@@ -1,0 +1,80 @@
+Perumda Aneka dharma
+
+Aplikasi Zahir dan kendala
+
+1. sistem akuntanasi
+
+1 hal:
+- memebeli -> arang masuk persediaan -> dijual (orang) -> barang sama (berdasarkan waktu) harga berbeda
+- kurang fleksible untuk update Aplikasi
+
+produksi
+- cetak form / nota :
+terdiir kertas , tinta , jasa poting -> menjadi prisuk d=nita dengan harga , penentuan hpp , agaka kesulitan
+
+disederhanakan.
+
+persediaan beli total, per tahun
+habis produksi berapa, untuk menentukan di akhir tahun / disepakati di awal tahun
+
+untuk input sudah masuk --> persediaan --> dijual.
+
+--------------------------------------------------------------------------------------------------------------
+
+harga hari ini,
+bisa update harga
+
+zahir ==> cloud dari server zahir
+
+--------------------------------
+
+ada data manual di Perumda
+
+-------------------------------------------------
+item sama dan harga berbeda
+
+-------------------------------------------------
+reporting neraca
+
+2 - 3 bulan
+
+reporting data semua.
+
+------------------------------------------------------
+multi sistem ?
+
+produksi
+sampah
+bantul radio
+apotik
+ternak
+percatakan outdoor
+atk 
+fotocopy
+truck
+------------------------------------------------------
+
+STANDAR WEB / PHP ?
+SERVER ?
+
+
+UPLOAD FILE PER MASING2 PERUSAHAAN BAGIAN
+------------------------------------------------------
+
+
+ADA FOTM DEPOSIT
+ADA SISA BAYAR DARI CUSTOMER
+
+LAPORAN PENJUALAN :
+BREAKDOWN produksi
+
+UNTUK BUAT NOTA --> BREAK DOWN ( KERTAS , TINTA DLL).
+
+NOTE Untuk penjualan / produksi unit:
+ADA FIRST IN FIRST OUT DI APLIKASI PEMBELIAN UNTUK UNIT INTERNAL
+
+
+
+
+
+

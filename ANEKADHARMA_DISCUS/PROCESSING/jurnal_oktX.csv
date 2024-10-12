@@ -1,0 +1,36 @@
+id;Tgl_date;tgl;nmr_spop;pl;kode_unit;unit;supplier;nmr_rek;rekening; jumlah ;uu 
+1;04/10/2022;4;347;2;1;Unit  Percetakan;Toko Pembantu;11501;Sediaan-Barang Jadi;1960000;1960000
+2;06/10/2022;6;350;2;1;Unit  Percetakan;CV Fahana Citra;51101;BPP-Percetakan;2065000;2065000
+3;04/10/2022;4;352;2;1;Unit  Percetakan;Percetakan Chandra;51101;BPP-Percetakan;9850000;9850000
+4;05/10/2022;5;353;2;1;Unit  Percetakan;Parangtritis Graphic;51101;BPP-Percetakan;1030000;1030000
+5;10/10/2022;10;355;2;1;Unit  Percetakan;PT Setia Harapan Komputer;51101;BPP-Percetakan;1600000;1600000
+6;12/10/2022;12;361;2;1;Unit  Percetakan;Bagus Teknik (Grafikita);51101;BPP-Percetakan;17600000;17600000
+7;17/10/2022;17;365;2;1;Unit  Percetakan;Toko Pembantu;11501;Sediaan-Barang Jadi;2145000;2145000
+8;27/10/2022;27;372;2;1;Unit  Percetakan;Colorlink (Grafikita);51101;BPP-Percetakan;5020400;5020400
+9;03/10/2022;3;346;4;2;unit Perdagangan Umum;Toko Mangun;11501;Sediaan-Barang Jadi;270000;270000
+10;04/10/2022;4;348;4;2;unit Perdagangan Umum;CKA;11501;Sediaan-Barang Jadi;95000;95000
+11;04/10/2022;;348;4;2;unit Perdagangan Umum;UD Naga Mas;11501;Sediaan-Barang Jadi;503500;503500
+12;04/10/2022;;348;4;2;unit Perdagangan Umum;Yobel;11501;Sediaan-Barang Jadi;42816;42816
+13;05/10/2022;5;349;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;9145200;9145200
+14;06/10/2022;6;351;4;2;unit Perdagangan Umum;Mitra Abadi;11501;Sediaan-Barang Jadi;496933;496933
+15;10/10/2022;10;354;4;2;unit Perdagangan Umum;PT Setiawan Sedjati;51116;BPP-ATK;865800;865800
+16;11/10/2022;11;356;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;368720;368720
+17;11/10/2022;11;357;4;2;unit Perdagangan Umum;Sinar Bhakti;11501;Sediaan-Barang Jadi;1241800;1241800
+18;11/10/2022;11;358;4;2;unit Perdagangan Umum;CV Perdana Mas;11501;Sediaan-Barang Jadi;507425;507425
+19;12/10/2022;12;359;4;2;unit Perdagangan Umum;PT Godrej Distribusi;11501;Sediaan-Barang Jadi;188700;188700
+20;14/10/2022;11;360;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;563000;563000
+21;12/10/2022;12;362;4;2;unit Perdagangan Umum;Mitra Abadi;11501;Sediaan-Barang Jadi;6000000;6000000
+22;14/10/2022;14;363;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;627800;627800
+23;14/10/2022;14;364;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;2547700;2547700
+24;18/10/2022;18;366;4;2;unit Perdagangan Umum;PT Setiawan Sedjati;11501;Sediaan-Barang Jadi;2175600;2175600
+25;20/10/2022;20;367;4;2;unit Perdagangan Umum;Alifia;11501;Sediaan-Barang Jadi;27975;27975
+26;20/10/2022;;367;4;2;unit Perdagangan Umum;Purnama;11501;Sediaan-Barang Jadi;59850;59850
+27;20/10/2022;;367;4;2;unit Perdagangan Umum;Aida;11501;Sediaan-Barang Jadi;20000;20000
+28;20/10/2022;20;368;4;2;unit Perdagangan Umum;Mitra Abadi;11501;Sediaan-Barang Jadi;411667;411667
+29;20/10/2022;20;369;4;2;unit Perdagangan Umum;Alifia;11501;Sediaan-Barang Jadi;392400;392400
+30;24/10/2022;21;370;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;2521250;2521250
+31;25/10/2022;25;371;4;2;unit Perdagangan Umum;CV Perdana Mas;11501;Sediaan-Barang Jadi;513313;513313
+32;27/10/2022;27;373;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;4768000;4768000
+33;27/10/2022;27;374;4;2;unit Perdagangan Umum;Aida;11501;Sediaan-Barang Jadi;49000;49000
+34;28/10/2022;28;375;4;2;unit Perdagangan Umum;Mitra Abadi;11501;Sediaan-Barang Jadi;8300000;8300000
+35;31/10/2022;31;376;4;2;unit Perdagangan Umum;Toko Pembantu;11501;Sediaan-Barang Jadi;1050000;1050000
