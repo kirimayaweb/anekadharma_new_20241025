@@ -28,9 +28,10 @@ date_default_timezone_set("Asia/Jakarta");
 
 // local xampp
 // $config['base_url'] = 'http://localhost/KIRIMAYA/anekadharma';
+$config['base_url'] = 'http://localhost/ANEKADHARMA_APPS/anekadharma/';
 
 // ONLINE ANEKADHARMA
-$config['base_url'] = 'https://anekadharma.my.id';
+// $config['base_url'] = 'https://anekadharma.my.id';
 
 /*
 |--------------------------------------------------------------------------
