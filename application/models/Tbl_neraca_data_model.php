@@ -8,9 +8,11 @@ class Tbl_neraca_data_model extends CI_Model
 
     public $table = 'tbl_neraca_data';
     public $id = 'id';
+    // public $tahun_transaksi = 'tahun_transaksi';
     public $uuid_data_neraca = 'uuid_data_neraca';
     public $tahun_transaksi = 'tahun_transaksi';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
     function __construct()
     {
@@ -20,7 +22,7 @@ class Tbl_neraca_data_model extends CI_Model
     // get all
     function get_all()
     {
-        $this->db->order_by($this->id, $this->order);
+        $this->db->order_by($this->tahun_transaksi, $this->order);
         return $this->db->get($this->table)->result();
     }
 

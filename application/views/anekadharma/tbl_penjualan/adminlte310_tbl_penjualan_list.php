@@ -67,7 +67,7 @@
 
                     <div class="card-body">
 
-                        <table id="exampleFreeze" class="display nowrap" style="width:100%">
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
@@ -76,6 +76,7 @@
                                     <th rowspan="2">nmrpesan</th>
                                     <th rowspan="2">nmrkirim</th>
                                     <th rowspan="2">Konsumen</th>
+                                    <th rowspan="2">Kode</th>
                                     <th rowspan="2">Nama Barang</th>
                                     <th rowspan="2">Unit</th>
                                     <th rowspan="2">Satuan</th>
@@ -128,6 +129,7 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
+                                            <td></td>
 
 
                                             <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>" ?> </td>
@@ -162,7 +164,16 @@
                                             $Total_utangppn_per_nmrkirim = 0;
                                         ?>
                                             <td><?php echo ++$start ?></td>
-                                            <td><?php echo date("d M Y", strtotime($list_data->tgl_jual)); ?></td>
+                                            <td>
+                                                <?php 
+                                                echo date("d M Y", strtotime($list_data->tgl_jual));
+                                                echo " "; 
+                                                echo anchor(site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Penjualan</i>', 'class="btn btn-success btn-xs"  target="_blank"');
+
+                                           
+
+                                                ?>
+                                            </td>
                                             <td align="center"><?php echo $list_data->nmrpesan; ?></td>
                                             <td align="center"><?php echo $list_data->nmrkirim; ?></td>
                                             <td align="center"><?php echo $list_data->konsumen_nama; ?></td>
@@ -172,6 +183,7 @@
                                         ?>
 
 
+                                        <td align="left"><?php echo $list_data->kode_barang; ?></td>
                                         <td align="left"><?php echo $list_data->nama_barang; ?></td>
                                         <td align="left"><?php echo $list_data->unit; ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
@@ -252,6 +264,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
 
                                     <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>" ?> </td>
                                     <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>" ?> </td>
@@ -268,6 +281,7 @@
 
                                 <tr>
                                     <th>No</th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>

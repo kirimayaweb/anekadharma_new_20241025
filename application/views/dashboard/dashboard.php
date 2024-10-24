@@ -1,3 +1,29 @@
+
+
+   <!-- sweetalert -->
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- //sweetalert -->
+
+
+        <!-- sweetalert -->
+        <script>
+            Swal.fire({
+                title: 'Error!',
+                text: 'Do you want to continue',
+                icon: 'error',
+                confirmButtonText: 'Cool'
+            })
+
+
+            Swal.fire({
+                icon: "error",
+                title: "Oops...",
+                text: "Something went wrong!",
+                footer: '<a href="#">Why do I have this issue?</a>'
+            });
+        </script>
+        <!-- //sweetalert -->
+
 <div class="content-wrapper">
     <section class="content">
         <div class="row">

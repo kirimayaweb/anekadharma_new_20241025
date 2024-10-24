@@ -353,6 +353,25 @@ $get_list_data = $x_list_data;
                                                     </div>
                                                 </div>
 
+
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
+                                                        <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                                            <option value="">Pilih Gudang</option>
+                                                            <?php
+
+                                                            $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                echo "<option value='$m->uuid_gudang' ";
+                                                                echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+
                                             </div>
 
                                         </div>

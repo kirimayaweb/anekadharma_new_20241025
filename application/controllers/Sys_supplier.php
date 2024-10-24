@@ -12,7 +12,7 @@ class Sys_supplier extends CI_Controller
         $this->load->library('form_validation');
     }
 
-    public function index()
+    public function indexXXXX()
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->input->get('start'));
@@ -44,6 +44,20 @@ class Sys_supplier extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_supplier/sys_supplier_list', $data);
     }
 
+    public function index(){
+        $data_supplier = $this->Sys_supplier_model->get_all();
+
+        $data = array(
+            'data_supplier' => $data_supplier,
+            'action' => site_url('Sys_supplier/cari_unit'),
+        );
+
+
+
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_supplier/adminlte310_sys_supplier_list', $data);
+    }
+
     public function read($id) 
     {
         $row = $this->Sys_supplier_model->get_by_id($id);
@@ -67,7 +81,7 @@ class Sys_supplier extends CI_Controller
     public function create() 
     {
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('sys_supplier/create_action'),
 	    'id' => set_value('id'),
 	    'uuid_supplier' => set_value('uuid_supplier'),
@@ -77,7 +91,11 @@ class Sys_supplier extends CI_Controller
 	    'alamat_supplier' => set_value('alamat_supplier'),
 	    'keterangan' => set_value('keterangan'),
 	);
-        $this->load->view('sys_supplier/sys_supplier_form', $data);
+
+        // $this->load->view('sys_supplier/sys_supplier_form', $data);
+    
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_supplier/adminlte310_sys_supplier_form', $data);
+   
     }
     
     public function create_action() 

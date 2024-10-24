@@ -194,9 +194,10 @@
                                     <table id="exampleFreeze" class="display nowrap" style="width:100%">
                                         <thead>
                                             <tr>
-                                                <th style="text-align:center" width="10px">No</th>
+                                                <th style="text-align:left" width="30px">No</th>
 
-                                                <th>Uraian</th>
+                                                <th style="text-align:left">Gudang</th>
+                                                <th style="text-align:left">Uraian</th>
                                                 <th style="text-align:center">Jumlah</th>
                                                 <th style="text-align:center">Satuan</th>
                                                 <!-- <th>Konsumen</th> -->
@@ -219,8 +220,9 @@
 
                                                 <tr>
 
-                                                    <td><?php echo ++$start ?></td>
+                                                    <td style="text-align:center"><?php echo ++$start ?></td>
 
+                                                    <td align="left"><?php echo $list_data->nama_gudang; ?></td>
                                                     <td align="left"><?php echo $list_data->uraian; ?></td>
                                                     <td align="center"><?php echo nominal($list_data->jumlah); ?></td>
                                                     <td align="center"><?php echo $list_data->satuan; ?></td>
@@ -336,6 +338,26 @@
                                                         <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
                                                     </div>
                                                 </div>
+
+
+                                                <div class="row">
+                                                    <div class="col-12">
+                                                        <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
+                                                        <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                                            <option value="">Pilih Gudang</option>
+                                                            <?php
+
+                                                            $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                echo "<option value='$m->uuid_gudang' ";
+                                                                echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+
 
                                             </div>
 

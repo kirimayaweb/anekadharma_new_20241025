@@ -8,7 +8,7 @@ class Tbl_penjualan extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model'));
+		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
@@ -69,7 +69,7 @@ class Tbl_penjualan extends CI_Controller
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/kaskecil/kaskecil_form');
 	}
-	
+
 	public function neraca()
 	{
 
@@ -188,7 +188,7 @@ class Tbl_penjualan extends CI_Controller
 						'nama_barang' => $namabarang,
 						'unit' => $unit,
 						'satuan' => $satuan,
-						
+
 						'harga_satuan' => preg_replace("/[^0-9]/", "", $hargasatuan),
 						'id_usr' => 1,
 					);
@@ -301,6 +301,8 @@ class Tbl_penjualan extends CI_Controller
 		$sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
 		$data_barang = $this->db->query($sql)->row();
 
+		// print_r($data_barang);
+		// die;
 
 		// [uuid_pembelian] => 5d4b4221756411ef88650021ccc9061e [uuid_barang] => ae37d726715911ef9fe90021ccc906hh [tgl_po] => 2024-09-01 00:00:00 [nmrsj] => [nmrfakturkwitansi] => 1 [nmrbpb] => [uuid_spop] => 54548eeb756411ef88650021ccc9061e [spop] => 1 [uuid_supplier] => 458c5d176b2311ef80a80021ccc9061e [supplier_kode] => [supplier_nama] => Supplier 1 [uraian] => Buku [jumlah] => 2 [satuan] => rim [uuid_konsumen] => b728e22d6b5811ef80a80021ccc9061e [konsumen] => pj-atk [harga_satuan] => 100000 [harga_total] => 0 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 0000-00-00 00:00:00 [id_usr] => 1 )
 
@@ -343,12 +345,14 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'kode_barang' => $data_barang->kode_barang,
 				'nama_barang' => $data_barang->uraian,
 				'uuid_unit' => $uuid_unit_selected,
 				'unit' => $data_nama_unit,
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
 				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
 				'id_usr' => 1,
 			);
 
@@ -370,12 +374,14 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'kode_barang' => $data_barang->kode_barang,
 				'nama_barang' => $data_barang->uraian,
 				'uuid_unit' => $uuid_unit_selected,
 				'unit' => $data_nama_unit,
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
 				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
 				'id_usr' => 1,
 			);
 			$this->Tbl_penjualan_model->insert_add_barang($data);
@@ -422,12 +428,31 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 		// 2.a. PERSIAPAN LIBRARY
-		$this->load->library('PdfGenerator');
+		// $this->load->library('PdfGenerator');
+
+		
+		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+
+		// print_r($data_master_penjualan_per_uuidpenjualan);		
+		// print_r($data_master_penjualan_per_uuidpenjualan->nmrpesan);
+		// print_r(date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)));
+		// print_r($data_master_penjualan_per_uuidpenjualan->konsumen_nama);
+		// die;
+
+
+		// $date_po = date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual));
+		// die;
 
 		// 2.b. PERSIAPAN DATA
 		$data = array(
 			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan),
+			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
+			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
+			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
 		);
+
+		// print_r($data);
+		// die;
 
 		// 2.C. MENAMPILKAN FILE DATA
 		// $data = array_merge($data);

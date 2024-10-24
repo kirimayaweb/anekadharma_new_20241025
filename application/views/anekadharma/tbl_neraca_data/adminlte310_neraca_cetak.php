@@ -65,7 +65,12 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 		<tr>
 			<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-				<strong>Per Tanggal 30 Juli 2024</strong>
+				<strong>Per Tanggal 
+					<?php 
+					// echo  date('d F Y'); 
+						//echo  date('d F Y'); 
+				echo $tahun_neraca;
+					?></strong>
 			</th>
 		</tr>
 

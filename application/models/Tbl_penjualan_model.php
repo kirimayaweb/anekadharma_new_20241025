@@ -46,21 +46,20 @@ class Tbl_penjualan_model extends CI_Model
     {
         $sql = "SELECT 
         -- tbl_penjualan_a.tgl_po as tgl_po,
+        tbl_penjualan_a.uuid_konsumen as uuid_konsumen,
         tbl_penjualan_a.konsumen_nama as nama_konsumen,
-        tbl_penjualan_a.unit as jumlah_belanja,
+        tbl_penjualan_a.jumlah as jumlah_belanja,
         tbl_penjualan_a.harga_satuan as harga_satuan_beli,
-(tbl_penjualan_a.unit*tbl_penjualan_a.harga_satuan) as total_belanja,
+        (tbl_penjualan_a.jumlah*tbl_penjualan_a.harga_satuan) as total_belanja,
         sys_konsumen_a.nama_konsumen as nama_konsumen_1
        
-
         FROM tbl_penjualan tbl_penjualan_a 
 
-        left join   sys_konsumen  sys_konsumen_a ON  sys_konsumen_a.nama_konsumen = tbl_penjualan_a.konsumen_nama
+        left join   sys_konsumen  sys_konsumen_a ON  sys_konsumen_a.uuid_konsumen = tbl_penjualan_a.uuid_konsumen
 
         group by sys_konsumen_a.nama_konsumen
         order by sys_konsumen_a.nama_konsumen ASC
         ";
-
 
         return $this->db->query($sql)->result();
     }
@@ -156,6 +155,7 @@ class Tbl_penjualan_model extends CI_Model
         // );
 
 
+        $this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
         $this->db->set('uuid_penjualan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
@@ -186,6 +186,7 @@ class Tbl_penjualan_model extends CI_Model
         // print_r($data);
         // die;
 
+        $this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
         // $this->db->set('uuid_penjualan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 

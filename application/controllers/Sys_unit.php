@@ -26,7 +26,7 @@ class Sys_unit extends CI_Controller
 
 
         // $this->load->view('sys_unit/sys_unit_list');
-        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit/adminlte310_sys_unit_list', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit/adminlte310_sys_unit_list_ALL', $data);
     }
 
     public function cari_unit($uuid_unit_selected = null)

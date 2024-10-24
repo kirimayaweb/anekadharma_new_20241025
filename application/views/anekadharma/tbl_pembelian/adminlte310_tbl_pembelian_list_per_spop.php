@@ -67,7 +67,7 @@
 
                     <div class="card-body">
 
-                        <table id="exampleFreeze" class="display nowrap" style="width:100%">
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>

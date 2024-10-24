@@ -71,19 +71,20 @@
                             <thead>
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
-                                    <th>Tgl Po</th>
-                                    <th>Spop</th>
-                                    <th>No. faktur/ kwitansi</th>
-                                    <th>Supplier</th>
-                                    <th>Uraian</th>
-                                    <th>Jumlah</th>
-                                    <th>Satuan</th>
-                                    <th>Konsumen</th>
-                                    <th>Harga Satuan</th>
-                                    <th>Harga Total</th>
-                                    <th>Statuslu</th>
-                                    <th>Kas / Bank</th>
-                                    <th>Tgl Bayar</th>
+                                    <th style="text-align:center" >Tgl Po</th>
+                                    <th style="text-align:center">Spop</th>
+                                    <th style="text-align:center">No. faktur/ kwitansi</th>
+                                    <th style="text-align:center">Supplier</th>
+                                    <th style="text-align:center">Kode Barang</th>
+                                    <th style="text-align:center">Nama Barang</th>
+                                    <th style="text-align:center">Jumlah</th>
+                                    <th style="text-align:center">Satuan</th>
+                                    <th style="text-align:center">Konsumen</th>
+                                    <th style="text-align:center">Harga Satuan</th>
+                                    <th style="text-align:center">Harga Total</th>
+                                    <th style="text-align:center">Statuslu</th>
+                                    <th style="text-align:center">Kas / Bank</th>
+                                    <th style="text-align:center">Tgl Bayar</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -114,6 +115,7 @@
                                                 ?>
 
                                             </td>
+                                            <td></td>
                                             <td></td>
                                             <!-- <td></td> -->
                                             <!-- <td></td> -->
@@ -205,9 +207,9 @@
                                                 } else {
                                                     // echo "oooooooooooo";
                                                     echo date("d M Y", strtotime($list_data->tgl_po));
-                                                    echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
-                                                    echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
                                                 }
                                                 ?>
                                             </td>
@@ -226,15 +228,29 @@
                                             <td><?php echo ++$start ?></td>
                                             <td><?php
                                                 echo date("d M Y", strtotime($list_data->tgl_po));
-                                                echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
-
-                                                echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
-                                                ?></td>
+                                                echo " ";
+                                                echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UPDATE</i>', 'class="btn btn-warning btn-xs"');
+                                                //echo " ";
+                                                //echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs" disabled');
+                                                //echo " ";
+                                                
+                                                ?>
+                                            
+                                        
+                                            </td>
                                             <td align="center">
                                                 <?php
                                                 echo $list_data->spop;
                                                 $x_button = $x_button + 1;
                                                 // echo $x_button;
+                                                echo "  ";
+                                                if($list_data->status_spop){
+                                                    // echo $list_data->status_spop;
+                                                    echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">'. $list_data->status_spop .'</i>', 'class="btn btn-success btn-xs"');
+                                                }else{
+                                                    echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">STATUS</i>', 'class="btn btn-danger btn-xs"');
+                                                }
+                                                
                                                 ?>
                                             </td>
 
@@ -251,6 +267,7 @@
 
 
 
+                                        <td align="center"><?php echo $list_data->kode_barang; ?></td>
                                         <td align="left"><?php echo $list_data->uraian; ?></td>
                                         <td align="right"><?php echo nominal($list_data->jumlah); ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
@@ -324,6 +341,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
                                     <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>" ?> </td>
                                     <td>
                                         <?php
@@ -381,6 +399,7 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
+                                    <th></th>
                                     <th style="text-align:right">TOTAL LUNAS</th>
                                     <th style="text-align:right"><?php echo nominal($TOTAL_LUNAS); ?></th>
                                     <th></th>
@@ -392,6 +411,7 @@
                                     <th></th>
                                     <!-- <th></th> -->
                                     <!-- <th></th> -->
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>

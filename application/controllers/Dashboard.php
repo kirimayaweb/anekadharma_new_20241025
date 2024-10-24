@@ -119,8 +119,6 @@ class Dashboard extends CI_Controller
             'link_penjualan' => 'Tbl_penjualan/',
         );
 
-
-
         // $this->template->load('template', 'dashboard/dashboard', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/dashboard/dashboard', $data);
     }

@@ -101,7 +101,7 @@
                                             $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
                                                 echo "<option value='$m->uuid_konsumen' ";
-                                                echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+                                                echo ">  " . strtoupper($m->nama_konsumen) . " | " . strtoupper($m->nmr_kontak_konsumen) . " | " . strtoupper($m->alamat_konsumen) . "</option>";
                                             }
                                             ?>
                                         </select>

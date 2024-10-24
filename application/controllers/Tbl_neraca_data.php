@@ -46,13 +46,27 @@ class Tbl_neraca_data extends CI_Controller
 		$this->load->view('tbl_neraca_data/tbl_neraca_data_list', $data);
 	}
 
-	public function index()
+	public function index($laporan_status=null)
 	{
+
+		
+		if (isset($laporan_status)) {
+			$status_laporan = "laporan";
+		} else {
+			$status_laporan = "bukan_laporan";
+		}
+
+		// print_r($status_laporan);
+		// die;
+
+
 		$Tbl_neraca_data = $this->Tbl_neraca_data_model->get_all();
 		$start = 0;
 		$data = array(
 			'Tbl_neraca_data' => $Tbl_neraca_data,
 			'start' => $start,
+			'status_laporan' => $status_laporan,
+			'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_tbl_neraca_data_list', $data);
 	}
@@ -447,6 +461,53 @@ class Tbl_neraca_data extends CI_Controller
 	}
 
 
+	public function neraca_form_input()
+	{
+
+		// print_r("neraca_form_input");
+		// print_r("<br/>");
+		// print_r($this->input->post('tahun_neraca', TRUE));
+		// print_r("<br/>");
+
+
+		$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($this->input->post('tahun_neraca', TRUE));
+		
+		// print_r($data_detail);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// if(isset($data_detail)){
+		// 	print_r("Ada data");
+		// }else{
+		// 	print_r("Tidak ada data");
+		// }
+
+		// die;
+
+
+		if (isset($data_detail)) {
+			$uuid_data_neraca=$data_detail->tahun_transaksi;
+			$data = array(
+				'button' => 'Update',
+				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $uuid_data_neraca),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $data_detail->tahun_transaksi,
+			);
+		} else {
+			$data = array(
+				'button' => 'Simpan',
+				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => $data_detail->uuid_data_neraca,
+				'tahun_neraca' => $this->input->post('tahun_neraca', TRUE),
+			);
+		}
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
 	public function neraca_form($uuid_data_neraca = null)
 	{
 		if ($uuid_data_neraca) {
@@ -463,10 +524,11 @@ class Tbl_neraca_data extends CI_Controller
 		if ($data_detail) {
 			$data = array(
 				'button' => 'Update',
-				'action' => site_url('Tbl_neraca_data/update_action_neraca/'.$uuid_data_neraca),
+				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $uuid_data_neraca),
 				'id' => set_value('id'),
 				'data_detail' => $data_detail,
 				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $data_detail->tahun_transaksi,
 			);
 		} else {
 			$data = array(
@@ -475,6 +537,7 @@ class Tbl_neraca_data extends CI_Controller
 				'id' => set_value('id'),
 				'data_detail' => $data_detail,
 				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $data_detail->tahun_transaksi,
 			);
 		}
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
@@ -488,7 +551,7 @@ class Tbl_neraca_data extends CI_Controller
 		// print_r("<br/>");
 		// // die;
 
-
+		$get_id = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca)->id;
 
 
 		$data = array(
@@ -529,7 +592,7 @@ class Tbl_neraca_data extends CI_Controller
 		if ($uuid_data_neraca) {
 			// update data neraca
 			// print_r("UPDATE DATA");
-			$this->Tbl_neraca_data_model->update($this->input->post('id', TRUE), $data);
+			$this->Tbl_neraca_data_model->update($get_id, $data);
 		} else {
 			// data baru, create tahun
 			// print_r("DATA BARU");
@@ -589,9 +652,9 @@ class Tbl_neraca_data extends CI_Controller
 			'laba_rugi_tahun_berjalan' => $this->input->post('laba_rugi_tahun_berjalan', TRUE),
 		);
 
-	
-			$this->Tbl_neraca_data_model->update_by_uuid_data_neraca($uuid_data_neraca, $data);
-	
+
+		$this->Tbl_neraca_data_model->update_by_uuid_data_neraca($uuid_data_neraca, $data);
+
 
 		$this->session->set_flashdata('message', 'Create Record Success');
 		redirect(site_url('tbl_neraca_data'));
@@ -620,23 +683,10 @@ class Tbl_neraca_data extends CI_Controller
 			$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
 		} else {
 			$year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
-			// print_r($year_sekarang);
-			// print_r("<br/>");
+
 			$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
-			// print_r($data_detail);
-			// print_r("<br/>");
-			// die;
-			// if ($data_detail) {
-			// 	print_r($data_detail->uuid_data_neraca);
-			// 	redirect(site_url('tbl_neraca_data/neraca_form/' . $data_detail->uuid_data_neraca));
-			// }
 		}
 
-
-		// $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_cetak', $data);
-
-
-		// ------------------
 
 
 		// 2.a. PERSIAPAN LIBRARY
@@ -648,6 +698,7 @@ class Tbl_neraca_data extends CI_Controller
 			// 'action' => site_url('Tbl_neraca_data/create_action_neraca'),
 			// 'id' => set_value('id'),
 			'data_detail' => $data_detail,
+			'tahun_neraca' => $data_detail->tahun_transaksi,
 		);
 
 

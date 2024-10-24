@@ -8,6 +8,7 @@ class Sys_nama_barang_model extends CI_Model
 
     public $table = 'sys_nama_barang';
     public $id = 'id';
+    public $uuid_barang = 'uuid_barang';
     public $order = 'DESC';
 
     function __construct()
@@ -26,6 +27,12 @@ class Sys_nama_barang_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    // get data by id
+    function get_by_uuid_barang($uuid_barang)
+    {
+        $this->db->where($this->uuid_barang, $uuid_barang);
         return $this->db->get($this->table)->row();
     }
     
@@ -66,6 +73,26 @@ class Sys_nama_barang_model extends CI_Model
             'PROCESS' => 'INSERT',
             'id' => $this->db->insert_id()
         );
+
+    }
+
+    // insert data
+    function insert_dari_pecah_satuan($data)
+    {
+        // $this->db->insert($this->table, $data);
+
+        $this->db->set('uuid_barang', "replace(uuid(),'-','')", FALSE);
+        $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+        $this->db->where($this->id, $datainsert['id']);
+        $uuid_barang = $this->db->get($this->table)->row()->uuid_barang;
+
+        return $uuid_barang;
 
     }
 

@@ -9,7 +9,7 @@ class Tbl_user extends CI_Controller
     public $table_tbl_tingkat_by_user = 'tbl_tingkat_by_user';
     public $table_tbl_user = 'tbl_user';
     public $email = 'email';
-    
+
 
     function __construct()
     {
@@ -20,7 +20,7 @@ class Tbl_user extends CI_Controller
         $this->load->library('form_validation');
     }
 
-    public function index()
+    public function indexXXXX()
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->uri->segment(3));
@@ -53,6 +53,22 @@ class Tbl_user extends CI_Controller
         // $this->template->load('template/adminlte310', 'tbl_user/tbl_user_list', $data);
         $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_list', $data);
     }
+
+    public function index()
+    {
+        $data_user = $this->Tbl_user_model->get_all();
+        
+        $data = array(
+            'data_user' => $data_user,
+            'action' => site_url('sys_unit/cari_unit'),
+        );
+
+
+
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_list', $data);
+    }
+
 
     public function read($id)
     {
@@ -184,10 +200,9 @@ class Tbl_user extends CI_Controller
                     // SIMPAN KE TABEL
 
                     $this->Tbl_user_model->insert_user_by_tingkat($data);
-
                 }
 
-               
+
 
                 redirect(site_url('tbl_user'));
             }
@@ -251,7 +266,7 @@ class Tbl_user extends CI_Controller
                 $status_tagihan_x = 0;
             }
 
-            if($this->input->post('password', TRUE)){
+            if ($this->input->post('password', TRUE)) {
                 // print_r(" Ada Password");
                 $data = array(
                     'uuid_users' => $this->input->post('uuid_users', TRUE),
@@ -265,8 +280,7 @@ class Tbl_user extends CI_Controller
                     'status_tagihan' => $status_tagihan_x,
                     'is_aktif' => $this->input->post('is_aktif', TRUE),
                 );
-    
-            }else{
+            } else {
                 // print_r("TIDAK Ada Password");
                 $data = array(
                     'uuid_users' => $this->input->post('uuid_users', TRUE),
@@ -280,7 +294,6 @@ class Tbl_user extends CI_Controller
                     'status_tagihan' => $status_tagihan_x,
                     'is_aktif' => $this->input->post('is_aktif', TRUE),
                 );
-    
             }
 
 

@@ -12,7 +12,7 @@ class Sys_konsumen extends CI_Controller
         $this->load->library('form_validation');
     }
 
-    public function index()
+    public function indexXXXX()
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->input->get('start'));
@@ -42,6 +42,24 @@ class Sys_konsumen extends CI_Controller
         );
         // $this->load->view('sys_konsumen/sys_konsumen_list', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/sys_konsumen_list', $data);
+    }
+
+    
+    public function index()
+    {
+        // $this->load->view('sys_gudang/sys_gudang_list');
+
+        $data_konsumen = $this->Sys_konsumen_model->get_all();
+
+        $data = array(
+            'data_konsumen' => $data_konsumen,
+            'action' => site_url('Sys_konsumen/cari_unit'),
+        );
+
+
+
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/adminlte310_sys_konsumen_list', $data);
     }
 
     public function read($id) 
@@ -77,7 +95,9 @@ class Sys_konsumen extends CI_Controller
 	    'alamat_konsumen' => set_value('alamat_konsumen'),
 	    'keterangan' => set_value('keterangan'),
 	);
-        $this->load->view('sys_konsumen/sys_konsumen_form', $data);
+        // $this->load->view('sys_konsumen/sys_konsumen_form', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/adminlte310_sys_konsumen_form', $data);
+
     }
     
     public function create_action() 

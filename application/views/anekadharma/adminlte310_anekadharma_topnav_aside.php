@@ -47,6 +47,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/dist/css/adminlte.min.css">
   <!-- END OFF SELECT2 && DATEPICKER -->
 
+
+   <!-- sweetalert -->
+   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- //sweetalert -->
+
+
+
+
 </head>
 
 
@@ -56,7 +64,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <div class="wrapper">
 
     <!-- Navbar -->
-    <nav class="main-header navbar navbar-expand-md navbar-light navbar-white">
+    <!-- <nav class="main-header navbar navbar-expand-md navbar-light navbar-white"> -->
+    <nav class="main-header navbar navbar-expand navbar-white navbar-light">
       <div class="container">
         <a href="#" class="navbar-brand">
           <img src="<?php echo base_url() ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
@@ -77,31 +86,26 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Setting</a>
               <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
-                <li>
-                  <a tabindex="-1" href="<?php echo base_url() ?>index.php/Sys_supplier" class="dropdown-item">Data Supplier</a>
-                </li>
-
+                <li><a tabindex="-1" href="<?php echo base_url() ?>index.php/Sys_supplier" class="dropdown-item">Data Supplier</a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_nama_barang" class="dropdown-item">Data Barang</a></li>
-
                 <li><a href="<?php echo base_url() ?>index.php/Sys_konsumen" class="dropdown-item">Data Konsumen</a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_unit" class="dropdown-item">Data Unit</a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_gudang" class="dropdown-item">Data Gudang</a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_status_transaksi" class="dropdown-item">Status Transaksi </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_pajak" class="dropdown-item">Variabel-Variabel</a></li>
-
-
-
+                <hr />
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_user" class="dropdown-item">User</a></li>
               </ul>
             </li>
 
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Transaksi Stock</a>
               <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                <li><a href="<?php echo base_url() ?>index.php/tbl_pembelian" class="dropdown-item">Pembelian (Belanja Perusahaan) </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian" class="dropdown-item">Pembelian (Belanja Perusahaan) </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan" class="dropdown-item">Penjualan</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/tbl_pembelian/stock" class="dropdown-item">Stock</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_unit" class="dropdown-item">UNIT</a></li>
-
-
-
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/stock" class="dropdown-item">Stock</a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Persediaan" class="dropdown-item">Persediaan </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_unit/detail_unit" class="dropdown-item">UNIT</a></li>
               </ul>
             </li>
 
@@ -111,10 +115,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         ?>index.php/Sys_konsumen" class="nav-link">Unit</a>
             </li> -->
 
-            <li class="nav-item">
-              <a href="<?php echo base_url() ?>index.php/tbl_pembelian/pembayaran" class="nav-link">Pembayaran</a>
-            </li>
+            <!-- <li class="nav-item">
+              <a href="<?php //echo base_url() 
+                        ?>index.php/tbl_pembelian/pembayaran" class="nav-link">Pembayaran</a>
+            </li> -->
 
+            <li class="nav-item dropdown">
+              <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Pembayaran</a>
+              <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/pembayaran_ke_supplier" class="dropdown-item">Pembayaran ke Supplier </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/pembayaran_dari_konsumen" class="dropdown-item">Pembayaran dari Konsumen</a></li>
+              </ul>
+            </li>
 
 
 
@@ -122,12 +134,21 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Accounting</a>
               <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                  <li><a href="<?php echo base_url() ?>index.php/tbl_penjualan/kaskecil" class="dropdown-item">Kas Kecil </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/tbl_penjualan/bukukas" class="dropdown-item">Buku Kas </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/jurnal_pembelian" class="dropdown-item">Jurnal Pembelian </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/kas_kecil" class="dropdown-item">Kas Kecil </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
+              
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data" class="dropdown-item">Neraca</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi" class="dropdown-item">Laba Rugi</a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_kode_akun" class="dropdown-item">Kode Akun </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Sys_bank" class="dropdown-item">Kode Bank </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_pendapatan_lain_lain" class="dropdown-item">Pendapatan Lain-Lain </a></li>
+                <!-- <li><a href="<?php //echo base_url() ?>index.php/Biayapengeluaran" class="dropdown-item">Biaya Pengeluaran </a></li> -->
 
+                <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan/rekap" class="dropdown-item">Rekap Penjualan </a></li>
+                <li><a href="<?php echo base_url() ?>index.php/Tbl_uang_muka_didepan" class="dropdown-item">Uang Muka di Depan</a></li>
 
                 <!-- Level two dropdown-->
                 <li class="dropdown-submenu dropdown-hover">
@@ -149,8 +170,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <li class="nav-item dropdown">
             <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Laporan</a>
             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-              <li><a href="<?php echo base_url() ?>index.php/tbl_penjualan/bukukas" class="dropdown-item">Buku Kas </a></li>
-              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/neraca_cetak" class="dropdown-item" target="_blank">Neraca</a></li>
+              <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan/bukukas" class="dropdown-item">Buku Kas </a></li>
+              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item" target="_blank">Neraca</a></li>
+
               <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
             </ul>
@@ -501,6 +523,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
     $('#date_transaksi').datetimepicker({
       format: 'D-M-YYYY'
     });
+    $('#tanggal_bayar_input').datetimepicker({
+      format: 'D-M-YYYY'
+    });
 
 
 
@@ -553,7 +578,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 
 
-
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+  <style type="text/css">
+    div.dataTables_wrapper {
+      width: 100%;
+      margin: 0 auto;
+    }
+  </style>
 
   <script>
     // BOOTSTRAP 3
@@ -583,7 +614,53 @@ scratch. This page gets rid of all links and provides the needed markup only.
     $(document).ready(function() {
       var table = $('#tglSPOPFreeze').DataTable({
         scrollX: true,
-        scrollY: "300px",
+        scrollY: "400px",
+        scrollCollapse: true,
+        paging: true,
+        // columnDefs: [
+        //     { orderable: false, targets: 0 },
+        //      { orderable: false, targets: -1 }
+        //  ],
+        //  ordering: [[ 1, 'asc' ]],
+        // colReorder: {
+        //     fixedColumnsLeft: 1,
+        //      fixedColumnsRight: 1
+        // }
+      });
+
+      new $.fn.dataTable.FixedColumns(table, {
+        leftColumns: 3,
+        // rightColumns: 1
+      });
+    });
+
+    $(document).ready(function() {
+      var table = $('#tglSPOPFreeze1').DataTable({
+        scrollX: true,
+        scrollY: "400px",
+        scrollCollapse: true,
+        paging: true,
+        // columnDefs: [
+        //     { orderable: false, targets: 0 },
+        //      { orderable: false, targets: -1 }
+        //  ],
+        //  ordering: [[ 1, 'asc' ]],
+        // colReorder: {
+        //     fixedColumnsLeft: 1,
+        //      fixedColumnsRight: 1
+        // }
+      });
+
+      new $.fn.dataTable.FixedColumns(table, {
+        leftColumns: 3,
+        // rightColumns: 1
+      });
+    });
+
+    $(document).ready(function() {
+      var table = $('#tglSPOPFreeze2').DataTable({
+        scrollX: true,
+        scrollY: "400px",
         scrollCollapse: true,
         paging: true,
         // columnDefs: [
@@ -606,6 +683,29 @@ scratch. This page gets rid of all links and provides the needed markup only.
     $(document).ready(function() {
       var table = $('#exampleFreeze').DataTable({
         scrollX: true,
+        scrollY: "400px",
+        scrollCollapse: true,
+        paging: true,
+        // columnDefs: [
+        //     { orderable: false, targets: 0 },
+        //      { orderable: false, targets: -1 }
+        //  ],
+        //  ordering: [[ 1, 'asc' ]],
+        // colReorder: {
+        //     fixedColumnsLeft: 1,
+        //      fixedColumnsRight: 1
+        // }
+      });
+
+      new $.fn.dataTable.FixedColumns(table, {
+        leftColumns: 3,
+        // rightColumns: 1
+      });
+    });
+
+    $(document).ready(function() {
+      var table = $('#examplepenjualanlist').DataTable({
+        scrollX: true,
         scrollY: "300px",
         scrollCollapse: true,
         paging: true,
@@ -621,10 +721,14 @@ scratch. This page gets rid of all links and provides the needed markup only.
       });
 
       new $.fn.dataTable.FixedColumns(table, {
-        leftColumns: 2,
+        leftColumns: 3,
         // rightColumns: 1
       });
     });
+
+
+
+
 
 
     $(document).ready(function() {
