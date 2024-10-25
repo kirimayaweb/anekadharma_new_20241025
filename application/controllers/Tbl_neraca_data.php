@@ -68,6 +68,7 @@ class Tbl_neraca_data extends CI_Controller
 			'status_laporan' => $status_laporan,
 			'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
 		);
+		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_tbl_neraca_data_list', $data);
 	}
 

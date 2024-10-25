@@ -112,53 +112,110 @@
                     </div>
                     <br />
 
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="card-body">
+                                <table id="ExampleOnFile" class="display nowrap" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:center" width="10px">No</th>
+                                            <th>Tahun</th>
+                                            <th>Action</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+
+                                        foreach ($Tbl_neraca_data as $list_data) {
+                                        ?>
+
+                                            <tr>
+
+                                                <td><?php echo ++$start ?></td>
+
+                                                <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
+                                                <td align="left">
+                                                    <?php
+                                                    if ($status_laporan == "bukan_laporan") {
+                                                        echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                    }
+
+                                                    echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
+                                        <?php
+                                        }
+                                        ?>
 
 
-                    <div class="card-body">
-
-                        <table id="ExampleOnFile" class="display nowrap" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th style="text-align:center" width="10px">No</th>
-                                    <th>Tahun</th>
-                                    <th>Action</th>
-
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-
-                                foreach ($Tbl_neraca_data as $list_data) {
-                                ?>
-
-                                    <tr>
-
-                                        <td><?php echo ++$start ?></td>
-
-                                        <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
-                                        <td align="left">
-                                            <?php
-                                            if ($status_laporan == "bukan_laporan") {
-                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                            }
-
-                                            echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
-                                            ?>
-                                        </td>
-
-                                    </tr>
-                                <?php
-                                }
-                                ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
 
-                            </tbody>
+                        <div class="col-6">
+                            <div class="card-body">
+                                <table id="example" class="display nowrap" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:center" width="10px">No</th>
+                                            <th>Tahun</th>
+                                            <th>Action</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+
+                                        foreach ($Tbl_neraca_data as $list_data) {
+                                        ?>
+
+                                            <tr>
+
+                                                <td><?php echo ++$start ?></td>
+
+                                                <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
+                                                <td align="left">
+                                                    <?php
+                                                    if ($status_laporan == "bukan_laporan") {
+                                                        echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                    }
+
+                                                    echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
+                                        <?php
+                                        }
+                                        ?>
 
 
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                        </table>
                     </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
                     <!-- /.card-body -->
                 </div>
             </div>
