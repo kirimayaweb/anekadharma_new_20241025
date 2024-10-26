@@ -490,11 +490,12 @@ class Tbl_neraca_data extends CI_Controller
 			$uuid_data_neraca=$data_detail->tahun_transaksi;
 			$data = array(
 				'button' => 'Update',
-				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $uuid_data_neraca),
+				'action' => site_url('Tbl_neraca_data/create_action_neraca/' . $uuid_data_neraca),
 				'id' => set_value('id'),
 				'data_detail' => $data_detail,
 				'uuid_data_neraca' => $uuid_data_neraca,
 				'tahun_neraca' => $data_detail->tahun_transaksi,
+				'bulan_transaksi' => $data_detail->bulan_transaksi,
 			);
 		} else {
 			$data = array(
@@ -502,15 +503,23 @@ class Tbl_neraca_data extends CI_Controller
 				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
 				'id' => set_value('id'),
 				'data_detail' => $data_detail,
-				'uuid_data_neraca' => $data_detail->uuid_data_neraca,
+				'uuid_data_neraca' => "0",
 				'tahun_neraca' => $this->input->post('tahun_neraca', TRUE),
+				'bulan_transaksi' => 0,
 			);
 		}
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
 	}
 
+
+
+
 	public function neraca_form($uuid_data_neraca = null)
 	{
+
+		// print_r($uuid_data_neraca);
+		// die;
+
 		if ($uuid_data_neraca) {
 			$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
 		} else {
@@ -530,6 +539,7 @@ class Tbl_neraca_data extends CI_Controller
 				'data_detail' => $data_detail,
 				'uuid_data_neraca' => $uuid_data_neraca,
 				'tahun_neraca' => $data_detail->tahun_transaksi,
+				'bulan_transaksi' => $data_detail->bulan_transaksi,
 			);
 		} else {
 			$data = array(
@@ -539,8 +549,11 @@ class Tbl_neraca_data extends CI_Controller
 				'data_detail' => $data_detail,
 				'uuid_data_neraca' => $uuid_data_neraca,
 				'tahun_neraca' => $data_detail->tahun_transaksi,
+				'bulan_transaksi' => 0,
 			);
 		}
+
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
 	}
 
@@ -556,47 +569,49 @@ class Tbl_neraca_data extends CI_Controller
 
 
 		$data = array(
-			'date_input' => $this->input->post('date_input', TRUE),
-			'date_transaksi' => $this->input->post('date_transaksi', TRUE),
+			'date_input' => date("Y-m-d"),
+			'date_transaksi' => date("Y-m-d"),
 			'tahun_transaksi' => $this->input->post('tahun_transaksi', TRUE),
 			'bulan_transaksi' => $this->input->post('bulan_transaksi', TRUE),
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
-			'kas' => $this->input->post('kas', TRUE),
-			'bank' => $this->input->post('bank', TRUE),
-			'piutang_usaha' => $this->input->post('piutang_usaha', TRUE),
-			'piutang_non_usaha' => $this->input->post('piutang_non_usaha', TRUE),
-			'persediaan' => $this->input->post('persediaan', TRUE),
-			'uang_muka_pajak' => $this->input->post('uang_muka_pajak', TRUE),
-			'aktiva_tetap' => $this->input->post('aktiva_tetap', TRUE),
-			'aktiva_tetap_berwujud' => $this->input->post('aktiva_tetap_berwujud', TRUE),
-			'akumulasi_depresiasi_atb' => $this->input->post('akumulasi_depresiasi_atb', TRUE),
-			'piutang_non_usaha_pihak_ketiga' => $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE),
-			'piutang_non_usaha_radio' => $this->input->post('piutang_non_usaha_radio', TRUE),
-			'ljpj_taman_gedung_kesenian_gabusan' => $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE),
-			'ljpj_kompleks_gedung_kesenian' => $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE),
-			'ljpj_radio' => $this->input->post('ljpj_radio', TRUE),
-			'ljpj_kerjasama_operasi_apotek_dharma_usaha' => $this->input->post('ljpj_kerjasama_operasi_apotek_dharma_usaha', TRUE),
-			'ljpj_peternakan' => $this->input->post('ljpj_peternakan', TRUE),
-			'ljpj_kerjasama_adwm' => $this->input->post('ljpj_kerjasama_adwm', TRUE),
-			'ljpj_kerjasama_pdu_cabean_panggungharjo' => $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE),
-			'utang_usaha' => $this->input->post('utang_usaha', TRUE),
-			'utang_pajak' => $this->input->post('utang_pajak', TRUE),
-			'utang_lain_lain' => $this->input->post('utang_lain_lain', TRUE),
-			'utang_afiliasi' => $this->input->post('utang_afiliasi', TRUE),
-			'modal_dasar_dan_penyertaan' => $this->input->post('modal_dasar_dan_penyertaan', TRUE),
-			'cadangan_umum' => $this->input->post('cadangan_umum', TRUE),
-			'laba_bumd_pad' => $this->input->post('laba_bumd_pad', TRUE),
-			'laba_rugi_tahun_lalu' => $this->input->post('laba_rugi_tahun_lalu', TRUE),
-			'laba_rugi_tahun_berjalan' => $this->input->post('laba_rugi_tahun_berjalan', TRUE),
+			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
+			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+			'piutang_usaha' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
+			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
+			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
+			'uang_muka_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('uang_muka_pajak', TRUE)),
+			'aktiva_tetap' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap', TRUE)),
+			'aktiva_tetap_berwujud' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap_berwujud', TRUE)),
+			'akumulasi_depresiasi_atb' =>  preg_replace("/[^0-9]/", "", $this->input->post('akumulasi_depresiasi_atb', TRUE)),
+			'piutang_non_usaha_pihak_ketiga' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
+			'piutang_non_usaha_radio' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_radio', TRUE)),
+			'ljpj_taman_gedung_kesenian_gabusan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE)),
+			'ljpj_kompleks_gedung_kesenian' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE)),
+			'ljpj_radio' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_radio', TRUE)),
+			'ljpj_kerjasama_operasi_apotek_dharma_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_operasi_apotek_dharma_usaha', TRUE)),
+			'ljpj_peternakan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_peternakan', TRUE)),
+			'ljpj_kerjasama_adwm' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_adwm', TRUE)),
+			'ljpj_kerjasama_pdu_cabean_panggungharjo' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE)),
+			'utang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('utang_usaha', TRUE)),
+			'utang_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('utang_pajak', TRUE)),
+			'utang_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('utang_lain_lain', TRUE)),
+			'utang_afiliasi' => preg_replace("/[^0-9]/", "", $this->input->post('utang_afiliasi', TRUE)),
+			'modal_dasar_dan_penyertaan' => preg_replace("/[^0-9]/", "", $this->input->post('modal_dasar_dan_penyertaan', TRUE)),
+			'cadangan_umum' => preg_replace("/[^0-9]/", "", $this->input->post('cadangan_umum', TRUE)),
+			'laba_bumd_pad' => preg_replace("/[^0-9]/", "", $this->input->post('laba_bumd_pad', TRUE)),
+			'laba_rugi_tahun_lalu' => preg_replace("/[^0-9]/", "", $this->input->post('laba_rugi_tahun_lalu', TRUE)),
+			'laba_rugi_tahun_berjalan' => preg_replace("/[^0-9]/", "", $this->input->post('laba_rugi_tahun_berjalan', TRUE)),
 		);
 
-		if ($uuid_data_neraca) {
+		if (isset($uuid_data_neraca) or $uuid_data_neraca="0" ) {
 			// update data neraca
 			// print_r("UPDATE DATA");
+			// die;
 			$this->Tbl_neraca_data_model->update($get_id, $data);
 		} else {
 			// data baru, create tahun
 			// print_r("DATA BARU");
+			// die;
 			$this->Tbl_neraca_data_model->insert($data);
 		}
 
@@ -611,9 +626,11 @@ class Tbl_neraca_data extends CI_Controller
 	{
 		// print_r($uuid_data_neraca);
 		// print_r("<br/>");
-		// print_r("create_action_neraca");
+		// print_r("update_action_neraca");
 		// print_r("<br/>");
-		// // die;
+		// print_r($this->input->post('kas', TRUE));
+		// print_r("<br/>");
+		// die;
 
 		$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
 		// $year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
@@ -624,33 +641,33 @@ class Tbl_neraca_data extends CI_Controller
 			'tahun_transaksi' => $data_detail->tahun_transaksi,
 			'bulan_transaksi' => $data_detail->bulan_transaksi,
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
-			'kas' => $this->input->post('kas', TRUE),
-			'bank' => $this->input->post('bank', TRUE),
-			'piutang_usaha' => $this->input->post('piutang_usaha', TRUE),
-			'piutang_non_usaha' => $this->input->post('piutang_non_usaha', TRUE),
-			'persediaan' => $this->input->post('persediaan', TRUE),
-			'uang_muka_pajak' => $this->input->post('uang_muka_pajak', TRUE),
-			'aktiva_tetap' => $this->input->post('aktiva_tetap', TRUE),
-			'aktiva_tetap_berwujud' => $this->input->post('aktiva_tetap_berwujud', TRUE),
-			'akumulasi_depresiasi_atb' => $this->input->post('akumulasi_depresiasi_atb', TRUE),
-			'piutang_non_usaha_pihak_ketiga' => $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE),
-			'piutang_non_usaha_radio' => $this->input->post('piutang_non_usaha_radio', TRUE),
-			'ljpj_taman_gedung_kesenian_gabusan' => $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE),
-			'ljpj_kompleks_gedung_kesenian' => $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE),
-			'ljpj_radio' => $this->input->post('ljpj_radio', TRUE),
-			'ljpj_kerjasama_operasi_apotek_dharma_usaha' => $this->input->post('ljpj_kerjasama_operasi_apotek_dharma_usaha', TRUE),
-			'ljpj_peternakan' => $this->input->post('ljpj_peternakan', TRUE),
-			'ljpj_kerjasama_adwm' => $this->input->post('ljpj_kerjasama_adwm', TRUE),
-			'ljpj_kerjasama_pdu_cabean_panggungharjo' => $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE),
-			'utang_usaha' => $this->input->post('utang_usaha', TRUE),
-			'utang_pajak' => $this->input->post('utang_pajak', TRUE),
-			'utang_lain_lain' => $this->input->post('utang_lain_lain', TRUE),
-			'utang_afiliasi' => $this->input->post('utang_afiliasi', TRUE),
-			'modal_dasar_dan_penyertaan' => $this->input->post('modal_dasar_dan_penyertaan', TRUE),
-			'cadangan_umum' => $this->input->post('cadangan_umum', TRUE),
-			'laba_bumd_pad' => $this->input->post('laba_bumd_pad', TRUE),
-			'laba_rugi_tahun_lalu' => $this->input->post('laba_rugi_tahun_lalu', TRUE),
-			'laba_rugi_tahun_berjalan' => $this->input->post('laba_rugi_tahun_berjalan', TRUE),
+			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
+			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+			'piutang_usaha' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
+			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
+			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
+			'uang_muka_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('uang_muka_pajak', TRUE)),
+			'aktiva_tetap' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap', TRUE)),
+			'aktiva_tetap_berwujud' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap_berwujud', TRUE)),
+			'akumulasi_depresiasi_atb' =>  preg_replace("/[^0-9]/", "", $this->input->post('akumulasi_depresiasi_atb', TRUE)),
+			'piutang_non_usaha_pihak_ketiga' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
+			'piutang_non_usaha_radio' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_radio', TRUE)),
+			'ljpj_taman_gedung_kesenian_gabusan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE)),
+			'ljpj_kompleks_gedung_kesenian' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE)),
+			'ljpj_radio' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_radio', TRUE)),
+			'ljpj_kerjasama_operasi_apotek_dharma_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_operasi_apotek_dharma_usaha', TRUE)),
+			'ljpj_peternakan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_peternakan', TRUE)),
+			'ljpj_kerjasama_adwm' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_adwm', TRUE)),
+			'ljpj_kerjasama_pdu_cabean_panggungharjo' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE)),
+			'utang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('utang_usaha', TRUE)),
+			'utang_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('utang_pajak', TRUE)),
+			'utang_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('utang_lain_lain', TRUE)),
+			'utang_afiliasi' => preg_replace("/[^0-9]/", "", $this->input->post('utang_afiliasi', TRUE)),
+			'modal_dasar_dan_penyertaan' => preg_replace("/[^0-9]/", "", $this->input->post('modal_dasar_dan_penyertaan', TRUE)),
+			'cadangan_umum' => preg_replace("/[^0-9]/", "", $this->input->post('cadangan_umum', TRUE)),
+			'laba_bumd_pad' => preg_replace("/[^0-9]/", "", $this->input->post('laba_bumd_pad', TRUE)),
+			'laba_rugi_tahun_lalu' => preg_replace("/[^0-9]/", "", $this->input->post('laba_rugi_tahun_lalu', TRUE)),
+			'laba_rugi_tahun_berjalan' => preg_replace("/[^0-9]/", "", $this->input->post('laba_rugi_tahun_berjalan', TRUE)),
 		);
 
 

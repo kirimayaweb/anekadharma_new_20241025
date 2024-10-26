@@ -103,13 +103,28 @@
 								</tr>
 
 								<tr>
+
+
 									<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-										<strong>Per Tanggal <?php
-															// echo  date('d F Y'); 
-															//echo  date('d F Y'); 
-															echo $tahun_neraca;
-															?></strong>
+
+										<strong>Per
+											<?php
+											if ($bulan_transaksi > 0) {
+												echo " " . $bulan_transaksi;
+											} else {
+											}
+
+											?>
+											Tahun <?php
+													// echo  date('d F Y'); 
+													//echo  date('d F Y'); 
+													echo $tahun_neraca;
+													?></strong>
+
+
 									</th>
+
+
 								</tr>
 
 								<tr>
@@ -1564,18 +1579,25 @@
 			<div class="form-group">
 
 				<div class="row">
-					<div class="col-4">
+					<div class="col-4" align="left">
 						<!-- <a href="<?php //echo site_url('tbl_pembelian/') 
 										?>" class="btn btn-primary">Lanjut Transaksi</a> -->
 						<!-- <a href="<?php //echo site_url('tbl_pembelian') 
 										?>" class="btn btn-default">Cancel</a> -->
+						<!-- <input type="hidden" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" /> -->
+						<input type="text" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" />
+						<input type="text" id="bulan_transaksi" name="bulan_transaksi" value="0" />
 					</div>
 
 					<div class="col-4">
 						<button type="submit" class="btn btn-primary"><?php echo $button; ?></button>
 
-						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $uuid_data_neraca)
-									?>" class="btn btn-success" target="_blank">Cetak Neraca (PDF)</a>
+						<?php
+						if ($button == "Update") {
+						?>
+							<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $uuid_data_neraca)
+										?>" class="btn btn-success" target="_blank">Cetak Neraca (PDF)</a>
+						<?php } ?>
 
 
 
@@ -1593,6 +1615,21 @@
 
 
 </form>
+
+
+
+<div class="form-group">
+
+	<div class="row">
+		<div class="col-4"></div>
+		<div class="col-4">
+			<button onclick="history.back()">&#8592; Back</button>
+		</div>
+		<div class="col-4"></div>
+	</div>
+</div>
+
+
 
 <?php
 

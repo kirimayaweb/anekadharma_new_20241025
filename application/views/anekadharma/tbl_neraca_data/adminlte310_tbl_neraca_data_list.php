@@ -24,181 +24,246 @@
         <div class="box box-warning box-solid">
 
             <div class="col-md-12">
-                <div class="card card-primary">
-                    <div class="card-header">
-                        <div class="row">
-                        </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA NERACA</strong></div>
-                                </div>
-
-
-                            </div>
-                            <div class="col-6">
-                                <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
-                                    <div class="row">
-                                        <div class="col-4" text-align="right"> <strong>INPUT NERACA BARU</strong></div>
-                                        <div class="col-6" text-align="left">
-
-                                            <?php
-                                            $date_input = date("Y") + 1;
-                                            $year_10tahun_before = date("Y") - 10;
-
-
-                                            ?>
-
-                                            <!-- <label for="konsumen_nama">Unit </label> -->
-                                            <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                <option value="">Pilih Input Tahun </option>
-                                                <!-- <option value="semua">TAMPIL SEMUA</option> -->
-                                                <?php
-
-                                                // $sql = "select tahun_transaksi from tbl_neraca_data order by tahun_transaksi ASC ";
-                                                // foreach ($this->db->query($sql)->result() as $m) {
-                                                //     echo "<option value='$m->tahun_transaksi' ";
-                                                //     echo ">  " . strtoupper($m->tahun_transaksi) . "</option>";
-                                                // }
-
-
-                                                while ($year_10tahun_before < $date_input) {
-                                                    // echo $i;
-                                                ?>
-                                                    <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
-                                                <?php
-                                                    $year_10tahun_before++;
-                                                }
-
-                                                ?>
-                                            </select>
-
-                                        </div>
-                                        <div class="col-2" text-align="right">
-
-                                            <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                            ?>
-
-                                            <button type="submit" class="btn btn-danger">Input</button>
-
-                                        </div>
-                                    </div>
-
-                                </form>
-                            </div>
-
-
-
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"'); 
-                                ?>
-                            </div>
-                            <div class="col-4">
-
-                            </div>
-                            <div class="col-2">
-                                <?php //echo anchor(site_url('Tbl_neraca_data/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                ?>
-                            </div>
-
-
-
-                        </div>
-
-
-
-                    </div>
-                    <br />
+                <!-- <div class="card card-primary"> -->
+                   
 
                     <div class="row">
                         <div class="col-6">
-                            <div class="card-body">
-                                <table id="ExampleOnFile" class="display nowrap" style="width:100%">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align:center" width="10px">No</th>
-                                            <th>Tahun</th>
-                                            <th>Action</th>
+                            <div class="card card-primary">
 
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
+                                <div class="card-header">
+                                    <div class="row">
+                                        <div class="col-12">
 
-                                        foreach ($Tbl_neraca_data as $list_data) {
-                                        ?>
+                                            <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
+                                                <div class="row">
+                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA TAHUNAN:</strong></div>
+                                                    <div class="col-4" text-align="left">
 
-                                            <tr>
+                                                        <?php
+                                                        $date_input = date("Y") + 1;
+                                                        $year_10tahun_before = date("Y") - 10;
 
-                                                <td><?php echo ++$start ?></td>
 
-                                                <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
-                                                <td align="left">
+                                                        ?>
+
+                                                        <!-- <label for="konsumen_nama">Unit </label> -->
+                                                        <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                                            <option value="">Pilih Tahun </option>
+                                                            <!-- <option value="semua">TAMPIL SEMUA</option> -->
+                                                            <?php
+
+                                                            // $sql = "select tahun_transaksi from tbl_neraca_data order by tahun_transaksi ASC ";
+                                                            // foreach ($this->db->query($sql)->result() as $m) {
+                                                            //     echo "<option value='$m->tahun_transaksi' ";
+                                                            //     echo ">  " . strtoupper($m->tahun_transaksi) . "</option>";
+                                                            // }
+
+
+                                                            while ($year_10tahun_before < $date_input) {
+                                                                // echo $i;
+                                                            ?>
+                                                                <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
+                                                            <?php
+                                                                $year_10tahun_before++;
+                                                            }
+
+                                                            ?>
+                                                        </select>
+
+                                                    </div>
+                                                    <div class="col-3" text-align="right">
+
+                                                        <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                        ?>
+
+                                                        <button type="submit" class="btn btn-danger">Tambah</button>
+
+                                                    </div>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <table id="ExampleOnFile" class="display nowrap" style="width:100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="text-align:center" width="10px">No</th>
+                                                        <th>Tahun</th>
+                                                        <th>Action</th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
                                                     <?php
-                                                    if ($status_laporan == "bukan_laporan") {
-                                                        echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                    }
 
-                                                    echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
+                                                    foreach ($Tbl_neraca_data as $list_data) {
                                                     ?>
-                                                </td>
 
-                                            </tr>
-                                        <?php
-                                        }
-                                        ?>
+                                                        <tr>
+
+                                                            <td><?php echo ++$start ?></td>
+
+                                                            <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
+                                                            <td align="left">
+                                                                <?php
+                                                                if ($status_laporan == "bukan_laporan") {
+                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                }
+
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+
+                                                                ?>
+                                                            </td>
+
+                                                        </tr>
+                                                    <?php
+                                                    }
+                                                    ?>
 
 
-                                    </tbody>
-                                </table>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
+
+
                         </div>
 
 
                         <div class="col-6">
-                            <div class="card-body">
-                                <table id="example" class="display nowrap" style="width:100%">
-                                    <thead>
-                                        <tr>
-                                            <th style="text-align:center" width="10px">No</th>
-                                            <th>Tahun</th>
-                                            <th>Action</th>
+                            <div class="card card-primary">
 
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
+                                <div class="card-header">
+                                    <div class="row">
+                                        <div class="col-12">
 
-                                        foreach ($Tbl_neraca_data as $list_data) {
-                                        ?>
+                                            <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
+                                                <div class="row">
+                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
+                                                    <div class="col-4" text-align="left">
+                                                        <div class="col-4" text-align="left">
 
-                                            <tr>
+                                                            <!-- <form action="/action_page.php"> -->
+                                                            <!-- <label for="bulan">BULAN :</label> -->
+                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
+                                                            <!-- <input type="submit"> -->
+                                                            <!-- </form> -->
 
-                                                <td><?php echo ++$start ?></td>
+                                                        </div>
 
-                                                <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
-                                                <td align="left">
+                                                    </div>
+                                                    <div class="col-3" text-align="right">
+
+                                                        <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                        ?>
+
+                                                        <button type="submit" class="btn btn-danger">Tambah</button>
+
+                                                    </div>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+
+                                            <table id="example" class="display nowrap" style="width:100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="text-align:center" width="10px">No</th>
+                                                        <th>Tahun</th>
+                                                        <th>Bulan</th>
+                                                        <th>Action</th>
+
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
                                                     <?php
-                                                    if ($status_laporan == "bukan_laporan") {
-                                                        echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+
+                                                    function bulan_teks($angka_bulan)
+                                                    {
+                                                        if ($angka_bulan == 1) {
+                                                            $bulan_teks = "Januari";
+                                                        } elseif ($angka_bulan == 2) {
+                                                            $bulan_teks = "Februari";
+                                                        } elseif ($angka_bulan == 3) {
+                                                            $bulan_teks = "Maret";
+                                                        } elseif ($angka_bulan == 4) {
+                                                            $bulan_teks = "April";
+                                                        } elseif ($angka_bulan == 5) {
+                                                            $bulan_teks = "Mei";
+                                                        } elseif ($angka_bulan == 6) {
+                                                            $bulan_teks = "Juni";
+                                                        } elseif ($angka_bulan == 7) {
+                                                            $bulan_teks = "Juli";
+                                                        } elseif ($angka_bulan == 8) {
+                                                            $bulan_teks = "Agustus";
+                                                        } elseif ($angka_bulan == 9) {
+                                                            $bulan_teks = "September";
+                                                        } elseif ($angka_bulan == 10) {
+                                                            $bulan_teks = "Oktober";
+                                                        } elseif ($angka_bulan == 11) {
+                                                            $bulan_teks = "November";
+                                                        } elseif ($angka_bulan == 12) {
+                                                            $bulan_teks = "Desember";
+                                                        } else {
+                                                            $bulan_teks = "";
+                                                        }
+                                                        return $bulan_teks;
                                                     }
 
-                                                    echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
+                                                    $start=0;
+                                                    foreach ($Tbl_neraca_data as $list_data) {
                                                     ?>
-                                                </td>
 
-                                            </tr>
-                                        <?php
-                                        }
-                                        ?>
+                                                        <tr>
+
+                                                            <td><?php echo ++$start ?></td>
+
+                                                            <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
+                                                            <td align="left"><?php echo $list_data->bulan_transaksi . " (" . bulan_teks($list_data->bulan_transaksi) . ")"; ?></td>
+                                                            <td align="left">
+                                                                <?php
+                                                                if ($status_laporan == "bukan_laporan") {
+                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                }
+
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+
+                                                                ?>
+                                                            </td>
+
+                                                        </tr>
+                                                    <?php
+                                                    }
+                                                    ?>
 
 
-                                    </tbody>
-                                </table>
+                                                </tbody>
+                                            </table>
+
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
@@ -217,7 +282,7 @@
 
 
                     <!-- /.card-body -->
-                </div>
+                <!-- </div> -->
             </div>
         </div>
     </section>
