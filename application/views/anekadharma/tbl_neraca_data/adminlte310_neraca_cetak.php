@@ -65,11 +65,19 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 		<tr>
 			<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-				<strong>Per Tanggal 
-					<?php 
+				<strong>Per
+					<?php
 					// echo  date('d F Y'); 
-						//echo  date('d F Y'); 
-				echo $tahun_neraca;
+					//echo  date('d F Y'); 
+					// echo $tahun_neraca;
+
+					if ($bulan_neraca > 0) {
+						echo " Bulan " . $bulan_neraca . " Tahun " . $tahun_neraca;
+					} else {
+						echo " Tahun " . $tahun_neraca;
+					}
+
+
 					?></strong>
 			</th>
 		</tr>
@@ -1129,7 +1137,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; border-top:none;width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal(99999999999) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right; border-top:none;width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($TOTAL_AKIVA_LANCAR + $Total_Aktiva_Tetap_Bersih + $Aktiva_Lain_Lain) ?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-bottom:none;border-top:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 

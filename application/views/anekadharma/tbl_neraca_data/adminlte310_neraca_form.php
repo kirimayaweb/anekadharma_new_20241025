@@ -549,11 +549,23 @@
 
 										<input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva_lancar" id="total_aktiva_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
 																																																														if (isset($TOTAL_AKIVA_LANCAR)) {
+																																																															if (isset($data_detail->uang_muka_pajak)) {
+																																																																$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
+																																																																echo nominal($TOTAL_AKIVA_LANCAR); 
+																																																															}
 
-																																																															echo $TOTAL_AKIVA_LANCAR;
-																																																															$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
+																																																															
+																																																														}elseif (isset($data_detail->uang_muka_pajak)) {
+																																																															$TOTAL_AKIVA_LANCAR = $data_detail->uang_muka_pajak;
+																																																															echo nominal($TOTAL_AKIVA_LANCAR); 	
 																																																														}
-																																																														?>>" ; />
+
+
+																																																														// if (isset($data_detail->uang_muka_pajak)) {
+																																																														// 	echo nominal($data_detail->uang_muka_pajak);
+																																																														// 	$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
+																																																														// }
+																																																														// ?>>" ; />
 
 									</th>
 
@@ -1585,8 +1597,8 @@
 						<!-- <a href="<?php //echo site_url('tbl_pembelian') 
 										?>" class="btn btn-default">Cancel</a> -->
 						<!-- <input type="hidden" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" /> -->
-						<input type="text" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" />
-						<input type="text" id="bulan_transaksi" name="bulan_transaksi" value="0" />
+						<input type="hidden" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" />
+						<input type="hidden" id="bulan_transaksi" name="bulan_transaksi" value="0" />
 					</div>
 
 					<div class="col-4">
