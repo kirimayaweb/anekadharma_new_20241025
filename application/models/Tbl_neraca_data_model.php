@@ -23,6 +23,7 @@ class Tbl_neraca_data_model extends CI_Model
     // get all
     function get_all()
     {
+        $this->db->order_by($this->bulan_transaksi, $this->orderASC);
         $this->db->order_by($this->tahun_transaksi, $this->order);
         return $this->db->get($this->table)->result();
     }

@@ -25,88 +25,91 @@
 
             <div class="col-md-12">
                 <!-- <div class="card card-primary"> -->
-                   
 
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="card card-primary">
 
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-12">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card card-primary">
 
-                                            <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
-                                                <div class="row">
-                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA TAHUNAN:</strong></div>
-                                                    <div class="col-4" text-align="left">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-12">
 
+                                        <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
+                                            <div class="row">
+                                                <div class="col-5" text-align="right"> <strong>INPUT NERACA TAHUNAN:</strong></div>
+                                                <div class="col-4" text-align="left">
+
+                                                    <?php
+                                                    $date_input = date("Y") + 1;
+                                                    $year_10tahun_before = date("Y") - 10;
+
+
+                                                    ?>
+
+                                                    <!-- <label for="konsumen_nama">Unit </label> -->
+                                                    <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                                        <option value="">Pilih Tahun </option>
+                                                        <!-- <option value="semua">TAMPIL SEMUA</option> -->
                                                         <?php
-                                                        $date_input = date("Y") + 1;
-                                                        $year_10tahun_before = date("Y") - 10;
 
+                                                        // $sql = "select tahun_transaksi from tbl_neraca_data order by tahun_transaksi ASC ";
+                                                        // foreach ($this->db->query($sql)->result() as $m) {
+                                                        //     echo "<option value='$m->tahun_transaksi' ";
+                                                        //     echo ">  " . strtoupper($m->tahun_transaksi) . "</option>";
+                                                        // }
+
+
+                                                        while ($year_10tahun_before < $date_input) {
+                                                            // echo $i;
+                                                        ?>
+                                                            <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
+                                                        <?php
+                                                            $year_10tahun_before++;
+                                                        }
 
                                                         ?>
+                                                    </select>
 
-                                                        <!-- <label for="konsumen_nama">Unit </label> -->
-                                                        <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                            <option value="">Pilih Tahun </option>
-                                                            <!-- <option value="semua">TAMPIL SEMUA</option> -->
-                                                            <?php
-
-                                                            // $sql = "select tahun_transaksi from tbl_neraca_data order by tahun_transaksi ASC ";
-                                                            // foreach ($this->db->query($sql)->result() as $m) {
-                                                            //     echo "<option value='$m->tahun_transaksi' ";
-                                                            //     echo ">  " . strtoupper($m->tahun_transaksi) . "</option>";
-                                                            // }
-
-
-                                                            while ($year_10tahun_before < $date_input) {
-                                                                // echo $i;
-                                                            ?>
-                                                                <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
-                                                            <?php
-                                                                $year_10tahun_before++;
-                                                            }
-
-                                                            ?>
-                                                        </select>
-
-                                                    </div>
-                                                    <div class="col-3" text-align="right">
-
-                                                        <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                                        ?>
-
-                                                        <button type="submit" class="btn btn-danger">Tambah</button>
-
-                                                    </div>
                                                 </div>
+                                                <div class="col-3" text-align="right">
 
-                                            </form>
+                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                    ?>
 
-                                        </div>
+                                                    <button type="submit" class="btn btn-danger">Tambah</button>
+
+                                                </div>
+                                            </div>
+
+                                        </form>
+
                                     </div>
                                 </div>
+                            </div>
 
 
 
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <table id="ExampleOnFile" class="display nowrap" style="width:100%">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="text-align:center" width="10px">No</th>
-                                                        <th>Tahun</th>
-                                                        <th>Action</th>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table id="ExampleOnFile" class="display nowrap" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:center" width="10px">No</th>
+                                                    <th>Tahun</th>
+                                                    <th>Action</th>
 
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
 
-                                                    foreach ($Tbl_neraca_data as $list_data) {
-                                                    ?>
+                                                foreach ($Tbl_neraca_data as $list_data) {
+
+                                                    if ($list_data->bulan_transaksi == 0) {
+
+                                                ?>
 
                                                         <tr>
 
@@ -125,114 +128,116 @@
                                                             </td>
 
                                                         </tr>
-                                                    <?php
+                                                <?php
                                                     }
-                                                    ?>
+                                                }
+                                                ?>
 
 
-                                                </tbody>
-                                            </table>
-                                        </div>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
-
                             </div>
-
 
                         </div>
 
 
-                        <div class="col-6">
-                            <div class="card card-primary">
+                    </div>
 
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-12">
 
-                                            <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
-                                                <div class="row">
-                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
+                    <div class="col-6">
+                        <div class="card card-primary">
+
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-12">
+
+                                        <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
+                                            <div class="row">
+                                                <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
+                                                <div class="col-4" text-align="left">
                                                     <div class="col-4" text-align="left">
-                                                        <div class="col-4" text-align="left">
 
-                                                            <!-- <form action="/action_page.php"> -->
-                                                            <!-- <label for="bulan">BULAN :</label> -->
-                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
-                                                            <!-- <input type="submit"> -->
-                                                            <!-- </form> -->
-
-                                                        </div>
+                                                        <!-- <form action="/action_page.php"> -->
+                                                        <!-- <label for="bulan">BULAN :</label> -->
+                                                        <input type="month" id="bulan_neraca" name="bulan_neraca">
+                                                        <!-- <input type="submit"> -->
+                                                        <!-- </form> -->
 
                                                     </div>
-                                                    <div class="col-3" text-align="right">
 
-                                                        <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                                        ?>
-
-                                                        <button type="submit" class="btn btn-danger">Tambah</button>
-
-                                                    </div>
                                                 </div>
+                                                <div class="col-3" text-align="right">
 
-                                            </form>
+                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                    ?>
 
-                                        </div>
+                                                    <button type="submit" class="btn btn-danger">Tambah</button>
+
+                                                </div>
+                                            </div>
+
+                                        </form>
+
                                     </div>
                                 </div>
+                            </div>
 
 
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-12">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-12">
 
-                                            <table id="example" class="display nowrap" style="width:100%">
-                                                <thead>
-                                                    <tr>
-                                                        <th style="text-align:center" width="10px">No</th>
-                                                        <th>Tahun</th>
-                                                        <th>Bulan</th>
-                                                        <th>Action</th>
+                                        <table id="example" class="display nowrap" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:center" width="10px">No</th>
+                                                    <th>Tahun</th>
+                                                    <th>Bulan</th>
+                                                    <th>Action</th>
 
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
 
-                                                    function bulan_teks($angka_bulan)
-                                                    {
-                                                        if ($angka_bulan == 1) {
-                                                            $bulan_teks = "Januari";
-                                                        } elseif ($angka_bulan == 2) {
-                                                            $bulan_teks = "Februari";
-                                                        } elseif ($angka_bulan == 3) {
-                                                            $bulan_teks = "Maret";
-                                                        } elseif ($angka_bulan == 4) {
-                                                            $bulan_teks = "April";
-                                                        } elseif ($angka_bulan == 5) {
-                                                            $bulan_teks = "Mei";
-                                                        } elseif ($angka_bulan == 6) {
-                                                            $bulan_teks = "Juni";
-                                                        } elseif ($angka_bulan == 7) {
-                                                            $bulan_teks = "Juli";
-                                                        } elseif ($angka_bulan == 8) {
-                                                            $bulan_teks = "Agustus";
-                                                        } elseif ($angka_bulan == 9) {
-                                                            $bulan_teks = "September";
-                                                        } elseif ($angka_bulan == 10) {
-                                                            $bulan_teks = "Oktober";
-                                                        } elseif ($angka_bulan == 11) {
-                                                            $bulan_teks = "November";
-                                                        } elseif ($angka_bulan == 12) {
-                                                            $bulan_teks = "Desember";
-                                                        } else {
-                                                            $bulan_teks = "";
-                                                        }
-                                                        return $bulan_teks;
+                                                function bulan_teks($angka_bulan)
+                                                {
+                                                    if ($angka_bulan == 1) {
+                                                        $bulan_teks = "Januari";
+                                                    } elseif ($angka_bulan == 2) {
+                                                        $bulan_teks = "Februari";
+                                                    } elseif ($angka_bulan == 3) {
+                                                        $bulan_teks = "Maret";
+                                                    } elseif ($angka_bulan == 4) {
+                                                        $bulan_teks = "April";
+                                                    } elseif ($angka_bulan == 5) {
+                                                        $bulan_teks = "Mei";
+                                                    } elseif ($angka_bulan == 6) {
+                                                        $bulan_teks = "Juni";
+                                                    } elseif ($angka_bulan == 7) {
+                                                        $bulan_teks = "Juli";
+                                                    } elseif ($angka_bulan == 8) {
+                                                        $bulan_teks = "Agustus";
+                                                    } elseif ($angka_bulan == 9) {
+                                                        $bulan_teks = "September";
+                                                    } elseif ($angka_bulan == 10) {
+                                                        $bulan_teks = "Oktober";
+                                                    } elseif ($angka_bulan == 11) {
+                                                        $bulan_teks = "November";
+                                                    } elseif ($angka_bulan == 12) {
+                                                        $bulan_teks = "Desember";
+                                                    } else {
+                                                        $bulan_teks = "";
                                                     }
+                                                    return $bulan_teks;
+                                                }
 
-                                                    $start=0;
-                                                    foreach ($Tbl_neraca_data as $list_data) {
-                                                    ?>
+                                                $start = 0;
+                                                foreach ($Tbl_neraca_data as $list_data) {
+                                                    if ($list_data->bulan_transaksi > 0) {
+                                                ?>
 
                                                         <tr>
 
@@ -252,23 +257,23 @@
                                                             </td>
 
                                                         </tr>
-                                                    <?php
+                                                <?php
                                                     }
-                                                    ?>
+                                                }
+                                                ?>
 
 
-                                                </tbody>
-                                            </table>
+                                            </tbody>
+                                        </table>
 
-                                        </div>
                                     </div>
                                 </div>
-
                             </div>
-                        </div>
 
+                        </div>
                     </div>
 
+                </div>
 
 
 
@@ -281,7 +286,8 @@
 
 
 
-                    <!-- /.card-body -->
+
+                <!-- /.card-body -->
                 <!-- </div> -->
             </div>
         </div>
