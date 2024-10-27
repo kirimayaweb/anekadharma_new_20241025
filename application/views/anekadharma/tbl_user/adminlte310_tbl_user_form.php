@@ -146,17 +146,21 @@
 
                                     <div class="row">
                                         <div class="col-12">
-                                            <div class="col-8 card-title">
+                                            <div class="col-12 card-title">
 
                                                 <!-- <h3 class="card-title"> -->
-                                                MENU USER
+                                                MENU USER : Setting menu untuk user: <?php
+                                                                                        if ($is_update == "TRUE") {
+                                                                                            echo $full_name;
+                                                                                        }
+                                                                                        ?>
                                                 <!-- </h3> -->
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="row"></div>
+                                <br />
+                                <!-- <div class="row"></div> -->
                                 <div class="row">
                                     <div class="col-12">
                                         <table id="example" class="table table-bordered" style="width:100%">
@@ -182,8 +186,10 @@
                                                     <tr>
                                                         <td><?php echo ++$start ?></td>
                                                         <td><?php echo $menu->name ?></td>
-                                                        <!-- <td><?php //echo $menu->link ?></td> -->
-                                                        <!-- <td><i class='<?php //echo $menu->icon ?>'></i></td> -->
+                                                        <!-- <td><?php //echo $menu->link 
+                                                                    ?></td> -->
+                                                        <!-- <td><i class='<?php //echo $menu->icon 
+                                                                            ?>'></i></td> -->
                                                         <td><?php echo $active ?></td>
                                                         <td><?php echo $parent ?></td>
                                                         <td style="text-align:center" width="140px">
