@@ -22,10 +22,8 @@ class Menu extends CI_Controller
             'menu_data' => $menu
         );
 
-        // print_r($data);
-        // die;
-
-        $this->template->load('template','menu_list', $data);
+        // $this->template->load('template','menu_list', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/menu/adminlte310_menu_list', $data);
     }
 
     public function read($id) 

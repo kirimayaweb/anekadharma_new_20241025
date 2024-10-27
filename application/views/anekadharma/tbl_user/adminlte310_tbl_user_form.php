@@ -53,20 +53,31 @@
                     <br />
 
                     <div class="row">
+
+                        <div class="col-2">
+
+                        </div>
+
+
                         <div class="col-6">
                             <form action="<?php echo $action; ?>" method="post">
                                 <table class='table table-bordered>'>
                                     <tr>
                                         <td width='200'>NickName <?php echo form_error('full_name') ?></td>
                                         <td>
-                                            <input type="text" class="form-control" name="full_name" id="full_name" placeholder="Full Name" value="<?php echo $full_name; ?>" />
+                                            <input type="text" class="form-control" name="full_name" id="full_name" placeholder="Full Name" value="
+                                            <?php
+                                            if ($is_update == "TRUE") {
+                                                echo $full_name;
+                                            }
+                                            ?>" />
                                         </td>
                                     </tr>
                                     <tr>
                                         <td width='200'>Email (Username) <?php echo form_error('email') ?></td>
                                         <td>
                                             <input type="text" class="form-control" name="email" id="email" placeholder="Email" value="<?php echo $email; ?>" />
-                                            Pastikan di isi dengan ....... @gmail.com / ....@xxxxxx.com
+                                            Pastikan di isi format email : [akun] @gmail.com / xxxxx @ xxxxxx.com
 
 
 
@@ -88,21 +99,26 @@
                                     <tr>
                                         <td width='200'>Password </td>
                                         <td>
-                                            <input type="password" class="form-control" name="password" id="password" placeholder="Password" value="<?php //echo $password; ?>" />
-                                            <?php echo "<strong>" . form_error('password') ."</strong>" ?>
-                                            
-                                            <?php 
-                                            if($is_update=="TRUE"){
+                                            <input type="password" class="form-control" name="password" id="password" placeholder="Password" value="<?php //echo $password; 
+                                                                                                                                                    ?>" />
+                                            <?php echo "<strong>" . form_error('password') . "</strong>" ?>
+
+                                            <?php
+                                            if ($is_update == "TRUE") {
                                                 echo "<strong style=color:red;> PASSWORD Dikosongkan , jika tidak ingin mengubah password </strong>";
                                             }
-                                             ?>
+                                            ?>
                                         </td>
-                                        
+
                                     </tr>
                                     <tr>
                                         <td width='200'>No. HP <?php echo form_error('no_hp') ?></td>
                                         <td>
-                                            <input type="text" class="form-control" name="no_hp" id="no_hp" placeholder="No.HP" value="<?php echo $no_hp; ?>" />
+                                            <input type="text" class="form-control" name="no_hp" id="no_hp" placeholder="No.HP" value="<?php
+                                            if ($is_update == "TRUE") {
+                                                                                                                                            echo $no_hp;
+                                                                                                                                        }
+                                                                                                                                        ?>" />
                                         </td>
                                     </tr>
 
@@ -125,84 +141,7 @@
                             </form>
                         </div>
 
-                        <div class="col-6">
-                            <!-- tabel data tingkat -->
-
-                            <div class="card-body">
-
-                                <!-- <table id="example1" class="table table-bordered table-striped"> -->
-                                <!-- <table id="example" class="display nowrap" style="width:100%"> -->
-                                <table id="exampletingkat" class="display nowrap" style="width:100%">
-                                    <thead>
-
-                                        <tr>
-                                            <th style="text-align:center" width="10px">No</th>
-                                            <!-- <th>Uuid Tingkat</th>
-                                            <th>Tingkat System</th> -->
-
-                                            <th>Tingkat terpilih yang Akif untuk user : </th>
-                                            <th>Tingkat</th>
-
-
-
-                                        </tr>
-                                    </thead>
-
-                                    <?php
-
-                                    // print_r($tbl_sales_data);
-
-                                    ?>
-
-
-                                    <tbody>
-
-                                        <?php
-                                        $start = 0;
-                                        foreach ($sys_tingkat_data as $sys_tingkat) {
-                                        ?>
-                                            <tr>
-                                                <td><?php echo ++$start ?></td>
-                                                <!-- <td><?php //echo $sys_tingkat->uuid_tingkat 
-                                                            ?></td>
-                                                    <td><?php //echo $sys_tingkat->tingkat_system 
-                                                        ?></td> -->
-
-
-                                                <td style="text-align:center" width="140px">
-                                                    <?php
-                                                    $this->db->where('id_users', $id_users);
-                                                    $this->db->where('uuid_tingkat', $sys_tingkat->uuid_tingkat);
-                                                    $get_tingkat_users = $this->db->get('tbl_tingkat_by_user');
-
-                                                    if ($get_tingkat_users->num_rows() > 0) {
-
-                                                        if ($get_tingkat_users->row()->status_tampil == "TAMPIL") {
-                                                            echo anchor(site_url('tbl_user/update_tingkat_user/' . $id_users . '/' . $sys_tingkat->uuid_tingkat . '/TAMPIL'), '<i class="fa fa-pencil-square-o" aria-hidden="true">TAMPIL</i>', 'class="btn btn-success btn-sm"');
-                                                            echo "<br/>";
-                                                        } else {
-                                                            echo anchor(site_url('tbl_user/update_tingkat_user/' . $id_users . '/' . $sys_tingkat->uuid_tingkat . '/TIDAKTAMPIL'), '<i class="fa fa-pencil-square-o" aria-hidden="true">TIDAK TAMPIL</i>', 'class="btn btn-danger btn-sm"');
-                                                        }
-                                                    } else {
-                                                        echo anchor(site_url('tbl_user/update_tingkat_user/' . $id_users . '/' . $sys_tingkat->uuid_tingkat . '/TAMPIL'), '<i class="fa fa-pencil-square-o" aria-hidden="true">TAMPIL</i>', 'class="btn btn-success btn-sm"');
-                                                    }
-                                                    ?>
-                                                </td>
-                                                <td><?php echo $sys_tingkat->tingkat ?></td>
-
-                                            </tr>
-                                        <?php
-                                        }
-                                        ?>
-
-                                    </tbody>
-
-
-                                </table>
-
-
-                            </div>
-
+                        <div class="col-2">
 
                         </div>
 

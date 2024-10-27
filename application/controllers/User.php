@@ -19,7 +19,37 @@ class User extends CI_Controller
 
 
         // $this->template->load('template', 'user/tbl_user_list');
-        $this->template->load('template/adminlte310', 'user/tbl_user_list', $data);
+        // $this->template->load('template/adminlte310', 'user/tbl_user_list', $data);
+
+        $row = $this->User_model->get_by_id($id);
+        if ($row) {
+            $data = array(
+		'id_users' => $row->id_users,
+		'uuid_users' => $row->uuid_users,
+		'date_input' => $row->date_input,
+		'full_name' => $row->full_name,
+		'email' => $row->email,
+		'password' => $row->password,
+		'images' => $row->images,
+		'id_user_level' => $row->id_user_level,
+		'is_aktif' => $row->is_aktif,
+		'nickname' => $row->nickname,
+		'no_hp' => $row->no_hp,
+		'status_tagihan' => $row->status_tagihan,
+		'cover_display' => $row->cover_display,
+	    );
+
+
+        $data = array(
+            'data_konsumen' => $data_konsumen,
+            'action' => site_url('Sys_konsumen/cari_unit'),
+        );
+
+
+
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/adminlte310_sys_konsumen_list', $data);
+
     }
 
     public function kirimwa($nomorwa = null, $pesantext = null)

@@ -63,9 +63,6 @@ class Tbl_user extends CI_Controller
             'action' => site_url('sys_unit/cari_unit'),
         );
 
-
-
-
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_list', $data);
     }
 
@@ -96,7 +93,7 @@ class Tbl_user extends CI_Controller
     {
 
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('tbl_user/create_action'),
             'id_users' => set_value('id_users'),
             'uuid_users' => set_value('uuid_users'),
@@ -110,9 +107,8 @@ class Tbl_user extends CI_Controller
             'is_aktif' => set_value('is_aktif'),
             'is_update' => "FALSE",
         );
-        // $this->template->load('template', 'tbl_user/tbl_user_form', $data);
-        // $this->template->load('template/adminlte310', 'tbl_user/tbl_user_form', $data);
-        $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
     }
 
     public function create_action()
@@ -150,7 +146,7 @@ class Tbl_user extends CI_Controller
                         'password' => password_hash($this->input->post('password', TRUE), PASSWORD_DEFAULT),
                         'no_hp' => $this->input->post('no_hp', TRUE),
                         'id_user_level' => $this->input->post('id_user_level', TRUE),
-                        'status_tagihan' => $status_tagihan_x,
+                        // 'status_tagihan' => $status_tagihan_x,
                         'is_aktif' => $this->input->post('is_aktif', TRUE),
                     );
                 } else {
@@ -176,35 +172,8 @@ class Tbl_user extends CI_Controller
                 $this->session->set_flashdata('message', 'Create Record Success 2');
 
 
-                // ----------------------------------------------------------------------------
-                // SIMPAN KE TABEL tbl_tingkat_by_user ==> UNTUK SETTING : DEFAULT TIDAK TAMPIL SEMUA, HARUS DI KONDISIKAN UNTUK KLIK TAMPIL
 
-                // get id_users berdasarkan email yang di inputkan
-                $email = $this->input->post('email', TRUE);
-
-                $this->db->where($this->email, $email);
-                $new_data_user = $this->db->get($this->table_tbl_user)->row();
-
-                // LOOPING SEMUA TINGKAT DAN DIBUAT TIDAK TAMPIL
-
-                $sql_tingkat = "SELECT * FROM `sys_tingkat` ORDER BY `id`;";
-
-                foreach ($this->db->query($sql_tingkat)->result() as $tingkat_list) {
-                    $data = array(
-                        'id_users' => $new_data_user->id_users,
-                        'uuid_tingkat' => $tingkat_list->uuid_tingkat,
-                        'status_tampil' => "TIDAKTAMPIL",
-                        'tingkat_system' => $tingkat_list->tingkat_system,
-                        'tingkat' => $tingkat_list->tingkat,
-                    );
-                    // SIMPAN KE TABEL
-
-                    $this->Tbl_user_model->insert_user_by_tingkat($data);
-                }
-
-
-
-                redirect(site_url('tbl_user'));
+                redirect(site_url('Tbl_user'));
             }
         }
     }
@@ -219,7 +188,7 @@ class Tbl_user extends CI_Controller
 
         if ($row) {
 
-            $sys_tingkat = $this->Sys_tingkat_model->get_all();
+            // $sys_tingkat = $this->Sys_tingkat_model->get_all();
 
 
             // $data = array(
@@ -239,15 +208,16 @@ class Tbl_user extends CI_Controller
                 'no_hp' => set_value('no_hp', $row->no_hp),
                 'id_user_level' => set_value('id_user_level', $row->id_user_level),
                 'is_aktif' => set_value('is_aktif', $row->is_aktif),
-                'sys_tingkat_data' => $sys_tingkat,
+                // 'sys_tingkat_data' => $sys_tingkat,
                 'is_update' => "TRUE",
             );
-            // $this->template->load('template', 'tbl_user/tbl_user_form', $data);
-            // $this->template->load('template/adminlte310', 'tbl_user/tbl_user_form', $data);
-            $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);
+           
+            // $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
+
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
-            redirect(site_url('tbl_user'));
+            redirect(site_url('Tbl_user'));
         }
     }
 
