@@ -22,7 +22,37 @@ class Persediaan extends CI_Controller
 		$data = array(
 			'Persediaan_data' => $Persediaan,
 			// 'start' => $start,
-			// 'status_laporan' => $status_laporan,
+			'action_cari' => site_url('persediaan/search'),
+		);
+
+		// print_r($data);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+	}
+
+	public function search()
+	{
+		
+		$from_date = date("Y-m-1", strtotime($this->input->post('bulan_persediaan', TRUE)));
+		$to_date = date("Y-m-t", strtotime($this->input->post('bulan_persediaan', TRUE)));
+
+		$sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
+
+		print_r($from_date);
+		print_r("<br/>");
+		print_r($to_date);
+		print_r("<br/>");
+		print_r($this->db->query($sql)->result());
+		print_r("<br/>");
+
+		// $Persediaan = $this->Persediaan_model->get_all();
+		$Persediaan = $this->db->query($sql)->result();
+
+		// $start = 0;
+		$data = array(
+			'Persediaan_data' => $Persediaan,
+			// 'start' => $start,
+			'action_cari' => site_url('persediaan/search'),
 		);
 
 		// print_r($data);

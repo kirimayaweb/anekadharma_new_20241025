@@ -25,52 +25,56 @@
 
             <div class="col-md-12">
                 <div class="card card-primary">
+
+
                     <div class="card-header">
-                        <div class="row">
-                        </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="col-12" text-align="center"> <strong>DATA PERSEDIAAN</strong></div>
+                        <form action="<?php echo $action_cari; ?>" method="post">
+                            <div class="row">
                             </div>
-                            <!-- <div class="col-6"> -->
-                            <?php //echo anchor(site_url('Persediaan/create'), 'Input Persediaan', 'class="btn btn-danger"');
-                            ?>
-
-                            <div class="col-4" text-align="left">
-
-                                <!-- <form action="/action_page.php"> -->
-                                <label for="bulan">BULAN :</label>
-                                <input type="month" id="bulan_persediaan" name="bulan_persediaan">
-                                <!-- <input type="submit"> -->
-                                <!-- </form> -->
-
-                            </div>
-
-                            <!-- </div> -->
-                            <div class="col-2">
-                                <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"');
+                            <div class="row">
+                                <div class="col-4">
+                                    <div class="col-12" text-align="center"> <strong>DATA PERSEDIAAN</strong></div>
+                                </div>
+                                <!-- <div class="col-6"> -->
+                                <?php //echo anchor(site_url('Persediaan/create'), 'Input Persediaan', 'class="btn btn-danger"');
                                 ?>
+
+                                <div class="col-4" text-align="left">
+
+                                    <!-- <form action="/action_page.php"> -->
+                                    <label for="bulan">BULAN :</label>
+                                    <input type="month" id="bulan_persediaan" name="bulan_persediaan">
+                                    <!-- <input type="submit"> -->
+                                    <!-- </form> -->
+
+                                </div>
+
+                                <!-- </div> -->
+                                <div class="col-2">
+                                    <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"');
+                                    ?>
+                                    <button type="submit" class="btn btn-danger"> Cari</button>
+                                </div>
+
+
+
                             </div>
+                            <div class="row">
+                                <div class="col-6">
+
+                                </div>
+                                <div class="col-4">
+
+                                </div>
+                                <div class="col-2">
+                                    <?php //echo anchor(site_url('Tbl_neraca_data/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                    ?>
+                                </div>
 
 
-
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
 
                             </div>
-                            <div class="col-4">
-
-                            </div>
-                            <div class="col-2">
-                                <?php //echo anchor(site_url('Tbl_neraca_data/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                ?>
-                            </div>
-
-
-
-                        </div>
-
+                        </form>
 
 
                     </div>
