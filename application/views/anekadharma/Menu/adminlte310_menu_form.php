@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>INPUT KODE AKUN</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>INPUT MENU</strong></div>
                                 </div>
 
 
@@ -53,26 +53,59 @@
 
 
                     <div class="card-body">
+                        <div class="row">
+                            <div class="col-2"></div>
+                            <div class="col-7">
+                                <form action="<?php echo $action; ?>" method="post">
 
-                        <form action="<?php echo $action; ?>" method="post">
 
-                            <div class="form-group">
-                                <label for="kode_bank">Kode Bank <?php echo form_error('kode_bank') ?></label>
-                                <textarea class="form-control" rows="3" name="kode_bank" id="kode_bank" placeholder="Kode Bank"><?php echo $kode_bank; ?></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="nama_bank">Nama Bank <?php echo form_error('nama_bank') ?></label>
-                                <textarea class="form-control" rows="3" name="nama_bank" id="nama_bank" placeholder="Nama Bank"><?php echo $nama_bank; ?></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="nmr_rekening">Nmr Rekening <?php echo form_error('nmr_rekening') ?></label>
-                                <textarea class="form-control" rows="3" name="nmr_rekening" id="nmr_rekening" placeholder="Nmr Rekening"><?php echo $nmr_rekening; ?></textarea>
-                            </div>
-                            <input type="hidden" name="id" value="<?php echo $id; ?>" />
-                            <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
-                            <a href="<?php echo site_url('Sys_bank') ?>" class="btn btn-default">Cancel</a>
-                        </form>
 
+                                    <table class='table table-bordered'>
+                                        <tr>
+                                            <td width="220">Name <?php echo form_error('name') ?></td>
+                                            <td><input type="text" class="form-control" name="name" id="name" placeholder="Name" value="<?php echo $name; ?>" />
+                                            </td>
+                                        <tr>
+                                            <td>Link <?php echo form_error('link') ?></td>
+                                            <td><input type="text" class="form-control" name="link" id="link" placeholder="Link" value="<?php echo $link; ?>" />
+                                            </td>
+                                        <tr>
+                                            <td>Icon <?php echo form_error('icon') ?></td>
+                                            <td><input type="text" class="form-control" name="icon" id="icon" placeholder="Icon" value="<?php echo $icon; ?>" />
+                                            </td>
+                                        <tr>
+                                            <td>Is Active <?php echo form_error('is_active') ?></td>
+                                            <td><?php echo form_dropdown('is_active', array('1' => 'AKTIF', '0' => 'TIDAK AKTIF'), $is_active, "class='form-control'"); ?>
+                                            </td>
+                                        <tr>
+                                            <td>Is Parent <?php echo form_error('is_parent') ?></td>
+                                            <td>
+                                                <select name="is_parent" class="form-control">
+                                                    <option value="0">YA</option>
+                                                    <!-- <option value="0">NO</option> -->
+                                                    <?php
+                                                    $menu = $this->db->get('menu');
+                                                    foreach ($menu->result() as $m) {
+                                                        echo "<option value='$m->id' ";
+                                                        echo $m->id == $is_parent ? 'selected' : '';
+                                                        echo ">" .  strtoupper($m->name) . "</option>";
+                                                    }
+                                                    ?>
+                                                </select>
+                                            </td>
+                                            <input type="hidden" name="id" value="<?php echo $id; ?>" />
+                                        <tr>
+                                            <td colspan='2' align="center">
+                                                <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
+                                                <a href="<?php echo site_url('menu') ?>" class="btn btn-default">Cancel</a>
+                                            </td>
+                                        </tr>
+
+                                    </table>
+                                </form>
+                            </div>
+                            <div class="col-3"></div>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>

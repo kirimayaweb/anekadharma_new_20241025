@@ -15,7 +15,7 @@ class Tbl_user extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model'));
+        $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model','Menu_model'));
         // $this->load->model(array('Tbl_user_model','Trans_cetak_model', 'Tbl_stok_barang_detail_model', 'Trans_cetakinput_detail_model', 'Tbl_produk_model', 'Tbl_produk_mapel_referensi_model', 'General_login'));
         $this->load->library('form_validation');
     }
@@ -91,7 +91,7 @@ class Tbl_user extends CI_Controller
 
     public function create()
     {
-
+        $menu = $this->Menu_model->get_all();
         $data = array(
             'button' => 'Simpan',
             'action' => site_url('tbl_user/create_action'),
@@ -106,6 +106,7 @@ class Tbl_user extends CI_Controller
             'id_user_level' => set_value('id_user_level'),
             'is_aktif' => set_value('is_aktif'),
             'is_update' => "FALSE",
+            'menu_data' => $menu,
         );
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
@@ -195,6 +196,8 @@ class Tbl_user extends CI_Controller
             //     'sys_tingkat_data' => $sys_tingkat
             // );
 
+            $menu = $this->Menu_model->get_all();
+
             $data = array(
                 'button' => 'Update',
                 'action' => site_url('tbl_user/update_action'),
@@ -210,6 +213,7 @@ class Tbl_user extends CI_Controller
                 'is_aktif' => set_value('is_aktif', $row->is_aktif),
                 // 'sys_tingkat_data' => $sys_tingkat,
                 'is_update' => "TRUE",
+                'menu_data' => $menu,
             );
            
             // $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);

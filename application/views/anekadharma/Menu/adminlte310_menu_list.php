@@ -101,11 +101,11 @@
                                         <td><?php echo $parent ?></td>
                                         <td style="text-align:center" width="140px">
                                             <?php
-                                            echo anchor(site_url('menu/read/' . $menu->id), '<i class="fa fa-eye"></i>', array('title' => 'detail', 'class' => 'btn btn-danger btn-sm'));
+                                            // echo anchor(site_url('menu/read/' . $menu->id), '<i class="fa fa-eye"></i>', array('title' => 'detail', 'class' => 'btn btn-danger btn-sm'));
+                                            // echo '  ';
+                                            echo anchor(site_url('menu/update/' . $menu->id), '<i class="fa fa-pencil-square-o">Update</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                             echo '  ';
-                                            echo anchor(site_url('menu/update/' . $menu->id), '<i class="fa fa-pencil-square-o"></i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-                                            echo '  ';
-                                            echo anchor(site_url('menu/delete/' . $menu->id), '<i class="fa fa-trash-o"></i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                            echo anchor(site_url('menu/delete/' . $menu->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                             ?>
                                         </td>
                                     </tr>

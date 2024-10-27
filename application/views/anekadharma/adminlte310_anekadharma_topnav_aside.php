@@ -93,7 +93,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <li><a href="<?php echo base_url() ?>index.php/Sys_gudang" class="dropdown-item">Data Gudang</a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_status_transaksi" class="dropdown-item">Status Transaksi </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_pajak" class="dropdown-item">Variabel-Variabel</a></li>
-                <hr />
+                <!-- <hr /> -->
+                <li><a href="<?php echo base_url() ?>index.php/Menu" class="dropdown-item">Menu</a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_user" class="dropdown-item">User</a></li>
               </ul>
             </li>

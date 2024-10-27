@@ -54,9 +54,7 @@
 
                     <div class="row">
 
-                        <div class="col-2">
 
-                        </div>
 
 
                         <div class="col-6">
@@ -115,7 +113,7 @@
                                         <td width='200'>No. HP <?php echo form_error('no_hp') ?></td>
                                         <td>
                                             <input type="text" class="form-control" name="no_hp" id="no_hp" placeholder="No.HP" value="<?php
-                                            if ($is_update == "TRUE") {
+                                                                                                                                        if ($is_update == "TRUE") {
                                                                                                                                             echo $no_hp;
                                                                                                                                         }
                                                                                                                                         ?>" />
@@ -141,26 +139,89 @@
                             </form>
                         </div>
 
-                        <div class="col-2">
+                        <div class="col-6">
+
+                            <div class="card card-primary">
+                                <div class="card-header">
+
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="col-8 card-title">
+
+                                                <!-- <h3 class="card-title"> -->
+                                                MENU USER
+                                                <!-- </h3> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row"></div>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table id="example" class="table table-bordered" style="width:100%">
+                                            <!-- <table class="table table-bordered table-striped" id="mytable"> -->
+                                            <thead>
+                                                <tr>
+                                                    <th width="10px">No</th>
+                                                    <th>Nama Menu</th>
+                                                    <!-- <th>Link</th> -->
+                                                    <!-- <th width="30">Icon</th> -->
+                                                    <th>Aktif</th>
+                                                    <th>Parent</th>
+                                                    <th>action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $start = 0;
+                                                foreach ($menu_data as $menu) {
+                                                    $active = $menu->is_active == 1 ? 'AKTIF' : 'TIDAK AKTIF';
+                                                    $parent = $menu->is_parent > 1 ? 'MAINMENU' : 'SUBMENU'
+                                                ?>
+                                                    <tr>
+                                                        <td><?php echo ++$start ?></td>
+                                                        <td><?php echo $menu->name ?></td>
+                                                        <!-- <td><?php //echo $menu->link ?></td> -->
+                                                        <!-- <td><i class='<?php //echo $menu->icon ?>'></i></td> -->
+                                                        <td><?php echo $active ?></td>
+                                                        <td><?php echo $parent ?></td>
+                                                        <td style="text-align:center" width="140px">
+                                                            <?php
+                                                            // echo anchor(site_url('menu/read/' . $menu->id), '<i class="fa fa-eye"></i>', array('title' => 'detail', 'class' => 'btn btn-danger btn-sm'));
+                                                            // echo '  ';
+                                                            echo anchor(site_url('menu/update/' . $menu->id), '<i class="fa fa-eye">Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
+                                                            // echo '  ';
+                                                            // echo anchor(site_url('menu/delete/' . $menu->id), '<i class="fa fa-trash">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                            ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php
+                                                }
+                                                ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </div>
+
 
                         </div>
 
+                        <!-- <div class="row"> -->
 
+
+
+
+                        <!-- </div> -->
+
+                        <!-- /.card-body -->
                     </div>
 
-                    <!-- <div class="row"> -->
-
-
-
-
-                    <!-- </div> -->
-
-                    <!-- /.card-body -->
                 </div>
 
             </div>
-
-        </div>
 
 
 
@@ -194,8 +255,8 @@
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#exampletingkat').DataTable({
-            "scrollY": 500,
+        $('#example').DataTable({
+            "scrollY": 300,
             "scrollX": true
         });
     });
