@@ -430,7 +430,7 @@ class Tbl_penjualan extends CI_Controller
 		// 2.a. PERSIAPAN LIBRARY
 		// $this->load->library('PdfGenerator');
 
-		
+
 		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
 
 		// print_r($data_master_penjualan_per_uuidpenjualan);		
@@ -636,6 +636,63 @@ class Tbl_penjualan extends CI_Controller
 
 		xlsEOF();
 		exit();
+	}
+
+
+	public function rekap($uuid_konsumen = null)
+	{
+		// print_r("rekap");
+		// print_r("<br/>");
+		// print_r($uuid_konsumen);
+		// die;
+
+		if (isset($uuid_konsumen)) {
+			if ($uuid_konsumen == "semua") {
+				$Tbl_penjualan = $this->Tbl_penjualan_model->get_all();
+				$data_selection = "semua";
+				$nama_konsumen_selection = "semua";
+			} else {
+				$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_konsumen($uuid_konsumen);
+				$data_selection = $uuid_konsumen;
+
+				$sql_uuid_konsumen = "SELECT * FROM `sys_konsumen` WHERE `uuid_konsumen`='$uuid_konsumen'";
+				$nama_konsumen_selection = $this->db->query($sql_uuid_konsumen)->row()->nama_konsumen;
+
+				// $nama_konsumen_selection = $get_nama_konsumen;
+			}
+		} else {
+			if ($this->input->post('uuid_konsumen', TRUE) == null) {
+				$Tbl_penjualan = $this->Tbl_penjualan_model->get_all();
+				$data_selection = "semua";
+				$nama_konsumen_selection = "semua";
+			} else {
+				redirect(site_url('tbl_penjualan/rekap/' . $this->input->post('uuid_konsumen', TRUE)));
+			}
+		}
+
+
+
+
+		$start = 0;
+		// print_r($Tbl_pembelian);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$data = array(
+			'Tbl_penjualan_data' => $Tbl_penjualan,
+			// 'q' => $q,
+			// 'pagination' => $this->pagination->create_links(),
+			// 'total_rows' => $config['total_rows'],
+			'start' => $start,
+
+			'action_cari_konsumen' => site_url('tbl_penjualan/rekap'),
+			'data_selection' => $data_selection,
+			'nama_konsumen_selection' => $nama_konsumen_selection,
+		);
+
+
+		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap', $data);
 	}
 }
 

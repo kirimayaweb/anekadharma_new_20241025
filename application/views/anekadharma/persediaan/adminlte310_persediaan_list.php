@@ -32,10 +32,21 @@
                             <div class="col-4">
                                 <div class="col-12" text-align="center"> <strong>DATA PERSEDIAAN</strong></div>
                             </div>
-                            <div class="col-6">
-                                <?php echo anchor(site_url('Persediaan/create'), 'Input Persediaan', 'class="btn btn-danger"');
-                                ?>
+                            <!-- <div class="col-6"> -->
+                            <?php //echo anchor(site_url('Persediaan/create'), 'Input Persediaan', 'class="btn btn-danger"');
+                            ?>
+
+                            <div class="col-4" text-align="left">
+
+                                <!-- <form action="/action_page.php"> -->
+                                <label for="bulan">BULAN :</label>
+                                <input type="month" id="bulan_persediaan" name="bulan_persediaan">
+                                <!-- <input type="submit"> -->
+                                <!-- </form> -->
+
                             </div>
+
+                            <!-- </div> -->
                             <div class="col-2">
                                 <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"');
                                 ?>
@@ -108,38 +119,39 @@
                             </thead>
                             <tbody>
                                 <?php
+                                $start = 0;
                                 foreach ($Persediaan_data as $persediaan) {
                                 ?>
-                                <tr>
-                                    <td width="80px"><?php echo ++$start ?></td>
-                                    <td><?php echo $persediaan->tanggal ?></td>
-                                    <td><?php echo $persediaan->kode ?></td>
-                                    <td><?php echo $persediaan->namabarang ?></td>
-                                    <td><?php echo $persediaan->satuan ?></td>
-                                    <td><?php echo $persediaan->hpp ?></td>
-                                    <td><?php echo $persediaan->sa ?></td>
-                                    <td><?php echo $persediaan->spop ?></td>
-                                    <td><?php echo $persediaan->beli ?></td>
-                                    <td><?php echo $persediaan->tuj ?></td>
-                                    <td><?php echo $persediaan->tgl_keluar ?></td>
-                                    <td><?php echo $persediaan->sekret ?></td>
-                                    <td><?php echo $persediaan->cetak ?></td>
-                                    <td><?php echo $persediaan->grafikita ?></td>
-                                    <td><?php echo $persediaan->dinas_umum ?></td>
-                                    <td><?php echo $persediaan->atk_rsud ?></td>
-                                    <td><?php echo $persediaan->ppbmp_kbs ?></td>
-                                    <td><?php echo $persediaan->kbs ?></td>
-                                    <td><?php echo $persediaan->ppbmp ?></td>
-                                    <td><?php echo $persediaan->medis ?></td>
-                                    <td><?php echo $persediaan->siiplah_bosda ?></td>
-                                    <td><?php echo $persediaan->sembako ?></td>
-                                    <td><?php echo $persediaan->fc_gose ?></td>
-                                    <td><?php echo $persediaan->fc_manding ?></td>
-                                    <td><?php echo $persediaan->fc_psamya ?></td>
-                                    <td><?php echo $persediaan->total_10 ?></td>
-                                    <td><?php echo $persediaan->nilai_persediaan ?></td>
-                                    <td width="200px">Action</td>
-                                </tr>
+                                    <tr>
+                                        <td width="80px"><?php echo ++$start ?></td>
+                                        <td><?php echo $persediaan->tanggal ?></td>
+                                        <td><?php echo $persediaan->kode ?></td>
+                                        <td><?php echo $persediaan->namabarang ?></td>
+                                        <td><?php echo $persediaan->satuan ?></td>
+                                        <td><?php echo $persediaan->hpp ?></td>
+                                        <td><?php echo $persediaan->sa ?></td>
+                                        <td><?php echo $persediaan->spop ?></td>
+                                        <td><?php echo $persediaan->beli ?></td>
+                                        <td><?php echo $persediaan->tuj ?></td>
+                                        <td><?php echo $persediaan->tgl_keluar ?></td>
+                                        <td><?php echo $persediaan->sekret ?></td>
+                                        <td><?php echo $persediaan->cetak ?></td>
+                                        <td><?php echo $persediaan->grafikita ?></td>
+                                        <td><?php echo $persediaan->dinas_umum ?></td>
+                                        <td><?php echo $persediaan->atk_rsud ?></td>
+                                        <td><?php echo $persediaan->ppbmp_kbs ?></td>
+                                        <td><?php echo $persediaan->kbs ?></td>
+                                        <td><?php echo $persediaan->ppbmp ?></td>
+                                        <td><?php echo $persediaan->medis ?></td>
+                                        <td><?php echo $persediaan->siiplah_bosda ?></td>
+                                        <td><?php echo $persediaan->sembako ?></td>
+                                        <td><?php echo $persediaan->fc_gose ?></td>
+                                        <td><?php echo $persediaan->fc_manding ?></td>
+                                        <td><?php echo $persediaan->fc_psamya ?></td>
+                                        <td><?php echo $persediaan->total_10 ?></td>
+                                        <td><?php echo $persediaan->nilai_persediaan ?></td>
+                                        <td width="200px">Action</td>
+                                    </tr>
                                 <?php
                                 }
                                 ?>

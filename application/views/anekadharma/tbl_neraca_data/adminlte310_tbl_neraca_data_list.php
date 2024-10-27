@@ -37,48 +37,57 @@
 
                                         <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
                                             <div class="row">
-                                                <div class="col-5" text-align="right"> <strong>INPUT NERACA TAHUNAN:</strong></div>
+                                                <?php
+                                                if ($status_laporan == "bukan_laporan") {
+                                                ?>
+                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA TAHUNAN:</strong></div>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                    <div class="col-5" text-align="right"> <strong>DATA NERACA TAHUNAN</strong></div>
+                                                <?php
+                                                }
+                                                ?>
+
                                                 <div class="col-4" text-align="left">
 
                                                     <?php
-                                                    $date_input = date("Y") + 1;
-                                                    $year_10tahun_before = date("Y") - 10;
+                                                    if ($status_laporan == "bukan_laporan") {
+                                                        $date_input = date("Y") + 1;
+                                                        $year_10tahun_before = date("Y") - 10;
 
 
                                                     ?>
+                                                        <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                                            <option value="">Pilih Tahun </option>
+                                                            <?php
+                                                            while ($year_10tahun_before < $date_input) {
+                                                            ?>
+                                                                <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
+                                                            <?php
+                                                                $year_10tahun_before++;
+                                                            }
 
-                                                    <!-- <label for="konsumen_nama">Unit </label> -->
-                                                    <select name="tahun_neraca" id="tahun_neraca" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                        <option value="">Pilih Tahun </option>
-                                                        <!-- <option value="semua">TAMPIL SEMUA</option> -->
-                                                        <?php
+                                                            ?>
+                                                        </select>
 
-                                                        // $sql = "select tahun_transaksi from tbl_neraca_data order by tahun_transaksi ASC ";
-                                                        // foreach ($this->db->query($sql)->result() as $m) {
-                                                        //     echo "<option value='$m->tahun_transaksi' ";
-                                                        //     echo ">  " . strtoupper($m->tahun_transaksi) . "</option>";
-                                                        // }
-
-
-                                                        while ($year_10tahun_before < $date_input) {
-                                                            // echo $i;
-                                                        ?>
-                                                            <option value="<?php echo $year_10tahun_before; ?>"> <?php echo $year_10tahun_before; ?> </option>
-                                                        <?php
-                                                            $year_10tahun_before++;
-                                                        }
-
-                                                        ?>
-                                                    </select>
+                                                    <?php
+                                                    }
+                                                    ?>
 
                                                 </div>
                                                 <div class="col-3" text-align="right">
 
                                                     <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
                                                     ?>
+                                                    <?php
 
-                                                    <button type="submit" class="btn btn-danger">Tambah</button>
-
+                                                    if ($status_laporan == "bukan_laporan") {
+                                                    ?>
+                                                        <button type="submit" class="btn btn-danger">Tambah</button>
+                                                    <?php
+                                                    }
+                                                    ?>
                                                 </div>
                                             </div>
 
@@ -155,26 +164,46 @@
 
                                         <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
                                             <div class="row">
-                                                <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
+                                                <?php
+                                                if ($status_laporan == "bukan_laporan") {
+                                                ?>
+                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                    <div class="col-5" text-align="right"> <strong>NERACA BULANAN</strong></div>
+
+                                                <?php
+                                                }
+                                                ?>
                                                 <div class="col-4" text-align="left">
-                                                    <div class="col-4" text-align="left">
+                                                    <?php
+                                                    if ($status_laporan == "bukan_laporan") {
+                                                    ?>
+                                                        <div class="col-4" text-align="left">
 
-                                                        <!-- <form action="/action_page.php"> -->
-                                                        <!-- <label for="bulan">BULAN :</label> -->
-                                                        <input type="month" id="bulan_neraca" name="bulan_neraca">
-                                                        <!-- <input type="submit"> -->
-                                                        <!-- </form> -->
+                                                            <!-- <form action="/action_page.php"> -->
+                                                            <!-- <label for="bulan">BULAN :</label> -->
+                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
+                                                            <!-- <input type="submit"> -->
+                                                            <!-- </form> -->
 
-                                                    </div>
+                                                        </div>
+                                                    <?php
+                                                    }
+                                                    ?>
 
                                                 </div>
                                                 <div class="col-3" text-align="right">
 
                                                     <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                    if ($status_laporan == "bukan_laporan") {
                                                     ?>
 
-                                                    <button type="submit" class="btn btn-danger">Tambah</button>
-
+                                                        <button type="submit" class="btn btn-danger">Tambah</button>
+                                                    <?php
+                                                    }
+                                                    ?>
                                                 </div>
                                             </div>
 

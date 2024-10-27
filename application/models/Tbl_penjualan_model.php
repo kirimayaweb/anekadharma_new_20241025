@@ -10,6 +10,7 @@ class Tbl_penjualan_model extends CI_Model
     public $id = 'id';
     public $tgl_jual = 'tgl_jual';
     public $uuid_penjualan = 'uuid_penjualan';
+    public $uuid_konsumen = 'uuid_konsumen';
     public $order = 'DESC';
     public $orderASC = 'ASC';
 
@@ -32,6 +33,7 @@ class Tbl_penjualan_model extends CI_Model
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
+   
 
     function get_all_by_uuid_penjualan_first_row($uuid_penjualan=null)
     {
@@ -41,6 +43,12 @@ class Tbl_penjualan_model extends CI_Model
     }
 
 
+    function get_all_by_uuid_konsumen($uuid_konsumen=null)
+    {
+        $this->db->where($this->uuid_konsumen, $uuid_konsumen);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
 
     function konsumen_tagihan()
     {
