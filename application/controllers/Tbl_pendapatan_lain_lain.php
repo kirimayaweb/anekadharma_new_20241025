@@ -80,7 +80,7 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
     public function create()
     {
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('tbl_pendapatan_lain_lain/create_action'),
             'id' => set_value('id'),
             'uuid_pendapatan_lain_lain' => set_value('uuid_pendapatan_lain_lain'),
@@ -103,13 +103,14 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
         if ($this->form_validation->run() == FALSE) {
             $this->create();
         } else {
+            $tgl_pendapatan = date("Y-m-d", strtotime($this->input->post('tgl_transaksi', TRUE)));
             $data = array(
                 // 'uuid_pendapatan_lain_lain' => $this->input->post('uuid_pendapatan_lain_lain', TRUE),
-                'tgl_transaksi' => $this->input->post('tgl_transaksi', TRUE),
+                'tgl_transaksi' => $tgl_pendapatan,
                 'kode' => $this->input->post('kode', TRUE),
                 'dari' => $this->input->post('dari', TRUE),
                 'uraian' => $this->input->post('uraian', TRUE),
-                'nominal' => $this->input->post('nominal', TRUE),
+                'nominal' => preg_replace("/[^0-9]/", "", $this->input->post('nominal', TRUE)) ,
                 'bank' => $this->input->post('bank', TRUE),
                 'nmr_rekening' => $this->input->post('nmr_rekening', TRUE),
             );
@@ -190,7 +191,8 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
         $this->form_validation->set_rules('kode', 'kode', 'trim|required');
         $this->form_validation->set_rules('dari', 'dari', 'trim|required');
         // $this->form_validation->set_rules('uraian', 'uraian', 'trim|required');
-        $this->form_validation->set_rules('nominal', 'nominal', 'trim|required|numeric');
+        // $this->form_validation->set_rules('nominal', 'nominal', 'trim|required|numeric');
+        $this->form_validation->set_rules('nominal', 'nominal', 'trim|required');
         $this->form_validation->set_rules('bank', 'bank', 'trim|required');
         $this->form_validation->set_rules('nmr_rekening', 'nmr rekening', 'trim|required');
 

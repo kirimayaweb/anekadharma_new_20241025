@@ -74,7 +74,7 @@
                         <table class="table table-bordered" style="margin-bottom: 10px">
                             <tr>
                                 <th>No</th>
-                                <th>Uuid Pendapatan Lain Lain</th>
+                                <!-- <th>Uuid Pendapatan Lain Lain</th> -->
                                 <th>Tgl Transaksi</th>
                                 <th>Kode</th>
                                 <th>Dari</th>
@@ -84,12 +84,19 @@
                                 <th>Nmr Rekening</th>
                                 <th>Action</th>
                             </tr><?php
+                                    $start = 0;
                                     foreach ($pendapatan_lain_lain_data as $tbl_pendapatan_lain_lain) {
                                     ?>
                                 <tr>
                                     <td width="80px"><?php echo ++$start ?></td>
-                                    <td><?php echo $tbl_pendapatan_lain_lain->uuid_pendapatan_lain_lain ?></td>
-                                    <td><?php echo $tbl_pendapatan_lain_lain->tgl_transaksi ?></td>
+                                    <!-- <td><?php //echo $tbl_pendapatan_lain_lain->uuid_pendapatan_lain_lain ?></td> -->
+                                    <td>
+                                        <?php 
+                                        // echo $tbl_pendapatan_lain_lain->tgl_transaksi 
+                                        echo date("d M Y", strtotime($tbl_pendapatan_lain_lain->tgl_transaksi));
+                                        
+                                        ?>
+                                        </td>
                                     <td><?php echo $tbl_pendapatan_lain_lain->kode ?></td>
                                     <td><?php echo $tbl_pendapatan_lain_lain->dari ?></td>
                                     <td><?php echo $tbl_pendapatan_lain_lain->uraian ?></td>

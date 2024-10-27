@@ -137,16 +137,18 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/jurnal_pembelian" class="dropdown-item">Jurnal Pembelian </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/kas_kecil" class="dropdown-item">Kas Kecil </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
-              
+                
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data" class="dropdown-item">Neraca</a></li>
+                
+                <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
+
                 <li><a href="<?php echo base_url() ?>index.php/Sys_kode_akun" class="dropdown-item">Kode Akun </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_bank" class="dropdown-item">Kode Bank </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pendapatan_lain_lain" class="dropdown-item">Pendapatan Lain-Lain </a></li>
                 <!-- <li><a href="<?php //echo base_url() ?>index.php/Biayapengeluaran" class="dropdown-item">Biaya Pengeluaran </a></li> -->
 
-                <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
+                
 
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan/rekap" class="dropdown-item">Rekap Penjualan </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_uang_muka_didepan" class="dropdown-item">Uang Muka di Depan</a></li>
@@ -155,8 +157,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <li class="dropdown-submenu dropdown-hover">
                   <a id="dropdownSubMenu2" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="dropdown-item dropdown-toggle">Setting</a>
                   <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
-                    <li>
+                    <!-- <li> -->
                       <!-- <a tabindex="-1" href="#" class="dropdown-item">level 2</a> -->
+                      <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
+              
                     <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_group" class="dropdown-item">Group Transaksi</a></li>
                     <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_detail" class="dropdown-item">Detail Transaksi</a></li>
                 </li>
@@ -172,7 +176,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Laporan</a>
             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
               <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
-              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item" target="_blank">Neraca</a></li>
+              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item" >Neraca</a></li>
 
               <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
