@@ -149,7 +149,7 @@
                                     <div class="row">
                                         <div class="col-12">
 
-                                            <form action="<?php echo $action_input_neraca_baru; ?>" method="post">
+                                            <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
                                                 <div class="row">
                                                     <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
                                                     <div class="col-4" text-align="left">

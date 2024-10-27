@@ -46,10 +46,10 @@ class Tbl_neraca_data extends CI_Controller
 		$this->load->view('tbl_neraca_data/tbl_neraca_data_list', $data);
 	}
 
-	public function index($laporan_status=null)
+	public function index($laporan_status = null)
 	{
 
-		
+
 		if (isset($laporan_status)) {
 			$status_laporan = "laporan";
 		} else {
@@ -67,8 +67,9 @@ class Tbl_neraca_data extends CI_Controller
 			'start' => $start,
 			'status_laporan' => $status_laporan,
 			'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
+			'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
 		);
-		
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_tbl_neraca_data_list', $data);
 	}
 
@@ -472,7 +473,7 @@ class Tbl_neraca_data extends CI_Controller
 
 
 		$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($this->input->post('tahun_neraca', TRUE));
-		
+
 		// print_r($data_detail);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -487,7 +488,7 @@ class Tbl_neraca_data extends CI_Controller
 
 
 		if (isset($data_detail)) {
-			$uuid_data_neraca=$data_detail->tahun_transaksi;
+			$uuid_data_neraca = $data_detail->tahun_transaksi;
 			$data = array(
 				'button' => 'Update',
 				'action' => site_url('Tbl_neraca_data/create_action_neraca/' . $uuid_data_neraca),
@@ -506,6 +507,67 @@ class Tbl_neraca_data extends CI_Controller
 				'uuid_data_neraca' => "0",
 				'tahun_neraca' => $this->input->post('tahun_neraca', TRUE),
 				'bulan_transaksi' => 0,
+			);
+		}
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
+
+
+	public function neraca_form_input_bulanan()
+	{
+
+		// print_r("neraca_form_input");
+		// print_r("<br/>");
+		// print_r($this->input->post('tahun_neraca', TRUE));
+		// print_r("<br/>");
+
+
+		// print_r($this->input->post('bulan_neraca', TRUE));
+		// print_r("<br/>");
+		// print_r(date("Y", strtotime($this->input->post('bulan_neraca', TRUE))));
+		// print_r("<br/>");
+		// print_r(date("m", strtotime($this->input->post('bulan_neraca', TRUE))));
+		// print_r("<br/>");
+		// die;
+		$bulan_transaksi = date("m", strtotime($this->input->post('bulan_neraca', TRUE)));
+		$tahun_transaksi = date("Y", strtotime($this->input->post('bulan_neraca', TRUE)));
+
+		$data_detail = $this->Tbl_neraca_data_model->get_all_by_MONTH_year($bulan_transaksi, $tahun_transaksi);
+
+		// print_r($data_detail);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// die;
+		// if(isset($data_detail)){
+		// 	print_r("Ada data");
+		// }else{
+		// 	print_r("Tidak ada data");
+		// }
+
+		// die;
+
+
+		if (isset($data_detail)) {
+			$uuid_data_neraca = $data_detail->tahun_transaksi;
+			$data = array(
+				'button' => 'Update',
+				'action' => site_url('Tbl_neraca_data/create_action_neraca/' . $uuid_data_neraca),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $tahun_transaksi,
+				'bulan_transaksi' => $bulan_transaksi,
+			);
+		} else {
+			$data = array(
+				'button' => 'Simpan',
+				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => "0",
+				'tahun_neraca' => $tahun_transaksi,
+				'bulan_transaksi' => $bulan_transaksi,
 			);
 		}
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
@@ -565,7 +627,13 @@ class Tbl_neraca_data extends CI_Controller
 		// print_r("<br/>");
 		// // die;
 
-		$get_id = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca)->id;
+		if (isset($uuid_data_neraca)) {
+			$get_id = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca)->id;
+		} else {
+			$uuid_data_neraca = null;
+		}
+
+
 
 
 		$data = array(
@@ -576,14 +644,14 @@ class Tbl_neraca_data extends CI_Controller
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
 			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
 			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
-			'piutang_usaha' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
+			'piutang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
 			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
 			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
 			'uang_muka_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('uang_muka_pajak', TRUE)),
 			'aktiva_tetap' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap', TRUE)),
 			'aktiva_tetap_berwujud' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap_berwujud', TRUE)),
 			'akumulasi_depresiasi_atb' =>  preg_replace("/[^0-9]/", "", $this->input->post('akumulasi_depresiasi_atb', TRUE)),
-			'piutang_non_usaha_pihak_ketiga' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
+			'piutang_non_usaha_pihak_ketiga' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
 			'piutang_non_usaha_radio' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_radio', TRUE)),
 			'ljpj_taman_gedung_kesenian_gabusan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE)),
 			'ljpj_kompleks_gedung_kesenian' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE)),
@@ -603,7 +671,11 @@ class Tbl_neraca_data extends CI_Controller
 			'laba_rugi_tahun_berjalan' => preg_replace("/[^0-9]/", "", $this->input->post('laba_rugi_tahun_berjalan', TRUE)),
 		);
 
-		if (isset($uuid_data_neraca) or $uuid_data_neraca="0" ) {
+		// print_r($data);
+		// print_r("<br/>");
+		// die;
+
+		if (isset($uuid_data_neraca)) {
 			// update data neraca
 			// print_r("UPDATE DATA");
 			// die;
@@ -643,14 +715,14 @@ class Tbl_neraca_data extends CI_Controller
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
 			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
 			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
-			'piutang_usaha' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
+			'piutang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
 			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
 			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
 			'uang_muka_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('uang_muka_pajak', TRUE)),
 			'aktiva_tetap' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap', TRUE)),
 			'aktiva_tetap_berwujud' => preg_replace("/[^0-9]/", "", $this->input->post('aktiva_tetap_berwujud', TRUE)),
 			'akumulasi_depresiasi_atb' =>  preg_replace("/[^0-9]/", "", $this->input->post('akumulasi_depresiasi_atb', TRUE)),
-			'piutang_non_usaha_pihak_ketiga' =>preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
+			'piutang_non_usaha_pihak_ketiga' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_pihak_ketiga', TRUE)),
 			'piutang_non_usaha_radio' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha_radio', TRUE)),
 			'ljpj_taman_gedung_kesenian_gabusan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_taman_gedung_kesenian_gabusan', TRUE)),
 			'ljpj_kompleks_gedung_kesenian' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kompleks_gedung_kesenian', TRUE)),
@@ -695,6 +767,9 @@ class Tbl_neraca_data extends CI_Controller
 	}
 
 
+
+
+
 	public function neraca_cetak($uuid_data_neraca = null)
 	{
 		if ($uuid_data_neraca) {
@@ -704,6 +779,7 @@ class Tbl_neraca_data extends CI_Controller
 
 			$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
 		}
+
 
 
 

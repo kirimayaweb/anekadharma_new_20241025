@@ -70,9 +70,40 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 					// echo  date('d F Y'); 
 					//echo  date('d F Y'); 
 					// echo $tahun_neraca;
-
+					function bulan_teks($angka_bulan)
+					{
+						if ($angka_bulan == 1) {
+							$bulan_teks = "Januari";
+						} elseif ($angka_bulan == 2) {
+							$bulan_teks = "Februari";
+						} elseif ($angka_bulan == 3) {
+							$bulan_teks = "Maret";
+						} elseif ($angka_bulan == 4) {
+							$bulan_teks = "April";
+						} elseif ($angka_bulan == 5) {
+							$bulan_teks = "Mei";
+						} elseif ($angka_bulan == 6) {
+							$bulan_teks = "Juni";
+						} elseif ($angka_bulan == 7) {
+							$bulan_teks = "Juli";
+						} elseif ($angka_bulan == 8) {
+							$bulan_teks = "Agustus";
+						} elseif ($angka_bulan == 9) {
+							$bulan_teks = "September";
+						} elseif ($angka_bulan == 10) {
+							$bulan_teks = "Oktober";
+						} elseif ($angka_bulan == 11) {
+							$bulan_teks = "November";
+						} elseif ($angka_bulan == 12) {
+							$bulan_teks = "Desember";
+						} else {
+							$bulan_teks = "";
+						}
+						return $bulan_teks;
+					}
+					
 					if ($bulan_neraca > 0) {
-						echo " Bulan " . $bulan_neraca . " Tahun " . $tahun_neraca;
+						echo " Bulan " . bulan_teks($bulan_neraca) . " Tahun " . $tahun_neraca;
 					} else {
 						echo " Tahun " . $tahun_neraca;
 					}

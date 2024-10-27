@@ -109,8 +109,42 @@
 
 										<strong>Per
 											<?php
+
+											function bulan_teks($angka_bulan)
+											{
+												if ($angka_bulan == 1) {
+													$bulan_teks = "Januari";
+												} elseif ($angka_bulan == 2) {
+													$bulan_teks = "Februari";
+												} elseif ($angka_bulan == 3) {
+													$bulan_teks = "Maret";
+												} elseif ($angka_bulan == 4) {
+													$bulan_teks = "April";
+												} elseif ($angka_bulan == 5) {
+													$bulan_teks = "Mei";
+												} elseif ($angka_bulan == 6) {
+													$bulan_teks = "Juni";
+												} elseif ($angka_bulan == 7) {
+													$bulan_teks = "Juli";
+												} elseif ($angka_bulan == 8) {
+													$bulan_teks = "Agustus";
+												} elseif ($angka_bulan == 9) {
+													$bulan_teks = "September";
+												} elseif ($angka_bulan == 10) {
+													$bulan_teks = "Oktober";
+												} elseif ($angka_bulan == 11) {
+													$bulan_teks = "November";
+												} elseif ($angka_bulan == 12) {
+													$bulan_teks = "Desember";
+												} else {
+													$bulan_teks = "";
+												}
+												return $bulan_teks;
+											}
+
+
 											if ($bulan_transaksi > 0) {
-												echo " " . $bulan_transaksi;
+												echo " " . bulan_teks($bulan_transaksi);
 											} else {
 											}
 
@@ -551,13 +585,11 @@
 																																																														if (isset($TOTAL_AKIVA_LANCAR)) {
 																																																															if (isset($data_detail->uang_muka_pajak)) {
 																																																																$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
-																																																																echo nominal($TOTAL_AKIVA_LANCAR); 
+																																																																echo nominal($TOTAL_AKIVA_LANCAR);
 																																																															}
-
-																																																															
-																																																														}elseif (isset($data_detail->uang_muka_pajak)) {
+																																																														} elseif (isset($data_detail->uang_muka_pajak)) {
 																																																															$TOTAL_AKIVA_LANCAR = $data_detail->uang_muka_pajak;
-																																																															echo nominal($TOTAL_AKIVA_LANCAR); 	
+																																																															echo nominal($TOTAL_AKIVA_LANCAR);
 																																																														}
 
 
@@ -565,7 +597,8 @@
 																																																														// 	echo nominal($data_detail->uang_muka_pajak);
 																																																														// 	$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
 																																																														// }
-																																																														// ?>>" ; />
+																																																														// 
+																																																														?>>" ; />
 
 									</th>
 
@@ -1598,7 +1631,7 @@
 										?>" class="btn btn-default">Cancel</a> -->
 						<!-- <input type="hidden" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" /> -->
 						<input type="hidden" id="tahun_transaksi" name="tahun_transaksi" value="<?php echo $tahun_neraca; ?>" />
-						<input type="hidden" id="bulan_transaksi" name="bulan_transaksi" value="0" />
+						<input type="hidden" id="bulan_transaksi" name="bulan_transaksi" value="<?php echo $bulan_transaksi; ?>" />
 					</div>
 
 					<div class="col-4">

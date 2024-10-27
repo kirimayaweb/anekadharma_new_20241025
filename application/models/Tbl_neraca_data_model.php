@@ -11,6 +11,7 @@ class Tbl_neraca_data_model extends CI_Model
     // public $tahun_transaksi = 'tahun_transaksi';
     public $uuid_data_neraca = 'uuid_data_neraca';
     public $tahun_transaksi = 'tahun_transaksi';
+    public $bulan_transaksi = 'bulan_transaksi';
     public $order = 'DESC';
     public $orderASC = 'ASC';
 
@@ -29,6 +30,13 @@ class Tbl_neraca_data_model extends CI_Model
     // get all
     function get_all_by_year($tahun_transaksi)
     {
+        $this->db->where($this->tahun_transaksi, $tahun_transaksi);
+        return $this->db->get($this->table)->row();
+    }
+    // get all
+    function get_all_by_MONTH_year($bulan_transaksi,$tahun_transaksi)
+    {
+        $this->db->where($this->bulan_transaksi, $bulan_transaksi);
         $this->db->where($this->tahun_transaksi, $tahun_transaksi);
         return $this->db->get($this->table)->row();
     }
