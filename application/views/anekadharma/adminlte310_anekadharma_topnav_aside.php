@@ -177,7 +177,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
               <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
               <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item" >Neraca</a></li>
-
               <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
             </ul>
