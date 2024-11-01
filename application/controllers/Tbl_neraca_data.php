@@ -635,15 +635,21 @@ class Tbl_neraca_data extends CI_Controller
 
 
 
-
 		$data = array(
 			'date_input' => date("Y-m-d"),
 			'date_transaksi' => date("Y-m-d"),
 			'tahun_transaksi' => $this->input->post('tahun_transaksi', TRUE),
 			'bulan_transaksi' => $this->input->post('bulan_transaksi', TRUE),
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
-			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
-			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+
+			// 'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
+			'kas' => $this->input->post('kas', TRUE),
+
+			// preg_replace('/[^\d-]+/', '', $myvariable); 
+
+			// 'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+			'bank' => $this->input->post('bank', TRUE),
+
 			'piutang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
 			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
 			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
@@ -707,14 +713,27 @@ class Tbl_neraca_data extends CI_Controller
 		$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
 		// $year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
 
+				print_r($this->input->post('kas', TRUE));
+				print_r("<br/>");
+				print_r($this->input->post('bank', TRUE));
+				print_r("<br/>");
+
+		// die;
+
+
 		$data = array(
 			// 'date_input' => $this->input->post('date_input', TRUE),
 			'date_transaksi' => date("Y-m-d H:i:s"),
 			'tahun_transaksi' => $data_detail->tahun_transaksi,
 			'bulan_transaksi' => $data_detail->bulan_transaksi,
 			// 'uuid_data_neraca' => $this->input->post('uuid_data_neraca', TRUE),
-			'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
-			'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+
+			// 'kas' => preg_replace("/[^0-9]/", "", $this->input->post('kas', TRUE)),
+			'kas' => $this->input->post('kas', TRUE),
+
+			// 'bank' => preg_replace("/[^0-9]/", "", $this->input->post('bank', TRUE)),
+			'bank' => $this->input->post('bank', TRUE),
+
 			'piutang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_usaha', TRUE)),
 			'piutang_non_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('piutang_non_usaha', TRUE)),
 			'persediaan' => preg_replace("/[^0-9]/", "", $this->input->post('persediaan', TRUE)),
@@ -745,6 +764,8 @@ class Tbl_neraca_data extends CI_Controller
 
 		$this->Tbl_neraca_data_model->update_by_uuid_data_neraca($uuid_data_neraca, $data);
 
+		print_r($data);
+		die;
 
 		$this->session->set_flashdata('message', 'Create Record Success');
 		redirect(site_url('tbl_neraca_data'));

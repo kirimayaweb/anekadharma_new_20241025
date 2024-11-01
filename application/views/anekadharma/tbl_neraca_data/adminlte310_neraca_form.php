@@ -1,3 +1,47 @@
+<script language="javascript">
+	function getkey(e) {
+		if (window.event)
+			return window.event.keyCode;
+		else if (e)
+			return e.which;
+		else
+			return null;
+	}
+
+	function goodchars(e, goods, field) {
+		var key, keychar;
+		key = getkey(e);
+		if (key == null) return true;
+
+		keychar = String.fromCharCode(key);
+		keychar = keychar.toLowerCase();
+		goods = goods.toLowerCase();
+
+		// check goodkeys
+		if (goods.indexOf(keychar) != -1)
+			return true;
+		// control keys
+		if (key == null || key == 0 || key == 8 || key == 9 || key == 27)
+			return true;
+
+		if (key == 13) {
+			var i;
+			for (i = 0; i < field.form.elements.length; i++)
+				if (field == field.form.elements[i])
+					break;
+			i = (i + 1) % field.form.elements.length;
+			field.form.elements[i].focus();
+			return false;
+		};
+
+
+
+		// else return false
+		return false;
+	}
+</script>
+
+
 <form action="<?php echo $action; ?>" method="post">
 
 
@@ -228,6 +272,10 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
+
+
+
+
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 										<!-- <input type="text" style="text-align:right;" name="kas" id="kas" placeholder="kas" value="<?php
@@ -235,10 +283,40 @@
 																																		?>"> -->
 
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="kas" id="kas" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->kas)) {
-																																																											echo nominal($data_detail->kas);
-																																																											$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->kas;
-																																																										} ?>" ; />
+
+										<!-- <script type="text/javascript">
+										function checkInput(e, chars, field) {
+											let teks = field.value;
+
+											let teksSplit = teks.split("");
+											let teksOke = [];
+
+											for (let i = 0; i < teksSplit.length; i++) {
+												if (chars.indexOf(teksSplit[i]) != -1) {
+													teksOke.push(teksSplit[i]);
+												}
+											}
+
+											field.value = teksOke.join("");
+										}
+									</script> -->
+
+										<!-- <input type="number"  class="form-control" onkeyup="sum_total_aktiva_lancar();" name="kas" id="kas" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //if (isset($data_detail->kas)) { echo nominal($data_detail->kas); $TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->kas; } 
+																																																											?>" ; /> -->
+
+
+										<!-- <input type="tel" pattern="[0-9(,)]{15}" class="form-control" onkeyup="TEST_sum_total_aktiva_lancar();" name="kas" id="kas" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //if (isset($data_detail->kas)) {
+																																																																	//echo nominal($data_detail->kas);
+																																																																	//$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->kas;
+																																																																	//} 
+																																																																	?>" ; /> -->
+
+
+
+										<!-- <input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="kas" id="kas" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
+
+										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="sum_total_aktiva_lancar();" name="kas" id="kas" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
 
 									</th>
 
@@ -298,10 +376,14 @@
 																																			?>"> -->
 
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="bank" id="bank" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->bank)) {
-																																																												echo nominal($data_detail->bank);
-																																																												$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->bank;
-																																																											} ?>" ; />
+										<!-- <input type="tel" pattern="[0-9()]{15}" class="form-control" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //if (isset($data_detail->bank)) {
+																																																																	//echo nominal($data_detail->bank);
+																																																																	//$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->bank;
+																																																																	//} 
+																																																																	?>" ; /> -->
+
+										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
 
 									</th>
 
@@ -365,6 +447,10 @@
 																																																																echo nominal($data_detail->piutang_usaha);
 																																																																$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_usaha;
 																																																															} ?>" ; />
+
+
+
+
 
 									</th>
 
@@ -581,24 +667,11 @@
 										<strong><?php //echo nominal($TOTAL_AKIVA_LANCAR) 
 												?></strong>
 
-										<input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva_lancar" id="total_aktiva_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																														if (isset($TOTAL_AKIVA_LANCAR)) {
-																																																															if (isset($data_detail->uang_muka_pajak)) {
-																																																																$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
-																																																																echo nominal($TOTAL_AKIVA_LANCAR);
-																																																															}
-																																																														} elseif (isset($data_detail->uang_muka_pajak)) {
-																																																															$TOTAL_AKIVA_LANCAR = $data_detail->uang_muka_pajak;
-																																																															echo nominal($TOTAL_AKIVA_LANCAR);
-																																																														}
+										<!-- <input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva_lancar" id="total_aktiva_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //if (isset($TOTAL_AKIVA_LANCAR)) { if (isset($data_detail->uang_muka_pajak)) { $TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak; echo nominal($TOTAL_AKIVA_LANCAR); } } elseif (isset($data_detail->uang_muka_pajak)) { $TOTAL_AKIVA_LANCAR = $data_detail->uang_muka_pajak; echo nominal($TOTAL_AKIVA_LANCAR);}	
+																																																																?>>" ; /> -->
 
+										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="0,00" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
 
-																																																														// if (isset($data_detail->uang_muka_pajak)) {
-																																																														// 	echo nominal($data_detail->uang_muka_pajak);
-																																																														// 	$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
-																																																														// }
-																																																														// 
-																																																														?>>" ; />
 
 									</th>
 
@@ -1735,10 +1808,255 @@ function terbilang($nilai)
 
 
 <script>
+	function format_rupiah(angka) {
+
+
+		var number_string = angka.replace(/[^,\d]/g, '').toString(),
+			split = number_string.split(','),
+			sisa = split[0].length % 3,
+			rupiah = split[0].substr(0, sisa),
+			ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+		// alert(split);
+		// alert(sisa);
+		// alert(rupiah);
+		// alert("ribuan: " + ribuan);
+
+		// tambahkan titik jika yang di input sudah menjadi angka ribuan
+		if (ribuan) {
+			separator = sisa ? '.' : '';
+			rupiah += separator + ribuan.join('.');
+
+		}
+
+		return rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+		// return prefix == undefined ? rupiah : (rupiah ? 'Rp. ' + rupiah : '');
+
+
+	}
+</script>
+
+<!-- <script src="<?php //echo base_url() ?>assets/js_calc/big.js"></script> -->
+
+
+<script>
+	function TEST_sum_total_aktiva_lancar() {
+
+		$va_kas = document.getElementById('kas').value;
+
+		var huruf = document.getElementById('kas').value;
+		var cek_decimal = huruf.split(",");
+
+		Xcv = cek_decimal[0];
+
+		const str = Xcv;
+
+		const substr = '-';
+
+		if (str.includes(substr) == true) {
+			alert("ada -");
+			var var_minus = "-";
+		} else {
+			alert("Tidak ada -");
+			var var_minus = "";
+		}
+
+		Ycv = Xcv.replace(/[^0-9]/g, '');
+		alert(Ycv);
+
+
+
+		if (!isNaN(Ycv)) {
+			alert(var_minus);
+			alert("tidak kosong : " + Ycv);
+			// alert(cek_decimal[1]);
+
+
+			// Xcv = cek_decimal[0].replace(/,/g, "");
+
+			// alert("replace , : " + Xcv);
+
+
+			// Xcv = Xcv.replace(/./g, "");
+			// alert("replace . : " + Xcv);
+
+			var var_rupiah_kas = format_rupiah(Ycv);
+			// alert(var_rupiah_kas);
+			var rupiah_format = var_rupiah_kas.replace(/,/g, ".");
+			// alert(rupiah_format);
+			document.getElementById('kas').value = var_minus + rupiah_format;
+
+			// const str = Xcv;
+			// alert(str);
+
+			// const substr = '.';
+
+			// if (str.includes(substr) == true) {
+			// 	alert('ada');
+			// 	// Xcv = str.replace(/./g, "");
+			// 	var res = str.replace(".", "");
+			// 	alert(res);
+			// 	var var_rupiah_kas = format_rupiah(res);
+			// 	alert(var_rupiah_kas);
+			// 	var rupiah_format = var_rupiah_kas.replace(/,/g, ".");
+			// 	alert(rupiah_format);
+			// 	document.getElementById('kas').value = rupiah_format;
+			// } else {
+			// 	alert('tidak ada');
+			// }
+
+			// console.log(str.includes(substr));
+			// The output akan menjadi true
+
+			// var var_rupiah_kas = format_rupiah(Xcv);
+			// alert(var_rupiah_kas);
+			// alert(var_rupiah_kas.replace(/,/g, "."));
+
+			// // alert(var_rupiah_kas.replace(/,/g, ".") + "," + cek_decimal[0]);
+			// alert("-----" + var_rupiah_kas.replace(/,/g, "."));
+			// xqwerty = var_rupiah_kas.replace(/,/g, ".");
+			// alert("====" + xqwerty);
+
+			// // var result_total_aktiva_tetap_bersih = parseFloat($xqwerty);
+			// // alert(">>>>>>" + result_total_aktiva_tetap_bersih);
+
+			// document.getElementById('kas').value = xqwerty;
+		}
+
+		// if (!isNaN(cek_decimal[0])) {
+		// 	alert(var_rupiah_kas.replace(/,/g, ".") + "," + cek_decimal[0]);
+		// 	document.getElementById('kas').value = var_rupiah_kas.replace(/,/g, ".") + "," + cek_decimal[0];
+		// } else {
+		// 	alert(var_rupiah_kas.replace(/,/g, "."));
+		// 	document.getElementById('kas').value = var_rupiah_kas.replace(/,/g, ".");
+		// }
+
+
+		let text = document.getElementById('kas').value;
+		const myArray = text.split(",");
+		// alert(myArray);
+
+		// $va_kas = document.getElementById('kas').value.replace(",", '.');
+		// alert($va_kas);
+
+		$va_kas = parseFloat($va_kas);
+		// alert($va_kas);
+
+		var va_kas = $va_kas.toFixed(2);
+		// alert(va_kas);
+		// alert($va_kas);
+
+		// document.getElementById('kas').value = format_rupiah(va_kas);
+
+
+
+		$va_bank = document.getElementById('bank').value.replace(",", '.');
+		// alert($va_bank);
+
+		$jumlah = parseFloat($va_kas) + parseFloat($va_bank);
+		var jumlah = $jumlah.toFixed(2);
+
+		// alert($jumlah.toFixed(2));
+
+
+		if (!isNaN(jumlah)) {
+			document.getElementById('total_aktiva_lancar').value = format_rupiah(jumlah);
+
+
+		}
+
+		// FORMAT RUPIAH
+
+
+	}
+</script>
+
+<script>
 	function sum_total_aktiva_lancar() {
 
 		if (!isNaN(parseInt(document.getElementById('kas').value.replace(/[^0-9]/g, '')))) {
-			$va_kas = parseInt(document.getElementById('kas').value.replace(/[^0-9]/g, ''));
+
+			var huruf = document.getElementById('kas').value;
+			var cek_decimal = huruf.split(",");
+
+			// alert(cek_decimal[0]);
+			// alert(cek_decimal[1]);
+
+
+			koma_belakang = cek_decimal[1];
+			// alert(koma_belakang);
+			Xcv = cek_decimal[0];
+			const str = Xcv;
+			const substr = '-';
+
+			if (str.includes(substr) == true) {
+				// alert("ada -");
+				var var_minus = "-";
+			} else {
+				// alert("Tidak ada -");
+				var var_minus = "";
+			}
+
+			Ycv = Xcv.replace(/[^0-9]/g, '');
+			// alert(Ycv);
+
+
+			if (!isNaN(Ycv)) {
+				alert(var_minus);
+				alert("tidak kosong : " + Ycv);
+
+				var var_rupiah_kas = format_rupiah(Ycv);
+				// alert(var_rupiah_kas);
+				var rupiah_format = var_rupiah_kas.replace(/,/g, ".");
+				// alert(rupiah_format);
+
+				if (!isNaN(koma_belakang)) {
+					document.getElementById('kas').value = var_minus + rupiah_format + "," + koma_belakang;
+					
+					var va_kas = var_minus + rupiah_format + "," + koma_belakang;
+					
+					alert(parseFloat(koma_belakang/100));
+					alert(parseInt(va_kas));
+					// var va_kas = parseInt(va_kas) + parseFloat(koma_belakang/100);
+
+					var cv = (parseInt(va_kas)+parseFloat(koma_belakang/100)).toFixed(2);
+					alert("var:" + cv);
+					cb=parseFloat(cv*100) + parseFloat(cv*100);
+					alert(cb);
+					cd=parseFloat(cb/100);
+					alert("total =" + cd);
+				} else {
+					document.getElementById('kas').value = var_minus + rupiah_format;
+					$va_kas = var_minus + rupiah_format;
+				}
+
+
+			}
+
+
+			// ==================================
+			// $va_kas = parseInt(document.getElementById('kas').value.replace(/[^0-9-]/g, ''));
+
+			// $va_kas = 0;
+			va_test = parseFloat($va_kas).toFixed(2) + parseFloat($va_kas).toFixed(2);
+			alert("VAS KAS" + $va_kas);
+			alert("VAS va_test" + va_test);
+			// alert("VAS==" + $va_kas + $va_test);
+
+
+
+
+
+
+			// const va_kas_new = parseFloat($va_kas);
+			// const va_kas_new1 = parseFloat($va_kas);
+
+			// alert(va_kas_new + va_kas_new1);
+
+
+	
+
+
 		} else {
 			$va_kas = 0;
 		}
@@ -1781,7 +2099,7 @@ function terbilang($nilai)
 
 
 
-		// 
+		//
 
 		if (!isNaN(parseInt(document.getElementById('aktiva_tetap').value.replace(/[^0-9]/g, '')))) {
 			$va_aktiva_tetap = parseInt(document.getElementById('aktiva_tetap').value.replace(/[^0-9]/g, ''));
@@ -1812,7 +2130,7 @@ function terbilang($nilai)
 
 
 
-		// 
+		//
 		if (!isNaN(parseInt(document.getElementById('piutang_non_usaha_pihak_ketiga').value.replace(/[^0-9]/g, '')))) {
 			$va_piutang_non_usaha_pihak_ketiga = parseInt(document.getElementById('piutang_non_usaha_pihak_ketiga').value.replace(/[^0-9]/g, ''));
 		} else {
@@ -1877,7 +2195,8 @@ function terbilang($nilai)
 		var result_total_aktiva_lain_lain = parseInt($va_piutang_non_usaha_pihak_ketiga) + parseInt($va_piutang_non_usaha_radio) + parseInt($va_ljpj_taman_gedung_kesenian_gabusan) + parseInt($va_ljpj_kompleks_gedung_kesenian) + parseInt($va_ljpj_radio) + parseInt($va_ljpj_kerjasama_operasi_apotek_dharma_usaha) + parseInt($va_ljpj_peternakan) + parseInt($va_ljpj_kerjasama_adwm) + parseInt($va_ljpj_kerjasama_pdu_cabean_panggungharjo);
 
 		if (!isNaN(result_total_aktiva_lain_lain)) {
-			document.getElementById('total_aktiva_lain_lain').value = result_total_aktiva_lain_lain;
+			// document.getElementById('total_aktiva_lain_lain').value = result_total_aktiva_lain_lain;
+			document.getElementById('total_aktiva_lain_lain').value = preg_replace('/[^\d-]+/', '', $result_total_aktiva_lain_lain);;
 		}
 
 
