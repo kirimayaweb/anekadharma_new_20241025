@@ -90,7 +90,7 @@
                                 $start = 0;
                                 foreach ($menu_data as $menu) {
                                     $active = $menu->is_active == 1 ? 'AKTIF' : 'TIDAK AKTIF';
-                                    $parent = $menu->is_parent > 1 ? 'MAINMENU' : 'SUBMENU'
+                                    $parent = $menu->is_parent < 1 ? 'MAINMENU' : 'SUBMENU'
                                 ?>
                                     <tr>
                                         <td><?php echo ++$start ?></td>

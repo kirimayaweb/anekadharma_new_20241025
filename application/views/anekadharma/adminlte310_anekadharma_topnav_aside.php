@@ -48,9 +48,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <!-- END OFF SELECT2 && DATEPICKER -->
 
 
-   <!-- sweetalert -->
-   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- //sweetalert -->
+  <!-- sweetalert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- //sweetalert -->
 
 
 
@@ -83,6 +83,79 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
             </li>
 
+
+            <?php
+            $id_user_active = $this->session->userdata('sess_iduser');
+
+            $sql_menu = "select * from menu where is_active='1' and is_parent=0";
+            $main_menu = $this->db->query($sql_menu)->result();
+
+            // print_r($main_menu);
+
+            // print_r("<br/>");
+            // print_r("<br/>");
+            // print_r("<br/>");
+
+            foreach ($main_menu as $menu) {
+
+              //  cek di tbl_hak_akses : adakah main_menu = menu->id ?
+              // jika ada : tampilkan main menu dan looping sub_menu yang ditampilkan
+
+              $this->db->where('main_menu', $menu->id);
+              $this->db->where('id_user',  $id_user_active);
+              $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+
+              if ($list_menu_hak_akses->num_rows() > 0) {
+                // print_r("lebih dari 0");
+                // print_r("<br/>");
+                // print_r($menu->id);
+                // print_r("<br/>");
+
+                // detail MAIN menu
+                $this->db->where('id', $menu->id);
+                $MAIN_menu = $this->db->get('menu')->row_array();
+                // print_r($MAIN_menu['name']);
+                // print_r("<br/>");
+            ?>
+
+                <li class="nav-item dropdown">
+                  <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle"><?php echo $MAIN_menu['name']; ?></a>
+
+                  <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
+
+                    <?php
+                    foreach ($list_menu_hak_akses->result() as $menu_list) {
+
+                      // detail menu
+                      $this->db->where('id', $menu_list->id_menu);
+                      $detail_menu = $this->db->get('menu')->row_array();
+                    ?>
+
+                      <li><a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo $detail_menu['name']; ?></a></li>
+
+
+                    <?php
+                    }
+
+                    ?>
+
+
+
+
+                  </ul>
+
+
+
+                </li>
+
+            <?php
+
+              }
+            }
+
+            ?>
+
+
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Setting</a>
               <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
@@ -98,6 +171,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_user" class="dropdown-item">User</a></li>
               </ul>
             </li>
+
 
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Transaksi Stock</a>
@@ -137,18 +211,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/jurnal_pembelian" class="dropdown-item">Jurnal Pembelian </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/kas_kecil" class="dropdown-item">Kas Kecil </a></li>
-                
+
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data" class="dropdown-item">Neraca</a></li>
-                
+
                 <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
                 <li><a href="<?php echo base_url() ?>index.php/Sys_kode_akun" class="dropdown-item">Kode Akun </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Sys_bank" class="dropdown-item">Kode Bank </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_pendapatan_lain_lain" class="dropdown-item">Pendapatan Lain-Lain </a></li>
-                <!-- <li><a href="<?php //echo base_url() ?>index.php/Biayapengeluaran" class="dropdown-item">Biaya Pengeluaran </a></li> -->
+                <!-- <li><a href="<?php //echo base_url() 
+                                  ?>index.php/Biayapengeluaran" class="dropdown-item">Biaya Pengeluaran </a></li> -->
 
-                
+
 
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan/rekap" class="dropdown-item">Rekap Penjualan </a></li>
                 <li><a href="<?php echo base_url() ?>index.php/Tbl_uang_muka_didepan" class="dropdown-item">Uang Muka di Depan</a></li>
@@ -158,9 +233,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
                   <a id="dropdownSubMenu2" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="dropdown-item dropdown-toggle">Setting</a>
                   <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
                     <!-- <li> -->
-                      <!-- <a tabindex="-1" href="#" class="dropdown-item">level 2</a> -->
-                      <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
-              
+                    <!-- <a tabindex="-1" href="#" class="dropdown-item">level 2</a> -->
+                    <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
+
                     <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_group" class="dropdown-item">Group Transaksi</a></li>
                     <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_detail" class="dropdown-item">Detail Transaksi</a></li>
                 </li>
@@ -176,7 +251,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Laporan</a>
             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
               <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
-              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item" >Neraca</a></li>
+              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item">Neraca</a></li>
               <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
 
             </ul>
