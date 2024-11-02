@@ -1836,7 +1836,8 @@ function terbilang($nilai)
 	}
 </script>
 
-<!-- <script src="<?php //echo base_url() ?>assets/js_calc/big.js"></script> -->
+<!-- <script src="<?php //echo base_url() 
+					?>assets/js_calc/big.js"></script> -->
 
 
 <script>
@@ -1984,6 +1985,8 @@ function terbilang($nilai)
 
 
 			koma_belakang = cek_decimal[1];
+
+
 			// alert(koma_belakang);
 			Xcv = cek_decimal[0];
 			const str = Xcv;
@@ -2002,8 +2005,8 @@ function terbilang($nilai)
 
 
 			if (!isNaN(Ycv)) {
-				alert(var_minus);
-				alert("tidak kosong : " + Ycv);
+				// alert(var_minus);
+				// alert("tidak kosong : " + Ycv);
 
 				var var_rupiah_kas = format_rupiah(Ycv);
 				// alert(var_rupiah_kas);
@@ -2012,19 +2015,45 @@ function terbilang($nilai)
 
 				if (!isNaN(koma_belakang)) {
 					document.getElementById('kas').value = var_minus + rupiah_format + "," + koma_belakang;
-					
-					var va_kas = var_minus + rupiah_format + "," + koma_belakang;
-					
-					alert(parseFloat(koma_belakang/100));
-					alert(parseInt(va_kas));
-					// var va_kas = parseInt(va_kas) + parseFloat(koma_belakang/100);
 
-					var cv = (parseInt(va_kas)+parseFloat(koma_belakang/100)).toFixed(2);
-					alert("var:" + cv);
-					cb=parseFloat(cv*100) + parseFloat(cv*100);
-					alert(cb);
-					cd=parseFloat(cb/100);
-					alert("total =" + cd);
+
+
+					alert(koma_belakang.length);
+
+					// if ((koma_belakang.length) === 1) {
+						// koma_belakang = koma_belakang;
+						alert("koma" + koma_belakang);
+						var va_kas = var_minus + rupiah_format + "," + koma_belakang;
+
+						alert("parsefloat" + parseFloat(koma_belakang / 10));
+						alert(parseInt(va_kas));
+
+						var cv = (parseInt(va_kas) + parseFloat(koma_belakang / 10)).toFixed(2);
+						alert("var:" + cv);
+						cb = parseFloat(cv * 10) + parseFloat(cv * 10);
+						alert(cb);
+						cd = parseFloat(cb / 10);
+						alert("total =" + cd);
+
+
+
+					// } elseif ((koma_belakang.length) > 1) {
+					// 	var va_kas = var_minus + rupiah_format + "," + koma_belakang;
+
+					// 	alert("parsefloat" + parseFloat(koma_belakang / 100));
+					// 	alert(parseInt(va_kas));
+
+					// 	var cv = (parseInt(va_kas) + parseFloat(koma_belakang / 100)).toFixed(2);
+					// 	alert("var:" + cv);
+					// 	cb = parseFloat(cv * 100) + parseFloat(cv * 100);
+					// 	alert(cb);
+					// 	cd = parseFloat(cb / 100);
+					// 	alert("total =" + cd);
+
+					// }
+
+
+
 				} else {
 					document.getElementById('kas').value = var_minus + rupiah_format;
 					$va_kas = var_minus + rupiah_format;
@@ -2054,7 +2083,7 @@ function terbilang($nilai)
 			// alert(va_kas_new + va_kas_new1);
 
 
-	
+
 
 
 		} else {
