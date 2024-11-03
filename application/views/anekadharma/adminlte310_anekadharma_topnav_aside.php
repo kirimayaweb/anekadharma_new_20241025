@@ -106,16 +106,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
               $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
 
               if ($list_menu_hak_akses->num_rows() > 0) {
-                // print_r("lebih dari 0");
-                // print_r("<br/>");
-                // print_r($menu->id);
-                // print_r("<br/>");
 
                 // detail MAIN menu
                 $this->db->where('id', $menu->id);
                 $MAIN_menu = $this->db->get('menu')->row_array();
-                // print_r($MAIN_menu['name']);
-                // print_r("<br/>");
+
             ?>
 
                 <li class="nav-item dropdown">
@@ -156,106 +151,50 @@ scratch. This page gets rid of all links and provides the needed markup only.
             ?>
 
 
-            <li class="nav-item dropdown">
-              <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Setting</a>
-              <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
-                <li><a tabindex="-1" href="<?php echo base_url() ?>index.php/Sys_supplier" class="dropdown-item">Data Supplier</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_nama_barang" class="dropdown-item">Data Barang</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_konsumen" class="dropdown-item">Data Konsumen</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_unit" class="dropdown-item">Data Unit</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_gudang" class="dropdown-item">Data Gudang</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_status_transaksi" class="dropdown-item">Status Transaksi </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_pajak" class="dropdown-item">Variabel-Variabel</a></li>
-                <!-- <hr /> -->
-                <li><a href="<?php echo base_url() ?>index.php/Menu" class="dropdown-item">Menu</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_user" class="dropdown-item">User</a></li>
-              </ul>
-            </li>
 
-
-            <li class="nav-item dropdown">
-              <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Transaksi Stock</a>
-              <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian" class="dropdown-item">Pembelian (Belanja Perusahaan) </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan" class="dropdown-item">Penjualan</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/stock" class="dropdown-item">Stock</a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Persediaan" class="dropdown-item">Persediaan </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_unit/detail_unit" class="dropdown-item">UNIT</a></li>
-              </ul>
-            </li>
-
-
-            <!-- <li class="nav-item">
-              <a href="<?php //echo base_url() 
-                        ?>index.php/Sys_konsumen" class="nav-link">Unit</a>
-            </li> -->
-
-            <!-- <li class="nav-item">
-              <a href="<?php //echo base_url() 
-                        ?>index.php/tbl_pembelian/pembayaran" class="nav-link">Pembayaran</a>
-            </li> -->
-
-            <li class="nav-item dropdown">
-              <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Pembayaran</a>
-              <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/pembayaran_ke_supplier" class="dropdown-item">Pembayaran ke Supplier </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/pembayaran_dari_konsumen" class="dropdown-item">Pembayaran dari Konsumen</a></li>
-              </ul>
-            </li>
-
-
-
-
+<!-- 
             <li class="nav-item dropdown">
               <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Accounting</a>
               <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/jurnal_pembelian" class="dropdown-item">Jurnal Pembelian </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/kas_kecil" class="dropdown-item">Kas Kecil </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
 
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data" class="dropdown-item">Neraca</a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
 
-                <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item" target="_blank"></a></li>
 
-                <li><a href="<?php echo base_url() ?>index.php/Sys_kode_akun" class="dropdown-item">Kode Akun </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Sys_bank" class="dropdown-item">Kode Bank </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_pendapatan_lain_lain" class="dropdown-item">Pendapatan Lain-Lain </a></li>
-                <!-- <li><a href="<?php //echo base_url() 
-                                  ?>index.php/Biayapengeluaran" class="dropdown-item">Biaya Pengeluaran </a></li> -->
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
 
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
 
-
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_penjualan/rekap" class="dropdown-item">Rekap Penjualan </a></li>
-                <li><a href="<?php echo base_url() ?>index.php/Tbl_uang_muka_didepan" class="dropdown-item">Uang Muka di Depan</a></li>
-
-                <!-- Level two dropdown-->
                 <li class="dropdown-submenu dropdown-hover">
                   <a id="dropdownSubMenu2" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="dropdown-item dropdown-toggle">Setting</a>
                   <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
-                    <!-- <li> -->
-                    <!-- <a tabindex="-1" href="#" class="dropdown-item">level 2</a> -->
-                    <li><a href="<?php echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
+                    <li><a href="<?php //echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
 
-                    <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_group" class="dropdown-item">Group Transaksi</a></li>
-                    <li><a href="<?php echo base_url() ?>index.php/Tbl_accounting_detail" class="dropdown-item">Detail Transaksi</a></li>
+                    <li><a href="<?php //echo base_url() ?>index.php/Tbl_accounting_group" class="dropdown-item">Group Transaksi</a></li>
+                    <li><a href="<?php //echo base_url() ?>index.php/Tbl_accounting_detail" class="dropdown-item">Detail Transaksi</a></li>
                 </li>
               </ul>
-            </li>
-            <!-- End Level two -->
+            </li> -->
 
 
-          </ul>
-          </li>
-
+          <!-- </ul>
+          </li> -->
+<!-- 
           <li class="nav-item dropdown">
             <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Laporan</a>
             <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-              <li><a href="<?php echo base_url() ?>index.php/Tbl_pembelian/buku_kas" class="dropdown-item">Buku Kas </a></li>
-              <li><a href="<?php echo base_url() ?>index.php/Tbl_neraca_data/index/laporan" class="dropdown-item">Neraca</a></li>
-              <li><a href="<?php echo base_url() ?>index.php/Laporan/labarugi_print" class="dropdown-item" target="_blank">Laba Rugi</a></li>
+              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
+              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
+              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item" target="_blank"></a></li>
 
             </ul>
-          </li>
+          </li> -->
 
           <li class="nav-item">
             <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link">LOGOUT</a>

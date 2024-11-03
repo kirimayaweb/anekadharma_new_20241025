@@ -194,11 +194,21 @@
                                                         <td><?php echo $parent ?></td>
                                                         <td style="text-align:center" width="140px">
                                                             <?php
-                                                            // echo anchor(site_url('menu/read/' . $menu->id), '<i class="fa fa-eye"></i>', array('title' => 'detail', 'class' => 'btn btn-danger btn-sm'));
-                                                            // echo '  ';
-                                                            echo anchor(site_url('menu/update/' . $menu->id), '<i class="fa fa-eye">Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-                                                            // echo '  ';
-                                                            // echo anchor(site_url('menu/delete/' . $menu->id), '<i class="fa fa-trash">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+                                                            // cek di tbl_hak_akses apakah menu->id ada berdasarkan id_user
+                                                            $id_user_active = $this->session->userdata('sess_iduser');
+
+                                                            $this->db->where('id_menu', $menu->id);
+                                                            $this->db->where('id_user',  $id_user_active);
+                                                            $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+
+                                                            if ($list_menu_hak_akses->num_rows() > 0) {
+                                                                echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_user_active . '/' . $menu->id  .'/0'), '<i class="fa fa-eye">Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
+                                                            } else {
+                                                                echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_user_active .'/'. $menu->id .'/0'), '<i class="fa fa-eye">Tidak Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
+                                                            }
+
+
                                                             ?>
                                                         </td>
                                                     </tr>

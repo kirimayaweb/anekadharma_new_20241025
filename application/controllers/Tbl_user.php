@@ -15,7 +15,7 @@ class Tbl_user extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model','Menu_model'));
+        $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model', 'Menu_model', 'Tbl_hak_akses_model'));
         // $this->load->model(array('Tbl_user_model','Trans_cetak_model', 'Tbl_stok_barang_detail_model', 'Trans_cetakinput_detail_model', 'Tbl_produk_model', 'Tbl_produk_mapel_referensi_model', 'General_login'));
         $this->load->library('form_validation');
     }
@@ -57,7 +57,7 @@ class Tbl_user extends CI_Controller
     public function index()
     {
         $data_user = $this->Tbl_user_model->get_all();
-        
+
         $data = array(
             'data_user' => $data_user,
             'action' => site_url('sys_unit/cari_unit'),
@@ -179,6 +179,118 @@ class Tbl_user extends CI_Controller
         }
     }
 
+    public function update_menu_per_user($id_user = null, $id_menu = null, $kondisi_menu = null)
+    {
+
+        $row = $this->Tbl_user_model->get_by_id($id_user);
+
+        print_r($row);
+        print_r("<br/>");
+        print_r("update_menu_per_user");
+        print_r("<br/>");
+        print_r($id_menu);
+        print_r("<br/>");
+        print_r($id_user);
+        print_r("<br/>");
+        print_r($kondisi_menu);
+        print_r("<br/>");
+        print_r("<br/>");
+        print_r("<br/>");
+
+        // if($id_user  == $id_user_active){}
+
+        $id_user_active = $this->session->userdata('sess_iduser');
+
+        if ($row) {
+
+            // Cek di tbl_hak_akses apakah ada menu, jika tidak ada maka insert
+            // dan
+            // jika ada maka update menjadi $kondisi_menu
+
+            // Get Main menu berdasarkan id_menu
+            $this->db->where('id',  $id_menu);
+            $get_main_menu = $this->db->get('menu')->row();
+            print_r($get_main_menu);
+            print_r("<br/>");
+            print_r($get_main_menu->is_parent);
+            print_r("<br/>");
+            print_r("<br/>");
+
+
+            // Get id_user_level berdasarkan id_user
+            $this->db->where('id_users',  $id_user_active);
+            $get_user_level = $this->db->get('tbl_user')->row();
+            print_r($get_user_level);
+            print_r("<br/>");
+            print_r($get_user_level->id_user_level);
+            print_r("<br/>");
+            print_r("<br/>");
+
+            //   die;
+
+
+            $this->db->where('id_menu', $id_menu);
+            $this->db->where('id_user',  $id_user_active);
+            $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+            // $list_menu_hak_akses_cek = $this->db->get('tbl_hak_akses')->row();
+
+            //             print_r($id_menu);
+            //             print_r("<br/>");
+            //             print_r($id_user_active);
+            //             print_r("<br/>");
+            //             // $dfg=$list_menu_hak_akses->row_array();
+            //             print_r($list_menu_hak_akses_cek->id);
+            //             print_r("<br/>");
+
+// print_r($list_menu_hak_akses->row());
+// print_r("<br/>");
+// print_r($list_menu_hak_akses->num_rows());
+// die;
+
+
+            // die;
+
+            if ($list_menu_hak_akses->num_rows() > 0) {
+                // update
+                print_r("update");
+
+
+                // get id tbl_hak_akses where id_menu $ id_user_level
+
+
+
+                $data = array(
+                    'id_user' => $id_user_active,
+                    'id_user_level' => $get_user_level->id_user_level,
+                    'main_menu' => 0,
+                    'id_menu' => $id_menu,
+                );
+
+
+                $this->Tbl_hak_akses_model->update($list_menu_hak_akses->row()->id, $data);
+            } else {
+                // insert
+
+                print_r("insert");
+
+                $data = array(
+                    'id_user' => $id_user_active,
+                    'id_user_level' => $get_user_level->id_user_level,
+                    'main_menu' => $get_main_menu->is_parent,
+                    'id_menu' => $id_menu,
+                );
+                
+                // print_r($data);
+                // die;
+
+                $this->Tbl_hak_akses_model->insert($data);
+            }
+        }
+        // die;
+        redirect('Tbl_user/update/' . $id_user_active);
+    }
+
+
     public function update($id)
     {
         $row = $this->Tbl_user_model->get_by_id($id);
@@ -188,13 +300,6 @@ class Tbl_user extends CI_Controller
 
 
         if ($row) {
-
-            // $sys_tingkat = $this->Sys_tingkat_model->get_all();
-
-
-            // $data = array(
-            //     'sys_tingkat_data' => $sys_tingkat
-            // );
 
             $menu = $this->Menu_model->get_all();
 
@@ -215,10 +320,9 @@ class Tbl_user extends CI_Controller
                 'is_update' => "TRUE",
                 'menu_data' => $menu,
             );
-           
+
             // $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);
             $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
-
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('Tbl_user'));

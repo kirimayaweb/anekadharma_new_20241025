@@ -9,6 +9,7 @@ class Menu_model extends CI_Model
     public $table = 'menu';
     public $id = 'id';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
     function __construct()
     {
