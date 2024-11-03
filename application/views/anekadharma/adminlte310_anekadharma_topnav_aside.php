@@ -227,7 +227,19 @@ scratch. This page gets rid of all links and provides the needed markup only.
             <img src="<?php echo base_url() ?>assets/AdminLTE310/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
           </div>
           <div class="info">
-            <a href="#" class="d-block">Admin</a>
+            <a href="#" class="d-block">
+              <?php 
+              
+              $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
+
+              $this->db->where('id_user_level', $sess_id_user_level_active);
+              $get_tbl_user_level = $this->db->get('tbl_user_level');
+              $data_get_tbl_user_level = $get_tbl_user_level->row_array();
+
+              print_r($data_get_tbl_user_level['nama_level']);
+
+              ?>
+          </a>
           </div>
         </div>
 
@@ -248,89 +260,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fas fa-tachometer-alt"></i>
-                <p>
-                  Transaksi Stock
-                  <i class="right fas fa-angle-left"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_pembelian" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Pembelian (Belanja Perusahaan)</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_penjualan" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Penjualan</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_pembelian/stock" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Stock</p>
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li class="nav-item">
-              <a href="<?php echo base_url() ?>index.php/tbl_penjualan/pembayaran" class="nav-link">
-                <i class="nav-icon fas fa-th"></i>
-                <p>
-                  Pembayaran
-                  <span class="right badge badge-danger">New</span>
-                </p>
-              </a>
-            </li>
-            <li class="nav-item menu-open">
-              <a href="<?php echo base_url() ?>index.php/tbl_penjualan/accounting" class="nav-link active">
-                <i class="nav-icon fas fa-copy"></i>
-                <p>
-                  Accounting
-                  <i class="fas fa-angle-left right"></i>
-                  <span class="badge badge-info right">6</span>
-                </p>
-              </a>
-
-            </li>
-
-
-
-            <li class="nav-item">
-              <a href="#" class="nav-link">
-                <i class="nav-icon fas fa-chart-pie"></i>
-                <p>
-                  Laporan
-                  <i class="right fas fa-angle-left"></i>
-                </p>
-              </a>
-              <ul class="nav nav-treeview">
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_penjualan/bukukas" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Buku Kas</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_penjualan/neraca" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Neraca</p>
-                  </a>
-                </li>
-                <li class="nav-item">
-                  <a href="<?php echo base_url() ?>index.php/tbl_penjualan/labarugi" class="nav-link">
-                    <i class="far fa-circle nav-icon"></i>
-                    <p>Laba Rugi</p>
-                  </a>
-                </li>
-
-              </ul>
-            </li>
-
+           
 
             <li class="nav-item menu-open">
               <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link active">
