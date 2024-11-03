@@ -1977,114 +1977,66 @@ function terbilang($nilai)
 
 		if (!isNaN(parseInt(document.getElementById('kas').value.replace(/[^0-9]/g, '')))) {
 
-			var huruf = document.getElementById('kas').value;
-			var cek_decimal = huruf.split(",");
-
-			// alert(cek_decimal[0]);
-			// alert(cek_decimal[1]);
+			// var huruf = document.getElementById('kas').value;
+			// var cek_decimal = huruf.split(",");
 
 
-			koma_belakang = cek_decimal[1];
+			// koma_belakang = cek_decimal[1];
+
+			// Xcv = cek_decimal[0];
+			// const str = Xcv;
+			// const substr = '-';
+
+			// if (str.includes(substr) == true) {
+			// 	var var_minus = "-";
+			// } else {
+			// 	var var_minus = "";
+			// }
+
+			// Ycv = Xcv.replace(/[^0-9]/g, '');
 
 
-			// alert(koma_belakang);
-			Xcv = cek_decimal[0];
-			const str = Xcv;
-			const substr = '-';
+			// if (!isNaN(Ycv)) {
 
-			if (str.includes(substr) == true) {
-				// alert("ada -");
-				var var_minus = "-";
-			} else {
-				// alert("Tidak ada -");
-				var var_minus = "";
-			}
+			// 	var var_rupiah_kas = format_rupiah(Ycv);
+			// 	var rupiah_format = var_rupiah_kas.replace(/,/g, ".");
 
-			Ycv = Xcv.replace(/[^0-9]/g, '');
-			// alert(Ycv);
-
-
-			if (!isNaN(Ycv)) {
-				// alert(var_minus);
-				// alert("tidak kosong : " + Ycv);
-
-				var var_rupiah_kas = format_rupiah(Ycv);
-				// alert(var_rupiah_kas);
-				var rupiah_format = var_rupiah_kas.replace(/,/g, ".");
-				// alert(rupiah_format);
-
-				if (!isNaN(koma_belakang)) {
-					document.getElementById('kas').value = var_minus + rupiah_format + "," + koma_belakang;
+			// 	if (!isNaN(koma_belakang)) {
+			// 		document.getElementById('kas').value = var_minus + rupiah_format + "," + koma_belakang;
 
 
 
-					alert(koma_belakang.length);
+			// 		alert(koma_belakang.length);
 
-					// if ((koma_belakang.length) === 1) {
-						// koma_belakang = koma_belakang;
-						alert("koma" + koma_belakang);
-						var va_kas = var_minus + rupiah_format + "," + koma_belakang;
+			// 			alert("koma" + koma_belakang);
+			// 			var va_kas = var_minus + rupiah_format + "," + koma_belakang;
 
-						alert("parsefloat" + parseFloat(koma_belakang / 10));
-						alert(parseInt(va_kas));
+			// 			alert("parsefloat" + parseFloat(koma_belakang / 10));
+			// 			alert(parseInt(va_kas));
 
-						var cv = (parseInt(va_kas) + parseFloat(koma_belakang / 10)).toFixed(2);
-						alert("var:" + cv);
-						cb = parseFloat(cv * 10) + parseFloat(cv * 10);
-						alert(cb);
-						cd = parseFloat(cb / 10);
-						alert("total =" + cd);
+			// 			var cv = (parseInt(va_kas) + parseFloat(koma_belakang / 10)).toFixed(2);
+			// 			alert("var:" + cv);
+			// 			cb = parseFloat(cv * 10) + parseFloat(cv * 10);
+			// 			alert(cb);
+			// 			cd = parseFloat(cb / 10);
+			// 			alert("total =" + cd);
 
 
 
-					// } elseif ((koma_belakang.length) > 1) {
-					// 	var va_kas = var_minus + rupiah_format + "," + koma_belakang;
-
-					// 	alert("parsefloat" + parseFloat(koma_belakang / 100));
-					// 	alert(parseInt(va_kas));
-
-					// 	var cv = (parseInt(va_kas) + parseFloat(koma_belakang / 100)).toFixed(2);
-					// 	alert("var:" + cv);
-					// 	cb = parseFloat(cv * 100) + parseFloat(cv * 100);
-					// 	alert(cb);
-					// 	cd = parseFloat(cb / 100);
-					// 	alert("total =" + cd);
-
-					// }
+			// 	} else {
+			// 		document.getElementById('kas').value = var_minus + rupiah_format;
+			// 		$va_kas = var_minus + rupiah_format;
+			// 	}
 
 
-
-				} else {
-					document.getElementById('kas').value = var_minus + rupiah_format;
-					$va_kas = var_minus + rupiah_format;
-				}
-
-
-			}
+			// }
 
 
 			// ==================================
-			// $va_kas = parseInt(document.getElementById('kas').value.replace(/[^0-9-]/g, ''));
 
-			// $va_kas = 0;
-			va_test = parseFloat($va_kas).toFixed(2) + parseFloat($va_kas).toFixed(2);
-			alert("VAS KAS" + $va_kas);
-			alert("VAS va_test" + va_test);
-			// alert("VAS==" + $va_kas + $va_test);
-
-
-
-
-
-
-			// const va_kas_new = parseFloat($va_kas);
-			// const va_kas_new1 = parseFloat($va_kas);
-
-			// alert(va_kas_new + va_kas_new1);
-
-
-
-
+			// va_test = parseFloat($va_kas).toFixed(2) + parseFloat($va_kas).toFixed(2);
+			// alert("VAS KAS" + $va_kas);
+			// alert("VAS va_test" + va_test);
 
 		} else {
 			$va_kas = 0;

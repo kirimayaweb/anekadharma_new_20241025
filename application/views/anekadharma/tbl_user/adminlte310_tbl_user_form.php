@@ -157,7 +157,9 @@
                                                 $get_tbl_user_level = $this->db->get('tbl_user_level');
                                                 $data_get_tbl_user_level = $get_tbl_user_level->row_array();
 
-                                                print_r($data_get_tbl_user_level['nama_level']);
+                                                print_r($id_user_level);
+                                                print_r("<br/>");
+                                                print_r($data_get_tbl_user_level);
                                                 // echo $list_menu_hak_akses['nama_level'];
                                             }
                                             ?>
