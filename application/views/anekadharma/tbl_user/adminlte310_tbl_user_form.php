@@ -75,7 +75,7 @@
                                         <td width='200'>Email (Username) <?php echo form_error('email') ?></td>
                                         <td>
                                             <input type="text" class="form-control" name="email" id="email" placeholder="Email" value="<?php echo $email; ?>" />
-                                            Pastikan di isi format email : [akun] @gmail.com / xxxxx @ xxxxxx.com
+                                            Pastikan di isi <strong style=color:red;> FORMAT EMAIL</strong> : [...akun...] @ [...NAMA Domain...].com / <strong style=color:red;> xxxxx @ xxxxxx.com </strong>
 
 
 
@@ -122,7 +122,56 @@
 
                                     <tr>
                                         <td width='200'>Level <?php echo form_error('id_user_level') ?></td>
-                                        <td> <?php echo form_dropdown('id_user_level', array('2' => 'ADMIN', '3' => 'MANAGER', '4' => 'PRODUKSI', '5' => 'GUDANG', '7' => 'KASIR', '6' => 'SALES'), $id_user_level, array('class' => 'form-control')); ?></td>
+
+
+
+                                        <td>
+
+                                            <?php //echo form_dropdown('id_user_level', array('2' => 'ADMIN', '3' => 'MANAGER', '4' => 'PRODUKSI', '5' => 'GUDANG', '7' => 'KASIR', '6' => 'SALES'), $id_user_level, array('class' => 'form-control')); 
+                                            ?>
+
+                                            <?php
+                                            
+
+                                            if ($id_user_level == "1" or $id_user_level == "2") {
+                                            ?>
+
+                                                <select name="id_user_level" id="id_user_level" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+
+                                                    <?php
+                                                    $sql = "select * from tbl_user_level order by nama_level";
+                                                    foreach ($this->db->query($sql)->result() as $m) {
+                                                        echo "<option value='$m->id_user_level ' ";
+                                                        echo "> " . strtoupper($m->nama_level) . "</option>";
+                                                    }
+                                                    ?>
+                                                </select>
+
+                                            <?php
+                                            } else {
+                                                // $this->db->where('id_user_level',  $id_user_level);
+                                                // $list_menu_hak_akses = $this->db->get('tbl_user_level');
+
+                                                $this->db->where('id_user_level', $id_user_level);
+                                                $get_tbl_user_level = $this->db->get('tbl_user_level');
+                                                $data_get_tbl_user_level = $get_tbl_user_level->row_array();
+
+                                                print_r($data_get_tbl_user_level['nama_level']);
+                                                // echo $list_menu_hak_akses['nama_level'];
+                                            }
+                                            ?>
+
+
+
+
+
+
+
+                                        </td>
+
+
+
                                     </tr>
                                     <tr>
                                         <td width='200'>Status Aktif <?php echo form_error('is_aktif') ?></td>
@@ -141,88 +190,98 @@
 
                         <div class="col-6">
 
-                            <div class="card card-primary">
-                                <div class="card-header">
+                            <?php
+                           $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
 
-                                    <div class="row">
-                                        <div class="col-12">
-                                            <div class="col-12 card-title">
+                                            // print_r($sess_id_user_level_active);
 
-                                                <!-- <h3 class="card-title"> -->
-                                                MENU USER : Setting menu untuk user: <?php
-                                                                                        if ($is_update == "TRUE") {
-                                                                                            echo $full_name;
-                                                                                        }
-                                                                                        ?>
-                                                <!-- </h3> -->
+                            if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
+                            ?>
+
+                                <div class="card card-primary">
+                                    <div class="card-header">
+
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <div class="col-12 card-title">
+
+                                                    <!-- <h3 class="card-title"> -->
+                                                    MENU USER : Setting menu untuk user: <?php
+                                                                                            if ($is_update == "TRUE") {
+                                                                                                echo $full_name;
+                                                                                            }
+                                                                                            ?>
+                                                    <!-- </h3> -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                                <br />
-                                <!-- <div class="row"></div> -->
-                                <div class="row">
-                                    <div class="col-12">
-                                        <table id="example" class="table table-bordered" style="width:100%">
-                                            <!-- <table class="table table-bordered table-striped" id="mytable"> -->
-                                            <thead>
-                                                <tr>
-                                                    <th width="10px">No</th>
-                                                    <th>Nama Menu</th>
-                                                    <!-- <th>Link</th> -->
-                                                    <!-- <th width="30">Icon</th> -->
-                                                    <th>Aktif</th>
-                                                    <th>Parent</th>
-                                                    <th>action</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                <?php
-                                                $start = 0;
-                                                foreach ($menu_data as $menu) {
-                                                    $active = $menu->is_active == 1 ? 'AKTIF' : 'TIDAK AKTIF';
-                                                    $parent = $menu->is_parent > 1 ? 'MAINMENU' : 'SUBMENU'
-                                                ?>
+                                    <br />
+                                    <!-- <div class="row"></div> -->
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <table id="example" class="table table-bordered" style="width:100%">
+                                                <!-- <table class="table table-bordered table-striped" id="mytable"> -->
+                                                <thead>
                                                     <tr>
-                                                        <td><?php echo ++$start ?></td>
-                                                        <td><?php echo $menu->name ?></td>
-                                                        <!-- <td><?php //echo $menu->link 
-                                                                    ?></td> -->
-                                                        <!-- <td><i class='<?php //echo $menu->icon 
-                                                                            ?>'></i></td> -->
-                                                        <td><?php echo $active ?></td>
-                                                        <td><?php echo $parent ?></td>
-                                                        <td style="text-align:center" width="140px">
-                                                            <?php
-
-                                                            // cek di tbl_hak_akses apakah menu->id ada berdasarkan id_user
-                                                            $id_user_active = $this->session->userdata('sess_iduser');
-
-                                                            $this->db->where('id_menu', $menu->id);
-                                                            $this->db->where('id_user',  $id_user_active);
-                                                            $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
-
-                                                            if ($list_menu_hak_akses->num_rows() > 0) {
-                                                                echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_user_active . '/' . $menu->id  .'/0'), '<i class="fa fa-eye">Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-                                                            } else {
-                                                                echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_user_active .'/'. $menu->id .'/0'), '<i class="fa fa-eye">Tidak Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-                                                            }
-
-
-                                                            ?>
-                                                        </td>
+                                                        <th width="10px">No</th>
+                                                        <th>Nama Menu</th>
+                                                        <!-- <th>Link</th> -->
+                                                        <!-- <th width="30">Icon</th> -->
+                                                        <th>Aktif</th>
+                                                        <th>Parent</th>
+                                                        <th>action</th>
                                                     </tr>
-                                                <?php
-                                                }
-                                                ?>
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    <?php
+                                                    $start = 0;
+                                                    foreach ($menu_data as $menu) {
+                                                        $active = $menu->is_active == 1 ? 'AKTIF' : 'TIDAK AKTIF';
+                                                        $parent = $menu->is_parent > 1 ? 'MAINMENU' : 'SUBMENU'
+                                                    ?>
+                                                        <tr>
+                                                            <td><?php echo ++$start ?></td>
+                                                            <td><?php echo $menu->name ?></td>
+                                                            <!-- <td><?php //echo $menu->link 
+                                                                        ?></td> -->
+                                                            <!-- <td><i class='<?php //echo $menu->icon 
+                                                                                ?>'></i></td> -->
+                                                            <td><?php echo $active ?></td>
+                                                            <td><?php echo $parent ?></td>
+                                                            <td style="text-align:center" width="140px">
+                                                                <?php
+
+                                                                // cek di tbl_hak_akses apakah menu->id ada berdasarkan id_user
+                                                                // $id_user_active = $this->session->userdata('sess_iduser');
+
+                                                                $this->db->where('id_menu', $menu->id);
+                                                                $this->db->where('id_user',  $id_users);
+                                                                $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+
+                                                                if ($list_menu_hak_akses->num_rows() > 0) {
+                                                                    echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_users . '/' . $menu->id  . '/0'), '<i class="fa fa-eye">Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
+                                                                } else {
+                                                                    echo anchor(site_url('Tbl_user/update_menu_per_user/' . $id_users . '/' . $menu->id . '/0'), '<i class="fa fa-eye">Tidak Tampil</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
+                                                                }
+
+
+                                                                ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php
+                                                    }
+                                                    ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
+
                                 </div>
 
-                            </div>
-
-
+                            <?php
+                            }
+                            ?>
                         </div>
 
                         <!-- <div class="row"> -->

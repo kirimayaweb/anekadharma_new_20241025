@@ -35,6 +35,12 @@ class Tbl_user_model extends CI_Model
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
+    // get data by id
+    function get_by_id_result($id)
+    {
+        $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->result();
+    }
 
     // get total rows
     function total_rows($q = NULL)

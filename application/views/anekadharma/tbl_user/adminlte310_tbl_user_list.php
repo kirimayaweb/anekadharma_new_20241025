@@ -15,7 +15,19 @@
                 <div class="card-header">
                     <div class="row">
                         <div class="col-4" align="left"> DATA USER 
-                            <?php echo anchor(site_url('tbl_user/create'), '<i class="fa fa-wpforms" aria-hidden="true"></i> Tambah Data User Baru', 'class="btn btn-danger btn-sm"'); ?>
+                            <?php 
+                            
+                            $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
+
+
+                            if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
+                                echo anchor(site_url('tbl_user/create'), '<i class="fa fa-wpforms" aria-hidden="true"></i> Tambah Data User Baru', 'class="btn btn-danger btn-sm"'); 
+                            }
+                            
+                            
+                            
+                            
+                            ?>
                         </div>
                         <div class="col-8" align="right">
                         </div>

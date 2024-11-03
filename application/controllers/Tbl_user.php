@@ -56,7 +56,18 @@ class Tbl_user extends CI_Controller
 
     public function index()
     {
-        $data_user = $this->Tbl_user_model->get_all();
+
+
+        $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
+
+        if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
+            $data_user = $this->Tbl_user_model->get_all();
+        } else {
+            $sess_iduser_active = $this->session->userdata('sess_iduser');
+            $data_user = $this->Tbl_user_model->get_by_id_result($sess_iduser_active);
+        }
+
+
 
         $data = array(
             'data_user' => $data_user,
@@ -184,22 +195,9 @@ class Tbl_user extends CI_Controller
 
         $row = $this->Tbl_user_model->get_by_id($id_user);
 
-        print_r($row);
-        print_r("<br/>");
-        print_r("update_menu_per_user");
-        print_r("<br/>");
-        print_r($id_menu);
-        print_r("<br/>");
-        print_r($id_user);
-        print_r("<br/>");
-        print_r($kondisi_menu);
-        print_r("<br/>");
-        print_r("<br/>");
-        print_r("<br/>");
-
         // if($id_user  == $id_user_active){}
 
-        $id_user_active = $this->session->userdata('sess_iduser');
+        // $id_user_active = $this->session->userdata('sess_iduser');
 
         if ($row) {
 
@@ -210,76 +208,37 @@ class Tbl_user extends CI_Controller
             // Get Main menu berdasarkan id_menu
             $this->db->where('id',  $id_menu);
             $get_main_menu = $this->db->get('menu')->row();
-            print_r($get_main_menu);
-            print_r("<br/>");
-            print_r($get_main_menu->is_parent);
-            print_r("<br/>");
-            print_r("<br/>");
-
 
             // Get id_user_level berdasarkan id_user
-            $this->db->where('id_users',  $id_user_active);
+            $this->db->where('id_users',  $id_user);
             $get_user_level = $this->db->get('tbl_user')->row();
-            print_r($get_user_level);
-            print_r("<br/>");
-            print_r($get_user_level->id_user_level);
-            print_r("<br/>");
-            print_r("<br/>");
-
-            //   die;
-
 
             $this->db->where('id_menu', $id_menu);
-            $this->db->where('id_user',  $id_user_active);
+            $this->db->where('id_user',  $id_user);
             $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
             // $list_menu_hak_akses_cek = $this->db->get('tbl_hak_akses')->row();
 
-            //             print_r($id_menu);
-            //             print_r("<br/>");
-            //             print_r($id_user_active);
-            //             print_r("<br/>");
-            //             // $dfg=$list_menu_hak_akses->row_array();
-            //             print_r($list_menu_hak_akses_cek->id);
-            //             print_r("<br/>");
-
-// print_r($list_menu_hak_akses->row());
-// print_r("<br/>");
-// print_r($list_menu_hak_akses->num_rows());
-// die;
-
-
-            // die;
-
             if ($list_menu_hak_akses->num_rows() > 0) {
                 // update
-                print_r("update");
-
-
-                // get id tbl_hak_akses where id_menu $ id_user_level
-
-
 
                 $data = array(
-                    'id_user' => $id_user_active,
+                    'id_user' => $id_user,
                     'id_user_level' => $get_user_level->id_user_level,
                     'main_menu' => 0,
                     'id_menu' => $id_menu,
                 );
 
-
                 $this->Tbl_hak_akses_model->update($list_menu_hak_akses->row()->id, $data);
             } else {
                 // insert
 
-                print_r("insert");
-
                 $data = array(
-                    'id_user' => $id_user_active,
+                    'id_user' => $id_user,
                     'id_user_level' => $get_user_level->id_user_level,
                     'main_menu' => $get_main_menu->is_parent,
                     'id_menu' => $id_menu,
                 );
-                
+
                 // print_r($data);
                 // die;
 
@@ -287,7 +246,7 @@ class Tbl_user extends CI_Controller
             }
         }
         // die;
-        redirect('Tbl_user/update/' . $id_user_active);
+        redirect('Tbl_user/update/' . $id_user);
     }
 
 
@@ -320,6 +279,8 @@ class Tbl_user extends CI_Controller
                 'is_update' => "TRUE",
                 'menu_data' => $menu,
             );
+
+
 
             // $this->template->load('template/adminlte310', 'tbl_user/adminlte310_tbl_user_form', $data);
             $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
