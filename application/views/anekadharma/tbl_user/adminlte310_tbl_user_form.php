@@ -134,6 +134,10 @@
                                             
 
                                             if ($id_user_level == "1" or $id_user_level == "2") {
+                                                // print_r("FORM");
+                                                // print_r("<br/>");
+                                                // print_r($id_user_level);
+                                                // print_r("<br/>");
                                             ?>
 
                                                 <select name="id_user_level" id="id_user_level" class="form-control select2" style="width: 100%; height: 40px;" required>
@@ -152,6 +156,12 @@
                                             } else {
                                                 // $this->db->where('id_user_level',  $id_user_level);
                                                 // $list_menu_hak_akses = $this->db->get('tbl_user_level');
+
+                                                // print_r("ELSE FORM");
+                                                // print_r("<br/>");
+                                                // print_r($id_user_level);
+                                                // print_r("<br/>");
+
 
                                                 $this->db->where('id_user_level', $id_user_level);
                                                 $get_tbl_user_level = $this->db->get('tbl_user_level');

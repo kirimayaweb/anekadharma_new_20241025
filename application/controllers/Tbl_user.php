@@ -60,11 +60,29 @@ class Tbl_user extends CI_Controller
 
         $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
 
+        // print_r($sess_id_user_level_active);
+        // print_r("<br/>");
+        // die;
+
         if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
             $data_user = $this->Tbl_user_model->get_all();
+
+            // print_r("admin");
+            // print_r("<br/>");
+            // print_r($data_user);
+            // print_r("<br/>");
+    
         } else {
             $sess_iduser_active = $this->session->userdata('sess_iduser');
             $data_user = $this->Tbl_user_model->get_by_id_result($sess_iduser_active);
+
+            // print_r("BUKAN admin");
+            // print_r("<br/>");
+            // print_r($sess_iduser_active);
+            // print_r("<br/>");
+            // print_r($data_user);
+            // print_r("<br/>");
+
         }
 
 
