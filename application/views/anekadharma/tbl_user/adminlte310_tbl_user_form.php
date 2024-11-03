@@ -57,7 +57,7 @@
 
 
 
-                        <div class="col-6">
+                        <div class="col-5">
                             <form action="<?php echo $action; ?>" method="post">
                                 <table class='table table-bordered>'>
                                     <tr>
@@ -131,26 +131,64 @@
                                             ?>
 
                                             <?php
-                                            
 
-                                            if ($id_user_level == "1" or $id_user_level == "2") {
+                                            $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
+
+                                            if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
                                                 // print_r("FORM");
                                                 // print_r("<br/>");
                                                 // print_r($id_user_level);
                                                 // print_r("<br/>");
+
+                                                // $sql = "select * from tbl_user_level where id_user_level ='$id_user_level'";
+                                                // $get_nama_level = $this->db->query($sql)->row()->nama_level;
+                                                // print_r($get_nama_level);
+                                                // print_r("<br/>");
+
+
+                                                if ($id_users) {
                                             ?>
+                                                    <select name="id_user_level" id="id_user_level" class="form-control select2" style="width: 100%; height: 40px;" required>
 
-                                                <select name="id_user_level" id="id_user_level" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+                                                        <?php
+
+                                                        $sql = "select * from tbl_user_level where id_user_level ='$id_user_level'";
+                                                        $get_nama_level = $this->db->query($sql)->row()->nama_level;
+
+                                                        echo "<option value='$id_user_level ' ";
+                                                        echo "> " . strtoupper($get_nama_level) . "</option>";
+
+                                                        $sql = "select * from tbl_user_level order by nama_level";
+                                                        foreach ($this->db->query($sql)->result() as $m) {
+                                                            echo "<option value='$m->id_user_level ' ";
+                                                            echo "> " . strtoupper($m->nama_level) . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+
+                                                <?php
+                                                } else {
+
+                                                ?>
+
+                                                    <select name="id_user_level" id="id_user_level" class="form-control select2" style="width: 100%; height: 40px;" required>
 
 
-                                                    <?php
-                                                    $sql = "select * from tbl_user_level order by nama_level";
-                                                    foreach ($this->db->query($sql)->result() as $m) {
-                                                        echo "<option value='$m->id_user_level ' ";
-                                                        echo "> " . strtoupper($m->nama_level) . "</option>";
-                                                    }
-                                                    ?>
-                                                </select>
+                                                        <?php
+
+                                                        $sql = "select * from tbl_user_level order by nama_level";
+                                                        foreach ($this->db->query($sql)->result() as $m) {
+                                                            echo "<option value='$m->id_user_level ' ";
+                                                            echo "> " . strtoupper($m->nama_level) . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+
+                                                <?php
+                                                }
+                                                ?>
+
 
                                             <?php
                                             } else {
@@ -163,14 +201,14 @@
                                                 // print_r("<br/>");
 
 
-                                                $this->db->where('id_user_level', $id_user_level);
+                                                $this->db->where('id_user_level', $sess_id_user_level_active);
                                                 $get_tbl_user_level = $this->db->get('tbl_user_level');
                                                 $data_get_tbl_user_level = $get_tbl_user_level->row_array();
 
-                                                print_r($id_user_level);
-                                                print_r("<br/>");
-                                                print_r($data_get_tbl_user_level);
-                                                // echo $list_menu_hak_akses['nama_level'];
+                                                // print_r($id_user_level);
+                                                // print_r("<br/>");
+                                                // print_r($data_get_tbl_user_level);
+                                                echo $list_menu_hak_akses['nama_level'];
                                             }
                                             ?>
 
@@ -200,12 +238,13 @@
                             </form>
                         </div>
 
+                        <div class="col-1"></div>
                         <div class="col-6">
 
                             <?php
-                           $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
+                            $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
 
-                                            // print_r($sess_id_user_level_active);
+                            // print_r($sess_id_user_level_active);
 
                             if ($sess_id_user_level_active == "1" or $sess_id_user_level_active == "2") {
                             ?>

@@ -55,6 +55,9 @@ class Masuk extends CI_Controller
 
 
             if (password_verify($password, $user['password'])) {
+
+  
+
                 // retrive user data to session
                 $this->session->set_userdata($user);
                 $sess = array(
@@ -68,6 +71,9 @@ class Masuk extends CI_Controller
                 );
                 $this->session->set_userdata($sess);
 
+
+      
+
                 $get_client = $this->get_client_ip();
                 $get_client_browser = $this->get_client_browser();
                 $date_login = date('Y-m-d H:i:s');
@@ -79,13 +85,9 @@ class Masuk extends CI_Controller
                     redirect('Dashboard');
                 } elseif ($this->session->userdata('sess_id_user_level') == '99') { //administrator
                     redirect('Dashboard');
-                } elseif ($this->session->userdata('sess_id_user_level') == '2') { //manager
+                } elseif ($this->session->userdata('sess_id_user_level') == '2') { //admin
                     redirect('Dashboard');
-                } elseif ($this->session->userdata('sess_id_user_level') == '7') { //kasir
-                    redirect('Dashboard');
-                } elseif ($this->session->userdata('sess_id_user_level') == '3') { //sales
-                    redirect('Dashboard');
-                } elseif ($this->session->userdata('sess_id_user_level') == '4') { //customer
+                } elseif ($this->session->userdata('sess_id_user_level') > '2') { //kasir
                     redirect('Dashboard');
                 } else {
                     // header("location:" . base_url());

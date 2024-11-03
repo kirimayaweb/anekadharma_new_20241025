@@ -20,7 +20,8 @@ class Anekadharmamasuk extends CI_Controller
     function cheklogin()
     {
 
-
+print_r("aneka dharma masuk");
+die;
 
         $email      = $this->input->post('email');
         //$password   = $this->input->post('password');

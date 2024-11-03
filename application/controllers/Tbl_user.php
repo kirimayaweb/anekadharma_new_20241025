@@ -132,11 +132,13 @@ class Tbl_user extends CI_Controller
             'password' => set_value('password'),
             'images' => set_value('images'),
             'no_hp' => set_value('no_hp'),
-            'id_user_level' => set_value('id_user_level'),
+            // 'id_user_level' => set_value('id_user_level'),
             'is_aktif' => set_value('is_aktif'),
             'is_update' => "FALSE",
             'menu_data' => $menu,
         );
+
+        // print_r($data);
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_user/adminlte310_tbl_user_form', $data);
     }
