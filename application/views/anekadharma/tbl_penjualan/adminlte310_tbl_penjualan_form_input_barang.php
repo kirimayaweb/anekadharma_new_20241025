@@ -246,9 +246,9 @@
                                                         <th style="text-align:center">No</th>
                                                         <!-- <th style="text-align:center">Tgl Beli</th> -->
                                                         <th style="text-align:center">Nama barang</th>
-                                                        <th style="text-align:center">Harga satuan</th>
+                                                        <th style="text-align:right">Harga satuan</th>
                                                         <!-- <th style="text-align:center">Sisa Stock</th> -->
-                                                        <th style="text-align:center">Pilih</th>
+                                                        <th style="text-align:left">Pilih</th>
 
                                                     </tr>
                                                 </thead>
