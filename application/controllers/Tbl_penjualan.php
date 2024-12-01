@@ -8,7 +8,7 @@ class Tbl_penjualan extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model'));
+		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model','Persediaan_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
@@ -232,6 +232,10 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_inisiasi($id_proses = null)
 	{
 
+		// $Data_stock = $this->Persediaan_model->get_all();
+		// print_r($Data_stock);
+		// die;
+		
 		// print_r($id_proses);
 		// print_r("<br/>");
 		// print_r($this->input->post('tgl_jual', TRUE));
