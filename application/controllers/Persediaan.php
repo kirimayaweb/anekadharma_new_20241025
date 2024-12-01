@@ -33,17 +33,25 @@ class Persediaan extends CI_Controller
 	public function search()
 	{
 		
-		$from_date = date("Y-m-1", strtotime($this->input->post('bulan_persediaan', TRUE)));
-		$to_date = date("Y-m-t", strtotime($this->input->post('bulan_persediaan', TRUE)));
+		// print_r($this->input->post('bulan_persediaan', TRUE));
+		// print_r("<br/>");
 
-		$sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
+		$from_date = date("1/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
+		$to_date = date("t/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
+		// $to_date = '30/09/2024';
 
-		print_r($from_date);
-		print_r("<br/>");
-		print_r($to_date);
-		print_r("<br/>");
-		print_r($this->db->query($sql)->result());
-		print_r("<br/>");
+		// $sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
+		$sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC"; 
+		
+		
+		// tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
+
+		// print_r($from_date);
+		// print_r("<br/>");
+		// print_r($to_date);
+		// print_r("<br/>");
+		// print_r($this->db->query($sql)->result());
+		// print_r("<br/>");
 
 		// $Persediaan = $this->Persediaan_model->get_all();
 		$Persediaan = $this->db->query($sql)->result();
