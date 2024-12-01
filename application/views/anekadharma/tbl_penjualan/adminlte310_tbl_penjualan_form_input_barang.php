@@ -226,8 +226,12 @@
                                         <!-- ----------- -->
 
                                         <?php
-                                        $Data_stock = $this->Tbl_pembelian_model->stock();
+                                        
+                                        // $Data_stock = $this->Tbl_pembelian_model->stock();
+                                        
+                                        // DATA PERSEDIAAN BERDASARKAN BULAN LALU
 
+                                        $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
 
 
                                         // print_r($Data_stock);
@@ -240,11 +244,11 @@
                                                 <thead>
                                                     <tr>
                                                         <th style="text-align:center">No</th>
-                                                        <th style="text-align:center">Tgl Beli</th>
-                                                        <th style="text-align:center">nama_barang_beli</th>
-                                                        <th style="text-align:center">harga_satuan_beli</th>
-                                                        <th style="text-align:center">Sisa Stock</th>
-                                                        <th style="text-align:center">pilih</th>
+                                                        <!-- <th style="text-align:center">Tgl Beli</th> -->
+                                                        <th style="text-align:center">Nama barang</th>
+                                                        <th style="text-align:center">Harga satuan</th>
+                                                        <!-- <th style="text-align:center">Sisa Stock</th> -->
+                                                        <th style="text-align:center">Pilih</th>
 
                                                     </tr>
                                                 </thead>
@@ -254,21 +258,19 @@
                                                     $start = 0;
                                                     foreach ($Data_stock as $list_data) {
 
-                                                        if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) {  //HIDE TOTAL SISA STOCK = 0;
+                                                        // CEK TOTAL STOCK TERSISA
+                                                        // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) {  //HIDE TOTAL SISA STOCK = 0;
                                                     ?>
                                                             <tr>
                                                                 <td><?php echo ++$start ?></td>
-                                                                <td>
-                                                                    <?php
-                                                                    // echo $list_data->tgl_po; 
-
-                                                                    echo date("d M Y", strtotime($list_data->tgl_po));
-
+                                                                <!-- <td>
+                                                                    <?php                                                                   
+                                                                    // echo date("d M Y", strtotime($list_data->tgl_po));
                                                                     ?>
-                                                                </td>
-                                                                <td><?php echo $list_data->nama_barang_beli; ?></td>
-                                                                <td><?php echo nominal($list_data->harga_satuan_beli); ?></td>
-                                                                <td><?php echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); ?></td>
+                                                                </td> -->
+                                                                <td><?php echo $list_data->namabarang; ?></td>
+                                                                <td><?php echo nominal($list_data->hpp); ?></td>
+                                                                <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); ?></td> -->
                                                                 <td>
                                                                     <?php
                                                                     // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
@@ -276,7 +278,7 @@
 
 
 
-                                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id_pembelian; ?>" data-target="#modal-xl_1_<?php echo $list_data->id_pembelian; ?>">
+                                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
                                                                         PILIH BARANG
                                                                     </button>
 
@@ -286,17 +288,17 @@
                                                                     if (!empty($uuid_penjualan)) {
                                                                         // print_r("ADa uuid penjualan");
                                                                     ?>
-                                                                        <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id_pembelian; ?>" method="post">
+                                                                        <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
                                                                         <?php
                                                                     } else {
                                                                         // print_r("TIDAK ADa uuid penjualan");
                                                                         ?>
-                                                                            <form action="<?php echo $action . "new/" . $list_data->id_pembelian; ?>" method="post">
+                                                                            <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
                                                                             <?php
                                                                         }
                                                                             ?>
 
-                                                                            <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id_pembelian; ?>">
+                                                                            <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
                                                                                 <div class="modal-dialog modal-xl">
                                                                                     <div class="modal-content">
                                                                                         <div class="modal-header">
@@ -311,7 +313,7 @@
                                                                                                 <div class="row">
                                                                                                     <div class="col-12">
                                                                                                         <label for="konsumen_nama">Barang </label>
-                                                                                                        <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->nama_barang_beli ?>" disabled>
+                                                                                                        <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->namabarang ?>" disabled>
                                                                                                     </div>
                                                                                                 </div>
 
@@ -320,7 +322,7 @@
                                                                                                 <div class="row">
                                                                                                     <div class="col-12">
                                                                                                         <label for="nmrpesan">Harga Satuan </label>
-                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_beli); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_beli); ?>">
+                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>">
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <div class="row">
@@ -378,7 +380,7 @@
 
                                                             </tr>
                                                     <?php
-                                                        }
+                                                        // }
                                                     }
                                                     ?>
 
