@@ -67,10 +67,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- <nav class="main-header navbar navbar-expand-md navbar-light navbar-white"> -->
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
       <div class="container">
-        <a href="#" class="navbar-brand">
-          <img src="<?php echo base_url() ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+        <!-- <a href="#" class="navbar-brand">
+          <img src="<?php //echo base_url() ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
           <span class="brand-text font-weight-light">ANEKA DHARMA</span>
-        </a>
+        </a> -->
 
         <button class="navbar-toggler order-1" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -90,11 +90,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
             $sql_menu = "select * from menu where is_active='1' and is_parent=0";
             $main_menu = $this->db->query($sql_menu)->result();
 
-            // print_r($main_menu);
 
-            // print_r("<br/>");
-            // print_r("<br/>");
-            // print_r("<br/>");
 
             foreach ($main_menu as $menu) {
 
@@ -126,7 +122,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                       $detail_menu = $this->db->get('menu')->row_array();
                     ?>
 
-                      <li><a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo $detail_menu['name']; ?></a></li>
+                      <li>
+                        <a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo $detail_menu['name']; ?>
+                      </a>
+                      </li>
 
 
                     <?php
@@ -149,56 +148,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
             }
 
             ?>
-
-
-
-<!-- 
-            <li class="nav-item dropdown">
-              <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Accounting</a>
-              <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
-
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item" target="_blank"></a></li>
-
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-                <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
-
-                <li class="dropdown-submenu dropdown-hover">
-                  <a id="dropdownSubMenu2" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="dropdown-item dropdown-toggle">Setting</a>
-                  <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
-                    <li><a href="<?php //echo base_url() ?>index.php/Sys_kas_nominal" class="dropdown-item">Kas nominal (maksimal saldo kas) </a></li>
-
-                    <li><a href="<?php //echo base_url() ?>index.php/Tbl_accounting_group" class="dropdown-item">Group Transaksi</a></li>
-                    <li><a href="<?php //echo base_url() ?>index.php/Tbl_accounting_detail" class="dropdown-item">Detail Transaksi</a></li>
-                </li>
-              </ul>
-            </li> -->
-
-
-          <!-- </ul>
-          </li> -->
-<!-- 
-          <li class="nav-item dropdown">
-            <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle">Laporan</a>
-            <ul aria-labelledby="dropdownSubMenu1" class="dropdown-menu border-0 shadow">
-              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"> </a></li>
-              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item"></a></li>
-              <li><a href="<?php //echo base_url() ?>index.php" class="dropdown-item" target="_blank"></a></li>
-
-            </ul>
-          </li> -->
-
-          <li class="nav-item">
-            <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link">LOGOUT</a>
-          </li>
+            <li class="nav-item">
+              <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link">LOGOUT</a>
+            </li>
 
 
           </ul>
@@ -228,8 +180,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
           </div>
           <div class="info">
             <a href="#" class="d-block">
-              <?php 
-              
+              <?php
+
               $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
 
               $this->db->where('id_user_level', $sess_id_user_level_active);
@@ -239,7 +191,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
               print_r($data_get_tbl_user_level['nama_level']);
 
               ?>
-          </a>
+            </a>
           </div>
         </div>
 
@@ -260,7 +212,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
           <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
             <!-- Add icons to the links using the .nav-icon class
                with font-awesome or any other icon font library -->
-           
+
 
             <li class="nav-item menu-open">
               <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link active">
