@@ -247,7 +247,8 @@
                                                         <!-- <th style="text-align:center">Tgl Beli</th> -->
                                                         <th style="text-align:center">Nama barang</th>
                                                         <th style="text-align:right">Harga satuan</th>
-                                                        <!-- <th style="text-align:center">Sisa Stock</th> -->
+                                                        <th style="text-align:right">satuan</th>
+                                                        <th style="text-align:center">Sisa Stock</th>
                                                         <th style="text-align:left">Pilih</th>
 
                                                     </tr>
@@ -270,6 +271,8 @@
                                                                 </td> -->
                                                                 <td><?php echo $list_data->namabarang; ?></td>
                                                                 <td><?php echo nominal($list_data->hpp); ?></td>
+                                                                <td><?php echo $list_data->satuan; ?></td>
+                                                                <td><?php echo $list_data->total_10; ?></td>
                                                                 <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); ?></td> -->
                                                                 <td>
                                                                     <?php
