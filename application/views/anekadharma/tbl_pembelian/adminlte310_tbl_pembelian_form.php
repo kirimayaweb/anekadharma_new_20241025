@@ -157,7 +157,7 @@ $get_list_data = $x_list_data;
                                             foreach ($this->db->query($sql)->result() as $m) {
                                                 // foreach ($data_produk as $m) {
                                                 echo "<option value='$m->uuid_supplier' ";
-                                                echo ">  " . strtoupper($m->nama_supplier) . strtoupper($m->nmr_kontak_supplier) . strtoupper($m->alamat_supplier) . "</option>";
+                                                echo ">  " . strtoupper($m->nama_supplier) . " ==> ( " . strtoupper($m->alamat_supplier) . ")</option>";
                                             }
                                             ?>
                                         </select>
@@ -322,10 +322,11 @@ $get_list_data = $x_list_data;
                                                             <option value="">Pilih Barang</option>
                                                             <?php
 
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                                            // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`";
                                                             foreach ($this->db->query($sql)->result() as $m) {
                                                                 echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->kode_barang) . strtoupper($m->nama_barang)  . "</option>";
+                                                                echo ">  " . strtoupper($m->kode_barang) . strtoupper($m->namabarang)  . "</option>";
                                                             }
                                                             ?>
                                                         </select>
