@@ -323,10 +323,10 @@ $get_list_data = $x_list_data;
                                                             <?php
 
                                                             // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
                                                             foreach ($this->db->query($sql)->result() as $m) {
                                                                 echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->kode_barang) . strtoupper($m->namabarang)  . "</option>";
+                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
                                                             }
                                                             ?>
                                                         </select>
