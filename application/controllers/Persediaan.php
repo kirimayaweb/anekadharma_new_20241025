@@ -8,9 +8,30 @@ class Persediaan extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->model('Persediaan_model');
+		$this->load->model(array('Persediaan_model', 'Sys_nama_barang_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
+	}
+
+	public function refresh_data_from_sys_data_barang()
+	{
+
+		$sql = "SELECT `namabarang`,`satuan` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`";
+
+		foreach ($this->db->query($sql)->result() as $m) {
+
+			$data_barang = $this->Sys_nama_barang_model->get_by_nama_barang($m->namabarang);
+
+			// $sql = "UPDATE `persediaan` SET `uuid_barang`='$data_barang->uuid_barang',`kode_barang`='$data_barang->kode_barang' WHERE `namabarang`= '$m->namabarang'";
+
+			$this->db->set('uuid_barang', $data_barang->uuid_barang, true);
+			$this->db->set('kode_barang', $data_barang->kode_barang, true);
+			$this->db->where('namabarang', $m->namabarang);
+			$this->db->update('persediaan');
+		}
+
+		print_r("Selesai updaye uuid_barang dan kode_barang di tabel persediaan berdasarkan uuid_barang dan kode barang dari sys_data_barang");
+
 	}
 
 	public function index()
@@ -32,7 +53,7 @@ class Persediaan extends CI_Controller
 
 	public function search()
 	{
-		
+
 		// print_r($this->input->post('bulan_persediaan', TRUE));
 		// print_r("<br/>");
 
@@ -41,9 +62,9 @@ class Persediaan extends CI_Controller
 		// $to_date = '30/09/2024';
 
 		// $sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
-		$sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC"; 
-		
-		
+		$sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC";
+
+
 		// tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
 
 		// print_r($from_date);

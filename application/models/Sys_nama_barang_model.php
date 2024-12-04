@@ -9,6 +9,7 @@ class Sys_nama_barang_model extends CI_Model
     public $table = 'sys_nama_barang';
     public $id = 'id';
     public $uuid_barang = 'uuid_barang';
+    public $nama_barang = 'nama_barang';
     public $order = 'DESC';
 
     function __construct()
@@ -27,6 +28,12 @@ class Sys_nama_barang_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    // get data by id
+    function get_by_nama_barang($nama_barang)
+    {
+        $this->db->where($this->nama_barang, $nama_barang);
         return $this->db->get($this->table)->row();
     }
     // get data by id
