@@ -12,6 +12,9 @@ class Masuk extends CI_Controller
 
     function index()
     {
+        redirect('Anekadharmamasuk');
+        
+        
         $this->load->view('masuk/masuk');
         // $this->load->view('anekadharma/anekadharma_macos_landingpage');
     }
