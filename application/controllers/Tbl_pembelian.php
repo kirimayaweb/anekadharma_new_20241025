@@ -857,6 +857,9 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_action_uuid_spop($uuid_spop = null)
 	{
+		// print_r("create_add_uraian");
+		// print_r("<br/>");
+		// die;
 
 		if ($uuid_spop) {
 			// print_r("ada SPOP");
@@ -945,6 +948,8 @@ class Tbl_pembelian extends CI_Controller
 			// print_r("Tidak ada SPOP");
 			// print_r("<br/>");
 			// print_r($this->input->post('uuid_barang', TRUE));
+			// print_r("<br/>");
+			// print_r($this->input->post('uuid_supplier', TRUE));
 			// print_r("<br/>");
 			// // Generate uuid_spop
 			// die;
