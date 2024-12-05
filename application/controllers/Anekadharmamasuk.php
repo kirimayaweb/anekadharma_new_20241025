@@ -6,12 +6,17 @@ class Anekadharmamasuk extends CI_Controller
     {
         parent::__construct();
         // is_login();
-        $this->load->model(array('KirimWa_model','Tbl_user_model'));
+        $this->load->model(array('KirimWa_model', 'Tbl_user_model'));
         // $this->load->library('form_validation');
     }
 
     function index()
     {
+
+        $this->session->sess_destroy();
+        $this->session->set_flashdata('status_login', 'Anda sudah berhasil keluar dari aplikasi');
+       
+        
         // $this->load->view('anekadharma/anekadharma_macos_landingpage');
         $this->load->view('masukgo/masukgo');
     }
@@ -20,8 +25,8 @@ class Anekadharmamasuk extends CI_Controller
     function cheklogin()
     {
 
-print_r("aneka dharma masuk");
-die;
+        // print_r("aneka dharma masuk");
+        // die;
 
         $email      = $this->input->post('email');
         //$password   = $this->input->post('password');
@@ -53,7 +58,7 @@ die;
                     // 'sess_status_tagihan'        => $user['status_tagihan'],
                 );
                 $this->session->set_userdata($sess);
-               
+
                 $get_client = $this->get_client_ip();
                 $get_client_browser = $this->get_client_browser();
                 $date_login = date('Y-m-d H:i:s');
@@ -82,122 +87,124 @@ die;
             }
         } else {
 
-                $X_data="TIDAK_ADA_DATA";
+            $X_data = "TIDAK_ADA_DATA";
 
-                //CEK DI tbl_user_lupapassword
-                $this->db->where('email', $email);
-                $users = $this->db->get('tbl_user_lupapassword');
+            //CEK DI tbl_user_lupapassword
+            $this->db->where('email', $email);
+            $users = $this->db->get('tbl_user_lupapassword');
 
-                if ($users->num_rows() > 0) {
-                    $user = $users->row_array();
-                    $X_data="ADA";
-                }
+            if ($users->num_rows() > 0) {
+                $user = $users->row_array();
+                $X_data = "ADA";
+            }
 
-                // $this->db->where('no_hp', $email);
-                // $users = $this->db->get('tbl_user_lupapassword');
+            // $this->db->where('no_hp', $email);
+            // $users = $this->db->get('tbl_user_lupapassword');
 
-                
 
-                $sql = "select * from tbl_user_lupapassword order by  date_input desc limit 1";
 
-                if ($this->db->query($sql)->num_rows() > 0) {
-                    $user = $this->db->query($sql)->row_array();
-                    $X_data="ADA";
-                }
-                
-                if($X_data == "ADA"){
+            $sql = "select * from tbl_user_lupapassword order by  date_input desc limit 1";
 
-                    // //Cek waktu: date_input, apakah kurang dari 5 menit.
+            if ($this->db->query($sql)->num_rows() > 0) {
+                $user = $this->db->query($sql)->row_array();
+                $X_data = "ADA";
+            }
 
-                    $date = $user['date_input'];
-                    $currentDate = strtotime($date);
-                    $futureDate = $currentDate+(60*5);
-                    $KadaluarsaDate = date("Y-m-d H:i:s", $futureDate);
+            if ($X_data == "ADA") {
 
-                    if(date('Y-m-d H:i:s') <= $KadaluarsaDate){
+                // //Cek waktu: date_input, apakah kurang dari 5 menit.
 
-                        if (password_verify($password, $user['password'])) {
-                            
-                             //GET DATA USER DARI tbl_user
-                             $this->db->where('id_user_level', $user['id_user_level']);
-                             $this->db->where('email', $user['email']);
-                             $users = $this->db->get('tbl_user');                            
- 
-                             $user = $users->row_array();
+                $date = $user['date_input'];
+                $currentDate = strtotime($date);
+                $futureDate = $currentDate + (60 * 5);
+                $KadaluarsaDate = date("Y-m-d H:i:s", $futureDate);
 
-                            // retrive user data to session
-                            $this->session->set_userdata($user);
+                if (date('Y-m-d H:i:s') <= $KadaluarsaDate) {
 
-                           
-                            // print_r($users_tbl_user->row()->id_users);
-                            // die;
+                    if (password_verify($password, $user['password'])) {
 
-                            $sess = array(
-                                'sess_username'        => $user['full_name'],
-                                'sess_iduser'        => $user['id_users'],
-                                'sess_id_user_level'        => $user['id_user_level'],
-                                'sess_email_user'        => $user['email'],
-                                'sess_no_hp'        => $user['no_hp'],
-                                // 'sess_status_tagihan'        => $user['status_tagihan'],
-                            );
-                            $this->session->set_userdata($sess);
-            
-            
-                            // print_r($sess);
-                            // print_r("<br/>");
-                            // print_r("<br/>");
-                            // die;
-            
-                            $get_client = $this->get_client_ip();
-                            $get_client_browser = $this->get_client_browser();
-                            $date_login = date('Y-m-d H:i:s');
-                            $pesan = "pilarpustakagroup.com [LOGIN DARURAT],  Hai " . $user['full_name']  . " / " . $get_client . " / " . $get_client_browser . " = " . $date_login . " Terimakasih Sudah Login";
-                            $nomorhp = "08157045860";
-                            $this->KirimWa_model->kirimwa($nomorhp, $pesan);
-            
-                            // print_r($this->session->userdata('sess_id_user_level'));
-                            // die;
+                        //GET DATA USER DARI tbl_user
+                        $this->db->where('id_user_level', $user['id_user_level']);
+                        $this->db->where('email', $user['email']);
+                        $users = $this->db->get('tbl_user');
 
-                            if ($this->session->userdata('sess_id_user_level') == '1') { //admin
-                                redirect('Dashboard');
-                            } elseif ($this->session->userdata('sess_id_user_level') == '99') { //administrator
-                                redirect('Dashboard');
-                            } elseif ($this->session->userdata('sess_id_user_level') == '2') { //manager
-                                redirect('Dashboard');
-                            } elseif ($this->session->userdata('sess_id_user_level') == '7') { //kasir
-                                redirect('Dashboard');
-                            } elseif ($this->session->userdata('sess_id_user_level') == '3') { //sales
-                                redirect('Dashboard');
-                            } elseif ($this->session->userdata('sess_id_user_level') == '4') { //customer
-                                redirect('Dashboard');
-                            } else {
-                                // header("location:" . base_url());
-                                redirect('Anekadharmamasuk');
-                            }
+                        $user = $users->row_array();
+
+                        // retrive user data to session
+                        $this->session->set_userdata($user);
+
+
+                        // print_r($users_tbl_user->row()->id_users);
+                        // die;
+
+                        $sess = array(
+                            'sess_username'        => $user['full_name'],
+                            'sess_iduser'        => $user['id_users'],
+                            'sess_id_user_level'        => $user['id_user_level'],
+                            'sess_email_user'        => $user['email'],
+                            'sess_no_hp'        => $user['no_hp'],
+                            // 'sess_status_tagihan'        => $user['status_tagihan'],
+                        );
+                        $this->session->set_userdata($sess);
+
+
+                        // print_r($sess);
+                        // print_r("<br/>");
+                        // print_r("<br/>");
+                        // die;
+
+                        $get_client = $this->get_client_ip();
+                        $get_client_browser = $this->get_client_browser();
+                        $date_login = date('Y-m-d H:i:s');
+                        $pesan = "pilarpustakagroup.com [LOGIN DARURAT],  Hai " . $user['full_name']  . " / " . $get_client . " / " . $get_client_browser . " = " . $date_login . " Terimakasih Sudah Login";
+                        $nomorhp = "08157045860";
+                        $this->KirimWa_model->kirimwa($nomorhp, $pesan);
+
+                        // print_r($this->session->userdata('sess_id_user_level'));
+                        // die;
+
+                        if ($this->session->userdata('sess_id_user_level') == '1') { //admin
+                            redirect('Dashboard');
+                        } elseif ($this->session->userdata('sess_id_user_level') == '99') { //administrator
+                            redirect('Dashboard');
+                        } elseif ($this->session->userdata('sess_id_user_level') == '2') { //manager
+                            redirect('Dashboard');
+                        } elseif ($this->session->userdata('sess_id_user_level') == '7') { //kasir
+                            redirect('Dashboard');
+                        } elseif ($this->session->userdata('sess_id_user_level') == '3') { //sales
+                            redirect('Dashboard');
+                        } elseif ($this->session->userdata('sess_id_user_level') == '4') { //customer
+                            redirect('Dashboard');
                         } else {
-                            // print_r("tidak lolos password");
-                            // die;
+                            // header("location:" . base_url());
                             redirect('Anekadharmamasuk');
                         }
-                    }else{
-                        $this->session->set_flashdata('status_login', 'email atau password yang anda input salah');
+                    } else {
+                        // print_r("tidak lolos password");
+                        // die;
                         redirect('Anekadharmamasuk');
                     }
-                }else{
-                            
+                } else {
                     $this->session->set_flashdata('status_login', 'email atau password yang anda input salah');
                     redirect('Anekadharmamasuk');
                 }
+            } else {
+
+                $this->session->set_flashdata('status_login', 'email atau password yang anda input salah');
+                redirect('Anekadharmamasuk');
+            }
         }
     }
 
-    function forgotpassword(){
+    function forgotpassword()
+    {
         $this->load->view('anekadharma/Anekadharmamasuk/lupapassword');
     }
 
-    function sendwhatsappnumber(){
+    function sendwhatsappnumber()
+    {
 
-       
+
 
         $whatsappnumber      = $this->input->post('whatsappnumber');
 
@@ -210,8 +217,8 @@ die;
         // untuk yang ada nomor, dikirimkan 5 digit ke nomor dan berlaku selama 5 menit untuk request yang terakhir
 
         $this->db->where('no_hp', $whatsappnumber);
-        $users = $this->db->get('tbl_user');  
-        
+        $users = $this->db->get('tbl_user');
+
         $date_request = date('Y-m-d H:i:s');
 
         if ($users->num_rows() > 0) {
@@ -227,7 +234,7 @@ die;
                 'no_hp' => $user['no_hp'],
                 'password' => password_hash($b, PASSWORD_DEFAULT),
             );
-    
+
             $this->Tbl_user_model->insert_tbl_user_lupapassword($data);
 
             //kirim kode $user['no_hp'] ==> ke nomor whatsapp $user['no_hp']
@@ -237,7 +244,7 @@ die;
             $pesan = "pilarpustakagroup.com ,  \r\n Hai " . $user['full_name']  . " \r\n\r\n *SEND LUPA PASSWORD* : \r\n *username:* " . $whatsappnumber . " \r\n *password:* " . $b . " \r\n dari: " . $get_client . " \r\n browser: " . $get_client_browser . " \r\n tgl: " . $date_login . " \r\n\r\n Terimakasih Sudah Request Password";
             $nomorhp = "08157045860";
             $this->KirimWa_model->kirimwa($nomorhp, $pesan);
-            
+
             $pesan = " *Thanks for visiting.* \r\n\r\n silahkan login: \r\n *user* = " . $whatsappnumber . " \r\n *Password* = " .  $b . " \r\n\r\n *Password ini hanya berlaku selama 5 menit* \r\n\r\n berlaku mulai " . $date_login . " \r\n\r\n *NOTE:* \r\n Setelah masuk ke aplikasi, silahkan buka menu *UBAH PASSWORD* dan isikan *password baru* dan klik *Simpan* \r\n\r\n *Selanjutnya* anda bisa login dengan password yang baru dibuat.";
             $nomorhp = $whatsappnumber;
             $this->KirimWa_model->kirimwa($nomorhp, $pesan);
@@ -249,49 +256,47 @@ die;
             //$message = '<div class="alert alert-success" role="alert">Success</div>';
 
             echo "<script>alert('Thanks for visiting whatsapp forgotten password');</script>";
-            
+
 
             // Lompat ke controller AUTH ==> login Form
             // $this->load->view('anekadharma/anekadharma_macos_landingpage');
             redirect('Anekadharmamasuk');
+        } else {
+            //convert 5 code angkan menjadi hash dan simpan ke tbl_user_lupapassword
+            $data = array(
+                'date_input' => $date_request,
+                // 'email' => $user['email'],
+                'no_hp' => $whatsappnumber,
+                'password' => "tidak ada nomor hp di sistem",
+            );
 
-        }else{
-                       //convert 5 code angkan menjadi hash dan simpan ke tbl_user_lupapassword
-                       $data = array(
-                        'date_input' => $date_request,
-                        // 'email' => $user['email'],
-                        'no_hp' => $whatsappnumber,
-                        'password' => "tidak ada nomor hp di sistem",
-                    );
-            
-                    $this->Tbl_user_model->insert_tbl_user_lupapassword($data);
-        
-                    //kirim kode $user['no_hp'] ==> ke nomor whatsapp $user['no_hp']
-                    $get_client = $this->get_client_ip();
-                    $get_client_browser = $this->get_client_browser();
-                    $date_login = date('Y-m-d H:i:s');
-                    $pesan = "pilarpustakagroup.com ,  \r\n SEND LUPA PASSWORD: *TIDAK ADA NOMOR HP DI SISTEM* : " . $whatsappnumber . "\r\n\r\n dari: " . $get_client . " \r\n browser: " . $get_client_browser . " \r\n pada: " . $date_request . " \r\n\r\n Terimakasih Sudah Request Password";
-                    $nomorhp = "08157045860";
-                    $this->KirimWa_model->kirimwa($nomorhp, $pesan);
-                    
-                    $pesan = "Thanks for visiting. \r\n\r\n Cheers";
-                    $nomorhp = $whatsappnumber;
-                    $this->KirimWa_model->kirimwa($nomorhp, $pesan);
-        
-        
-        
-                    // print_r("Berhasil insert");
-                    // alert("Berhasil kirim pesan");
-                    //$message = '<div class="alert alert-success" role="alert">Success</div>';
-        
-                    echo "<script>alert('Thanks for visiting whatsapp forgotten password');</script>";
-                    
-        
-                    // Lompat ke controller AUTH ==> login Form
-                    // $this->load->view('anekadharma/anekadharma_macos_landingpage');
-                    redirect('Anekadharmamasuk');
+            $this->Tbl_user_model->insert_tbl_user_lupapassword($data);
+
+            //kirim kode $user['no_hp'] ==> ke nomor whatsapp $user['no_hp']
+            $get_client = $this->get_client_ip();
+            $get_client_browser = $this->get_client_browser();
+            $date_login = date('Y-m-d H:i:s');
+            $pesan = "pilarpustakagroup.com ,  \r\n SEND LUPA PASSWORD: *TIDAK ADA NOMOR HP DI SISTEM* : " . $whatsappnumber . "\r\n\r\n dari: " . $get_client . " \r\n browser: " . $get_client_browser . " \r\n pada: " . $date_request . " \r\n\r\n Terimakasih Sudah Request Password";
+            $nomorhp = "08157045860";
+            $this->KirimWa_model->kirimwa($nomorhp, $pesan);
+
+            $pesan = "Thanks for visiting. \r\n\r\n Cheers";
+            $nomorhp = $whatsappnumber;
+            $this->KirimWa_model->kirimwa($nomorhp, $pesan);
+
+
+
+            // print_r("Berhasil insert");
+            // alert("Berhasil kirim pesan");
+            //$message = '<div class="alert alert-success" role="alert">Success</div>';
+
+            echo "<script>alert('Thanks for visiting whatsapp forgotten password');</script>";
+
+
+            // Lompat ke controller AUTH ==> login Form
+            // $this->load->view('anekadharma/anekadharma_macos_landingpage');
+            redirect('Anekadharmamasuk');
         }
-
     }
 
 
@@ -305,11 +310,11 @@ die;
         $pieces = [];
         $max = mb_strlen($keyspace, '8bit') - 1;
         for ($i = 0; $i < $length; ++$i) {
-            $pieces []= $keyspace[random_int(0, $max)];
+            $pieces[] = $keyspace[random_int(0, $max)];
         }
         return implode('', $pieces);
     }
-    
+
 
 
     function logout()

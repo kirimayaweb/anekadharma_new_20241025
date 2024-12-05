@@ -12,6 +12,8 @@ class Masukgo extends CI_Controller
 
     function index()
     {
+        redirect('Anekadharmamasuk');
+        
         $this->load->view('masukgo/masukgo');
         // $this->load->view('anekadharma/anekadharma_macos_landingpage');
     }
