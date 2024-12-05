@@ -257,7 +257,7 @@
                                     <div id="divuraian"></div>
                                     <button type="button" onclick="tambahuraian(); return false;">Tambah Uraian</button> -->
 
-                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-xl-input-barang">
+                                    <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
                                         Tambah Barang
                                     </button>
 
