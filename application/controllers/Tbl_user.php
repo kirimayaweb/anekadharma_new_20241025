@@ -14,7 +14,7 @@ class Tbl_user extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        // is_login();
+        is_login();
         $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model', 'Menu_model', 'Tbl_hak_akses_model'));
         // $this->load->model(array('Tbl_user_model','Trans_cetak_model', 'Tbl_stok_barang_detail_model', 'Trans_cetakinput_detail_model', 'Tbl_produk_model', 'Tbl_produk_mapel_referensi_model', 'General_login'));
         $this->load->library('form_validation');
