@@ -8,6 +8,7 @@ class Tbl_accounting_group extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Tbl_accounting_group_model');
         $this->load->library('form_validation');        
 	$this->load->library('datatables');

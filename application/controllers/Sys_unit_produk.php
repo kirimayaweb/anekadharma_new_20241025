@@ -8,6 +8,7 @@ class Sys_unit_produk extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model(array('Sys_unit_produk_model','Sys_unit_model'));
         $this->load->library('form_validation');        
 	$this->load->library('datatables');

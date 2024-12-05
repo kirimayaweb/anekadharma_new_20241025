@@ -10,6 +10,7 @@ class Tbl_identitas_pengguna extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model(array('Tbl_identitas_pengguna_model', 'Perijinan_pendaftaran_model'));
         $this->load->library('form_validation');
         $this->load->library('Pdf');

@@ -8,6 +8,7 @@ class Sys_kode_akun extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Sys_kode_akun_model');
         $this->load->library('form_validation');
     }

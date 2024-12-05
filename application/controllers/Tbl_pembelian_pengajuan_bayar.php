@@ -8,6 +8,7 @@ class Tbl_pembelian_pengajuan_bayar extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Tbl_pembelian_pengajuan_bayar_model');
         $this->load->library('form_validation');
     }

@@ -8,6 +8,7 @@ class Sys_kas_nominal extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Sys_kas_nominal_model');
         $this->load->library('form_validation');
 		$this->load->library('datatables');

@@ -8,6 +8,7 @@ class Sys_bank extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Sys_bank_model');
         $this->load->library('form_validation');
     }

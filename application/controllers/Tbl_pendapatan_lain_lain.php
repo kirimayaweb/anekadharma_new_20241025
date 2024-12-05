@@ -8,6 +8,7 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Tbl_pendapatan_lain_lain_model');
         $this->load->library('form_validation');
     }

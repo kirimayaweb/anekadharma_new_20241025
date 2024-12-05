@@ -7,7 +7,7 @@ class Form extends CI_Controller
 	public function __construct()
 	{
 		parent::__construct();
-
+		is_login();
 		// $this->load->model('ProvinsiModel');
 		// $this->load->model('KotaModel');
 		// $this->load->model('JenisModel');

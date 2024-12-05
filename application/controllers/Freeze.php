@@ -8,7 +8,7 @@ class Freeze extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        // is_login();
+        is_login();
         // $this->load->model(array('Tbl_sales_model', 'Trans_penjualan_detail_model', 'Trans_pemesanan_model', 'Tbl_produk_model', 'Trans_penjualan_model', 'Tbl_produk_mapel_referensi_model', 'Trans_retur_model', 'KirimWa_model', 'Trans_pemesanan_detail_model', 'Trans_retur_detail_model'));
         $this->load->library('form_validation');
         $this->load->library('Pdf');

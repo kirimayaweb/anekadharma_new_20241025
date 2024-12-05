@@ -8,6 +8,7 @@ class Tbl_pembelian_pecah_satuan extends CI_Controller
     function __construct()
     {
         parent::__construct();
+		is_login();
         $this->load->model('Tbl_pembelian_pecah_satuan_model');
         $this->load->library('form_validation');
     }

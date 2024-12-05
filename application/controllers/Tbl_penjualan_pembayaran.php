@@ -8,6 +8,7 @@ class Tbl_penjualan_pembayaran extends CI_Controller
     function __construct()
     {
         parent::__construct();
+		is_login();
         $this->load->model('Tbl_penjualan_pembayaran_model');
         $this->load->library('form_validation');
     }

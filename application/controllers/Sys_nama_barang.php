@@ -8,6 +8,7 @@ class Sys_nama_barang extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Sys_nama_barang_model');
         $this->load->library('form_validation');
     }
@@ -32,7 +33,7 @@ class Sys_nama_barang extends CI_Controller
        
        
         }
-print_r("selesai");
+print_r("sys_data_barang selesai");
 
 
 

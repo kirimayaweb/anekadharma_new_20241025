@@ -8,6 +8,7 @@ class Tbl_hak_akses extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Tbl_hak_akses_model');
         $this->load->library('form_validation');        
 	$this->load->library('datatables');

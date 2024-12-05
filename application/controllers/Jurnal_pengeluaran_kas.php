@@ -8,6 +8,7 @@ class Jurnal_pengeluaran_kas extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Jurnal_pengeluaran_kas_model');
         $this->load->library('form_validation');        
 	$this->load->library('datatables');

@@ -8,29 +8,31 @@ class Tbl_user_level extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Tbl_user_level_model');
-        $this->load->library('form_validation');        
-	$this->load->library('datatables');
+        $this->load->library('form_validation');
+        $this->load->library('datatables');
     }
 
     public function index()
     {
         $this->load->view('tbl_user_level/tbl_user_level_list');
-    } 
-    
-    public function json() {
+    }
+
+    public function json()
+    {
         header('Content-Type: application/json');
         echo $this->Tbl_user_level_model->json();
     }
 
-    public function read($id) 
+    public function read($id)
     {
         $row = $this->Tbl_user_level_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'id_user_level' => $row->id_user_level,
-		'nama_level' => $row->nama_level,
-	    );
+                'id_user_level' => $row->id_user_level,
+                'nama_level' => $row->nama_level,
+            );
             $this->load->view('tbl_user_level/tbl_user_level_read', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
@@ -38,18 +40,18 @@ class Tbl_user_level extends CI_Controller
         }
     }
 
-    public function create() 
+    public function create()
     {
         $data = array(
             'button' => 'Create',
             'action' => site_url('tbl_user_level/create_action'),
-	    'id_user_level' => set_value('id_user_level'),
-	    'nama_level' => set_value('nama_level'),
-	);
+            'id_user_level' => set_value('id_user_level'),
+            'nama_level' => set_value('nama_level'),
+        );
         $this->load->view('tbl_user_level/tbl_user_level_form', $data);
     }
-    
-    public function create_action() 
+
+    public function create_action()
     {
         $this->_rules();
 
@@ -57,16 +59,16 @@ class Tbl_user_level extends CI_Controller
             $this->create();
         } else {
             $data = array(
-		'nama_level' => $this->input->post('nama_level',TRUE),
-	    );
+                'nama_level' => $this->input->post('nama_level', TRUE),
+            );
 
             $this->Tbl_user_level_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('tbl_user_level'));
         }
     }
-    
-    public function update($id) 
+
+    public function update($id)
     {
         $row = $this->Tbl_user_level_model->get_by_id($id);
 
@@ -74,17 +76,17 @@ class Tbl_user_level extends CI_Controller
             $data = array(
                 'button' => 'Update',
                 'action' => site_url('tbl_user_level/update_action'),
-		'id_user_level' => set_value('id_user_level', $row->id_user_level),
-		'nama_level' => set_value('nama_level', $row->nama_level),
-	    );
+                'id_user_level' => set_value('id_user_level', $row->id_user_level),
+                'nama_level' => set_value('nama_level', $row->nama_level),
+            );
             $this->load->view('tbl_user_level/tbl_user_level_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('tbl_user_level'));
         }
     }
-    
-    public function update_action() 
+
+    public function update_action()
     {
         $this->_rules();
 
@@ -92,16 +94,16 @@ class Tbl_user_level extends CI_Controller
             $this->update($this->input->post('id_user_level', TRUE));
         } else {
             $data = array(
-		'nama_level' => $this->input->post('nama_level',TRUE),
-	    );
+                'nama_level' => $this->input->post('nama_level', TRUE),
+            );
 
             $this->Tbl_user_level_model->update($this->input->post('id_user_level', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('tbl_user_level'));
         }
     }
-    
-    public function delete($id) 
+
+    public function delete($id)
     {
         $row = $this->Tbl_user_level_model->get_by_id($id);
 
@@ -115,12 +117,12 @@ class Tbl_user_level extends CI_Controller
         }
     }
 
-    public function _rules() 
+    public function _rules()
     {
-	$this->form_validation->set_rules('nama_level', 'nama level', 'trim|required');
+        $this->form_validation->set_rules('nama_level', 'nama level', 'trim|required');
 
-	$this->form_validation->set_rules('id_user_level', 'id_user_level', 'trim');
-	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+        $this->form_validation->set_rules('id_user_level', 'id_user_level', 'trim');
+        $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
     public function excel()
@@ -145,23 +147,22 @@ class Tbl_user_level extends CI_Controller
 
         $kolomhead = 0;
         xlsWriteLabel($tablehead, $kolomhead++, "No");
-	xlsWriteLabel($tablehead, $kolomhead++, "Nama Level");
+        xlsWriteLabel($tablehead, $kolomhead++, "Nama Level");
 
-	foreach ($this->Tbl_user_level_model->get_all() as $data) {
+        foreach ($this->Tbl_user_level_model->get_all() as $data) {
             $kolombody = 0;
 
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->nama_level);
+            xlsWriteLabel($tablebody, $kolombody++, $data->nama_level);
 
-	    $tablebody++;
+            $tablebody++;
             $nourut++;
         }
 
         xlsEOF();
         exit();
     }
-
 }
 
 /* End of file Tbl_user_level.php */

@@ -8,6 +8,7 @@ class Tbl_neraca_data extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
+		is_login();
 		$this->load->model(array('Tbl_neraca_data_model', 'Tbl_accounting_detail_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');

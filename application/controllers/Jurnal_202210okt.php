@@ -8,6 +8,7 @@ class Jurnal_202210okt extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Jurnal_202210okt_model');
         $this->load->library('form_validation');        
 	$this->load->library('datatables');

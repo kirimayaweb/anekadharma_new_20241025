@@ -8,6 +8,7 @@ class Tbl_penjualan extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
+		is_login();
 		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model','Persediaan_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');

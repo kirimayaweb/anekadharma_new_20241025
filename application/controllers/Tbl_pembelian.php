@@ -8,6 +8,7 @@ class Tbl_pembelian extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
+		is_login();
 		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
