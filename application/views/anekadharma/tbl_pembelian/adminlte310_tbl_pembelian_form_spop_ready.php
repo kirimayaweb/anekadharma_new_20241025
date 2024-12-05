@@ -257,7 +257,7 @@
                                     <div id="divuraian"></div>
                                     <button type="button" onclick="tambahuraian(); return false;">Tambah Uraian</button> -->
 
-                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-default">
+                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-xl-input-barang">
                                         Tambah Barang
                                     </button>
 
@@ -269,79 +269,91 @@
 
                             <br />
 
-                            <!-- /.modal -->
-                            <div class="modal fade" id="modal-default">
-                                <div class="modal-dialog">
+                          
+
+
+
+                            <!-- MODAL EXTRA LARGE -->
+
+                            <div class="modal fade" id="modal-xl-input-barang">
+                                <div class="modal-dialog modal-xl">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h4 class="modal-title">Input Data Barang</h4>
+                                            <h4 class="modal-title">Tambah Barang Beli</h4>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
+
                                         <div class="modal-body">
                                             <div class="form-group">
 
+
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
                                                         <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                                            <option value="<?php echo $uuid_konsumen; ?>"><?php echo $konsumen; ?></option>
+                                                            <option value="">Pilih Konsumen/Unit </option>
                                                             <?php
-                                                            $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+
+                                                            // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                                            $sql = "select * from sys_unit order by nama_unit ASC ";
                                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_konsumen' ";
-                                                                echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+                                                                echo "<option value='$m->uuid_unit' ";
+                                                                echo ">  " . strtoupper($m->nama_unit) .  "</option>";
                                                             }
                                                             ?>
                                                         </select>
                                                     </div>
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-4">
+                                                    </div>
                                                 </div>
 
+
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
+
                                                         <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
                                                             <option value="">Pilih Barang</option>
                                                             <?php
 
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-
-
-
+                                                            // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
                                                             foreach ($this->db->query($sql)->result() as $m) {
                                                                 echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->kode_barang) . strtoupper($m->nama_barang)  . "</option>";
+                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
                                                             }
                                                             ?>
                                                         </select>
-                                                    </div>
-                                                </div>
 
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
-                                                                                    ?></label>
-                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
-                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
                                                         <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
                                                     </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
                                                         <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
                                                     </div>
                                                 </div>
 
-
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
+                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
+                                                                                    ?></label>
+                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
+                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                                                    </div>
+                                                    <div class="col-4">
                                                         <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
                                                         <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
                                                             <option value="">Pilih Gudang</option>
@@ -355,13 +367,18 @@
                                                             ?>
                                                         </select>
                                                     </div>
+                                                    <div class="col-4">
+                                                    </div>
                                                 </div>
+
+
 
 
 
                                             </div>
 
                                         </div>
+
                                         <div class="modal-footer justify-content-between">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                                             <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
@@ -372,7 +389,9 @@
                                 </div>
                                 <!-- /.modal-dialog -->
                             </div>
-                            <!-- /.modal -->
+
+                            <!-- END OF MODAL EXTRA LARGE -->
+
 
                             <br />
 
@@ -382,7 +401,7 @@
 
                             <a href="<?php echo site_url('tbl_pembelian/simpan_data_spop/' . $uuid_spop) ?>" class="btn btn-primary"><?php echo $button ?></a>
 
-                            <a href="<?php echo site_url('tbl_pembelian/cetak_belanja_per_spop/' . $uuid_spop) ?>" class="btn btn-primary" target="_blank">Cetak PDF</a>
+                            <!-- <a href="<?php //echo site_url('tbl_pembelian/cetak_belanja_per_spop/' . $uuid_spop) ?>" class="btn btn-primary" target="_blank">Cetak PDF</a> -->
 
                             <a href="<?php echo site_url('tbl_pembelian/list_data') ?>" class="btn btn-default">Cancel</a>
                         </form>

@@ -143,6 +143,7 @@ $get_list_data = $x_list_data;
                                 <div class="row">
                                     <div class="col-3">
                                         <label for="supplier_nama">Nama Supplier <?php echo form_error('supplier_nama') ?></label>
+                                        
                                         <!-- <textarea class="form-control" rows="3" name="supplier_nama" id="supplier_nama" placeholder="Supplier Nama"><?php //echo $supplier_nama; 
                                                                                                                                                             ?></textarea> -->
 
@@ -270,7 +271,8 @@ $get_list_data = $x_list_data;
                                     <div id="divuraian"></div>
                                     <button type="button" onclick="tambahuraian(); return false;">Tambah Uraian</button> -->
 
-                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-default">
+                                    <!-- <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-default"> -->
+                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-xl-input-barang">
                                         Tambah Barang
                                     </button>
 
@@ -282,22 +284,27 @@ $get_list_data = $x_list_data;
 
                             <br />
 
-                            <!-- /.modal -->
-                            <div class="modal fade" id="modal-default">
-                                <div class="modal-dialog">
+
+
+
+                            <!-- MODAL EXTRA LARGE -->
+
+                            <div class="modal fade" id="modal-xl-input-barang">
+                                <div class="modal-dialog modal-xl">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h4 class="modal-title">Input Data Barang</h4>
+                                            <h4 class="modal-title">Tambah Barang Beli</h4>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
                                         </div>
+
                                         <div class="modal-body">
                                             <div class="form-group">
 
 
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
                                                         <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
                                                             <option value="">Pilih Konsumen/Unit </option>
@@ -312,12 +319,17 @@ $get_list_data = $x_list_data;
                                                             ?>
                                                         </select>
                                                     </div>
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-4">
+                                                    </div>
                                                 </div>
 
 
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
+
                                                         <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
                                                             <option value="">Pilih Barang</option>
                                                             <?php
@@ -330,33 +342,32 @@ $get_list_data = $x_list_data;
                                                             }
                                                             ?>
                                                         </select>
-                                                    </div>
-                                                </div>
 
-                                                <div class="row">
-                                                    <div class="col-12">
-                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
-                                                                                    ?></label>
-                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
-                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
                                                         <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
                                                     </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
                                                         <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
                                                         <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
                                                     </div>
                                                 </div>
 
-
                                                 <div class="row">
-                                                    <div class="col-12">
+                                                    <div class="col-4">
+                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
+                                                                                    ?></label>
+                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
+                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                                                    </div>
+                                                    <div class="col-4">
                                                         <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
                                                         <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
                                                             <option value="">Pilih Gudang</option>
@@ -370,12 +381,18 @@ $get_list_data = $x_list_data;
                                                             ?>
                                                         </select>
                                                     </div>
+                                                    <div class="col-4">
+                                                    </div>
                                                 </div>
+
+
+
 
 
                                             </div>
 
                                         </div>
+
                                         <div class="modal-footer justify-content-between">
                                             <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                                             <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
@@ -386,12 +403,15 @@ $get_list_data = $x_list_data;
                                 </div>
                                 <!-- /.modal-dialog -->
                             </div>
-                            <!-- /.modal -->
+
+                            <!-- END OF MODAL EXTRA LARGE -->
+
 
                             <br />
 
                             <input type="hidden" name="id" value="<?php echo $id; ?>" />
-                            <!-- <button type="submit" class="btn btn-primary"><?php //echo $button ?></button> -->
+                            <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
+                                                                                ?></button> -->
                             <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
                         </form>
 
