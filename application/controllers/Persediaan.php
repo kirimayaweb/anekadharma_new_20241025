@@ -31,7 +31,7 @@ class Persediaan extends CI_Controller
 			$this->db->update('persediaan');
 		}
 
-		print_r("Selesai updaye uuid_barang dan kode_barang di tabel persediaan berdasarkan uuid_barang dan kode barang dari sys_data_barang");
+		print_r("Selesai update uuid_barang dan kode_barang di tabel persediaan berdasarkan uuid_barang dan kode barang dari sys_data_barang");
 
 	}
 

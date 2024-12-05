@@ -23,7 +23,13 @@
                                     
                                 </div>
 
-                                <div class="col-lg-3 col-xs-6">
+
+
+
+
+                                <!-- HIDE UNTUK SEMUA ICON -->
+
+                                <!-- <div class="col-lg-3 col-xs-6">
                                     <a href="tbl_pembelian">
                                         <div class="small-box bg-green">
                                             <div class="inner">
@@ -51,7 +57,13 @@
                                             <a href="tbl_penjualan" class="small-box-footer">Penjualan ke customer <i class="fa fa-arrow-circle-right"></i></a>
                                         </div>
                                     </a>
-                                </div>
+                                </div> -->
+
+                                <!-- END OF HIDE UNTUK SEMUA ICON -->
+                                
+
+
+
                                 
                             </div>
                         </div>
