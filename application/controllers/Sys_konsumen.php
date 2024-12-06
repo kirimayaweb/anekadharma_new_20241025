@@ -13,11 +13,33 @@ class Sys_konsumen extends CI_Controller
         $this->load->library('form_validation');
     }
 
+    public function refresh_data_sys_konsumen() {
+        $sql = "SELECT * FROM `sys_konsumen_new` ORDER BY nama_konsumen asc";
+
+        foreach ($this->db->query($sql)->result() as $m) {
+
+            $data = array(
+                // 'uuid_supplier' => $this->input->post('uuid_supplier',TRUE),
+                'kode_konsumen' => str_replace(" ","",$m->nama_konsumen),
+                'nama_konsumen' => $m->nama_konsumen,
+                'kelompok_dipersediaan' => $m->kelompok_dipersediaan,
+                'nmr_kontak_konsumen' => $m->nmr_kontak_konsumen,
+                'alamat_konsumen' => $m->alamat_konsumen,
+                // 'keterangan' => $this->input->post('keterangan', TRUE),
+            );
+
+            $this->Sys_konsumen_model->insert($data);
+
+        }
+
+        print_r("Selesai insert sys_konsumen_new ke sys_konsumen");
+    }
+
     public function indexXXXX()
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->input->get('start'));
-        
+
         if ($q <> '') {
             $config['base_url'] = base_url() . 'sys_konsumen/index.html?q=' . urlencode($q);
             $config['first_url'] = base_url() . 'sys_konsumen/index.html?q=' . urlencode($q);
@@ -45,7 +67,7 @@ class Sys_konsumen extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/sys_konsumen_list', $data);
     }
 
-    
+
     public function index()
     {
         // $this->load->view('sys_gudang/sys_gudang_list');
@@ -63,19 +85,19 @@ class Sys_konsumen extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/adminlte310_sys_konsumen_list', $data);
     }
 
-    public function read($id) 
+    public function read($id)
     {
         $row = $this->Sys_konsumen_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'id' => $row->id,
-		'uuid_konsumen' => $row->uuid_konsumen,
-		'kode_konsumen' => $row->kode_konsumen,
-		'nama_konsumen' => $row->nama_konsumen,
-		'nmr_kontak_konsumen' => $row->nmr_kontak_konsumen,
-		'alamat_konsumen' => $row->alamat_konsumen,
-		'keterangan' => $row->keterangan,
-	    );
+                'id' => $row->id,
+                'uuid_konsumen' => $row->uuid_konsumen,
+                'kode_konsumen' => $row->kode_konsumen,
+                'nama_konsumen' => $row->nama_konsumen,
+                'nmr_kontak_konsumen' => $row->nmr_kontak_konsumen,
+                'alamat_konsumen' => $row->alamat_konsumen,
+                'keterangan' => $row->keterangan,
+            );
             $this->load->view('sys_konsumen/sys_konsumen_read', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
@@ -83,25 +105,24 @@ class Sys_konsumen extends CI_Controller
         }
     }
 
-    public function create() 
+    public function create()
     {
         $data = array(
             'button' => 'Create',
             'action' => site_url('sys_konsumen/create_action'),
-	    'id' => set_value('id'),
-	    'uuid_konsumen' => set_value('uuid_konsumen'),
-	    'kode_konsumen' => set_value('kode_konsumen'),
-	    'nama_konsumen' => set_value('nama_konsumen'),
-	    'nmr_kontak_konsumen' => set_value('nmr_kontak_konsumen'),
-	    'alamat_konsumen' => set_value('alamat_konsumen'),
-	    'keterangan' => set_value('keterangan'),
-	);
+            'id' => set_value('id'),
+            'uuid_konsumen' => set_value('uuid_konsumen'),
+            'kode_konsumen' => set_value('kode_konsumen'),
+            'nama_konsumen' => set_value('nama_konsumen'),
+            'nmr_kontak_konsumen' => set_value('nmr_kontak_konsumen'),
+            'alamat_konsumen' => set_value('alamat_konsumen'),
+            'keterangan' => set_value('keterangan'),
+        );
         // $this->load->view('sys_konsumen/sys_konsumen_form', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_konsumen/adminlte310_sys_konsumen_form', $data);
-
     }
-    
-    public function create_action() 
+
+    public function create_action()
     {
         $this->_rules();
 
@@ -109,21 +130,21 @@ class Sys_konsumen extends CI_Controller
             $this->create();
         } else {
             $data = array(
-		// 'uuid_konsumen' => $this->input->post('uuid_konsumen',TRUE),
-		'kode_konsumen' => $this->input->post('kode_konsumen',TRUE),
-		'nama_konsumen' => $this->input->post('nama_konsumen',TRUE),
-		'nmr_kontak_konsumen' => $this->input->post('nmr_kontak_konsumen',TRUE),
-		'alamat_konsumen' => $this->input->post('alamat_konsumen',TRUE),
-		'keterangan' => $this->input->post('keterangan',TRUE),
-	    );
+                // 'uuid_konsumen' => $this->input->post('uuid_konsumen',TRUE),
+                'kode_konsumen' => $this->input->post('kode_konsumen', TRUE),
+                'nama_konsumen' => $this->input->post('nama_konsumen', TRUE),
+                'nmr_kontak_konsumen' => $this->input->post('nmr_kontak_konsumen', TRUE),
+                'alamat_konsumen' => $this->input->post('alamat_konsumen', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+            );
 
             $this->Sys_konsumen_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('sys_konsumen'));
         }
     }
-    
-    public function update($id) 
+
+    public function update($id)
     {
         $row = $this->Sys_konsumen_model->get_by_id($id);
 
@@ -131,22 +152,22 @@ class Sys_konsumen extends CI_Controller
             $data = array(
                 'button' => 'Update',
                 'action' => site_url('sys_konsumen/update_action'),
-		'id' => set_value('id', $row->id),
-		'uuid_konsumen' => set_value('uuid_konsumen', $row->uuid_konsumen),
-		'kode_konsumen' => set_value('kode_konsumen', $row->kode_konsumen),
-		'nama_konsumen' => set_value('nama_konsumen', $row->nama_konsumen),
-		'nmr_kontak_konsumen' => set_value('nmr_kontak_konsumen', $row->nmr_kontak_konsumen),
-		'alamat_konsumen' => set_value('alamat_konsumen', $row->alamat_konsumen),
-		'keterangan' => set_value('keterangan', $row->keterangan),
-	    );
+                'id' => set_value('id', $row->id),
+                'uuid_konsumen' => set_value('uuid_konsumen', $row->uuid_konsumen),
+                'kode_konsumen' => set_value('kode_konsumen', $row->kode_konsumen),
+                'nama_konsumen' => set_value('nama_konsumen', $row->nama_konsumen),
+                'nmr_kontak_konsumen' => set_value('nmr_kontak_konsumen', $row->nmr_kontak_konsumen),
+                'alamat_konsumen' => set_value('alamat_konsumen', $row->alamat_konsumen),
+                'keterangan' => set_value('keterangan', $row->keterangan),
+            );
             $this->load->view('sys_konsumen/sys_konsumen_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('sys_konsumen'));
         }
     }
-    
-    public function update_action() 
+
+    public function update_action()
     {
         $this->_rules();
 
@@ -154,21 +175,21 @@ class Sys_konsumen extends CI_Controller
             $this->update($this->input->post('id', TRUE));
         } else {
             $data = array(
-		// 'uuid_konsumen' => $this->input->post('uuid_konsumen',TRUE),
-		'kode_konsumen' => $this->input->post('kode_konsumen',TRUE),
-		'nama_konsumen' => $this->input->post('nama_konsumen',TRUE),
-		'nmr_kontak_konsumen' => $this->input->post('nmr_kontak_konsumen',TRUE),
-		'alamat_konsumen' => $this->input->post('alamat_konsumen',TRUE),
-		'keterangan' => $this->input->post('keterangan',TRUE),
-	    );
+                // 'uuid_konsumen' => $this->input->post('uuid_konsumen',TRUE),
+                'kode_konsumen' => $this->input->post('kode_konsumen', TRUE),
+                'nama_konsumen' => $this->input->post('nama_konsumen', TRUE),
+                'nmr_kontak_konsumen' => $this->input->post('nmr_kontak_konsumen', TRUE),
+                'alamat_konsumen' => $this->input->post('alamat_konsumen', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+            );
 
             $this->Sys_konsumen_model->update($this->input->post('id', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('sys_konsumen'));
         }
     }
-    
-    public function delete($id) 
+
+    public function delete($id)
     {
         $row = $this->Sys_konsumen_model->get_by_id($id);
 
@@ -182,17 +203,17 @@ class Sys_konsumen extends CI_Controller
         }
     }
 
-    public function _rules() 
+    public function _rules()
     {
-	// $this->form_validation->set_rules('uuid_konsumen', 'uuid konsumen', 'trim|required');
-	// $this->form_validation->set_rules('kode_konsumen', 'kode konsumen', 'trim|required');
-	$this->form_validation->set_rules('nama_konsumen', 'nama konsumen', 'trim|required');
-	// $this->form_validation->set_rules('nmr_kontak_konsumen', 'nmr kontak konsumen', 'trim|required');
-	// $this->form_validation->set_rules('alamat_konsumen', 'alamat konsumen', 'trim|required');
-	// $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
+        // $this->form_validation->set_rules('uuid_konsumen', 'uuid konsumen', 'trim|required');
+        // $this->form_validation->set_rules('kode_konsumen', 'kode konsumen', 'trim|required');
+        $this->form_validation->set_rules('nama_konsumen', 'nama konsumen', 'trim|required');
+        // $this->form_validation->set_rules('nmr_kontak_konsumen', 'nmr kontak konsumen', 'trim|required');
+        // $this->form_validation->set_rules('alamat_konsumen', 'alamat konsumen', 'trim|required');
+        // $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
 
-	$this->form_validation->set_rules('id', 'id', 'trim');
-	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+        $this->form_validation->set_rules('id', 'id', 'trim');
+        $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
     public function excel()
@@ -217,33 +238,32 @@ class Sys_konsumen extends CI_Controller
 
         $kolomhead = 0;
         xlsWriteLabel($tablehead, $kolomhead++, "No");
-	xlsWriteLabel($tablehead, $kolomhead++, "Uuid Konsumen");
-	xlsWriteLabel($tablehead, $kolomhead++, "Kode Konsumen");
-	xlsWriteLabel($tablehead, $kolomhead++, "Nama Konsumen");
-	xlsWriteLabel($tablehead, $kolomhead++, "Nmr Kontak Konsumen");
-	xlsWriteLabel($tablehead, $kolomhead++, "Alamat Konsumen");
-	xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
+        xlsWriteLabel($tablehead, $kolomhead++, "Uuid Konsumen");
+        xlsWriteLabel($tablehead, $kolomhead++, "Kode Konsumen");
+        xlsWriteLabel($tablehead, $kolomhead++, "Nama Konsumen");
+        xlsWriteLabel($tablehead, $kolomhead++, "Nmr Kontak Konsumen");
+        xlsWriteLabel($tablehead, $kolomhead++, "Alamat Konsumen");
+        xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
 
-	foreach ($this->Sys_konsumen_model->get_all() as $data) {
+        foreach ($this->Sys_konsumen_model->get_all() as $data) {
             $kolombody = 0;
 
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->uuid_konsumen);
-	    xlsWriteNumber($tablebody, $kolombody++, $data->kode_konsumen);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->nama_konsumen);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->nmr_kontak_konsumen);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->alamat_konsumen);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
+            xlsWriteLabel($tablebody, $kolombody++, $data->uuid_konsumen);
+            xlsWriteNumber($tablebody, $kolombody++, $data->kode_konsumen);
+            xlsWriteLabel($tablebody, $kolombody++, $data->nama_konsumen);
+            xlsWriteLabel($tablebody, $kolombody++, $data->nmr_kontak_konsumen);
+            xlsWriteLabel($tablebody, $kolombody++, $data->alamat_konsumen);
+            xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
 
-	    $tablebody++;
+            $tablebody++;
             $nourut++;
         }
 
         xlsEOF();
         exit();
     }
-
 }
 
 /* End of file Sys_konsumen.php */
