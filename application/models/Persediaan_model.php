@@ -135,7 +135,13 @@ class Persediaan_model extends CI_Model
     // insert data
     function insert($data)
     {
+        $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
     }
 
     // update data
