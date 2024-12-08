@@ -64,10 +64,12 @@
 
                             <!--  -->
 
-                            <!-- <h2 style="margin-top:0px">Sys_nama_barang <?php //echo $button ?></h2> -->
+                            <!-- <h2 style="margin-top:0px">Sys_nama_barang <?php //echo $button 
+                                                                            ?></h2> -->
                             <form action="<?php echo $action; ?>" method="post">
                                 <!-- <div class="form-group">
-                                    <label for="varchar">Uuid Barang <?php //echo form_error('uuid_barang') ?></label>
+                                    <label for="varchar">Uuid Barang <?php //echo form_error('uuid_barang') 
+                                                                        ?></label>
                                     <input type="text" class="form-control" name="uuid_barang" id="uuid_barang" placeholder="Uuid Barang" value="<?php echo $uuid_barang; ?>" />
                                 </div> -->
                                 <div class="form-group">

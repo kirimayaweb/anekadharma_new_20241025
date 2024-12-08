@@ -152,6 +152,7 @@ class Tbl_pembelian_model extends CI_Model
         return $this->db->get($this->table)->row();
     }
 
+
     // get data by uuid_spop
     function get_by_uuid_spop($uuid_spop)
     {

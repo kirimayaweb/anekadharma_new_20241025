@@ -1156,6 +1156,7 @@ class Tbl_pembelian extends CI_Controller
 		$Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($data_per_uuidspop->spop);
 		$start = 0;
 		$data = array(
+
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'start' => $start,
 		);
@@ -1167,6 +1168,67 @@ class Tbl_pembelian extends CI_Controller
 
 		// $this->template->load('anekadharma/adminlte310_anekadharma', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop', $data);
+	}
+
+
+	public function update_per_id($uuid_pembelian)
+	{
+
+
+		// $data_per_uuidspop = $this->Tbl_pembelian_model->get_by_id($uuid_spop);
+		// print_r($data_per_uuidspop->spop);
+		// die;
+
+		// print_r($uuid_pembelian);
+		// print_r("<br/>");
+
+		$get_id_pembelian = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
+		// print_r($get_id_pembelian->id);
+		// print_r("<br/>");
+
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_by_id($get_id_pembelian->id);
+		// print_r($Tbl_pembelian);
+		// print_r("<br/>");
+
+		$start = 0;
+		$data = array(
+			'button' => 'Update',
+			'action' => site_url('tbl_pembelian/update_action'),
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'start' => $start,
+			'id' => $get_id_pembelian->id,
+			'tgl_po' => date($Tbl_pembelian->tgl_po),
+			'uuid_supplier' => $Tbl_pembelian->uuid_supplier,
+			'supplier_nama' => $Tbl_pembelian->supplier_nama,
+			'statuslu' => $Tbl_pembelian->statuslu,
+			'kas_bank' => $Tbl_pembelian->kas_bank,
+			'spop' => $Tbl_pembelian->spop,
+			'nmrfakturkwitansi' => $Tbl_pembelian->nmrfakturkwitansi,
+			'uuid_gudang' => $Tbl_pembelian->uuid_gudang,
+			'nama_gudang' => $Tbl_pembelian->nama_gudang,
+
+			'uraian' => $Tbl_pembelian->uraian,
+			'uuid_barang' => $Tbl_pembelian->uuid_barang,
+			'kode_barang' => $Tbl_pembelian->kode_barang,
+
+			'jumlah' => $Tbl_pembelian->jumlah,
+			'satuan' => $Tbl_pembelian->satuan,
+			'harga_satuan' => $Tbl_pembelian->harga_satuan,
+
+		);
+
+
+
+		// print_r($data['kas_bank']);
+		// print_r("<br/>");
+		// 		print_r("<br/>");
+		// die;
+
+		// $this->template->load('anekadharma/adminlte310_anekadharma', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop', $data);
+
+		// $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop', $data);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_per_id', $data);
 	}
 
 
@@ -1284,6 +1346,24 @@ class Tbl_pembelian extends CI_Controller
 
 		if ($row) {
 			$this->Tbl_pembelian_model->delete($id);
+			$this->session->set_flashdata('message', 'Delete Record Success');
+			redirect(site_url('tbl_pembelian'));
+		} else {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(site_url('tbl_pembelian'));
+		}
+	}
+
+	public function delete_by_uuid_pembelian($uuid_pembelian)
+	{
+
+		
+		$get_id_pembelian = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
+		
+		$row = $this->Tbl_pembelian_model->get_by_id($get_id_pembelian->id);
+		
+		if ($row) {
+				$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian'));
 		} else {
@@ -1667,7 +1747,8 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_kas_kecil', $data);
 	}
 
-	public function buku_kas(){
+	public function buku_kas()
+	{
 
 		$from_date = date("Y-m-1", strtotime(date("Y-m-d")));
 		$to_date = date("Y-m-t", strtotime(date("Y-m-d")));
@@ -1685,10 +1766,9 @@ class Tbl_pembelian extends CI_Controller
 			'action_by_bulan' => site_url('tbl_pembelian/buku_kas_per_bulan'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/bukukas/adminlte310_buku_kas_list', $data);
-
-
 	}
-	public function buku_kas_per_bulan(){
+	public function buku_kas_per_bulan()
+	{
 
 		$from_date = date("Y-m-1", strtotime($this->input->post('bulan_pembelian', TRUE)));
 		$to_date = date("Y-m-t", strtotime($this->input->post('bulan_pembelian', TRUE)));
@@ -1707,10 +1787,7 @@ class Tbl_pembelian extends CI_Controller
 			'action_by_bulan' => site_url('tbl_pembelian/buku_kas_per_bulan'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/bukukas/adminlte310_buku_kas_list', $data);
-
-
 	}
-
 }
 
 /* End of file Tbl_pembelian.php */

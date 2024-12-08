@@ -71,7 +71,7 @@
                             <thead>
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
-                                    <th style="text-align:center" >Tgl Po</th>
+                                    <th style="text-align:center">Tgl Po</th>
                                     <th style="text-align:center">Spop</th>
                                     <th style="text-align:center">No. faktur/ kwitansi</th>
                                     <th style="text-align:center">Supplier</th>
@@ -101,11 +101,14 @@
                                     $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
                                     if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
-                                ?>
+                                            ?>
                                         <tr>
                                             <td><?php echo ++$start ?></td>
                                             <td>
                                                 <?php
+
+                                                
+
                                                 // echo "baris x";
                                                 // if ($x_button == 1) {
                                                 // echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
@@ -193,7 +196,7 @@
 
                                                 <?php
 
-
+                                                // echo $list_data->spop;
 
 
                                                 if (($compare_spop == $list_data->spop) and $x_button == 1) {
@@ -207,15 +210,17 @@
                                                 } else {
                                                     // echo "oooooooooooo";
                                                     echo date("d M Y", strtotime($list_data->tgl_po));
-                                                    echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
-                                                    echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
                                                 }
                                                 ?>
                                             </td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td><?php echo $list_data->spop; ?></td>
+                                            <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
+                                            
+
+                                            <td align="left"><?php echo $list_data->supplier_nama; ?></td>
                                             <!-- <td></td>
                                             <td></td> -->
                                         <?php
@@ -229,14 +234,18 @@
                                             <td><?php
                                                 echo date("d M Y", strtotime($list_data->tgl_po));
                                                 echo " ";
-                                                echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UPDATE</i>', 'class="btn btn-warning btn-xs"');
+
+                                                echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UPDATE</i>', 'class="btn btn-warning btn-xs"');
+
+                                                echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+
                                                 //echo " ";
                                                 //echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs" disabled');
                                                 //echo " ";
-                                                
+
                                                 ?>
-                                            
-                                        
+
+
                                             </td>
                                             <td align="center">
                                                 <?php
@@ -244,13 +253,13 @@
                                                 $x_button = $x_button + 1;
                                                 // echo $x_button;
                                                 echo "  ";
-                                                if($list_data->status_spop){
+                                                if ($list_data->status_spop) {
                                                     // echo $list_data->status_spop;
-                                                    echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">'. $list_data->status_spop .'</i>', 'class="btn btn-success btn-xs"');
-                                                }else{
+                                                    echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->status_spop . '</i>', 'class="btn btn-success btn-xs"');
+                                                } else {
                                                     echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">STATUS</i>', 'class="btn btn-danger btn-xs"');
                                                 }
-                                                
+
                                                 ?>
                                             </td>
 
@@ -333,7 +342,8 @@
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td></td>
+                                    <td><?php //list total per spop 
+                                        ?></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
