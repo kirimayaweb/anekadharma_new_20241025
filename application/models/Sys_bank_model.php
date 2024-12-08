@@ -8,6 +8,7 @@ class Sys_bank_model extends CI_Model
 
     public $table = 'sys_bank';
     public $id = 'id';
+    public $uuid_bank = 'uuid_bank';
     public $order = 'DESC';
 
     function __construct()
@@ -26,6 +27,13 @@ class Sys_bank_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    
+    // get data by id
+    function get_by_uuid_bank($uuid_bank)
+    {
+        $this->db->where($this->uuid_bank, $uuid_bank);
         return $this->db->get($this->table)->row();
     }
     
