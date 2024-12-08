@@ -102,8 +102,8 @@ class Tbl_kas_kecil extends CI_Controller
                 'tanggal' => $date_kas_kecil,
                 'unit' => $row_unit->nama_unit,
                 'keterangan' => $this->input->post('keterangan', TRUE),
-                'debet' => $this->input->post('debet', TRUE),
-                'kredit' => $this->input->post('kredit', TRUE),
+                'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                 // 'saldo' => $this->input->post('saldo', TRUE),
                 // 'id_usr' => $this->input->post('id_usr', TRUE),
             );
