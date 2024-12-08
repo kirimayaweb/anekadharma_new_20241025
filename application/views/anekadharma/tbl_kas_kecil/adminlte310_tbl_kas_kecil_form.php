@@ -112,11 +112,11 @@
                                     </div>
                                     <div class="col-3">
                                         <label for="double">Debet <?php echo form_error('debet') ?></label>
-                                        <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" />
+                                        <input type="text" class="form-control uang" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" />
                                     </div>
                                     <div class="col-3">
                                         <label for="double">Kredit <?php echo form_error('kredit') ?></label>
-                                        <input type="text" class="form-control" name="kredit" id="kredit" placeholder="Kredit" value="<?php echo $kredit; ?>" />
+                                        <input type="text" class="form-control uang" name="kredit" id="kredit" placeholder="Kredit" value="<?php echo $kredit; ?>" />
                                     </div>
                                 </div>
                             </div>
