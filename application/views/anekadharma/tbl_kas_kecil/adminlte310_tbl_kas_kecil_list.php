@@ -101,11 +101,11 @@
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <!-- <td style="text-align:center"><?php //echo $list_data->uuid_gudang 
                                                                                                     ?></td> -->
-                                                                <td style="text-align:center"><?php echo $list_data->tanggal ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->unit ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->keterangan ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->debet ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->kredit ?> </td>
+                                                                <td style="text-align:center"><?php echo $list_data->tanggal; ?> </td>
+                                                                <td style="text-align:center"><?php echo $list_data->unit; ?> </td>
+                                                                <td style="text-align:center"><?php echo $list_data->keterangan; ?> </td>
+                                                                <td style="text-align:center"><?php echo nominal($list_data->debet); ?> </td>
+                                                                <td style="text-align:center"><?php echo nominal($list_data->kredit); ?> </td>
                                                                 <td style="text-align:center">
                                                                     <?php
                                                                     if ($get_saldo == 0) {
