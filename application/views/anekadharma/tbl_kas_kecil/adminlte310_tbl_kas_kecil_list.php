@@ -90,11 +90,11 @@
                                                     <tbody>
                                                         <?php
                                                         $start = 0;
-
+                                                        $get_saldo = 0;
                                                         foreach ($Tbl_kas_kecil_data as $list_data) {
 
 
-                                                          
+
 
                                                         ?>
                                                             <tr>
@@ -106,7 +106,18 @@
                                                                 <td style="text-align:center"><?php echo $list_data->keterangan ?> </td>
                                                                 <td style="text-align:center"><?php echo $list_data->debet ?> </td>
                                                                 <td style="text-align:center"><?php echo $list_data->kredit ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->saldo ?> </td>
+                                                                <td style="text-align:center">
+                                                                    <?php
+                                                                    if ($get_saldo == 0) {
+                                                                        echo nominal($list_data->debet - $list_data->kredit);
+                                                                        $get_saldo = $list_data->debet - $list_data->kredit;
+                                                                    } else {
+                                                                        echo nominal($get_saldo + $list_data->debet - $list_data->kredit);
+                                                                        $get_saldo = $get_saldo + $list_data->debet - $list_data->kredit;
+                                                                    }
+                                                                    // echo $list_data->saldo 
+                                                                    ?>
+                                                                </td>
                                                                 <td style="text-align:center"></td>
 
                                                             </tr>
@@ -117,17 +128,21 @@
 
                                                     </tbody>
 
-                                                    <!-- <tfoot>
+                                                    <tfoot>
                                                         <tr>
-                                                            <th width="10px"></th>
+                                                            <th width="80px"></th>
+                                                            <!-- <th>Uuid Kas Kecil</th> -->
                                                             <th></th>
                                                             <th></th>
                                                             <th></th>
                                                             <th></th>
-                                                            <th style="text-align:right"></th>
+                                                            <th>SALDO</th>
+                                                            <th><?php echo nominal($get_saldo); ?></th>
+                                                            <!-- <th>Id Usr</th> -->
+                                                            <th width="200px"></th>
                                                         </tr>
 
-                                                    </tfoot> -->
+                                                    </tfoot>
 
 
 

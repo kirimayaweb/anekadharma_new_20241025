@@ -11,6 +11,7 @@ class Tbl_kas_kecil extends CI_Controller
         $this->load->model(array('Tbl_kas_kecil_model','Sys_unit_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
+        $this->load->helper(array('nominal'));
     }
 
     public function indexSERVERSIDE()
@@ -86,9 +87,18 @@ class Tbl_kas_kecil extends CI_Controller
             
             $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
 
+
+            if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                $date_kas_kecil = date("Y-m-d H:i:s");
+            } else {
+                $date_kas_kecil = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+            }
+
+
+
             $data = array(
                 // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
-                'tanggal' => $this->input->post('tanggal', TRUE),
+                'tanggal' => $date_kas_kecil,
                 'unit' => $row_unit->nama_unit,
                 'keterangan' => $this->input->post('keterangan', TRUE),
                 'debet' => $this->input->post('debet', TRUE),
