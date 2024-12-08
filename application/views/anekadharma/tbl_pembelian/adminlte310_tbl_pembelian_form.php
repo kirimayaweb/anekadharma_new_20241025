@@ -143,7 +143,7 @@ $get_list_data = $x_list_data;
                                 <div class="row">
                                     <div class="col-3">
                                         <label for="supplier_nama">Nama Supplier <?php echo form_error('supplier_nama') ?></label>
-                                        
+
                                         <!-- <textarea class="form-control" rows="3" name="supplier_nama" id="supplier_nama" placeholder="Supplier Nama"><?php //echo $supplier_nama; 
                                                                                                                                                             ?></textarea> -->
 
@@ -261,8 +261,24 @@ $get_list_data = $x_list_data;
                                 <div class="card-header">
 
                                     <div class="row">
-                                        <div class="col-12" text-align="center"> <strong>Detail Barang</strong></div>
+                                        
+                                    <div class="col-4" text-align="center"> </div>
+                                        
+                                        <div class="col-4" text-align="center">
+                                            <strong>Detail Barang</strong>
+                                        </div>
+
+
+
+                                        <div class="col-2" text-align="center">
+                                            <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-warning"'); ?>
+                                        </div>
+
+                                        <div class="col-2" text-align="center"> </div>
+
                                     </div>
+
+
 
                                 </div>
                                 <div class="card-body">
@@ -273,7 +289,7 @@ $get_list_data = $x_list_data;
 
                                     <!-- <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-default"> -->
                                     <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
-                                        Tambah Barang
+                                        Tambah Barang Pembelian
                                     </button>
 
 

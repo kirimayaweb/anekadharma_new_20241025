@@ -9,34 +9,29 @@ class Sys_nama_barang extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model('Sys_nama_barang_model');
+        $this->load->model(array('Sys_nama_barang_model','Persediaan_model'));
         $this->load->library('form_validation');
     }
 
     public function refresh_data_from_persediaan_data()
     {
         $sql = "SELECT `namabarang`,`satuan` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`";
-       
+
         foreach ($this->db->query($sql)->result() as $m) {
             // echo "<option value='$m->uuid_barang' ";
             // echo ">  " . strtoupper($m->kode_barang) . strtoupper($m->namabarang)  . "</option>";
-       
+
             $data = array(
                 // 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
-                'kode_barang' => str_replace(" ","",$m->namabarang),
+                'kode_barang' => str_replace(" ", "", $m->namabarang),
                 'nama_barang' => $m->namabarang,
                 'satuan' => $m->satuan,
                 // 'keterangan' => $this->input->post('keterangan', TRUE),
             );
 
             $this->Sys_nama_barang_model->insert($data);
-       
-       
         }
-print_r("sys_data_barang selesai");
-
-
-
+        print_r("sys_data_barang selesai");
     }
 
 
@@ -91,11 +86,11 @@ print_r("sys_data_barang selesai");
         }
     }
 
-    public function create()
+    public function create($source_form = null)
     {
         $data = array(
             'button' => 'Create',
-            'action' => site_url('sys_nama_barang/create_action'),
+            'action' => site_url('sys_nama_barang/create_action/' . $source_form),
             'id' => set_value('id'),
             'uuid_barang' => set_value('uuid_barang'),
             'kode_barang' => set_value('kode_barang'),
@@ -107,8 +102,10 @@ print_r("sys_data_barang selesai");
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_nama_barang/sys_nama_barang_form', $data);
     }
 
-    public function create_action()
+    public function create_action($source_form = null)
     {
+
+
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
@@ -122,9 +119,95 @@ print_r("sys_data_barang selesai");
                 'keterangan' => $this->input->post('keterangan', TRUE),
             );
 
-            $this->Sys_nama_barang_model->insert($data);
+            $id_barang_insert = $this->Sys_nama_barang_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('sys_nama_barang'));
+
+            // simpan ke data persediaan
+
+
+            $row = $this->Sys_nama_barang_model->get_by_id($id_barang_insert);
+
+            // print_r($id_barang_insert);
+            // print_r("<br/>");
+            // print_r($row->uuid_barang);
+            // print_r("<br/>");
+            // print_r($row->kode_barang);
+            // print_r("<br/>");
+            // print_r($row->nama_barang);
+            // print_r("<br/>");
+            // print_r($row->satuan);
+            // print_r("<br/>");
+            // print_r($row->keterangan);
+            // print_r("<br/>");
+            // die;
+
+            // $data = array(
+            //     'button' => 'Update',
+            //     'action' => site_url('sys_nama_barang/update_action'),
+            //     'id' => set_value('id', $row->id),
+            //     // 'uuid_barang' => set_value('uuid_barang', $row->uuid_barang),
+            //     'kode_barang' => set_value('kode_barang', $row->kode_barang),
+            //     'nama_barang' => set_value('nama_barang', $row->nama_barang),
+            //     'satuan' => set_value('satuan', $row->satuan),
+            //     'keterangan' => set_value('keterangan', $row->keterangan),
+            // );
+
+
+
+            $data = array(
+                // 'id' => $this->input->post('id', TRUE),
+                // 'tanggal' => $this->input->post('tanggal', TRUE),
+                'uuid_barang' => $row->uuid_barang,
+                'kode' => $row->kode_barang,
+                'namabarang' => $row->nama_barang,
+                'satuan' => $row->satuan,
+                // 'hpp' => $this->input->post('hpp', TRUE),
+                // 'sa' => $this->input->post('sa', TRUE),
+                // 'spop' => $this->input->post('spop', TRUE),
+                // 'beli' => $this->input->post('beli', TRUE),
+                // 'tuj' => $this->input->post('tuj', TRUE),
+                // 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+                // 'sekret' => $this->input->post('sekret', TRUE),
+                // 'cetak' => $this->input->post('cetak', TRUE),
+                // 'grafikita' => $this->input->post('grafikita', TRUE),
+                // 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+                // 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+                // 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+                // 'kbs' => $this->input->post('kbs', TRUE),
+                // 'ppbmp' => $this->input->post('ppbmp', TRUE),
+                // 'medis' => $this->input->post('medis', TRUE),
+                // 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+                // 'sembako' => $this->input->post('sembako', TRUE),
+                // 'fc_gose' => $this->input->post('fc_gose', TRUE),
+                // 'fc_manding' => $this->input->post('fc_manding', TRUE),
+                // 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+                // 'total_10' => $this->input->post('total_10', TRUE),
+                // 'nilai_persediaan' => $this->input->post('nilai_persediaan', TRUE),
+            );
+
+            $this->Persediaan_model->insert($data);
+
+
+
+            if ($source_form) {
+                // print_r("create_action");
+                // print_r("<br/>");
+                // print_r("source_form");
+                // print_r("<br/>");
+                // print_r($source_form);
+                // die;
+
+                // $previous = "javascript:history.go(-1)";
+                // if(isset($_SERVER['HTTP_REFERER'])) {
+                //     $previous = $_SERVER['HTTP_REFERER'];
+                // }
+
+                sleep(5);
+
+                header("Location: http://localhost/ANEKADHARMA_APPS/anekadharma_new_20241025/index.php/tbl_pembelian/create");
+            } else {
+                redirect(site_url('sys_nama_barang'));
+            }
         }
     }
 

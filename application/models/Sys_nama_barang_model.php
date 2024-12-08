@@ -81,6 +81,7 @@ class Sys_nama_barang_model extends CI_Model
             'id' => $this->db->insert_id()
         );
 
+        return $datainsert['id'];
     }
 
     // insert data
