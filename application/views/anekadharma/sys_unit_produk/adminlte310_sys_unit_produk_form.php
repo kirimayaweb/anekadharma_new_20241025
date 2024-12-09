@@ -59,21 +59,34 @@
                             <!-- <div class="form-group">
                                 <label for="kode_unit">Kode Unit <?php //echo form_error('kode_unit') 
                                                                     ?></label>
-                                <textarea class="form-control" rows="3" name="kode_unit" id="kode_unit" placeholder="Kode Unit"><?php echo $kode_unit; ?></textarea>
+                                <textarea class="form-control" rows="3" name="kode_unit" id="kode_unit" placeholder="Kode Unit"><?php //echo $kode_unit; 
+                                                                                                                                ?></textarea>
                             </div> -->
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-6">
+                                    <div class="col-4">
                                         <label for="nama_unit">Nama Unit <?php echo form_error('nama_unit') ?></label>
-                                        <textarea class="form-control" rows="3" name="nama_unit" id="nama_unit" placeholder="Nama Unit" disabled><?php echo $nama_unit; ?></textarea>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <label for="keterangan">tgl_transaksi <?php echo form_error('tgl_transaksi') ?></label>
+                                        <!-- <textarea class="form-control" rows="3" name="nama_unit" id="nama_unit" placeholder="Nama Unit" disabled><?php //echo $nama_unit; 
+                                                                                                                                                        ?></textarea> -->
+
+
+                                        <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                            <option value="">Pilih Unit</option>
+                                            <?php
+
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->nama_unit)  . "]</option>";
+                                            }
+                                            ?>
+                                        </select>
+
+
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="keterangan">Tanggal <?php echo form_error('tgl_transaksi') ?></label>
                                         <div class="input-group date" id="tgl_transaksi" name="tgl_transaksi" data-target-input="nearest">
                                             <input type="text" class="form-control datetimepicker-input" data-target="#tgl_transaksi" id="tgl_transaksi" name="tgl_transaksi" required />
                                             <div class="input-group-append" data-target="#tgl_transaksi" data-toggle="datetimepicker">
@@ -85,8 +98,14 @@
 
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                   
                                     <div class="col-6">
-                                        <label for="keterangan">nama_barang <?php echo form_error('nama_barang') ?></label>
+                                        <label for="keterangan">Nama Barang <?php echo form_error('nama_barang') ?></label>
                                         <input class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang">
                                     </div>
 
@@ -104,8 +123,8 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-4">
-                                        <label for="keterangan">jumlah_produksi <?php echo form_error('jumlah_produksi') ?></label>
-                                        <input class="form-control" rows="3" name="jumlah_produksi" id="jumlah_produksi" placeholder="jumlah_produksi">
+                                        <label for="keterangan">Jumlah Produksi <?php echo form_error('jumlah_produksi') ?></label>
+                                        <input class="form-control uang" rows="3" name="jumlah_produksi" id="jumlah_produksi" placeholder="jumlah_produksi">
                                     </div>
                                     <div class="col-4">
                                         <label for="keterangan">Satuan <?php echo form_error('satuan') ?></label>
@@ -113,8 +132,8 @@
 
                                     </div>
                                     <div class="col-4">
-                                        <label for="keterangan">harga_satuan <?php echo form_error('harga_satuan') ?></label>
-                                        <input class="form-control" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan">
+                                        <label for="keterangan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
+                                        <input class="form-control uang" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan">
 
                                     </div>
                                 </div>

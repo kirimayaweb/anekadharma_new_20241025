@@ -87,7 +87,7 @@ class Sys_unit_produk_model extends CI_Model
     {
         // $this->db->insert($this->table, $data);
 
-        $this->db->set('uuid_produk', "replace(uuid(),'-','')", FALSE);
+        // $this->db->set('uuid_produk', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
         $datainsert = array(
