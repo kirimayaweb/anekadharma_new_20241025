@@ -9,7 +9,7 @@ class Tbl_kas_kecil extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Tbl_kas_kecil_model','Sys_unit_model'));
+        $this->load->model(array('Tbl_kas_kecil_model', 'Sys_unit_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->helper(array('nominal'));
@@ -20,14 +20,15 @@ class Tbl_kas_kecil extends CI_Controller
         $this->load->view('tbl_kas_kecil/tbl_kas_kecil_list');
     }
 
-    public function index(){
+    public function index()
+    {
         $Tbl_kas_kecil = $this->Tbl_kas_kecil_model->get_all();
-		// $start = 0;
-		$data = array(
-			'Tbl_kas_kecil_data' => $Tbl_kas_kecil,
-			// 'start' => $start,
-		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_kas_kecil/adminlte310_tbl_kas_kecil_list', $data);
+        // $start = 0;
+        $data = array(
+            'Tbl_kas_kecil_data' => $Tbl_kas_kecil,
+            // 'start' => $start,
+        );
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_kas_kecil/adminlte310_tbl_kas_kecil_list', $data);
     }
 
     public function json()
@@ -85,7 +86,7 @@ class Tbl_kas_kecil extends CI_Controller
             $this->create();
         } else {
 
-            
+
             $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
 
 
@@ -108,7 +109,7 @@ class Tbl_kas_kecil extends CI_Controller
                 // 'id_usr' => $this->input->post('id_usr', TRUE),
             );
 
-           
+
 
             $this->Tbl_kas_kecil_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
@@ -134,7 +135,11 @@ class Tbl_kas_kecil extends CI_Controller
                 'saldo' => set_value('saldo', $row->saldo),
                 'id_usr' => set_value('id_usr', $row->id_usr),
             );
-            $this->load->view('tbl_kas_kecil/tbl_kas_kecil_form', $data);
+            
+            // $this->load->view('tbl_kas_kecil/tbl_kas_kecil_form', $data);
+            
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_kas_kecil/adminlte310_tbl_kas_kecil_form', $data);
+
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('tbl_kas_kecil'));
