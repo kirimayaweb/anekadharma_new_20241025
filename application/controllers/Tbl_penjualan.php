@@ -194,6 +194,10 @@ class Tbl_penjualan extends CI_Controller
 						'id_usr' => 1,
 					);
 
+					print_r($data);
+					print_r("<br/>");
+					print_r("<br/>");
+
 					$this->Tbl_penjualan_model->insert($data);
 				}
 			}

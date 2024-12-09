@@ -51,7 +51,7 @@ class Persediaan_model extends CI_Model
 
         // $from_date = date("1/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
         // $to_date = date("t/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
-        $to_date = '30/09/2024';
+        $to_date = '2024-09-30';
 
         // $sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
         $sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC";

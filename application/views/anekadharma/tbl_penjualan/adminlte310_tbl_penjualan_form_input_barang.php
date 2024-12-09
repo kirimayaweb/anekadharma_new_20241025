@@ -152,8 +152,9 @@
                                                 <th style="text-align:left">Tgl Jual</th>
                                                 <th style="text-align:center">Nama Barang</th>
                                                 <!-- <th style="text-align:center">Unit</th> -->
-                                                <th style="text-align:right">Jumlah</th>
+
                                                 <th style="text-align:center">Satuan</th>
+                                                <th style="text-align:right">Jumlah</th>
                                                 <th style="text-align:right">Harga Satuan</th>
                                                 <th style="text-align:right">Total</th>
 
@@ -181,8 +182,9 @@
                                                     <td><?php echo $list_data->nama_barang; ?></td>
                                                     <!-- <td><?php //echo $list_data->unit; 
                                                                 ?></td> -->
-                                                    <td style="text-align:right"><?php echo nominal($list_data->jumlah); ?></td>
+
                                                     <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
+                                                    <td style="text-align:right"><?php echo nominal($list_data->jumlah); ?></td>
                                                     <td style="text-align:right"><?php echo nominal($list_data->harga_satuan); ?></td>
                                                     <td style="text-align:right"><?php echo nominal($list_data->jumlah * $list_data->harga_satuan); ?></td>
 
@@ -234,7 +236,7 @@
 
                                         // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
 
-                                        $sql_data = "SELECT id,tanggal_beli,spop,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
+                                        $sql_data = "SELECT id,tanggal_beli,spop,uuid_barang,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
 
                                         // $sql = "SELECT * FROM tbl_pembelian WHERE id=$id_proses";
                                         $Data_stock = $this->db->query($sql_data)->result();
@@ -269,6 +271,34 @@
 
                                                         // CEK TOTAL STOCK TERSISA
                                                         // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) {  //HIDE TOTAL SISA STOCK = 0;
+
+                                                        // SISA STOCK ==> ek di tabel penjualan jumlah terjual dan dibandingkan dengan total jumlah pembelian
+
+                                                        // SELECT sum(`total_10`) FROM `persediaan` WHERE `uuid_barang`='190ef5ddb24011ef85130021ccc9061e' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='190ef5ddb24011ef85130021ccc9061e');
+
+
+                                                        $sql = "SELECT sum(`total_10`) as sisa_stock FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang')";
+
+                                                        $data_barang_per_barang = $this->db->query($sql)->row();
+
+                                                        // print_r($data_barang_per_barang->sisa_stock);
+                                                        // print_r("<br/>");
+
+
+                                                        // Total jumlah penjualan per uuid_barang
+                                                        // SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='158d764eb49a11ef8d550021ccc9061e';
+
+                                                        $sql = "SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='$list_data->uuid_barang'";
+
+                                                        $data_barang_terjual = $this->db->query($sql)->row();
+
+                                                        // print_r($data_barang_terjual->jumlah_jual);
+                                                        // print_r("<br/>");
+                                                        // print_r("<br/>");
+                                                        // print_r("<br/>");
+                                                        // print_r("<br/>");
+
+
                                                     ?>
                                                         <tr>
                                                             <td><?php echo ++$start ?></td>
@@ -280,7 +310,21 @@
                                                             <td><?php echo $list_data->namabarang; ?></td>
                                                             <td><?php echo nominal($list_data->hpp); ?></td>
                                                             <td><?php echo $list_data->satuan; ?></td>
-                                                            <td><?php echo $list_data->total_10; ?></td>
+                                                            <td>
+                                                                <?php
+                                                                // echo $list_data->total_10; 
+                                                                if ($data_barang_terjual->jumlah_jual) {
+                                                                    echo nominal($data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual);
+                                                                } else {
+                                                                    echo nominal($data_barang_per_barang->sisa_stock);
+                                                                }
+
+
+
+                                                                ?>
+                                                            </td>
+
+
                                                             <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); 
                                                                         ?></td> -->
                                                             <td>

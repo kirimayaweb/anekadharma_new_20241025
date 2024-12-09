@@ -152,7 +152,7 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>
+                                            <td> <?php echo $list_data->konsumen_nama; ?> </td>
                                           
                                         <?php
                                         } else {
