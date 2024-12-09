@@ -9,7 +9,7 @@ class Tbl_penjualan extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model','Persediaan_model'));
+		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
@@ -236,7 +236,7 @@ class Tbl_penjualan extends CI_Controller
 		// $Data_stock = $this->Persediaan_model->get_all();
 		// print_r($Data_stock);
 		// die;
-		
+
 		// print_r($id_proses);
 		// print_r("<br/>");
 		// print_r($this->input->post('tgl_jual', TRUE));
@@ -270,10 +270,11 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_proses = null)
 	{
 
-		// print_r($uuid_penjualan);
-		// print_r("<br/>");
-		// print_r($id_proses);
-		// print_r("<br/>");
+		// 		print_r($uuid_penjualan);
+		// 		print_r("<br/>");
+		// 		print_r($id_proses);
+		// 		print_r("<br/>");
+		// die;
 
 		// print_r("create_action_simpan_barang");
 		// die;
@@ -303,8 +304,18 @@ class Tbl_penjualan extends CI_Controller
 		// print_r("<br/>");
 
 		// $x_1 = $id_proses;
-		$sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
+
+		// AMBIL DATA DARI PEMBELIAN
+		// $sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
+		// $data_barang = $this->db->query($sql)->row();
+
+		// AMBIL DATA DARI PERSEDIAAN
+		$sql = "SELECT * FROM `persediaan` WHERE `id`='$id_proses'";
 		$data_barang = $this->db->query($sql)->row();
+
+
+
+
 
 		// print_r($data_barang);
 		// die;
@@ -327,9 +338,9 @@ class Tbl_penjualan extends CI_Controller
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
 		$data_nama_konsumen = $data_konsumen->nama_konsumen;
 
-		$uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
-		$data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);
-		$data_nama_unit = $data_unit->nama_unit;
+		// $uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
+		// $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);
+		// $data_nama_unit = $data_unit->nama_unit;
 
 
 		// print_r($data_nama_unit);
@@ -349,11 +360,13 @@ class Tbl_penjualan extends CI_Controller
 				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
-				'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_barang' => $data_barang->uuid_persediaan, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
-				'nama_barang' => $data_barang->uraian,
-				'uuid_unit' => $uuid_unit_selected,
-				'unit' => $data_nama_unit,
+				// 'nama_barang' => $data_barang->uraian,
+				'nama_barang' => $data_barang->namabarang,
+				// 'uuid_unit' => $uuid_unit_selected,
+				// 'unit' => $data_nama_unit,
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
 				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
@@ -378,11 +391,13 @@ class Tbl_penjualan extends CI_Controller
 				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
-				'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_barang' => $data_barang->uuid_persediaan, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
-				'nama_barang' => $data_barang->uraian,
-				'uuid_unit' => $uuid_unit_selected,
-				'unit' => $data_nama_unit,
+				// 'nama_barang' => $data_barang->uraian,
+				'nama_barang' => $data_barang->namabarang,
+				// 'uuid_unit' => $uuid_unit_selected,
+				// 'unit' => $data_nama_unit,
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
 				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),

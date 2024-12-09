@@ -65,35 +65,51 @@
                                 <div class="row">
                                     <div class="col-3">
                                         <label for="date">Tanggal <?php echo form_error('tanggal') ?></label>
-                                        
+
                                         <div class="input-group date" id="tanggal" name="tanggal" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tanggal" required />
-                                        <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
-                                            <div class="input-group-text">
-                                                <i class="fa fa-calendar"></i>
+                                            <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tanggal" value="<?php echo date("d-m-Y", strtotime($tanggal)); ?>" required />
+                                            <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
+                                                <div class="input-group-text">
+                                                    <i class="fa fa-calendar"></i>
+                                                </div>
+
                                             </div>
 
                                         </div>
-
-                                    </div>
                                     </div>
                                     <div class="col-3">
                                         <label for="unit">Unit <?php echo form_error('unit') ?></label>
-                                        <!-- <textarea class="form-control" rows="3" name="unit" id="unit" placeholder="Unit"><?php //echo $unit; ?></textarea> -->
+                                        <!-- <textarea class="form-control" rows="3" name="unit" id="unit" placeholder="Unit"><?php //echo $unit; 
+                                                                                                                                ?></textarea> -->
 
 
                                         <select name="unit" id="unit" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                                            <option value="">Pilih Unit </option>
-                                                            <?php
 
-                                                            // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                                            $sql = "select * from sys_unit order by nama_unit ASC ";
-                                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_unit' ";
-                                                                echo ">  " . strtoupper($m->nama_unit) .  "</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
+                                            <?php
+
+                                            if ($unit) {
+                                            ?>
+                                                <option value="<?php echo $unit; ?>"><?php echo $unit; ?></option>
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">Pilih Unit </option>
+                                            <?php
+                                            }
+
+
+                                            ?>
+
+                                            <?php
+
+                                            // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->nama_unit) .  "</option>";
+                                            }
+                                            ?>
+                                        </select>
 
                                     </div>
                                 </div>
@@ -122,12 +138,16 @@
                             </div>
 
                             <!-- <div class="form-group">
-                                <label for="double">Debet <?php //echo form_error('debet') ?></label>
-                                <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php //echo $debet; ?>" />
+                                <label for="double">Debet <?php //echo form_error('debet') 
+                                                            ?></label>
+                                <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php //echo $debet; 
+                                                                                                                            ?>" />
                             </div>
                             <div class="form-group">
-                                <label for="double">Kredit <?php //echo form_error('kredit') ?></label>
-                                <input type="text" class="form-control" name="kredit" id="kredit" placeholder="Kredit" value="<?php //echo $kredit; ?>" />
+                                <label for="double">Kredit <?php //echo form_error('kredit') 
+                                                            ?></label>
+                                <input type="text" class="form-control" name="kredit" id="kredit" placeholder="Kredit" value="<?php //echo $kredit; 
+                                                                                                                                ?>" />
                             </div> -->
                             <!-- <div class="form-group">
                                 <label for="double">Saldo <?php //echo form_error('saldo') 

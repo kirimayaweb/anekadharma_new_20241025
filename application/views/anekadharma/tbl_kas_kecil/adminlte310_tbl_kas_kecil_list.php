@@ -76,7 +76,7 @@
                                                     <thead>
                                                         <tr>
                                                             <th width="80px">No</th>
-                                                            <!-- <th>Uuid Kas Kecil</th> -->
+                                                            <th width="200px">Action</th>
                                                             <th>Tanggal</th>
                                                             <th>Unit</th>
                                                             <th>Keterangan</th>
@@ -84,7 +84,7 @@
                                                             <th>Kredit</th>
                                                             <th>Saldo</th>
                                                             <!-- <th>Id Usr</th> -->
-                                                            <th width="200px">Action</th>
+                                                            
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -99,14 +99,19 @@
                                                         ?>
                                                             <tr>
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
-                                                                <!-- <td style="text-align:center"><?php //echo $list_data->uuid_gudang 
-                                                                                                    ?></td> -->
+                                                                <td style="text-align:left">
+                                                                    <?php
+                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    echo ' ';
+                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                                    ?>
+                                                                </td>
                                                                 <td style="text-align:center"><?php echo $list_data->tanggal; ?> </td>
                                                                 <td style="text-align:center"><?php echo $list_data->unit; ?> </td>
                                                                 <td style="text-align:center"><?php echo $list_data->keterangan; ?> </td>
-                                                                <td style="text-align:center"><?php echo nominal($list_data->debet); ?> </td>
-                                                                <td style="text-align:center"><?php echo nominal($list_data->kredit); ?> </td>
-                                                                <td style="text-align:center">
+                                                                <td style="text-align:right"><?php echo nominal($list_data->debet); ?> </td>
+                                                                <td style="text-align:right"><?php echo nominal($list_data->kredit); ?> </td>
+                                                                <td style="text-align:right">
                                                                     <?php
                                                                     if ($get_saldo == 0) {
                                                                         echo nominal($list_data->debet - $list_data->kredit);
@@ -118,7 +123,7 @@
                                                                     // echo $list_data->saldo 
                                                                     ?>
                                                                 </td>
-                                                                <td style="text-align:center"></td>
+                                                                
 
                                                             </tr>
                                                         <?php

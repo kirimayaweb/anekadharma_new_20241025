@@ -151,7 +151,7 @@
                                                 <th style="text-align:center">No</th>
                                                 <th style="text-align:left">Tgl Jual</th>
                                                 <th style="text-align:center">Nama Barang</th>
-                                                <th style="text-align:center">Unit</th>
+                                                <!-- <th style="text-align:center">Unit</th> -->
                                                 <th style="text-align:right">Jumlah</th>
                                                 <th style="text-align:center">Satuan</th>
                                                 <th style="text-align:right">Harga Satuan</th>
@@ -179,7 +179,8 @@
                                                     <!-- <td><?php //echo $list_data->konsumen_nama; 
                                                                 ?></td> -->
                                                     <td><?php echo $list_data->nama_barang; ?></td>
-                                                    <td><?php echo $list_data->unit; ?></td>
+                                                    <!-- <td><?php //echo $list_data->unit; 
+                                                                ?></td> -->
                                                     <td style="text-align:right"><?php echo nominal($list_data->jumlah); ?></td>
                                                     <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
                                                     <td style="text-align:right"><?php echo nominal($list_data->harga_satuan); ?></td>
@@ -226,12 +227,19 @@
                                         <!-- ----------- -->
 
                                         <?php
-                                        
+
                                         // $Data_stock = $this->Tbl_pembelian_model->stock();
-                                        
+
                                         // DATA PERSEDIAAN BERDASARKAN BULAN LALU
 
-                                        $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
+                                        // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
+
+                                        $sql_data = "SELECT id,tanggal_beli,spop,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
+
+                                        // $sql = "SELECT * FROM tbl_pembelian WHERE id=$id_proses";
+                                        $Data_stock = $this->db->query($sql_data)->result();
+
+                                        // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
 
 
                                         // print_r($Data_stock);
@@ -262,126 +270,134 @@
                                                         // CEK TOTAL STOCK TERSISA
                                                         // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) {  //HIDE TOTAL SISA STOCK = 0;
                                                     ?>
-                                                            <tr>
-                                                                <td><?php echo ++$start ?></td>
-                                                                <!-- <td>
-                                                                    <?php                                                                   
+                                                        <tr>
+                                                            <td><?php echo ++$start ?></td>
+                                                            <!-- <td>
+                                                                    <?php
                                                                     // echo date("d M Y", strtotime($list_data->tgl_po));
                                                                     ?>
                                                                 </td> -->
-                                                                <td><?php echo $list_data->namabarang; ?></td>
-                                                                <td><?php echo nominal($list_data->hpp); ?></td>
-                                                                <td><?php echo $list_data->satuan; ?></td>
-                                                                <td><?php echo $list_data->total_10; ?></td>
-                                                                <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); ?></td> -->
-                                                                <td>
+                                                            <td><?php echo $list_data->namabarang; ?></td>
+                                                            <td><?php echo nominal($list_data->hpp); ?></td>
+                                                            <td><?php echo $list_data->satuan; ?></td>
+                                                            <td><?php echo $list_data->total_10; ?></td>
+                                                            <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); 
+                                                                        ?></td> -->
+                                                            <td>
+                                                                <?php
+                                                                // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
+                                                                ?>
+
+
+
+                                                                <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                    PILIH BARANG
+                                                                </button>
+
+
+
+                                                                <?php
+                                                                if (!empty($uuid_penjualan)) {
+                                                                    // print_r("ADa uuid penjualan");
+                                                                ?>
+                                                                    <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
                                                                     <?php
-                                                                    // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
+                                                                } else {
+                                                                    // print_r("TIDAK ADa uuid penjualan");
                                                                     ?>
-
-
-
-                                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                        PILIH BARANG
-                                                                    </button>
-
-
-
-                                                                    <?php
-                                                                    if (!empty($uuid_penjualan)) {
-                                                                        // print_r("ADa uuid penjualan");
-                                                                    ?>
-                                                                        <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
+                                                                        <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
                                                                         <?php
-                                                                    } else {
-                                                                        // print_r("TIDAK ADa uuid penjualan");
+                                                                    }
                                                                         ?>
-                                                                            <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
-                                                                            <?php
-                                                                        }
-                                                                            ?>
 
-                                                                            <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                                <div class="modal-dialog modal-xl">
-                                                                                    <div class="modal-content">
-                                                                                        <div class="modal-header">
-                                                                                            <h4 class="modal-title">Isi Jumlah Barang & pilih Unit</h4>
-                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                                <span aria-hidden="true">&times;</span>
-                                                                                            </button>
-                                                                                        </div>
-                                                                                        <div class="modal-body">
+                                                                        <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                            <div class="modal-dialog modal-xl">
+                                                                                <div class="modal-content">
+                                                                                    <div class="modal-header">
+                                                                                        <h4 class="modal-title">Isi Jumlah Barang & pilih Unit</h4>
+                                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                            <span aria-hidden="true">&times;</span>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                    <div class="modal-body">
 
-                                                                                            <div class="form-group">
-                                                                                                <div class="row">
-                                                                                                    <div class="col-12">
-                                                                                                        <label for="konsumen_nama">Barang </label>
-                                                                                                        <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->namabarang ?>" disabled>
-                                                                                                    </div>
+                                                                                        <div class="form-group">
+                                                                                            <div class="row">
+                                                                                                <div class="col-12">
+                                                                                                    <label for="konsumen_nama">Barang </label>
+                                                                                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->namabarang ?>" disabled>
                                                                                                 </div>
+                                                                                            </div>
 
 
 
-                                                                                                <div class="row">
-                                                                                                    <div class="col-12">
-                                                                                                        <label for="nmrpesan">Harga Satuan </label>
-                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>">
-                                                                                                    </div>
+                                                                                            <div class="row">
+                                                                                                <div class="col-4">
+                                                                                                    <label for="nmrpesan">Harga Satuan </label>
+                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>"> -->
                                                                                                 </div>
-                                                                                                <div class="row">
-
-
-                                                                                                    <div class="col-12">
-                                                                                                        <label for="nmrkirim">Jumlah </label>
-                                                                                                        <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah">
-                                                                                                    </div>
-
-
+                                                                                                <div class="col-4">
+                                                                                                    <label for="nmrkirim">Jumlah Maks= <?php echo $list_data->total_10 ?></label>
                                                                                                 </div>
+                                                                                            </div>
+                                                                                            <div class="row">
 
 
+                                                                                                <div class="col-4">
+                                                                                                    <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>">
+                                                                                                </div>
+                                                                                                <div class="col-4">
+                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
+                                                                                                    <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $list_data->total_10 ?>">
 
-                                                                                                <div class="row">
-                                                                                                    <div class="col-6">
-                                                                                                        <label for="konsumen_nama">Unit </label>
-                                                                                                        <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                                                                            <option value="">Pilih Unit</option>
-                                                                                                            <?php
-
-                                                                                                            $sql = "select * from sys_unit order by nama_unit ASC ";
-                                                                                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                                                                                echo "<option value='$m->uuid_unit' ";
-                                                                                                                echo ">  " . strtoupper($m->nama_unit)  . "</option>";
-                                                                                                            }
-                                                                                                            ?>
-                                                                                                        </select>
-                                                                                                    </div>
                                                                                                 </div>
 
 
                                                                                             </div>
 
 
+                                                                                            <!-- 
+                                                                                            <div class="row">
+                                                                                                <div class="col-6">
+                                                                                                    <label for="konsumen_nama">Konsumen </label>
+                                                                                                    <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                                                                                        <option value="">Pilih Unit</option>
+                                                                                                        <?php
+
+                                                                                                        // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                                                                                        // foreach ($this->db->query($sql)->result() as $m) {
+                                                                                                        //     echo "<option value='$m->uuid_konsumen' ";
+                                                                                                        //     echo ">  " . strtoupper($m->nama_konsumen)  . "  [" . strtoupper($m->kelompok_dipersediaan) . "]</option>";
+                                                                                                        // }
+                                                                                                        ?>
+                                                                                                    </select>
+                                                                                                </div>
+                                                                                            </div> -->
+
+
                                                                                         </div>
-                                                                                        <div class="modal-footer justify-content-between">
-                                                                                            <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
-                                                                                            <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
-                                                                                            <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
-                                                                                            <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
-                                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                                                                            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-                                                                                            <button type="submit" class="btn btn-primary">SIMPAN</button>
-                                                                                        </div>
+
+
                                                                                     </div>
-                                                                                    <!-- /.modal-content -->
+                                                                                    <div class="modal-footer justify-content-between">
+                                                                                        <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
+                                                                                        <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
+                                                                                        <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
+                                                                                        <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
+                                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                                                        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                                                                                        <button type="submit" class="btn btn-primary">SIMPAN</button>
+                                                                                    </div>
                                                                                 </div>
-
+                                                                                <!-- /.modal-content -->
                                                                             </div>
-                                                                            </form>
 
-                                                                </td>
+                                                                        </div>
+                                                                        </form>
 
-                                                            </tr>
+                                                            </td>
+
+                                                        </tr>
                                                     <?php
                                                         // }
                                                     }
