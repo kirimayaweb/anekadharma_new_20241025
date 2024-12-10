@@ -35,8 +35,12 @@
                                         <div class="col-12" text-align="center"> <strong>PRODUKSI</strong></div>
                                     </div>
                                     <div class="col-6">
-                                        <?php echo anchor(site_url('Sys_unit_produk/create'), 'Tambah Produksi', 'class="btn btn-danger"');
+                                        <?php //echo anchor(site_url('Sys_unit_produk/create'), 'Tambah Produksi', 'class="btn btn-danger"');
                                         ?>
+
+                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-select-unit">
+                                            Input Produksi
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -82,14 +86,14 @@
 
                                                             <th>Tgl Transaksi</th>
                                                             <th>Nama Unit</th>
-                                                            
+
                                                             <!-- <th>Uuid Barang</th> -->
                                                             <!-- <th>Kode Barang</th> -->
                                                             <th>Nama Barang</th>
                                                             <th>Jumlah Produksi</th>
                                                             <th>Satuan</th>
                                                             <th>Harga Satuan</th>
-                                                            
+
 
                                                         </tr>
                                                     </thead>
@@ -111,13 +115,13 @@
                                                                 </td>
 
 
-                                                                <td style="text-align:center"><?php echo $list_data->tgl_transaksi; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->nama_unit; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->nama_barang; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->jumlah_produksi; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->satuan; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->harga_satuan; ?> </td>
-                                                                
+                                                                <td style="text-align:left"><?php echo $list_data->tgl_transaksi; ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->nama_unit; ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->nama_barang; ?> </td>
+                                                                <td style="text-align:right"><?php echo $list_data->jumlah_produksi; ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->satuan; ?> </td>
+                                                                <td style="text-align:right"><?php echo $list_data->harga_satuan; ?> </td>
+
 
                                                                 <!-- `id`, `uuid_unit`, `kode_unit`, `nama_unit`, ``, `uuid_produk`, `kode_barang`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan` -->
 
@@ -178,6 +182,74 @@
 
     </section>
 </div>
+
+
+<!-- MODAL EXTRA LARGE -->
+<form action="<?php echo $action; ?>" method="post">
+    <div class="modal fade" id="modal-xl-select-unit">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Unit Produksi</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+
+
+                        <div class="row">
+
+                            <div class="col-4">
+                            </div>
+
+                            <div class="col-4">
+                                <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
+                                <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                    <option value="">Pilih Unit </option>
+                                    <?php
+
+                                    // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                    $sql = "select * from sys_unit order by nama_unit ASC ";
+                                    foreach ($this->db->query($sql)->result() as $m) {
+                                        echo "<option value='$m->uuid_unit' ";
+                                        echo ">  " . strtoupper($m->nama_unit) .  "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+
+                            <div class="col-4">
+                            </div>
+                        </div>
+
+
+
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+
+
+
+                    <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button> -->
+                    <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                    <button type="submit" class="btn btn-primary">Proses</button>
+
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+</form>
+
+<!-- END OF MODAL EXTRA LARGE -->
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">

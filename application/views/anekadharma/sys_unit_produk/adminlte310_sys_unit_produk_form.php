@@ -32,7 +32,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>TAMBAH PRODUK</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>TAMBAH PRODUK : <?php echo $nama_unit; ?> </strong></div>
                                 </div>
 
 
@@ -64,27 +64,7 @@
                             </div> -->
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-4">
-                                        <label for="nama_unit">Nama Unit <?php echo form_error('nama_unit') ?></label>
 
-                                        <!-- <textarea class="form-control" rows="3" name="nama_unit" id="nama_unit" placeholder="Nama Unit" disabled><?php //echo $nama_unit; 
-                                                                                                                                                        ?></textarea> -->
-
-
-                                        <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                            <option value="">Pilih Unit</option>
-                                            <?php
-
-                                            $sql = "select * from sys_unit order by nama_unit ASC ";
-                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_unit' ";
-                                                echo ">  " . strtoupper($m->nama_unit)  . "]</option>";
-                                            }
-                                            ?>
-                                        </select>
-
-
-                                    </div>
                                     <div class="col-4">
                                         <label for="keterangan">Tanggal <?php echo form_error('tgl_transaksi') ?></label>
                                         <div class="input-group date" id="tgl_transaksi" name="tgl_transaksi" data-target-input="nearest">
@@ -98,28 +78,20 @@
 
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="form-group">
-                                <div class="row">
-                                   
+
+
                                     <div class="col-6">
                                         <label for="keterangan">Nama Barang <?php echo form_error('nama_barang') ?></label>
                                         <input class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang">
                                     </div>
 
+
+
                                 </div>
-
-
                             </div>
-                            <!-- <div class="form-group">
-                                <div class="row">
-                                    <div class="col-6">
-                                        
-                                    </div>
-                                </div>
-                            </div> -->
+
+
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-4">
@@ -138,6 +110,13 @@
                                     </div>
                                 </div>
                             </div>
+
+
+
+
+
+<!--  -->
+
 
 
                             <input type="hidden" name="id" value="<?php echo $id; ?>" />
