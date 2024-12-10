@@ -133,7 +133,7 @@
                             <div class="card-header">
                                 <div class="row">
                                     <div class="col-12" text-align="center"> <strong>Detail Barang</strong> <button type="button" class="btn btn-warning btn-lg" data-toggle="modal" data-target="#modal-xl">
-                                            Input Barang
+                                            Input Detail Barang
                                         </button></div>
 
                                 </div>
@@ -255,6 +255,7 @@
                                                     <tr>
                                                         <th style="text-align:center">No</th>
                                                         <!-- <th style="text-align:center">Tgl Beli</th> -->
+                                                        <!-- <th style="text-align:center">UUID barang</th> -->
                                                         <th style="text-align:center">Nama barang</th>
                                                         <th style="text-align:right">Harga satuan</th>
                                                         <th style="text-align:right">satuan</th>
@@ -307,12 +308,21 @@
                                                                     // echo date("d M Y", strtotime($list_data->tgl_po));
                                                                     ?>
                                                                 </td> -->
+
+
+                                                            <!-- <td><?php //echo $list_data->uuid_barang; ?></td> -->
+
                                                             <td><?php echo $list_data->namabarang; ?></td>
+
+
                                                             <td><?php echo nominal($list_data->hpp); ?></td>
                                                             <td><?php echo $list_data->satuan; ?></td>
                                                             <td>
                                                                 <?php
                                                                 // echo $list_data->total_10; 
+
+                                                                // echo $data_barang_per_barang->sisa_stock . " - " . $data_barang_terjual->jumlah_jual;
+
                                                                 if ($data_barang_terjual->jumlah_jual) {
                                                                     echo nominal($data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual);
                                                                 } else {

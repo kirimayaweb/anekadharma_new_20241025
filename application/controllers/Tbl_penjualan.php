@@ -318,6 +318,9 @@ class Tbl_penjualan extends CI_Controller
 		$data_barang = $this->db->query($sql)->row();
 
 
+		// print_r($data_barang);
+
+		// die;
 
 
 
@@ -365,7 +368,7 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_barang' => $data_barang->uuid_persediaan, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
 				// 'nama_barang' => $data_barang->uraian,
 				'nama_barang' => $data_barang->namabarang,
@@ -396,7 +399,7 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_barang' => $data_barang->uuid_persediaan, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
 				// 'nama_barang' => $data_barang->uraian,
 				'nama_barang' => $data_barang->namabarang,

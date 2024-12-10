@@ -126,36 +126,30 @@
 
 
 
-                            <div class="card card-success">
-                                <div class="card-header">
-                                    <div class="row">
-                                        <div class="col-12" text-align="center"> <strong>Detail Barang</strong></div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-12" align="center">
+                                        <button type="submit" class="btn btn-success" data-toggle="modal" data-target="#modal-xl">
+                                            Input Barang Penjualan
+                                        </button>
                                     </div>
-                                </div>
-                                <div class="card-body">
-                                    <!-- <input id="iduraian" value="1" type="hidden" />
-                                    <div id="divuraian"></div>
-                                    <button type="button" onclick="tambahuraian(); return false;">Tambah Barang</button> -->
-
-
-                                    <!-- <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modal-default">
-                                        Tambah Barang
-                                    </button> -->
-
-                                    <button type="submit" class="btn btn-default" data-toggle="modal" data-target="#modal-xl">
-                                        Tambah Barang
-                                    </button>
                                 </div>
                             </div>
 
-                    
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-12" align="center">
+                                        <!-- <input type="hidden" name="id" value="<?php //echo $id; 
+                                                                                    ?>" /> -->
+                                        <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
+                                                                                            ?></button> -->
+                                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Cancel</a>
+                                    </div>
+                                </div>
+                            </div>
 
 
-
-                            <!-- <input type="hidden" name="id" value="<?php //echo $id; ?>" /> -->
-                            <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
-                                                                                ?></button> -->
-                            <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Cancel</a>
                         </form>
 
 
