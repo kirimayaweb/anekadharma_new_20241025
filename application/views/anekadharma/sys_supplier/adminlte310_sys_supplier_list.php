@@ -94,10 +94,10 @@
                                                             <tr>
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <!-- <td style="text-align:center"><?php //echo $list_data->uuid_gudang ?></td> -->
-                                                                <td style="text-align:center"><?php echo $list_data->kode_supplier ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->nama_supplier ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->nmr_kontak_supplier ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->alamat_supplier ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->kode_supplier ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->nama_supplier ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->nmr_kontak_supplier ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->alamat_supplier ?> </td>
                                                                 <td style="text-align:center"></td>
                                                                 
                                                             </tr>
