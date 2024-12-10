@@ -391,7 +391,7 @@
                                                                                                     <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>"> -->
                                                                                                 </div>
                                                                                                 <div class="col-4">
-                                                                                                    <label for="nmrkirim">Jumlah Maks= <?php echo $list_data->total_10 ?></label>
+                                                                                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $list_data->total_10 ?></label>
                                                                                                 </div>
                                                                                             </div>
                                                                                             <div class="row">
