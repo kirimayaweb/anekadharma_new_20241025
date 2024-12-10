@@ -621,7 +621,7 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
-		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
 		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
 		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
@@ -633,7 +633,7 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
 		xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
 		xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
-		xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
 		foreach ($this->Tbl_penjualan_model->get_all() as $data) {
 			$kolombody = 0;
@@ -643,7 +643,7 @@ class Tbl_penjualan extends CI_Controller
 			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
 			xlsWriteNumber($tablebody, $kolombody++, $data->nmrpesan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->nmrkirim);
-			xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
+			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
 			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
 			xlsWriteNumber($tablebody, $kolombody++, $data->kode_barang);
 			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
@@ -655,7 +655,7 @@ class Tbl_penjualan extends CI_Controller
 			xlsWriteNumber($tablebody, $kolombody++, $data->piutang);
 			xlsWriteNumber($tablebody, $kolombody++, $data->penjualandpp);
 			xlsWriteNumber($tablebody, $kolombody++, $data->utangppn);
-			xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 
 			$tablebody++;
 			$nourut++;
