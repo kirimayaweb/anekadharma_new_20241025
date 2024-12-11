@@ -152,10 +152,36 @@ class Tbl_penjualan extends CI_Controller
 
 
 			// GET KONSUMEN DATA
-			$get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-			$sql_uuid_konsumen = "SELECT * FROM `sys_konsumen` WHERE `uuid_konsumen`='$get_uuid_konsumen'";
-			// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
-			$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_konsumen;
+
+
+			// =================
+
+			$this->db->where('uuid_konsumen', $this->input->post('uuid_konsumen', TRUE));
+			//$this->db->where('password',  $test);
+			$sys_konsumen_data = $this->db->get('sys_konsumen');
+
+			if ($sys_konsumen_data->num_rows() > 0) {
+				// Konsumen dari sys_konsumen
+				$get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+				$sql_uuid_konsumen = "SELECT * FROM `sys_konsumen` WHERE `uuid_konsumen`='$get_uuid_konsumen'";
+				// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
+				$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_konsumen;
+			} else {
+				// Konsumen dari unit
+
+				// $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+				// $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+				// $data_nama_konsumen = $data_konsumen->nama_unit;
+
+
+				$get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+				$sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_konsumen'";
+				// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
+				$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
+			}
+
+
+
 
 			if (date("Y", strtotime($this->input->post('tgl_jual', TRUE))) < 2020) {
 				// print_r("Tahun kurang dari 2020");
@@ -251,9 +277,28 @@ class Tbl_penjualan extends CI_Controller
 		// print_r("<br/>");
 		// print_r($this->input->post('nmrkirim', TRUE));
 
-		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-		$data_nama_konsumen = $data_konsumen->nama_konsumen;
+		$this->db->where('uuid_konsumen', $this->input->post('uuid_konsumen', TRUE));
+		//$this->db->where('password',  $test);
+		$sys_konsumen_data = $this->db->get('sys_konsumen');
+
+		if ($sys_konsumen_data->num_rows() > 0) {
+			// Konsumen dari sys_konsumen
+			$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
+			$data_nama_konsumen = $data_konsumen->nama_konsumen;
+		} else {
+			// Konsumen dari unit
+
+			$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+			$data_nama_konsumen = $data_konsumen->nama_unit;
+		}
+
+
+
+
+
+
 
 		$data = array(
 			'button' => 'Simpan',

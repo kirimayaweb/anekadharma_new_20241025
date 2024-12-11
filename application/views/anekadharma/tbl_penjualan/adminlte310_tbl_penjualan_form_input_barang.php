@@ -101,6 +101,13 @@
                                         <option value="<?php echo $uuid_konsumen ?>"><?php echo $nama_konsumen ?></option>
                                         <?php
 
+                                        // Data Unit
+                                        $sql = "select * from sys_unit order by nama_unit ASC ";
+                                        foreach ($this->db->query($sql)->result() as $m) {
+                                            echo "<option value='$m->uuid_unit' ";
+                                            echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+                                        }
+                                        // Data Sys_konsumen
                                         $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
                                         foreach ($this->db->query($sql)->result() as $m) {
                                             echo "<option value='$m->uuid_konsumen' ";
@@ -310,7 +317,8 @@
                                                                 </td> -->
 
 
-                                                            <!-- <td><?php //echo $list_data->uuid_barang; ?></td> -->
+                                                            <!-- <td><?php //echo $list_data->uuid_barang; 
+                                                                        ?></td> -->
 
                                                             <td><?php echo $list_data->namabarang; ?></td>
 
@@ -324,11 +332,15 @@
                                                                 // echo $data_barang_per_barang->sisa_stock . " - " . $data_barang_terjual->jumlah_jual;
 
                                                                 if ($data_barang_terjual->jumlah_jual) {
-                                                                    echo nominal($data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual);
-                                                                } else {
-                                                                    echo nominal($data_barang_per_barang->sisa_stock);
-                                                                }
+                                                                    // echo nominal($data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual);
 
+                                                                    $sisa_stock_data = $data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual;
+                                                                } else {
+                                                                    // echo nominal($data_barang_per_barang->sisa_stock);
+
+                                                                    $sisa_stock_data = $data_barang_per_barang->sisa_stock;
+                                                                }
+                                                                echo nominal($sisa_stock_data);
 
 
                                                                 ?>
@@ -340,13 +352,26 @@
                                                             <td>
                                                                 <?php
                                                                 // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
+
+
+                                                                if ($sisa_stock_data > 0) {
+                                                                ?>
+                                                                    <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                        PILIH BARANG
+                                                                    </button>
+                                                                <?php
+                                                                } else {
+                                                                ?>
+                                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                        PILIH BARANG
+                                                                    </button>
+                                                                <?php
+                                                                }
                                                                 ?>
 
 
 
-                                                                <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                    PILIH BARANG
-                                                                </button>
+
 
 
 

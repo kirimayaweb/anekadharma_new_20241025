@@ -98,6 +98,12 @@
                                             <option value="">Pilih Konsumen</option>
                                             <?php
 
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+                                            }
+
                                             $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
                                                 echo "<option value='$m->uuid_konsumen' ";
