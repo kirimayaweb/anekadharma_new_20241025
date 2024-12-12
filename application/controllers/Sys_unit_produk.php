@@ -9,7 +9,7 @@ class Sys_unit_produk extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model'));
+        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Sys_konsumen_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->library('Pdf');
@@ -101,160 +101,159 @@ class Sys_unit_produk extends CI_Controller
             redirect(site_url('sys_unit_produk'));
         }
     }
-    
-	public function create_action_simpan_bahan($uuid_produk = null, $id_proses = null)
-	{
 
-		// 		print_r($uuid_penjualan);
-		// 		print_r("<br/>");
-		// 		print_r($id_proses);
-		// 		print_r("<br/>");
-		// die;
+    public function create_action_simpan_bahan($uuid_produk = null, $id_proses = null)
+    {
 
-		// print_r("create_action_simpan_barang");
-		// die;
-		// print_r("<br/>");
+        // 		print_r($uuid_penjualan);
+        // 		print_r("<br/>");
+        // 		print_r($id_proses);
+        // 		print_r("<br/>");
+        // die;
 
-		// print_r("tgl_jual : ");
-		// print_r($this->input->post('tgl_jual', TRUE));
-		// print_r("<br/>");
-		// print_r("uuid_konsumen : ");
-		// print_r($this->input->post('uuid_konsumen', TRUE));
-		// print_r("<br/>");
-		// print_r("nmrpesan : ");
-		// print_r($this->input->post('nmrpesan', TRUE));
-		// print_r("<br/>");
-		// print_r("nmrkirim : ");
-		// print_r($this->input->post('nmrkirim', TRUE));
-		// print_r("<br/>");
-		// print_r("id_pembelian_barang : ");
-		// print_r($id_proses);
-		// print_r("<br/>");
-		// print_r("harga_satuan_beli : ");
-		// print_r($this->input->post('harga_satuan_beli', TRUE));
-		// print_r("<br/>");
-		// print_r("jumlah : ");
-		// print_r($this->input->post('jumlah', TRUE));
-		// print_r("<br/>");
-		// print_r("<br/>");
+        // print_r("create_action_simpan_barang");
+        // die;
+        // print_r("<br/>");
 
-		// $x_1 = $id_proses;
+        // print_r("tgl_jual : ");
+        // print_r($this->input->post('tgl_jual', TRUE));
+        // print_r("<br/>");
+        // print_r("uuid_konsumen : ");
+        // print_r($this->input->post('uuid_konsumen', TRUE));
+        // print_r("<br/>");
+        // print_r("nmrpesan : ");
+        // print_r($this->input->post('nmrpesan', TRUE));
+        // print_r("<br/>");
+        // print_r("nmrkirim : ");
+        // print_r($this->input->post('nmrkirim', TRUE));
+        // print_r("<br/>");
+        // print_r("id_pembelian_barang : ");
+        // print_r($id_proses);
+        // print_r("<br/>");
+        // print_r("harga_satuan_beli : ");
+        // print_r($this->input->post('harga_satuan_beli', TRUE));
+        // print_r("<br/>");
+        // print_r("jumlah : ");
+        // print_r($this->input->post('jumlah', TRUE));
+        // print_r("<br/>");
+        // print_r("<br/>");
 
-		// AMBIL DATA DARI PEMBELIAN
-		// $sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
-		// $data_barang = $this->db->query($sql)->row();
+        // $x_1 = $id_proses;
 
-		// AMBIL DATA DARI PERSEDIAAN
-		$sql = "SELECT * FROM `persediaan` WHERE `id`='$id_proses'";
-		$data_barang = $this->db->query($sql)->row();
+        // AMBIL DATA DARI PEMBELIAN
+        // $sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
+        // $data_barang = $this->db->query($sql)->row();
 
-
-		// print_r($data_barang);
-
-		// die;
+        // AMBIL DATA DARI PERSEDIAAN
+        $sql = "SELECT * FROM `persediaan` WHERE `id`='$id_proses'";
+        $data_barang = $this->db->query($sql)->row();
 
 
+        // print_r($data_barang);
 
-		// print_r($data_barang);
-		// die;
-
-		// [uuid_pembelian] => 5d4b4221756411ef88650021ccc9061e [uuid_barang] => ae37d726715911ef9fe90021ccc906hh [tgl_po] => 2024-09-01 00:00:00 [nmrsj] => [nmrfakturkwitansi] => 1 [nmrbpb] => [uuid_spop] => 54548eeb756411ef88650021ccc9061e [spop] => 1 [uuid_supplier] => 458c5d176b2311ef80a80021ccc9061e [supplier_kode] => [supplier_nama] => Supplier 1 [uraian] => Buku [jumlah] => 2 [satuan] => rim [uuid_konsumen] => b728e22d6b5811ef80a80021ccc9061e [konsumen] => pj-atk [harga_satuan] => 100000 [harga_total] => 0 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 0000-00-00 00:00:00 [id_usr] => 1 )
-
-		// print_r($data_barang->id);
-		// print_r("<br/>");
-		// print_r($data_barang->uuid_barang);
-		// print_r("<br/>");
-		// print_r($data_barang->uraian);
-		// print_r("<br/>");
-		// print_r($data_barang->satuan);
-		// print_r("<br/>");
-
-
-		// die;
-
-		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-		$data_nama_konsumen = $data_konsumen->nama_konsumen;
-
-		// $uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
-		// $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);
-		// $data_nama_unit = $data_unit->nama_unit;
-
-
-		// print_r($data_nama_unit);
-		// print_r("<br/>");
-
-		// =========SIMPAN DATA==================
-		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
-
-
-		if ($uuid_penjualan == "new") {
-			// print_r("NEW");
-			$data = array(
-				'tgl_input' => date("Y-m-d H:i:s"),
-				'tgl_jual' => $tgl_jual_X,
-				// 'uuid_penjualan' => "new",
-				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
-				'uuid_konsumen' => $uuid_konsumen,
-				'konsumen_nama' => $data_nama_konsumen,
-				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'kode_barang' => $data_barang->kode_barang,
-				// 'nama_barang' => $data_barang->uraian,
-				'nama_barang' => $data_barang->namabarang,
-				// 'uuid_unit' => $uuid_unit_selected,
-				// 'unit' => $data_nama_unit,
-				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
-				'satuan' => $data_barang->satuan,
-				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'id_usr' => 1,
-			);
-
-			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
-			// print_r($uuid_penjualan);
-		} else {
-			// print_r("BUKAN NEW");
+        // die;
 
 
 
+        // print_r($data_barang);
+        // die;
 
-			$data = array(
-				'tgl_input' => date("Y-m-d H:i:s"),
+        // [uuid_pembelian] => 5d4b4221756411ef88650021ccc9061e [uuid_barang] => ae37d726715911ef9fe90021ccc906hh [tgl_po] => 2024-09-01 00:00:00 [nmrsj] => [nmrfakturkwitansi] => 1 [nmrbpb] => [uuid_spop] => 54548eeb756411ef88650021ccc9061e [spop] => 1 [uuid_supplier] => 458c5d176b2311ef80a80021ccc9061e [supplier_kode] => [supplier_nama] => Supplier 1 [uraian] => Buku [jumlah] => 2 [satuan] => rim [uuid_konsumen] => b728e22d6b5811ef80a80021ccc9061e [konsumen] => pj-atk [harga_satuan] => 100000 [harga_total] => 0 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 0000-00-00 00:00:00 [id_usr] => 1 )
 
-				'tgl_jual' => $tgl_jual_X,
-				'uuid_penjualan' => $uuid_penjualan,
-				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
-				'uuid_konsumen' => $uuid_konsumen,
-				'konsumen_nama' => $data_nama_konsumen,
-				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'kode_barang' => $data_barang->kode_barang,
-				// 'nama_barang' => $data_barang->uraian,
-				'nama_barang' => $data_barang->namabarang,
-				// 'uuid_unit' => $uuid_unit_selected,
-				// 'unit' => $data_nama_unit,
-				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
-				'satuan' => $data_barang->satuan,
-				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'id_usr' => 1,
-			);
-			$this->Tbl_penjualan_model->insert_add_barang($data);
-		}
-
-		// die;
-		// =========SIMPAN DATA==================
+        // print_r($data_barang->id);
+        // print_r("<br/>");
+        // print_r($data_barang->uuid_barang);
+        // print_r("<br/>");
+        // print_r($data_barang->uraian);
+        // print_r("<br/>");
+        // print_r($data_barang->satuan);
+        // print_r("<br/>");
 
 
-		// redirect("kasir_penjualan/".$uuid_penjualan);
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
-	}
+        // die;
+
+        $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+        $data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
+        
+
+        if (empty($data_konsumen)) {
+            $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+            $data_nama_konsumen = $data_konsumen->nama_unit;
+        }else{
+            $data_nama_konsumen = $data_konsumen->nama_konsumen;
+        }
+
+        // =========SIMPAN DATA==================
+        $tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
 
 
-    public function create_action_produksi($uuid_unit_process=null)
+        if ($uuid_penjualan == "new") {
+            // print_r("NEW");
+            $data = array(
+                'tgl_input' => date("Y-m-d H:i:s"),
+                'tgl_jual' => $tgl_jual_X,
+                // 'uuid_penjualan' => "new",
+                'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+                'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+                'uuid_konsumen' => $uuid_konsumen,
+                'konsumen_nama' => $data_nama_konsumen,
+                // 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+                'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+                'kode_barang' => $data_barang->kode_barang,
+                // 'nama_barang' => $data_barang->uraian,
+                'nama_barang' => $data_barang->namabarang,
+                // 'uuid_unit' => $uuid_unit_selected,
+                // 'unit' => $data_nama_unit,
+                'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
+                'satuan' => $data_barang->satuan,
+                'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+                'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+                'id_usr' => 1,
+            );
+
+            $uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
+            // print_r($uuid_penjualan);
+        } else {
+            // print_r("BUKAN NEW");
+
+
+
+
+            $data = array(
+                'tgl_input' => date("Y-m-d H:i:s"),
+
+                'tgl_jual' => $tgl_jual_X,
+                'uuid_penjualan' => $uuid_penjualan,
+                'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+                'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+                'uuid_konsumen' => $uuid_konsumen,
+                'konsumen_nama' => $data_nama_konsumen,
+                // 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+                'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+                'kode_barang' => $data_barang->kode_barang,
+                // 'nama_barang' => $data_barang->uraian,
+                'nama_barang' => $data_barang->namabarang,
+                // 'uuid_unit' => $uuid_unit_selected,
+                // 'unit' => $data_nama_unit,
+                'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
+                'satuan' => $data_barang->satuan,
+                'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+                'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+                'id_usr' => 1,
+            );
+            $this->Tbl_penjualan_model->insert_add_barang($data);
+        }
+
+        // die;
+        // =========SIMPAN DATA==================
+
+
+        // redirect("kasir_penjualan/".$uuid_penjualan);
+        redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+    }
+
+
+    public function create_action_produksi($uuid_unit_process = null)
     {
 
 

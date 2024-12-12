@@ -389,14 +389,14 @@ class Tbl_penjualan extends CI_Controller
 
 		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-		$data_nama_konsumen = $data_konsumen->nama_konsumen;
+		
 
 		if (empty($data_konsumen)) {
 			$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
 			$data_nama_konsumen = $data_konsumen->nama_unit;
+		}else{
+			$data_nama_konsumen = $data_konsumen->nama_konsumen;
 		}
-
-
 
 		// print_r($uuid_konsumen);
 		// print_r("<br/>");
@@ -407,14 +407,11 @@ class Tbl_penjualan extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-
-
 		// die;
 
 		// $uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
 		// $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);
 		// $data_nama_unit = $data_unit->nama_unit;
-
 
 		// print_r($data_nama_unit);
 		// print_r("<br/>");
