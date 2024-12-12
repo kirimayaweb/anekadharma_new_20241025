@@ -319,10 +319,10 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_proses = null)
 	{
 
-		// 		print_r($uuid_penjualan);
-		// 		print_r("<br/>");
-		// 		print_r($id_proses);
-		// 		print_r("<br/>");
+		print_r($uuid_penjualan);
+		print_r("<br/>");
+		print_r($id_proses);
+		print_r("<br/>");
 		// die;
 
 		// print_r("create_action_simpan_barang");
@@ -363,8 +363,9 @@ class Tbl_penjualan extends CI_Controller
 		$data_barang = $this->db->query($sql)->row();
 
 
-		// print_r($data_barang);
-
+		print_r($data_barang);
+		print_r("<br/>");
+		print_r("<br/>");
 		// die;
 
 
@@ -389,6 +390,26 @@ class Tbl_penjualan extends CI_Controller
 		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
 		$data_nama_konsumen = $data_konsumen->nama_konsumen;
+
+		if (empty($data_konsumen)) {
+			$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+			$data_nama_konsumen = $data_konsumen->nama_unit;
+		}
+
+
+
+		// print_r($uuid_konsumen);
+		// print_r("<br/>");
+		// print_r($data_konsumen);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($data_nama_konsumen);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+
+		// die;
 
 		// $uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
 		// $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);

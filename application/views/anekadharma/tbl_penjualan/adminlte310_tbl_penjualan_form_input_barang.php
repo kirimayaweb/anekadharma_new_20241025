@@ -243,10 +243,25 @@
 
                                         // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
 
-                                        $sql_data = "SELECT id,tanggal_beli,spop,uuid_barang,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
+                                        // $sql_data = "SELECT id,tanggal_beli,spop,uuid_barang,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
 
-                                        // $sql = "SELECT * FROM tbl_pembelian WHERE id=$id_proses";
-                                        $Data_stock = $this->db->query($sql_data)->result();
+                                        // // $sql = "SELECT * FROM tbl_pembelian WHERE id=$id_proses";
+                                        // $Data_stock = $this->db->query($sql_data)->result();
+
+
+                                        $sql_stock = "SELECT persediaan.id as id, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan, persediaan.satuan as satuan_persediaan,
+                                                tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
+                                                tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+                                                FROM persediaan  
+                                                left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+                                                left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+                                                WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+                                                ORDER BY persediaan.uuid_barang ASC";
+
+                                        // print_r($this->db->query($sql_stock)->result());
+                                        $Data_stock = $this->db->query($sql_stock)->result();
+
+
 
                                         // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
 
@@ -278,35 +293,15 @@
                                                     foreach ($Data_stock as $list_data) {
 
                                                         // CEK TOTAL STOCK TERSISA
-                                                        // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) {  //HIDE TOTAL SISA STOCK = 0;
+                                                       
+                                                        // $sql = "SELECT sum(`total_10`) as sisa_stock FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang')";
 
-                                                        // SISA STOCK ==> ek di tabel penjualan jumlah terjual dan dibandingkan dengan total jumlah pembelian
+                                                        // $data_barang_per_barang = $this->db->query($sql)->row();
+                                                    
+                                                        // $sql = "SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='$list_data->uuid_barang'";
 
-                                                        // SELECT sum(`total_10`) FROM `persediaan` WHERE `uuid_barang`='190ef5ddb24011ef85130021ccc9061e' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='190ef5ddb24011ef85130021ccc9061e');
-
-
-                                                        $sql = "SELECT sum(`total_10`) as sisa_stock FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang')";
-
-                                                        $data_barang_per_barang = $this->db->query($sql)->row();
-
-                                                        // print_r($data_barang_per_barang->sisa_stock);
-                                                        // print_r("<br/>");
-
-
-                                                        // Total jumlah penjualan per uuid_barang
-                                                        // SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='158d764eb49a11ef8d550021ccc9061e';
-
-                                                        $sql = "SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='$list_data->uuid_barang'";
-
-                                                        $data_barang_terjual = $this->db->query($sql)->row();
-
-                                                        // print_r($data_barang_terjual->jumlah_jual);
-                                                        // print_r("<br/>");
-                                                        // print_r("<br/>");
-                                                        // print_r("<br/>");
-                                                        // print_r("<br/>");
-
-
+                                                        // $data_barang_terjual = $this->db->query($sql)->row();
+                                            
                                                     ?>
                                                         <tr>
                                                             <td><?php echo ++$start ?></td>
@@ -320,26 +315,34 @@
                                                             <!-- <td><?php //echo $list_data->uuid_barang; 
                                                                         ?></td> -->
 
-                                                            <td><?php echo $list_data->namabarang; ?></td>
+                                                            <td><?php echo $list_data->nama_barang_beli; ?></td>
 
 
-                                                            <td><?php echo nominal($list_data->hpp); ?></td>
-                                                            <td><?php echo $list_data->satuan; ?></td>
+                                                            <td><?php echo nominal($list_data->harga_satuan_persediaan); ?></td>
+                                                            <td><?php echo $list_data->satuan_persediaan; ?></td>
                                                             <td>
                                                                 <?php
-                                                                // echo $list_data->total_10; 
+                                                               
+                                                                // if ($data_barang_terjual->jumlah_jual) {
+                                                                    
+                                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan - $data_barang_terjual->jumlah_jual;
+                                                                // } else {
+                                                                    
+                                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan;
+                                                                // }
 
-                                                                // echo $data_barang_per_barang->sisa_stock . " - " . $data_barang_terjual->jumlah_jual;
 
-                                                                if ($data_barang_terjual->jumlah_jual) {
-                                                                    // echo nominal($data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual);
+                                                                // echo $list_data->jumlah_sediaan;
+                                                                // echo "<br/>";
 
-                                                                    $sisa_stock_data = $data_barang_per_barang->sisa_stock - $data_barang_terjual->jumlah_jual;
-                                                                } else {
-                                                                    // echo nominal($data_barang_per_barang->sisa_stock);
+                                                                // echo $list_data->jumlah_belanja;
+                                                                // echo "<br/>";
 
-                                                                    $sisa_stock_data = $data_barang_per_barang->sisa_stock;
-                                                                }
+                                                                // echo $list_data->jumlah_terjual;
+                                                                // echo "<br/>";
+
+                                                                $sisa_stock_data = $list_data->jumlah_sediaan + $list_data->jumlah_belanja - $list_data->jumlah_terjual ;
+
                                                                 echo nominal($sisa_stock_data);
 
 
@@ -404,7 +407,7 @@
                                                                                             <div class="row">
                                                                                                 <div class="col-12">
                                                                                                     <label for="konsumen_nama">Barang </label>
-                                                                                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->namabarang ?>" disabled>
+                                                                                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->nama_barang_beli ?>" disabled>
                                                                                                 </div>
                                                                                             </div>
 
@@ -413,46 +416,25 @@
                                                                                             <div class="row">
                                                                                                 <div class="col-4">
                                                                                                     <label for="nmrpesan">Harga Satuan </label>
-                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>"> -->
+                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>"> -->
                                                                                                 </div>
                                                                                                 <div class="col-4">
-                                                                                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $list_data->total_10 ?></label>
+                                                                                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
                                                                                                 </div>
                                                                                             </div>
                                                                                             <div class="row">
 
 
                                                                                                 <div class="col-4">
-                                                                                                    <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->hpp); ?>" placeholder="<?php echo nominal($list_data->hpp); ?>">
+                                                                                                    <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>">
                                                                                                 </div>
                                                                                                 <div class="col-4">
                                                                                                     <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
-                                                                                                    <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $list_data->total_10 ?>">
+                                                                                                    <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $sisa_stock_data ?>">
 
                                                                                                 </div>
-
 
                                                                                             </div>
-
-
-                                                                                            <!-- 
-                                                                                            <div class="row">
-                                                                                                <div class="col-6">
-                                                                                                    <label for="konsumen_nama">Konsumen </label>
-                                                                                                    <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                                                                        <option value="">Pilih Unit</option>
-                                                                                                        <?php
-
-                                                                                                        // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                                                                                        // foreach ($this->db->query($sql)->result() as $m) {
-                                                                                                        //     echo "<option value='$m->uuid_konsumen' ";
-                                                                                                        //     echo ">  " . strtoupper($m->nama_konsumen)  . "  [" . strtoupper($m->kelompok_dipersediaan) . "]</option>";
-                                                                                                        // }
-                                                                                                        ?>
-                                                                                                    </select>
-                                                                                                </div>
-                                                                                            </div> -->
-
 
                                                                                         </div>
 
