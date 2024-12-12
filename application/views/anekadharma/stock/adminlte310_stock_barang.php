@@ -180,7 +180,7 @@
 
                                             // if ($list_data->harga_satuan_persediaan and $list_data->harga_satuan_persediaan > 0) {
                                             if (!empty($list_data->harga_satuan_persediaan)) {
-                                                echo $list_data->harga_satuan_persediaan;
+                                                echo nominal($list_data->harga_satuan_persediaan);
                                                 $X_harga_satuan = $list_data->harga_satuan_persediaan;
                                             } else {
                                                 echo "0";
