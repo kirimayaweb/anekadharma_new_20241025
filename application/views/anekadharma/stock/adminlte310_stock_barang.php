@@ -111,7 +111,7 @@
                                     <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th>Tgl Po</th>
                                     <th>Gudang</th>
-                                    <th>kode <br />Barang</th>
+                                    <!-- <th>kode <br />Barang</th> -->
                                     <th>nama barang <br />beli</th>
                                     <th>harga satuan <br />beli</th>
                                     <th>satuan</th>
@@ -154,13 +154,15 @@
 
                                         </td>
 
-                                        <td style="text-align:left">
-                                            <?php
-                                            // echo $list_data->kode_barang; 
 
-                                            echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->kode_barang . '</i>', 'class=""');
+                                        <!-- // echo $list_data->kode_barang;  -->
+                                        <!-- <td style="text-align:left">
+                                            <?php
+                                            
+
+                                            // echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->kode_barang . '</i>', 'class=""');
                                             ?>
-                                        </td>
+                                        </td> -->
 
                                         <td style="text-align:left">
                                             <?php
