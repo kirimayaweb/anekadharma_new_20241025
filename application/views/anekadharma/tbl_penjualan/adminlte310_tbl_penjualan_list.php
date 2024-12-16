@@ -31,7 +31,9 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA PENJUALAN</strong></div>
+                                    <div class="col-6" text-align="center"> <strong>DATA PENJUALAN</strong></div>
+                                    <div class="col-6" text-align="center"> <strong><?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN', 'class="btn btn-danger"'); ?></strong></div>
+                                    
                                 </div>
 
 
@@ -40,23 +42,13 @@
 
                             </div>
 
-
-
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN', 'class="btn btn-danger"'); ?>
-                            </div>
-                            <div class="col-4">
-
-                            </div>
                             <div class="col-2">
                                 <?php echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                             </div>
 
 
-
                         </div>
+                        
 
 
 
@@ -151,14 +143,16 @@
                                         if ($compare_nmr_kirim == $list_data->nmrkirim) {
                                         ?>
                                             <td><?php echo ++$start ?></td>
-                                            <td></td>
+                                            <td><?php //echo date("d M Y", strtotime($list_data->tgl_jual)); ?></td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
-                                                echo "";
+                                                echo "<br/>";
+                                               
                                                 echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
                                                 echo "";
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  ');
+                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  ');
+                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id),'Hapus','onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" '); 
                                                 ?>
                                             </td>
                                             <td></td>
@@ -177,7 +171,7 @@
                                             <td>
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                echo "";
+                                                echo "<br/>";
                                                 echo anchor(site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Penjualan</i>', 'class="btn btn-success btn-xs"  target="_blank"');
 
 
@@ -187,10 +181,14 @@
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
-                                                echo "";
+                                                echo "<br/>";
+                                                // echo anchor(site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Penjualan</i>', 'class="btn btn-success btn-xs"  target="_blank"');
+                                                // echo "";
                                                 echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
                                                 echo "";
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  target="_blank"');
+                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  target="_blank"');
+
+                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id),'Hapus','onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" '); 
                                                 ?>
                                             </td>
                                             <td align="left"><?php echo $list_data->nmrkirim; ?></td>
@@ -206,7 +204,7 @@
                                         <td align="left"><?php echo $list_data->nama_barang; ?></td>
                                         <td align="left"><?php echo $list_data->unit; ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
-                                        <td align="right"><?php echo $list_data->harga_satuan; ?></td>
+                                        <td align="right"><?php echo nominal($list_data->harga_satuan); ?></td>
 
 
                                         <td align="right">
