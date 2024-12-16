@@ -155,7 +155,7 @@
                                                 echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id),'Hapus','onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" '); 
                                                 ?>
                                             </td>
-                                            <td></td>
+                                            <td><?php echo $list_data->nmrkirim; ?></td>
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
                                         <?php
