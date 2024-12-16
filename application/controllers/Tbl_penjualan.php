@@ -562,8 +562,7 @@ class Tbl_penjualan extends CI_Controller
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
 		);
 
-		print_r($data);
-		die;
+		
 
 		// 2.C. MENAMPILKAN FILE DATA
 		// $data = array_merge($data);
