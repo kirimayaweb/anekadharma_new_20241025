@@ -630,9 +630,11 @@ class Tbl_penjualan extends CI_Controller
 				'tgl_jual' => set_value('tgl_jual', $row->tgl_jual),
 				'nmrpesan' => set_value('nmrpesan', $row->nmrpesan),
 				'nmrkirim' => set_value('nmrkirim', $row->nmrkirim),
+				
 				'konsumen_id' => set_value('konsumen_id', $row->konsumen_id),
 				'uuid_konsumen' => set_value('uuid_konsumen', $row->uuid_konsumen),
 				'konsumen_nama' => set_value('konsumen_nama', $row->konsumen_nama),
+
 				'id_persediaan_barang' => set_value('id_persediaan_barang', $row->id_persediaan_barang),
 				'uuid_barang' => set_value('uuid_barang', $row->uuid_barang),
 				'kode_barang' => set_value('kode_barang', $row->kode_barang),
@@ -754,7 +756,7 @@ class Tbl_penjualan extends CI_Controller
 			$data_nama_konsumen = $data_konsumen->nama_unit;
 		} else {
 			$data_id_konsumen = $data_konsumen->nama_konsumen;
-			$data_nama_konsumen = $data_konsumen->id;
+			$data_nama_konsumen = $data_konsumen->nama_konsumen;
 		}
 
 		if (empty($this->input->post('id_persediaan_barang', TRUE)) or $this->input->post('id_persediaan_barang', TRUE) == 0) {
