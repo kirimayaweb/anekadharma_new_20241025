@@ -9,6 +9,7 @@ class Tbl_penjualan_model extends CI_Model
     public $table = 'tbl_penjualan';
     public $id = 'id';
     public $tgl_jual = 'tgl_jual';
+    public $uuid_penjualan_proses = 'uuid_penjualan_proses';
     public $uuid_penjualan = 'uuid_penjualan';
     public $uuid_konsumen = 'uuid_konsumen';
     public $order = 'DESC';
@@ -38,6 +39,13 @@ class Tbl_penjualan_model extends CI_Model
     function get_all_by_uuid_penjualan_first_row($uuid_penjualan=null)
     {
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->row();
+    }
+
+    function get_all_by_uuid_penjualan_proses($uuid_penjualan_proses=null)
+    {
+        $this->db->where($this->uuid_penjualan_proses, $uuid_penjualan_proses);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->row();
     }
@@ -222,6 +230,21 @@ class Tbl_penjualan_model extends CI_Model
     function update($id, $data)
     {
         $this->db->where($this->id, $id);
+        $this->db->update($this->table, $data);
+    }
+
+    // update data
+    function update_proses($uuid_penjualan_proses, $data)
+    {
+
+        // print_r($uuid_penjualan_proses);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r($data);
+        // die;
+
+        $this->db->where($this->uuid_penjualan_proses, $uuid_penjualan_proses);
         $this->db->update($this->table, $data);
     }
 
