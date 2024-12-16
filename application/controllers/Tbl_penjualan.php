@@ -755,7 +755,7 @@ class Tbl_penjualan extends CI_Controller
 			$data_id_konsumen = $data_konsumen->id;
 			$data_nama_konsumen = $data_konsumen->nama_unit;
 		} else {
-			$data_id_konsumen = $data_konsumen->nama_konsumen;
+			$data_id_konsumen = $data_konsumen->id;
 			$data_nama_konsumen = $data_konsumen->nama_konsumen;
 		}
 
