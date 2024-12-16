@@ -7,7 +7,7 @@ class Persediaan_model extends CI_Model
 {
 
     public $table = 'persediaan';
-    public $id = '';
+    public $id = 'id';
     public $order = 'DESC';
 
     function __construct()

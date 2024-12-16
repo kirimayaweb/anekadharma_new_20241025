@@ -220,9 +220,9 @@ class Tbl_penjualan extends CI_Controller
 						'id_usr' => 1,
 					);
 
-					print_r($data);
-					print_r("<br/>");
-					print_r("<br/>");
+					// print_r($data);
+					// print_r("<br/>");
+					// print_r("<br/>");
 
 					$this->Tbl_penjualan_model->insert($data);
 				}
@@ -389,12 +389,12 @@ class Tbl_penjualan extends CI_Controller
 
 		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-		
+
 
 		if (empty($data_konsumen)) {
 			$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
 			$data_nama_konsumen = $data_konsumen->nama_unit;
-		}else{
+		} else {
 			$data_nama_konsumen = $data_konsumen->nama_konsumen;
 		}
 
@@ -418,6 +418,8 @@ class Tbl_penjualan extends CI_Controller
 
 		// =========SIMPAN DATA==================
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
+
+
 
 
 		if ($uuid_penjualan == "new") {
@@ -583,12 +585,295 @@ class Tbl_penjualan extends CI_Controller
 				'utangppn' => set_value('utangppn', $row->utangppn),
 				'id_usr' => set_value('id_usr', $row->id_usr),
 			);
-			$this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+
+			// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update', $data);
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
 		}
 	}
+
+	public function update_penjualan($uuid_penjualan_proses)
+	{
+		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
+
+
+		// print_r($row);
+		// die;
+
+		if ($row) {
+			$data = array(
+				'button' => 'Update',
+				'uuid_penjualan_proses' => $uuid_penjualan_proses,
+				'action' => site_url('Tbl_penjualan/update_action_proses/' . $uuid_penjualan_proses),
+				'id' => set_value('id', $row->id),
+				'tgl_input' => set_value('tgl_input', $row->tgl_input),
+				'tgl_jual' => set_value('tgl_jual', $row->tgl_jual),
+				'nmrpesan' => set_value('nmrpesan', $row->nmrpesan),
+				'nmrkirim' => set_value('nmrkirim', $row->nmrkirim),
+				'konsumen_id' => set_value('konsumen_id', $row->konsumen_id),
+				'konsumen_nama' => set_value('konsumen_nama', $row->konsumen_nama),
+				'kode_barang' => set_value('kode_barang', $row->kode_barang),
+				'nama_barang' => set_value('nama_barang', $row->nama_barang),
+				'unit' => set_value('unit', $row->unit),
+				'satuan' => set_value('satuan', $row->satuan),
+				'harga_satuan' => set_value('harga_satuan', $row->harga_satuan),
+				'jumlah' => set_value('jumlah', $row->jumlah),
+				'umpphpsl22' => set_value('umpphpsl22', $row->umpphpsl22),
+				'piutang' => set_value('piutang', $row->piutang),
+				'penjualandpp' => set_value('penjualandpp', $row->penjualandpp),
+				'utangppn' => set_value('utangppn', $row->utangppn),
+				'id_usr' => set_value('id_usr', $row->id_usr),
+				// 'Data_stock' => $Data_stock,
+			);
+
+			// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update_new', $data);
+		} else {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(site_url('tbl_penjualan'));
+		}
+	}
+
+	public function update_action_pilih_barang($uuid_penjualan_proses = null, $proses_cek = null, $id = null)
+	{
+
+		$row_barang = $this->Persediaan_model->get_by_id($id);
+
+		print_r($row_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r($uuid_penjualan_proses);
+		print_r("<br/>");
+		print_r($proses_cek);
+		print_r("<br/>");
+		print_r($id);
+		print_r("<br/>");
+		print_r("update_action_prosesX");
+		
+
+
+		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
+
+
+		// print_r($row);
+		// die;
+
+		if ($row) {
+			$data = array(
+				'button' => 'Update',
+				'uuid_penjualan_proses' => $uuid_penjualan_proses,
+				'action' => site_url('tbl_penjualan/update_action_proses/' . $uuid_penjualan_proses . '/'),
+				'id' => set_value('id', $row->id),
+				'tgl_input' => set_value('tgl_input', $row->tgl_input),
+				'tgl_jual' => set_value('tgl_jual', $row->tgl_jual),
+				'nmrpesan' => set_value('nmrpesan', $row->nmrpesan),
+				'nmrkirim' => set_value('nmrkirim', $row->nmrkirim),
+				'konsumen_id' => set_value('konsumen_id', $row->konsumen_id),
+				'konsumen_nama' => set_value('konsumen_nama', $row->konsumen_nama),
+
+				'uuid_barang' => set_value('uuid_barang', $row_barang->uuid_barang),
+				'kode_barang' => set_value('kode_barang', $row_barang->kode_barang),
+				'nama_barang' => set_value('nama_barang', $row_barang->namabarang),
+				'satuan' => set_value('satuan', $row_barang->satuan),
+				'harga_satuan' => set_value('harga_satuan', $row_barang->hpp),
+				
+				'unit' => set_value('unit', $row->unit),
+				
+				
+				'jumlah' => set_value('jumlah', $row->jumlah),
+				'umpphpsl22' => set_value('umpphpsl22', $row->umpphpsl22),
+				'piutang' => set_value('piutang', $row->piutang),
+				'penjualandpp' => set_value('penjualandpp', $row->penjualandpp),
+				'utangppn' => set_value('utangppn', $row->utangppn),
+				'id_usr' => set_value('id_usr', $row->id_usr),
+				// 'Data_stock' => $Data_stock,
+			);
+
+			print_r($data);
+
+			// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update_new', $data);
+		} else {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(site_url('tbl_penjualan'));
+		}
+	}
+
+	public function update_action_proses($uuid_penjualan_proses = null, $proses_cek = null, $id_barang=null)
+	{
+
+		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
+
+
+
+
+		print_r("update_action_proses");
+		print_r("<br/>");
+		print_r($uuid_penjualan_proses);
+		print_r("<br/>");
+		print_r($proses_cek);
+		print_r("<br/>");
+		print_r($id_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r($row);
+
+		// die;
+		print_r("<br/>");
+
+
+		print_r($this->input->post('tgl_jual', TRUE));
+		print_r("<br/>");
+		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
+
+		// die;
+		print_r("<br/>");
+		print_r($tgl_jual_X);
+		print_r("<br/>");
+
+		print_r($this->input->post('nmrpesan', TRUE));
+		print_r("<br/>");
+
+
+		print_r($this->input->post('nmrkirim', TRUE));
+		print_r("<br/>");
+
+		print_r($this->input->post('nama_barang', TRUE));
+		print_r("<br/>");
+
+
+
+		print_r($this->input->post('jumlah', TRUE));
+		print_r("<br/>");
+
+		print_r($this->input->post('uuid_konsumen', TRUE));
+		print_r("<br/>");
+
+		die;
+
+
+		// print_r($proses_cek);
+		// die;
+
+		// $this->_rules();
+
+		// if ($this->form_validation->run() == FALSE) {
+		// 	print_r("error");
+		// 	die;
+		// 	$this->update_penjualan($uuid_penjualan_proses);
+		// } else {
+
+		if ($proses_cek) {
+			print_r("<br/> PROSES : ");
+			print_r($proses_cek);
+			print_r("<br/>");
+			// die;
+
+
+			// Ubah Nama Barang dan atau data penjualan
+
+			// $row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
+			$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
+
+
+			// $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			// $data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
+
+
+			// if (empty($data_konsumen)) {
+			// 	$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+			// 	$data_nama_konsumen = $data_konsumen->nama_unit;
+			// } else {
+			// 	$data_nama_konsumen = $data_konsumen->nama_konsumen;
+			// }
+
+			print_r($this->input->post('tgl_jual', TRUE));
+			print_r("<br/>");
+
+			print_r($this->input->post('nmrpesan', TRUE));
+			print_r("<br/>");
+
+
+			print_r($tgl_jual_X);
+			print_r("<br/>");
+
+
+			// print_r($uuid_konsumen);
+			// print_r("<br/>");
+			// print_r($data_nama_konsumen);
+			// print_r("<br/>");
+			die;
+
+			if ($row) {
+				$data = array(
+					'button' => 'Update',
+					'action' => site_url('tbl_penjualan/update_action'),
+					'id' => set_value('id', $row->id),
+					'tgl_input' => $tgl_jual_X,
+					'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+					'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+
+					'konsumen_id' => $uuid_konsumen,
+					'konsumen_nama' => $data_nama_konsumen,
+
+					'kode_barang' => set_value('kode_barang', $row->kode_barang),
+					'nama_barang' => set_value('nama_barang', $row->nama_barang),
+
+					'unit' => set_value('unit', $row->unit),
+					'satuan' => set_value('satuan', $row->satuan),
+					'harga_satuan' => set_value('harga_satuan', $row->harga_satuan),
+					'jumlah' => set_value('jumlah', $row->jumlah),
+					'umpphpsl22' => set_value('umpphpsl22', $row->umpphpsl22),
+					'piutang' => set_value('piutang', $row->piutang),
+					'penjualandpp' => set_value('penjualandpp', $row->penjualandpp),
+					'utangppn' => set_value('utangppn', $row->utangppn),
+					'id_usr' => set_value('id_usr', $row->id_usr),
+					// 'Data_stock' => $Data_stock,
+				);
+
+				// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+				$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update', $data);
+			} else {
+				$this->session->set_flashdata('message', 'Record Not Found');
+				redirect(site_url('tbl_penjualan'));
+			}
+			// end of Ubah Nama Barang dan atau data penjualan
+
+		} else {
+
+
+
+			$data = array(
+				'tgl_input' => $this->input->post('tgl_input', TRUE),
+				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+				'konsumen_id' => $this->input->post('konsumen_id', TRUE),
+				'konsumen_nama' => $this->input->post('konsumen_nama', TRUE),
+				'kode_barang' => $this->input->post('kode_barang', TRUE),
+				'nama_barang' => $this->input->post('nama_barang', TRUE),
+				'unit' => $this->input->post('unit', TRUE),
+				'satuan' => $this->input->post('satuan', TRUE),
+				'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+				'jumlah' => $this->input->post('jumlah', TRUE),
+				'umpphpsl22' => $this->input->post('umpphpsl22', TRUE),
+				'piutang' => $this->input->post('piutang', TRUE),
+				'penjualandpp' => $this->input->post('penjualandpp', TRUE),
+				'utangppn' => $this->input->post('utangppn', TRUE),
+				'id_usr' => $this->input->post('id_usr', TRUE),
+			);
+
+
+			$this->Tbl_penjualan_model->update_proses($uuid_penjualan_proses, $data);
+			$this->session->set_flashdata('message', 'Update Record Success');
+			redirect(site_url('tbl_penjualan'));
+		}
+		// }
+	}
+
 
 	public function update_action()
 	{
