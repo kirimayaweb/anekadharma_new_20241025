@@ -31,8 +31,8 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-6" text-align="center"> <strong>DATA PENJUALAN BARU</strong></div>
-                                    <div class="col-6" text-align="center"> <strong><?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN', 'class="btn btn-danger"'); ?></strong></div>
+                                    <div class="col-5" text-align="center"> <strong>DATA PENJUALAN</strong></div>
+                                    <div class="col-7" text-align="center"> <strong><?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); ?></strong></div>
 
                                 </div>
 
@@ -177,7 +177,8 @@
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
                                                 echo "<br/>";
-                                                echo anchor(site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Penjualan</i>', 'class="btn btn-success btn-xs"  target="_blank"');
+                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
+                                                echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
 
 
 
