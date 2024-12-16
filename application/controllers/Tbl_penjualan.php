@@ -902,9 +902,10 @@ class Tbl_penjualan extends CI_Controller
 
 	public function excel()
 	{
+		$tgl_jual_Now = date("Y-m-d");
 		$this->load->helper('exportexcel');
-		$namaFile = "tbl_penjualan.xls";
-		$judul = "tbl_penjualan";
+		$namaFile = "tbl_penjualan_". $tgl_jual_Now .".xls";
+		$judul = "Data Penjualan";
 		$tablehead = 0;
 		$tablebody = 1;
 		$nourut = 1;
