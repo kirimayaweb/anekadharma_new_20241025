@@ -31,9 +31,9 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-6" text-align="center"> <strong>DATA PENJUALAN</strong></div>
+                                    <div class="col-6" text-align="center"> <strong>DATA PENJUALAN BARU</strong></div>
                                     <div class="col-6" text-align="center"> <strong><?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN', 'class="btn btn-danger"'); ?></strong></div>
-                                    
+
                                 </div>
 
 
@@ -48,7 +48,7 @@
 
 
                         </div>
-                        
+
 
 
 
@@ -97,6 +97,7 @@
                             <tbody>
                                 <?php
                                 $compare_nmr_kirim = 0;
+                                $compare_uuid_penjualan = 0;
                                 $Total_Jumlah_per_nmrkirim = 0;
                                 $Total_UMPPHPSL22_per_nmrkirim = 0;
                                 $Total_piutang_per_nmrkirim = 0;
@@ -108,11 +109,14 @@
                                 $TOTAL_ALL_piutang = 0;
                                 $TOTAL_ALL_penjualandpp = 0;
                                 $TOTAL_ALL_utangppn = 0;
+
                                 foreach ($Tbl_penjualan_data as $list_data) {
-                                    if (($compare_nmr_kirim <> $list_data->nmrkirim) and ($start >= 1)) {
+
+                                    if (($start >= 1) and ($compare_uuid_penjualan <> $list_data->uuid_penjualan)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
                                         <tr>
+                                            <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start ?></td>
                                             <td></td>
                                             <td></td>
@@ -133,26 +137,27 @@
                                             <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" ?> </td>
 
 
-
+                                            <!-- END OF BARIS TOTAL -->
                                         </tr>
                                     <?php
                                     }
                                     ?>
                                     <tr>
                                         <?php
-                                        if ($compare_nmr_kirim == $list_data->nmrkirim) {
+                                        if (($compare_nmr_kirim == $list_data->nmrkirim)  and ($compare_uuid_penjualan == $list_data->uuid_penjualan)) {
                                         ?>
                                             <td><?php echo ++$start ?></td>
-                                            <td><?php //echo date("d M Y", strtotime($list_data->tgl_jual)); ?></td>
+                                            <td><?php //echo date("d M Y", strtotime($list_data->tgl_jual)); 
+                                                ?></td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
                                                 echo "<br/>";
-                                               
+
                                                 echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
                                                 echo "";
                                                 // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  ');
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id),'Hapus','onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" '); 
+                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
                                                 ?>
                                             </td>
                                             <td><?php echo $list_data->nmrkirim; ?></td>
@@ -188,7 +193,7 @@
                                                 echo "";
                                                 // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  target="_blank"');
 
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id),'Hapus','onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" '); 
+                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
                                                 ?>
                                             </td>
                                             <td align="left"><?php echo $list_data->nmrkirim; ?></td>
@@ -266,6 +271,8 @@
 
                                         <?php
                                         $compare_nmr_kirim = $list_data->nmrkirim;
+                                        $compare_uuid_penjualan = $list_data->uuid_penjualan;
+
                                         ?>
                                     </tr>
                                 <?php
