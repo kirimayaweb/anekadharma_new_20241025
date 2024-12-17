@@ -26,6 +26,10 @@ class Sys_unit_produk extends CI_Controller
     public function index()
     {
         $Sys_unit_produk_data = $this->Sys_unit_produk_model->get_all();
+
+        print_r($Sys_unit_produk_data);
+        // die;
+
         // $start = 0;
         $data = array(
             'action' => site_url('Sys_unit_produk/create_produksi'),
@@ -712,6 +716,180 @@ class Sys_unit_produk extends CI_Controller
             redirect(site_url('sys_unit_produk'));
         }
     }
+
+    public function update_produk($uuid_produk)
+    {
+        $row_data_produk = $this->Sys_unit_produk_model->get_by_uuid_produk($uuid_produk);
+
+        if ($row_data_produk) {
+            // $data = array(
+            //     'button' => 'Update',
+            //     'action' => site_url('Sys_unit_produk/update_produk_action'),
+            //     'id' => set_value('id', $row_data_produk->id),
+
+            //     'uuid_unit' => set_value('uuid_unit', $row_data_produk->uuid_unit),
+            //     'kode_unit' => set_value('kode_unit', $row_data_produk->kode_unit),
+            //     'nama_unit' => set_value('nama_unit', $row_data_produk->nama_unit),
+
+            //     'tgl_transaksi' => set_value('tgl_transaksi', $row_data_produk->tgl_transaksi),
+
+            //     'uuid_barang' => set_value('uuid_barang', $row_data_produk->uuid_barang),
+            //     'kode_barang' => set_value('kode_barang', $row_data_produk->kode_barang),
+            //     'nama_barang' => set_value('nama_barang', $row_data_produk->nama_barang),
+
+            //     'jumlah_produksi' => set_value('jumlah_produksi', $row_data_produk->jumlah_produksi),
+            //     'satuan' => set_value('satuan', $row_data_produk->satuan),
+            //     'harga_satuan' => set_value('harga_satuan', $row_data_produk->harga_satuan),
+            // );
+            // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
+
+
+            // $get_uuid_barang = $this->input->post('uuid_barang', TRUE);
+            $sql_stock = "SELECT persediaan.id as id_persediaan_barang, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,  persediaan.satuan as satuan
+			-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
+			-- tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+			FROM persediaan  
+			-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+			-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+			WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  AND persediaan.uuid_barang='$uuid_produk'
+			ORDER BY persediaan.uuid_barang ASC";
+
+            $data_persediaan = $this->db->query($sql_stock)->row();
+
+
+            $data = array(
+                'button' => 'Update Produk',
+                'action' => site_url('sys_unit_produk/update_produk_action/' . $uuid_produk),
+
+                'id' => $row_data_produk->id,
+                'uuid_unit' => $row_data_produk->uuid_unit,
+                'kode_unit' => $row_data_produk->kode_unit,
+                'nama_unit' =>  $row_data_produk->nama_unit,
+                'tgl_transaksi' => $row_data_produk->tgl_transaksi,
+
+                'id_persediaan_barang' => $data_persediaan->id_persediaan_barang,
+                'uuid_barang' => $row_data_produk->uuid_produk,
+                'kode_barang' => $row_data_produk->kode_barang,
+                'nama_barang' => $row_data_produk->nama_barang,
+                'satuan' => $row_data_produk->satuan,
+                'harga_satuan' => $row_data_produk->harga_satuan,
+
+                'jumlah_produksi' => $row_data_produk->jumlah_produksi,
+            );
+
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
+        } else {
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('sys_unit_produk'));
+        }
+    }
+
+    public function update_produk_action($uuid_produk)
+    {
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->update($this->input->post('id', TRUE));
+        } else {
+            $data = array(
+                'uuid_unit' => $this->input->post('uuid_unit', TRUE),
+                'kode_unit' => $this->input->post('kode_unit', TRUE),
+                'nama_unit' => $this->input->post('nama_unit', TRUE),
+                'tgl_transaksi' => $this->input->post('tgl_transaksi', TRUE),
+                'uuid_produk' => $this->input->post('uuid_barang', TRUE),
+                'kode_barang' => $this->input->post('kode_barang', TRUE),
+                'nama_barang' => $this->input->post('nama_barang', TRUE),
+                'jumlah_produksi' => $this->input->post('jumlah_produksi', TRUE),
+                'satuan' => $this->input->post('satuan', TRUE),
+                'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+            );
+
+            $this->Sys_unit_produk_model->update($this->input->post('id', TRUE), $data);
+
+            $id_persediaan_barang = $this->input->post('id_persediaan_barang', TRUE);
+
+            if (date("Y", strtotime($this->input->post('tgl_transaksi', TRUE))) < 2020) {
+                $date_tgl_produksi = date("Y-m-d H:i:s");
+            } else {
+                $date_tgl_produksi = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_transaksi', TRUE)));
+            }
+
+
+
+            $data = array(
+                // 'id' => $this->input->post('id', TRUE),
+                // 'tanggal' => $date_tgl_produksi,
+                // 'tanggal_new' => $date_persediaan,
+                // 'uuid_barang' => $row_sys_nama_barang->uuid_barang,
+                // 'kode' => $row_sys_nama_barang->kode_barang,
+                'namabarang' => $this->input->post('nama_barang', TRUE),
+                'satuan' => $this->input->post('satuan', TRUE),
+                'hpp' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                // 'sa' => ,
+                'tanggal_beli' => $date_tgl_produksi,
+                'spop' => "produksi",
+                'total_10' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+            );
+
+            // SIMPAN KE PERSEDIAAN
+            $this->Persediaan_model->update($id_persediaan_barang,$data);
+
+
+            print_r("update pembelian by uuid_barang & update sys_nama_barang ==> Belum selesau");
+            die;
+            
+            // SIMPAN KE TABEL PEMBELIAN
+
+              // GET SUPPLIER DATA
+              $get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+              $sql_uuid_unit = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_unit'";
+              $get_kode_unit = $this->db->query($sql_uuid_unit)->row()->kode_unit;
+              $get_nama_unit = $this->db->query($sql_uuid_unit)->row()->nama_unit;
+
+              
+            $data = array(
+                // 'date_input' => date("Y-m-d H:i:s"),
+                'tgl_po' => $date_tgl_produksi,
+                'nmrsj' => "produksi",
+                'nmrfakturkwitansi' => "produksi",
+                'nmrbpb' => "produksi",
+                'spop' => "produksi",
+
+                'supplier_kode' => $get_kode_unit,
+                'uuid_supplier' => $get_uuid_unit,
+                'supplier_nama' => $get_nama_unit,
+
+
+
+            
+
+                // 'uuid_barang' => $row_sys_nama_barang->uuid_barang,
+                // 'kode_barang' => $row_sys_nama_barang->kode_barang,
+                'uraian' => $this->input->post('nama_barang', TRUE),
+
+                'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+                'satuan' => $this->input->post('satuan', TRUE),
+                // 'konsumen' => $get_nama_konsumen,
+                'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                // 'harga_total' => $this->input->post('harga_total', TRUE),
+                // 'statuslu' => $this->input->post('statuslu', TRUE),
+                // 'kas_bank' => $this->input->post('kas_bank', TRUE),
+                // 'uuid_gudang' => $this->input->post('uuid_gudang', TRUE),
+                // 'nama_gudang' => $get_nama_gudang,
+                // 'id_usr' => 1,
+            );
+
+            $this->Tbl_pembelian_model->update($uuid_produk,$data);
+
+            // update sys_nama_barang
+
+
+
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('sys_unit_produk'));
+        }
+    }
+
 
     public function update($id)
     {

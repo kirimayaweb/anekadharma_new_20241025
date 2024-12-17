@@ -8,6 +8,7 @@ class Sys_unit_produk_model extends CI_Model
 
     public $table = 'sys_unit_produk';
     public $id = 'id';
+    public $uuid_produk = 'uuid_produk';
     public $uuid_unit = 'uuid_unit';
     public $order = 'DESC';
 
@@ -37,6 +38,13 @@ class Sys_unit_produk_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    
+    // get data by id
+    function get_by_uuid_produk($uuid_produk)
+    {
+        $this->db->where($this->uuid_produk, $uuid_produk);
         return $this->db->get($this->table)->row();
     }
     

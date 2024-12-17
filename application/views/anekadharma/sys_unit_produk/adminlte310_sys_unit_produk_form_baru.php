@@ -95,8 +95,18 @@
 
                                     <div class="col-4">
                                         <label for="keterangan">Tanggal <?php echo form_error('tgl_transaksi') ?></label>
+
+
+                                        <?php
+                                        if ($tgl_transaksi) {
+                                            $tgl_transaksi_X = date("d-m-Y", strtotime($tgl_transaksi));
+                                        }
+                                        ?>
+
+
+
                                         <div class="input-group date" id="tgl_transaksi" name="tgl_transaksi" data-target-input="nearest">
-                                            <input type="text" class="form-control datetimepicker-input" data-target="#tgl_transaksi" id="tgl_transaksi" name="tgl_transaksi" required />
+                                            <input type="text" class="form-control datetimepicker-input" data-target="#tgl_transaksi" id="tgl_transaksi" name="tgl_transaksi" value="<?php echo $tgl_transaksi_X; ?>" required />
                                             <div class="input-group-append" data-target="#tgl_transaksi" data-toggle="datetimepicker">
                                                 <div class="input-group-text">
                                                     <i class="fa fa-calendar"></i>
@@ -110,7 +120,18 @@
                                     <div class="col-4">
                                         <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
                                         <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="">Pilih Unit </option>
+                                            <?php
+                                            if ($uuid_unit) {
+                                            ?>
+                                                <option value="<?php echo $uuid_unit; ?>"><?php echo $nama_unit; ?> </option>
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">Pilih Unit </option>
+                                            <?php
+                                            }
+                                            ?>
+
                                             <?php
 
                                             // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
@@ -125,7 +146,7 @@
 
                                     <div class="col-4">
                                         <label for="keterangan">Jumlah Produksi <?php echo form_error('jumlah_produksi') ?></label>
-                                        <input class="form-control uang" rows="3" name="jumlah_produksi" id="jumlah_produksi"  placeholder="jumlah_produksi" required>
+                                        <input class="form-control uang" rows="3" name="jumlah_produksi" id="jumlah_produksi" placeholder="jumlah_produksi" value="<?php echo $jumlah_produksi; ?>" required>
                                     </div>
 
 
