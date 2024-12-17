@@ -265,7 +265,7 @@
                                                             // $data_barang_terjual = $this->db->query($sql)->row();
 
                                                         ?>
-                                                            <tr>
+                                                            <trv>
                                                                 <td><?php echo ++$start ?></td>
                                                                 <!-- <td>
                                                                     <?php
@@ -319,14 +319,7 @@
                                                                     }
                                                                     ?>
 
-
-
-
-
-
-
-
-                                                                    <form action="<?php echo $action_bahan . "new/" . $list_data->id; ?>" method="post">
+                                                                    <!-- <form action="<?php //echo $action_bahan . "/" . $list_data->id; ?>" method="post"> -->
                                                                         <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
                                                                             <div class="modal-dialog modal-xl">
                                                                                 <div class="modal-content">
@@ -397,7 +390,7 @@
                                                                             </div>
 
                                                                         </div>
-                                                                    </form>
+                                                                    <!-- </form> -->
 
                                                                 </td>
 

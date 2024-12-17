@@ -9,7 +9,7 @@ class Sys_unit_produk extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Sys_konsumen_model'));
+        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Sys_konsumen_model', 'Tbl_pembelian_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->library('Pdf');
@@ -28,7 +28,7 @@ class Sys_unit_produk extends CI_Controller
         $Sys_unit_produk_data = $this->Sys_unit_produk_model->get_all();
         // $start = 0;
         $data = array(
-            'action' => site_url('Sys_unit_produk/create'),
+            'action' => site_url('Sys_unit_produk/create_produksi'),
             'Sys_unit_produk_data' => $Sys_unit_produk_data,
             // 'start' => $start,
         );
@@ -74,13 +74,12 @@ class Sys_unit_produk extends CI_Controller
 
         if ($this->input->post('uuid_unit', TRUE)) {
 
-
             $data_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('uuid_unit', TRUE));
 
             $data = array(
                 'button' => 'Simpan',
                 'action' => site_url('sys_unit_produk/create_action_produksi/' . $this->input->post('uuid_unit', TRUE)),
-                'action_bahan' => site_url('sys_unit_produk/create_action_simpan_bahan/' . $this->input->post('uuid_unit', TRUE)),
+                // 'action_bahan' => site_url('sys_unit_produk/create_action_simpan_bahan/' . $this->input->post('uuid_unit', TRUE)),
                 'id' => set_value('id'),
                 'uuid_unit' => $this->input->post('uuid_unit', TRUE),
                 'kode_unit' => set_value('kode_unit'),
@@ -102,14 +101,18 @@ class Sys_unit_produk extends CI_Controller
         }
     }
 
-    public function create_action_simpan_bahan($uuid_produk = null, $id_proses = null)
+    public function create_action_simpan_bahan($uuid_unit = null, $id_proses = null)
     {
 
-        // 		print_r($uuid_penjualan);
-        // 		print_r("<br/>");
-        // 		print_r($id_proses);
-        // 		print_r("<br/>");
-        // die;
+        // print_r("create_action_simpan_bahan");
+        // print_r("<br/>");
+        // print_r($uuid_unit);
+        // print_r("<br/>");
+        // print_r($id_proses);
+        // print_r("<br/>");
+        // print_r($this->input->post('uuid_konsumen', TRUE));
+        // print_r("<br/>");
+
 
         // print_r("create_action_simpan_barang");
         // die;
@@ -150,8 +153,10 @@ class Sys_unit_produk extends CI_Controller
 
 
         // print_r($data_barang);
-
-        // die;
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // // die;
 
 
 
@@ -172,16 +177,22 @@ class Sys_unit_produk extends CI_Controller
 
         // die;
 
-        $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-        $data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-        
+        // $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+        $data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_unit);
+
 
         if (empty($data_konsumen)) {
-            $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+            $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit);
+            // print_r($data_konsumen);
+            // die;
             $data_nama_konsumen = $data_konsumen->nama_unit;
-        }else{
+        } else {
             $data_nama_konsumen = $data_konsumen->nama_konsumen;
         }
+
+
+        // print_r($data_nama_konsumen);
+        // die;
 
         // =========SIMPAN DATA==================
         $tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
@@ -215,9 +226,6 @@ class Sys_unit_produk extends CI_Controller
             // print_r($uuid_penjualan);
         } else {
             // print_r("BUKAN NEW");
-
-
-
 
             $data = array(
                 'tgl_input' => date("Y-m-d H:i:s"),
@@ -253,8 +261,106 @@ class Sys_unit_produk extends CI_Controller
     }
 
 
-    public function create_action_produksi($uuid_unit_process = null)
+    public function create_produksi($id_persediaan_barang = null)
     {
+        // print_r("create_produksi");
+        // print_r("<br/>");
+        if ($id_persediaan_barang) {
+            // print_r("Sudah Ada");
+            // print_r("<br/>");
+            // print_r($id_persediaan_barang);
+
+            $data_barang_selected = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+
+            // print_r($data_barang_selected);
+
+            $data = array(
+                'button' => 'Simpan Produk',
+                'action' => site_url('sys_unit_produk/create_action_produksi/' . $id_persediaan_barang),
+
+                'id' => set_value('id'),
+                'uuid_unit' => set_value('uuid_unit'),
+                'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  set_value('nama_unit'),
+                'tgl_transaksi' => set_value('tgl_transaksi'),
+
+                'id_persediaan_barang' => $id_persediaan_barang,
+                'uuid_barang' => $data_barang_selected->uuid_barang,
+                'kode_barang' => $data_barang_selected->kode_barang,
+                'nama_barang' => $data_barang_selected->namabarang,
+                'satuan' => $data_barang_selected->satuan,
+                'harga_satuan' => $data_barang_selected->hpp,
+
+                'jumlah_produksi' => set_value('jumlah_produksi'),
+            );
+
+            // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
+
+            // $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
+        } else {
+            // print_r("Baru");
+            // print_r("<br/>");
+            // print_r($this->input->post('nama_barang', TRUE));
+            // die;
+
+
+
+            $data = array(
+                'button' => 'Simpan Produk',
+                'action' => site_url('sys_unit_produk/create_action_produksi/' . $id_persediaan_barang),
+
+                'id' => set_value('id'),
+                'uuid_unit' => set_value('uuid_unit'),
+                'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  set_value('nama_unit'),
+                'tgl_transaksi' => set_value('tgl_transaksi'),
+
+                'id_persediaan_barang' => set_value('id_persediaan_barang'),
+                'uuid_barang' => set_value('uuid_barang'),
+                'kode_barang' => set_value('kode_barang'),
+                'nama_barang' => $this->input->post('nama_barang', TRUE),
+                'satuan' => set_value('satuan'),
+                'harga_satuan' => set_value('harga_satuan'),
+
+                'jumlah_produksi' => set_value('jumlah_produksi'),
+            );
+
+            // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
+
+
+        }
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
+    }
+
+
+    public function create_action_produksi($id_persediaan_barang = null)
+    {
+
+
+        // print_r($id_persediaan_barang);
+        // print_r("<br/>");
+
+        // print_r($this->input->post('uuid_barang', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('nama_barang', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('satuan', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('harga_satuan', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('tgl_transaksi', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('uuid_unit', TRUE));
+        // print_r("<br/>");
+
+        // print_r($this->input->post('jumlah_produksi', TRUE));
+        // print_r("<br/>");
+
 
 
 
@@ -265,24 +371,12 @@ class Sys_unit_produk extends CI_Controller
         } else {
 
 
-            // INPUT BARANG BARU : Simpan ke tabel sys_barang & persediaan
 
-
-
-            $data = array(
-                // 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
-                'kode_barang' => str_replace(" ", "", $this->input->post('nama_barang', TRUE)),
-                'nama_barang' => $this->input->post('nama_barang', TRUE),
-                'satuan' => $this->input->post('satuan', TRUE),
-                // 'keterangan' => $this->input->post('keterangan', TRUE),
-            );
-
-            $id_sys_nama_barang = $this->Sys_nama_barang_model->insert($data);
-
-            // kemudian mendapatkan uuid_barang setelah input ke tabel sys_namabarang
-
-            $row_sys_nama_barang = $this->Sys_nama_barang_model->get_by_id($id_sys_nama_barang);
-
+            // GET SUPPLIER DATA
+            $get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+            $sql_uuid_unit = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_unit'";
+            $get_kode_unit = $this->db->query($sql_uuid_unit)->row()->kode_unit;
+            $get_nama_unit = $this->db->query($sql_uuid_unit)->row()->nama_unit;
 
             // Kemudian Insert ke tabel persediaan
 
@@ -293,21 +387,145 @@ class Sys_unit_produk extends CI_Controller
             }
 
 
+            if ($id_persediaan_barang) {
+                // Sudah ada nama produk
 
-            $data = array(
-                // 'id' => $this->input->post('id', TRUE),
-                'tanggal' => $date_tgl_produksi,
-                // 'tanggal_new' => $date_persediaan,
-                'kode' => $row_sys_nama_barang->kode_barang,
-                'namabarang' => $row_sys_nama_barang->nama_barang,
-                'satuan' => $this->input->post('satuan', TRUE),
-                'hpp' => $this->input->post('harga_satuan', TRUE),
-                'sa' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
-                'tanggal_beli' => $date_tgl_produksi,
-                'spop' => "produksi",
-                'total_10' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
-            );
-            $this->Persediaan_model->insert($data);
+                // 
+
+
+
+
+                $row_sys_nama_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
+
+                $data = array(
+                    // 'id' => $this->input->post('id', TRUE),
+                    'tanggal' => $date_tgl_produksi,
+                    // 'tanggal_new' => $date_persediaan,
+                    'uuid_barang' => $row_sys_nama_barang->uuid_barang,
+                    'kode' => $row_sys_nama_barang->kode_barang,
+                    'namabarang' => $row_sys_nama_barang->nama_barang,
+                    'satuan' => $this->input->post('satuan', TRUE),
+                    'hpp' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                    // 'sa' => ,
+                    'tanggal_beli' => $date_tgl_produksi,
+                    'spop' => "produksi",
+                    'total_10' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+                );
+
+                // SIMPAN KE PERSEDIAAN
+                $this->Persediaan_model->insert($data);
+
+
+                // SIMPAN KE TABEL PEMBELIAN
+
+                $data = array(
+                    'date_input' => date("Y-m-d H:i:s"),
+                    'tgl_po' => $date_tgl_produksi,
+                    'nmrsj' => "produksi",
+                    'nmrfakturkwitansi' => "produksi",
+                    'nmrbpb' => "produksi",
+                    'spop' => "produksi",
+
+                    'supplier_kode' => $get_kode_unit,
+                    'uuid_supplier' => $this->input->post('uuid_unit', TRUE),
+                    'supplier_nama' => $get_nama_unit,
+
+                    'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+                    'uraian' => $this->input->post('nama_barang', TRUE),
+                    'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+                    'satuan' => $this->input->post('satuan', TRUE),
+                    // 'konsumen' => $get_nama_konsumen,
+                    'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                    // 'harga_total' => $this->input->post('harga_total', TRUE),
+                    // 'statuslu' => $this->input->post('statuslu', TRUE),
+                    // 'kas_bank' => $this->input->post('kas_bank', TRUE),
+                    // 'uuid_gudang' => $this->input->post('uuid_gudang', TRUE),
+                    // 'nama_gudang' => $get_nama_gudang,
+                    // 'id_usr' => 1,
+                );
+
+                $this->Tbl_pembelian_model->insert($data);
+            } else {
+                // Produk Baru
+                // INPUT BARANG BARU : Simpan ke tabel sys_barang & persediaan
+
+                $data = array(
+                    // 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
+                    'kode_barang' => str_replace(" ", "", $this->input->post('nama_barang', TRUE)),
+                    'nama_barang' => $this->input->post('nama_barang', TRUE),
+                    'satuan' => $this->input->post('satuan', TRUE),
+                    // 'keterangan' => $this->input->post('keterangan', TRUE),
+                );
+
+                $id_sys_nama_barang = $this->Sys_nama_barang_model->insert($data);
+
+                // kemudian mendapatkan uuid_barang setelah input ke tabel sys_namabarang
+
+                $row_sys_nama_barang = $this->Sys_nama_barang_model->get_by_id($id_sys_nama_barang);
+
+                $data = array(
+                    // 'id' => $this->input->post('id', TRUE),
+                    'tanggal' => $date_tgl_produksi,
+                    // 'tanggal_new' => $date_persediaan,
+                    'uuid_barang' => $row_sys_nama_barang->uuid_barang,
+                    'kode' => $row_sys_nama_barang->kode_barang,
+                    'namabarang' => $row_sys_nama_barang->nama_barang,
+                    'satuan' => $this->input->post('satuan', TRUE),
+                    'hpp' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                    // 'sa' => ,
+                    'tanggal_beli' => $date_tgl_produksi,
+                    'spop' => "produksi",
+                    'total_10' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+                );
+
+                // SIMPAN KE PERSEDIAAN
+                $this->Persediaan_model->insert($data);
+
+
+                // SIMPAN KE TABEL PEMBELIAN
+
+                $data = array(
+                    'date_input' => date("Y-m-d H:i:s"),
+                    'tgl_po' => $date_tgl_produksi,
+                    'nmrsj' => "produksi",
+                    'nmrfakturkwitansi' => "produksi",
+                    'nmrbpb' => "produksi",
+                    'spop' => "produksi",
+
+                    'supplier_kode' => $get_kode_unit,
+                    'uuid_supplier' => $this->input->post('uuid_unit', TRUE),
+                    'supplier_nama' => $get_nama_unit,
+
+
+                    'uuid_barang' => $row_sys_nama_barang->uuid_barang,
+                    'kode_barang' => $row_sys_nama_barang->kode_barang,
+                    'uraian' => $row_sys_nama_barang->nama_barang,
+
+                    'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
+                    'satuan' => $this->input->post('satuan', TRUE),
+                    // 'konsumen' => $get_nama_konsumen,
+                    'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+                    // 'harga_total' => $this->input->post('harga_total', TRUE),
+                    // 'statuslu' => $this->input->post('statuslu', TRUE),
+                    // 'kas_bank' => $this->input->post('kas_bank', TRUE),
+                    // 'uuid_gudang' => $this->input->post('uuid_gudang', TRUE),
+                    // 'nama_gudang' => $get_nama_gudang,
+                    // 'id_usr' => 1,
+                );
+
+                $this->Tbl_pembelian_model->insert($data);
+            }
+
+
+
+
+
+
+
+            // print_r($data);
+            // die;
+
+
 
             // End of Kemudian Insert ke tabel persediaan
 
