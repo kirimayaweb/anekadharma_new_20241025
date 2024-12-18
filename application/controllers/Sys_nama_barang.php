@@ -226,7 +226,8 @@ class Sys_nama_barang extends CI_Controller
                 'satuan' => set_value('satuan', $row->satuan),
                 'keterangan' => set_value('keterangan', $row->keterangan),
             );
-            $this->load->view('sys_nama_barang/sys_nama_barang_form', $data);
+            // $this->load->view('sys_nama_barang/sys_nama_barang_form', $data);
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_nama_barang/sys_nama_barang_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('sys_nama_barang'));
