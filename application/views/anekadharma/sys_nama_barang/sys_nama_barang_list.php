@@ -113,8 +113,8 @@
                                         <td><?php echo $sys_nama_barang->keterangan ?></td>
                                         <td style="text-align:center" width="200px">
                                             <?php
-                                            echo anchor(site_url('sys_nama_barang/read/' . $sys_nama_barang->id), 'Read');
-                                            echo ' | ';
+                                            // echo anchor(site_url('sys_nama_barang/read/' . $sys_nama_barang->id), 'Read');
+                                            // echo ' | ';
                                             echo anchor(site_url('sys_nama_barang/update/' . $sys_nama_barang->id), 'Update');
                                             echo ' | ';
                                             echo anchor(site_url('sys_nama_barang/delete/' . $sys_nama_barang->id), 'Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
