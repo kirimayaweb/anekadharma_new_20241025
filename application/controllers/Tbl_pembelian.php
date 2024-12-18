@@ -127,7 +127,6 @@ class Tbl_pembelian extends CI_Controller
 
 			// print_r($this->db->query($sql_stock)->result());
 			$Data_stock = $this->db->query($sql_stock)->result();
-
 		} else {
 			// $Data_stock = $this->Tbl_pembelian_model->stock();
 			// print_r("NON  IF SEMUA");
@@ -149,7 +148,7 @@ class Tbl_pembelian extends CI_Controller
 			'Data_stock' => $Data_stock,
 		);
 
-		
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/stock/adminlte310_stock_barang', $data);
 	}
 
@@ -1302,13 +1301,9 @@ class Tbl_pembelian extends CI_Controller
 			'harga_satuan' => $Tbl_pembelian->harga_satuan,
 
 		);
+print_r($data);
 
 
-
-		// print_r($data['kas_bank']);
-		// print_r("<br/>");
-		// 		print_r("<br/>");
-		// die;
 
 		// $this->template->load('anekadharma/adminlte310_anekadharma', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop', $data);
 
@@ -1321,31 +1316,163 @@ class Tbl_pembelian extends CI_Controller
 
 	public function update_action()
 	{
+
+		// print_r($this->input->post('id', TRUE));
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
 		$this->_rules();
 
 		if ($this->form_validation->run() == FALSE) {
 			$this->update($this->input->post('id', TRUE));
 		} else {
+
+			if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
+				// print_r("Tahun kurang dari 2020");
+				$date_po = date("Y-m-d H:i:s");
+			} else {
+				// print_r("Tahun lebih dari 2020");
+				$date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+			}
+
+
+			// GET SUPPLIER DATA
+			$get_uuid_supplier = $this->input->post('uuid_supplier', TRUE);
+			$sql_uuid_supplier = "SELECT * FROM `sys_supplier` WHERE `uuid_supplier`='$get_uuid_supplier'";
+			$get_kode_supplier = $this->db->query($sql_uuid_supplier)->row()->kode_supplier;
+			$get_nama_supplier = $this->db->query($sql_uuid_supplier)->row()->nama_supplier;
+
+			// // GET KONSUMEN DATA
+			// $GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+
+			// $sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$GET_uuid_konsumen'";
+			// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_unit;
+			// $get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
+
+
+			// $this->db->where('uuid_konsumen', $this->input->post('uuid_konsumen', TRUE));
+			// //$this->db->where('password',  $test);
+			// $sys_konsumen_data = $this->db->get('sys_konsumen');
+
+			// if ($sys_konsumen_data->num_rows() > 0) {
+			// 	// Konsumen dari sys_konsumen
+			// 	$get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			// 	$sql_uuid_konsumen = "SELECT * FROM `sys_konsumen` WHERE `uuid_konsumen`='$get_uuid_konsumen'";
+			// 	// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
+			// 	$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_konsumen;
+			// } else {
+			// 	// Konsumen dari unit
+
+			// 	// $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			// 	// $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+			// 	// $data_nama_konsumen = $data_konsumen->nama_unit;
+
+
+			// 	$get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+			// 	$sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_konsumen'";
+			// 	// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
+			// 	$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
+			// }
+
+			// print_r($get_nama_konsumen);
+			// die;
+
+
+
+
+
+
+
+
+
+
+			// GET BARANG DATA
+			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
+			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
+			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
+			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+
+			// print_r($GET_uuid_barang);
+			// print_r("<br/>");
+			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
+			$harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+			$TOTAL_X = $jumlah_x * $harga_satuan_x;
+
+
+			// GET GUDANG DATA
+			$GET_uuid_gudang = $this->input->post('uuid_gudang', TRUE);
+			$sql_uuid_gudang = "SELECT * FROM `sys_gudang` WHERE `uuid_gudang`='$GET_uuid_gudang'";
+			$get_kode_gudang = $this->db->query($sql_uuid_gudang)->row()->kode_gudang;
+			$get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
+
+
+
+
+			// $data = array(
+			// 	'tgl_po' => $this->input->post('tgl_po', TRUE),
+			// 	'nmrsj' => $this->input->post('nmrsj', TRUE),
+			// 	'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+			// 	'nmrbpb' => $this->input->post('nmrbpb', TRUE),
+			// 	'spop' => $this->input->post('spop', TRUE),
+			// 	'supplier_kode' => $this->input->post('supplier_kode', TRUE),
+			// 	'supplier_nama' => $this->input->post('supplier_nama', TRUE),
+			// 	'uraian' => $this->input->post('uraian', TRUE),
+			// 	'jumlah' => $this->input->post('jumlah', TRUE),
+			// 	'satuan' => $this->input->post('satuan', TRUE),
+			// 	'konsumen' => $this->input->post('konsumen', TRUE),
+			// 	'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+			// 	'harga_total' => $this->input->post('harga_total', TRUE),
+			// 	'statuslu' => $this->input->post('statuslu', TRUE),
+			// 	'kas_bank' => $this->input->post('kas_bank', TRUE),
+			// 	'tgl_bayar' => $this->input->post('tgl_bayar', TRUE),
+			// 	'id_usr' => $this->input->post('id_usr', TRUE),
+			// );
+
+
+
 			$data = array(
-				'tgl_po' => $this->input->post('tgl_po', TRUE),
-				'nmrsj' => $this->input->post('nmrsj', TRUE),
+				// 'date_input' => date("Y-m-d H:i:s"),
+
+				'tgl_po' => $date_po,
+
+				// 'nmrsj' => $this->input->post('nmrsj', TRUE),
+
 				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
-				'nmrbpb' => $this->input->post('nmrbpb', TRUE),
+
+				// 'nmrbpb' => $this->input->post('nmrbpb', TRUE),
+
 				'spop' => $this->input->post('spop', TRUE),
-				'supplier_kode' => $this->input->post('supplier_kode', TRUE),
-				'supplier_nama' => $this->input->post('supplier_nama', TRUE),
-				'uraian' => $this->input->post('uraian', TRUE),
+
+				// 'supplier_kode' => $get_kode_supplier,
+				'uuid_supplier' => $this->input->post('uuid_supplier', TRUE),
+				'supplier_nama' => $get_nama_supplier,
+
+				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+
+				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'kode_barang' => $get_kode_barang,
+				'uraian' => $get_nama_barang,
+
 				'jumlah' => $this->input->post('jumlah', TRUE),
 				'satuan' => $this->input->post('satuan', TRUE),
-				'konsumen' => $this->input->post('konsumen', TRUE),
 				'harga_satuan' => $this->input->post('harga_satuan', TRUE),
-				'harga_total' => $this->input->post('harga_total', TRUE),
+
+				'uuid_konsumen' => $this->input->post('uuid_konsumen', TRUE),
+				// 'konsumen' => $get_nama_konsumen,
+
+				'harga_total' => $TOTAL_X,
 				'statuslu' => $this->input->post('statuslu', TRUE),
 				'kas_bank' => $this->input->post('kas_bank', TRUE),
-				'tgl_bayar' => $this->input->post('tgl_bayar', TRUE),
-				'id_usr' => $this->input->post('id_usr', TRUE),
+				'uuid_gudang' => $this->input->post('uuid_gudang', TRUE),
+				'nama_gudang' => $get_nama_gudang,
+				// 'id_usr' => 1,
 			);
 
+
+
+			// print_r($data);
+			// die;
 			$this->Tbl_pembelian_model->update($this->input->post('id', TRUE), $data);
 			$this->session->set_flashdata('message', 'Update Record Success');
 			redirect(site_url('tbl_pembelian'));

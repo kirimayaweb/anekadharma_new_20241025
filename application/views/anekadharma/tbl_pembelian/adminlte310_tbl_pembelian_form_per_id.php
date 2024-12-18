@@ -68,8 +68,23 @@
                                 <div class="col-3">
                                     <!-- <input type="text" class="form-control" name="tgl_po" id="tgl_po" placeholder="Tgl Po" value="<?php //echo $tgl_po; 
                                                                                                                                         ?>" /> -->
+                                    <?php
+
+                                    if (date("Y", strtotime($tgl_po)) < 2020) {
+                                        // print_r("Tahun kurang dari 2020");
+                                        $date_po = date("d-m-Y");
+                                    } else {
+                                        // print_r("Tahun lebih dari 2020");
+                                        $date_po = date("d-m-Y", strtotime($tgl_po));
+                                    }
+
+                                    // echo $date_po;
+
+                                    ?>
+
+
                                     <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo date("d-m-Y", strtotime($tgl_po)); ?>" required />
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo date("d-m-Y", strtotime($date_po)); ?>" required />
                                         <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
@@ -95,9 +110,18 @@
 
                                         <select name="uuid_supplier" id="uuid_supplier" class="form-control select2" style="width: 100%; height: 40px;" required>
                                             <!-- <option value="">Pilih Supplier</option> -->
+                                            <?php
+                                            if ($uuid_supplier) {
+                                            ?>
+                                                <option value="<?php echo $uuid_supplier; ?>"><?php echo $supplier_nama; ?></option>
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">pilih suplier</option>
 
-
-                                            <option value="<?php echo $uuid_supplier; ?>"><?php echo $supplier_nama; ?></option>
+                                            <?php
+                                            }
+                                            ?>
                                             <?php
 
                                             $sql = "select * from sys_supplier  order by  nama_supplier ASC ";
