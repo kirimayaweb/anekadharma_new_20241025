@@ -151,6 +151,24 @@
                                         <div class="row">
 
                                             <div class="col-4">
+                                            </div>
+                                            <div class="col-4">
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="form-group">
+                                                    <label for="int">TOTAL PEMBAYARAN: </label>
+                                                    <div class="col-10" style="text-align:right">
+                                                        <?php echo '<span style="color:black;"><strong> ' . nominal($TOTAL_NOMINAL_TRANSAKSI_PILIH) . '</strong></span>'; ?>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="row">
+
+                                            <div class="col-4">
                                                 <div class="form-group">
 
                                                     <div class="col-12">
@@ -191,11 +209,27 @@
 
                                             <div class="col-4">
                                                 <div class="form-group">
-                                                    <label for="int">TOTAL PEMBAYARAN: </label>
+                                                    <label for="int">KODE BANK: </label>
                                                     <div class="col-10" style="text-align:right">
-                                                        <?php echo '<span style="color:black;"><strong> ' . nominal($TOTAL_NOMINAL_TRANSAKSI_PILIH) . '</strong></span>'; ?>
+                                                        <select name="uuid_kode_akun" id="uuid_kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                                            <!-- <option value="<?php //echo $uuid_kode_akun; 
+                                                                                ?>"><?php //echo $kode_akun . " - " . $nama_akun; 
+                                                                                    ?></option> -->
+                                                            <option value="">Pilih Kode Akun</option>
+                                                            <?php
+
+                                                            $sql = "select * from sys_kode_akun order by nama_akun ASC ";
+
+
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                // foreach ($data_produk as $m) {
+                                                                echo "<option value='$m->uuid_kode_akun' ";
+                                                                echo ">  " . strtoupper($m->kode_akun) . " - " . strtoupper($m->nama_akun) . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
                                                     </div>
-                                                    
+
                                                 </div>
                                             </div>
                                         </div>
@@ -206,13 +240,13 @@
                                             <div class="col-12">
                                                 <div class="form-group">
                                                     <div class="col-12" style="text-align:right">
-                                                       
-                                                            <?php if ($start > 0) { //Jika ada data yang sedang di proses
-                                                            ?>
-                                                                <button type="submit" class="btn btn-success"><?php echo $button ?></button>
-                                                            <?php
-                                                            } ?>
-                                                       
+
+                                                        <?php if ($start > 0) { //Jika ada data yang sedang di proses
+                                                        ?>
+                                                            <button type="submit" class="btn btn-success"><?php echo $button ?></button>
+                                                        <?php
+                                                        } ?>
+
                                                     </div>
                                                 </div>
                                             </div>
@@ -230,7 +264,7 @@
                                 <?php } ?>
                             </form>
 
-                            <div class="col-12" text-align="center" style="color:green;font-size: 1.000em;"> Pembayaran Per transaksi barang <br />( klik tombol bayar per barang pada tabel riwayat penjualan dibawah ) </div>
+                            <div class="col-12" text-align="center" style="color:green;font-size: 1.000em;"> Pembayaran Per transaksi barang <br />( klik tombol kuning: pilih bayar per barang pada tabel riwayat penjualan dibawah ) </div>
                         </div>
 
 
@@ -323,6 +357,47 @@
 
                                     </div>
 
+
+
+                                    <div class="row">
+
+                                        <div class="col-3">
+                                            <label for="datetime">KODE BANK </label>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-group">
+
+                                                <div class="col-12">
+
+                                                    <div class="input-group date" id="tanggal_bayar_input" name="tanggal_bayar_input" data-target-input="nearest">
+
+                                                        : &nbsp;&nbsp;&nbsp; <select name="uuid_kode_akun_nominal" id="uuid_kode_akun_nominal" class="form-control select2" style="width: 90%; height: 40px;" required>
+                                                            <!-- <option value="<?php //echo $uuid_kode_akun; 
+                                                                                ?>"><?php //echo $kode_akun . " - " . $nama_akun; 
+                                                                                ?></option> -->
+                                                            <option value="">Pilih Kode Akun</option>
+                                                            <?php
+
+                                                            $sql = "select * from sys_kode_akun order by nama_akun ASC ";
+
+
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                // foreach ($data_produk as $m) {
+                                                                echo "<option value='$m->uuid_kode_akun' ";
+                                                                echo ">  " . strtoupper($m->kode_akun) . " - " . strtoupper($m->nama_akun) . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+
                                     <div class="row">
                                         <div class="col-3">
                                             <label for="datetime">Nominal Bayar <?php echo form_error('nominal_bayar_input') ?></label>
@@ -343,7 +418,7 @@
 
                                                 <div class="col-12">
                                                     <div class="input-group date" id="nominal_bayar_input" name="nominal_bayar_input" data-target-input="nearest">
-                                                        : &nbsp;&nbsp;&nbsp; 
+                                                        : &nbsp;&nbsp;&nbsp;
                                                         <input type="text" class="form-control uang" onkeyup="sum();" name="nominal_bayar_input" id="nominal_bayar_input" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
 
                                                     </div>

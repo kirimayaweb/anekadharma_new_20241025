@@ -521,7 +521,6 @@
 
 						<div class="col-4">
 
-
 							<a href="<?php echo site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $uuid_pengajuan_bayar_terproses)?>" class="btn btn-success" target="_blank">Cetak Pengajuan Pembayaran (PDF)</a> 
 
 							<!-- <button type="submit" class="btn btn-primary">SIMPAN</button> -->
