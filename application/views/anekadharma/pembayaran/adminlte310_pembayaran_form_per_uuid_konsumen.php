@@ -156,9 +156,9 @@
                                             </div>
                                             <div class="col-4">
                                                 <div class="form-group">
-                                                    <label for="int">TOTAL PEMBAYARAN: </label>
-                                                    <div class="col-10" style="text-align:right">
-                                                        <?php echo '<span style="color:black;"><strong> ' . nominal($TOTAL_NOMINAL_TRANSAKSI_PILIH) . '</strong></span>'; ?>
+                                                    <label for="int" style="color:green" >TOTAL PEMBAYARAN: </label>
+                                                    <div class="col-10" style="text-align:right;color:red">
+                                                        <?php echo '<span style="color:red;"><strong> ' . nominal($TOTAL_NOMINAL_TRANSAKSI_PILIH) . '</strong></span>'; ?>
                                                     </div>
 
                                                 </div>
