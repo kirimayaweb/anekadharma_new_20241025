@@ -1301,7 +1301,7 @@ class Tbl_pembelian extends CI_Controller
 			'harga_satuan' => $Tbl_pembelian->harga_satuan,
 
 		);
-// print_r($data);
+		// print_r($data);
 
 
 

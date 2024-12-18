@@ -99,8 +99,18 @@
 
                                         <?php
                                         if ($tgl_transaksi) {
-                                            $tgl_transaksi_X = date("d-m-Y", strtotime($tgl_transaksi));
+                                            if (date("Y", strtotime($tgl_transaksi)) < 2020) {
+                                                $tgl_transaksi_X = date("d-m-Y H:i:s");
+                                            } else {
+                                                $tgl_transaksi_X = date("d-m-Y H:i:s", strtotime($tgl_transaksi));
+                                            }
+
+                                            
+                                            // $tgl_transaksi_X = date("d-m-Y", strtotime($tgl_transaksi));
+                                        }else{
+                                            $tgl_transaksi_X = date("d-m-Y");
                                         }
+                                        // echo $tgl_transaksi;
                                         ?>
 
 

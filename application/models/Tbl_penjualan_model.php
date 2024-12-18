@@ -24,7 +24,9 @@ class Tbl_penjualan_model extends CI_Model
     function get_all()
     {
         $this->db->order_by($this->tgl_jual, $this->order);
-        $this->db->order_by($this->id, $this->orderASC);
+        // $this->db->order_by($this->id, $this->orderASC);
+        $this->db->order_by($this->tgl_jual, $this->order);
+        $this->db->order_by($this->uuid_penjualan, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
 

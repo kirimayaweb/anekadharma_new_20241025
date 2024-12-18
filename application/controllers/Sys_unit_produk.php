@@ -27,7 +27,7 @@ class Sys_unit_produk extends CI_Controller
     {
         $Sys_unit_produk_data = $this->Sys_unit_produk_model->get_all();
 
-        print_r($Sys_unit_produk_data);
+        // print_r($Sys_unit_produk_data);
         // die;
 
         // $start = 0;
@@ -717,9 +717,13 @@ class Sys_unit_produk extends CI_Controller
         }
     }
 
-    public function update_produk($uuid_produk)
+    public function update_produk($id_produk)
     {
-        $row_data_produk = $this->Sys_unit_produk_model->get_by_uuid_produk($uuid_produk);
+
+        // print_r($id_produk);
+        // die;
+        $row_data_produk = $this->Sys_unit_produk_model->get_by_id($id_produk);
+        $uuid_produk=$row_data_produk->uuid_produk;
 
         if ($row_data_produk) {
             // $data = array(
@@ -776,6 +780,7 @@ class Sys_unit_produk extends CI_Controller
 
                 'jumlah_produksi' => $row_data_produk->jumlah_produksi,
             );
+            // print_r($data);
 
             $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
         } else {
@@ -791,17 +796,31 @@ class Sys_unit_produk extends CI_Controller
         if ($this->form_validation->run() == FALSE) {
             $this->update($this->input->post('id', TRUE));
         } else {
+
+            if (date("Y", strtotime($this->input->post('tgl_transaksi', TRUE))) < 2020) {
+                $date_tgl_produksi = date("Y-m-d H:i:s");
+            } else {
+                $date_tgl_produksi = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_transaksi', TRUE)));
+            }
+
+
+              // GET SUPPLIER DATA
+              $get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+              $sql_uuid_unit = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_unit'";
+              $get_kode_unit = $this->db->query($sql_uuid_unit)->row()->kode_unit;
+              $get_nama_unit = $this->db->query($sql_uuid_unit)->row()->nama_unit;
+
             $data = array(
-                'uuid_unit' => $this->input->post('uuid_unit', TRUE),
-                'kode_unit' => $this->input->post('kode_unit', TRUE),
-                'nama_unit' => $this->input->post('nama_unit', TRUE),
-                'tgl_transaksi' => $this->input->post('tgl_transaksi', TRUE),
-                'uuid_produk' => $this->input->post('uuid_barang', TRUE),
-                'kode_barang' => $this->input->post('kode_barang', TRUE),
+                'uuid_unit' => $get_uuid_unit,
+                'kode_unit' => $get_kode_unit,
+                'nama_unit' => $get_nama_unit,
+                'tgl_transaksi' => $date_tgl_produksi,
+                // 'uuid_produk' => $this->input->post('uuid_barang', TRUE),
+                // 'kode_barang' => $this->input->post('kode_barang', TRUE),
                 'nama_barang' => $this->input->post('nama_barang', TRUE),
-                'jumlah_produksi' => $this->input->post('jumlah_produksi', TRUE),
+                'jumlah_produksi' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
                 'satuan' => $this->input->post('satuan', TRUE),
-                'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+                'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
             );
 
             $this->Sys_unit_produk_model->update($this->input->post('id', TRUE), $data);
@@ -835,16 +854,12 @@ class Sys_unit_produk extends CI_Controller
             $this->Persediaan_model->update($id_persediaan_barang,$data);
 
 
-            print_r("update pembelian by uuid_barang & update sys_nama_barang ==> Belum selesau");
-            die;
+            // print_r("update pembelian by uuid_barang & update sys_nama_barang ==> Belum selesau");
+            // die;
             
             // SIMPAN KE TABEL PEMBELIAN
 
-              // GET SUPPLIER DATA
-              $get_uuid_unit = $this->input->post('uuid_unit', TRUE);
-              $sql_uuid_unit = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$get_uuid_unit'";
-              $get_kode_unit = $this->db->query($sql_uuid_unit)->row()->kode_unit;
-              $get_nama_unit = $this->db->query($sql_uuid_unit)->row()->nama_unit;
+
 
               
             $data = array(
