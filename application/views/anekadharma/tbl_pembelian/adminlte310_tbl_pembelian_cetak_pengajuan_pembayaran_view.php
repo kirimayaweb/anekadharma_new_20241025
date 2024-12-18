@@ -515,7 +515,7 @@
 
 					<div class="row">
 						<div class="col-4">
-							<a href="<?php echo site_url('tbl_pembelian/') ?>" class="btn btn-primary">Lanjut Transaksi</a>
+							<a href="<?php echo site_url('tbl_pembelian//pembayaran_ke_supplier') ?>" class="btn btn-primary">Lanjut Transaksi</a>
 							<!-- <a href="<?php //echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a> -->
 						</div>
 

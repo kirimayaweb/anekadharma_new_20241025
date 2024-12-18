@@ -310,6 +310,13 @@ class Tbl_pembelian_model extends CI_Model
         $this->db->where($this->uuid_spop, $uuid_spop);
         $this->db->update($this->table, $data);
     }
+    // update data
+    function update_statuslu_per_spop($uuid_spop, $data)
+    {
+
+        $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->update($this->table, $data);
+    }
 
     // update data
     function update_proses_per_spop($uuid_spop, $data)

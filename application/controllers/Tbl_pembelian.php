@@ -247,6 +247,8 @@ class Tbl_pembelian extends CI_Controller
 	public function create_pembayaran_action($uuid_spop = null)
 	{
 
+		print_r($uuid_spop);
+
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
 
 
@@ -299,14 +301,22 @@ class Tbl_pembelian extends CI_Controller
 			'nama_kasirpemebelian' => $this->input->post('nama_kasirpemebelian', TRUE),
 		);
 
-		// print_r($data);
-		// die;
+		
 
 		$uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->insert($data);
 
 		// print_r("uuid_pengajuan_bayar_terproses : ");
 		// print_r($uuid_pengajuan_bayar_terproses);
 		// die;
+
+		// UPDATE TABEL PEMBELIAN : statuslu ==> Lunas
+		// $data_status = $this->Sys_status_transaksi_model->get_by_uuid_status_transaksi($this->input->post('uuid_status_transaksi', TRUE));
+
+		$data = array(
+			'statuslu' => "Lunas",
+		);
+
+		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
 
 		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}
