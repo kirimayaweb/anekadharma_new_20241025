@@ -1689,9 +1689,8 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/stock/adminlte310_stock_barang', $data);
 	}
 
-	public function pecah_satuan($uuid_pembelian = null)
+	public function pecah_satuan_proses($uuid_pembelian = null)
 	{
-
 		$Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
 
 		$data = array(
@@ -1713,6 +1712,121 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_pecah_satuan_barang', $data);
+	}
+	public function pecah_satuan($uuid_gudang = null)
+	{
+
+
+
+		// $uuid_gudang="cd64c3af883c11ef9d7f0021ccc9061e";
+
+		// $sql_stock = "SELECT persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, 
+		// tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang, tbl_pembelian.satuan as satuan,
+		// tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+		//                     FROM persediaan  
+		//                    	left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+		//                     left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+		// 					WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+		//                     ORDER BY persediaan.uuid_barang ASC";
+		// print_r($this->db->query($sql_stock)->result());
+
+
+		// die;
+
+		if (null !== ($this->input->post('uuid_gudang', TRUE))) {
+			if ($this->input->post('uuid_gudang', TRUE) == "semua") {
+
+				// print_r("IF SEMUA");
+				//Pilih combobox dengan pilihan semua
+				// $Data_stock = $this->Tbl_pembelian_model->stock();
+
+				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,
+								tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
+							tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+                            FROM persediaan  
+                           	left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+                            left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+							WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+                            ORDER BY persediaan.uuid_barang ASC";
+
+				// print_r($this->db->query($sql_stock)->result());
+				$Data_stock = $this->db->query($sql_stock)->result();
+			} else {
+				// print_r("IF GUDANG");
+				$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
+				// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
+				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+								tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
+							tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+							FROM persediaan  
+			   				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+							left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+							WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+							ORDER BY persediaan.uuid_barang ASC";
+
+				// print_r($this->db->query($sql_stock)->result());
+				$Data_stock = $this->db->query($sql_stock)->result();
+			}
+		} else {
+			// $Data_stock = $this->Tbl_pembelian_model->stock();
+			// print_r("ELSE SEMUA");
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+						tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
+					tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+					FROM persediaan  
+					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+					WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+					ORDER BY persediaan.uuid_barang ASC";
+
+			// print_r($this->db->query($sql_stock)->result());
+			$Data_stock = $this->db->query($sql_stock)->result();
+		}
+
+
+
+
+
+
+		if (isset($uuid_gudang)) {
+			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
+			// print_r("NON  IF GUDANG");
+			$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
+			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+							tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
+						tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+						FROM persediaan  
+						   left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+						left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+						WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+						ORDER BY persediaan.uuid_barang ASC";
+
+			// print_r($this->db->query($sql_stock)->result());
+			$Data_stock = $this->db->query($sql_stock)->result();
+		} else {
+			// $Data_stock = $this->Tbl_pembelian_model->stock();
+			// print_r("NON  IF SEMUA");
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+						tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po, tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
+					tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+					FROM persediaan  
+					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+					WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+					ORDER BY persediaan.uuid_barang ASC";
+
+			// print_r($this->db->query($sql_stock)->result());
+			$Data_stock = $this->db->query($sql_stock)->result();
+		}
+
+		$data = array(
+			'action_cari_gudang' => site_url('Tbl_pembelian/pecah_satuan'),
+			'Data_stock' => $Data_stock,
+		);
+
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pecah_satuan/adminlte310_list_barang', $data);
 	}
 
 	public function pecah_satuan_action($uuid_pembelian)

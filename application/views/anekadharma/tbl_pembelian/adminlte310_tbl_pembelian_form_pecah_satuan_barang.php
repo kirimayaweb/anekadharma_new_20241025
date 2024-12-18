@@ -170,14 +170,24 @@
                                     <div class="form-group">
 
                                         <div class="row">
-                                            <div class="col-4">
-                                                <label for="nmrfakturkwitansi">Jumlah</label>
+                                            <div class="col-2">
+                                                <label for="nmrfakturkwitansi">Jumlah dari Stock</label>
                                                 
                                                 <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
                                                 
-                                                <input type="text" class="form-control uang" onkeyup="sum();" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
+                                                <input type="text" class="form-control uang" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
                                                 
                                                 Max.: <?php echo nominal($jumlah); ?>
+
+                                            </div>
+                                            <div class="col-2">
+                                                <label for="nmrfakturkwitansi">Jumlah Baru</label>
+                                                
+                                                <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
+                                                
+                                                <input type="text" class="form-control uang" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
+                                                
+                                                <!-- Max.: <?php //echo nominal($jumlah); ?> -->
 
                                             </div>
                                             <div class="col-4">
@@ -208,7 +218,7 @@
 
                                         <input type="hidden" name="id" value="<?php echo $uuid_pembelian; ?>" />
                                         <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
-                                        <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
+                                        <a href="<?php echo site_url('tbl_pembelian/pecah_satuan/') ?>" class="btn btn-default">Cancel</a>
 
                                     </div>
                                     <div class="col-4"></div>
