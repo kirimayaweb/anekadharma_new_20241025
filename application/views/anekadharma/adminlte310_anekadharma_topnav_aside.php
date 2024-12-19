@@ -413,6 +413,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
       format: 'D-M-YYYY'
     });
 
+    $('#tgl_pembayaran').datetimepicker({
+      format: 'D-M-YYYY'
+    });
+
     $('#tgl_jatuh_tempo').datetimepicker({
       format: 'D-M-YYYY'
     });
