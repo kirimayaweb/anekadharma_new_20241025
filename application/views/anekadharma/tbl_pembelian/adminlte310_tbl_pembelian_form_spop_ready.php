@@ -403,7 +403,7 @@
 
                             <!-- <a href="<?php //echo site_url('tbl_pembelian/cetak_belanja_per_spop/' . $uuid_spop) ?>" class="btn btn-primary" target="_blank">Cetak PDF</a> -->
 
-                            <a href="<?php echo site_url('tbl_pembelian/list_data') ?>" class="btn btn-default">Cancel</a>
+                            <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
                         </form>
 
 
