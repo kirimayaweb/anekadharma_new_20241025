@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model','Sys_kode_akun_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model','Sys_unit_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -248,6 +248,26 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 		// print_r($uuid_spop);
+		// print_r("<br/>");
+		// print_r($this->input->post('tgl_pembayaran', TRUE));
+		// print_r("<br/>");
+
+		// print_r($this->input->post('tgl_nomor_bkk', TRUE));
+		// print_r("<br/>");
+
+		// print_r($this->input->post('uuid_bank_bkk', TRUE));
+		// print_r("<br/>");
+
+		// print_r($this->input->post('nomor_rekening_bkk', TRUE));
+		// print_r("<br/>");
+
+		// print_r($this->input->post('atas_nama_rekening_bkk', TRUE));
+		// print_r("<br/>");
+
+		// print_r($this->input->post('uuid_unit', TRUE));
+
+		// die;
+
 
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
 
@@ -256,6 +276,13 @@ class Tbl_pembelian extends CI_Controller
 			$date_tgl_permohonan = date("Y-m-d H:i:s");
 		} else {
 			$date_tgl_permohonan = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_permohonan', TRUE)));
+		}
+
+
+		if (date("Y", strtotime($this->input->post('tgl_nomor_bkk', TRUE))) < 2020) {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s");
+		} else {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_nomor_bkk', TRUE)));
 		}
 
 		if (date("Y", strtotime($this->input->post('tgl_jatuh_tempo', TRUE))) < 2020) {
@@ -270,6 +297,9 @@ class Tbl_pembelian extends CI_Controller
 			$date_tgl_nomor_bkk = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_nomor_bkk', TRUE)));
 		}
 
+		$get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+		$data_unit = $this->Sys_unit_model->get_by_uuid_unit($get_uuid_unit);
+		$data_nama_unit = $data_unit->nama_unit;
 
 		$data = array(
 			'uuid_spop' => $uuid_spop,
@@ -281,27 +311,42 @@ class Tbl_pembelian extends CI_Controller
 			'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)),
 			'nomor_permohonan' => $this->input->post('nomor_permohonan', TRUE),
 			'jumlah_nominal' => $this->input->post('jumlah_nominal', TRUE),
+
 			'tgl_permohonan' => $date_tgl_permohonan,
+			'tgl_pembayaran' => $date_tgl_permohonan,
+
 			'terbilang' => $this->input->post('terbilang', TRUE),
 			'keterangan' => $this->input->post('keterangan', TRUE),
 			'tgl_jatuh_tempo' => $date_tgl_jatuh_tempo,
 			'nomor_faktur' => $this->input->post('nomor_faktur', TRUE),
 			'uuid_bank' => $this->input->post('uuid_bank', TRUE),
+
+			// ditransfer ke
 			'nama_bank' => $row_per_uuid_bank->nama_bank,
 			'nomor_rekening' => $this->input->post('nomor_rekening', TRUE),
 			'atas_nama_rekening' => $this->input->post('atas_nama_rekening', TRUE),
+
 			'nomor_bkk' => $this->input->post('nomor_bkk', TRUE),
 			'tgl_nomor_bkk' => $date_tgl_nomor_bkk,
-			'bank_checkbox' => $this->input->post('bank_checkbox', TRUE),
+
+			// 'bank_checkbox' => $this->input->post('bank_checkbox', TRUE),
+			'uuid_bank_bkk' => $this->input->post('uuid_bank_bkk', TRUE),
+			'nomor_rekening_bkk' => $this->input->post('nomor_rekening_bkk', TRUE),
+			'atas_nama_rekening_bkk' => $this->input->post('atas_nama_rekening_bkk', TRUE),
+
+
 			'kas_checkbox' => $this->input->post('kas_checkbox', TRUE),
-			'account' => $this->input->post('account', TRUE),
+
+			'uuid_account_unit' => $this->input->post('uuid_unit', TRUE),
+			'account' => $data_nama_unit,
+			
 			'nomor_cek_giro' => $this->input->post('nomor_cek_giro', TRUE),
 			'nama_direktur' => $this->input->post('nama_direktur', TRUE),
 			'nama_kabagkeuangan' => $this->input->post('nama_kabagkeuangan', TRUE),
 			'nama_kasirpemebelian' => $this->input->post('nama_kasirpemebelian', TRUE),
 		);
 
-		
+
 
 		$uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->insert($data);
 
@@ -601,7 +646,7 @@ class Tbl_pembelian extends CI_Controller
 
 		// RIWAYAT TRANSAKSI PENJUALAN
 		$sql = "SELECT * FROM `tbl_penjualan` WHERE `uuid_konsumen`='$uuid_konsumen' and `proses_bayar`='proses'";
-		
+
 		$Data_konsumen_proses_bayar = $this->db->query($sql)->result();
 
 		// print_r($Data_konsumen_proses_bayar);
@@ -696,10 +741,10 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_pembayaran_per_uuid_konsumen_by_transaksi_action($uuid_konsumen = null)
 	{
-		 
+
 
 		$get_data_kode_akun = $this->Sys_kode_akun_model->get_by_uuid_kode_akun($this->input->post('uuid_kode_akun', TRUE));
-		
+
 
 		$sql = "select * from `tbl_penjualan` where  `uuid_konsumen`='$uuid_konsumen' and `proses_bayar`='proses'";
 		foreach ($this->db->query($sql)->result() as $list_data) {
