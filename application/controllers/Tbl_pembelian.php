@@ -247,7 +247,7 @@ class Tbl_pembelian extends CI_Controller
 	public function create_pembayaran_action($uuid_spop = null)
 	{
 
-		print_r($uuid_spop);
+		// print_r($uuid_spop);
 
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
 
