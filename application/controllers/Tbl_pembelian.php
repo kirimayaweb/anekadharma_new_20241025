@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model','Sys_unit_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -339,7 +339,7 @@ class Tbl_pembelian extends CI_Controller
 
 			'uuid_account_unit' => $this->input->post('uuid_unit', TRUE),
 			'account' => $data_nama_unit,
-			
+
 			'nomor_cek_giro' => $this->input->post('nomor_cek_giro', TRUE),
 			'nama_direktur' => $this->input->post('nama_direktur', TRUE),
 			'nama_kabagkeuangan' => $this->input->post('nama_kabagkeuangan', TRUE),
@@ -370,6 +370,15 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 		$row_per_uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_pengajuan_bayar($uuid_pengajuan_bayar_terproses);
+
+		// print_r($row_per_uuid_pengajuan_bayar_terproses);
+
+		// if ($row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk) {
+		// 	print_r("ada bank");
+		// } else {
+		// 	print_r("tidak ada bank");
+		// }
+		// print_r("<br/>");
 
 		$uuid_spop = $row_per_uuid_pengajuan_bayar_terproses->uuid_spop;
 
@@ -419,6 +428,9 @@ class Tbl_pembelian extends CI_Controller
 			'nama_direktur' => $row_per_uuid_pengajuan_bayar_terproses->nama_direktur,
 			'nama_kabagkeuangan' => $row_per_uuid_pengajuan_bayar_terproses->nama_kabagkeuangan,
 			'nama_kasirpemebelian' => $row_per_uuid_pengajuan_bayar_terproses->nama_kasirpemebelian,
+			'uuid_bank_bkk' => $row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk,
+			'nomor_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->nomor_rekening_bkk,
+			'atas_nama_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->atas_nama_rekening_bkk,
 
 		);
 
@@ -488,6 +500,9 @@ class Tbl_pembelian extends CI_Controller
 			'nama_direktur' => $row_per_uuid_pengajuan_bayar_terproses->nama_direktur,
 			'nama_kabagkeuangan' => $row_per_uuid_pengajuan_bayar_terproses->nama_kabagkeuangan,
 			'nama_kasirpemebelian' => $row_per_uuid_pengajuan_bayar_terproses->nama_kasirpemebelian,
+			'uuid_bank_bkk' => $row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk,
+			'nomor_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->nomor_rekening_bkk,
+			'atas_nama_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->atas_nama_rekening_bkk,
 
 		);
 

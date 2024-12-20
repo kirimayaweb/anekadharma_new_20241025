@@ -137,15 +137,15 @@
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-										<?php 
+										<?php
 										if (date("Y", strtotime($tgl_permohonan)) < 2020) {
 											$date_tgl_permohonan = date("d M Y");
 										} else {
 											$date_tgl_permohonan = date("d M Y", strtotime($tgl_permohonan));
 										}
-										
-										
-										echo ": " . $date_tgl_permohonan; 
+
+
+										echo ": " . $date_tgl_permohonan;
 										?>
 									</th>
 
@@ -194,13 +194,13 @@
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">JATUH TEMPO</th>
 									<th style="font-size:0.550em; width: 100px;" colspan="298">
-										<?php 
+										<?php
 										if (date("Y", strtotime($tgl_jatuh_tempo)) < 2020) {
 											$date_tgl_jatuh_tempo = date("d M Y");
 										} else {
 											$date_tgl_jatuh_tempo = date("d M Y", strtotime($tgl_jatuh_tempo));
 										}
-										echo ": " . $date_tgl_jatuh_tempo; 
+										echo ": " . $date_tgl_jatuh_tempo;
 										?>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
@@ -211,11 +211,14 @@
 
 
 								<tr style="border: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;">
-									<th style="font-size:0.550em; width: 152px;" colspan="152"></th>
-									<!-- <th style="font-size:0.550em; width: 2px" colspan="2">:</th> -->
-									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">No. Faktur
-										<?php echo ": " . $nomor_faktur; ?>
+								
+									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">No. Faktur</th>
+									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
+									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
+										<?php echo  $nomor_faktur; ?>
 									</th>
+
+
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -290,13 +293,13 @@
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="98"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL</th>
 									<th style="font-size:0.550em; text-align:left; width: 200px;" colspan="200">
-										<?php 
+										<?php
 										if (date("Y", strtotime($tgl_nomor_bkk)) < 2020) {
 											$date_tgl_nomor_bkk = date("d M Y");
 										} else {
 											$date_tgl_nomor_bkk = date("d M Y", strtotime($tgl_nomor_bkk));
 										}
-										echo ": " . $date_tgl_nomor_bkk; 
+										echo ": " . $date_tgl_nomor_bkk;
 										?>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x5</th> -->
@@ -332,40 +335,69 @@
 									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">TANGGAL</th>
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348">
-										<?php 
+										<?php
 										if (date("Y", strtotime($tgl_po)) < 2020) {
 											$date_tgl_po = date("d M Y");
 										} else {
 											$date_tgl_po = date("d M Y", strtotime($tgl_po));
 										}
-										echo $date_tgl_po; 
+										echo $date_tgl_po;
 										?>
+									</th>
+
+
+
+
+
+									<?php
+									if ($uuid_bank_bkk) {
+									?>
+										<!-- <th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
+											BANK : &ensp; <?php //echo $nama_bank; ?> &ensp;&ensp;&ensp; <?php //echo $nomor_rekening_bkk; ?> &ensp;&ensp;&ensp; a.n <?php //echo $atas_nama_rekening_bkk; ?>
+										</th> -->
+
+
+										<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">BANK</th>
+										<th style="font-size:0.550em; text-align:left; width: 500px;" colspan="500">
+											<?php echo ": " . $nama_bank . "&ensp;&ensp;&ensp;" . $nomor_rekening_bkk . "&ensp;&ensp;&ensp; a.n: " . $atas_nama_rekening_bkk;  ?>
 										</th>
-									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										BANK &ensp; (
-										<?php
-										if ($bank_checkbox == 1) {
-										?>
-											<input type="checkbox" class="radio" value="1" name="bank_checkbox" checked />
-										<?php } ?>
-										)
-										<!-- <input type="checkbox" class="radio" value="1" name="fooby[1][]" />Bank</label> -->
-									</th>
-									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
-									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
-									<th style="font-size:0.550em; text-align:left; width: 198px;" colspan="198">
-										KAS &ensp; (
-										<?php
-										if ($kas_checkbox == 1) {
-										?>
+
+									<?php } else {
+									?>
+
+									
+
+
+										<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">KAS</th>
+										<th style="font-size:0.550em; text-align:left; width: 500px;" colspan="500">
+											(
 											<input type="checkbox" class="radio" value="1" name="kas_checkbox" checked />
-										<?php } ?>
-										)
+											)
+										</th>
 
 
-									</th>
-									<th style="font-size:0.550em; width: 100px;" colspan="100"></th>
-									<th style="font-size:0.550em; width: 200px;" colspan="200"></th>
+									<?php
+									} ?>
+
+									<!-- <input type="checkbox" class="radio" value="1" name="fooby[1][]" />Bank</label> -->
+
+									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
+									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
+
+									<!-- <th style="font-size:0.550em; text-align:left; width: 198px;" colspan="198"> -->
+									<!-- KAS &ensp; ( -->
+									<?php
+									// if ($kas_checkbox == 1) {
+									?>
+									<!-- <input type="checkbox" class="radio" value="1" name="kas_checkbox" checked /> -->
+									<?php //} 
+									?>
+									<!-- ) -->
+
+									<!-- </th> -->
+
+									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
+									<!-- <th style="font-size:0.550em; width: 200px;" colspan="200"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x5</th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x6</th> -->
@@ -516,12 +548,13 @@
 					<div class="row">
 						<div class="col-4">
 							<a href="<?php echo site_url('tbl_pembelian//pembayaran_ke_supplier') ?>" class="btn btn-primary">Lanjut Transaksi</a>
-							<!-- <a href="<?php //echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a> -->
+							<!-- <a href="<?php //echo site_url('tbl_pembelian') 
+											?>" class="btn btn-default">Cancel</a> -->
 						</div>
 
 						<div class="col-4">
 
-							<a href="<?php echo site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $uuid_pengajuan_bayar_terproses)?>" class="btn btn-success" target="_blank">Cetak Pengajuan Pembayaran (PDF)</a> 
+							<a href="<?php echo site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $uuid_pengajuan_bayar_terproses) ?>" class="btn btn-success" target="_blank">Cetak Pengajuan Pembayaran (PDF)</a>
 
 							<!-- <button type="submit" class="btn btn-primary">SIMPAN</button> -->
 

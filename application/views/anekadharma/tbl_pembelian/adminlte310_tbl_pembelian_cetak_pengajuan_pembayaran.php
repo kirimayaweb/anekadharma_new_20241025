@@ -206,11 +206,14 @@
 
 
 								<tr style="border: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;">
-									<th style="font-size:0.550em; width: 152px;" colspan="152"></th>
-									<!-- <th style="font-size:0.550em; width: 2px" colspan="2">:</th> -->
-									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">No. Faktur
-										<input type="text" name="nomor_faktur" id="nomor_faktur" placeholder="Nomor faktur" value="">
+									
+									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">No. Faktur</th>
+									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
+									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
+										<input type="text" name="nomor_faktur" id="nomor_faktur" placeholder="nomor_faktur" value="">
 									</th>
+
+
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -342,7 +345,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
 										BANK &ensp;
 										<!-- ( <input type="checkbox" class="radio" value="1" name="bank_checkbox" id="bank_checkbox" />) -->
-										<select name="uuid_bank_bkk" id="uuid_bank_bkk" class="form-control select2" style="width: 80%;" required>
+										<select name="uuid_bank_bkk" id="uuid_bank_bkk" class="form-control select2" style="width: 80%;">
 											<option value="">Pilih Bank </option>
 											<?php
 
@@ -378,7 +381,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="" required>
+										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -401,7 +404,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-									<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="" required>
+										<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -435,7 +438,9 @@
 									<th style="font-size:0.550em; text-align:left; width: 300px;" colspan="300">
 										<!-- <input type="text" name="account" id="account" placeholder="Nama Unit" value="" required> -->
 										<select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 80%; height: 3px;" required>
-											<option value="<?php //echo $uuid_konsumen ?>"><?php //echo $nama_konsumen ?></option>
+											<option value="<?php //echo $uuid_konsumen 
+															?>"><?php //echo $nama_konsumen 
+																							?></option>
 											<?php
 
 											// Data Unit
@@ -444,7 +449,7 @@
 												echo "<option value='$m->uuid_unit' ";
 												echo ">  " . strtoupper($m->nama_unit)  . "</option>";
 											}
-											
+
 											?>
 										</select>
 									</th>

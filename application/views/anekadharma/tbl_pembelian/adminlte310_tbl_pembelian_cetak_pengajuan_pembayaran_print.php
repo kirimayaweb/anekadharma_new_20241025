@@ -167,11 +167,13 @@
 
 
 		<tr style="border: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;">
-			<th style="font-size:0.550em; width: 152px;" colspan="152"></th>
-			<!-- <th style="font-size:0.550em; width: 2px" colspan="2">:</th> -->
-			<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">No. Faktur
-				<?php echo ": " . $nomor_faktur; ?>
+			
+			<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">No. Faktur</th>
+			<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
+			<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
+				<?php echo  $nomor_faktur; ?>
 			</th>
+
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -290,41 +292,72 @@
 			<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348">
 				<?php
 				if (date("Y", strtotime($tgl_po)) > 2020) {
-					echo ": " . date("d M Y", strtotime($tgl_po));
+					echo  date("d M Y", strtotime($tgl_po));
 				} else {
-					echo ":";
+					// echo ":";
 				}
 
 				?>
 			</th>
-			<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-				BANK &ensp; (
-				<?php
-				if ($bank_checkbox == 1) {
-				?>
-					<i class="fa fa-check" style="font-size:8px">V</i>
-				<?php } ?>
-				)
-				<!-- <input type="checkbox" class="radio" value="1" name="fooby[1][]" />Bank</label> -->
-			</th>
-			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
-			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
-			<th style="font-size:0.550em; text-align:left; width: 398px;" colspan="398">
-				KAS &ensp; (
-				<?php
-				if ($kas_checkbox == 1) {
-				?>
-					<i class="fa fa-check" style="font-size:8px">V</i>
-				<?php } ?>
-				)
 
 
-			</th>
+			<?php
+			if ($uuid_bank_bkk) {
+			?>
+				<!-- <th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
+											BANK : &ensp; <?php //echo $nama_bank; 
+															?> &ensp;&ensp;&ensp; <?php //echo $nomor_rekening_bkk; 
+																											?> &ensp;&ensp;&ensp; a.n <?php //echo $atas_nama_rekening_bkk; 
+																																										?>
+										</th> -->
+
+
+				<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">BANK</th>
+				<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
+					<?php echo ": " . $nama_bank . "&ensp;&ensp;&ensp;" . $nomor_rekening_bkk . "&ensp;&ensp;&ensp; a.n: " . $atas_nama_rekening_bkk;  ?>
+				</th>
+
+			<?php } else {
+			?>
+
+
+
+
+				<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">KAS</th>
+				<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
+					(
+					<input type="checkbox" class="radio" value="1" name="kas_checkbox" checked />
+					)
+				</th>
+
+
+			<?php
+			} ?>
+
+			<!-- <input type="checkbox" class="radio" value="1" name="fooby[1][]" />Bank</label> -->
+
+			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
+			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
+
+			<!-- <th style="font-size:0.550em; text-align:left; width: 198px;" colspan="198"> -->
+			<!-- KAS &ensp; ( -->
+			<?php
+			// if ($kas_checkbox == 1) {
+			?>
+			<!-- <input type="checkbox" class="radio" value="1" name="kas_checkbox" checked /> -->
+			<?php //} 
+			?>
+			<!-- ) -->
+
+			<!-- </th> -->
+
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 			<!-- <th style="font-size:0.550em; width: 200px;" colspan="200"></th> -->
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x5</th> -->
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x6</th> -->
+		</tr>
+
 		</tr>
 
 		<script type="text/javascript">
