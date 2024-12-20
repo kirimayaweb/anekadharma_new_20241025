@@ -290,7 +290,7 @@
 
 
 								<tr style="border: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;">
-									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">PO. NO</th>
+									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">SPOP No.</th>
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"><?php echo $spop; ?></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">BKK NO.</th>
