@@ -9,7 +9,7 @@ class Tbl_kas_kecil extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Tbl_kas_kecil_model', 'Sys_unit_model'));
+        $this->load->model(array('Tbl_kas_kecil_model', 'Sys_unit_model','Tbl_pembelian_model','Tbl_pembelian_pengajuan_bayar_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->helper(array('nominal'));
@@ -61,6 +61,10 @@ class Tbl_kas_kecil extends CI_Controller
 
     public function create()
     {
+
+        $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+	
+
         $data = array(
             'button' => 'Simpan',
             'action' => site_url('tbl_kas_kecil/create_action'),
@@ -73,6 +77,7 @@ class Tbl_kas_kecil extends CI_Controller
             'kredit' => set_value('kredit'),
             'saldo' => set_value('saldo'),
             'id_usr' => set_value('id_usr'),
+            'Tbl_pembelian_data' => $Tbl_pembelian,
         );
         // $this->load->view('tbl_kas_kecil/tbl_kas_kecil_form', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_kas_kecil/adminlte310_tbl_kas_kecil_form', $data);
