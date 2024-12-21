@@ -572,6 +572,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 		$sql = "SELECT tbl_pembelian_a.uuid_spop as uuid_spop, 
+        tbl_pembelian_a.tgl_po as tgl_po,
         tbl_pembelian_a.spop as spop,
         tbl_pembelian_a.jumlah as jumlah,
         tbl_pembelian_a.harga_satuan as harga_satuan,
@@ -604,6 +605,8 @@ class Tbl_pembelian extends CI_Controller
 			'Data_supplier_tagihan' => $Data_supplier_tagihan,
 			// 'Data_konsumen_tagihan' => $Data_konsumen_tagihan,
 		);
+
+		// print_r($data);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_list_ke_supplier', $data);
 	}
@@ -1030,7 +1033,14 @@ class Tbl_pembelian extends CI_Controller
 		// $jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 		// $harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
 		$TOTAL_X = $row_per_uuid_spop->jumlah * $row_per_uuid_spop->harga_satuan;
-
+// print_r($row_per_uuid_spop->statuslu);
+		if($row_per_uuid_spop->statuslu == "u" ){
+			$get_statuslu=$row_per_uuid_spop->statuslu;
+			$get_kas_bank="";
+		}else{
+			$get_statuslu=$row_per_uuid_spop->statuslu;
+			$get_kas_bank=$row_per_uuid_spop->kas_bank;
+		}
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
@@ -1051,8 +1061,8 @@ class Tbl_pembelian extends CI_Controller
 			'konsumen' => $row_per_uuid_spop->konsumen,
 			// 'harga_satuan' => $row_per_uuid_spop->harga_satuan,
 			'harga_total' => $TOTAL_X,
-			'statuslu' => $row_per_uuid_spop->statuslu,
-			'kas_bank' => $row_per_uuid_spop->kas_bank,
+			'statuslu' => $get_statuslu,
+			'kas_bank' => $get_kas_bank,
 			// 'tgl_bayar' => $row_per_uuid_spop->tgl_bayar,
 			// 'id_usr' => $row_per_uuid_spop->,
 		);

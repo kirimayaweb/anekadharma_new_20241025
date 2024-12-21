@@ -54,6 +54,7 @@
                             <thead>
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
+                                    <th>Tanggal</th>
                                     <th>SPOP</th>
                                     <th>Nama SUPPLIER</th>
                                     <th>Jumlah Tagihan</th>
@@ -77,6 +78,7 @@
 
                                     <tr>
                                         <td><?php echo ++$start ?></td>
+                                        <td><?php echo date("d M Y", strtotime($data_pembelian_per_spop->tgl_po));  ?></td>
                                         <td><?php echo $data_pembelian_per_spop->spop ?></td>
                                         <td align="left"><?php echo $list_data->supplier_nama; ?></td>
 
