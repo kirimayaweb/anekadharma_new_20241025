@@ -9,7 +9,7 @@ class Sys_nama_barang extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Sys_nama_barang_model','Persediaan_model'));
+        $this->load->model(array('Sys_nama_barang_model', 'Persediaan_model'));
         $this->load->library('form_validation');
     }
 
@@ -89,7 +89,7 @@ class Sys_nama_barang extends CI_Controller
     public function create($source_form = null)
     {
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('sys_nama_barang/create_action/' . $source_form),
             'id' => set_value('id'),
             'uuid_barang' => set_value('uuid_barang'),
@@ -97,10 +97,14 @@ class Sys_nama_barang extends CI_Controller
             'nama_barang' => set_value('nama_barang'),
             'satuan' => set_value('satuan'),
             'keterangan' => set_value('keterangan'),
+            'source_form' => $source_form,
         );
         // $this->load->view('sys_nama_barang/sys_nama_barang_form', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_nama_barang/sys_nama_barang_form', $data);
     }
+
+
+
 
     public function create_action($source_form = null)
     {
@@ -108,12 +112,47 @@ class Sys_nama_barang extends CI_Controller
 
         $this->_rules();
 
+
+        // CEK Apakah Sudah ada nama barang yang sama
+        // query chek sys_nama_barang
+        $this->db->where('nama_barang', $this->input->post('nama_barang', TRUE));
+        $sys_nama_barang = $this->db->get('sys_nama_barang');
+
+        if ($sys_nama_barang->num_rows() > 0) {
+            $this->form_validation->set_rules('nama_barang', 'nama barang', 'trim|required');
+            $this->create();
+        }
+
+
+
         if ($this->form_validation->run() == FALSE) {
             $this->create();
         } else {
+
+            // Otomatis membuat kode barang
+
+            $get_kode_barang = "";
+
+            $teks = $this->input->post('nama_barang', TRUE);
+
+            $split = explode(' ', $teks);
+            foreach ($split as $kata) {
+                $get_kode_barang = $get_kode_barang . substr($kata, 0, 2);                
+            }
+
+            // CEK KODE APAKAH SUDAH ADA, JIKA SUDAH ADA MAKA DITAMBAHKAN NOMOR
+            // query chek sys_nama_barang
+            $this->db->where('kode_barang', $get_kode_barang);
+            $sys_nama_barang = $this->db->get('sys_nama_barang');
+
+            if ($sys_nama_barang->num_rows() > 0) {
+                // print_r ("Sudah ada ");
+                $get_kode_barang = $get_kode_barang . "_" . $sys_nama_barang->num_rows();
+            }
+
             $data = array(
                 // 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
-                'kode_barang' => $this->input->post('kode_barang', TRUE),
+                'kode_barang' => strtoupper($get_kode_barang),
                 'nama_barang' => $this->input->post('nama_barang', TRUE),
                 'satuan' => $this->input->post('satuan', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),

@@ -70,12 +70,12 @@
                                 <!-- <div class="form-group">
                                     <label for="varchar">Uuid Barang <?php //echo form_error('uuid_barang') 
                                                                         ?></label>
-                                    <input type="text" class="form-control" name="uuid_barang" id="uuid_barang" placeholder="Uuid Barang" value="<?php echo $uuid_barang; ?>" />
+                                    <input type="text" class="form-control" name="uuid_barang" id="uuid_barang" placeholder="Uuid Barang" value="<?php //echo $uuid_barang; ?>" />
                                 </div> -->
-                                <div class="form-group">
-                                    <label for="varchar">Kode Barang <?php echo form_error('kode_barang') ?></label>
-                                    <input type="text" class="form-control" name="kode_barang" id="kode_barang" placeholder="Kode Barang" value="<?php echo $kode_barang; ?>" />
-                                </div>
+                                <!-- <div class="form-group">
+                                    <label for="varchar">Kode Barang <?php //echo form_error('kode_barang') ?></label>
+                                    <input type="text" class="form-control" name="kode_barang" id="kode_barang" placeholder="Kode Barang" value="<?php //echo $kode_barang; ?>" />
+                                </div> -->
                                 <div class="form-group">
                                     <label for="nama_barang">Nama Barang <?php echo form_error('nama_barang') ?></label>
                                     <textarea class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="Nama Barang"><?php echo $nama_barang; ?></textarea>
@@ -90,7 +90,18 @@
                                 </div>
                                 <input type="hidden" name="id" value="<?php echo $id; ?>" />
                                 <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
-                                <a href="<?php echo site_url('sys_nama_barang') ?>" class="btn btn-default">Cancel</a>
+                                <?php
+                                if ($source_form == "pembelian") {
+                                ?>
+                                    <a href="<?php echo site_url('Tbl_pembelian/create') ?>" class="btn btn-default">Cancel</a>
+                                <?php
+                                } else {
+                                ?>
+                                    <a href="<?php echo site_url('sys_nama_barang') ?>" class="btn btn-default">Cancel</a>
+                                <?php
+                                }
+                                ?>
+
                             </form>
 
 
