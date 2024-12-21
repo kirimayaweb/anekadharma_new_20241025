@@ -206,7 +206,7 @@
 
 
 								<tr style="border: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;">
-									
+
 									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">No. Faktur</th>
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
@@ -440,7 +440,7 @@
 										<select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 80%; height: 3px;" required>
 											<option value="<?php //echo $uuid_konsumen 
 															?>"><?php //echo $nama_konsumen 
-																							?></option>
+																?></option>
 											<?php
 
 											// Data Unit
@@ -588,7 +588,20 @@
 						<div class="col-4">
 							<!-- <a href="<?php //echo site_url('tbl_pembelian/') 
 											?>" class="btn btn-primary">Lanjut Transaksi</a> -->
-							<a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
+							<?php
+							if ($from_pembelian_page == "Pembelian") {
+								// echo $from_pembelian_page;
+							?>
+								<a href="<?php echo site_url('Tbl_pembelian') ?>" class="btn btn-default">Cancel </a>
+							<?php
+							} else {
+								// echo $from_pembelian_page;
+							?>
+								<a href="<?php echo site_url('Tbl_pembelian/pembayaran_ke_supplier') ?>" class="btn btn-default">Cancel</a>
+							<?php
+							}
+							?>
+
 						</div>
 
 						<div class="col-4">

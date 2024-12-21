@@ -152,7 +152,7 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/stock/adminlte310_stock_barang', $data);
 	}
 
-	public function create_pembayaran($uuid_spop = null)
+	public function create_pembayaran($uuid_spop = null, $from_pembelian_page=null)
 	{
 
 
@@ -186,6 +186,7 @@ class Tbl_pembelian extends CI_Controller
 			'kas_bank' => $row_per_uuid_spop->kas_bank,
 			// 'tgl_bayar' => $row_per_uuid_spop->tgl_bayar,
 			// 'id_usr' => $row_per_uuid_spop->,
+			
 		);
 
 		// print_r($data);
@@ -220,6 +221,12 @@ class Tbl_pembelian extends CI_Controller
 			$x_total = $x_total + $list_data->total_pembelian;
 		}
 
+		if($from_pembelian_page){
+			$from_pembelian_page="Pembelian";
+		}else{
+			$from_pembelian_page="BukanPembelian";
+		}
+
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
@@ -239,6 +246,7 @@ class Tbl_pembelian extends CI_Controller
 			'nama_direktur' => $row_per_direktur->full_name,
 			'nama_kabagkeuangan' => $row_per_kabagkeuangan->full_name,
 			'nama_kasirpemebelian' => $row_per_kasirpembelian->full_name,
+			'from_pembelian_page' => $from_pembelian_page,
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_cetak_pengajuan_pembayaran', $data);

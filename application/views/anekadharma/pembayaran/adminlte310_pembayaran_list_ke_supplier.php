@@ -59,6 +59,7 @@
                                     <th>Nama SUPPLIER</th>
                                     <th>Jumlah Tagihan</th>
                                     <th>Pembayaran</th>
+                                    <th>Kekurangan</th>
                                     <th>Action</th>
 
                                 </tr>
@@ -82,7 +83,7 @@
                                         <td><?php echo $data_pembelian_per_spop->spop ?></td>
                                         <td align="left"><?php echo $list_data->supplier_nama; ?></td>
 
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
                                             
                                             echo nominal($list_data->total_pembelian);
@@ -99,13 +100,46 @@
                                             ?>
                                         </td>
 
-                                        <td align="left">
-                                            <?php
+                                        <td align="right">
+                                        <?php
                                             
                                             // echo nominal($list_data->total_pembelian);
                                             // echo "&nbsp &nbsp";
 
                                             $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($list_data->uuid_spop)->total_pengajuan;
+                                            
+                                            // echo $TOTAL_Nominal_pengajuan;
+                                            // if($list_data->nominal_pengajuan > 0){
+                                            if ($list_data->nominal_pengajuan > 0) {
+                                                // echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                if ($TOTAL_Nominal_pengajuan < $list_data->total_pembelian) {
+                                                    // echo "&nbsp &nbsp";
+                                                    // echo $TOTAL_Nominal_pengajuan;
+                                                    // echo "&nbsp &nbsp";
+                                                    // echo $list_data->total_pembelian;
+                                                    // echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                    // echo "&nbsp &nbsp";
+                                                    // echo "-" . nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan);
+                                                    echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
+                                                    
+                                                }
+                                            } else {
+                                                // echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                // echo "&nbsp &nbsp";
+                                                echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
+                                            }
+
+                                            ?>
+                                        </td>
+
+                                        <td align="right">
+                                            <?php
+                                            
+                                            // echo nominal($list_data->total_pembelian);
+                                            // echo "&nbsp &nbsp";
+
+                                            // $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($list_data->uuid_spop)->total_pengajuan;
+
                                             // echo $TOTAL_Nominal_pengajuan;
                                             // if($list_data->nominal_pengajuan > 0){
                                             if ($list_data->nominal_pengajuan > 0) {
@@ -116,15 +150,15 @@
                                                     // echo "&nbsp &nbsp";
                                                     // echo $list_data->total_pembelian;
                                                     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                    echo "&nbsp &nbsp";
+                                                    // echo "&nbsp &nbsp";
                                                     // echo "-" . nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan);
-                                                    echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
+                                                    // echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
                                                     
                                                 }
                                             } else {
                                                 echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                echo "&nbsp &nbsp";
-                                                echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
+                                                // echo "&nbsp &nbsp";
+                                                // echo "<font color='red'> -". nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan) ."</font>";
                                             }
 
                                             ?>
