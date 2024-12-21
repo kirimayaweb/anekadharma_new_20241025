@@ -101,13 +101,13 @@
                                     $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
                                     if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
-                                            ?>
+                                ?>
                                         <tr>
                                             <td><?php echo ++$start ?></td>
                                             <td>
                                                 <?php
 
-                                                
+
 
                                                 // echo "baris x";
                                                 // if ($x_button == 1) {
@@ -218,7 +218,7 @@
                                             </td>
                                             <td><?php echo $list_data->spop; ?></td>
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
-                                            
+
 
                                             <td align="left"><?php echo $list_data->supplier_nama; ?></td>
                                             <!-- <td></td>
@@ -306,7 +306,18 @@
 
                                             ?>
                                         </td>
-                                        <td align="center"><?php echo $list_data->kas_bank; ?></td>
+                                        
+                                        <td align="center">
+                                            <?php
+                                            // echo $list_data->kas_bank;
+
+                                            if ($list_data->statuslu == "Lunas"  or $list_data->statuslu == "L" ) {
+                                                echo $list_data->kas_bank;
+                                            }
+
+                                            ?>
+                                        </td>
+
                                         <td align="center">
                                             <?php
 
