@@ -177,6 +177,8 @@
 
                                                     if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
                                                         echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran A </i>', 'class="btn btn-warning btn-xs"');
+                                                        echo " - ";
+                                                        echo $list_data->statuslu;
                                                     }else{
                                                         echo "-";
                                                     }
