@@ -98,12 +98,22 @@
                                 $x_button = 0;
                                 foreach ($Tbl_pembelian_data as $list_data) {
 
-                                    $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
+                                    // $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
                                     if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                         ?>
                                         <tr>
-                                            <td><?php echo ++$start ?></td>
+                                            <td><?php 
+                                            echo ++$start ;
+                                            // echo "-compare : ";
+                                            // echo $compare_spop;
+                                            // echo "- spop : ";
+                                            // echo $list_data->spop;
+                                            // echo " ---- : ";
+                                            // echo $list_spop_status_lu;
+                                            // echo " ---- : ";
+                                            // echo $list_data->statuslu;
+                                            ?></td>
                                             <td>
                                                 <?php
 
@@ -165,31 +175,37 @@
                                                     // echo " : ";
                                                     if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
 
-                                                        if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran B</i>', 'class="btn btn-warning btn-xs"');
-                                                        }else{
-                                                            echo "-";
-                                                    
+                                                        if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
+                                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                                         }
+                                                        // else{
+                                                        //     echo "- XX ";
+                                                    
+                                                        // }
                                                     }
                                                 } else {
                                                     // if ($total_nominal_pengajuan < $Total_per_SPOP) {
 
-                                                    if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran A </i>', 'class="btn btn-warning btn-xs"');
-                                                        echo " - ";
-                                                        echo $list_data->statuslu;
-                                                    }else{
-                                                        echo "-";
+                                                    if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
+                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                        // echo " - YY  ";
+                                                        // echo  $list_spop_status_lu;
+                                                        // echo " - ";
+                                                        // echo  $list_data->statuslu;
+                                                        // echo " - ";
+                                                        // echo  $compare_spop;
+                                                        // echo " - ";
+                                                        // echo  $list_data->spop;
                                                     }
-                                                    // }else{
-                                                    //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
+                                                    // else{
+                                                    //     echo "-";
                                                     // }
+                                                    
 
                                                 }
 
 
-
+                                                $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
 
                                                 ?>
                                             </td>
@@ -402,17 +418,17 @@
                                             // echo $Total_per_SPOP;
                                             // echo " : ";
                                             if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
-                                                if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran Y</i>', 'class="btn btn-warning btn-xs"');
+                                                if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
+                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                                 }
                                             }
                                         } else {
                                             // if ($total_nominal_pengajuan < $Total_per_SPOP) {
 
 
-                                            if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
+                                            if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
 
-                                                echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran X</i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                             }
 
                                             // }else{
@@ -420,7 +436,7 @@
                                             // }
 
                                         }
-                                        $list_spop_status_lu == "";
+                                        
 
                                         ?>
                                     </td>
