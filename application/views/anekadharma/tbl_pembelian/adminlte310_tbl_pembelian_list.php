@@ -128,7 +128,7 @@
                                                 ?>
 
                                             </td>
-                                            <td></td>
+                                            <td><?php echo $compare_spop; ?></td>
                                             <td></td>
                                             <!-- <td></td> -->
                                             <!-- <td></td> -->
@@ -382,8 +382,7 @@
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td><?php //list total per spop 
-                                        ?></td>
+                                    <td><?php echo $list_data->spop; ?></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
