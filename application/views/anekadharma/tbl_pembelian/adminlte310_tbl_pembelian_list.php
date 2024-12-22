@@ -166,14 +166,14 @@
                                                     if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
 
                                                         if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran B</i>', 'class="btn btn-warning btn-xs"');
                                                         }
                                                     }
                                                 } else {
                                                     // if ($total_nominal_pengajuan < $Total_per_SPOP) {
 
                                                     if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran A </i>', 'class="btn btn-warning btn-xs"');
                                                     }
                                                     // }else{
                                                     //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
