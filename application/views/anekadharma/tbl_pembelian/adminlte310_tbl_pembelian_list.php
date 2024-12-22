@@ -396,7 +396,7 @@
                                             // echo " : ";
                                             if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
                                                 if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
-                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran Y</i>', 'class="btn btn-warning btn-xs"');
                                                 }
                                             }
                                         } else {
@@ -405,7 +405,7 @@
 
                                             if ($list_data->statuslu == "Hutang"  or $list_data->statuslu == "U") {
 
-                                                echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran X</i>', 'class="btn btn-warning btn-xs"');
                                             }
 
                                             // }else{
