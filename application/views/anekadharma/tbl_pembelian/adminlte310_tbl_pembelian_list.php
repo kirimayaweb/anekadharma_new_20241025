@@ -101,7 +101,7 @@
                                     $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
                                     if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
-                                ?>
+                                        ?>
                                         <tr>
                                             <td><?php echo ++$start ?></td>
                                             <td>
@@ -420,6 +420,7 @@
                                             // }
 
                                         }
+                                        $list_spop_status_lu == "";
 
                                         ?>
                                     </td>
