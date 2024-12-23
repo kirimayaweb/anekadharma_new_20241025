@@ -47,14 +47,15 @@
                             <!-- LIST DATA BARANG -->
                             <div class="form-group">
 
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-2">
                                         Gudang
                                     </div>
                                     <div class="col-8">
-                                        <?php echo " : " .  $nama_gudang ?>
+                                        <?php //echo " : " .  $nama_gudang 
+                                        ?>
                                     </div>
-                                </div>
+                                </div> -->
 
 
                                 <div class="row">
@@ -130,27 +131,23 @@
                                     <div class="form-group">
 
                                         <div class="row">
+
                                             <div class="col-4">
-                                                <label for="nmrsj">Gudang</label>
-
-                                                <!-- <input type="text" class="form-control" rows="3" name="spop" id="spop" placeholder="Nomor SPOP" required> -->
-
-                                                <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                                    <option value="<?php echo $uuid_gudang; ?>"><?php echo $nama_gudang; ?></option>
+                                                <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
+                                                <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                                    <option value="">Pilih Konsumen/Unit </option>
                                                     <?php
 
-                                                    $sql = "select * from sys_gudang order by nama_gudang ASC ";
-
-
+                                                    // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                                    $sql = "select * from sys_unit order by nama_unit ASC ";
                                                     foreach ($this->db->query($sql)->result() as $m) {
-                                                        // foreach ($data_produk as $m) {
-                                                        echo "<option value='$m->uuid_gudang' ";
-                                                        echo ">  " . strtoupper($m->kode_gudang) . " - " . strtoupper($m->nama_gudang) . "</option>";
+                                                        echo "<option value='$m->uuid_unit' ";
+                                                        echo ">  " . strtoupper($m->nama_unit) .  "</option>";
                                                     }
                                                     ?>
                                                 </select>
-
                                             </div>
+                                          
 
                                             <div class="col-4">
                                                 <label for="nmrfakturkwitansi">Nama Barang Baru</label>
@@ -159,7 +156,8 @@
 
                                             <div class="col-4">
                                                 <label for="nmrfakturkwitansi">kode Barang Baru</label>
-                                                <input type="text" class="form-control" rows="3" name="kode_barang_baru" id="kode_barang_baru" placeholder="kode barang baru" required>
+                                                <input type="text" class="form-control" rows="3" name="kode_barang_baru" id="kode_barang_baru" placeholder="kode barang baru">
+                                                <label style="color:red;font-size: 16px;">Jika dikosongkan maka akan di generate otomatis oleh aplikasi.</label>
                                             </div>
 
                                         </div>
@@ -172,22 +170,23 @@
                                         <div class="row">
                                             <div class="col-2">
                                                 <label for="nmrfakturkwitansi">Jumlah dari Stock</label>
-                                                
+
                                                 <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
-                                                
-                                                <input type="text" class="form-control uang" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
-                                                
+
+                                                <input type="number" class="form-control" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" min="1" max="<?php echo $jumlah ?>" ; />
+
                                                 Max.: <?php echo nominal($jumlah); ?>
 
                                             </div>
                                             <div class="col-2">
                                                 <label for="nmrfakturkwitansi">Jumlah Baru</label>
-                                                
+
                                                 <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
-                                                
+
                                                 <input type="text" class="form-control uang" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
-                                                
-                                                <!-- Max.: <?php //echo nominal($jumlah); ?> -->
+
+                                                <!-- Max.: <?php //echo nominal($jumlah); 
+                                                            ?> -->
 
                                             </div>
                                             <div class="col-4">
@@ -196,11 +195,12 @@
                                             </div>
                                             <div class="col-4">
                                                 <label for="nmrfakturkwitansi">Harga Satuan</label>
-                                            
+
                                                 <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_barang_baru" id="harga_satuan_barang_baru" placeholder="harga satuan barang baru" required> -->
 
                                                 <input type="text" class="form-control uang" onkeyup="sum();" name="harga_satuan_barang_baru" id="harga_satuan_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
-                                            
+                                                <label style="color:red;font-size: 16px;">Jika dikosongkan maka akan di generate otomatis dikalkulasi dari harga satuan dari satuan stock.</label>
+
                                             </div>
                                         </div>
                                     </div>
@@ -216,7 +216,7 @@
                                     <div class="col-4"></div>
                                     <div class="col-4">
 
-                                        <input type="hidden" name="id" value="<?php echo $uuid_pembelian; ?>" />
+                                        <input type="hidden" name="id" value="<?php echo $uuid_persediaan; ?>" />
                                         <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
                                         <a href="<?php echo site_url('tbl_pembelian/pecah_satuan/') ?>" class="btn btn-default">Cancel</a>
 

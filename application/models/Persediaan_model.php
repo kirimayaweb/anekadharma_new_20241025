@@ -8,6 +8,7 @@ class Persediaan_model extends CI_Model
 
     public $table = 'persediaan';
     public $id = 'id';
+    public $uuid_persediaan = 'uuid_persediaan';
     public $order = 'DESC';
 
     function __construct()
@@ -37,6 +38,12 @@ class Persediaan_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+
+    function get_by_uuid_persediaan($uuid_persediaan)
+    {
+        $this->db->where($this->uuid_persediaan, $uuid_persediaan);
         return $this->db->get($this->table)->row();
     }
 
@@ -142,6 +149,21 @@ class Persediaan_model extends CI_Model
             'PROCESS' => 'INSERT',
             'id' => $this->db->insert_id()
         );
+
+        
+    }
+    // insert data
+    function insert_pecah_satuan($data)
+    {
+        $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
+        $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+        return $datainsert['id'];
     }
 
     // update data

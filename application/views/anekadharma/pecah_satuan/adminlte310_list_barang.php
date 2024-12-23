@@ -131,47 +131,36 @@
                                         <td style="text-align:center"><?php echo ++$start ?></td>
                                         <td style="text-align:center">
                                             <?php 
-                                            echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o">Pilih Buat Satuan Baru</i>', array('title' => 'Pilih Buat Satuan Baru', 'class' => 'btn btn-success btn-sm')); 
+                                            echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o">Pilih Buat Satuan Baru '. $list_data->uuid_persediaan .' </i>', array('title' => 'Pilih Buat Satuan Baru ' , 'class' => 'btn btn-success btn-sm')); 
                                             ?>
                                         </td>
-                                        <td style="text-align:left"><?php echo date("Y-m-d", strtotime($list_data->tgl_po)); ?></td>
+                                        <td style="text-align:left"><?php //echo date("Y-m-d", strtotime($list_data->tgl_po)); ?></td>
                                         <td style="text-align:left;text-transform: uppercase;">
                                             <?php
-                                            // echo $list_data->nama_gudang;
-
-                                            echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_gudang . '</i>', 'class=""');
+                                           
+                                            // echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_gudang . '</i>', 'class=""');
 
                                             ?>
 
                                         </td>
 
 
-                                        <!-- // echo $list_data->kode_barang;  -->
-                                        <!-- <td style="text-align:left">
-                                            <?php
-
-
-                                            // echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->kode_barang . '</i>', 'class=""');
-                                            ?>
-                                        </td> -->
 
                                         <td style="text-align:left">
                                             <?php
-                                            // echo $list_data->nama_barang_beli; 
+                                            
 
-                                            echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_barang_beli . '</i>', 'class=""');
+                                            echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_barang_beli . '</i>', 'class=""');
 
                                             ?>
                                         </td>
 
 
-                                        <!-- Harga Satuan  -->
-                                        <!-- <td style="text-align:right"><?php //echo nominal($list_data->harga_satuan_beli); 
-                                                                            ?></td> -->
+                                   
                                         <td style="text-align:right">
                                             <?php
 
-                                            // if ($list_data->harga_satuan_persediaan and $list_data->harga_satuan_persediaan > 0) {
+                                            
                                             if (!empty($list_data->harga_satuan_persediaan)) {
                                                 echo nominal($list_data->harga_satuan_persediaan);
                                                 $X_harga_satuan = $list_data->harga_satuan_persediaan;
@@ -185,7 +174,7 @@
 
 
 
-                                        <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
+                                        <td style="text-align:center"><?php //echo $list_data->satuan; ?></td>
 
                                         <!-- nominal Persediaan -->
                                         <td style="text-align:right">
@@ -204,13 +193,13 @@
                                         <td style="text-align:right">
                                             <?php
 
-                                            if ($list_data->jumlah_belanja and $list_data->jumlah_belanja > 0) {
-                                                echo nominal($list_data->jumlah_belanja);
-                                                $x_jumlah_belanja = $list_data->jumlah_belanja;
-                                            } else {
-                                                echo "0";
-                                                $x_jumlah_belanja = 0;
-                                            }
+                                            // if ($list_data->jumlah_belanja and $list_data->jumlah_belanja > 0) {
+                                            //     // echo nominal($list_data->jumlah_belanja);
+                                            //     $x_jumlah_belanja = $list_data->jumlah_belanja;
+                                            // } else {
+                                            //     echo "0";
+                                            //     $x_jumlah_belanja = 0;
+                                            // }
 
 
                                             ?>
@@ -219,34 +208,27 @@
                                         <!-- Jumlah penjualan -->
                                         <td style="text-align:rirightght">
                                             <?php
-                                            if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
-                                                echo nominal($list_data->jumlah_terjual);
-                                                $x_jumlah_terjual = $list_data->jumlah_terjual;
-                                            } else {
-                                                echo "0";
-                                                $x_jumlah_terjual = 0;
-                                            }
+                                            // if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
+                                            //     // echo nominal($list_data->jumlah_terjual);
+                                            //     $x_jumlah_terjual = $list_data->jumlah_terjual;
+                                            // } else {
+                                            //     echo "0";
+                                            //     $x_jumlah_terjual = 0;
+                                            // }
 
                                             ?>
                                         </td>
 
                                         <!-- Sisa stock -->
-                                        <td style="text-align:right"><?php echo nominal($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual); ?></td>
+                                        <td style="text-align:right"><?php //echo nominal($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual); ?></td>
 
                                         <td style="text-align:right">
                                             <?php
-                                            // echo $stock_persediaan;
-                                            // echo "<br/>";
-                                            // echo $x_jumlah_belanja;
-                                            // echo "<br/>";
-                                            // echo $x_jumlah_terjual;
-                                            // echo "<br/>";
-                                            // echo $X_harga_satuan;
-                                            // echo "<br/>";
+                                            
 
-                                            echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
+                                            // //echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
 
-                                            $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
+                                            // $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
                                             ?>
                                         </td>
 
@@ -271,7 +253,7 @@
                                     <th></th>
                                     <th></th>
                                     <th>TOTAL</th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_PERSEDIAAN); ?></th>
+                                    <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); ?></th>
 
                                 </tr>
                             </tfoot>
