@@ -171,6 +171,8 @@
                                             <?php
 
                                             $start = 0;
+                                            $get_jumlah_barang = 0;
+                                            $get_total_harga = 0;
                                             foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 
                                             ?>
@@ -191,9 +193,19 @@
                                                                 ?></td> -->
 
                                                     <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
-                                                    <td style="text-align:right"><?php echo nominal($list_data->jumlah); ?></td>
+                                                    <td style="text-align:right">
+                                                        <?php
+                                                        echo nominal($list_data->jumlah);
+                                                        $get_jumlah_barang = $get_jumlah_barang + $list_data->jumlah;
+                                                        ?>
+                                                    </td>
                                                     <td style="text-align:right"><?php echo nominal($list_data->harga_satuan); ?></td>
-                                                    <td style="text-align:right"><?php echo nominal($list_data->jumlah * $list_data->harga_satuan); ?></td>
+                                                    <td style="text-align:right">
+                                                        <?php
+                                                        echo nominal($list_data->jumlah * $list_data->harga_satuan);
+                                                        $get_total_harga = $get_total_harga + ($list_data->jumlah * $list_data->harga_satuan);
+                                                        ?>
+                                                    </td>
 
                                                 </tr>
 
@@ -205,6 +217,22 @@
 
 
                                         </tbody>
+
+
+                                        <tfoot>
+                                            <tr>
+                                                <th style="text-align:center"></th>
+                                                <th style="text-align:left"></th>
+                                                <th style="text-align:center"></th>
+                                                <!-- <th style="text-align:center">Unit</th> -->
+
+                                                <th style="text-align:center"></th>
+                                                <th style="text-align:right"><?php echo nominal($get_jumlah_barang);  ?></th>
+                                                <th style="text-align:right"></th>
+                                                <th style="text-align:right"><?php echo nominal($get_total_harga); ?></th>
+
+                                            </tr>
+                                        </tfoot>
 
 
 
@@ -249,7 +277,7 @@
                                         // $Data_stock = $this->db->query($sql_data)->result();
 
 
-                                        $sql_stock = "SELECT persediaan.id as id, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan, persediaan.satuan as satuan_persediaan,
+                                        $sql_stock = "SELECT persediaan.id as id, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan, persediaan.satuan as satuan_persediaan,
                                                 tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
                                                 tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
                                                 FROM persediaan  
@@ -293,174 +321,200 @@
                                                     foreach ($Data_stock as $list_data) {
 
                                                         // CEK TOTAL STOCK TERSISA
-                                                       
+
                                                         // $sql = "SELECT sum(`total_10`) as sisa_stock FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang')";
 
                                                         // $data_barang_per_barang = $this->db->query($sql)->row();
-                                                    
+
                                                         // $sql = "SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='$list_data->uuid_barang'";
 
                                                         // $data_barang_terjual = $this->db->query($sql)->row();
-                                            
+
+
+                                                        if ($list_data->uuid_barang) { //ada data barang
                                                     ?>
-                                                        <tr>
-                                                            <td><?php echo ++$start ?></td>
-                                                            <!-- <td>
+                                                            <tr>
+                                                                <td align="right"><?php echo ++$start ?></td>
+                                                                <!-- <td>
                                                                     <?php
                                                                     // echo date("d M Y", strtotime($list_data->tgl_po));
                                                                     ?>
                                                                 </td> -->
 
 
-                                                            <!-- <td><?php //echo $list_data->uuid_barang; 
-                                                                        ?></td> -->
+                                                                <!-- <td><?php //echo $list_data->uuid_barang; 
+                                                                            ?></td> -->
 
-                                                            <td><?php echo $list_data->nama_barang_beli; ?></td>
-
-
-                                                            <td><?php echo nominal($list_data->harga_satuan_persediaan); ?></td>
-                                                            <td><?php echo $list_data->satuan_persediaan; ?></td>
-                                                            <td>
-                                                                <?php
-                                                               
-                                                                // if ($data_barang_terjual->jumlah_jual) {
-                                                                    
-                                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan - $data_barang_terjual->jumlah_jual;
-                                                                // } else {
-                                                                    
-                                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan;
-                                                                // }
+                                                                <td align="left"><?php echo $list_data->nama_barang_beli; ?></td>
 
 
-                                                                // echo $list_data->jumlah_sediaan;
-                                                                // echo "<br/>";
-
-                                                                // echo $list_data->jumlah_belanja;
-                                                                // echo "<br/>";
-
-                                                                // echo $list_data->jumlah_terjual;
-                                                                // echo "<br/>";
-
-                                                                $sisa_stock_data = $list_data->jumlah_sediaan + $list_data->jumlah_belanja - $list_data->jumlah_terjual ;
-
-                                                                echo nominal($sisa_stock_data);
-
-
-                                                                ?>
-                                                            </td>
-
-
-                                                            <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); 
-                                                                        ?></td> -->
-                                                            <td>
-                                                                <?php
-                                                                // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
-
-
-                                                                if ($sisa_stock_data > 0) {
-                                                                ?>
-                                                                    <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                        PILIH BARANG
-                                                                    </button>
-                                                                <?php
-                                                                } else {
-                                                                ?>
-                                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                        PILIH BARANG
-                                                                    </button>
-                                                                <?php
-                                                                }
-                                                                ?>
-
-
-
-
-
-
-
-                                                                <?php
-                                                                if (!empty($uuid_penjualan)) {
-                                                                    // print_r("ADa uuid penjualan");
-                                                                ?>
-                                                                    <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
+                                                                <td align="right"><?php echo nominal($list_data->harga_satuan_persediaan); ?></td>
+                                                                <td align="left"><?php echo $list_data->satuan_persediaan; ?></td>
+                                                                <td align="right">
                                                                     <?php
-                                                                } else {
-                                                                    // print_r("TIDAK ADa uuid penjualan");
-                                                                    ?>
-                                                                        <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
-                                                                        <?php
+
+                                                                    // if ($data_barang_terjual->jumlah_jual) {
+
+                                                                    //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan - $data_barang_terjual->jumlah_jual;
+                                                                    // } else {
+
+                                                                    //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan;
+                                                                    // }
+
+
+                                                                    // echo $list_data->jumlah_sediaan;
+                                                                    // echo "<br/>";
+
+                                                                    // echo $list_data->jumlah_belanja;
+                                                                    // echo "<br/>";
+
+                                                                    // echo $list_data->jumlah_terjual;
+                                                                    // echo "<br/>";
+
+
+                                                                    if ($list_data->jumlah_sediaan) {
+                                                                        $get_jumlah_sediaan = $list_data->jumlah_sediaan;
+                                                                    } else {
+                                                                        $get_jumlah_sediaan = 0;
                                                                     }
+
+                                                                    if ($list_data->jumlah_belanja) {
+                                                                        $get_jumlah_belanja = $list_data->jumlah_belanja;
+                                                                    } else {
+                                                                        $get_jumlah_belanja = 0;
+                                                                    }
+
+                                                                    if ($list_data->jumlah_terjual) {
+                                                                        $get_jumlah_terjual = $list_data->jumlah_terjual;
+                                                                    } else {
+                                                                        $get_jumlah_terjual = 0;
+                                                                    }
+
+
+
+                                                                    $sisa_stock_data = $get_jumlah_sediaan + $get_jumlah_belanja - $get_jumlah_terjual;
+
+
+                                                                    echo nominal($sisa_stock_data);
+
+
+                                                                    ?>
+                                                                </td>
+
+
+                                                                <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); 
+                                                                            ?></td> -->
+                                                                <td align="left">
+                                                                    <?php
+                                                                    // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
+
+
+                                                                    if ($sisa_stock_data > 0) {
+                                                                    ?>
+                                                                        <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                            PILIH BARANG <?php //echo $list_data->id 
+                                                                                            ?>
+                                                                        </button>
+                                                                    <?php
+                                                                    } else {
+                                                                    ?>
+                                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                            PILIH BARANG <?php //echo $list_data->id 
+                                                                                            ?>
+                                                                        </button>
+                                                                    <?php
+                                                                    }
+                                                                    ?>
+
+
+
+
+
+
+
+                                                                    <?php
+                                                                    if (!empty($uuid_penjualan)) {
+                                                                        // print_r("ADa uuid penjualan");
+                                                                    ?>
+                                                                        <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
+                                                                        <?php
+                                                                    } else {
+                                                                        // print_r("TIDAK ADa uuid penjualan");
                                                                         ?>
+                                                                            <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
+                                                                            <?php
+                                                                        }
+                                                                            ?>
 
-                                                                        <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                            <div class="modal-dialog modal-xl">
-                                                                                <div class="modal-content">
-                                                                                    <div class="modal-header">
-                                                                                        <h4 class="modal-title">Isi Jumlah Barang & pilih Unit</h4>
-                                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                            <span aria-hidden="true">&times;</span>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                    <div class="modal-body">
+                                                                            <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
+                                                                                <div class="modal-dialog modal-xl">
+                                                                                    <div class="modal-content">
+                                                                                        <div class="modal-header">
+                                                                                            <h4 class="modal-title">Isi Jumlah Barang & pilih Unit</h4>
+                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                <span aria-hidden="true">&times;</span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <div class="modal-body">
 
-                                                                                        <div class="form-group">
-                                                                                            <div class="row">
-                                                                                                <div class="col-12">
-                                                                                                    <label for="konsumen_nama">Barang </label>
-                                                                                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->nama_barang_beli ?>" disabled>
+                                                                                            <div class="form-group">
+                                                                                                <div class="row">
+                                                                                                    <div class="col-12">
+                                                                                                        <label for="konsumen_nama">Barang </label>
+                                                                                                        <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->nama_barang_beli ?>" disabled>
+                                                                                                    </div>
                                                                                                 </div>
+
+
+
+                                                                                                <div class="row">
+                                                                                                    <div class="col-4">
+                                                                                                        <label for="nmrpesan">Harga Satuan </label>
+                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>"> -->
+                                                                                                    </div>
+                                                                                                    <div class="col-4">
+                                                                                                        <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="row">
+
+
+                                                                                                    <div class="col-4">
+                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>">
+                                                                                                    </div>
+                                                                                                    <div class="col-4">
+                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
+                                                                                                        <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $sisa_stock_data ?>">
+
+                                                                                                    </div>
+
+                                                                                                </div>
+
                                                                                             </div>
 
-
-
-                                                                                            <div class="row">
-                                                                                                <div class="col-4">
-                                                                                                    <label for="nmrpesan">Harga Satuan </label>
-                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>"> -->
-                                                                                                </div>
-                                                                                                <div class="col-4">
-                                                                                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="row">
-
-
-                                                                                                <div class="col-4">
-                                                                                                    <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>">
-                                                                                                </div>
-                                                                                                <div class="col-4">
-                                                                                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
-                                                                                                    <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $sisa_stock_data ?>">
-
-                                                                                                </div>
-
-                                                                                            </div>
 
                                                                                         </div>
-
-
+                                                                                        <div class="modal-footer justify-content-between">
+                                                                                            <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
+                                                                                            <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
+                                                                                            <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
+                                                                                            <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
+                                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                                                            <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                                                                                            <button type="submit" class="btn btn-primary">SIMPAN</button>
+                                                                                        </div>
                                                                                     </div>
-                                                                                    <div class="modal-footer justify-content-between">
-                                                                                        <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
-                                                                                        <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
-                                                                                        <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
-                                                                                        <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
-                                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                                                                        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-                                                                                        <button type="submit" class="btn btn-primary">SIMPAN</button>
-                                                                                    </div>
+                                                                                    <!-- /.modal-content -->
                                                                                 </div>
-                                                                                <!-- /.modal-content -->
+
                                                                             </div>
+                                                                            </form>
 
-                                                                        </div>
-                                                                        </form>
+                                                                </td>
 
-                                                            </td>
-
-                                                        </tr>
+                                                            </tr>
                                                     <?php
-                                                        // }
+                                                        }
                                                     }
                                                     ?>
 
