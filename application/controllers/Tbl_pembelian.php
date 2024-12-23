@@ -1929,7 +1929,7 @@ class Tbl_pembelian extends CI_Controller
 			$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
 
-			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan
+			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan, persediaan.tanggal as tanggal 
 						FROM persediaan  
 						   left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 						left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
@@ -1942,7 +1942,7 @@ class Tbl_pembelian extends CI_Controller
 			// $Data_stock = $this->Tbl_pembelian_model->stock();
 			// print_r("NON  IF SEMUA");
 
-			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan
+			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan, persediaan.tanggal as tanggal 
 					FROM persediaan  
 					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
@@ -1975,12 +1975,12 @@ class Tbl_pembelian extends CI_Controller
 		// $Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
 		$Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
 
-		print_r("Data_Barang: ");
-		print_r("<br/>");
-		print_r($Data_Barang);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r("Data_Barang: ");
+		// print_r("<br/>");
+		// print_r($Data_Barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		$get_jumlah_barang_di_pecah = preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_dari_stock', TRUE));
 
@@ -2034,9 +2034,9 @@ class Tbl_pembelian extends CI_Controller
 			// print_r("<br/>");
 
 		}
-		print_r("get_kode_barang: ");
-		print_r($get_kode_barang);
-		print_r("<br/>");
+		// print_r("get_kode_barang: ");
+		// print_r($get_kode_barang);
+		// print_r("<br/>");
 
 
 		if ($this->input->post('harga_satuan_barang_baru', TRUE)) {
@@ -2090,12 +2090,12 @@ class Tbl_pembelian extends CI_Controller
 
 		);
 
-		print_r("Tbl_pembelian_pecah_satuan: ");
-		print_r("<br/>");
-		print_r($data_Tbl_pembelian_pecah_satuan);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r("Tbl_pembelian_pecah_satuan: ");
+		// print_r("<br/>");
+		// print_r($data_Tbl_pembelian_pecah_satuan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 		// die;
 
 		$this->Tbl_pembelian_pecah_satuan_model->insert($data_Tbl_pembelian_pecah_satuan);
@@ -2147,12 +2147,12 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 
-		print_r("data_Tbl_penjualan: ");
-		print_r("<br/>");
-		print_r($data_Tbl_penjualan);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r("data_Tbl_penjualan: ");
+		// print_r("<br/>");
+		// print_r($data_Tbl_penjualan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 
 		$this->Tbl_penjualan_model->insert_new($data_Tbl_penjualan);
@@ -2170,12 +2170,12 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 
-		print_r("data_Sys_nama_barang: ");
-		print_r("<br/>");
-		print_r($data_Sys_nama_barang);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r("data_Sys_nama_barang: ");
+		// print_r("<br/>");
+		// print_r($data_Sys_nama_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		$uuid_barang_baru = $this->Sys_nama_barang_model->insert_dari_pecah_satuan($data_Sys_nama_barang);
 
@@ -2216,15 +2216,15 @@ class Tbl_pembelian extends CI_Controller
 			'nilai_persediaan' => $get_harga_satuan_barang_baru * $get_jumlah_barang_baru,
 		);
 
-		print_r("data_Persediaan: ");
-		print_r("<br/>");
-		print_r($data_Persediaan);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r("data_Persediaan: ");
+		// print_r("<br/>");
+		// print_r($data_Persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		$this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
-		
+
 		// $GET_id_persediaan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
 
 		// $GET_uuid_persediaan = $this->Persediaan_model->get_by_id($GET_id_persediaan)->uuid_persediaan;
@@ -2272,7 +2272,7 @@ class Tbl_pembelian extends CI_Controller
 
 		// $this->Tbl_pembelian_model->insert_spop($data_Tbl_pembelian);
 
-		die;
+		// die;
 
 		redirect(site_url('tbl_pembelian/pecah_satuan'));
 	}
