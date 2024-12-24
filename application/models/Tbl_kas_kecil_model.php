@@ -8,6 +8,7 @@ class Tbl_kas_kecil_model extends CI_Model
 
     public $table = 'tbl_kas_kecil';
     public $id = 'id';
+    public $uuid_kas_kecil = 'uuid_kas_kecil';
     public $tanggal = 'tanggal';
     public $order = 'DESC';
     public $orderASC = 'ASC';
@@ -38,6 +39,13 @@ class Tbl_kas_kecil_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    
+    // get data by id
+    function get_by_uuid_kas_kecil($uuid_kas_kecil)
+    {
+        $this->db->where($this->uuid_kas_kecil, $uuid_kas_kecil);
         return $this->db->get($this->table)->row();
     }
     

@@ -29,13 +29,19 @@
                         <div class="row">
                         </div>
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-9">
                                 <div class="row">
                                     <div class="col-3">
                                         <div class="col-12" text-align="center"> <strong>KAS KECIL</strong></div>
                                     </div>
-                                    <div class="col-6">
-                                        <?php echo anchor(site_url('Tbl_kas_kecil/create'), 'Tambah Data Kas', 'class="btn btn-danger"');
+                                    <div class="col-3">
+                                        <?php echo anchor(site_url('Tbl_kas_kecil/pemasukan_kas_kecil'), 'Pemasukan Data Kas', 'class="btn btn-danger"');
+                                        ?>
+                                        
+                                    </div>
+                                    <div class="col-3">
+                                       
+                                        <?php echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil'), 'Pengeluaran Data Kas', 'class="btn btn-success"');
                                         ?>
                                     </div>
                                 </div>
@@ -101,26 +107,30 @@
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <td style="text-align:left">
                                                                     <?php
-                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->uuid_kas_kecil), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                     echo ' ';
-                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->uuid_kas_kecil), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>
                                                                 </td>
-                                                                <td style="text-align:center"><?php echo $list_data->tanggal; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->unit; ?> </td>
-                                                                <td style="text-align:center"><?php echo $list_data->keterangan; ?> </td>
+                                                                <td style="text-align:center">
+                                                                    <?php 
+                                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                                    ?> 
+                                                                </td>
+                                                                <td style="text-align:left"><?php echo $list_data->unit; ?> </td>
+                                                                <td style="text-align:left"><?php echo $list_data->keterangan; ?> </td>
                                                                 <td style="text-align:right"><?php echo nominal($list_data->debet); ?> </td>
                                                                 <td style="text-align:right"><?php echo nominal($list_data->kredit); ?> </td>
                                                                 <td style="text-align:right">
                                                                     <?php
                                                                     if ($get_saldo == 0) {
-                                                                        echo nominal($list_data->debet - $list_data->kredit);
+                                                                        // echo nominal($list_data->debet - $list_data->kredit);
                                                                         $get_saldo = $list_data->debet - $list_data->kredit;
                                                                     } else {
-                                                                        echo nominal($get_saldo + $list_data->debet - $list_data->kredit);
+                                                                        // echo nominal($get_saldo + $list_data->debet - $list_data->kredit);
                                                                         $get_saldo = $get_saldo + $list_data->debet - $list_data->kredit;
                                                                     }
-                                                                    // echo $list_data->saldo 
+                                                                    echo nominal($get_saldo); 
                                                                     ?>
                                                                 </td>
                                                                 
@@ -141,10 +151,11 @@
                                                             <th></th>
                                                             <th></th>
                                                             <th></th>
+                                                            <th></th>
                                                             <th>SALDO</th>
-                                                            <th><?php echo nominal($get_saldo); ?></th>
+                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;"><?php echo nominal($get_saldo); ?></th>
                                                             <!-- <th>Id Usr</th> -->
-                                                            <th width="200px"></th>
+                                                            <!-- <th width="200px"></th> -->
                                                         </tr>
 
                                                     </tfoot>

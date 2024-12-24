@@ -297,10 +297,6 @@ class Tbl_pembelian_model extends CI_Model
         // print_r($uuid_spop);
         return $uuid_spop;
         // die;
-
-
-
-
     }
 
     // update data
