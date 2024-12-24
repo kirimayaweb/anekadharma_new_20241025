@@ -482,7 +482,7 @@ class Tbl_kas_kecil extends CI_Controller
                 );
             }
 
-            print_r($data);
+            // print_r($data);
             // die;
             // $this->load->view('tbl_kas_kecil/tbl_kas_kecil_form', $data);
 

@@ -248,8 +248,8 @@
                                         // echo $this->input->post('tanggal', TRUE);
                                         // echo "<br/>";
                                         if ($tanggal) {
-                                            echo "ada tanggal";
-                                            echo $this->input->post('tanggal', TRUE);
+                                            // echo "ada tanggal";
+                                            // echo $this->input->post('tanggal', TRUE);
                                             // $get_tanggal = date("d-m-Y", strtotime($tanggal));
 
                                             if (date("Y", strtotime($tanggal)) < 2020) {
@@ -259,7 +259,7 @@
                                             }
 
                                         } else {
-                                            echo "tidak ada";
+                                            // echo "tidak ada";
                                             $get_tanggal = date("Y-m-d H:i:s");
                                         }
                                         // echo $get_tanggal;
