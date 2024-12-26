@@ -229,7 +229,7 @@
                                             <?php
 
 
-                                            echo nominal($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual);
+                                            echo nominal(($stock_persediaan + $x_jumlah_belanja) - $x_jumlah_terjual);
 
                                             ?>
                                         </td>
@@ -245,7 +245,7 @@
                                             echo $x_jumlah_terjual;
                                             echo "<br/>";
 
-                                            
+
                                             echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
 
                                             $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
