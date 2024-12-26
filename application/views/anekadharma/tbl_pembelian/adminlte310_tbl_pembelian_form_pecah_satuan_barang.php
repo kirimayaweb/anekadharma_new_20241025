@@ -83,7 +83,11 @@
                                         jumlah
                                     </div>
                                     <div class="col-8">
-                                        <?php echo " : " .  nominal($jumlah) ?>
+                                        <?php 
+                                        $Get_Sisa_Stock = $jumlah_persediaan + $jumlah_beli - $jumlah_jual;
+
+                                        echo " : " .  nominal($Get_Sisa_Stock) ;
+                                        ?>
                                     </div>
                                 </div>
 
@@ -173,9 +177,9 @@
 
                                                 <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
 
-                                                <input type="number" class="form-control" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" min="1" max="<?php echo $jumlah ?>" ; />
+                                                <input type="number" class="form-control" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" min="1" max="<?php echo $Get_Sisa_Stock ?>" ; />
 
-                                                Max.: <?php echo nominal($jumlah); ?>
+                                                Max.: <?php echo nominal($Get_Sisa_Stock); ?>
 
                                             </div>
                                             <div class="col-2">
@@ -183,7 +187,7 @@
 
                                                 <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
 
-                                                <input type="text" class="form-control uang" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" ; />
+                                                <input type="text" class="form-control uang" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;"  required />
 
                                                 <!-- Max.: <?php //echo nominal($jumlah); 
                                                             ?> -->

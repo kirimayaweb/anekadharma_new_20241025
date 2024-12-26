@@ -1834,12 +1834,45 @@ class Tbl_pembelian extends CI_Controller
 	public function pecah_satuan_proses($uuid_persediaan = null)
 	{
 		// $Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
-		$Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+		// $Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
 
 		// print_r($Data_Barang);
 
 		// get data pembelian awal ==> jika tidak ada di data tbl_pembelian maka termasuk data stock persediaan
 		// get_uuid_barang dengan filter uuid_barang di tbl_pembelian
+
+		// get uuid barang dari uuid_persediaan
+		$get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+
+		print_r($get_data_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r($get_data_barang->uuid_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		$x=$get_data_barang->uuid_barang;
+		
+		$sql_stock = "SELECT persediaan.*,
+		sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
+		sum(tbl_penjualan.jumlah) as sum_jumlah_jual
+				FROM persediaan  
+				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+				left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+				-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
+				where persediaan.uuid_barang='$x'
+				Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
+				ORDER BY persediaan.namabarang ASC";
+
+		// print_r($this->db->query($sql_stock)->result());
+		$Data_Barang = $this->db->query($sql_stock)->row();
+
+		print_r($Data_Barang);
+		// die;
+
+
+
 
 
 		$data = array(
@@ -1852,12 +1885,15 @@ class Tbl_pembelian extends CI_Controller
 			// 'uuid_spop' => $Data_Barang->uuid_spop,
 			'kode_barang' => $Data_Barang->kode_barang,
 			'nama_barang' => $Data_Barang->namabarang,
-			'jumlah' => $Data_Barang->total_10,
+			'jumlah_persediaan' => $Data_Barang->total_10,
+			'jumlah_beli' => $Data_Barang->sum_jumlah_beli,
+			'jumlah_jual' => $Data_Barang->sum_jumlah_jual,
 			'satuan' => $Data_Barang->satuan,
 			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
 			// 'nama_gudang' => $Data_Barang->nama_gudang,
 			'harga_satuan' => $Data_Barang->hpp,
 			'uuid_barang' => $Data_Barang->uuid_barang,
+
 			'uuid_persediaan' => $uuid_persediaan,
 		);
 
