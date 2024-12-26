@@ -58,14 +58,14 @@
                                 </div> -->
 
 
-                                <div class="row">
+                                <!-- <div class="row">
                                     <div class="col-2">
                                         Kode Barang
                                     </div>
                                     <div class="col-8">
-                                        <?php echo " : " .  $kode_barang ?>
+                                        <?php //echo " : " .  $kode_barang ?>
                                     </div>
-                                </div>
+                                </div> -->
 
 
                                 <div class="row">
@@ -150,6 +150,7 @@
                                                     }
                                                     ?>
                                                 </select>
+                                                <label style="color:red;font-size: 16px;text-align: right;" align="right">Unit Harus di pilih.</label>
                                             </div>
                                           
 

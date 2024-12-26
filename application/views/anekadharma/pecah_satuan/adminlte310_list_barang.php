@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA STOCK BARANG</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>DATA PERSEDIAAN (STOCK BARANG)</strong></div>
                                 </div>
 
 
@@ -40,30 +40,30 @@
                             <div class="col-4">
                                 <form action="<?php echo $action_cari_gudang; ?>" method="post">
                                     <div class="row">
-                                        <div class="col-4" text-align="right"> <strong>GUDANG</strong></div>
+                                        <div class="col-4" text-align="right"> 
+                                            <!-- <strong>GUDANG</strong> -->
+                                        </div>
                                         <div class="col-6" text-align="left">
 
                                             <!-- <label for="konsumen_nama">Unit </label> -->
-                                            <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 60px;" required>
+                                            <!-- <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 60px;" required>
                                                 <option value="">Pilih Gudang</option>
                                                 <option value="semua">TAMPIL SEMUA</option>
                                                 <?php
 
-                                                $sql = "select * from sys_gudang order by nama_gudang ASC ";
-                                                foreach ($this->db->query($sql)->result() as $m) {
-                                                    echo "<option value='$m->uuid_gudang' ";
-                                                    echo ">  " . strtoupper($m->kode_gudang)  . " | " . strtoupper($m->nama_gudang)  . "</option>";
-                                                }
+                                                // $sql = "select * from sys_gudang order by nama_gudang ASC ";
+                                                // foreach ($this->db->query($sql)->result() as $m) {
+                                                //     echo "<option value='$m->uuid_gudang' ";
+                                                //     echo ">  " . strtoupper($m->kode_gudang)  . " | " . strtoupper($m->nama_gudang)  . "</option>";
+                                                // }
                                                 ?>
-                                            </select>
+                                            </select> -->
 
                                         </div>
                                         <div class="col-2" text-align="right">
 
-                                            <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                            ?>
-
-                                            <button type="submit" class="btn btn-danger"> Cari</button>
+                                        
+                                            <!-- <button type="submit" class="btn btn-danger"> Cari</button> -->
 
                                         </div>
                                     </div>
@@ -99,11 +99,11 @@
 
                                     <!-- <th>Gudang</th> -->
                                     <!-- <th>kode <br />Barang</th> -->
-                                    <th>nama barang <br />beli</th>
-                                    <th>harga satuan <br />beli</th>
+                                    <th>nama barang</th>
+                                    <th>harga satuan</th>
                                     <th>satuan</th>
                                     <th>Persediaan</th>
-                                    <th>jumlah <br />beli</th>
+                                    <th>jumlah</th>
 
                                     <!-- <th>nama_barang_jual</th> -->
                                     <th>jumlah <br />terjual</th>
@@ -133,6 +133,10 @@
                                         <td style="text-align:center">
                                             <?php
                                             echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o">Pilih Buat Satuan Baru </i>', array('title' => 'Pilih Buat Satuan Baru ', 'class' => 'btn btn-success btn-sm'));
+                                            if($list_data->uuid_barang_baru){
+                                                echo "<br/>";
+                                                echo anchor(site_url('tbl_pembelian/rollback_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o">Mengembalikan ke Satuan Awal </i>', array('title' => 'Pilih Buat Satuan Baru ', 'class' => 'btn btn-danger btn-sm'));
+                                            }
                                             ?>
                                         </td>
                                         <td style="text-align:left"><?php echo date("Y-m-d", strtotime($list_data->tanggal)); ?></td>

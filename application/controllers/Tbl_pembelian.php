@@ -1853,8 +1853,8 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$x=$get_data_barang->uuid_barang;
-		
+		$x = $get_data_barang->uuid_barang;
+
 		$sql_stock = "SELECT persediaan.*,
 		sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
 		sum(tbl_penjualan.jumlah) as sum_jumlah_jual
@@ -1899,6 +1899,134 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_pecah_satuan_barang', $data);
+	}
+
+	public function rollback_satuan_proses($uuid_persediaan = null)
+	{
+
+		// print_r("rollback_satuan_proses");
+		// die;
+
+		// $Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
+		// $Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+
+		// print_r($Data_Barang);
+
+		// get data pembelian awal ==> jika tidak ada di data tbl_pembelian maka termasuk data stock persediaan
+		// get_uuid_barang dengan filter uuid_barang di tbl_pembelian
+
+		// get uuid barang dari uuid_persediaan
+		$get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+
+		// print_r($get_data_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($get_data_barang->uuid_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$GET_uuid_barang = $get_data_barang->uuid_barang;
+
+		$sql_stock = "SELECT persediaan.*,
+		sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
+		sum(tbl_penjualan.jumlah) as sum_jumlah_jual
+				FROM persediaan  
+				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+				left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+				-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
+				where persediaan.uuid_barang='$GET_uuid_barang'
+				Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
+				ORDER BY persediaan.namabarang ASC";
+
+		// print_r($this->db->query($sql_stock)->result());
+		$Data_Barang = $this->db->query($sql_stock)->row();
+
+		// print_r($Data_Barang);
+		// die;
+
+
+		// Source Data Barang Pecah
+		$sql_barang_pecah_satuan = "SELECT * FROM tbl_pembelian_pecah_satuan where tbl_pembelian_pecah_satuan.uuid_barang_baru='$GET_uuid_barang' ";
+		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
+
+		// print_r("Data_Barang_pecah_satuan");
+		// print_r("<br/>");
+		// print_r($Data_Barang_pecah_satuan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$sql_source_data = "SELECT persediaan.*,
+		sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
+		sum(tbl_penjualan.jumlah) as sum_jumlah_jual
+				FROM persediaan  
+				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+				left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+				-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
+				where persediaan.uuid_barang='$Data_Barang_pecah_satuan->uuid_barang'
+				Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
+				ORDER BY persediaan.namabarang ASC";
+
+		// print_r($this->db->query($sql_stock)->result());
+		$SOURCE_Data_Barang = $this->db->query($sql_source_data)->row();
+
+		// print_r($SOURCE_Data_Barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		$data = array(
+			'Data_Barang' => $Data_Barang,
+			'action' => site_url('tbl_pembelian/rollback_satuan_action/' . $uuid_persediaan),
+			'button' => 'Simpan',
+
+			// Barang Setelah pecah satuan di persediaan
+			'uuid_barang' => $Data_Barang->uuid_barang,
+			'kode_barang' => $Data_Barang->kode_barang,
+			'nama_barang' => $Data_Barang->namabarang,
+			'jumlah_persediaan' => $Data_Barang->total_10,
+			'jumlah_beli' => $Data_Barang->sum_jumlah_beli,
+			'jumlah_jual' => $Data_Barang->sum_jumlah_jual,
+
+			'satuan' => $Data_Barang->satuan,
+			'harga_satuan' => $Data_Barang->hpp,
+			'uuid_barang' => $Data_Barang->uuid_barang,
+			'uuid_persediaan' => $uuid_persediaan,
+
+
+
+			// Barang Setelah pecah satuan di persediaan
+			'uuid_barang_source' => $SOURCE_Data_Barang->uuid_barang,
+			'kode_barang_source' => $SOURCE_Data_Barang->kode_barang,
+			'nama_barang_source' => $SOURCE_Data_Barang->namabarang,
+			'jumlah_persediaan_source' => $SOURCE_Data_Barang->total_10,
+
+			'jumlah_beli_source' => $SOURCE_Data_Barang->sum_jumlah_beli,
+			'jumlah_jual_source' => $SOURCE_Data_Barang->sum_jumlah_jual,
+
+			'satuan_source' => $SOURCE_Data_Barang->satuan,
+			'harga_satuan_source' => $SOURCE_Data_Barang->hpp,
+
+
+			'jumlah_di_pecah_satuan_source' => $Data_Barang_pecah_satuan->jumlah,
+			'jumlah_setelah_di_pecah_satuan' => $Data_Barang_pecah_satuan->jumlah_barang_baru,
+
+		
+		);
+
+		// print_r($data);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_rollback_barang', $data);
+	}
+
+
+	public function rollback_satuan_action(){
+		print_r("rollback_satuan_action");
+		die;
 	}
 
 	public function pecah_satuan($uuid_gudang = null)
@@ -1988,10 +2116,12 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.tanggal as tanggal, 
 			persediaan.satuan as satuan,
 			sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
-			sum(tbl_penjualan.jumlah) as sum_jumlah_jual
+			sum(tbl_penjualan.jumlah) as sum_jumlah_jual,
+			tbl_pembelian_pecah_satuan.uuid_barang_baru as uuid_barang_baru
 					FROM persediaan  
 					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+					left join tbl_pembelian_pecah_satuan ON persediaan.uuid_barang = tbl_pembelian_pecah_satuan.uuid_barang_baru  
 					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
 					Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
 					ORDER BY persediaan.namabarang ASC";
@@ -2102,6 +2232,28 @@ class Tbl_pembelian extends CI_Controller
 
 
 
+
+		// Insert nama barang baru ke sys_nama_barang dan mendapatkan uuid_barang
+		$data_Sys_nama_barang = array(
+			// 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
+			'kode_barang' => $get_kode_barang,
+			'nama_barang' => $this->input->post('nama_barang_baru', TRUE),
+			'satuan' => $this->input->post('satuan_barang_baru', TRUE),
+			// 'keterangan' => $this->input->post('keterangan',TRUE),
+		);
+
+
+		// print_r("data_Sys_nama_barang: ");
+		// print_r("<br/>");
+		// print_r($data_Sys_nama_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$uuid_barang_baru = $this->Sys_nama_barang_model->insert_dari_pecah_satuan($data_Sys_nama_barang);
+
+
+
 		$data_Tbl_pembelian_pecah_satuan = array(
 
 			'proses_input' => date("Y-m-d H:i:s"),
@@ -2129,6 +2281,7 @@ class Tbl_pembelian extends CI_Controller
 			'harga_satuan' => $Data_Barang->hpp,
 			// 'uuid_gudang_baru' => $this->input->post('uuid_gudang', TRUE),
 
+			'uuid_barang_baru' => $uuid_barang_baru,
 			'kode_barang_baru' => $get_kode_barang,
 			'nama_barang_baru' => $this->input->post('nama_barang_baru', TRUE),
 			'jumlah_barang_baru' => $get_jumlah_barang_baru,
@@ -2207,27 +2360,6 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		// Insert nama barang baru ke sys_nama_barang dan mendapatkan uuid_barang
-		$data_Sys_nama_barang = array(
-			// 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
-			'kode_barang' => $get_kode_barang,
-			'nama_barang' => $this->input->post('nama_barang_baru', TRUE),
-			'satuan' => $this->input->post('satuan_barang_baru', TRUE),
-			// 'keterangan' => $this->input->post('keterangan',TRUE),
-		);
-
-
-		// print_r("data_Sys_nama_barang: ");
-		// print_r("<br/>");
-		// print_r($data_Sys_nama_barang);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		$uuid_barang_baru = $this->Sys_nama_barang_model->insert_dari_pecah_satuan($data_Sys_nama_barang);
-
-
-
 		// Proses simpan ke tbl_pembelian menjadi barang baru
 
 		// Input ke data persediaan
@@ -2236,6 +2368,7 @@ class Tbl_pembelian extends CI_Controller
 			'tanggal' => date("Y-m-d H:i:s"),
 			// 'tanggal_new' => date("Y-m-d H:i:s"),
 			'uuid_barang' => $uuid_barang_baru,
+			'kode_barang' => $get_kode_barang,
 			'kode' => $get_kode_barang,
 			'namabarang' => $this->input->post('nama_barang_baru', TRUE),
 			'satuan' => $this->input->post('satuan_barang_baru', TRUE),
@@ -2306,7 +2439,7 @@ class Tbl_pembelian extends CI_Controller
 		// 	'konsumen' => $data_nama_unit,
 
 		// 	'harga_total' => $get_jumlah_barang_baru * $get_harga_satuan_barang_baru,
-			
+
 		// );
 
 
