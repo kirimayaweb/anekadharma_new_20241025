@@ -60,7 +60,7 @@
 
                                 <div class="row">
                                     <div class="col-2">
-                                        kode_barang
+                                        Kode Barang
                                     </div>
                                     <div class="col-8">
                                         <?php echo " : " .  $kode_barang ?>
@@ -70,7 +70,7 @@
 
                                 <div class="row">
                                     <div class="col-2">
-                                        nama_barang
+                                        Nama Barang
                                     </div>
                                     <div class="col-8">
                                         <?php echo " : " .  $nama_barang ?>
@@ -80,7 +80,7 @@
 
                                 <div class="row">
                                     <div class="col-2">
-                                        jumlah
+                                        Persediaan (Stock)
                                     </div>
                                     <div class="col-8">
                                         <?php 
@@ -94,7 +94,7 @@
 
                                 <div class="row">
                                     <div class="col-2">
-                                        satuan
+                                        Satuan
                                     </div>
                                     <div class="col-8">
                                         <?php echo " : " .  $satuan ?>
@@ -103,7 +103,7 @@
 
                                 <div class="row">
                                     <div class="col-2">
-                                        harga_satuan
+                                        Harga Satuan
                                     </div>
                                     <div class="col-8">
                                         <?php echo " : " .  nominal($harga_satuan) ?>

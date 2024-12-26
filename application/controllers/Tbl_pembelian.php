@@ -1844,14 +1844,15 @@ class Tbl_pembelian extends CI_Controller
 		// get uuid barang dari uuid_persediaan
 		$get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
 
-		print_r($get_data_barang);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r($get_data_barang->uuid_barang);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($get_data_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($get_data_barang->uuid_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
 		$x=$get_data_barang->uuid_barang;
 		
 		$sql_stock = "SELECT persediaan.*,
@@ -1868,7 +1869,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($this->db->query($sql_stock)->result());
 		$Data_Barang = $this->db->query($sql_stock)->row();
 
-		print_r($Data_Barang);
+		// print_r($Data_Barang);
 		// die;
 
 
@@ -2162,46 +2163,46 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		// Proses simpan ke tbl_penjualan dari barang asli sesuai jumlah yang di pecah : ditambah info status
-		$data_Tbl_penjualan = array(
-			'tgl_input' => date("Y-m-d H:i:s"),
-			'tgl_jual' => date("Y-m-d H:i:s"),
+		// // Proses simpan ke tbl_penjualan dari barang asli sesuai jumlah yang di pecah : ditambah info status
+		// $data_Tbl_penjualan = array(
+		// 	'tgl_input' => date("Y-m-d H:i:s"),
+		// 	'tgl_jual' => date("Y-m-d H:i:s"),
 
 
-			'uuid_persediaan' => $uuid_persediaan,
-			'id_persediaan_barang' => $Data_Barang->id,
+		// 	'uuid_persediaan' => $uuid_persediaan,
+		// 	'id_persediaan_barang' => $Data_Barang->id,
 
 
-			'nmrpesan' => "pecahsatuan",
-			'nmrkirim' => "pecahsatuan",
+		// 	'nmrpesan' => "pecahsatuan",
+		// 	'nmrkirim' => "pecahsatuan",
 
-			'uuid_konsumen' => $get_uuid_unit,
-			'konsumen_nama' => $data_nama_unit,
+		// 	'uuid_konsumen' => $get_uuid_unit,
+		// 	'konsumen_nama' => $data_nama_unit,
 
-			'uuid_barang' => $Data_Barang->uuid_barang,
-			'kode_barang' => $Data_Barang->kode_barang,
-			'nama_barang' => $Data_Barang->namabarang,
+		// 	'uuid_barang' => $Data_Barang->uuid_barang,
+		// 	'kode_barang' => $Data_Barang->kode_barang,
+		// 	'nama_barang' => $Data_Barang->namabarang,
 
-			'uuid_unit' => $get_uuid_unit,
-			'unit' => $data_nama_unit,
+		// 	'uuid_unit' => $get_uuid_unit,
+		// 	'unit' => $data_nama_unit,
 
-			'jumlah' => $get_jumlah_barang_di_pecah,
-			'satuan' => $Data_Barang->satuan,
-			'harga_satuan' => $Data_Barang->harga_satuan,
-			'total_nominal' =>  $get_jumlah_barang_di_pecah * $Data_Barang->harga_satuan,
-			'id_usr' => 1,
-		);
-
-
-		// print_r("data_Tbl_penjualan: ");
-		// print_r("<br/>");
-		// print_r($data_Tbl_penjualan);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
+		// 	'jumlah' => $get_jumlah_barang_di_pecah,
+		// 	'satuan' => $Data_Barang->satuan,
+		// 	'harga_satuan' => $Data_Barang->harga_satuan,
+		// 	'total_nominal' =>  $get_jumlah_barang_di_pecah * $Data_Barang->harga_satuan,
+		// 	'id_usr' => 1,
+		// );
 
 
-		$this->Tbl_penjualan_model->insert_new($data_Tbl_penjualan);
+		// // print_r("data_Tbl_penjualan: ");
+		// // print_r("<br/>");
+		// // print_r($data_Tbl_penjualan);
+		// // print_r("<br/>");
+		// // print_r("<br/>");
+		// // print_r("<br/>");
+
+
+		// $this->Tbl_penjualan_model->insert_new($data_Tbl_penjualan);
 
 
 
