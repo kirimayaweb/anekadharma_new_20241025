@@ -238,12 +238,12 @@
                                         <td style="text-align:right">
                                             <?php
 
-                                            echo $stock_persediaan;
-                                            echo "<br/>";
-                                            echo $x_jumlah_belanja;
-                                            echo "<br/>";
-                                            echo $x_jumlah_terjual;
-                                            echo "<br/>";
+                                            // echo $stock_persediaan;
+                                            // echo "<br/>";
+                                            // echo $x_jumlah_belanja;
+                                            // echo "<br/>";
+                                            // echo $x_jumlah_terjual;
+                                            // echo "<br/>";
 
 
                                             echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
