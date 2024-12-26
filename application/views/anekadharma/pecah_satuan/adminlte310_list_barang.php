@@ -153,7 +153,7 @@
                                                 <?php
 
 
-                                                echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_barang_beli . '</i>', 'class=""');
+                                                echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_barang_persediaan . '</i>', 'class=""');
 
                                                 ?>
                                             </td>
@@ -166,6 +166,7 @@
 
                                                 if (!empty($list_data->harga_satuan_persediaan)) {
                                                     echo nominal($list_data->harga_satuan_persediaan);
+                                                    // echo $list_data->harga_satuan_persediaan;
                                                     $X_harga_satuan = $list_data->harga_satuan_persediaan;
                                                 } else {
                                                     echo "0";
@@ -183,7 +184,8 @@
                                             <td style="text-align:right">
                                                 <?php
                                                 if ($list_data->jumlah_sediaan and $list_data->jumlah_sediaan > 0) {
-                                                    echo nominal($list_data->jumlah_sediaan);
+                                                    // echo nominal($list_data->jumlah_sediaan);
+                                                    echo $list_data->jumlah_sediaan;
                                                     $stock_persediaan = $list_data->jumlah_sediaan;
                                                 } else {
                                                     echo "0";
@@ -196,9 +198,9 @@
                                             <td style="text-align:right">
                                                 <?php
 
-                                                if ($list_data->jumlah_belanja and $list_data->jumlah_belanja > 0) {
-                                                    echo nominal($list_data->jumlah_belanja);
-                                                    $x_jumlah_belanja = $list_data->jumlah_belanja;
+                                                if ($list_data->sum_jumlah_beli and $list_data->sum_jumlah_beli > 0) {
+                                                    echo nominal($list_data->sum_jumlah_beli);
+                                                    $x_jumlah_belanja = $list_data->sum_jumlah_beli;
                                                 } else {
                                                     echo "0";
                                                     $x_jumlah_belanja = 0;
@@ -211,9 +213,9 @@
                                             <!-- Jumlah penjualan -->
                                             <td style="text-align:rirightght">
                                                 <?php
-                                                if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
-                                                    echo nominal($list_data->jumlah_terjual);
-                                                    $x_jumlah_terjual = $list_data->jumlah_terjual;
+                                                if ($list_data->sum_jumlah_jual and $list_data->sum_jumlah_jual > 0) {
+                                                    echo nominal($list_data->sum_jumlah_jual);
+                                                    $x_jumlah_terjual = $list_data->sum_jumlah_jual;
                                                 } else {
                                                     echo "0";
                                                     $x_jumlah_terjual = 0;

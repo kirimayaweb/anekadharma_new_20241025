@@ -1929,11 +1929,11 @@ class Tbl_pembelian extends CI_Controller
 			$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
 
-			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan, persediaan.tanggal as tanggal 
-						FROM persediaan  
-						   left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-						left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-						WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan, persediaan.tanggal as tanggal , persediaan.satuan as satuan , sum(tbl_pembelian_a.jumlah) as sum_jumlah_beli, sum(tbl_penjualan_a.jumlah) as sum_jumlah_jual
+						FROM persediaan persediaan_a   
+						   left join tbl_pembelian tbl_pembelian_a ON persediaan.uuid_barang = tbl_pembelian_a.uuid_barang 
+						left join tbl_penjualan tbl_penjualan_a ON persediaan.uuid_barang = tbl_penjualan_a.uuid_barang  
+						WHERE tbl_pembelian_a.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
 						ORDER BY persediaan.namabarang ASC";
 
 			// print_r($this->db->query($sql_stock)->result());
@@ -1942,11 +1942,21 @@ class Tbl_pembelian extends CI_Controller
 			// $Data_stock = $this->Tbl_pembelian_model->stock();
 			// print_r("NON  IF SEMUA");
 
-			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan, persediaan.tanggal as tanggal 
+			$sql_stock = "SELECT persediaan.uuid_persediaan as uuid_persediaan, 
+			persediaan.uuid_barang as uuid_barang, 
+			persediaan.kode_barang as kode_barang, 
+			persediaan.namabarang as nama_barang_persediaan, 
+			persediaan.total_10 as jumlah_sediaan, 
+			persediaan.hpp as harga_satuan_persediaan, 
+			persediaan.tanggal as tanggal, 
+			persediaan.satuan as satuan,
+			sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
+			sum(tbl_penjualan.jumlah) as sum_jumlah_jual
 					FROM persediaan  
 					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-					WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
+					Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
 					ORDER BY persediaan.namabarang ASC";
 
 			// print_r($this->db->query($sql_stock)->result());

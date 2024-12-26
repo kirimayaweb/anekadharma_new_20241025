@@ -252,7 +252,7 @@ class Tbl_kas_kecil extends CI_Controller
                 $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
                 $this->db->query($sql);
 
-                print_r("update uuid_spop");
+                // print_r("update uuid_spop");
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
                     'date_input' => date("Y-m-d H:i:s"),
