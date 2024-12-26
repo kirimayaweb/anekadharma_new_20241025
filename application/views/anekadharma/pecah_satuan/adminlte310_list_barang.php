@@ -126,7 +126,7 @@
 
                                     // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) { //HIDE SISA STOCK =0;
 
-                                    if ($list_data->uuid_barang) {
+                                    // if ($list_data->uuid_barang) {
                                 ?>
                                         <tr>
                                             <td style="text-align:center"><?php echo ++$start ?></td>
@@ -145,7 +145,7 @@
 
                                             ?>
 
-                                        </td> -->
+                                            </td> -->
 
 
 
@@ -184,8 +184,8 @@
                                             <td style="text-align:right">
                                                 <?php
                                                 if ($list_data->jumlah_sediaan and $list_data->jumlah_sediaan > 0) {
-                                                    // echo nominal($list_data->jumlah_sediaan);
-                                                    echo $list_data->jumlah_sediaan;
+                                                    echo nominal($list_data->jumlah_sediaan);
+                                                    // echo $list_data->jumlah_sediaan;
                                                     $stock_persediaan = $list_data->jumlah_sediaan;
                                                 } else {
                                                     echo "0";
@@ -243,7 +243,7 @@
 
                                 <?php
                                         // } //if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0)
-                                    }
+                                    // }
                                 }
                                 ?>
 
