@@ -44,7 +44,7 @@ class Persediaan extends CI_Controller
 			print_r("<br/>");
 
 
-			$date_process=$tahun_process ."-". $bulan_process ."-". $day_process;
+			$date_process = $tahun_process . "-" . $bulan_process . "-" . $day_process;
 
 			print_r($date_process);
 			print_r("<br/>");
@@ -56,12 +56,12 @@ class Persediaan extends CI_Controller
 
 
 
-			if($m->spop){
+			if ($m->spop) {
 				print_r("ada spop");
 				print_r("<br/>");
 
-				$date_beli_process=$tahun_process ."-". $bulan_process ."-01";
-				$date_beli= date("Y-m-d", strtotime($date_beli_process));
+				$date_beli_process = $tahun_process . "-" . $bulan_process . "-01";
+				$date_beli = date("Y-m-d", strtotime($date_beli_process));
 				print_r($date_beli);
 				print_r("<br/>");
 				print_r("<br/>");
@@ -99,46 +99,43 @@ class Persediaan extends CI_Controller
 					'total_10' => $m->total_10,
 					'nilai_persediaan' => $m->nilai_persediaan,
 				);
+			} else {
 
-			}else{
 
-	
-			$data = array(
-				// 'id' => $this->input->post('id', TRUE),
-				'tanggal' => $date_persediaan,
-				'tanggal_new' => $date_persediaan,
-				'kode' => $m->kode,
-				'namabarang' => $m->namabarang,
-				'satuan' => $m->satuan,
-				'hpp' => $m->hpp,
-				'sa' => $m->sa,
-				'spop' => $m->spop,
-				'beli' => $m->beli,
-				'tuj' => $m->tuj,
-				'tgl_keluar' => $m->tgl_keluar,
-				'sekret' => $m->sekret,
-				'cetak' => $m->cetak,
-				'grafikita' => $m->grafikita,
-				'dinas_umum' => $m->dinas_umum,
-				'atk_rsud' => $m->atk_rsud,
-				'ppbmp_kbs' => $m->ppbmp_kbs,
-				'kbs' => $m->kbs,
-				'ppbmp' => $m->ppbmp,
-				'medis' => $m->medis,
-				'siiplah_bosda' => $m->siiplah_bosda,
-				'sembako' => $m->sembako,
-				'fc_gose' => $m->fc_gose,
-				'fc_manding' => $m->fc_manding,
-				'fc_psamya' => $m->fc_psamya,
-				'total_10' => $m->total_10,
-				'nilai_persediaan' => $m->nilai_persediaan,
-			);
-		}
+				$data = array(
+					// 'id' => $this->input->post('id', TRUE),
+					'tanggal' => $date_persediaan,
+					'tanggal_new' => $date_persediaan,
+					'kode' => $m->kode,
+					'namabarang' => $m->namabarang,
+					'satuan' => $m->satuan,
+					'hpp' => $m->hpp,
+					'sa' => $m->sa,
+					'spop' => $m->spop,
+					'beli' => $m->beli,
+					'tuj' => $m->tuj,
+					'tgl_keluar' => $m->tgl_keluar,
+					'sekret' => $m->sekret,
+					'cetak' => $m->cetak,
+					'grafikita' => $m->grafikita,
+					'dinas_umum' => $m->dinas_umum,
+					'atk_rsud' => $m->atk_rsud,
+					'ppbmp_kbs' => $m->ppbmp_kbs,
+					'kbs' => $m->kbs,
+					'ppbmp' => $m->ppbmp,
+					'medis' => $m->medis,
+					'siiplah_bosda' => $m->siiplah_bosda,
+					'sembako' => $m->sembako,
+					'fc_gose' => $m->fc_gose,
+					'fc_manding' => $m->fc_manding,
+					'fc_psamya' => $m->fc_psamya,
+					'total_10' => $m->total_10,
+					'nilai_persediaan' => $m->nilai_persediaan,
+				);
+			}
 
 
 			$this->Persediaan_model->insert($data);
-
-
 		}
 	}
 
@@ -160,6 +157,80 @@ class Persediaan extends CI_Controller
 		}
 
 		print_r("Selesai update uuid_barang dan kode_barang di tabel persediaan berdasarkan uuid_barang dan kode barang dari sys_data_barang");
+	}
+
+	public function cek_pembelian_persediaan()
+	{
+		$sql = "SELECT * FROM `tbl_pembelian` GROUP by `uuid_barang`";
+		$start = 0;
+		foreach ($this->db->query($sql)->result() as $list_data) {
+
+			$GET_uuid_barang_cek = $list_data->uuid_barang;
+			$this->db->where('uuid_barang', $GET_uuid_barang_cek);
+			//$this->db->where('password',  $test);
+			$get_data_persediaan = $this->db->get('persediaan');
+
+			$data_persediaan = $get_data_persediaan->row();
+
+
+			if ($get_data_persediaan->num_rows() > 0) {
+
+				print_r($start++);
+				print_r(" - PEMBELIAN: ");
+				print_r($list_data->uuid_barang);
+				print_r(" : ");
+				print_r($list_data->uraian);
+				print_r(" ----- ");
+				print_r($data_persediaan->uuid_barang);
+				print_r(" : ");
+				print_r($data_persediaan->namabarang);
+
+				// print_r("<br/>");
+			} else {
+				print_r($start++);
+				print_r(" - PEMBELIAN: ");
+				print_r($list_data->uuid_barang);
+				print_r(" : ");
+				print_r($list_data->uraian);
+				print_r(" ----- TIDAK ADA ");
+
+				// Simpan Ke persediaan
+				$data = array(
+					// 'id' => $this->input->post('id', TRUE),
+					'tanggal' => $list_data->tgl_po,
+					'uuid_barang' => $list_data->uuid_barang,
+					'kode' => $list_data->kode_barang,
+					'kode_barang' => $list_data->kode_barang,
+					'namabarang' => $list_data->uraian,
+					'satuan' => $list_data->satuan,
+					'hpp' => $list_data->harga_satuan,
+					'sa' => $list_data->jumlah,
+					'spop' => $list_data->spop,
+					'beli' => $list_data->jumlah,
+					'tuj' => $list_data->jumlah,
+					// 'tgl_keluar' => $list_data->,
+					// 'sekret' => $list_data->,
+					// 'cetak' => $this->input->post('cetak', TRUE),
+					// 'grafikita' => $this->input->post('grafikita', TRUE),
+					// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+					// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+					// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+					// 'kbs' => $this->input->post('kbs', TRUE),
+					// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+					// 'medis' => $this->input->post('medis', TRUE),
+					// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+					// 'sembako' => $this->input->post('sembako', TRUE),
+					// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+					// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+					// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+					'total_10' => $list_data->jumlah,
+					'nilai_persediaan' => $list_data->jumlah*$list_data->harga_satuan,
+				);
+				$this->Persediaan_model->insert($data);
+			}
+			print_r("<br/>");
+			print_r("<br/>");
+		}
 	}
 
 	public function index()
