@@ -195,12 +195,38 @@ class Persediaan extends CI_Controller
 				print_r(" ----- TIDAK ADA ");
 
 				// Simpan Ke persediaan
+				if ($list_data->kode_barang) {
+					$GET_kode_barang = $list_data->kode_barang;
+				} else {
+					// GENERATE KODE BARANG
+
+					$teks = $list_data->kode_barang;
+
+					$split = explode(' ', $teks);
+					foreach ($split as $kata) {
+						$get_kode_barang = $get_kode_barang . substr($kata, 0, 2);
+					}
+
+					// CEK KODE APAKAH SUDAH ADA, JIKA SUDAH ADA MAKA DITAMBAHKAN NOMOR
+					// query chek sys_nama_barang
+					$this->db->where('kode_barang', $get_kode_barang);
+					$sys_nama_barang = $this->db->get('sys_nama_barang');
+
+					if ($sys_nama_barang->num_rows() > 0) {
+						// print_r ("Sudah ada ");
+						$get_kode_barang = $get_kode_barang . "_" . $sys_nama_barang->num_rows();
+					}
+				}
+
+
 				$data = array(
 					// 'id' => $this->input->post('id', TRUE),
 					'tanggal' => $list_data->tgl_po,
 					'uuid_barang' => $list_data->uuid_barang,
-					'kode' => $list_data->kode_barang,
-					'kode_barang' => $list_data->kode_barang,
+
+					'kode' => $GET_kode_barang,
+					'kode_barang' => $GET_kode_barang,
+					
 					'namabarang' => $list_data->uraian,
 					'satuan' => $list_data->satuan,
 					'hpp' => $list_data->harga_satuan,
@@ -224,9 +250,21 @@ class Persediaan extends CI_Controller
 					// 'fc_manding' => $this->input->post('fc_manding', TRUE),
 					// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
 					'total_10' => $list_data->jumlah,
-					'nilai_persediaan' => $list_data->jumlah*$list_data->harga_satuan,
+					'nilai_persediaan' => $list_data->jumlah * $list_data->harga_satuan,
 				);
 				$this->Persediaan_model->insert($data);
+
+				// Simpan ke sys_nama_barang
+
+				$data = array(
+					// 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
+					'kode_barang' => $GET_kode_barang,
+					'nama_barang' => $list_data->uraian,
+					'satuan' => $list_data->satuan,
+					'keterangan' => "Update dari pembelian",
+				);
+
+				$this->Sys_nama_barang_model->insert($data);
 			}
 			print_r("<br/>");
 			print_r("<br/>");
