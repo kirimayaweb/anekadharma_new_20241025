@@ -133,7 +133,21 @@
                                         <td style="text-align:center">
                                             <?php
                                             echo anchor(site_url('tbl_pembelian/pecah_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o">Pilih Buat Satuan Baru </i>', array('title' => 'Pilih Buat Satuan Baru ', 'class' => 'btn btn-success btn-sm'));
-                                            if($list_data->uuid_barang_baru){
+
+                                            // Cek apakah UUID_barang ada di tbl_pembelian_pecah_satuan , jika ada ==> tambahkan tombol rollback
+                                            // echo "<br/>";
+                                            // echo $list_data->uuid_barang;
+                                            // echo "<br/>";
+                                            // echo $list_data->uuid_barang_pecah;
+
+                                            $this->db->where('uuid_barang_baru', $list_data->uuid_barang);
+                                            $get_data_pecah_satuan = $this->db->get('tbl_pembelian_pecah_satuan');
+                                    
+                                            if ($get_data_pecah_satuan->num_rows() > 0) {
+
+                                            // if( $list_data->uuid_barang_baru){
+                                                // echo "<br/>";
+                                                // echo $get_data_pecah_satuan->row()->uuid_barang_baru;
                                                 echo "<br/>";
                                                 echo anchor(site_url('tbl_pembelian/rollback_satuan_proses/' . $list_data->uuid_persediaan), '<i class="fa fa-pencil-square-o">Mengembalikan ke Satuan Awal </i>', array('title' => 'Pilih Buat Satuan Baru ', 'class' => 'btn btn-danger btn-sm'));
                                             }
@@ -188,9 +202,15 @@
                                         <td style="text-align:right">
                                             <?php
                                             if ($list_data->jumlah_sediaan and $list_data->jumlah_sediaan > 0) {
-                                                echo nominal($list_data->jumlah_sediaan);
-                                                // echo $list_data->jumlah_sediaan;
-                                                $stock_persediaan = $list_data->jumlah_sediaan;
+
+                                                if($list_data->jumlah_terpecah and $list_data->jumlah_terpecah > 0 ){
+                                                    echo nominal($list_data->jumlah_sediaan - $list_data->jumlah_terpecah);
+                                                    $stock_persediaan = $list_data->jumlah_sediaan - $list_data->jumlah_terpecah;
+                                                }else{
+                                                    echo nominal($list_data->jumlah_sediaan);
+                                                    $stock_persediaan = $list_data->jumlah_sediaan;
+                                                }
+                                                
                                             } else {
                                                 echo "0";
                                                 $stock_persediaan = 0;

@@ -1951,6 +1951,7 @@ class Tbl_pembelian extends CI_Controller
 		$sql_barang_pecah_satuan = "SELECT * FROM tbl_pembelian_pecah_satuan where tbl_pembelian_pecah_satuan.uuid_barang_baru='$GET_uuid_barang' ";
 		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
 
+		$Get_uuid_pecah_satuan_proses = $Data_Barang_pecah_satuan->uuid_pecah_satuan;
 		// print_r("Data_Barang_pecah_satuan");
 		// print_r("<br/>");
 		// print_r($Data_Barang_pecah_satuan);
@@ -1981,7 +1982,7 @@ class Tbl_pembelian extends CI_Controller
 
 		$data = array(
 			'Data_Barang' => $Data_Barang,
-			'action' => site_url('tbl_pembelian/rollback_satuan_action/' . $uuid_persediaan),
+			'action' => site_url('tbl_pembelian/rollback_satuan_action/' . $Get_uuid_pecah_satuan_proses),
 			'button' => 'Simpan',
 
 			// Barang Setelah pecah satuan di persediaan
@@ -2015,7 +2016,7 @@ class Tbl_pembelian extends CI_Controller
 			'jumlah_di_pecah_satuan_source' => $Data_Barang_pecah_satuan->jumlah,
 			'jumlah_setelah_di_pecah_satuan' => $Data_Barang_pecah_satuan->jumlah_barang_baru,
 
-		
+
 		);
 
 		// print_r($data);
@@ -2024,9 +2025,137 @@ class Tbl_pembelian extends CI_Controller
 	}
 
 
-	public function rollback_satuan_action(){
+	public function rollback_satuan_action($Get_uuid_pecah_satuan_proses = null)
+	{
+
+		print_r($Get_uuid_pecah_satuan_proses);
+		print_r("<br/>");
+
+		print_r($this->input->post('jumlah_barang_rollback_stock', TRUE));
+		print_r("<br/>");
+
 		print_r("rollback_satuan_action");
-		die;
+		print_r("<br/>");
+		// die;
+
+		// Update tbl_pembelian_pecah_satuan ==> mengurangi jumlah yang terpecah
+
+
+		// $get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+
+		// $GET_uuid_barang = $get_data_barang->uuid_barang;
+
+		// Get Jumlah yang terpecah 
+
+
+		$sql_barang_pecah_satuan = "SELECT * FROM `tbl_pembelian_pecah_satuan` WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
+		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
+		$Get_uuid_barang_baru=$Data_Barang_pecah_satuan->uuid_barang_baru;
+		
+
+			
+		
+		
+		
+		print_r($Data_Barang_pecah_satuan);
+		print_r("<br/>");
+		print_r("<br/>");
+
+		$Get_jumlah_sebelum_terpecah_awal =$Data_Barang_pecah_satuan->jumlah;
+
+		print_r("STOCK Get_jumlah_sebelum_terpecah_awal: ");
+		print_r($Get_jumlah_sebelum_terpecah_awal);
+		print_r("<br/>");
+
+
+		$Get_jumlah_setelah_terpecah =$Data_Barang_pecah_satuan->jumlah_barang_baru;	
+
+		print_r("BARANG BARU Get_jumlah_setelah_terpecah: ");
+		print_r($Get_jumlah_setelah_terpecah);
+		print_r("<br/>");
+		// print_r("<br/>");
+
+
+		$Get_jumlah_variabel_perubahan_jumlah_satuan = $Get_jumlah_setelah_terpecah / $Get_jumlah_sebelum_terpecah_awal;
+
+		print_r("Variabel pecahan ke satuan BARU : Get_jumlah_variabel_perubahan_jumlah_satuan: ");
+		print_r($Get_jumlah_variabel_perubahan_jumlah_satuan);
+		print_r("<br/>");
+		// print_r("<br/>");
+
+		$Get_jumlah_rollback = preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE));
+
+		print_r("<br/>");
+		print_r("Yang di ROLL BACK : Get_jumlah_rollback: ");
+		print_r($Get_jumlah_rollback);
+		print_r("<br/>");
+
+
+		
+		
+		$Get_jumlah_akhir_proses = $Get_jumlah_sebelum_terpecah_awal - preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE));
+		// die;
+
+		print_r("Get_jumlah_akhir_proses: ");
+		print_r($Get_jumlah_akhir_proses);
+		print_r("<br/>");
+
+
+		$Get_jumlah_update_jumlah_terpecah = $Get_jumlah_setelah_terpecah - ($Get_jumlah_variabel_perubahan_jumlah_satuan * preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE)));
+
+		print_r("<br/>");
+		print_r("UPDATE Jumlah BARANG BARU Get_jumlah_update_jumlah_terpecah: ");
+		print_r($Get_jumlah_update_jumlah_terpecah);
+		print_r("<br/>");
+
+
+		// // Source Data Barang Pecah
+		$sql_barang_pecah_satuan = "UPDATE `tbl_pembelian_pecah_satuan` SET `jumlah` = $Get_jumlah_akhir_proses , `jumlah_barang_baru` = $Get_jumlah_update_jumlah_terpecah WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
+		$this->db->query($sql_barang_pecah_satuan);
+		
+		// Jumlah baru untuk barang baru setelah ROLL BACK
+		$sql_persediaan_jumlah_stock = "SELECT `total_10` FROM `persediaan` WHERE `uuid_barang`='$Get_uuid_barang_baru'";
+		$Get_JUMLAH_stock_barang_baru_di_persediaan = $this->db->query($sql_persediaan_jumlah_stock)->row();
+		
+		print_r("JUMLAH DI PERSEDIAAN Get_JUMLAH_stock_barang_baru_di_persediaan->total_10");
+		print_r($Get_JUMLAH_stock_barang_baru_di_persediaan->total_10);
+		print_r("<br/>");
+
+		$Get_sisa_stock_barang_baru = $Get_JUMLAH_stock_barang_baru_di_persediaan->total_10 - ($Get_jumlah_variabel_perubahan_jumlah_satuan * preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE)) );
+
+		print_r($Get_sisa_stock_barang_baru);
+		print_r("<br/>");
+
+
+		// update barang pecah satuan di data stock persediaan , dikurang sejumlah yang di rollback
+		$sql_persediaan_update_jumlah_barang_baru = "UPDATE `persediaan` SET `sa` = $Get_sisa_stock_barang_baru , `beli` = $Get_sisa_stock_barang_baru , `tuj` =$Get_sisa_stock_barang_baru , `total_10` = $Get_sisa_stock_barang_baru WHERE `uuid_barang`='$Get_uuid_barang_baru'";
+		$this->db->query($sql_persediaan_update_jumlah_barang_baru);
+
+
+
+		// Display Akhir data =================================================================================================
+		$sql_barang_pecah_satuan = "SELECT * FROM `tbl_pembelian_pecah_satuan` WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
+		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
+		
+		print_r($Data_Barang_pecah_satuan);
+		print_r("<br/>");
+		print_r($Data_Barang_pecah_satuan->uuid_barang_baru);
+		$Get_uuid_barang_baru=$Data_Barang_pecah_satuan->uuid_barang_baru;
+		print_r("<br/>");
+		print_r("<br/>");
+
+		
+		$sql_barang_pecah_satuan_di_persediaan = "SELECT * FROM `persediaan` WHERE `uuid_barang`='$Get_uuid_barang_baru'";
+		$Data_Barang_pecah_satuan_di_persediaan = $this->db->query($sql_barang_pecah_satuan_di_persediaan)->row();
+
+		print_r($Data_Barang_pecah_satuan_di_persediaan);
+		print_r("<br/>");
+		print_r("<br/>");
+
+		print_r("Selesai");
+		// die;
+		redirect(site_url('tbl_pembelian/pecah_satuan'));
+
 	}
 
 	public function pecah_satuan($uuid_gudang = null)
@@ -2117,11 +2246,14 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.satuan as satuan,
 			sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
 			sum(tbl_penjualan.jumlah) as sum_jumlah_jual,
+			tbl_pembelian_pecah_satuan.jumlah as jumlah_terpecah,
+			tbl_pembelian_pecah_satuan.jumlah_barang_baru as jumlah_setelah_terpecah,
+			tbl_pembelian_pecah_satuan.uuid_barang as uuid_barang_pecah,
 			tbl_pembelian_pecah_satuan.uuid_barang_baru as uuid_barang_baru
 					FROM persediaan  
 					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-					left join tbl_pembelian_pecah_satuan ON persediaan.uuid_barang = tbl_pembelian_pecah_satuan.uuid_barang_baru  
+					left join tbl_pembelian_pecah_satuan ON persediaan.uuid_barang = tbl_pembelian_pecah_satuan.uuid_barang  
 					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
 					Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
 					ORDER BY persediaan.namabarang ASC";

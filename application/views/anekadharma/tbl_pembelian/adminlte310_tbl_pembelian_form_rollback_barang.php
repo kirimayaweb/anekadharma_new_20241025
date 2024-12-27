@@ -30,7 +30,7 @@
                         </div>
                         <div class="row">
                             <div class="col-12" text-align="center"> <strong>
-                                    Rollback Barang (Mengembalikan barang pecah satuan ke satuan awal)
+                                    Rollback Produk (Mengembalikan Produk pecah satuan ke satuan awal)
                                 </strong>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
 
                                         <div class="row">
                                             <div class="col-4">
-                                                Nama Barang
+                                                Nama Produk
                                             </div>
                                             <div class="col-8">
                                                 <?php echo " : " .  $nama_barang ?>
@@ -105,14 +105,16 @@
                                     <!-- source sumber barang sebelum di pecah -->
 
                                     <div class="info-box  bg-success">
+
+                                    
                                         <span class="info-box-icon bg-warning"><i class="far fa-flag"></i></span>
 
                                         <div class="info-box-content">
-                                            <span class="info-box-text"> Sumber Barang Sebelum di pecah:</span>
+                                            <span class="info-box-text"> Sumber Produk Sebelum di pecah:</span>
                                             <span class="info-box-text">
                                                 <div class="row">
                                                     <div class="col-4">
-                                                        Nama Barang
+                                                        Nama Produk
                                                     </div>
                                                     <div class="col-8">
                                                         <?php echo " : " .  $nama_barang_source ?>
@@ -236,14 +238,14 @@
                                     <div class="row">
                                         <div class="col-4"></div>
                                         <div class="col-3">
-                                            <label for="nmrfakturkwitansi">Jumlah <?php echo $satuan_source; ?> ( Per <?php echo $jumlah_setelah_di_pecah_satuan . " " . $satuan  ?> )</label>
+                                            <label for="nmrfakturkwitansi">Jumlah <?php echo $satuan_source; ?> ( Per <?php echo $satuan_source . " = " . ($jumlah_setelah_di_pecah_satuan / $jumlah_di_pecah_satuan_source) . " " . $satuan  ?> )</label>
 
                                             <!-- <input type="text" class="form-control" rows="3" name="jumlah_barang_baru" id="jumlah_barang_baru" placeholder="Jumlah barang baru" required> -->
 
-                                            <input type="number" class="form-control" onkeyup="sum();" name="jumlah_barang_dari_stock" id="jumlah_barang_dari_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" min="1" max="<?php echo $Get_Sisa_Stock / $jumlah_setelah_di_pecah_satuan ?>" ; required/>
+                                            <input type="number" class="form-control" onkeyup="sum();" name="jumlah_barang_rollback_stock" id="jumlah_barang_rollback_stock" placeholder="" value="" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" min="1" max="<?php echo $Get_Sisa_Stock / ($jumlah_setelah_di_pecah_satuan / $jumlah_di_pecah_satuan_source) ?>" ; required/>
 
 
-                                            <label style="color:red;font-size: 20px;">Max.: <?php echo nominal($Get_Sisa_Stock / $jumlah_setelah_di_pecah_satuan); ?></label>
+                                            <label style="color:red;font-size: 20px;">Max.: <?php echo nominal($Get_Sisa_Stock / ($jumlah_setelah_di_pecah_satuan / $jumlah_di_pecah_satuan_source)) . " " . $satuan_source  ; ?></label>
 
                                         </div>
                                         <div class="col-4"></div>
