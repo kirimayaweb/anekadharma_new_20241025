@@ -29,7 +29,7 @@ class Tbl_penjualan extends CI_Controller
 
 		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
 		$start = 0;
-		// print_r($Tbl_pembelian);
+		// print_r($Tbl_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 
@@ -321,9 +321,11 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
+		// print_r("create_action_simpan_barang");
+		// print_r("<br/>");
 		// print_r($uuid_penjualan);
 		// print_r("<br/>");
-		// print_r($id_proses);
+		// print_r($id_persediaan_barang);
 		// print_r("<br/>");
 		// die;
 
@@ -497,25 +499,23 @@ class Tbl_penjualan extends CI_Controller
 
 
 		// redirect("kasir_penjualan/".$uuid_penjualan);
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE) ));
 	}
 
-	public function kasir_penjualan($uuid_penjualan,$tgl_jual,$nmrkirim)
+	public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
 	{
 
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim($uuid_penjualan,$tgl_jual,$nmrkirim);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual, $nmrkirim);
 
 		// print_r($data_penjualan_per_uuid_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan,$tgl_jual,$nmrkirim);
+		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual, $nmrkirim);
 
-		print_r($data_penjualan_per_uuid_penjualan_first_row);
-		die;
-
+		
 
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
@@ -538,14 +538,15 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
-	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null)
+	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null,$date_tgl_jual=null,$nmrkirim=null)
 	{
 
 		// 2.a. PERSIAPAN LIBRARY
 		// $this->load->library('PdfGenerator');
 
 
-		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan,$date_tgl_jual,$nmrkirim);
 
 		// print_r($data_master_penjualan_per_uuidpenjualan);		
 		// print_r($data_master_penjualan_per_uuidpenjualan->nmrpesan);
@@ -559,7 +560,7 @@ class Tbl_penjualan extends CI_Controller
 
 		// 2.b. PERSIAPAN DATA
 		$data = array(
-			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan),
+			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($date_tgl_jual,$nmrkirim),
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
@@ -617,10 +618,8 @@ class Tbl_penjualan extends CI_Controller
 
 	public function update_penjualan($uuid_penjualan_proses)
 	{
-		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
-		// print_r($row);
-		// die;
+		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
 		if ($row) {
 			$data = array(
@@ -656,6 +655,7 @@ class Tbl_penjualan extends CI_Controller
 			// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
 			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update_new', $data);
 		} else {
+
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
 		}
@@ -744,6 +744,7 @@ class Tbl_penjualan extends CI_Controller
 	public function update_action_proses($uuid_penjualan_proses = null)
 	{
 
+	
 		// $row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
@@ -827,7 +828,7 @@ class Tbl_penjualan extends CI_Controller
 
 
 
-			
+
 
 
 		);
