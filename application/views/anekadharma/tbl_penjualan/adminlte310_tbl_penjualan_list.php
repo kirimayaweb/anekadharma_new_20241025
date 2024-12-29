@@ -97,6 +97,7 @@
                             <tbody>
                                 <?php
                                 $compare_tgl_jual = 0;
+                                $compare_nmr_pesan = 0;
                                 $compare_nmr_kirim = 0;
                                 $compare_uuid_penjualan = 0;
 
@@ -126,12 +127,16 @@
                                         <tr>
                                             <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start; ?></td>
-                                            <td><?php
-                                                //echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                // echo $GET_tgl_jual;
-                                                ?></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td style="background-color:yellow;" align="right"><?php
+                                                                                                // echo date("d M Y", strtotime($list_data->tgl_jual));
+                                                                                                // echo $GET_tgl_jual;
+
+                                                                                                echo "<font color='red'><strong>TOTAL</strong></font>"
+
+                                                                                                ?>
+                                            </td>
+                                            <td style="background-color:yellow;" align="right"><?php echo $compare_nmr_pesan; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo $compare_nmr_kirim; ?></td>
                                             <td></td>
                                             <td></td>
                                             <td><?php //echo $list_data->nama_barang; 
@@ -162,7 +167,7 @@
 
                                         <tr>
 
-                                            <td><?php echo ++$start ; ?></td>
+                                            <td><?php echo ++$start; ?></td>
                                             <td>
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
@@ -272,6 +277,7 @@
 
                                     <?php
 
+                                        $compare_nmr_pesan = $list_data->nmrpesan;
                                         $compare_nmr_kirim = $list_data->nmrkirim;
                                         $compare_tgl_jual = $list_data->tgl_jual;
                                     } else {
@@ -386,8 +392,10 @@
 
                                     <?php
 
+                                        $compare_nmr_pesan = $list_data->nmrpesan;
                                         $compare_nmr_kirim = $list_data->nmrkirim;
                                         $compare_tgl_jual = $list_data->tgl_jual;
+                                        
                                     }
                                     ?>
 
