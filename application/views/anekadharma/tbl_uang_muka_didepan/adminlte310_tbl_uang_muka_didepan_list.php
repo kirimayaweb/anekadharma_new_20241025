@@ -110,8 +110,8 @@
 
                                                                 <td style="text-align:center" width="200px">
                                                                     <?php
-                                                                    echo anchor(site_url('tbl_uang_muka_didepan/read/' . $tbl_uang_muka_didepan->id), 'Read');
-                                                                    echo ' | ';
+                                                                    // echo anchor(site_url('tbl_uang_muka_didepan/read/' . $tbl_uang_muka_didepan->id), 'Read');
+                                                                    // echo ' | ';
                                                                     // echo anchor(site_url('tbl_uang_muka_didepan/update/' . $tbl_uang_muka_didepan->id), 'Update');
                                                                     // echo ' | ';
                                                                     echo anchor(site_url('tbl_uang_muka_didepan/delete/' . $tbl_uang_muka_didepan->id), 'Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
