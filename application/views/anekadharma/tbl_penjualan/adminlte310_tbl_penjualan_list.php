@@ -96,8 +96,10 @@
                             </thead>
                             <tbody>
                                 <?php
+                                $compare_tgl_jual = 0;
                                 $compare_nmr_kirim = 0;
                                 $compare_uuid_penjualan = 0;
+
                                 $Total_Jumlah_per_nmrkirim = 0;
                                 $Total_UMPPHPSL22_per_nmrkirim = 0;
                                 $Total_piutang_per_nmrkirim = 0;
@@ -112,9 +114,12 @@
 
                                 foreach ($Tbl_penjualan_data as $list_data) {
 
-                                    if (($start >= 1) and ($compare_uuid_penjualan <> $list_data->uuid_penjualan)) {
+                                    if (($start >= 1) and ($compare_tgl_jual <> $list_data->tgl_jual)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
+
+
+                                        <!-- // Buat 1 baris untuk total dan background = KUNING -->
                                         <tr>
                                             <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start ?></td>
@@ -142,12 +147,16 @@
                                     <?php
                                     }
                                     ?>
+
+
+                                    <!-- cek data apakah tgl , nmrpesan dan nmrkirim berbeda ?  jika berbeda maka buat baris baru -->
                                     <tr>
                                         <?php
-                                        if (($compare_nmr_kirim == $list_data->nmrkirim)  and ($compare_uuid_penjualan == $list_data->uuid_penjualan)) {
+                                        // if (($compare_nmr_kirim == $list_data->nmrkirim)  and ($compare_uuid_penjualan == $list_data->uuid_penjualan)) {
+                                        if (($compare_nmr_kirim == $list_data->nmrkirim)  and ($compare_tgl_jual == $list_data->tgl_jual)) {
                                         ?>
                                             <td><?php echo ++$start ?></td>
-                                            <td><?php //echo date("d M Y", strtotime($list_data->tgl_jual)); 
+                                            <td><?php echo date("d M Y", strtotime($list_data->tgl_jual)); 
                                                 ?></td>
                                             <td align="left">
                                                 <?php
@@ -177,8 +186,12 @@
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
                                                 echo "<br/>";
-                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
-                                                echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
+                                                
+                                                $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
+
+                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan .'/'.$date_tgl_jual .'/'.$list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
+
+                                                echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan .'/'.$date_tgl_jual .'/'.$list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
 
 
 
@@ -210,7 +223,11 @@
                                         <td align="left"><?php echo $list_data->nama_barang; ?></td>
                                         <td align="left"><?php echo $list_data->unit; ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
-                                        <td align="right"><?php echo nominal($list_data->harga_satuan); ?></td>
+                                        <td align="right">
+                                            <?php
+                                            // echo number_to_amount('123,456,789,012', 2, 'de_DE'); // Returns 123,46 billion
+                                            // echo "<br/>";
+                                            echo nominal($list_data->harga_satuan); ?></td>
 
 
                                         <td align="right">
@@ -272,6 +289,7 @@
 
                                         <?php
                                         $compare_nmr_kirim = $list_data->nmrkirim;
+                                        $compare_tgl_jual = $list_data->tgl_jual;
                                         $compare_uuid_penjualan = $list_data->uuid_penjualan;
 
                                         ?>

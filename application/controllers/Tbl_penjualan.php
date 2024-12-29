@@ -15,6 +15,7 @@ class Tbl_penjualan extends CI_Controller
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
 		$this->load->helper(array('nominal'));
+		// $this->load->helper('number');
 	}
 
 
@@ -26,7 +27,7 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 
-		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all();
+		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
 		$start = 0;
 		// print_r($Tbl_pembelian);
 		// print_r("<br/>");
@@ -499,21 +500,21 @@ class Tbl_penjualan extends CI_Controller
 		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 	}
 
-	public function kasir_penjualan($uuid_penjualan)
+	public function kasir_penjualan($uuid_penjualan,$tgl_jual,$nmrkirim)
 	{
 
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim($uuid_penjualan,$tgl_jual,$nmrkirim);
 
 		// print_r($data_penjualan_per_uuid_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan,$tgl_jual,$nmrkirim);
 
-		// print_r($data_penjualan_per_uuid_penjualan_first_row);
-		// die;
+		print_r($data_penjualan_per_uuid_penjualan_first_row);
+		die;
 
 
 		$data = array(
@@ -564,7 +565,7 @@ class Tbl_penjualan extends CI_Controller
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
 		);
 
-		
+
 
 		// 2.C. MENAMPILKAN FILE DATA
 		// $data = array_merge($data);
@@ -618,7 +619,6 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
-
 		// print_r($row);
 		// die;
 
@@ -632,7 +632,7 @@ class Tbl_penjualan extends CI_Controller
 				'tgl_jual' => set_value('tgl_jual', $row->tgl_jual),
 				'nmrpesan' => set_value('nmrpesan', $row->nmrpesan),
 				'nmrkirim' => set_value('nmrkirim', $row->nmrkirim),
-				
+
 				'konsumen_id' => set_value('konsumen_id', $row->konsumen_id),
 				'uuid_konsumen' => set_value('uuid_konsumen', $row->uuid_konsumen),
 				'konsumen_nama' => set_value('konsumen_nama', $row->konsumen_nama),
@@ -744,7 +744,7 @@ class Tbl_penjualan extends CI_Controller
 	public function update_action_proses($uuid_penjualan_proses = null)
 	{
 
-		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
+		// $row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
 
@@ -764,6 +764,7 @@ class Tbl_penjualan extends CI_Controller
 		if (empty($this->input->post('id_persediaan_barang', TRUE)) or $this->input->post('id_persediaan_barang', TRUE) == 0) {
 
 			$get_uuid_barang = $this->input->post('uuid_barang', TRUE);
+
 			$sql_stock = "SELECT persediaan.id as id_persediaan_barang, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,  persediaan.satuan as satuan
 			-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
 			-- tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
@@ -776,6 +777,7 @@ class Tbl_penjualan extends CI_Controller
 			$data_barang = $this->db->query($sql_stock)->row();
 		} else {
 			$get_id_persediaan_barang = $this->input->post('id_persediaan_barang', TRUE);
+
 			$sql_stock = "SELECT persediaan.id as id_persediaan_barang, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,  persediaan.satuan as satuan
 			-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
 			-- tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
@@ -793,7 +795,8 @@ class Tbl_penjualan extends CI_Controller
 
 
 		$data = array(
-			'tgl_input' => $this->input->post('tgl_input', TRUE),
+			'tgl_input' => date("Y-m-d H:i:s"),
+			'tgl_jual' => $tgl_jual_X,
 			'nmrpesan' => $this->input->post('nmrpesan', TRUE),
 			'nmrkirim' => $this->input->post('nmrkirim', TRUE),
 			'uuid_konsumen' => $this->input->post('uuid_konsumen', TRUE),
@@ -815,11 +818,18 @@ class Tbl_penjualan extends CI_Controller
 
 
 
-			'umpphpsl22' => $this->input->post('umpphpsl22', TRUE),
-			'piutang' => $this->input->post('piutang', TRUE),
-			'penjualandpp' => $this->input->post('penjualandpp', TRUE),
-			'utangppn' => $this->input->post('utangppn', TRUE),
-			'id_usr' => $this->input->post('id_usr', TRUE),
+			// 'umpphpsl22' => $this->input->post('umpphpsl22', TRUE),
+			// 'piutang' => $this->input->post('piutang', TRUE),
+			// 'penjualandpp' => $this->input->post('penjualandpp', TRUE),
+			// 'utangppn' => $this->input->post('utangppn', TRUE),
+			// 'id_usr' => $this->input->post('id_usr', TRUE),
+
+
+
+
+			
+
+
 		);
 
 		// print_r($data);
@@ -906,7 +916,7 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$tgl_jual_Now = date("Y-m-d H:i:sa");
 		$this->load->helper('exportexcel');
-		$namaFile = "tbl_penjualan_". $tgl_jual_Now .".xls";
+		$namaFile = "tbl_penjualan_" . $tgl_jual_Now . ".xls";
 		$judul = "Data Penjualan";
 		$tablehead = 0;
 		$tablebody = 1;
@@ -958,7 +968,7 @@ class Tbl_penjualan extends CI_Controller
 			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
-			
+
 			// xlsWriteNumber($tablebody, $kolombody++, $data->umpphpsl22);
 			// xlsWriteNumber($tablebody, $kolombody++, $data->piutang);
 			// xlsWriteNumber($tablebody, $kolombody++, $data->penjualandpp);
