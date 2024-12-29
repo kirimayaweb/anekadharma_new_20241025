@@ -135,8 +135,8 @@
 
                                                                                                 ?>
                                             </td>
-                                            <td style="background-color:yellow;" align="right"><?php echo $compare_nmr_pesan; ?></td>
-                                            <td style="background-color:yellow;" align="right"><?php echo $compare_nmr_kirim; ?></td>
+                                            <td style="background-color:yellow;" align="left"><?php echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  ?></td>
+                                            <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_kirim . "</strong></font>"; ?></td>
                                             <td></td>
                                             <td></td>
                                             <td><?php //echo $list_data->nama_barang; 
