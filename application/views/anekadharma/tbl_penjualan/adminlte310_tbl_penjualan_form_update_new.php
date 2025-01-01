@@ -132,7 +132,10 @@
                                     <div class="col-4">
 
                                         <label for="double">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                        <input type="text" class="form-control" name="harga_satuan" id="harga_satuan" placeholder="Harga Satuan" value="<?php echo $harga_satuan; ?>" disabled />
+                                        <input type="text" class="form-control" name="harga_satuan" id="harga_satuan" placeholder="Harga Satuan" value="<?php 
+                                        // echo $harga_satuan; 
+                                        echo number_format($harga_satuan, 2, ',', '.'); 
+                                        ?>" disabled />
 
 
                                     </div>
@@ -282,7 +285,8 @@
                                                                     <?php
 
                                                                     if (!empty($list_data->harga_satuan_persediaan)) {
-                                                                        echo nominal($list_data->harga_satuan_persediaan);
+                                                                        // echo nominal($list_data->harga_satuan_persediaan);
+                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                                         $X_harga_satuan = $list_data->harga_satuan_persediaan;
                                                                     } else {
                                                                         echo "0";
