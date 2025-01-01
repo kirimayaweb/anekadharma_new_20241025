@@ -284,13 +284,19 @@
                                     <div class="col-2">
                                         <label for="kas_bank">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
 
-                                        <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php echo nominal($harga_satuan); ?>">
+                                        <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php 
+                                        // echo nominal($harga_satuan); 
+                                    echo number_format($harga_satuan, 2, ',', '.');
+                                        ?>">
 
                                     </div>
                                     <div class="col-2">
                                         <label for="kas_bank">Total </label>
 
-                                        <input type="text" class="form-control" rows="3" name="total" id="total" placeholder="total" value="<?php echo nominal($jumlah * $harga_satuan); ?>">
+                                        <input type="text" class="form-control" rows="3" name="total" id="total" placeholder="total" value="<?php 
+                                        // echo nominal($jumlah * $harga_satuan); 
+                                        echo number_format($jumlah * $harga_satuan, 2, ',', '.');
+                                        ?>">
 
                                     </div>
                                 </div>
