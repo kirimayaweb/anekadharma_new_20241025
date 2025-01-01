@@ -191,7 +191,7 @@
 
                                 <div class="card-body">
 
-                                    <table id="exampleFreeze" class="display nowrap" style="width:100%">
+                                    <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                                         <thead>
                                             <tr>
                                                 <th style="text-align:left" width="30px">No</th>
@@ -212,6 +212,7 @@
                                             $Total_per_SPOP = 0;
                                             $TOTAL_LUNAS = 0;
                                             $TOTAL_HUTANG = 0;
+                                            // $TOTAL_HARGA=0;
                                             $start = 0;
                                             foreach ($data_ALL_per_SPOP as $list_data) {
 
@@ -227,12 +228,19 @@
                                                     <td align="center"><?php echo nominal($list_data->jumlah); ?></td>
                                                     <td align="center"><?php echo $list_data->satuan; ?></td>
 
-                                                    <td align="right"><?php echo nominal($list_data->harga_satuan); ?></td>
+                                                    <td align="right">
+                                                        <?php
+                                                        // echo nominal($list_data->harga_satuan); 
+                                                        echo number_format($list_data->harga_satuan, 2, ',', '.');
+                                                        ?>
+                                                    </td>
                                                     <td align="right">
                                                         <?php
                                                         $total_per_uraian = $list_data->jumlah * $list_data->harga_satuan;
 
-                                                        echo nominal($total_per_uraian);
+                                                        // echo nominal($total_per_uraian);
+
+                                                        echo number_format($total_per_uraian, 2, ',', '.');
 
                                                         $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
 
@@ -246,6 +254,24 @@
                                             ?>
 
                                         </tbody>
+
+                                        <tfoot>
+                                            <tr>
+                                                <th style="text-align:left" width="30px"></th>
+                                                <th style="text-align:left"></th>
+                                                <th style="text-align:left"></th>
+                                                <th style="text-align:center">Jumlah</th>
+                                                <th style="text-align:center"></th>
+                                                <th style="text-align:right">TOTAL</th>
+                                                <th style="text-align:right">
+                                                    <?php
+                                                    // echo $Total_per_SPOP; 
+                                                    echo number_format($Total_per_SPOP, 2, ',', '.');
+                                                    ?>
+                                                </th>
+                                            </tr>
+                                        </tfoot>
+
 
                                     </table>
                                 </div>
@@ -269,7 +295,7 @@
 
                             <br />
 
-                          
+
 
 
 
@@ -401,7 +427,8 @@
 
                             <a href="<?php echo site_url('tbl_pembelian/simpan_data_spop/' . $uuid_spop) ?>" class="btn btn-primary"><?php echo $button ?></a>
 
-                            <!-- <a href="<?php //echo site_url('tbl_pembelian/cetak_belanja_per_spop/' . $uuid_spop) ?>" class="btn btn-primary" target="_blank">Cetak PDF</a> -->
+                            <!-- <a href="<?php //echo site_url('tbl_pembelian/cetak_belanja_per_spop/' . $uuid_spop) 
+                                            ?>" class="btn btn-primary" target="_blank">Cetak PDF</a> -->
 
                             <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
                         </form>

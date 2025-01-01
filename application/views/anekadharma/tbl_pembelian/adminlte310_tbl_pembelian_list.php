@@ -26,42 +26,18 @@
             <div class="col-md-12">
                 <div class="card card-primary">
                     <div class="card-header">
+
                         <div class="row">
-                        </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA PEMBELIAN</strong></div>
-                                </div>
-
-
-                            </div>
-                            <div class="col-6">
-
-                            </div>
-
-
-
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
+                            <div class="col-3" text-align="left"> <strong>DATA PEMBELIAN</strong></div>
+                            <div class="col-6" text-align="left" align="left">
                                 <?php echo anchor(site_url('tbl_pembelian/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"'); ?>
                             </div>
-                            <div class="col-4">
-
-                            </div>
-                            <div class="col-2">
+                            <div class="col-2" text-align="right" align="right">
                                 <?php echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                             </div>
-
-
-
                         </div>
 
-
-
                     </div>
-                    <br />
 
 
 
@@ -101,19 +77,19 @@
                                     // $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
                                     if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
-                                        ?>
+                                ?>
                                         <tr>
-                                            <td><?php 
-                                            echo ++$start ;
-                                            // echo "-compare : ";
-                                            // echo $compare_spop;
-                                            // echo "- spop : ";
-                                            // echo $list_data->spop;
-                                            // echo " ---- : ";
-                                            // echo $list_spop_status_lu;
-                                            // echo " ---- : ";
-                                            // echo $list_data->statuslu;
-                                            ?></td>
+                                            <td><?php
+                                                echo ++$start;
+                                                // echo "-compare : ";
+                                                // echo $compare_spop;
+                                                // echo "- spop : ";
+                                                // echo $list_data->spop;
+                                                // echo " ---- : ";
+                                                // echo $list_spop_status_lu;
+                                                // echo " ---- : ";
+                                                // echo $list_data->statuslu;
+                                                ?></td>
                                             <td>
                                                 <?php
 
@@ -139,7 +115,12 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>" ?> </td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
+                                                // echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>"; 
+                                                echo "<font color='red'><strong>" . number_format($Total_per_SPOP, 2, ',', '.')  . "</strong></font>";
+                                                ?>
+                                            </td>
                                             <td>
                                                 <?php
 
@@ -180,7 +161,7 @@
                                                         }
                                                         // else{
                                                         //     echo "- XX ";
-                                                    
+
                                                         // }
                                                     }
                                                 } else {
@@ -200,7 +181,7 @@
                                                     // else{
                                                     //     echo "-";
                                                     // }
-                                                    
+
 
                                                 }
 
@@ -264,7 +245,7 @@
                                                 echo date("d M Y", strtotime($list_data->tgl_po));
                                                 echo " ";
 
-                                                echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UPDATE</i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
                                                 echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
 
@@ -310,12 +291,22 @@
                                         <td align="right"><?php echo nominal($list_data->jumlah); ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
                                         <td align="left"><?php echo $list_data->konsumen; ?></td>
-                                        <td align="right"><?php echo nominal($list_data->harga_satuan); ?></td>
+                                        <td align="right">
+                                            <?php
+                                            // echo $list_data->harga_satuan;
+                                            // echo "<br/>";
+                                            echo number_format($list_data->harga_satuan, 2, ',', '.');
+                                            // echo "<br/>";
+                                            // echo nominal($list_data->harga_satuan); 
+                                            ?>
+                                        </td>
                                         <td align="right">
                                             <?php
                                             $total_per_uraian = $list_data->jumlah * $list_data->harga_satuan;
 
-                                            echo nominal($total_per_uraian);
+                                            // echo nominal($total_per_uraian);
+                                            // echo "<br/>";
+                                            echo number_format($total_per_uraian, 2, ',', '.');
 
                                             $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
 
@@ -391,7 +382,12 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>" ?> </td>
+                                    <td style="background-color:yellow;" align="right">
+                                        <?php
+                                        // echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>";
+                                        echo "<font color='red'><strong>" . number_format($Total_per_SPOP, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
                                     <td>
                                         <?php
                                         // if ($list_spop_status_lu == "U") {
@@ -435,7 +431,7 @@
                                             // }
 
                                         }
-                                        
+
 
                                         ?>
                                     </td>
@@ -459,7 +455,12 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right">TOTAL LUNAS</th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_LUNAS); ?></th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        // echo nominal($TOTAL_LUNAS);
+                                        echo number_format($TOTAL_LUNAS, 2, ',', '.');
+                                        ?>
+                                    </th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -478,7 +479,12 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right"><?php echo "<font color='red'>TOTAL HUTANG</font>"; ?></th>
-                                    <th style="text-align:right"><?php echo "<font color='red'>" . nominal($TOTAL_HUTANG) . "</font>"; ?></th>
+                                    <th style="text-align:right">
+                                        <?php 
+                                        // echo "<font color='red'>" . nominal($TOTAL_HUTANG) . "</font>"; 
+                                        echo "<font color='red'>" . number_format($TOTAL_HUTANG, 2, ',', '.') . "</font>"; 
+                                        ?>
+                                        </th>
                                     <th></th>
                                     <th></th>
                                     <th></th>

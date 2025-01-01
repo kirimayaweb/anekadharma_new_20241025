@@ -1088,6 +1088,10 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// die;
 
+		// print_r($this->input->post('harga_satuan', TRUE));
+
+		// die;
+
 		if ($uuid_spop) {
 			// print_r("ada SPOP");
 			// die;
@@ -1115,8 +1119,27 @@ class Tbl_pembelian extends CI_Controller
 			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
 
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
-			$harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+			
+			$harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik
+			// print_r("harga_satuan_tanpa_titik: ");
+			// print_r($harga_satuan_tanpa_titik);
+			// print_r("<br/>");
+
+			$harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
+			// Masukkan data ke database
+
+			// print_r("harga_satuan_x: ");
+			// print_r($harga_satuan_x);
+			// print_r("<br/>");
+
+
 			$TOTAL_X = $jumlah_x * $harga_satuan_x;
+
+
+			// print_r("TOTAL_X: ");
+			// print_r($TOTAL_X);
+			// print_r("<br/>");
+			// die;
 
 			// GET GUDANG DATA
 			$GET_uuid_gudang = $this->input->post('uuid_gudang', TRUE);
@@ -1218,10 +1241,29 @@ class Tbl_pembelian extends CI_Controller
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
-			$harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+
+			// $harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+
+			$harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik
+			// print_r("harga_satuan_tanpa_titik: ");
+			// print_r($harga_satuan_tanpa_titik);
+			// print_r("<br/>");
+
+			$harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
+			// Masukkan data ke database
+
+			// print_r("harga_satuan_x: ");
+			// print_r($harga_satuan_x);
+			// print_r("<br/>");
+
+
 			$TOTAL_X = $jumlah_x * $harga_satuan_x;
 
 
+			// print_r("TOTAL_X: ");
+			// print_r($TOTAL_X);
+			// print_r("<br/>");
+			// die;
 			// GET GUDANG DATA
 			$GET_uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 			$sql_uuid_gudang = "SELECT * FROM `sys_gudang` WHERE `uuid_gudang`='$GET_uuid_gudang'";
@@ -1255,7 +1297,7 @@ class Tbl_pembelian extends CI_Controller
 
 				'jumlah' => $this->input->post('jumlah', TRUE),
 				'satuan' => $this->input->post('satuan', TRUE),
-				'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+				'harga_satuan' => $harga_satuan_x,
 
 				'uuid_konsumen' => $this->input->post('uuid_konsumen', TRUE),
 				'konsumen' => $get_nama_konsumen,
@@ -2050,20 +2092,20 @@ class Tbl_pembelian extends CI_Controller
 
 		$sql_barang_pecah_satuan = "SELECT * FROM `tbl_pembelian_pecah_satuan` WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
 		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
-		$Get_uuid_barang_baru=$Data_Barang_pecah_satuan->uuid_barang_baru;
-			
+		$Get_uuid_barang_baru = $Data_Barang_pecah_satuan->uuid_barang_baru;
+
 		// print_r($Data_Barang_pecah_satuan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$Get_jumlah_sebelum_terpecah_awal =$Data_Barang_pecah_satuan->jumlah;
+		$Get_jumlah_sebelum_terpecah_awal = $Data_Barang_pecah_satuan->jumlah;
 
 		// print_r("STOCK Get_jumlah_sebelum_terpecah_awal: ");
 		// print_r($Get_jumlah_sebelum_terpecah_awal);
 		// print_r("<br/>");
 
 
-		$Get_jumlah_setelah_terpecah =$Data_Barang_pecah_satuan->jumlah_barang_baru;	
+		$Get_jumlah_setelah_terpecah = $Data_Barang_pecah_satuan->jumlah_barang_baru;
 
 		// print_r("BARANG BARU Get_jumlah_setelah_terpecah: ");
 		// print_r($Get_jumlah_setelah_terpecah);
@@ -2086,8 +2128,8 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 
-		
-		
+
+
 		$Get_jumlah_akhir_proses = $Get_jumlah_sebelum_terpecah_awal - preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE));
 		// die;
 
@@ -2107,16 +2149,16 @@ class Tbl_pembelian extends CI_Controller
 		// // Source Data Barang Pecah
 		$sql_barang_pecah_satuan = "UPDATE `tbl_pembelian_pecah_satuan` SET `jumlah` = $Get_jumlah_akhir_proses , `jumlah_barang_baru` = $Get_jumlah_update_jumlah_terpecah WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
 		$this->db->query($sql_barang_pecah_satuan);
-		
+
 		// Jumlah baru untuk barang baru setelah ROLL BACK
 		$sql_persediaan_jumlah_stock = "SELECT `total_10` FROM `persediaan` WHERE `uuid_barang`='$Get_uuid_barang_baru'";
 		$Get_JUMLAH_stock_barang_baru_di_persediaan = $this->db->query($sql_persediaan_jumlah_stock)->row();
-		
+
 		// print_r("JUMLAH DI PERSEDIAAN Get_JUMLAH_stock_barang_baru_di_persediaan->total_10");
 		// print_r($Get_JUMLAH_stock_barang_baru_di_persediaan->total_10);
 		// print_r("<br/>");
 
-		$Get_sisa_stock_barang_baru = $Get_JUMLAH_stock_barang_baru_di_persediaan->total_10 - ($Get_jumlah_variabel_perubahan_jumlah_satuan * preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE)) );
+		$Get_sisa_stock_barang_baru = $Get_JUMLAH_stock_barang_baru_di_persediaan->total_10 - ($Get_jumlah_variabel_perubahan_jumlah_satuan * preg_replace("/[^0-9]/", "", $this->input->post('jumlah_barang_rollback_stock', TRUE)));
 
 		// print_r($Get_sisa_stock_barang_baru);
 		// print_r("<br/>");
@@ -2131,15 +2173,15 @@ class Tbl_pembelian extends CI_Controller
 		// Display Akhir data =================================================================================================
 		$sql_barang_pecah_satuan = "SELECT * FROM `tbl_pembelian_pecah_satuan` WHERE `uuid_pecah_satuan`='$Get_uuid_pecah_satuan_proses'";
 		$Data_Barang_pecah_satuan = $this->db->query($sql_barang_pecah_satuan)->row();
-		
+
 		// print_r($Data_Barang_pecah_satuan);
 		// print_r("<br/>");
 		// print_r($Data_Barang_pecah_satuan->uuid_barang_baru);
-		$Get_uuid_barang_baru=$Data_Barang_pecah_satuan->uuid_barang_baru;
+		$Get_uuid_barang_baru = $Data_Barang_pecah_satuan->uuid_barang_baru;
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		
+
 		$sql_barang_pecah_satuan_di_persediaan = "SELECT * FROM `persediaan` WHERE `uuid_barang`='$Get_uuid_barang_baru'";
 		$Data_Barang_pecah_satuan_di_persediaan = $this->db->query($sql_barang_pecah_satuan_di_persediaan)->row();
 
@@ -2150,7 +2192,6 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("Selesai");
 		// die;
 		redirect(site_url('tbl_pembelian/pecah_satuan'));
-
 	}
 
 	public function pecah_satuan($uuid_gudang = null)
