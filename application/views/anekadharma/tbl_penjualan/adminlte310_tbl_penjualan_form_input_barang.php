@@ -199,10 +199,16 @@
                                                         $get_jumlah_barang = $get_jumlah_barang + $list_data->jumlah;
                                                         ?>
                                                     </td>
-                                                    <td style="text-align:right"><?php echo nominal($list_data->harga_satuan); ?></td>
+                                                    <td style="text-align:right">
+                                                        <?php 
+                                                        // echo nominal($list_data->harga_satuan); 
+                                                        echo number_format($list_data->harga_satuan, 2, ',', '.'); 
+                                                        ?>
+                                                        </td>
                                                     <td style="text-align:right">
                                                         <?php
-                                                        echo nominal($list_data->jumlah * $list_data->harga_satuan);
+                                                        // echo nominal($list_data->jumlah * $list_data->harga_satuan);
+                                                        echo number_format($list_data->jumlah * $list_data->harga_satuan, 2, ',', '.');
                                                         $get_total_harga = $get_total_harga + ($list_data->jumlah * $list_data->harga_satuan);
                                                         ?>
                                                     </td>
@@ -229,7 +235,12 @@
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:right"><?php echo nominal($get_jumlah_barang);  ?></th>
                                                 <th style="text-align:right"></th>
-                                                <th style="text-align:right"><?php echo nominal($get_total_harga); ?></th>
+                                                <th style="text-align:right">
+                                                    <?php 
+                                                    // echo nominal($get_total_harga); 
+                                                    echo number_format($get_total_harga, 2, ',', '.'); 
+                                                    ?>
+                                                    </th>
 
                                             </tr>
                                         </tfoot>
@@ -348,7 +359,12 @@
                                                                 <td align="left"><?php echo $list_data->nama_barang_beli; ?></td>
 
 
-                                                                <td align="right"><?php echo nominal($list_data->harga_satuan_persediaan); ?></td>
+                                                                <td align="right">
+                                                                    <?php 
+                                                                    // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                    echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                    ?>
+                                                                    </td>
                                                                 <td align="left"><?php echo $list_data->satuan_persediaan; ?></td>
                                                                 <td align="right">
                                                                     <?php
@@ -470,7 +486,13 @@
                                                                                                 <div class="row">
                                                                                                     <div class="col-4">
                                                                                                         <label for="nmrpesan">Harga Satuan </label>
-                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>"> -->
+                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php 
+                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                        ?>" placeholder="<?php 
+                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                        ?>"> -->
                                                                                                     </div>
                                                                                                     <div class="col-4">
                                                                                                         <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
@@ -480,7 +502,13 @@
 
 
                                                                                                     <div class="col-4">
-                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php echo nominal($list_data->harga_satuan_persediaan); ?>" placeholder="<?php echo nominal($list_data->harga_satuan_persediaan); ?>">
+                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php 
+                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                        ?>" placeholder="<?php 
+                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                        ?>">
                                                                                                     </div>
                                                                                                     <div class="col-4">
                                                                                                         <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->

@@ -295,12 +295,6 @@ class Tbl_penjualan extends CI_Controller
 			$data_nama_konsumen = $data_konsumen->nama_unit;
 		}
 
-
-
-
-
-
-
 		$data = array(
 			'button' => 'Simpan',
 			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
@@ -309,7 +303,6 @@ class Tbl_penjualan extends CI_Controller
 			'nmrkirim' => $this->input->post('nmrkirim', TRUE),
 			'uuid_konsumen' => $uuid_konsumen,
 			'nama_konsumen' => $data_nama_konsumen,
-
 		);
 		// print_r($data);
 
