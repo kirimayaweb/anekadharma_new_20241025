@@ -1580,8 +1580,30 @@ class Tbl_pembelian extends CI_Controller
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
-			$harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+			
+			// $harga_satuan_x = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
+			// $TOTAL_X = $jumlah_x * $harga_satuan_x;
+
+			$harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik
+			// print_r("harga_satuan_tanpa_titik: ");
+			// print_r($harga_satuan_tanpa_titik);
+			// print_r("<br/>");
+
+			$harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
+			// Masukkan data ke database
+
+			// print_r("harga_satuan_x: ");
+			// print_r($harga_satuan_x);
+			// print_r("<br/>");
+
+
 			$TOTAL_X = $jumlah_x * $harga_satuan_x;
+
+
+			// print_r("TOTAL_X: ");
+			// print_r($TOTAL_X);
+			// print_r("<br/>");
+
 
 
 			// GET GUDANG DATA
@@ -1640,7 +1662,7 @@ class Tbl_pembelian extends CI_Controller
 
 				'jumlah' => $this->input->post('jumlah', TRUE),
 				'satuan' => $this->input->post('satuan', TRUE),
-				'harga_satuan' => $this->input->post('harga_satuan', TRUE),
+				'harga_satuan' => $harga_satuan_x,
 
 				'uuid_konsumen' => $this->input->post('uuid_konsumen', TRUE),
 				// 'konsumen' => $get_nama_konsumen,
