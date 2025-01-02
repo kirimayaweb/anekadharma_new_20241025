@@ -14,6 +14,7 @@ class Persediaan extends CI_Controller
 		$this->load->library('datatables');
 	}
 
+	// -------------- PROSES UPDATE DATA PERSEDIAAN (STOCK) -------------- 
 
 	public function moving_persediaan_master_from_persediaan_update_tanggal_beli_by_spop()
 	{
@@ -166,8 +167,8 @@ class Persediaan extends CI_Controller
 		foreach ($this->db->query($sql)->result() as $list_data) {
 
 			$GET_uuid_barang_cek = $list_data->uuid_barang;
+
 			$this->db->where('uuid_barang', $GET_uuid_barang_cek);
-			//$this->db->where('password',  $test);
 			$get_data_persediaan = $this->db->get('persediaan');
 
 			$data_persediaan = $get_data_persediaan->row();
@@ -226,7 +227,7 @@ class Persediaan extends CI_Controller
 
 					'kode' => $GET_kode_barang,
 					'kode_barang' => $GET_kode_barang,
-					
+
 					'namabarang' => $list_data->uraian,
 					'satuan' => $list_data->satuan,
 					'hpp' => $list_data->harga_satuan,
@@ -270,6 +271,102 @@ class Persediaan extends CI_Controller
 			print_r("<br/>");
 		}
 	}
+
+
+	public function update_id_persediaan_pembelian_penjualan()
+	{
+		//  ------------------ PEMBELIAN ------------------
+		$sql = "SELECT * FROM `tbl_pembelian` GROUP by `uuid_barang`";
+
+		$start = 0;
+		foreach ($this->db->query($sql)->result() as $list_data) {
+
+			$GET_uuid_barang_cek = $list_data->uuid_barang;
+
+			$this->db->where('uuid_barang', $GET_uuid_barang_cek);
+			$get_data_persediaan = $this->db->get('persediaan');
+			// $data_persediaan = $get_data_persediaan->row();
+
+
+
+			// $data = array(
+
+			// 	'id_persediaan_barang' => $get_data_persediaan->row()->id,
+			// 	'uuid_persediaan' => $get_data_persediaan->row()->uuid_persediaan,
+
+			// );
+
+			print_r(++$start);
+			print_r(" : ");
+			print_r($list_data->uraian);
+			print_r(" ==> ");
+			print_r($get_data_persediaan->row()->id);
+			print_r("<br/>");
+
+			// print_r($data);
+			// die;
+			// $this->Tbl_pembelian_model->update($this->input->post('id', TRUE), $data);
+			$id_persediaan_barang = 0;
+
+			$this->db->set('id_persediaan_barang', $get_data_persediaan->row()->id, true);
+			$this->db->set('uuid_persediaan', $get_data_persediaan->row()->uuid_persediaan, true);
+			$this->db->where('uuid_barang', $list_data->uuid_barang);
+			// $this->db->where('id_persediaan_barang', $id_persediaan_barang);
+			$this->db->update('tbl_pembelian');
+		}
+
+
+
+		print_r("Penjualan");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r("<br/>");
+
+
+		$sql_tbl_penjualan = "SELECT * FROM `tbl_penjualan`  order by `id_persediaan_barang` ";
+
+		$start = 0;
+		foreach ($this->db->query($sql_tbl_penjualan)->result() as $list_data) {
+
+			print_r("Data - ");
+			print_r("<br/>");
+			print_r($list_data->id_persediaan_barang);
+			print_r("<br/>");
+
+			if ($list_data->id_persediaan_barang == "" or $list_data->id_persediaan_barang == 0 or $list_data->id_persediaan_barang == null) {
+
+				print_r("ada data id kosong");
+				print_r("<br/>");
+				$GET_uuid_barang_cek = $list_data->uuid_barang;
+
+				$this->db->where('uuid_barang', $GET_uuid_barang_cek);
+				$get_data_persediaan = $this->db->get('persediaan');
+
+
+				print_r(++$start);
+				print_r(" : ");
+				print_r($list_data->nama_barang);
+				print_r(" ==> ");
+				print_r($get_data_persediaan->row()->id);
+				print_r("<br/>");
+
+
+
+				$this->db->set('id_persediaan_barang', $get_data_persediaan->row()->id, true);
+				$this->db->set('uuid_persediaan', $get_data_persediaan->row()->uuid_persediaan, true);
+				$this->db->where('uuid_barang', $list_data->uuid_barang);
+				$this->db->update('tbl_penjualan');
+			}
+		}
+	}
+
+
+
+
+	// -------------- END OF PROSES PENGKONDISIAN DAN UPDATE DATA PERSEDIAAN (STOCK) -------------- 
+
 
 	public function index()
 	{
