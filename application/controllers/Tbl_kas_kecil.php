@@ -282,19 +282,6 @@ class Tbl_kas_kecil extends CI_Controller
                 );
             }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
             $this->Tbl_kas_kecil_model->insert($data);
 
             $this->session->set_flashdata('message', 'Create Record Success');
@@ -617,7 +604,15 @@ class Tbl_kas_kecil extends CI_Controller
         $row = $this->Tbl_kas_kecil_model->get_by_id($id);
 
         if ($row) {
-            $this->Tbl_kas_kecil_model->delete($id);
+
+            $reset_date_bayar_pembelian = "0000-00-00 00:00:00";
+            $get_spop = $row->uuid_spop;
+
+            // Cek apaah ada isi record uuid_spop tbl_pembelian , jika ada maka update uuid_spop --> statuslu menjadi U
+            $sql = "UPDATE `tbl_pembelian` SET `statuslu`='U',`kas_bank`='',`tgl_bayar`='$reset_date_bayar_pembelian' WHERE `uuid_spop`='$get_spop'";
+            $this->db->query($sql);
+
+            $this->Tbl_kas_kecil_model->delete($id);            
             $this->session->set_flashdata('message', 'Delete Record Success');
             redirect(site_url('tbl_kas_kecil'));
         } else {

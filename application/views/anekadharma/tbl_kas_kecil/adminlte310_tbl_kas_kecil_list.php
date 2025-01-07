@@ -107,9 +107,9 @@
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <td style="text-align:left">
                                                                     <?php
-                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->uuid_kas_kecil), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                     echo ' ';
-                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->uuid_kas_kecil), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>
                                                                 </td>
                                                                 <td style="text-align:center">
