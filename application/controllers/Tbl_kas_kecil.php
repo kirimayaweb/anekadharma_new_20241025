@@ -170,7 +170,7 @@ class Tbl_kas_kecil extends CI_Controller
         tbl_pembelian_a.supplier_nama as nama_supplier,
         tbl_pembelian_a.uuid_spop as uuid_spop,
         tbl_pembelian_a.spop as spop,
-        -- tbl_pembelian_a.jumlah as jumlah,
+        tbl_pembelian_a.statuslu as statuslu,
         -- tbl_pembelian_a.harga_satuan as harga_satuan,
         sum(tbl_pembelian_a.harga_total) as sum_harga_total,
         (tbl_pembelian_a.jumlah*tbl_pembelian_a.harga_satuan) as total_belanja,
@@ -180,7 +180,7 @@ class Tbl_kas_kecil extends CI_Controller
         FROM tbl_pembelian tbl_pembelian_a 
 
         left join   sys_supplier  sys_supplier_a ON  sys_supplier_a.nama_supplier = tbl_pembelian_a.supplier_nama
-
+        where tbl_pembelian_a.statuslu='U'
         group by tbl_pembelian_a.uuid_spop
         order by tbl_pembelian_a.spop ASC
         ";
@@ -188,6 +188,7 @@ class Tbl_kas_kecil extends CI_Controller
         $Tbl_pembelian = $this->db->query($sql)->result();
 
         // print_r($this->db->query($sql)->result());
+        // die;
 
         if ($get_spop) {
             $data = array(
@@ -337,7 +338,7 @@ class Tbl_kas_kecil extends CI_Controller
 
             $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
 
-       
+
 
             if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
                 $date_kas_kecil = date("Y-m-d H:i:s");
@@ -374,7 +375,7 @@ class Tbl_kas_kecil extends CI_Controller
 
             $this->Tbl_kas_kecil_model->insert($data);
 
-        
+
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('tbl_kas_kecil'));
         }
@@ -495,7 +496,7 @@ class Tbl_kas_kecil extends CI_Controller
 
     public function update_action($uuid_kas_kecil = null, $get_spop_update = null)
     {
-       
+
         // print_r("update_action");
         // print_r("<br/>");
 
@@ -540,12 +541,12 @@ class Tbl_kas_kecil extends CI_Controller
             if ($get_spop_update) {
                 if ($get_spop_update <> $get_data_kas_kecil->uuid_spop) {
                     $uuid_spop_lama = $get_data_kas_kecil->uuid_spop;
-                    $uuid_spop_update_proses=$get_spop_update;
+                    $uuid_spop_update_proses = $get_spop_update;
 
                     $date_kas_kecil = $get_data_kas_kecil->uuid_spop;
-                    
+
                     //uuid_pembelian di ubah ==> uuid_spop awal di kembalikan ke U dan proses get_spop_update ke L
-                    
+
                     // 1. update uuid_spop di tbl_pembelian == U                    
                     $sql = "UPDATE `tbl_pembelian` SET `statuslu`='U',`kas_bank`='',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$uuid_spop_lama'";
                     $this->db->query($sql);
@@ -553,12 +554,10 @@ class Tbl_kas_kecil extends CI_Controller
                     // 2. update get_spop_update di tbl_pembelian == L dan kas 
                     $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop_update'";
                     $this->db->query($sql);
-
-                    
                 }
-            }else{
+            } else {
 
-                $uuid_spop_update_proses=$get_data_kas_kecil->uuid_spop;
+                $uuid_spop_update_proses = $get_data_kas_kecil->uuid_spop;
             }
 
 
@@ -587,7 +586,7 @@ class Tbl_kas_kecil extends CI_Controller
                 // print_r("kredit");
                 // print_r("<br/>");
                 // print_r($this->input->post('debet', TRUE));
-                
+
 
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
@@ -607,7 +606,7 @@ class Tbl_kas_kecil extends CI_Controller
 
             $this->Tbl_kas_kecil_model->update($this->input->post('id', TRUE), $data);
 
-        //    die;
+            //    die;
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('tbl_kas_kecil'));
         }
