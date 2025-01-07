@@ -37,10 +37,10 @@
                                     <div class="col-3">
                                         <?php echo anchor(site_url('Tbl_kas_kecil/pemasukan_kas_kecil'), 'Pemasukan Data Kas', 'class="btn btn-danger"');
                                         ?>
-                                        
+
                                     </div>
                                     <div class="col-3">
-                                       
+
                                         <?php echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil'), 'Pengeluaran Data Kas', 'class="btn btn-success"');
                                         ?>
                                     </div>
@@ -90,18 +90,17 @@
                                                             <th>Kredit</th>
                                                             <th>Saldo</th>
                                                             <!-- <th>Id Usr</th> -->
-                                                            
+
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         <?php
                                                         $start = 0;
                                                         $get_saldo = 0;
+                                                        $get_Total_debet = 0;
+                                                        $get_Total_kredit = 0;
+
                                                         foreach ($Tbl_kas_kecil_data as $list_data) {
-
-
-
-
                                                         ?>
                                                             <tr>
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
@@ -113,14 +112,26 @@
                                                                     ?>
                                                                 </td>
                                                                 <td style="text-align:center">
-                                                                    <?php 
+                                                                    <?php
                                                                     echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                                    ?> 
+                                                                    ?>
                                                                 </td>
                                                                 <td style="text-align:left"><?php echo $list_data->unit; ?> </td>
                                                                 <td style="text-align:left"><?php echo $list_data->keterangan; ?> </td>
-                                                                <td style="text-align:right"><?php echo nominal($list_data->debet); ?> </td>
-                                                                <td style="text-align:right"><?php echo nominal($list_data->kredit); ?> </td>
+                                                                <td style="text-align:right">
+                                                                    <?php
+                                                                    // echo nominal($list_data->debet);
+                                                                    echo number_format($list_data->debet, 2, ',', '.');
+                                                                    $get_Total_debet = $get_Total_debet + $list_data->debet;
+                                                                    ?>
+                                                                </td>
+                                                                <td style="text-align:right">
+                                                                    <?php
+                                                                    // echo nominal($list_data->kredit);
+                                                                    echo number_format($list_data->kredit, 2, ',', '.');
+                                                                    $get_Total_kredit = $get_Total_kredit + $list_data->kredit;
+                                                                    ?>
+                                                                </td>
                                                                 <td style="text-align:right">
                                                                     <?php
                                                                     if ($get_saldo == 0) {
@@ -130,10 +141,11 @@
                                                                         // echo nominal($get_saldo + $list_data->debet - $list_data->kredit);
                                                                         $get_saldo = $get_saldo + $list_data->debet - $list_data->kredit;
                                                                     }
-                                                                    echo nominal($get_saldo); 
+                                                                    // echo nominal($get_saldo);
+                                                                    echo number_format($get_saldo, 2, ',', '.');
                                                                     ?>
                                                                 </td>
-                                                                
+
 
                                                             </tr>
                                                         <?php
@@ -150,10 +162,10 @@
                                                             <th></th>
                                                             <th></th>
                                                             <th></th>
-                                                            <th></th>
-                                                            <th></th>
-                                                            <th>SALDO</th>
-                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;"><?php echo nominal($get_saldo); ?></th>
+                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;">TOTAL</th>
+                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;"><?php echo number_format($get_Total_debet, 2, ',', '.'); ?></th>
+                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;"><?php echo number_format($get_Total_kredit, 2, ',', '.'); ?></th>
+                                                            <th style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;"><?php echo number_format($get_saldo, 2, ',', '.'); ?></th>
                                                             <!-- <th>Id Usr</th> -->
                                                             <!-- <th width="200px"></th> -->
                                                         </tr>
