@@ -639,7 +639,7 @@ class Tbl_kas_kecil extends CI_Controller
     public function excel()
     {
 
-        $tgl_sekarang = date("Y-m-d H:i:s");
+        $tgl_sekarang = date("d-m-Y H:i:s");
 
         $this->load->helper('exportexcel');
         $namaFile = "KAS_KECIL_". $tgl_sekarang .".xls";
