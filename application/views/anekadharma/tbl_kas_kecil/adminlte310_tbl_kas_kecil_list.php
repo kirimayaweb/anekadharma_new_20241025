@@ -29,20 +29,24 @@
                         <div class="row">
                         </div>
                         <div class="row">
-                            <div class="col-9">
+                            <div class="col-12">
                                 <div class="row">
-                                    <div class="col-3">
+                                    <div class="col-2" align="left">
                                         <div class="col-12" text-align="center"> <strong>KAS KECIL</strong></div>
                                     </div>
-                                    <div class="col-3">
+                                    <div class="col-2" align="left">
                                         <?php echo anchor(site_url('Tbl_kas_kecil/pemasukan_kas_kecil'), 'Pemasukan Data Kas', 'class="btn btn-danger"');
                                         ?>
 
                                     </div>
-                                    <div class="col-3">
+                                    <div class="col-2" align="left">
 
                                         <?php echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil'), 'Pengeluaran Data Kas', 'class="btn btn-success"');
                                         ?>
+                                    </div>
+                                    <div class="col-6" align="right">
+
+                                    <?php echo anchor(site_url('tbl_kas_kecil/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                                     </div>
                                 </div>
                             </div>

@@ -638,8 +638,11 @@ class Tbl_kas_kecil extends CI_Controller
 
     public function excel()
     {
+
+        $tgl_sekarang = date("Y-m-d H:i:s");
+
         $this->load->helper('exportexcel');
-        $namaFile = "tbl_kas_kecil.xls";
+        $namaFile = "KAS_KECIL_". $tgl_sekarang .".xls";
         $judul = "tbl_kas_kecil";
         $tablehead = 0;
         $tablebody = 1;
@@ -658,28 +661,33 @@ class Tbl_kas_kecil extends CI_Controller
 
         $kolomhead = 0;
         xlsWriteLabel($tablehead, $kolomhead++, "No");
-        xlsWriteLabel($tablehead, $kolomhead++, "Uuid Kas Kecil");
+        // xlsWriteLabel($tablehead, $kolomhead++, "Uuid Kas Kecil");
         xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
         xlsWriteLabel($tablehead, $kolomhead++, "Unit");
         xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
         xlsWriteLabel($tablehead, $kolomhead++, "Debet");
         xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
         xlsWriteLabel($tablehead, $kolomhead++, "Saldo");
-        xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+        // xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
+        $get_total_debet=0;
+        $get_total_kredit=0;
         foreach ($this->Tbl_kas_kecil_model->get_all() as $data) {
             $kolombody = 0;
 
+            $get_total_debet=$get_total_debet+$data->debet;
+            $get_total_kredit=$get_total_kredit+$data->kredit;
+
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
-            xlsWriteLabel($tablebody, $kolombody++, $data->uuid_kas_kecil);
+            // xlsWriteLabel($tablebody, $kolombody++, $data->uuid_kas_kecil);
             xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
             xlsWriteLabel($tablebody, $kolombody++, $data->unit);
             xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
             xlsWriteNumber($tablebody, $kolombody++, $data->debet);
             xlsWriteNumber($tablebody, $kolombody++, $data->kredit);
-            xlsWriteNumber($tablebody, $kolombody++, $data->saldo);
-            xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+            xlsWriteNumber($tablebody, $kolombody++, $get_total_debet - $get_total_kredit);
+            // xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 
             $tablebody++;
             $nourut++;
