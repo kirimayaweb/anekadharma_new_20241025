@@ -155,12 +155,8 @@ class Tbl_pembelian extends CI_Controller
 	public function create_pembayaran($uuid_spop = null, $from_pembelian_page = null)
 	{
 
-
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
-
-
-		// die;
 
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
