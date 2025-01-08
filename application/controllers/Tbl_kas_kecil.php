@@ -20,6 +20,92 @@ class Tbl_kas_kecil extends CI_Controller
         $this->load->view('tbl_kas_kecil/tbl_kas_kecil_list');
     }
 
+
+
+
+    public function cek_pembelian_kaskecil()
+    {
+
+        $sql = "SELECT * FROM `tbl_pembelian` WHERE `statuslu` LIKE 'L' AND `kas_bank` LIKE 'kas'";
+        $data_Lunas_kas_pembelian = $this->db->query($sql);
+
+        // print_r($data_Lunas_kas_pembelian->result());
+
+        // [74] => stdClass Object ( [id] => 415 [proses_input] => 1 [date_input] => 2025-01-07 10:52:19 [uuid_pembelian] => c897252eccaa11ef9652246e9611a63c [uuid_persediaan] => [id_persediaan_barang] => [uuid_barang] => b77ca692ccaa11ef9652246e9611a63c [tgl_po] => 2024-10-02 00:00:00 [nmrsj] => [nmrfakturkwitansi] => [nmrbpb] => [uuid_spop] => c8972513ccaa11ef9652246e9611a63c [spop] => 561 [status_spop] => [uuid_supplier] => f0526577b6bd11efb1fe246e9611a63c [supplier_kode] => [supplier_nama] => Toko Devi Stationery [kode_barang] => DOCLJO32 [uraian] => double clip joyko 320 [jumlah] => 10 [satuan] => dus [uuid_konsumen] => 783a780eb6b811efb1fe246e9611a63c [konsumen] => PU-ATK [uuid_gudang] => cd64c3af883c11ef9d7f0021ccc9061e [nama_gudang] => Gudang 1 [harga_satuan] => 13500 [harga_total] => 135000 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 2024-10-01 00:00:00 [id_usr] => 1 [tgl_pengajuan_1] => [nominal_pengajuan_1] => [tgl_pengajuan_2] => [nominal_pengajuan_2] => [kode_akun] => [proses_transaksi] => ) )
+
+
+        // Loop data, cek spop di kas kecil sudah ada atau belum
+        $start = 0;
+        foreach ($data_Lunas_kas_pembelian->result() as $list_data) {
+            echo ++$start;
+            echo " : ";
+            echo $list_data->uuid_spop;
+            echo " : ";
+            echo $list_data->spop;
+            echo "<br/>";
+
+
+            // cek di tabel kas kecil
+
+            // SELECT * FROM `tbl_kas_kecil` WHERE `uuid_spop` LIKE 'a383069bb69c11efaa6a246e9611a63c'
+            // $sql = "SELECT * FROM `tbl_pembelian` WHERE `statuslu` LIKE 'L' AND `kas_bank` LIKE 'kas'";
+            //         $data_Lunas_kas_pembelian = $this->db->query($sql);
+
+            $this->db->where('uuid_spop', $list_data->uuid_spop);
+            $data_kas_kecil = $this->db->get('tbl_kas_kecil');
+
+            if ($data_kas_kecil->num_rows() > 0) {
+                print_r("ada uuid spop");
+                print_r($list_data->harga_total);
+
+                print_r(" : kas kecil : ");
+                print_r($data_kas_kecil->row()->kredit);
+                if ($data_kas_kecil->row()->kredit = $list_data->harga_total) {
+                    print_r("SAMA : LUNAS");
+                } else {
+                    print_r("TIDAK SAMA ");
+                }
+            
+            } else {
+            
+                print_r("tidak ada spop");
+
+                $date_po = date("Y-m-d", strtotime($list_data->tgl_po));
+
+                // insert ke kas kecil
+                $data = array(
+                    // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                    'date_input' => date("Y-m-d H:i:s"),
+                    'tanggal' => $list_data->tgl_po,
+                    'uuid_spop' => $list_data->uuid_spop,
+                    'uuid_unit' => $list_data->uuid_konsumen,
+                    'unit' => $list_data->konsumen,
+                    'keterangan' => "Pembayaran SPOP No. " . $list_data->spop . " tgl " . $date_po,
+                    'status_data' => "pengeluaran",
+                                        
+                    // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                    'kredit' => $list_data->harga_total,
+                    
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                    'id_usr' => 99999,
+                );
+
+                print_r($data);
+                print_r("<br/>");
+                
+                $this->Tbl_kas_kecil_model->insert($data);
+                print_r("TERSIMPAN DI KAS KECIL");
+                // die;
+            
+            }
+
+
+            echo "<br/>";
+            echo "<br/>";
+        }
+    }
+
+
     public function index()
     {
         $Tbl_kas_kecil = $this->Tbl_kas_kecil_model->get_all();
@@ -612,7 +698,7 @@ class Tbl_kas_kecil extends CI_Controller
             $sql = "UPDATE `tbl_pembelian` SET `statuslu`='U',`kas_bank`='',`tgl_bayar`='$reset_date_bayar_pembelian' WHERE `uuid_spop`='$get_spop'";
             $this->db->query($sql);
 
-            $this->Tbl_kas_kecil_model->delete($id);            
+            $this->Tbl_kas_kecil_model->delete($id);
             $this->session->set_flashdata('message', 'Delete Record Success');
             redirect(site_url('tbl_kas_kecil'));
         } else {
@@ -642,7 +728,7 @@ class Tbl_kas_kecil extends CI_Controller
         $tgl_sekarang = date("d-m-Y H:i:s");
 
         $this->load->helper('exportexcel');
-        $namaFile = "KAS_KECIL_". $tgl_sekarang .".xls";
+        $namaFile = "KAS_KECIL_" . $tgl_sekarang . ".xls";
         $judul = "tbl_kas_kecil";
         $tablehead = 0;
         $tablebody = 1;
@@ -670,13 +756,13 @@ class Tbl_kas_kecil extends CI_Controller
         xlsWriteLabel($tablehead, $kolomhead++, "Saldo");
         // xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-        $get_total_debet=0;
-        $get_total_kredit=0;
+        $get_total_debet = 0;
+        $get_total_kredit = 0;
         foreach ($this->Tbl_kas_kecil_model->get_all() as $data) {
             $kolombody = 0;
 
-            $get_total_debet=$get_total_debet+$data->debet;
-            $get_total_kredit=$get_total_kredit+$data->kredit;
+            $get_total_debet = $get_total_debet + $data->debet;
+            $get_total_kredit = $get_total_kredit + $data->kredit;
 
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
