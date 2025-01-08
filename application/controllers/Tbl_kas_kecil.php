@@ -26,10 +26,11 @@ class Tbl_kas_kecil extends CI_Controller
     public function cek_pembelian_kaskecil()
     {
 
-        $sql = "SELECT * FROM `tbl_pembelian` WHERE `statuslu` LIKE 'L' AND `kas_bank` LIKE 'kas'";
+        $sql = "SELECT date_input,tgl_po,uuid_konsumen,konsumen,uuid_spop,spop, sum(harga_total) as harga_total, statuslu,kas_bank FROM `tbl_pembelian` WHERE `statuslu` LIKE 'L' AND `kas_bank` LIKE 'kas' group by uuid_spop";
         $data_Lunas_kas_pembelian = $this->db->query($sql);
 
         // print_r($data_Lunas_kas_pembelian->result());
+        // die;
 
         // [74] => stdClass Object ( [id] => 415 [proses_input] => 1 [date_input] => 2025-01-07 10:52:19 [uuid_pembelian] => c897252eccaa11ef9652246e9611a63c [uuid_persediaan] => [id_persediaan_barang] => [uuid_barang] => b77ca692ccaa11ef9652246e9611a63c [tgl_po] => 2024-10-02 00:00:00 [nmrsj] => [nmrfakturkwitansi] => [nmrbpb] => [uuid_spop] => c8972513ccaa11ef9652246e9611a63c [spop] => 561 [status_spop] => [uuid_supplier] => f0526577b6bd11efb1fe246e9611a63c [supplier_kode] => [supplier_nama] => Toko Devi Stationery [kode_barang] => DOCLJO32 [uraian] => double clip joyko 320 [jumlah] => 10 [satuan] => dus [uuid_konsumen] => 783a780eb6b811efb1fe246e9611a63c [konsumen] => PU-ATK [uuid_gudang] => cd64c3af883c11ef9d7f0021ccc9061e [nama_gudang] => Gudang 1 [harga_satuan] => 13500 [harga_total] => 135000 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 2024-10-01 00:00:00 [id_usr] => 1 [tgl_pengajuan_1] => [nominal_pengajuan_1] => [tgl_pengajuan_2] => [nominal_pengajuan_2] => [kode_akun] => [proses_transaksi] => ) )
 
@@ -60,14 +61,29 @@ class Tbl_kas_kecil extends CI_Controller
 
                 print_r(" : kas kecil : ");
                 print_r($data_kas_kecil->row()->kredit);
-                if ($data_kas_kecil->row()->kredit = $list_data->harga_total) {
-                    print_r("SAMA : LUNAS");
-                } else {
+
+                if ($data_kas_kecil->row()->kredit <> $list_data->harga_total) {
                     print_r("TIDAK SAMA ");
+
+                    print_r($list_data->harga_total);
+
+
+                    // Update penyesuaian harga total di pembelian dengan kredit di kas kecil
+                    $data_update = array(
+                        'kredit' => $list_data->harga_total,
+                    );
+
+
+                    // print_r($data);
+
+                    $this->Tbl_kas_kecil_model->update($data_kas_kecil->row()->id, $data_update);
+                    print_r(' SELESAI UPDATE');
+                } else {
+
+                    print_r(" SAMA : LUNAS");
                 }
-            
             } else {
-            
+
                 print_r("tidak ada spop");
 
                 $date_po = date("Y-m-d", strtotime($list_data->tgl_po));
@@ -82,21 +98,21 @@ class Tbl_kas_kecil extends CI_Controller
                     'unit' => $list_data->konsumen,
                     'keterangan' => "Pembayaran SPOP No. " . $list_data->spop . " tgl " . $date_po,
                     'status_data' => "pengeluaran",
-                                        
+
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
                     'kredit' => $list_data->harga_total,
-                    
+
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     'id_usr' => 99999,
                 );
 
                 print_r($data);
                 print_r("<br/>");
-                
+
                 $this->Tbl_kas_kecil_model->insert($data);
                 print_r("TERSIMPAN DI KAS KECIL");
                 // die;
-            
+
             }
 
 
