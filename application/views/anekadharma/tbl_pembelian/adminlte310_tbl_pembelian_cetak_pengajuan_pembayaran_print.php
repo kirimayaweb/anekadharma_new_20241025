@@ -119,7 +119,7 @@
 			<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">TERBILANG</th>
 			<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 			<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="848">
-				<?php echo  $terbilang; ?>
+				<?php echo  terbilang($nominal_pengajuan); ?>
 			</th>
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">TANGGAL</th> -->
 			<!-- <th style="font-size:0.550em; width: 2px;" colspan="2">:</th> -->
