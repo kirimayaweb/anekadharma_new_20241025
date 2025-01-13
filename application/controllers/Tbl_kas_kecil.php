@@ -226,6 +226,313 @@ class Tbl_kas_kecil extends CI_Controller
         }
     }
 
+    public function pengeluaran_kas_kecil_update($get_id = null, $get_spop = null)
+    {
+
+        // List data pembelian
+        $sql = "SELECT 
+        tbl_pembelian_a.id as id,
+        tbl_pembelian_a.tgl_po as tanggal,
+        tbl_pembelian_a.tgl_po as tanggal,
+        tbl_pembelian_a.supplier_nama as nama_supplier,
+        tbl_pembelian_a.uuid_spop as uuid_spop,
+        tbl_pembelian_a.spop as spop,
+        tbl_pembelian_a.statuslu as statuslu,
+        tbl_pembelian_a.uuid_konsumen as uuid_konsumen,
+        tbl_pembelian_a.konsumen as konsumen,
+        -- tbl_pembelian_a.harga_satuan as harga_satuan,
+        sum(tbl_pembelian_a.harga_total) as sum_harga_total,
+        (tbl_pembelian_a.jumlah*tbl_pembelian_a.harga_satuan) as total_belanja,
+        sys_supplier_a.nama_supplier as nama_supplier_1
+    
+        FROM tbl_pembelian tbl_pembelian_a 
+
+        left join   sys_supplier  sys_supplier_a ON  sys_supplier_a.nama_supplier = tbl_pembelian_a.supplier_nama
+        where tbl_pembelian_a.statuslu='U'
+        group by tbl_pembelian_a.uuid_spop
+        order by tbl_pembelian_a.spop ASC
+        ";
+
+        $Tbl_pembelian = $this->db->query($sql)->result();
+
+        // GET DATA KAS KECIL
+        $GET_DATA_KAS_KECIL = $this->Tbl_kas_kecil_model->get_by_id($get_id);
+
+        // print_r($GET_DATA_KAS_KECIL);
+        // die;
+
+        // CEK APAKAH ADA UUID_UNIT ?
+        if ($GET_DATA_KAS_KECIL->uuid_unit) {
+            $get_uuid_unit = $GET_DATA_KAS_KECIL->uuid_unit;
+        } else {
+
+            // cari uuid_unit berdasarkan nama unit
+            if ($GET_DATA_KAS_KECIL->unit) {
+
+                $get_nama_unit = $GET_DATA_KAS_KECIL->unit;
+
+                $sql_data_unit = "SELECT * FROM `sys_unit` WHERE `nama_unit` LIKE '$get_nama_unit'";
+                $Get_data_unit = $this->db->query($sql_data_unit)->row();
+
+                $get_uuid_unit = $Get_data_unit->uuid_unit;
+
+                // print_r("blm ada uuid_unit");
+                // print_r("<br/>");
+                // print_r($GET_DATA_KAS_KECIL->unit);
+                // print_r("<br/>");
+                // print_r($get_uuid_unit);
+                // print_r("<br/>");
+                // print_r($Get_data_unit->nama_unit);
+                // die;
+
+                // UPDATE UUID_UNIT TABEL KAS KECIL 
+                // UPDATE `sys_unit` SET `uuid_unit`='[value-2]' WHERE `id`=1
+                $sql_update_uuid_unit = "UPDATE `tbl_kas_kecil` SET `uuid_unit`='$get_uuid_unit' WHERE `id`='$get_id'";
+                $this->db->query($sql_update_uuid_unit);
+            } else {
+                $get_uuid_unit = "";
+            }
+        }
+
+
+        if ($GET_DATA_KAS_KECIL) {
+            if ($get_spop) {
+
+                // CEK get_spop apakah sama dengan uuid_spop di id kas_kecil , jika beda maka akan merubah spop ( ubah spop lama menjadi u dan spop baru menjadi L )
+
+                // $message = "wrong answer";
+                // echo "<script type='text/javascript'>alert('$message');</script>";
+                // $this->pengeluaran_kas_kecil_update($get_id,$get_spop);
+                // redirect(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $get_id .'/'.$get_spop));
+
+                if ($get_spop <> $GET_DATA_KAS_KECIL->uuid_spop) {
+
+                    // $message = "Berbeda spop";
+                    // echo "<script type='text/javascript'>alert('$message');</script>";
+
+                    $Get_spop_lama = $GET_DATA_KAS_KECIL->uuid_spop;
+
+
+
+                    $sql = "SELECT 
+                    tbl_pembelian_a.id as id,
+                    tbl_pembelian_a.tgl_po as tanggal,
+                    tbl_pembelian_a.supplier_nama as nama_supplier,
+                    tbl_pembelian_a.uuid_spop as uuid_spop,
+                    tbl_pembelian_a.spop as spop,
+                    -- tbl_pembelian_a.jumlah as jumlah,
+                    -- tbl_pembelian_a.harga_satuan as harga_satuan,
+                    sum(tbl_pembelian_a.harga_total) as sum_harga_total,
+                    (tbl_pembelian_a.jumlah*tbl_pembelian_a.harga_satuan) as total_belanja,
+                    sys_supplier_a.nama_supplier as nama_supplier_1
+                
+                    FROM tbl_pembelian tbl_pembelian_a 
+        
+                    left join   sys_supplier  sys_supplier_a ON  sys_supplier_a.nama_supplier = tbl_pembelian_a.supplier_nama
+                    where tbl_pembelian_a.uuid_spop LIKE '$Get_spop_lama'
+                    group by tbl_pembelian_a.uuid_spop
+                    order by tbl_pembelian_a.spop ASC
+                    ";
+
+                    $Get_data_SPOP_Lama_proses = $this->db->query($sql)->row();
+                } else {
+
+                    // $message = "spop sama";
+                    // echo "<script type='text/javascript'>alert('$message');</script>";
+
+                    $Get_data_SPOP_Lama_proses = "";
+                    $Get_spop_lama = "";
+                }
+
+                // print_r("update spop");
+                // print_r("<br/>");
+                // die;
+
+                $sql = "SELECT 
+                tbl_pembelian_a.id as id,
+                tbl_pembelian_a.tgl_po as tanggal,
+                tbl_pembelian_a.supplier_nama as nama_supplier,
+                tbl_pembelian_a.uuid_spop as uuid_spop,
+                tbl_pembelian_a.spop as spop,
+                -- tbl_pembelian_a.jumlah as jumlah,
+                -- tbl_pembelian_a.harga_satuan as harga_satuan,
+                sum(tbl_pembelian_a.harga_total) as sum_harga_total,
+                (tbl_pembelian_a.jumlah*tbl_pembelian_a.harga_satuan) as total_belanja,
+                sys_supplier_a.nama_supplier as nama_supplier_1
+            
+                FROM tbl_pembelian tbl_pembelian_a 
+    
+                left join   sys_supplier  sys_supplier_a ON  sys_supplier_a.nama_supplier = tbl_pembelian_a.supplier_nama
+                where tbl_pembelian_a.uuid_spop LIKE '$get_spop'
+                group by tbl_pembelian_a.uuid_spop
+                order by tbl_pembelian_a.spop ASC
+                ";
+
+                $Get_data_proses = $this->db->query($sql)->row();
+
+                $data = array(
+                    'button' => 'Ubah',
+                    'action' => site_url('tbl_kas_kecil/pengeluaran_kas_kecil_update_action/' . $get_id . '/' . $get_spop . '/' . $Get_spop_lama),
+                    'id' => $GET_DATA_KAS_KECIL->id,
+                    'uuid_kas_kecil' => $GET_DATA_KAS_KECIL->uuid_kas_kecil,
+                    'tanggal' => $GET_DATA_KAS_KECIL->tanggal,
+                    'uuid_spop' => $get_spop,
+                    'uuid_unit' => $get_uuid_unit,
+                    'unit' => $GET_DATA_KAS_KECIL->unit,
+                    'keterangan' => $GET_DATA_KAS_KECIL->keterangan,
+                    'debet' => $GET_DATA_KAS_KECIL->debet,
+                    'kredit' => $GET_DATA_KAS_KECIL->kredit,
+                    'saldo' => $GET_DATA_KAS_KECIL->saldo,
+                    'id_usr' => $GET_DATA_KAS_KECIL->id_usr,
+                    'Tbl_pembelian_data' => $Tbl_pembelian,
+                    'Get_data_proses' => $Get_data_proses,
+                    'Get_spop_lama' => $Get_data_SPOP_Lama_proses,
+                );
+            } else {
+
+                $Get_data_proses = "";
+                $Get_data_SPOP_Lama_proses = "";
+
+                $data = array(
+                    'button' => 'Ubah',
+                    'action' => site_url('tbl_kas_kecil/pengeluaran_kas_kecil_update_action/' . $get_id),
+                    'id' => $GET_DATA_KAS_KECIL->id,
+                    'uuid_kas_kecil' => $GET_DATA_KAS_KECIL->uuid_kas_kecil,
+                    'tanggal' => $GET_DATA_KAS_KECIL->tanggal,
+                    'uuid_spop' => $get_spop,
+                    'uuid_unit' => $get_uuid_unit,
+                    'unit' => $GET_DATA_KAS_KECIL->unit,
+                    'keterangan' => $GET_DATA_KAS_KECIL->keterangan,
+                    'debet' => $GET_DATA_KAS_KECIL->debet,
+                    'kredit' => $GET_DATA_KAS_KECIL->kredit,
+                    'saldo' => $GET_DATA_KAS_KECIL->saldo,
+                    'id_usr' => $GET_DATA_KAS_KECIL->id_usr,
+                    'Tbl_pembelian_data' => $Tbl_pembelian,
+                    'Get_data_proses' => $Get_data_proses,
+                    'Get_spop_lama' => $Get_data_SPOP_Lama_proses,
+                );
+            }
+
+            // $this->load->view('tbl_kas_kecil/tbl_kas_kecil_form', $data);
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_kas_kecil/adminlte310_tbl_kas_kecil_form_pengeluaran_update', $data);
+        } else {
+
+            // Tidak ada id 
+            redirect(site_url('tbl_kas_kecil'));
+        }
+    }
+
+
+    public function pengeluaran_kas_kecil_update_action($get_id = null, $get_spop = null, $Get_spop_lama = null)
+    {
+
+
+        $this->_rules();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->pengeluaran_kas_kecil_update($get_id);
+        } else {
+
+
+            // print_r($get_id);
+            // print_r("<br/>");
+            // print_r($get_spop);
+            // print_r("<br/>");
+            // print_r($Get_spop_lama);
+            // print_r("<br/>");
+            // die;
+
+
+            if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                $date_kas_kecil = date("Y-m-d H:i:s");
+            } else {
+                $date_kas_kecil = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+            }
+
+
+            $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
+
+
+
+            if ($get_spop) {
+                if ($Get_spop_lama) {
+
+                    // Update tabel pembelian : spop lama = U dan spop baru = L & tabel kas kecil berdasarkan id di update
+
+                    // Update spop lama pembelian ==> menjadi U kembali
+                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='U',`kas_bank`='kas',`tgl_bayar`='0000-00-00 00:00:00' WHERE `uuid_spop`='$Get_spop_lama'";
+                    $this->db->query($sql);
+
+                    // proses update tbl_pembelian ==> memproses Lunas jika sudah sesuai total nominal per spop nya
+                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
+                    $this->db->query($sql);
+
+                    // print_r("update uuid_spop");
+                    $data = array(
+                        // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                        'date_input' => date("Y-m-d H:i:s"),
+                        'tanggal' => $date_kas_kecil,
+                        'uuid_spop' => $get_spop,
+                        'uuid_unit' => $this->input->post('unit', TRUE),
+                        'unit' => $row_unit->nama_unit,
+                        'keterangan' => $this->input->post('keterangan', TRUE),
+                        'status_data' => "pengeluaran",
+                        // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                        'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        // 'saldo' => $this->input->post('saldo', TRUE),
+                        // 'id_usr' => $this->input->post('id_usr', TRUE),
+                    );
+                } else {
+                    // Update sesuai spop ( update tabel kas kecil berdasarkan id tanpa merubah status tabel pembelian )
+
+                    // proses update tbl_pembelian ==> memproses Lunas jika sudah sesuai total nominal per spop nya
+                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
+                    $this->db->query($sql);
+
+                    // print_r("update uuid_spop");
+                    $data = array(
+                        // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                        'date_input' => date("Y-m-d H:i:s"),
+                        'tanggal' => $date_kas_kecil,
+                        'uuid_spop' => $get_spop,
+                        'uuid_unit' => $this->input->post('unit', TRUE),
+                        'unit' => $row_unit->nama_unit,
+                        'keterangan' => $this->input->post('keterangan', TRUE),
+                        'status_data' => "pengeluaran",
+                        // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                        'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        // 'saldo' => $this->input->post('saldo', TRUE),
+                        // 'id_usr' => $this->input->post('id_usr', TRUE),
+                    );
+                }
+            } else {
+                // Update data tabel kas kecil berdasarkan id secara langsung data tanpa ada data spop pembelian
+
+                $data = array(
+                    // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                    'date_input' => date("Y-m-d H:i:s"),
+                    'tanggal' => $date_kas_kecil,
+                    'uuid_unit' => $this->input->post('unit', TRUE),
+                    'unit' => $row_unit->nama_unit,
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    'status_data' => "pengeluaran",
+                    // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                    'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                    // 'id_usr' => $this->input->post('id_usr', TRUE),
+                );
+            }
+
+
+
+
+
+            $this->Tbl_kas_kecil_model->update($get_id, $data);
+
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('tbl_kas_kecil'));
+        }
+    }
 
     public function pengeluaran_kas_kecil($get_spop = null)
     {
@@ -361,6 +668,7 @@ class Tbl_kas_kecil extends CI_Controller
                     'date_input' => date("Y-m-d H:i:s"),
                     'tanggal' => $date_kas_kecil,
                     'uuid_spop' => $get_spop,
+                    'uuid_unit' => $this->input->post('unit', TRUE),
                     'unit' => $row_unit->nama_unit,
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
@@ -370,10 +678,12 @@ class Tbl_kas_kecil extends CI_Controller
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
             } else {
+
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
                     'date_input' => date("Y-m-d H:i:s"),
                     'tanggal' => $date_kas_kecil,
+                    'uuid_unit' => $this->input->post('unit', TRUE),
                     'unit' => $row_unit->nama_unit,
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
