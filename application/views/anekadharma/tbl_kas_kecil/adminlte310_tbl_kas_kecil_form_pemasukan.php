@@ -128,7 +128,7 @@
                                     </div>
                                     <div class="col-3">
                                         <label for="double">Debet <?php echo form_error('debet') ?></label>
-                                        <input type="text" class="form-control uang" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required/>
+                                        <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required/>
 
                                     </div>
                                 </div>

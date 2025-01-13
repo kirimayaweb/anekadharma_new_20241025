@@ -46,7 +46,7 @@
                                     </div>
                                     <div class="col-6" align="right">
 
-                                    <?php echo anchor(site_url('tbl_kas_kecil/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('tbl_kas_kecil/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                                     </div>
                                 </div>
                             </div>
@@ -110,7 +110,15 @@
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <td style="text-align:left">
                                                                     <?php
-                                                                    echo anchor(site_url('Tbl_kas_kecil/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    if ($list_data->debet > 0) {
+                                                                        echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    } else {
+                                                                        if ($list_data->uuid_spop) {
+                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id .'/'. $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                        } else {
+                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                        }
+                                                                    }
                                                                     echo ' ';
                                                                     echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>

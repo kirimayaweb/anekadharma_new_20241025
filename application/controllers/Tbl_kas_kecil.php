@@ -195,6 +195,29 @@ class Tbl_kas_kecil extends CI_Controller
         } else {
 
 
+            // print_r($this->input->post('debet', TRUE));
+            // print_r("<br/>");
+
+            // $x=str_replace(".", "", $this->input->post('debet', TRUE));
+
+            // print_r($x);
+            // print_r("<br/>");
+
+            // $nominal_debet = str_replace(",", ".", $this->input->post('debet', TRUE));
+
+
+            // print_r($nominal_debet);
+            // print_r("<br/>");
+            // print_r(preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)));
+            // print_r("<br/>");
+
+            // $nominal_debet_x = str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE)));
+
+            // print_r($nominal_debet_x);
+
+            // die;
+
+
             $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
 
 
@@ -204,15 +227,22 @@ class Tbl_kas_kecil extends CI_Controller
                 $date_kas_kecil = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
             }
 
-
+            // print_r($date_kas_kecil);
+            // die;
 
             $data = array(
                 // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                'date_input' => date("Y-m-d H:i:s"),
                 'tanggal' => $date_kas_kecil,
                 'unit' => $row_unit->nama_unit,
                 'keterangan' => $this->input->post('keterangan', TRUE),
                 'status_data' => "pemasukan",
-                'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+
+                // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+                // 'debet' => str_replace(".", "", $this->input->post('debet', TRUE)),
+                'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
+
+
                 // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                 // 'saldo' => $this->input->post('saldo', TRUE),
                 // 'id_usr' => $this->input->post('id_usr', TRUE),
@@ -477,8 +507,15 @@ class Tbl_kas_kecil extends CI_Controller
                         'unit' => $row_unit->nama_unit,
                         'keterangan' => $this->input->post('keterangan', TRUE),
                         'status_data' => "pengeluaran",
+                        
                         // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                        'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        
+                        
+                        // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+                        
+                        
+                        
                         // 'saldo' => $this->input->post('saldo', TRUE),
                         // 'id_usr' => $this->input->post('id_usr', TRUE),
                     );
@@ -499,8 +536,13 @@ class Tbl_kas_kecil extends CI_Controller
                         'unit' => $row_unit->nama_unit,
                         'keterangan' => $this->input->post('keterangan', TRUE),
                         'status_data' => "pengeluaran",
+                        
                         // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                        'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        
+                        // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                        'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+                        
+                        
                         // 'saldo' => $this->input->post('saldo', TRUE),
                         // 'id_usr' => $this->input->post('id_usr', TRUE),
                     );
@@ -517,7 +559,12 @@ class Tbl_kas_kecil extends CI_Controller
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                    'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+
+                    // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                    // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
+                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+                    
+                    
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
@@ -648,6 +695,14 @@ class Tbl_kas_kecil extends CI_Controller
             $this->pengeluaran_kas_kecil();
         } else {
 
+            // print_r($this->input->post('kredit', TRUE));
+            // print_r("<br/>");
+            // print_r(preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)));
+            // print_r("<br/>");
+            
+            // print_r(str_replace(".", "", $this->input->post('kredit', TRUE)) );
+            // die;
+
             if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
                 $date_kas_kecil = date("Y-m-d H:i:s");
             } else {
@@ -673,7 +728,12 @@ class Tbl_kas_kecil extends CI_Controller
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                    'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+
+                    // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                    // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
+                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+
+
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
@@ -688,7 +748,11 @@ class Tbl_kas_kecil extends CI_Controller
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                    'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                    
+                    // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+                    // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
+                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
@@ -1096,9 +1160,9 @@ class Tbl_kas_kecil extends CI_Controller
             xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
             xlsWriteLabel($tablebody, $kolombody++, $data->unit);
             xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
-            xlsWriteNumber($tablebody, $kolombody++, $data->debet);
-            xlsWriteNumber($tablebody, $kolombody++, $data->kredit);
-            xlsWriteNumber($tablebody, $kolombody++, $get_total_debet - $get_total_kredit);
+            xlsWriteLabel($tablebody, $kolombody++, number_format($data->debet, 2, ',', '.'));
+            xlsWriteLabel($tablebody, $kolombody++, number_format($data->kredit, 2, ',', '.'));
+            xlsWriteLabel($tablebody, $kolombody++, number_format($get_total_debet - $get_total_kredit, 2, ',', '.'));
             // xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 
             $tablebody++;
