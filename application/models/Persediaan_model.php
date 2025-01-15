@@ -152,6 +152,20 @@ class Persediaan_model extends CI_Model
 
         
     }
+   
+    // insert data
+    function insert_produk_baru($data)
+    {
+        $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
+        $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+        return $datainsert['id'];
+    }
     // insert data
     function insert_pecah_satuan($data)
     {

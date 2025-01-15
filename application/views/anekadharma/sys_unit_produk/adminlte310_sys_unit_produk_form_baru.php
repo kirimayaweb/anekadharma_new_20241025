@@ -162,6 +162,162 @@
                             </div>
 
 
+                            <div class="card card-success">
+                            <div class="card-header">
+
+                                <div class="row">
+                                    <div class="col-2" text-align="center"> <strong>Detail Barang</strong></div>
+                                    <div class="col-3" text-align="left">
+                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
+                                            Input Bahan
+                                        </button>
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="card-body">
+
+                                <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align:left" width="30px">No</th>
+                                            <th style="text-align:left">Action</th>
+
+                                            <th style="text-align:left">Gudang</th>
+                                            <th style="text-align:left">Uraian</th>
+                                            <th style="text-align:center">Jumlah</th>
+                                            <th style="text-align:center">Satuan</th>
+                                            <!-- <th>Konsumen</th> -->
+                                            <th style="text-align:right">Harga Satuan</th>
+                                            <th style="text-align:right">Harga Total</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $compare_spop = 0;
+                                        $Total_per_SPOP = 0;
+                                        $TOTAL_LUNAS = 0;
+                                        $TOTAL_HUTANG = 0;
+                                        // $TOTAL_HARGA=0;
+                                        $start = 0;
+                                        $jumlah_barang = 0;
+                                        foreach ($data_ALL_per_SPOP as $list_data) {
+
+                                        ?>
+
+
+                                            <tr>
+
+                                                <td style="text-align:center"><?php echo ++$start ?></td>
+
+                                                <td align="left">
+
+                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
+                                                        UBAH <?php //echo $list_data->id 
+                                                                ?>
+                                                    </button>
+
+                                                    <?php
+                                                    // echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+
+                                                    echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+
+
+
+                                                    ?>
+
+
+
+                                                </td>
+                                                <td align="left"><?php echo $list_data->nama_gudang; ?></td>
+                                                <td align="left"><?php echo $list_data->uraian; ?></td>
+                                                <td align="center">
+                                                    <?php
+                                                    // echo nominal($list_data->jumlah);                                                         
+                                                    echo number_format($list_data->jumlah, 0, ',', '.');
+                                                    $jumlah_barang = $jumlah_barang + $list_data->jumlah;
+
+                                                    ?>
+                                                </td>
+                                                <td align="center"><?php echo $list_data->satuan; ?></td>
+
+                                                <td align="right">
+                                                    <?php
+                                                    // echo nominal($list_data->harga_satuan); 
+                                                    echo number_format($list_data->harga_satuan, 2, ',', '.');
+                                                    ?>
+                                                </td>
+                                                <td align="right">
+                                                    <?php
+                                                    $total_per_uraian = $list_data->jumlah * $list_data->harga_satuan;
+
+                                                    // echo nominal($total_per_uraian);
+
+                                                    echo number_format($total_per_uraian, 2, ',', '.');
+
+                                                    $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
+
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
+
+
+
+
+
+                                        <?php
+                                        }
+                                        ?>
+
+                                    </tbody>
+
+                                    <tfoot>
+                                        <tr>
+                                            <th style="text-align:left" width="30px"></th>
+                                            <th style="text-align:left"></th>
+                                            <th style="text-align:left"></th>
+                                            <th style="text-align:right">TOTAL</th>
+                                            <th style="text-align:center"><?php
+                                                                            // echo $jumlah_barang; 
+                                                                            echo number_format($jumlah_barang, 0, ',', '.');
+                                                                            ?></th>
+                                            <th style="text-align:center">
+
+                                            </th>
+                                            <th style="text-align:right"></th>
+                                            <th style="text-align:right">
+                                                <?php
+                                                // echo $Total_per_SPOP; 
+                                                echo number_format($Total_per_SPOP, 2, ',', '.');
+                                                ?>
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+
+
+                                </table>
+                            </div>
+
+
+                            <!-- <div class="card-body">
+
+                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
+                                    Tambah Barang
+                                </button>
+
+                            </div> -->
+
+                        </div>
+
+
+
 
                             <!-- MODAL EXTRA LARGE -->
 

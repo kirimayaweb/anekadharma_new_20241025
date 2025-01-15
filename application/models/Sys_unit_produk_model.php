@@ -10,6 +10,7 @@ class Sys_unit_produk_model extends CI_Model
     public $id = 'id';
     public $uuid_produk = 'uuid_produk';
     public $uuid_unit = 'uuid_unit';
+    public $uuid_persediaan = 'uuid_persediaan';
     public $order = 'DESC';
 
     function __construct()
@@ -38,6 +39,13 @@ class Sys_unit_produk_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+    
+    // get data by id
+    function get_by_uuid_persediaan($uuid_persediaan)
+    {
+        $this->db->where($this->uuid_persediaan, $uuid_persediaan);
         return $this->db->get($this->table)->row();
     }
     
