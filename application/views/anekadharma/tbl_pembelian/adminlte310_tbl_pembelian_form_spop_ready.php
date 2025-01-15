@@ -198,7 +198,14 @@
                             <input type="hidden" name="uuid_spop_proses" id="uuid_spop_proses" value="<?php echo $uuid_spop; ?>" />
                             <input type="hidden" name="spop_proses" id="spop_proses" value="<?php echo $spop; ?>" />
 
-                            <button type="submit" onclick="confirmUbahSPOP(event)" class="btn btn-primary"><?php echo $button; ?></button>
+                            <div class="row">
+                                <div class="col-4"></div>
+                                <div class="col-4">
+                                    <button type="submit" onclick="confirmUbahSPOP(event)" class="btn btn-primary"><?php echo $button; ?></button>
+                                </div>
+                                <div class="col-4"></div>
+                            </div>
+
 
                             <!-- <button type="submit" onclick="myFunction()" class="btn btn-primary"><?php //echo $button; 
                                                                                                         ?></button> -->
@@ -211,7 +218,7 @@
                             <!-- <button onclick="CekKondisi()">Simpan Perubahan Detail SPOP</button> -->
 
 
-                            <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
+
 
 
                             <!-- Disabled button tombol setelah di klik -->
@@ -624,6 +631,16 @@
 
 
 
+
+                        <div class="row">
+                            <div class="col-4"></div>
+                            <div class="col-4">
+                                <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-success">Kembali ke data pembelian</a>
+                            </div>
+                            <div class="col-4"></div>
+                        </div>
+
+
                     </div>
 
                     <!-- /.card-body -->
@@ -632,6 +649,7 @@
             </div>
 
         </div>
+
     </section>
 </div>
 

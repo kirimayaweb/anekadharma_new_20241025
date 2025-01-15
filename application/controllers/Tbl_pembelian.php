@@ -1112,22 +1112,23 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_action_detail_uuid_spop_update($uuid_spop = null)
 	{
-		print_r("create_action_detail_uuid_spop_update");
-		print_r("<br/>");
-		print_r($uuid_spop);
 
-		print_r("<br/>");
-		print_r($this->input->post('tgl_po', TRUE));
-		print_r("<br/>");
-		print_r($this->input->post('uuid_supplier', TRUE));
-		print_r("<br/>");
-		print_r($this->input->post('statuslu', TRUE));
-		print_r("<br/>");
-		print_r($this->input->post('kas_bank', TRUE));
-		print_r("<br/>");
-		print_r($this->input->post('spop', TRUE));
-		print_r("<br/>");
-		print_r($this->input->post('nmrfakturkwitansi', TRUE));
+		// print_r("create_action_detail_uuid_spop_update");
+		// print_r("<br/>");
+		// print_r($uuid_spop);
+
+		// print_r("<br/>");
+		// print_r($this->input->post('tgl_po', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('uuid_supplier', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('statuslu', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('kas_bank', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('spop', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('nmrfakturkwitansi', TRUE));
 
 
 		// --------------------------------------------------------------------------------------------
@@ -1169,38 +1170,91 @@ class Tbl_pembelian extends CI_Controller
 
 		if ($row_per_uuid_spop->spop <> $this->input->post('spop', TRUE)) {
 
-			print_r("<br/>");
-			echo "SPOP BEDA DDDDDDDDDDDDDD";
+			// print_r("<br/>");
+			// echo "SPOP BEDA DDDDDDDDDDDDDD";
 
 			// CEK APAKAH SPOP BARU SUDAH ADA DI DATABASE , JIKA SUDAH ADA MAKA HARUS KONFIRMASI UNTUK MENGGABUNGKAN ATAU TIDAK ?
 			// JIKA MENGGABUNGKAN : MAKA UPDATE UUID_SPOP DAN SPOP SEMUA RECORD KE UUID_SPOP & SPOP YANG BARU , DAN SEMUA DETAIL SPOP UPDATE
 
-			$message = "SPOP BEDA BBBBBBBBBBBBBBBBBBBB";
-			echo "<script type='text/javascript'>alert('$message');</script>";
-			die;
+			// $message = "SPOP BEDA BBBBBBBBBBBBBBBBBBBB";
+			// echo "<script type='text/javascript'>alert('$message');</script>";
+			// die;
 
-			// $table_pembelian = "tbl_pembelian";
-			// $this->db->where('uuid_spop', $uuid_spop);
-			// $this->db->update($table_pembelian, array(
-			// 	'tgl_po' => $date_po,
-			// 	'uuid_supplier' => $get_uuid_supplier,
-			// 	'supplier_nama' => $get_nama_supplier,
-			// 	'statuslu' => $this->input->post('statuslu', TRUE),
-			// 	'kas_bank' => $this->input->post('kas_bank', TRUE),
-			// 	'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
-			// ));
+			$table_pembelian = "tbl_pembelian";
+			$this->db->where('uuid_spop', $uuid_spop);
+			$this->db->update($table_pembelian, array(
+				'tgl_po' => $date_po,
+				'uuid_supplier' => $get_uuid_supplier,
+				'supplier_nama' => $get_nama_supplier,
+				'statuslu' => $this->input->post('statuslu', TRUE),
+				'kas_bank' => $this->input->post('kas_bank', TRUE),
+				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+			));
 
 			// redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
 
-			die;
-
+			// die;
 
 			// Update data berdasarkan spop lama
 
 			// update spop lama menjadi spop baru, 
 
+			// Get uuid_spop by  $this->input->post('spop', TRUE)
 
+			$get_spop_proses_new = $this->input->post('spop', TRUE);
+
+			$this->db->where('spop', $get_spop_proses_new);
+			$Get_record_spop = $this->db->get('tbl_pembelian');
+
+			// print_r($Get_record_spop->row());
+			// print_r("<br/>");
+			// print_r("<br/>");
+
+			if ($Get_record_spop->num_rows() > 0) {
+
+				// ada spop , maka diubah uuid_spop
+
+				// echo "ada record dengan spop sama, maka update uuid_spop dengan uuid_spop yang baru (copy spop)";
+				// print_r("<br/>");
+				// print_r($Get_record_spop->row()->uuid_spop);
+				// print_r("<br/>");
+				// print_r($Get_record_spop->row()->spop);
+
+				$table_pembelian = "tbl_pembelian";
+				$this->db->where('uuid_spop', $uuid_spop);
+				$this->db->update($table_pembelian, array(
+					'tgl_po' => $date_po,
+					'uuid_supplier' => $get_uuid_supplier,
+					'supplier_nama' => $get_nama_supplier,
+					'statuslu' => $this->input->post('statuslu', TRUE),
+					'kas_bank' => $this->input->post('kas_bank', TRUE),
+					'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+					'uuid_spop' => $Get_record_spop->row()->uuid_spop,
+					'spop' => $this->input->post('spop', TRUE),
+				));
+			} else {
+				// belum ada spop, maka buat spop baru
+				// echo "Belum ada spop yang sama, maka buat uuid_spop baru, maka ubah spop saja & uuid_spop tidak di ubah";
+
+				$table_pembelian = "tbl_pembelian";
+				$this->db->where('uuid_spop', $uuid_spop);
+				$this->db->update($table_pembelian, array(
+					'tgl_po' => $date_po,
+					'uuid_supplier' => $get_uuid_supplier,
+					'supplier_nama' => $get_nama_supplier,
+					'statuslu' => $this->input->post('statuslu', TRUE),
+					'kas_bank' => $this->input->post('kas_bank', TRUE),
+					'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+					// 'uuid_spop' => $Get_record_spop->row()->uuid_spop, // uuid_spop tidak perlu diubah, karena tidak ada yang sama
+					'spop' => $this->input->post('spop', TRUE),
+				));
+
+			}
+			
+			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $Get_record_spop->row()->uuid_spop ));
+		
 		} else {
+
 			// echo "SPOP sama";
 			// LANJUT PROSES UPDATE DATA
 
