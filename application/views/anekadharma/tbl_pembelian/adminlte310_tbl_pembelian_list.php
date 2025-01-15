@@ -75,7 +75,8 @@
                                 foreach ($Tbl_pembelian_data as $list_data) {
 
                                     // $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP)
-                                    if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
+                                    // if (($compare_spop <> $list_data->spop) and ($start >= 1)) {
+                                    if (($compare_uuid_spop <> $list_data->uuid_spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
                                         <tr>
@@ -92,7 +93,7 @@
                                                 ?></td>
                                             <td>
                                                 <?php
-
+                                                // echo $compare_spop . " - " . $list_data->spop;
 
 
                                                 // echo "baris x";
@@ -124,67 +125,31 @@
                                             <td>
                                                 <?php
 
-                                                // if ($list_data->statuslu == "U") {
-                                                //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran </i>', 'class="btn btn-warning btn-xs"');
-                                                // }
-
-
-
-
-
-
-
                                                 $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($compare_uuid_spop);
 
                                                 $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($compare_uuid_spop)->total_pengajuan;
-                                                //                                         print_r("spop : ");
-                                                //                                         print_r($compare_uuid_spop);
-                                                //                                         print_r(" : ");
-                                                // print_r($result_pengajuan_by_uuid_spop);
+
                                                 if ($result_pengajuan_by_uuid_spop) {
                                                     $startx = 0;
                                                     $total_nominal_pengajuan = 0;
                                                     foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
-                                                        // echo $list_data_pengajuan->uuid_pengajuan_bayar;
                                                         echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
 
                                                         $total_nominal_pengajuan = $total_nominal_pengajuan + $list_data_pengajuan->nominal_pengajuan;
                                                     }
-                                                    // echo $TOTAL_Nominal_pengajuan;
-                                                    // echo " : ";
-                                                    // echo $Total_per_SPOP;
-                                                    // echo " : ";
+
                                                     if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
 
                                                         if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
                                                             echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                                         }
-                                                        // else{
-                                                        //     echo "- XX ";
-
-                                                        // }
                                                     }
                                                 } else {
-                                                    // if ($total_nominal_pengajuan < $Total_per_SPOP) {
 
                                                     if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
                                                         echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                        // echo " - YY  ";
-                                                        // echo  $list_spop_status_lu;
-                                                        // echo " - ";
-                                                        // echo  $list_data->statuslu;
-                                                        // echo " - ";
-                                                        // echo  $compare_spop;
-                                                        // echo " - ";
-                                                        // echo  $list_data->spop;
                                                     }
-                                                    // else{
-                                                    //     echo "-";
-                                                    // }
-
-
                                                 }
-
 
                                                 $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
 
@@ -199,7 +164,7 @@
                                     ?>
                                     <tr>
                                         <?php
-                                        if ($compare_spop == $list_data->spop) {
+                                        if ($compare_uuid_spop == $list_data->uuid_spop) {
                                         ?>
                                             <td><?php echo ++$start ?></td>
                                             <td>
@@ -209,7 +174,7 @@
                                                 // echo $list_data->spop;
 
 
-                                                if (($compare_spop == $list_data->spop) and $x_button == 1) {
+                                                if (($compare_uuid_spop == $list_data->uuid_spop) and $x_button == 1) {
                                                     // echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
                                                     // echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
@@ -220,9 +185,9 @@
                                                 } else {
                                                     // echo "oooooooooooo";
                                                     echo date("d M Y", strtotime($list_data->tgl_po));
-                                                    echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
-                                                    echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+                                                    // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
                                                 }
                                                 ?>
                                             </td>
@@ -245,9 +210,9 @@
                                                 echo date("d M Y", strtotime($list_data->tgl_po));
                                                 echo " ";
 
-                                                echo anchor(site_url('tbl_pembelian/update_per_id/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
-                                                echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+                                                // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
 
                                                 //echo " ";
                                                 //echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs" disabled');
@@ -257,7 +222,7 @@
 
 
                                             </td>
-                                            <td align="center">
+                                            <td align="left">
                                                 <?php
                                                 echo $list_data->spop;
                                                 $x_button = $x_button + 1;
@@ -273,13 +238,10 @@
                                                 ?>
                                             </td>
 
-                                            <!-- <td align="center"><?php //echo $list_data->nmrsj; 
-                                                                    ?></td> -->
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
-                                            <!-- <td align="center"><?php //echo $list_data->nmrbpb; 
-                                                                    ?></td> -->
 
                                             <td align="left"><?php echo $list_data->supplier_nama; ?></td>
+
                                         <?php
                                         }
                                         ?>
@@ -293,23 +255,18 @@
                                         <td align="left"><?php echo $list_data->konsumen; ?></td>
                                         <td align="right">
                                             <?php
-                                            // echo $list_data->harga_satuan;
-                                            // echo "<br/>";
+
                                             echo number_format($list_data->harga_satuan, 2, ',', '.');
-                                            // echo "<br/>";
-                                            // echo nominal($list_data->harga_satuan); 
+
                                             ?>
                                         </td>
                                         <td align="right">
                                             <?php
                                             $total_per_uraian = $list_data->jumlah * $list_data->harga_satuan;
 
-                                            // echo nominal($total_per_uraian);
-                                            // echo "<br/>";
                                             echo number_format($total_per_uraian, 2, ',', '.');
 
                                             $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
-
 
                                             ?>
                                         </td>
@@ -329,7 +286,6 @@
 
                                         <td align="center">
                                             <?php
-                                            // echo $list_data->kas_bank;
 
                                             if ($list_data->statuslu == "Lunas"  or $list_data->statuslu == "L") {
                                                 echo $list_data->kas_bank;
@@ -353,6 +309,7 @@
                                         <?php
                                         $compare_spop = $list_data->spop;
                                         $compare_uuid_spop = $list_data->uuid_spop;
+                                        $list_spop_status_lu = $list_data->statuslu;
                                         ?>
                                     </tr>
                                 <?php
@@ -480,11 +437,11 @@
                                     <th></th>
                                     <th style="text-align:right"><?php echo "<font color='red'>TOTAL HUTANG</font>"; ?></th>
                                     <th style="text-align:right">
-                                        <?php 
+                                        <?php
                                         // echo "<font color='red'>" . nominal($TOTAL_HUTANG) . "</font>"; 
-                                        echo "<font color='red'>" . number_format($TOTAL_HUTANG, 2, ',', '.') . "</font>"; 
+                                        echo "<font color='red'>" . number_format($TOTAL_HUTANG, 2, ',', '.') . "</font>";
                                         ?>
-                                        </th>
+                                    </th>
                                     <th></th>
                                     <th></th>
                                     <th></th>

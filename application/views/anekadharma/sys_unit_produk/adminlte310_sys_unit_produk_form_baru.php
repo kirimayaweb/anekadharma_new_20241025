@@ -104,10 +104,8 @@
                                             } else {
                                                 $tgl_transaksi_X = date("d-m-Y H:i:s", strtotime($tgl_transaksi));
                                             }
-
-                                            
                                             // $tgl_transaksi_X = date("d-m-Y", strtotime($tgl_transaksi));
-                                        }else{
+                                        } else {
                                             $tgl_transaksi_X = date("d-m-Y");
                                         }
                                         // echo $tgl_transaksi;
@@ -165,6 +163,157 @@
 
 
 
+                            <!-- MODAL EXTRA LARGE -->
+
+                            <div class="modal fade" id="modal-xl-select-unit">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title">Pilih Bahan Produksi</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <!-- <div class="card-body"> -->
+                                               
+                                                <?php
+                                                $sql_stock = "SELECT persediaan.id as id_persediaan_barang, 
+                                                persediaan.kode_barang as kode_barang, 
+                                                persediaan.namabarang as nama_barang_beli,
+                                                persediaan.tanggal_beli as tanggal_beli,
+                                                persediaan.total_10 as jumlah_sediaan,  
+                                                persediaan.hpp as harga_satuan_persediaan,
+                                                tbl_pembelian.uuid_pembelian as uuid_pembelian,
+                                                tbl_pembelian.uraian as barang_beli, 
+                                                tbl_pembelian.jumlah as jumlah_belanja, 
+                                                tbl_pembelian.harga_satuan as harga_satuan_beli,  
+                                                tbl_pembelian.tgl_po as tgl_po,
+                                                tbl_pembelian.uuid_gudang as uuid_gudang, 
+                                                tbl_pembelian.nama_gudang as nama_gudang,  
+                                                tbl_pembelian.satuan as satuan,
+                                                tbl_penjualan.nama_barang as barang_jual, 
+                                                tbl_penjualan.jumlah as jumlah_terjual
+                                                FROM persediaan  
+                                                left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+                                                left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+                                                WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan 
+                                                GROUP BY persediaan.uuid_barang)  
+                                                ORDER BY persediaan.uuid_barang ASC";
+
+                                                $Data_stock = $this->db->query($sql_stock)->result();
+
+                                                ?>
+
+
+
+
+                                                <table id="example9" class="display nowrap" style="width:100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th style="text-align:center" width="10px">No</th>
+                                                            <th>Action</th>
+                                                            <th>Tanggal Masuk</th>
+
+                                                            <th>nama barang <br />beli</th>
+                                                            <th>harga satuan <br />beli</th>
+                                                            <th>satuan</th>
+
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <?php
+                                                        $compare_spop = 0;
+                                                        $Total_per_SPOP = 0;
+                                                        $TOTAL_LUNAS = 0;
+                                                        $TOTAL_HUTANG = 0;
+                                                        $start = 0;
+                                                        $TOTAL_PERSEDIAAN = 0;
+                                                        foreach ($Data_stock as $list_data) {
+
+
+                                                        ?>
+                                                            <tr>
+                                                                <td style="text-align:center"><?php echo ++$start ?></td>
+                                                            
+                                                                <td style="text-align:left">
+                                                                    <?php
+                                                                    echo anchor(site_url('Sys_unit_produk/create_produksi/' . $list_data->id_persediaan_barang), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pilih Barang</i>', 'class="btn btn-warning btn-xs"  ');
+
+
+                                                                    ?>
+                                                                </td>
+
+                                                                <td style="text-align:left">
+                                                                    <?php 
+                                                                    // echo $list_data->tanggal_beli; 
+                                                                    echo date("d-m-Y", strtotime($list_data->tanggal_beli));
+                                                                    ?>
+                                                                    </td>
+
+                                                                <td style="text-align:left">
+                                                                    <?php
+
+                                                                    echo $list_data->nama_barang_beli;
+
+                                                                    ?>
+                                                                </td>
+
+                                                                <td style="text-align:right">
+                                                                    <?php
+
+                                                                    if (!empty($list_data->harga_satuan_persediaan)) {
+                                                                        // echo nominal($list_data->harga_satuan_persediaan);
+                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                                        $X_harga_satuan = $list_data->harga_satuan_persediaan;
+                                                                    } else {
+                                                                        echo "0";
+                                                                        $X_harga_satuan = 0;
+                                                                    }
+
+                                                                    ?>
+                                                                </td>
+
+                                                                <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
+
+                                                            </tr>
+
+                                                        <?php
+
+                                                        }
+                                                        ?>
+
+
+                                                    </tbody>
+
+
+
+                                                </table>
+                                            <!-- </div> -->
+
+                                            <!-- End of Tabel data -->
+
+
+
+
+                                        </div>
+
+                                        <div class="modal-footer">
+
+                                            <!-- <button type="submit" class="btn btn-primary">Proses</button> -->
+
+                                        </div>
+                                    </div>
+                                    <!-- /.modal-content -->
+                                </div>
+                                <!-- /.modal-dialog -->
+                            </div>
+
+
+                            <!-- END OF MODAL EXTRA LARGE -->
+
+
 
 
 
@@ -175,7 +324,13 @@
                                     <div class="col-4"></div>
                                     <div class="col-4">
                                         <input type="hidden" name="id" value="<?php echo $id; ?>" />
-                                        <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
+                                        <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
+                                                                                            ?></button> -->
+
+                                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-xl-select-unit">
+                                            Input Bahan
+                                        </button>
+
                                         <a href="<?php echo site_url('sys_unit/detail_unit/' . $uuid_unit) ?>" class="btn btn-default">Cancel</a>
                                     </div>
                                     <div class="col-4"></div>
@@ -215,7 +370,7 @@
 <script>
     $(document).ready(function() {
         $('#example9').DataTable({
-            "scrollY": 900,
+            "scrollY": 350,
             "scrollX": true
         });
     });

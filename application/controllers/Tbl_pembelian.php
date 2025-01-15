@@ -1116,6 +1116,9 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("create_action_detail_uuid_spop_update");
 		// print_r("<br/>");
 		// print_r($uuid_spop);
+		// print_r("<br/>");
+		// print_r($this->input->post('spop', TRUE));
+		// die;
 
 		// print_r("<br/>");
 		// print_r($this->input->post('tgl_po', TRUE));
@@ -1232,6 +1235,15 @@ class Tbl_pembelian extends CI_Controller
 					'uuid_spop' => $Get_record_spop->row()->uuid_spop,
 					'spop' => $this->input->post('spop', TRUE),
 				));
+
+				// print_r("selesai gabung uuid_spop ");
+				// print_r("<br/>");
+				// print_r($this->input->post('spop', TRUE));
+				// print_r("<br/>");
+				// print_r($Get_record_spop->row()->uuid_spop);
+		
+				$uuid_spop_processing= $Get_record_spop->row()->uuid_spop;
+		
 			} else {
 				// belum ada spop, maka buat spop baru
 				// echo "Belum ada spop yang sama, maka buat uuid_spop baru, maka ubah spop saja & uuid_spop tidak di ubah";
@@ -1249,10 +1261,16 @@ class Tbl_pembelian extends CI_Controller
 					'spop' => $this->input->post('spop', TRUE),
 				));
 
+				// print_r("selesai spop berubah ");
+				// print_r("<br/>");
+				// print_r($this->input->post('spop', TRUE));
+				// print_r("<br/>");
+				// print_r($Get_record_spop->row()->uuid_spop);
+
+				$uuid_spop_processing= $uuid_spop;
 			}
-			
-			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $Get_record_spop->row()->uuid_spop ));
-		
+// die;
+			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop_processing));
 		} else {
 
 			// echo "SPOP sama";
@@ -1776,8 +1794,11 @@ class Tbl_pembelian extends CI_Controller
 			// 'nmrbpb' => $row_per_uuid_spop->nmrbpb,
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
+
+			'uuid_supplier' => $row_per_uuid_spop->uuid_supplier,
 			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
 			'supplier_nama' => $row_per_uuid_spop->supplier_nama,
+
 			// 'uraian' => $row_per_uuid_spop->uraian,
 			// 'jumlah' => $row_per_uuid_spop->jumlah,
 			// 'satuan' => $row_per_uuid_spop->satuan,
@@ -1789,6 +1810,9 @@ class Tbl_pembelian extends CI_Controller
 			'kas_bank' => $get_kas_bank,
 			// 'tgl_bayar' => $row_per_uuid_spop->tgl_bayar,
 			// 'id_usr' => $row_per_uuid_spop->,
+			'action_ubah_detail_spop' => site_url('tbl_pembelian/create_action_detail_uuid_spop_update/' . $uuid_spop),
+			'action_ubah_per_id' => site_url('tbl_pembelian/create_action_uuid_spop_update_per_id/'),
+			'action_tambah_barang_per_spop' => site_url('tbl_pembelian/create_action_tambah_barang_per_spop/'),
 		);
 
 		// print_r($data);
