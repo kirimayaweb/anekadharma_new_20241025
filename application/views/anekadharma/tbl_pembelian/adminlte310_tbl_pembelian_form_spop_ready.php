@@ -1,8 +1,4 @@
-<?php
-
-
-
-?>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="content-wrapper">
 
@@ -82,16 +78,17 @@
                     <div class="card-body">
 
 
-                        <form action="<?php echo $action_ubah_detail_spop; ?>" method="post">
+                        <form action="<?php echo $action_ubah_detail_spop; ?>" id="form_update_spop" method="post">
                             <div class="form-group">
                                 <label for="datetime">Tgl Po <?php echo form_error('tgl_po') ?></label>
                                 <div class="col-3">
                                     <!-- <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
-                                        <input type="text" class="form-control" rows="3" name="tgl_po" id="tgl_po" placeholder="tgl_po" value="<?php //echo $date_po_X; ?>" >
+                                        <input type="text" class="form-control" rows="3" name="tgl_po" id="tgl_po" placeholder="tgl_po" value="<?php //echo $date_po_X; 
+                                                                                                                                                ?>" >
                                     </div> -->
 
                                     <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po"  value="<?php echo $date_po_X; ?>" required />
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
                                         <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
@@ -109,7 +106,8 @@
                                     <div class="col-3">
                                         <label for="supplier_nama">Nama Supplier <?php echo form_error('supplier_nama') ?></label>
 
-                                        <!-- <input type="text" class="form-control" rows="3" name="Supplier" id="Supplier" placeholder="Supplier" value="<?php //echo $supplier_nama; ?>" disabled> -->
+                                        <!-- <input type="text" class="form-control" rows="3" name="Supplier" id="Supplier" placeholder="Supplier" value="<?php //echo $supplier_nama; 
+                                                                                                                                                            ?>" disabled> -->
 
 
                                         <select name="uuid_supplier" id="uuid_supplier" class="form-control select2" style="width: 100%; height: 40px;" required>
@@ -135,10 +133,10 @@
 
                                         <select name="statuslu" id="statuslu" class="form-control select2" style="width: 100%; height: 40px;">
                                             <option value="<?php echo $statuslu; ?>">
-                                                <?php 
-                                                if($statuslu=="U"){
+                                                <?php
+                                                if ($statuslu == "U") {
                                                     echo "Hutang";
-                                                }else{
+                                                } else {
                                                     echo "Lunas";
                                                 }
                                                 ?>
@@ -175,6 +173,7 @@
 
                                         <input type="text" class="form-control" rows="3" name="spop" id="spop" placeholder="spop" value="<?php echo $spop; ?>" required>
 
+                                        <p id="info_spop"></p>
                                     </div>
 
                                     <div class="col-4">
@@ -196,10 +195,145 @@
 
 
                             <input type="hidden" name="id" value="<?php echo $id; ?>" />
-                            <button type="submit" class="btn btn-primary"><?php echo $button; ?></button>
+                            <input type="hidden" name="uuid_spop_proses" id="uuid_spop_proses" value="<?php echo $uuid_spop; ?>" />
+                            <input type="hidden" name="spop_proses" id="spop_proses" value="<?php echo $spop; ?>" />
+
+                            <button type="submit" onclick="confirmUbahSPOP(event)" class="btn btn-primary"><?php echo $button; ?></button>
+
+                            <!-- <button type="submit" onclick="myFunction()" class="btn btn-primary"><?php //echo $button; 
+                                                                                                        ?></button> -->
+                            <!-- <button type="submit" onclick="confirmCancel()" class="btn btn-primary"><?php //echo $button; 
+                                                                                                            ?></button> -->
+
+                            <!-- <a href="edit.php?id=1" onclick="return  confirm('do you want to delete Y/N')">Edit </a> -->
+
+                            <!-- <button onclick="myFunction()">Try it</button> -->
+                            <!-- <button onclick="CekKondisi()">Simpan Perubahan Detail SPOP</button> -->
+
 
                             <a href="<?php echo site_url('tbl_pembelian') ?>" class="btn btn-default">Cancel</a>
+
+
+                            <!-- Disabled button tombol setelah di klik -->
+                            <!-- <script>
+                                function disableButton() {
+                                    var btn = document.getElementById('btn');
+                                    btn.disabled = true;
+                                    btn.innerText = 'Posting...'
+                                }
+                            </script> -->
+                            <!-- End if Disabled button tombol setelah di klik -->
+
+
+
+
+
+
+                            <script>
+                                // function CekKondisi() {
+                                //     Swal.fire({
+                                //         title: "Do you want to save the changes?",
+                                //         showDenyButton: true,
+                                //         showCancelButton: true,
+                                //         confirmButtonText: "Save",
+                                //         denyButtonText: `Don't save`
+                                //     }).then((result) => {
+                                //         /* Read more about isConfirmed, isDenied below */
+                                //         if (result.isConfirmed) {
+                                //             Swal.fire("Saved!", "", "success");
+                                //         } else if (result.isDenied) {
+                                //             Swal.fire("Changes are not saved", "", "info");
+                                //         }
+                                //     });
+                                // }
+
+                                function myFunction() {
+
+
+
+
+                                    // cek uuid_spop dan input text spop = apakah beda ?
+
+                                    let input_spop = document.getElementById("spop").value;
+                                    let input_spop_proses = document.getElementById("spop_proses").value;
+                                    // let value = inputField.value;
+                                    // alert("Input SPOP: " + input_spop);
+
+                                    // var numbers = <?php //echo $get_awal 
+                                                        ?>;
+
+                                    if (input_spop != input_spop_proses) {
+                                        let text = "SPOP terjadi perbedaan: \n SPOP awal:" + input_spop_proses + "\n SPOP baru: " + input_spop + "\n Apakah Tetap diproses ubah SPOP? ";
+
+
+                                        if (confirm(text) === true) {
+                                            text = "SPOP BERBEDA!<br/> dan di Proses? " + input_spop;
+                                            document.getElementById("form_update_spop").submit();
+                                        } else {
+                                            // text = "SPOP tidak boleh beda";
+                                            // alert("CANCEL");
+                                            // window.fail;
+                                            // document.getElementById("form_update_spop").submit();
+                                            // history.back(-1);
+                                            // break;
+                                            document.getElementById("info_spop").innerHTML = text;
+                                        }
+                                        // document.getElementById("info_spop").innerHTML = text;
+                                    }
+
+
+                                }
+
+
+                                function confirmUbahSPOP(e) {
+
+                                    let input_spop = document.getElementById("spop").value;
+                                    let input_spop_proses = document.getElementById("spop_proses").value;
+
+                                    if (input_spop != input_spop_proses) {
+                                        let text = "SPOP terjadi perbedaan: \n SPOP awal:" + input_spop_proses + "\n SPOP baru: " + input_spop + "\n Apakah Tetap diproses ubah SPOP? ";
+
+                                        if (confirm(text))
+                                            // alert('Proses Ubah SPOP !');
+                                            // e.preventDefault();
+                                            document.getElementById("form_update_spop").submit();
+                                        else {
+                                            // alert('Cancelled! \n harap SPOP dikembalikan ke: ' + input_spop_proses);
+                                            e.preventDefault();
+                                        }
+
+                                    }
+
+
+                                }
+
+                                // function confirmCancel() {
+                                //     var msj = 'Are you sure that you want to delete this comment?';
+                                //     if (!confirm(msj)) {
+                                //         return false;
+                                //     } else {
+                                //         window.location = $base_url() + 'index.php/Tbl_pembelian/create_action_detail_uuid_spop_update/' + input_spop;
+                                //     }
+                                // }
+                            </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                         </form>
+
+
 
 
 
@@ -271,6 +405,9 @@
                                                     // echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
                                                     echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+
+
+
                                                     ?>
 
 
@@ -327,11 +464,11 @@
                                             <th style="text-align:left"></th>
                                             <th style="text-align:right">TOTAL</th>
                                             <th style="text-align:center"><?php
-                                                // echo $jumlah_barang; 
-                                                echo number_format($jumlah_barang, 0, ',', '.');
-                                                ?></th>
+                                                                            // echo $jumlah_barang; 
+                                                                            echo number_format($jumlah_barang, 0, ',', '.');
+                                                                            ?></th>
                                             <th style="text-align:center">
-                                                
+
                                             </th>
                                             <th style="text-align:right"></th>
                                             <th style="text-align:right">
@@ -368,116 +505,116 @@
 
                         <!-- TAMBAH BARANG MODAL EXTRA LARGE -->
                         <form action="<?php echo $action_tambah_barang_per_spop . $uuid_spop; ?>" method="post">
-                        <div class="modal fade" id="modal-xl-input-barang">
-                            <div class="modal-dialog modal-xl">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h4 class="modal-title">Tambah Barang Beli</h4>
-                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
+                            <div class="modal fade" id="modal-xl-input-barang">
+                                <div class="modal-dialog modal-xl">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title">Tambah Barang Beli</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
 
-                                    <div class="modal-body">
-                                        <div class="form-group">
-
-
-                                            <div class="row">
-                                                <div class="col-4">
-                                                    <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
-                                                    <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                                        <option value="">Pilih Konsumen/Unit </option>
-                                                        <?php
-
-                                                        // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                                        $sql = "select * from sys_unit order by nama_unit ASC ";
-                                                        foreach ($this->db->query($sql)->result() as $m) {
-                                                            echo "<option value='$m->uuid_unit' ";
-                                                            echo ">  " . strtoupper($m->nama_unit) .  "</option>";
-                                                        }
-                                                        ?>
-                                                    </select>
-                                                </div>
-                                                <div class="col-4">
-                                                </div>
-                                                <div class="col-4">
-                                                </div>
-                                            </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
 
 
-                                            <div class="row">
-                                                <div class="col-4">
-                                                    <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
+                                                <div class="row">
+                                                    <div class="col-4">
+                                                        <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
+                                                        <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                                            <option value="">Pilih Konsumen/Unit </option>
+                                                            <?php
 
-                                                    <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
-                                                        <option value="">Pilih Barang</option>
-                                                        <?php
-
-                                                        // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
-                                                        foreach ($this->db->query($sql)->result() as $m) {
-                                                            echo "<option value='$m->uuid_barang' ";
-                                                            echo ">  " . strtoupper($m->namabarang)  . "</option>";
-                                                        }
-                                                        ?>
-                                                    </select>
-
-                                                    <div class="row">
-                                                        <div class="col-8">
-                                                            <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
-                                                        </div>
+                                                            // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                echo "<option value='$m->uuid_unit' ";
+                                                                echo ">  " . strtoupper($m->nama_unit) .  "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
                                                     </div>
+                                                    <div class="col-4">
+                                                    </div>
+                                                    <div class="col-4">
+                                                    </div>
+                                                </div>
 
-                                                </div>
-                                                <div class="col-4">
-                                                    <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
-                                                    <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
-                                                </div>
-                                                <div class="col-4">
-                                                    <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                                    <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
-                                                </div>
-                                            </div>
 
-                                            <div class="row">
-                                                <div class="col-4">
-                                                    <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
-                                                                                ?></label>
-                                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
-                                                    <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
-                                                </div>
-                                                <div class="col-4">
-                                                    <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
-                                                    <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
-                                                        <option value="">Pilih Gudang</option>
-                                                        <?php
+                                                <div class="row">
+                                                    <div class="col-4">
+                                                        <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
 
-                                                        $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
-                                                        foreach ($this->db->query($sql)->result() as $m) {
-                                                            echo "<option value='$m->uuid_gudang' ";
-                                                            echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
-                                                        }
-                                                        ?>
-                                                    </select>
+                                                        <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                                            <option value="">Pilih Barang</option>
+                                                            <?php
+
+                                                            // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                echo "<option value='$m->uuid_barang' ";
+                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+
+                                                        <div class="row">
+                                                            <div class="col-8">
+                                                                <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
+                                                        <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
+                                                        <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
+                                                    </div>
                                                 </div>
-                                                <div class="col-4">
+
+                                                <div class="row">
+                                                    <div class="col-4">
+                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
+                                                                                    ?></label>
+                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
+                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
+                                                        <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                                            <option value="">Pilih Gudang</option>
+                                                            <?php
+
+                                                            $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
+                                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                                echo "<option value='$m->uuid_gudang' ";
+                                                                echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
+                                                            }
+                                                            ?>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-4">
+                                                    </div>
                                                 </div>
+
                                             </div>
 
                                         </div>
 
+                                        <div class="modal-footer justify-content-between">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                            <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                                            <button type="submit" class="btn btn-primary">Simpan Tambah Barang Beli</button>
+                                        </div>
                                     </div>
-
-                                    <div class="modal-footer justify-content-between">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                                        <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                                        <button type="submit" class="btn btn-primary">Simpan Tambah Barang Beli</button>
-                                    </div>
+                                    <!-- /.modal-content -->
                                 </div>
-                                <!-- /.modal-content -->
+                                <!-- /.modal-dialog -->
                             </div>
-                            <!-- /.modal-dialog -->
-                        </div>
                         </form>
                         <!-- END OF MODAL EXTRA LARGE -->
 

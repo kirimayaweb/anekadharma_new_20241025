@@ -1110,15 +1110,137 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_spop_ready', $data);
 	}
 
-	public function create_action_detail_uuid_spop_update($uuid_spop = null){
+	public function create_action_detail_uuid_spop_update($uuid_spop = null)
+	{
 		print_r("create_action_detail_uuid_spop_update");
 		print_r("<br/>");
 		print_r($uuid_spop);
-		die;
+
+		print_r("<br/>");
+		print_r($this->input->post('tgl_po', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('uuid_supplier', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('statuslu', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('kas_bank', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('spop', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('nmrfakturkwitansi', TRUE));
+
+
+		// --------------------------------------------------------------------------------------------
+		if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
+			// print_r("Tahun kurang dari 2020");
+			$date_po = date("Y-m-d H:i:s");
+		} else {
+			// print_r("Tahun lebih dari 2020");
+			$date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+		}
+
+
+
+		// GET SUPPLIER DATA
+		$get_uuid_supplier = $this->input->post('uuid_supplier', TRUE);
+		$sql_uuid_supplier = "SELECT * FROM `sys_supplier` WHERE `uuid_supplier`='$get_uuid_supplier'";
+		$get_kode_supplier = $this->db->query($sql_uuid_supplier)->row()->kode_supplier;
+		$get_nama_supplier = $this->db->query($sql_uuid_supplier)->row()->nama_supplier;
+
+
+
+
+		// --------------------------------------------------------------------------------------------
+
+
+		// die;
+
+		//  cek apakah SPOP diubah ? , jika di ubah: cek apakah spop yang baru sudah ada dalam sistem ? jika sudah ada , maka harus ada konfirmasi: apakah di gabung atau tidak ?
+
+		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		// print_r($row_per_uuid_spop->uuid_spop);
+		// print_r("<br/>");
+		// print_r($row_per_uuid_spop->spop);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($this->input->post('spop', TRUE));
+		// print_r("<br/>");
+
+		if ($row_per_uuid_spop->spop <> $this->input->post('spop', TRUE)) {
+
+			print_r("<br/>");
+			echo "SPOP BEDA DDDDDDDDDDDDDD";
+
+			// CEK APAKAH SPOP BARU SUDAH ADA DI DATABASE , JIKA SUDAH ADA MAKA HARUS KONFIRMASI UNTUK MENGGABUNGKAN ATAU TIDAK ?
+			// JIKA MENGGABUNGKAN : MAKA UPDATE UUID_SPOP DAN SPOP SEMUA RECORD KE UUID_SPOP & SPOP YANG BARU , DAN SEMUA DETAIL SPOP UPDATE
+
+			$message = "SPOP BEDA BBBBBBBBBBBBBBBBBBBB";
+			echo "<script type='text/javascript'>alert('$message');</script>";
+			die;
+
+			// $table_pembelian = "tbl_pembelian";
+			// $this->db->where('uuid_spop', $uuid_spop);
+			// $this->db->update($table_pembelian, array(
+			// 	'tgl_po' => $date_po,
+			// 	'uuid_supplier' => $get_uuid_supplier,
+			// 	'supplier_nama' => $get_nama_supplier,
+			// 	'statuslu' => $this->input->post('statuslu', TRUE),
+			// 	'kas_bank' => $this->input->post('kas_bank', TRUE),
+			// 	'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+			// ));
+
+			// redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
+
+			die;
+
+
+			// Update data berdasarkan spop lama
+
+			// update spop lama menjadi spop baru, 
+
+
+		} else {
+			// echo "SPOP sama";
+			// LANJUT PROSES UPDATE DATA
+
+			$data_update_spop = array(
+				'date_input' => date("Y-m-d H:i:s"),
+				'tgl_po' => $date_po,
+
+				'uuid_supplier' => $get_uuid_supplier,
+				'supplier_nama' => $get_nama_supplier,
+
+				'statuslu' => $this->input->post('statuslu', TRUE),
+				'kas_bank' => $this->input->post('kas_bank', TRUE),
+				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
+				// 'uuid_spop' => $row_per_uuid_spop->uuid_spop,
+				// 'spop' => $row_per_uuid_spop->spop,
+
+			);
+
+			$this->Tbl_pembelian_model->update_proses_per_spop($uuid_spop, $data_update_spop);
+
+			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
+		}
+
+		// die;
+
+
+		// $this->db->where('uuid_spop', $uuid_spop);
+		// $get_data_spop = $this->db->get('tbl_pembelian');
+		// if ($get_data_spop->num_rows() > 0) {
+		// 	echo "ada spop yang sama";
+		// } else {
+		// 	echo "Tidak ada spop";
+		// }
+
+
 
 	}
 
-	public function create_action_tambah_barang_per_spop($uuid_spop=null){
+	public function create_action_tambah_barang_per_spop($uuid_spop = null)
+	{
 
 		// print_r("create_action_tambah_barang_per_spop");
 		// print_r("<br/>");
@@ -1134,7 +1256,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r($this->input->post('uuid_gudang', TRUE));
 		// die;
-		
+
 
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
@@ -1235,7 +1357,6 @@ class Tbl_pembelian extends CI_Controller
 		$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
 
 		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
-
 	}
 
 
@@ -1291,7 +1412,7 @@ class Tbl_pembelian extends CI_Controller
 		// Masukkan data ke database
 
 		$harga_satuan_x = str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan', TRUE))); // menghilangkan titik dan mengubah koma menjadi titik agar bisa masuk ke type data decimal di mysql
-		
+
 
 		$TOTAL_X = $jumlah_x * $harga_satuan_x;
 
@@ -1304,7 +1425,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-// UPDATE DATA BARANG
+		// UPDATE DATA BARANG
 		$data = array(
 			'date_input' => date("Y-m-d H:i:s"),
 
@@ -1323,7 +1444,7 @@ class Tbl_pembelian extends CI_Controller
 			'uuid_gudang' => $this->input->post('uuid_gudang', TRUE),
 			'nama_gudang' => $get_nama_gudang,
 			// 'id_usr' => 1,
-		);	
+		);
 
 		$this->Tbl_pembelian_model->update($id, $data);
 
@@ -1877,18 +1998,9 @@ class Tbl_pembelian extends CI_Controller
 		// redirect("https://google.com", ['target' => '_blank']);
 		redirect(site_url('tbl_pembelian'));
 
-
-
-
-
-
 		// die;
 
-
 		// 2. proses cetak form , di tab baru
-
-
-
 
 		// echo "
 		// <script>
