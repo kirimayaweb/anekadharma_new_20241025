@@ -2477,11 +2477,18 @@ class Tbl_pembelian extends CI_Controller
 
 	public function delete_per_spop($uuid_spop)
 	{
+
+		// print_r("delete_per_spop");
+		// print_r("<br/>");
 		// $row = $this->Tbl_pembelian_model->get_by_id($uuid_spop);
 		$data_per_uuidspop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		// print_r($data_per_uuidspop);
+		// print_r("<br/>");
 
 		if ($data_per_uuidspop) {
-			$this->Tbl_pembelian_model->delete($uuid_spop);
+			// print_r("Ada data");
+			$this->Tbl_pembelian_model->delete_by_uuid_spop($uuid_spop);
+			// die;
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian'));
 		} else {
@@ -2516,6 +2523,24 @@ class Tbl_pembelian extends CI_Controller
 			$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
+		} else {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(site_url('tbl_pembelian'));
+		}
+	}
+	
+	public function delete_by_uuid_spop($uuid_spop)
+	{
+
+
+		// $get_data_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		$row = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		if ($row) {
+			$this->Tbl_pembelian_model->delete_by_uuid_spop($uuid_spop);
+			$this->session->set_flashdata('message', 'Delete Record Success');
+			redirect(site_url('tbl_pembelian'));
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_pembelian'));

@@ -333,6 +333,11 @@ class Tbl_pembelian_model extends CI_Model
         $this->db->where($this->id, $id);
         $this->db->delete($this->table);
     }
+    function delete_by_uuid_spop($uuid_spop)
+    {
+        $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->delete($this->table);
+    }
 }
 
 /* End of file Tbl_pembelian_model.php */
