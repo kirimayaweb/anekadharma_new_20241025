@@ -518,7 +518,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
     $(document).ready(function() {
       var table = $('#tglSPOPFreeze').DataTable({
         scrollX: true,
-        scrollY: "400px",
+        scrollY: "700px",
         scrollCollapse: true,
         paging: true,
         // columnDefs: [
