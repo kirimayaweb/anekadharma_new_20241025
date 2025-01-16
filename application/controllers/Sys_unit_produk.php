@@ -9,7 +9,7 @@ class Sys_unit_produk extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Sys_konsumen_model', 'Tbl_pembelian_model'));
+        $this->load->model(array('Sys_unit_produk_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Sys_konsumen_model', 'Tbl_pembelian_model', 'Sys_unit_produk_bahan_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->library('Pdf');
@@ -72,7 +72,7 @@ class Sys_unit_produk extends CI_Controller
             'tanggal' => $date_tgl_produksi,
             // 'tanggal_new' => $date_persediaan,
             'kode' => $row_sys_nama_barang->kode_barang,
-            
+
             'uuid_barang' => $row_sys_nama_barang->uuid_barang,
             'namabarang' => $row_sys_nama_barang->nama_barang,
             'satuan' => $this->input->post('satuan', TRUE),
@@ -84,9 +84,9 @@ class Sys_unit_produk extends CI_Controller
         );
         $id_persediaan_barang = $this->Persediaan_model->insert_produk_baru($data);
 
-        
+
         $sql_data_persediaan = "SELECT * FROM `persediaan` WHERE `id`='$id_persediaan_barang'";
-		$get_uuid_persediaan = $this->db->query($sql_data_persediaan)->row()->uuid_persediaan;
+        $get_uuid_persediaan = $this->db->query($sql_data_persediaan)->row()->uuid_persediaan;
 
 
 
@@ -110,7 +110,7 @@ class Sys_unit_produk extends CI_Controller
 
         $this->Sys_unit_produk_model->insert($data);
         $this->session->set_flashdata('message', 'Create Record Success');
-        redirect(site_url('Sys_unit_produk/create_produksi/'.$id_persediaan_barang));
+        redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang));
     }
 
 
@@ -338,6 +338,47 @@ class Sys_unit_produk extends CI_Controller
         redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
     }
 
+    public function create_action_produksi_input_bahan($id_persediaan_barang)
+    {
+
+        $data_barang_selected = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+
+        $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+
+        $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+
+        $get_data_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
+
+        print_r($get_data_barang);
+        print_r("<br/>");
+        print_r("<br/>");
+        print_r("<br/>");
+
+        // Simpan bahan ke tabel sys_unit_produk_bahan berdasarkan id_persediaan barang
+
+        $data = array(
+
+            'uuid_persediaan' => $data_barang_selected->uuid_persediaan,
+
+            'uuid_unit' => $get_data_produk_unit->uuid_unit,
+            // 'kode_unit' => $this->input->post('kode_unit', TRUE),
+            'nama_unit' => $get_data_produk_unit->nama_unit,
+
+            'tgl_transaksi' => $data_barang_selected->tanggal,
+
+            'uuid_produk' => $get_data_barang->uuid_barang,
+            'kode_barang_bahan' => $get_data_barang->kode_barang,
+            'nama_barang_bahan' => $get_data_barang->nama_barang,
+            'jumlah_bahan' => $this->input->post('jumlah', TRUE),
+            // 'satuan_bahan' => $this->input->post('satuan_bahan', TRUE),
+            // 'harga_satuan_bahan' => $this->input->post('harga_satuan_bahan', TRUE),
+        );
+
+        $this->Sys_unit_produk_bahan_model->insert($data);
+        // print_r("selesai");
+        // die;
+        redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang));
+    }
 
     public function create_produksi($id_persediaan_barang = null)
     {
@@ -352,13 +393,16 @@ class Sys_unit_produk extends CI_Controller
 
 
             $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
 
 
             // print_r($data_barang_selected);
 
             $data = array(
+                'data_bahan_produk_unit' => $get_result_data_bahan_produk_unit,
                 'button' => 'Simpan Produk',
                 'action' => site_url('sys_unit_produk/create_action_produksi/' . $id_persediaan_barang),
+                'action_simpan_bahan' => site_url('sys_unit_produk/create_action_produksi_input_bahan/' . $id_persediaan_barang),
 
                 'id' => set_value('id'),
                 'uuid_unit' => $get_data_produk_unit->uuid_unit,
@@ -390,7 +434,7 @@ class Sys_unit_produk extends CI_Controller
             $data = array(
                 'button' => 'Simpan Produk',
                 'action' => site_url('sys_unit_produk/create_action_produksi/' . $id_persediaan_barang),
-
+                'action_simpan_bahan' => site_url('sys_unit_produk/create_action_produksi_input_bahan/'),
                 'id' => set_value('id'),
                 'uuid_unit' => set_value('uuid_unit'),
                 'kode_unit' => set_value('kode_unit'),
