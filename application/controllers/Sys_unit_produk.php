@@ -349,10 +349,10 @@ class Sys_unit_produk extends CI_Controller
 
         $get_data_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
 
-        print_r($get_data_barang);
-        print_r("<br/>");
-        print_r("<br/>");
-        print_r("<br/>");
+        // print_r($get_data_barang);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
 
         // Simpan bahan ke tabel sys_unit_produk_bahan berdasarkan id_persediaan barang
 
