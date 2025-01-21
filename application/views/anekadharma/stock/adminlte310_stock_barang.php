@@ -143,7 +143,7 @@
                                 ?>
                                     <tr>
                                         <td style="text-align:center"><?php echo ++$start ?></td>
-                                        <td style="text-align:left"><?php echo date("Y-m-d", strtotime($list_data->tanggal_beli_persediaan)); ?></td>
+                                        <td style="text-align:left"><?php echo date("d-m-Y", strtotime($list_data->tanggal_beli_persediaan)); ?></td>
                                         <td style="text-align:left;text-transform: uppercase;">
                                             <?php
                                             // echo $list_data->nama_gudang;
