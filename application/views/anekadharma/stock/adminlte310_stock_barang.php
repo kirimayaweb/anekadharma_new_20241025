@@ -123,7 +123,9 @@
                                     <!-- <th>harga_satuan_jual</th> -->
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
-                                    <th>Nominal Stock</th>
+                                    <!-- <th>Nominal Stock</th> -->
+                                    <th>Nomianl Persediaan</th>
+                                    <!-- <th>Total Persediaan</th> -->
 
                                 </tr>
                             </thead>
@@ -135,6 +137,8 @@
                                 $TOTAL_HUTANG = 0;
                                 $start = 0;
                                 $TOTAL_PERSEDIAAN = 0;
+                                $TOTAL_NILAI_PERSEDIAAN = 0;
+                                $TOTAL_PERSEDIAAN_X = 0;
                                 foreach ($Data_stock as $list_data) {
 
                                     // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) { //HIDE SISA STOCK =0;
@@ -158,7 +162,7 @@
                                         <!-- // echo $list_data->kode_barang;  -->
                                         <!-- <td style="text-align:left">
                                             <?php
-                                            
+
 
                                             // echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->kode_barang . '</i>', 'class=""');
                                             ?>
@@ -215,10 +219,10 @@
 
                                             if ($list_data->jumlah_belanja and $list_data->jumlah_belanja > 0) {
                                                 echo nominal($list_data->jumlah_belanja);
-                                                $x_jumlah_belanja=$list_data->jumlah_belanja;
+                                                $x_jumlah_belanja = $list_data->jumlah_belanja;
                                             } else {
                                                 echo "0";
-                                                $x_jumlah_belanja=0;
+                                                $x_jumlah_belanja = 0;
                                             }
 
 
@@ -230,10 +234,10 @@
                                             <?php
                                             if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
                                                 echo nominal($list_data->jumlah_terjual);
-                                                $x_jumlah_terjual=$list_data->jumlah_terjual;
+                                                $x_jumlah_terjual = $list_data->jumlah_terjual;
                                             } else {
                                                 echo "0";
-                                                $x_jumlah_terjual=0;
+                                                $x_jumlah_terjual = 0;
                                             }
 
                                             ?>
@@ -241,24 +245,34 @@
 
                                         <!-- Sisa stock -->
                                         <td style="text-align:right"><?php echo nominal($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual); ?></td>
-
+<!-- 
                                         <td style="text-align:right">
                                             <?php
-                                            // echo $stock_persediaan;
-                                            // echo "<br/>";
-                                            // echo $x_jumlah_belanja;
-                                            // echo "<br/>";
-                                            // echo $x_jumlah_terjual;
-                                            // echo "<br/>";
-                                            // echo $X_harga_satuan;
-                                            // echo "<br/>";
+                                           
+                                            // echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
 
-                                            echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
-
-                                            $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
+                                            // $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
                                             ?>
-                                        </td>
+                                        </td> -->
 
+                                        <!-- NOMINAL PERSEDIAAN -->
+                                        <td style="text-align:right">
+
+                                            <?php
+                                            $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $list_data->nilai_persediaan;
+                                            echo nominal($list_data->nilai_persediaan);
+                                            ?>
+
+                                        </td>
+<!-- 
+                                        <td style="text-align:right">
+
+                                            <?php
+                                            // $TOTAL_PERSEDIAAN_X = $TOTAL_PERSEDIAAN_X + $list_data->nilai_persediaan;
+                                            // echo nominal($TOTAL_PERSEDIAAN_X);
+                                            // ?>
+
+                                        </td> -->
 
                                     </tr>
 
@@ -280,7 +294,9 @@
                                     <th></th>
                                     <th></th>
                                     <th>TOTAL</th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_PERSEDIAAN); ?></th>
+                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); ?></th> -->
+                                    <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
+                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN_X); ?></th> -->
 
                                 </tr>
                             </tfoot>
@@ -307,7 +323,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 300,
+            "scrollY": 600,
             "scrollX": true
         });
     });
