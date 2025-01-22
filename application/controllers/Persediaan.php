@@ -16,6 +16,63 @@ class Persediaan extends CI_Controller
 
 	// -------------- PROSES UPDATE DATA PERSEDIAAN (STOCK) -------------- 
 
+	public function cek_nominal_persediaan(){
+		$sql = "SELECT `id`,`uuid_persediaan`,`nilai_persediaan` FROM `persediaan`";
+
+		$start=0;
+		foreach ($this->db->query($sql)->result() as $m) {
+			print_r($m->id);
+			print_r(" : ");
+			print_r($m->nilai_persediaan);
+			// print_r(" :=> ");
+			// print_r($start);
+			print_r(" :=====> ");
+			$start=$start+$m->nilai_persediaan;
+			print_r($start);
+			print_r("<br/>");
+
+		}		
+	}
+
+
+	public function cek_uuid_persediaan_kosong(){
+		$sql = "SELECT `id`,`uuid_persediaan`,`nilai_persediaan` FROM `persediaan` where `uuid_persediaan`='' ";
+
+		$start=0;
+		foreach ($this->db->query($sql)->result() as $m) {
+
+			$get_id=$m->id;
+			print_r($m->id);
+			print_r(" : ");
+			print_r($m->nilai_persediaan);
+			// print_r(" :=> ");
+			// print_r($start);
+			print_r(" :=====> ");
+			$start=$start+$m->nilai_persediaan;
+			print_r($start);
+			print_r("<br/>");
+
+			// id dengan uuid_persediaan = kosong di update di isi dengan uuid
+			$sql_update_uuid_persediaan = "UPDATE `persediaan` SET `uuid_persediaan`=replace(uuid(),'-','') WHERE `id`='$get_id'";
+			$this->db->query($sql_update_uuid_persediaan);
+
+
+			print_r($get_id);
+			print_r("====> isi : ");
+
+			$sql_data_id = "SELECT `uuid_persediaan` FROM `persediaan` WHERE `id`='$get_id'";
+			// $this->db->query($sql_data_id)->row();
+			print_r($this->db->query($sql_data_id)->row()->uuid_persediaan);
+			print_r("<br/>");
+
+			usleep(500000);
+
+
+
+		}		
+	}
+
+
 	public function moving_persediaan_master_from_persediaan_update_tanggal_beli_by_spop()
 	{
 		$sql = "SELECT * FROM `persediaan_master_new` order by id";
@@ -140,6 +197,36 @@ class Persediaan extends CI_Controller
 		}
 	}
 
+
+	public function Update_uuid_persediaan()
+	{
+
+		// Proses : update uuid_persediaan yang kosong karena import data dari csv dan belum ada record uuid_persediaan
+
+		$sql = "SELECT `id`,`uuid_persediaan` FROM `persediaan` where `uuid_persediaan`='' ";
+
+		foreach ($this->db->query($sql)->result() as $m) {
+			$get_id = $m->id;
+
+
+
+			$sql_update_uuid_persediaan = "UPDATE `persediaan` SET `uuid_persediaan`=replace(uuid(),'-','') WHERE `id`='$get_id'";
+			$this->db->query($sql_update_uuid_persediaan);
+
+
+			print_r($get_id);
+			print_r("<br/>");
+
+			$sql_data_id = "SELECT `uuid_persediaan` FROM `persediaan` WHERE `id`='$get_id'";
+			// $this->db->query($sql_data_id)->row();
+			print_r($this->db->query($sql_data_id)->row()->uuid_persediaan);
+
+
+
+			usleep(500000);
+		}
+	}
+
 	public function refresh_data_from_sys_data_barang()
 	{
 
@@ -151,6 +238,7 @@ class Persediaan extends CI_Controller
 
 			// $sql = "UPDATE `persediaan` SET `uuid_barang`='$data_barang->uuid_barang',`kode_barang`='$data_barang->kode_barang' WHERE `namabarang`= '$m->namabarang'";
 
+			// $this->db->set('uuid_persediaan', replace(uuid(),'-',''), true);
 			$this->db->set('uuid_barang', $data_barang->uuid_barang, true);
 			$this->db->set('kode_barang', $data_barang->kode_barang, true);
 			$this->db->where('namabarang', $m->namabarang);

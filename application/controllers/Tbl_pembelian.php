@@ -130,18 +130,41 @@ class Tbl_pembelian extends CI_Controller
 		} else {
 			// $Data_stock = $this->Tbl_pembelian_model->stock();
 			// print_r("NON  IF SEMUA");
-			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,persediaan.tanggal_beli as tanggal_beli_persediaan, persediaan.nilai_persediaan as nilai_persediaan,
-						tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po, tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
-					tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, 
+			persediaan.uuid_persediaan as uuid_persediaan,
+			persediaan.namabarang as nama_barang_persediaan,
+			persediaan.total_10 as jumlah_sediaan, 
+			persediaan.hpp as harga_satuan_persediaan,
+			persediaan.tanggal_beli as tanggal_beli_persediaan, 
+			persediaan.satuan as satuan, 
+			persediaan.satuan as satuan, 
+			persediaan.satuan as satuan, 
+			
+					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
+					-- 	tbl_pembelian.uraian as barang_beli, 
+					-- 	tbl_pembelian.jumlah as jumlah_belanja, 
+					-- 	tbl_pembelian.harga_satuan as harga_satuan_beli, 
+					-- 	tbl_pembelian.tgl_po as tgl_po, 
+					-- 	tbl_pembelian.uuid_gudang as uuid_gudang, 
+					-- 	tbl_pembelian.nama_gudang as nama_gudang,
+					-- 	tbl_pembelian.satuan as satuan,
+					-- tbl_penjualan.nama_barang as barang_jual, 
+					-- tbl_penjualan.jumlah as jumlah_terjual
+
+			persediaan.nilai_persediaan as nilai_persediaan
+					
 					FROM persediaan  
-					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-					WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+					-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+					-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
 					ORDER BY persediaan.uuid_barang ASC";
 
 			// print_r($this->db->query($sql_stock)->result());
 			$Data_stock = $this->db->query($sql_stock)->result();
 		}
+
+		// print_r($this->db->query($sql_stock)->num_rows());
+		// die;
 
 		$data = array(
 			'action_cari_gudang' => site_url('Tbl_pembelian/stock'),
@@ -1241,9 +1264,8 @@ class Tbl_pembelian extends CI_Controller
 				// print_r($this->input->post('spop', TRUE));
 				// print_r("<br/>");
 				// print_r($Get_record_spop->row()->uuid_spop);
-		
-				$uuid_spop_processing= $Get_record_spop->row()->uuid_spop;
-		
+
+				$uuid_spop_processing = $Get_record_spop->row()->uuid_spop;
 			} else {
 				// belum ada spop, maka buat spop baru
 				// echo "Belum ada spop yang sama, maka buat uuid_spop baru, maka ubah spop saja & uuid_spop tidak di ubah";
@@ -1267,9 +1289,9 @@ class Tbl_pembelian extends CI_Controller
 				// print_r("<br/>");
 				// print_r($Get_record_spop->row()->uuid_spop);
 
-				$uuid_spop_processing= $uuid_spop;
+				$uuid_spop_processing = $uuid_spop;
 			}
-// die;
+			// die;
 			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop_processing));
 		} else {
 
@@ -2528,7 +2550,7 @@ class Tbl_pembelian extends CI_Controller
 			redirect(site_url('tbl_pembelian'));
 		}
 	}
-	
+
 	public function delete_by_uuid_spop($uuid_spop)
 	{
 
