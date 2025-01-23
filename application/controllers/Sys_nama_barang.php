@@ -129,6 +129,8 @@ class Sys_nama_barang extends CI_Controller
             $this->create();
         } else {
 
+
+
             // Otomatis membuat kode barang
 
             $get_kode_barang = "";
@@ -193,38 +195,38 @@ class Sys_nama_barang extends CI_Controller
 
 
 
-            $data = array(
-                // 'id' => $this->input->post('id', TRUE),
-                // 'tanggal' => $this->input->post('tanggal', TRUE),
-                'uuid_barang' => $row->uuid_barang,
-                'kode' => $row->kode_barang,
-                'namabarang' => $row->nama_barang,
-                'satuan' => $row->satuan,
-                // 'hpp' => $this->input->post('hpp', TRUE),
-                // 'sa' => $this->input->post('sa', TRUE),
-                // 'spop' => $this->input->post('spop', TRUE),
-                // 'beli' => $this->input->post('beli', TRUE),
-                // 'tuj' => $this->input->post('tuj', TRUE),
-                // 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
-                // 'sekret' => $this->input->post('sekret', TRUE),
-                // 'cetak' => $this->input->post('cetak', TRUE),
-                // 'grafikita' => $this->input->post('grafikita', TRUE),
-                // 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
-                // 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
-                // 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
-                // 'kbs' => $this->input->post('kbs', TRUE),
-                // 'ppbmp' => $this->input->post('ppbmp', TRUE),
-                // 'medis' => $this->input->post('medis', TRUE),
-                // 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
-                // 'sembako' => $this->input->post('sembako', TRUE),
-                // 'fc_gose' => $this->input->post('fc_gose', TRUE),
-                // 'fc_manding' => $this->input->post('fc_manding', TRUE),
-                // 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
-                // 'total_10' => $this->input->post('total_10', TRUE),
-                // 'nilai_persediaan' => $this->input->post('nilai_persediaan', TRUE),
-            );
+            // $data = array(
+            //     // 'id' => $this->input->post('id', TRUE),
+            //     // 'tanggal' => $this->input->post('tanggal', TRUE),
+            //     'uuid_barang' => $row->uuid_barang,
+            //     'kode' => $row->kode_barang,
+            //     'namabarang' => $row->nama_barang,
+            //     'satuan' => $row->satuan,
+            //     // 'hpp' => $this->input->post('hpp', TRUE),
+            //     // 'sa' => $this->input->post('sa', TRUE),
+            //     // 'spop' => $this->input->post('spop', TRUE),
+            //     // 'beli' => $this->input->post('beli', TRUE),
+            //     // 'tuj' => $this->input->post('tuj', TRUE),
+            //     // 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+            //     // 'sekret' => $this->input->post('sekret', TRUE),
+            //     // 'cetak' => $this->input->post('cetak', TRUE),
+            //     // 'grafikita' => $this->input->post('grafikita', TRUE),
+            //     // 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+            //     // 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+            //     // 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+            //     // 'kbs' => $this->input->post('kbs', TRUE),
+            //     // 'ppbmp' => $this->input->post('ppbmp', TRUE),
+            //     // 'medis' => $this->input->post('medis', TRUE),
+            //     // 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+            //     // 'sembako' => $this->input->post('sembako', TRUE),
+            //     // 'fc_gose' => $this->input->post('fc_gose', TRUE),
+            //     // 'fc_manding' => $this->input->post('fc_manding', TRUE),
+            //     // 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+            //     // 'total_10' => $this->input->post('total_10', TRUE),
+            //     // 'nilai_persediaan' => $this->input->post('nilai_persediaan', TRUE),
+            // );
 
-            $this->Persediaan_model->insert($data);
+            // $this->Persediaan_model->insert($data);
 
 
 
