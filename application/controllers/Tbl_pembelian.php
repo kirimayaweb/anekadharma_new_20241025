@@ -1337,6 +1337,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 		// print_r("create_action_tambah_barang_per_spop");
+		// die;
 		// print_r("<br/>");
 		// print_r($uuid_spop);
 		// print_r("<br/>");
@@ -1449,6 +1450,45 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 		$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+
+		// Insert barang ke data persediaan
+		$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
+		$data_persediaan = array(
+			// 'id' => $this->input->post('id', TRUE),
+			'tanggal' => date("Y-m-d H:i:s"),
+			'tanggal_beli' => $row_per_uuid_spop->tgl_po,
+			// 'kode' => $this->input->post('kode', TRUE),
+			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'namabarang' => $get_nama_barang,
+			'satuan' => $this->input->post('satuan', TRUE),
+			'hpp' => $harga_satuan_x,
+			'sa' => $jumlah_x,
+			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
+			'spop' => $row_per_uuid_spop->spop,
+			// 'beli' => $this->input->post('beli', TRUE),
+			// 'tuj' => $this->input->post('tuj', TRUE),
+			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+			// 'sekret' => $this->input->post('sekret', TRUE),
+			// 'cetak' => $this->input->post('cetak', TRUE),
+			// 'grafikita' => $this->input->post('grafikita', TRUE),
+			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+			// 'kbs' => $this->input->post('kbs', TRUE),
+			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+			// 'medis' => $this->input->post('medis', TRUE),
+			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+			// 'sembako' => $this->input->post('sembako', TRUE),
+			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+			'total_10' => $jumlah_x,
+			'nilai_persediaan' => $Get_nominal_persediaan,
+		);
+
+		$this->Persediaan_model->insert($data_persediaan);
+
+
 
 		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
 	}
@@ -1846,7 +1886,7 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_action_uuid_spop($uuid_spop = null)
 	{
-		// print_r("create_add_uraian");
+		// print_r("create_action_uuid_spop");
 		// print_r("<br/>");
 		// die;
 
@@ -1910,6 +1950,10 @@ class Tbl_pembelian extends CI_Controller
 			$get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
 
 
+
+			$Get_tanggal_beli = $row_per_uuid_spop->tgl_po;
+			$Get_uuid_spop = $row_per_uuid_spop->uuid_spop;
+			$Get_spop = $row_per_uuid_spop->spop;
 
 			$data = array(
 				'date_input' => $row_per_uuid_spop->date_input,
@@ -2033,7 +2077,6 @@ class Tbl_pembelian extends CI_Controller
 			$get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
 
 
-
 			$data = array(
 				'date_input' => date("Y-m-d H:i:s"),
 
@@ -2079,8 +2122,51 @@ class Tbl_pembelian extends CI_Controller
 			// print_r("<br/>");
 			// // print_r("Selesai");
 			// print_r("Selesai");
+
+			$Get_tanggal_beli = $date_po;
+			$Get_uuid_spop = $get_uuid_spop_generating;
+			$Get_spop = $this->input->post('spop', TRUE);
 		}
 
+
+
+		// Simpan Barang ke persediaan ==> sebagai spop baru dan otomatis uuid_persediaan baru
+
+		$Get_nominal_persediaan = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
+		$data_persediaan = array(
+			// 'id' => $this->input->post('id', TRUE),
+			'tanggal' => date("Y-m-d H:i:s"),
+			'tanggal_beli' => $Get_tanggal_beli,
+			// 'kode' => $this->input->post('kode', TRUE),
+			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'namabarang' => $get_nama_barang,
+			'satuan' => $this->input->post('satuan', TRUE),
+			'hpp' => $harga_satuan_x,
+			'sa' => $this->input->post('jumlah', TRUE),
+			'uuid_spop' => $Get_uuid_spop,
+			'spop' => $Get_spop,
+			// 'beli' => $this->input->post('beli', TRUE),
+			// 'tuj' => $this->input->post('tuj', TRUE),
+			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+			// 'sekret' => $this->input->post('sekret', TRUE),
+			// 'cetak' => $this->input->post('cetak', TRUE),
+			// 'grafikita' => $this->input->post('grafikita', TRUE),
+			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+			// 'kbs' => $this->input->post('kbs', TRUE),
+			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+			// 'medis' => $this->input->post('medis', TRUE),
+			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+			// 'sembako' => $this->input->post('sembako', TRUE),
+			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+			'total_10' => $this->input->post('jumlah', TRUE),
+			'nilai_persediaan' => $Get_nominal_persediaan,
+		);
+
+		$this->Persediaan_model->insert($data_persediaan);
 
 		redirect(site_url('tbl_pembelian/create_add_uraian/' . $get_uuid_spop_generating));
 	}

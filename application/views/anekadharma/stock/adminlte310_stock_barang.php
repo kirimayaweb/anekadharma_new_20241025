@@ -124,8 +124,8 @@
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
                                     <!-- <th>Nominal Stock</th> -->
-                                    <!-- <th>Nominal Persediaan</th> -->
-                                    <th>Total Persediaan</th>
+                                    <th>Nominal <br/>Persediaan</th>
+                                    <!-- <th>Total Persediaan</th> -->
 
                                 </tr>
                             </thead>
@@ -294,24 +294,24 @@
                                         </td> -->
 
                                         <!-- NOMINAL PERSEDIAAN -->
-                                        <!-- <td style="text-align:right">
-
-                                            <?php
-                                            // $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $list_data->nilai_persediaan;
-                                            // echo nominal($list_data->nilai_persediaan);
-                                            ?>
-
-                                        </td> -->
-
-                                        <!-- TOTAL PERSEDIAAN -->
                                         <td style="text-align:right">
 
                                             <?php
-                                            $TOTAL_PERSEDIAAN_X = $TOTAL_PERSEDIAAN_X + $list_data->nilai_persediaan;
-                                            echo nominal($TOTAL_PERSEDIAAN_X);
+                                            $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $list_data->nilai_persediaan;
+                                            echo nominal($list_data->nilai_persediaan);
                                             ?>
 
-                                        </td>
+                                        </td> 
+
+                                        <!-- TOTAL PERSEDIAAN -->
+                                        <!-- <td style="text-align:right">
+
+                                            <?php
+                                            // $TOTAL_PERSEDIAAN_X = $TOTAL_PERSEDIAAN_X + $list_data->nilai_persediaan;
+                                            // echo nominal($TOTAL_PERSEDIAAN_X);
+                                            ?>
+
+                                        </td> -->
 
                                     </tr>
 
@@ -335,8 +335,8 @@
                                     <th>TOTAL</th>
                                     <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); 
                                                                         ?></th> -->
-                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th> -->
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_PERSEDIAAN_X); ?></th>
+                                    <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
+                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN_X); ?></th> -->
 
                                 </tr>
                             </tfoot>
