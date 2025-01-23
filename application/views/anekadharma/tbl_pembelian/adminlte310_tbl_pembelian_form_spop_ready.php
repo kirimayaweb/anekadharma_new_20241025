@@ -512,7 +512,7 @@
 
                         <!-- TAMBAH BARANG MODAL EXTRA LARGE -->
                         <form action="<?php echo $action_tambah_barang_per_spop . $uuid_spop; ?>" method="post">
-                            <div class="modal fade" id="modal-xl-input-barang">
+                            <div class="modal fade" id="modal-xl-input-barang" role="dialog" style="overflow:hidden;">
                                 <div class="modal-dialog modal-xl">
                                     <div class="modal-content">
                                         <div class="modal-header">
@@ -558,14 +558,25 @@
                                                             <?php
 
                                                             // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+
+
                                                             foreach ($this->db->query($sql)->result() as $m) {
                                                                 echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
+                                                                echo ">  " . strtoupper($m->nama_barang)  . "</option>";
                                                             }
                                                             ?>
                                                         </select>
 
+
+
+
+
+
+
+
+
+                                                        
                                                         <div class="row">
                                                             <div class="col-8">
                                                                 <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
