@@ -245,7 +245,8 @@ class Sys_nama_barang extends CI_Controller
 
                 sleep(5);
 
-                header( base_url("/tbl_pembelian/create"));
+                // header( base_url("/tbl_pembelian/create"));
+                redirect(site_url('Tbl_pembelian/create'));
             
             } else {
                 redirect(site_url('sys_nama_barang'));
