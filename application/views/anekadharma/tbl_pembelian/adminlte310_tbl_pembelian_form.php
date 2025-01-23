@@ -48,7 +48,7 @@ $get_list_data = $x_list_data;
         $(iduraian).remove();
     }
 </script>
-
+<!-- ===== -->
 
 <div class="content-wrapper">
 
