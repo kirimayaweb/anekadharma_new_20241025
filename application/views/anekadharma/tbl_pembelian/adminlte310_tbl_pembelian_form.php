@@ -351,10 +351,10 @@ $get_list_data = $x_list_data;
                                                             <?php
 
                                                             // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
+                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang`  GROUP by `nama_barang`";
                                                             foreach ($this->db->query($sql)->result() as $m) {
                                                                 echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
+                                                                echo ">  " . strtoupper($m->nama_barang)  . "</option>";
                                                             }
                                                             ?>
                                                         </select>
