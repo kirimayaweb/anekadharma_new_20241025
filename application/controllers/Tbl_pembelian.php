@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -20,6 +20,8 @@ class Tbl_pembelian extends CI_Controller
 	{
 		$this->load->view('anekadharma/tbl_pembelian/tbl_pembelian_list');
 	}
+
+	
 
 	public function json()
 	{
@@ -953,6 +955,8 @@ class Tbl_pembelian extends CI_Controller
 			$this->create();
 		} else {
 
+			// print_r("create_action");
+			// die;
 
 			// print_r($_POST["uraian"]);
 			// print_r("<br/>");
@@ -1406,6 +1410,13 @@ class Tbl_pembelian extends CI_Controller
 		$get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
 
 
+		$Get_tanggal_beli = $row_per_uuid_spop->tgl_po;
+		$Get_uuid_spop = $row_per_uuid_spop->uuid_spop;
+		$Get_spop = $row_per_uuid_spop->spop;
+		$Get_Status_LU = $row_per_uuid_spop->statuslu;
+		$Get_Kas_BANK = $row_per_uuid_spop->kas_bank;
+		$Get_date_po = $row_per_uuid_spop->tgl_po;
+		$Get_nominal = $jumlah_x * $harga_satuan_x;
 
 		$data = array(
 			'date_input' => $row_per_uuid_spop->date_input,
@@ -1450,6 +1461,115 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 		$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+
+
+		// TABEL KAS KECIL
+		// JIKA STATUSLU = L & PILIHAN KAS ==> MAKA OTOMATIS MASUK DATA PENGELUARAN KAS KECIL
+
+		if ($Get_Status_LU == "L" and $Get_Kas_BANK == "kas") {
+			// echo "L kas";
+
+			// Cek data spop di kas kecil , apakah sudah ada? , jika belum maka insert data pengeluaran keas kecil dan apabila sudah ada maka update data dan menjumlahkan nominal
+
+			$this->db->where('uuid_spop', $Get_uuid_spop);
+			//$this->db->where('password',  $test);
+			$Get_data_kas_Kecil = $this->db->get('tbl_kas_kecil');
+
+			// print_r($Get_data_kas_Kecil->num_rows());
+			// print_r("<br/>");
+
+			if ($Get_data_kas_Kecil->num_rows() > 0) {
+				// Ada data spop di kas kecil ==> dapatkan nominal dan jumlahkan kemudian update berdasarkan spop
+
+
+				// print_r("UPDATE: ");
+				// print_r("<br/>");
+				// print_r("Nominal Kredit");
+				// print_r("<br/>");
+
+				$RowArray_data_kas_Kecil = $Get_data_kas_Kecil->row_array();
+				$get_id = $RowArray_data_kas_Kecil['id'];
+
+				// print_r($RowArray_data_kas_Kecil['kredit']);
+				// print_r("<br/>");
+				// print_r($RowArray_data_kas_Kecil['id']);
+
+				$data = array(
+					// 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+					'date_input' => date("Y-m-d H:i:s"),
+					// 'tanggal' => $date_kas_kecil,
+					// 'uuid_spop' => $get_spop,
+					// 'uuid_unit' => $this->input->post('unit', TRUE),
+					// 'unit' => $row_unit->nama_unit,
+					// 'keterangan' => $this->input->post('keterangan', TRUE),
+					// 'status_data' => "pengeluaran",
+
+					// 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+
+					// 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+					'kredit' => $RowArray_data_kas_Kecil['kredit'] + str_replace(",", ".", str_replace(".", "", $Get_nominal)),
+
+
+					// 'saldo' => $this->input->post('saldo', TRUE),
+					// 'id_usr' => $this->input->post('id_usr', TRUE),
+				);
+				$this->Tbl_kas_kecil_model->update($get_id, $data);
+			} else {
+				// Belum ada data spop ==> lanjutkan dengan insert data pengeluaran baru berdasarkan uuid_spop
+
+
+				// $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
+
+
+				// if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+				// 	$date_kas_kecil = date("Y-m-d H:i:s");
+				// } else {
+				// 	$date_kas_kecil = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+				// }
+
+				// print_r($date_kas_kecil);
+				// die;
+
+				if (date("Y", strtotime($Get_date_po)) < 2020) {
+					$date_proses = date("d-m-Y");
+				} else {
+					$date_proses = date("d-m-Y", strtotime($Get_date_po));
+				}
+
+
+				$data_pengeluaran_kas_kecil = array(
+					// 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+					'date_input' => date("Y-m-d H:i:s"),
+					'tanggal' => $Get_date_po,
+
+					'uuid_spop' => $Get_uuid_spop,
+					'uuid_unit' => $GET_uuid_konsumen,
+					'unit' => $get_nama_konsumen,
+
+					'keterangan' => "Pembayaran SPOP No " . $Get_spop  . " tgl " . $date_proses,
+					'status_data' => "pengeluaran",
+
+					// 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+					// 'debet' => str_replace(".", "", $this->input->post('debet', TRUE)),
+					'kredit' => str_replace(",", ".", str_replace(".", "", $Get_nominal)),
+
+
+					// 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+					// 'saldo' => $this->input->post('saldo', TRUE),
+					// 'id_usr' => $this->input->post('id_usr', TRUE),
+				);
+
+
+
+				$this->Tbl_kas_kecil_model->insert($data_pengeluaran_kas_kecil);
+
+				// print_r("INSERT: ");
+				// print_r("<br/>");
+				// print_r($data_pengeluaran_kas_kecil);
+			}
+		}
+
+		// die;
 
 		// Insert barang ke data persediaan
 		$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
@@ -1894,6 +2014,11 @@ class Tbl_pembelian extends CI_Controller
 
 		// die;
 
+
+
+
+		// TABEL PEMBELIAN
+
 		if ($uuid_spop) {
 			// print_r("ada SPOP");
 			// die;
@@ -1954,6 +2079,11 @@ class Tbl_pembelian extends CI_Controller
 			$Get_tanggal_beli = $row_per_uuid_spop->tgl_po;
 			$Get_uuid_spop = $row_per_uuid_spop->uuid_spop;
 			$Get_spop = $row_per_uuid_spop->spop;
+			$Get_Status_LU = $row_per_uuid_spop->statuslu;
+			$Get_Kas_BANK = $row_per_uuid_spop->kas_bank;
+			$Get_date_po = $row_per_uuid_spop->tgl_po;
+			$Get_nominal = $jumlah_x * $harga_satuan_x;
+
 
 			$data = array(
 				'date_input' => $row_per_uuid_spop->date_input,
@@ -1973,10 +2103,8 @@ class Tbl_pembelian extends CI_Controller
 				'uuid_supplier' => $row_per_uuid_spop->uuid_supplier,
 				'supplier_nama' => $row_per_uuid_spop->supplier_nama,
 
-
 				'statuslu' => $row_per_uuid_spop->statuslu,
 				'kas_bank' => $row_per_uuid_spop->kas_bank,
-
 
 				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
 				'kode_barang' => $get_kode_barang,
@@ -2126,10 +2254,106 @@ class Tbl_pembelian extends CI_Controller
 			$Get_tanggal_beli = $date_po;
 			$Get_uuid_spop = $get_uuid_spop_generating;
 			$Get_spop = $this->input->post('spop', TRUE);
+			$Get_Status_LU = $this->input->post('statuslu', TRUE);
+			$Get_Kas_BANK = $this->input->post('kas_bank', TRUE);
+			$Get_date_po = $date_po;
+			$Get_nominal = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
 		}
 
 
+		// TABEL KAS KECIL
+		// JIKA STATUSLU = L & PILIHAN KAS ==> MAKA OTOMATIS MASUK DATA PENGELUARAN KAS KECIL
 
+		if ($Get_Status_LU == "L" and $Get_Kas_BANK == "kas") {
+			// echo "L kas";
+
+			// Cek data spop di kas kecil , apakah sudah ada? , jika belum maka insert data pengeluaran keas kecil dan apabila sudah ada maka update data dan menjumlahkan nominal
+
+			$this->db->where('uuid_spop', $Get_uuid_spop);
+			//$this->db->where('password',  $test);
+			$Get_data_kas_Kecil = $this->db->get('tbl_kas_kecil');
+
+			if ($Get_data_kas_Kecil->num_rows() > 0) {
+				// Ada data spop di kas kecil ==> dapatkan nominal dan jumlahkan kemudian update berdasarkan spop
+				// print_r("Nominal Kredit");
+				// print_r("<br/>");
+
+				$RowArray_data_kas_Kecil = $Get_data_kas_Kecil->row_array();
+				$get_id = $RowArray_data_kas_Kecil['id'];
+
+				// print_r($RowArray_data_kas_Kecil['kredit']);
+				// print_r("<br/>");
+				// print_r($RowArray_data_kas_Kecil['id']);
+
+				$data = array(
+					// 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+					'date_input' => date("Y-m-d H:i:s"),
+					// 'tanggal' => $date_kas_kecil,
+					// 'uuid_spop' => $get_spop,
+					// 'uuid_unit' => $this->input->post('unit', TRUE),
+					// 'unit' => $row_unit->nama_unit,
+					// 'keterangan' => $this->input->post('keterangan', TRUE),
+					// 'status_data' => "pengeluaran",
+
+					// 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+
+					// 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+					'kredit' => $RowArray_data_kas_Kecil['kredit'] + str_replace(",", ".", str_replace(".", "", $Get_nominal)),
+
+
+					// 'saldo' => $this->input->post('saldo', TRUE),
+					// 'id_usr' => $this->input->post('id_usr', TRUE),
+				);
+				$this->Tbl_kas_kecil_model->update($get_id, $data);
+			} else {
+				// Belum ada data spop ==> lanjutkan dengan insert data pengeluaran baru berdasarkan uuid_spop
+
+
+				// $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
+
+
+				if (date("Y", strtotime($Get_date_po)) < 2020) {
+					$date_proses = date("d-m-Y");
+				} else {
+					$date_proses = date("d-m-Y", strtotime($Get_date_po));
+				}
+
+				// print_r($date_kas_kecil);
+				// die;
+
+				$data_pengeluaran_kas_kecil = array(
+					// 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+					'date_input' => date("Y-m-d H:i:s"),
+					'tanggal' => $Get_date_po,
+
+					'uuid_spop' => $Get_uuid_spop,
+					'uuid_unit' => $GET_uuid_konsumen,
+					'unit' => $get_nama_konsumen,
+
+					'keterangan' => "Pembayaran SPOP No " . $Get_spop  . " tgl " . $date_proses,
+					'status_data' => "pengeluaran",
+
+					// 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
+					// 'debet' => str_replace(".", "", $this->input->post('debet', TRUE)),
+					'kredit' => str_replace(",", ".", str_replace(".", "", $Get_nominal)),
+
+
+					// 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
+					// 'saldo' => $this->input->post('saldo', TRUE),
+					// 'id_usr' => $this->input->post('id_usr', TRUE),
+				);
+
+
+
+				$this->Tbl_kas_kecil_model->insert($data_pengeluaran_kas_kecil);
+
+				// print_r($data_pengeluaran_kas_kecil);
+			}
+		}
+
+		// die;
+
+		// PERSEDIAAN
 		// Simpan Barang ke persediaan ==> sebagai spop baru dan otomatis uuid_persediaan baru
 
 		$Get_nominal_persediaan = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
