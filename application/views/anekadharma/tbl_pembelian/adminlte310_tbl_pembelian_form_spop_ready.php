@@ -579,7 +579,10 @@
                                                         
                                                         <div class="row">
                                                             <div class="col-8">
-                                                                <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                                                <?php 
+                                                                // $Get_source_form = "/Tbl_pembelian/create_add_uraian/" . $uuid_spop;
+                                                                ?>
+                                                                <?php echo anchor(site_url('Sys_nama_barang/create/Tbl_pembelian/create_add_uraian/'.$uuid_spop), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
                                                             </div>
                                                         </div>
 

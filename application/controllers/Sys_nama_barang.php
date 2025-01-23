@@ -86,11 +86,11 @@ class Sys_nama_barang extends CI_Controller
         }
     }
 
-    public function create($source_form = null)
+    public function create($source_form = null, $Get_create_add_uraian = null, $Get_uuid_spop = null)
     {
         $data = array(
             'button' => 'Simpan',
-            'action' => site_url('sys_nama_barang/create_action/' . $source_form),
+            'action' => site_url('sys_nama_barang/create_action/' . $source_form . '/' . $Get_create_add_uraian . '/' . $Get_uuid_spop),
             'id' => set_value('id'),
             'uuid_barang' => set_value('uuid_barang'),
             'kode_barang' => set_value('kode_barang'),
@@ -106,7 +106,7 @@ class Sys_nama_barang extends CI_Controller
 
 
 
-    public function create_action($source_form = null)
+    public function create_action($source_form = null, $Get_create_add_uraian = null, $Get_uuid_spop = null)
     {
 
 
@@ -130,6 +130,15 @@ class Sys_nama_barang extends CI_Controller
         } else {
 
 
+            // print_r("create_action");
+            // print_r("<br/>");
+            // print_r($source_form);
+            // print_r("<br/>");
+            // print_r($Get_create_add_uraian);
+            // print_r("<br/>");
+            // print_r($Get_uuid_spop);
+            // print_r("<br/>");
+
 
             // Otomatis membuat kode barang
 
@@ -139,7 +148,7 @@ class Sys_nama_barang extends CI_Controller
 
             $split = explode(' ', $teks);
             foreach ($split as $kata) {
-                $get_kode_barang = $get_kode_barang . substr($kata, 0, 2);                
+                $get_kode_barang = $get_kode_barang . substr($kata, 0, 2);
             }
 
             // CEK KODE APAKAH SUDAH ADA, JIKA SUDAH ADA MAKA DITAMBAHKAN NOMOR
@@ -243,11 +252,24 @@ class Sys_nama_barang extends CI_Controller
                 //     $previous = $_SERVER['HTTP_REFERER'];
                 // }
 
-                sleep(5);
+                // sleep(5);
 
                 // header( base_url("/tbl_pembelian/create"));
-                redirect(site_url('Tbl_pembelian/create'));
-            
+
+                // print_r($source_form);
+
+                // print_r($source_form);
+                // print_r("<br/>");
+                // print_r($Get_create_add_uraian);
+                // print_r("<br/>");
+                // print_r($Get_uuid_spop);
+                // print_r("<br/>");
+
+
+                // die;
+
+
+                redirect(site_url($source_form .'/'. $Get_create_add_uraian .'/'. $Get_uuid_spop));
             } else {
                 redirect(site_url('sys_nama_barang'));
             }
