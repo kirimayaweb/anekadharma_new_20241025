@@ -245,7 +245,8 @@ class Sys_nama_barang extends CI_Controller
 
                 sleep(5);
 
-                header("Location: http://localhost/ANEKADHARMA_APPS/anekadharma_new_20241025/index.php/tbl_pembelian/create");
+                header( base_url("/tbl_pembelian/create"));
+            
             } else {
                 redirect(site_url('sys_nama_barang'));
             }
