@@ -391,6 +391,10 @@ class Tbl_pembelian extends CI_Controller
 		$this->db->where('uuid_spop', $uuid_spop);
 		$Get_data_pembayaran_pembelian = $this->db->get('tbl_pembelian_pengajuan_bayar');
 
+		// print_r($Get_data_pembayaran_pembelian);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
 		if ($Get_data_pembayaran_pembelian->num_rows() > 0) {
 
 			// $RowArray_data_kas_Kecil = $Get_data_kas_Kecil->row_array();
@@ -423,12 +427,18 @@ class Tbl_pembelian extends CI_Controller
 
 			if ($Data_Pembayaran_uuid_spop->total_sudah_terbayar >= $jumlah_tagihan_total) {
 				$data = array(
-					'statuslu' => "Lunas",
+					'statuslu' => "L",
 				);
 
 				$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
 			}
 		}
+
+		// print_r($Data_Pembayaran_uuid_spop->total_sudah_terbayar);
+		// print_r("<br/>");
+		// print_r($jumlah_tagihan_total);
+		// print_r("<br/>");
+		// die;
 
 		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}

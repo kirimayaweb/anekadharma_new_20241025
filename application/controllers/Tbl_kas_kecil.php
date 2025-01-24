@@ -507,15 +507,15 @@ class Tbl_kas_kecil extends CI_Controller
                         'unit' => $row_unit->nama_unit,
                         'keterangan' => $this->input->post('keterangan', TRUE),
                         'status_data' => "pengeluaran",
-                        
+
                         // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                        
-                        
+
+
                         // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                         'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
-                        
-                        
-                        
+
+
+
                         // 'saldo' => $this->input->post('saldo', TRUE),
                         // 'id_usr' => $this->input->post('id_usr', TRUE),
                     );
@@ -536,13 +536,13 @@ class Tbl_kas_kecil extends CI_Controller
                         'unit' => $row_unit->nama_unit,
                         'keterangan' => $this->input->post('keterangan', TRUE),
                         'status_data' => "pengeluaran",
-                        
+
                         // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                        
+
                         // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                         'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
-                        
-                        
+
+
                         // 'saldo' => $this->input->post('saldo', TRUE),
                         // 'id_usr' => $this->input->post('id_usr', TRUE),
                     );
@@ -563,8 +563,8 @@ class Tbl_kas_kecil extends CI_Controller
                     // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                     // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
                     'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
-                    
-                    
+
+
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
@@ -699,7 +699,7 @@ class Tbl_kas_kecil extends CI_Controller
             // print_r("<br/>");
             // print_r(preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)));
             // print_r("<br/>");
-            
+
             // print_r(str_replace(".", "", $this->input->post('kredit', TRUE)) );
             // die;
 
@@ -714,8 +714,6 @@ class Tbl_kas_kecil extends CI_Controller
 
             if ($get_spop) {
                 // proses update tbl_pembelian ==> memproses Lunas jika sudah sesuai total nominal per spop nya
-                $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
-                $this->db->query($sql);
 
                 // print_r("update uuid_spop");
                 $data = array(
@@ -737,6 +735,43 @@ class Tbl_kas_kecil extends CI_Controller
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
+                $this->Tbl_kas_kecil_model->insert($data);
+
+
+                // GET TAGIHAN , JIKA PEMBAYARAN >= TAGIHAN MAKA STATUS : L
+                $sql_data_pembelian = "SELECT `uuid_spop`,`spop`,`jumlah`,`harga_satuan` FROM `tbl_pembelian` WHERE `uuid_spop`='$get_spop'";
+                $jumlah_tagihan_total = 0;
+
+                foreach ($this->db->query($sql_data_pembelian)->result() as $list_data) {
+                    // print_r($list_data->jumlah);
+                    // print_r("<br/>");
+                    // print_r($list_data->harga_satuan);
+                    // print_r("<br/>");
+                    $jumlah_tagihan_total = $jumlah_tagihan_total + ($list_data->jumlah * $list_data->harga_satuan);
+
+                    // print_r($jumlah_tagihan_total);
+                    // print_r("<br/>");
+                    // print_r("<br/>");
+                }
+
+
+                // Cek total pembayaran di kas kecil berdasarkan spop
+
+
+                $sql_data_kas_kecil = "SELECT sum(`kredit`) as total_terbayar FROM `tbl_kas_kecil` WHERE `uuid_spop`='$get_spop' GROUP BY `uuid_spop`";
+
+                $Ge_Total_terbayar = $this->db->query($sql_data_kas_kecil)->row()->total_terbayar;
+                
+                if ($Ge_Total_terbayar >= $jumlah_tagihan_total) {
+                    // update record tabel pembelian dengan uuid_spop ==> L (Lunas)
+                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
+                    $this->db->query($sql);
+                }
+
+
+
+
+                
             } else {
 
                 $data = array(
@@ -748,7 +783,7 @@ class Tbl_kas_kecil extends CI_Controller
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'status_data' => "pengeluaran",
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-                    
+
                     // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
                     // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
                     'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
@@ -756,9 +791,10 @@ class Tbl_kas_kecil extends CI_Controller
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
+                $this->Tbl_kas_kecil_model->insert($data);
             }
 
-            $this->Tbl_kas_kecil_model->insert($data);
+
 
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('tbl_kas_kecil'));
