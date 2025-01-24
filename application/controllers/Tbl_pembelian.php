@@ -2175,6 +2175,7 @@ class Tbl_pembelian extends CI_Controller
 
 			$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
 			$get_uuid_spop_generating = $uuid_spop;
+	
 		} else {
 
 			// print_r("Tidak ada SPOP");
@@ -2309,6 +2310,47 @@ class Tbl_pembelian extends CI_Controller
 		}
 
 
+		// PERSEDIAAN
+		// Simpan Barang ke persediaan ==> sebagai spop baru dan otomatis uuid_persediaan baru
+
+		$Get_nominal_persediaan = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
+		$data_persediaan = array(
+			// 'id' => $this->input->post('id', TRUE),
+			'tanggal' => date("Y-m-d H:i:s"),
+			'tanggal_beli' => $Get_tanggal_beli,
+			// 'kode' => $this->input->post('kode', TRUE),
+			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'namabarang' => $get_nama_barang,
+			'satuan' => $this->input->post('satuan', TRUE),
+			'hpp' => $harga_satuan_x,
+			'sa' => $this->input->post('jumlah', TRUE),
+			'uuid_spop' => $Get_uuid_spop,
+			'spop' => $Get_spop,
+			// 'beli' => $this->input->post('beli', TRUE),
+			// 'tuj' => $this->input->post('tuj', TRUE),
+			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+			// 'sekret' => $this->input->post('sekret', TRUE),
+			// 'cetak' => $this->input->post('cetak', TRUE),
+			// 'grafikita' => $this->input->post('grafikita', TRUE),
+			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+			// 'kbs' => $this->input->post('kbs', TRUE),
+			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+			// 'medis' => $this->input->post('medis', TRUE),
+			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+			// 'sembako' => $this->input->post('sembako', TRUE),
+			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+			'total_10' => $this->input->post('jumlah', TRUE),
+			'nilai_persediaan' => $Get_nominal_persediaan,
+		);
+
+		$this->Persediaan_model->insert($data_persediaan);
+
+
+
 		// TABEL KAS KECIL
 		// JIKA STATUSLU = L & PILIHAN KAS ==> MAKA OTOMATIS MASUK DATA PENGELUARAN KAS KECIL
 
@@ -2401,44 +2443,6 @@ class Tbl_pembelian extends CI_Controller
 
 		// die;
 
-		// PERSEDIAAN
-		// Simpan Barang ke persediaan ==> sebagai spop baru dan otomatis uuid_persediaan baru
-
-		$Get_nominal_persediaan = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
-		$data_persediaan = array(
-			// 'id' => $this->input->post('id', TRUE),
-			'tanggal' => date("Y-m-d H:i:s"),
-			'tanggal_beli' => $Get_tanggal_beli,
-			// 'kode' => $this->input->post('kode', TRUE),
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
-			'namabarang' => $get_nama_barang,
-			'satuan' => $this->input->post('satuan', TRUE),
-			'hpp' => $harga_satuan_x,
-			'sa' => $this->input->post('jumlah', TRUE),
-			'uuid_spop' => $Get_uuid_spop,
-			'spop' => $Get_spop,
-			// 'beli' => $this->input->post('beli', TRUE),
-			// 'tuj' => $this->input->post('tuj', TRUE),
-			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
-			// 'sekret' => $this->input->post('sekret', TRUE),
-			// 'cetak' => $this->input->post('cetak', TRUE),
-			// 'grafikita' => $this->input->post('grafikita', TRUE),
-			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
-			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
-			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
-			// 'kbs' => $this->input->post('kbs', TRUE),
-			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
-			// 'medis' => $this->input->post('medis', TRUE),
-			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
-			// 'sembako' => $this->input->post('sembako', TRUE),
-			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
-			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
-			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
-			'total_10' => $this->input->post('jumlah', TRUE),
-			'nilai_persediaan' => $Get_nominal_persediaan,
-		);
-
-		$this->Persediaan_model->insert($data_persediaan);
 
 		redirect(site_url('tbl_pembelian/create_add_uraian/' . $get_uuid_spop_generating));
 	}
