@@ -21,7 +21,7 @@ class Tbl_pembelian extends CI_Controller
 		$this->load->view('anekadharma/tbl_pembelian/tbl_pembelian_list');
 	}
 
-	
+
 
 	public function json()
 	{
@@ -383,14 +383,52 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($uuid_pengajuan_bayar_terproses);
 		// die;
 
-		// UPDATE TABEL PEMBELIAN : statuslu ==> Lunas
+		// UPDATE TABEL PEMBELIAN : Jika nominal pembayaran = jumlah tagihan maka  statuslu ==> Lunas
 		// $data_status = $this->Sys_status_transaksi_model->get_by_uuid_status_transaksi($this->input->post('uuid_status_transaksi', TRUE));
 
-		$data = array(
-			'statuslu' => "Lunas",
-		);
+		// CEK TAGIHAN DAN CEK JUMLAH PEMBAYARAN
 
-		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+		$this->db->where('uuid_spop', $uuid_spop);
+		$Get_data_pembayaran_pembelian = $this->db->get('tbl_pembelian_pengajuan_bayar');
+
+		if ($Get_data_pembayaran_pembelian->num_rows() > 0) {
+
+			// $RowArray_data_kas_Kecil = $Get_data_kas_Kecil->row_array();
+			// $get_id = $RowArray_data_kas_Kecil['id'];
+
+			$sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`";
+
+			$Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
+			// print_r($Data_Pembayaran_uuid_spop);
+			// print_r("<br/>");
+
+			// print_r($Data_Pembayaran_uuid_spop->total_sudah_terbayar);
+			// print_r("<br/>");
+
+			// GET TAGIHAN DI TABEL PEMBELIAN
+
+			$sql_data_pembelian = "SELECT `uuid_spop`,`spop`,`jumlah`,`harga_satuan` FROM `tbl_pembelian` WHERE `uuid_spop`='$uuid_spop'";
+			$jumlah_tagihan_total = 0;
+			foreach ($this->db->query($sql_data_pembelian)->result() as $list_data) {
+				// print_r($list_data->jumlah);
+				// print_r("<br/>");
+				// print_r($list_data->harga_satuan);
+				// print_r("<br/>");
+				$jumlah_tagihan_total = $jumlah_tagihan_total + ($list_data->jumlah * $list_data->harga_satuan);
+
+				// print_r($jumlah_tagihan_total);
+				// print_r("<br/>");
+				// print_r("<br/>");
+			}
+
+			if ($Data_Pembayaran_uuid_spop->total_sudah_terbayar >= $jumlah_tagihan_total) {
+				$data = array(
+					'statuslu' => "Lunas",
+				);
+
+				$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+			}
+		}
 
 		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}
