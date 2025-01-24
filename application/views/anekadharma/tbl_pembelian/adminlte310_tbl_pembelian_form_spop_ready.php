@@ -510,135 +510,6 @@
 
 
 
-                        <!-- TAMBAH BARANG MODAL EXTRA LARGE -->
-                        <form action="<?php echo $action_tambah_barang_per_spop . $uuid_spop; ?>" method="post">
-                            <div class="modal fade" id="modal-xl-input-barang" role="dialog" style="overflow:hidden;">
-                                <div class="modal-dialog modal-xl">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h4 class="modal-title">Tambah Barang Beli</h4>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <div class="form-group">
-
-
-                                                <div class="row">
-                                                    <div class="col-4">
-                                                        <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
-                                                        <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                                            <option value="">Pilih Konsumen/Unit </option>
-                                                            <?php
-
-                                                            // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                                            $sql = "select * from sys_unit order by nama_unit ASC ";
-                                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_unit' ";
-                                                                echo ">  " . strtoupper($m->nama_unit) .  "</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-4">
-                                                    </div>
-                                                    <div class="col-4">
-                                                    </div>
-                                                </div>
-
-
-                                                <div class="row">
-                                                    <div class="col-4">
-                                                        <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
-
-                                                        <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
-                                                            <option value="">Pilih Barang</option>
-                                                            <?php
-
-                                                            // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
-
-
-                                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->nama_barang)  . "</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
-
-
-
-
-
-
-
-
-
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-8">
-                                                                <?php 
-                                                                // $Get_source_form = "/Tbl_pembelian/create_add_uraian/" . $uuid_spop;
-                                                                ?>
-                                                                <?php echo anchor(site_url('Sys_nama_barang/create/Tbl_pembelian/create_add_uraian/'.$uuid_spop), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
-                                                            </div>
-                                                        </div>
-
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
-                                                        <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                                        <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
-                                                    </div>
-                                                </div>
-
-                                                <div class="row">
-                                                    <div class="col-4">
-                                                        <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
-                                                                                    ?></label>
-                                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
-                                                        <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
-                                                        <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
-                                                            <option value="">Pilih Gudang</option>
-                                                            <?php
-
-                                                            $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
-                                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_gudang' ";
-                                                                echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
-                                                            }
-                                                            ?>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-4">
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div class="modal-footer justify-content-between">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                                            <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                                            <button type="submit" class="btn btn-primary">Simpan Tambah Barang Beli</button>
-                                        </div>
-                                    </div>
-                                    <!-- /.modal-content -->
-                                </div>
-                                <!-- /.modal-dialog -->
-                            </div>
-                        </form>
-                        <!-- END OF MODAL EXTRA LARGE -->
-
 
                         <!-- <br /> -->
 
@@ -666,6 +537,8 @@
 
     </section>
 </div>
+
+
 
 
 <?php
@@ -756,11 +629,11 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                         <!-- <option value="">Pilih Barang</option> -->
                                         <?php
 
-                                        // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
+                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+
                                         foreach ($this->db->query($sql)->result() as $m) {
                                             echo "<option value='$m->uuid_barang' ";
-                                            echo ">  " . strtoupper($m->namabarang)  . "</option>";
+                                            echo ">  " . strtoupper($m->nama_barang)  . "</option>";
                                         }
                                         ?>
                                     </select>
@@ -833,6 +706,153 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 <?php
 }
 ?>
+
+
+
+
+
+<!-- TAMBAH BARANG MODAL EXTRA LARGE -->
+<form action="<?php echo $action_tambah_barang_per_spop . $uuid_spop; ?>" method="post">
+    <div class="modal fade" id="modal-xl-input-barang" role="dialog" style="overflow:hidden;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Tambah Barang Beli</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+
+
+                        <div class="row">
+                            <div class="col-4">
+                                <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
+                                <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                    <option value="">Pilih Konsumen/Unit </option>
+                                    <?php
+
+                                    // $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                    $sql = "select * from sys_unit order by nama_unit ASC ";
+                                    foreach ($this->db->query($sql)->result() as $m) {
+                                        echo "<option value='$m->uuid_unit' ";
+                                        echo ">  " . strtoupper($m->nama_unit) .  "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                            </div>
+                            <div class="col-4">
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-4">
+                                <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
+
+
+
+
+                                <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                    <option value="">pilih </option>
+                                    <!-- <option value="">Pilih Barang</option> -->
+                                    <?php
+
+                                    // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+
+                                    foreach ($this->db->query($sql)->result() as $m) {
+                                        echo "<option value='$m->uuid_barang' ";
+                                        echo ">  " . strtoupper($m->nama_barang)  . "</option>";
+                                    }
+                                    ?>
+                                </select>
+
+
+
+
+
+
+
+                                <div class="row">
+                                    <div class="col-8">
+                                        <?php
+                                        // $Get_source_form = "/Tbl_pembelian/create_add_uraian/" . $uuid_spop;
+                                        ?>
+                                        <?php echo anchor(site_url('Sys_nama_barang/create/Tbl_pembelian/create_add_uraian/' . $uuid_spop), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-4">
+                                <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
+                                <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
+                            </div>
+                            <div class="col-4">
+                                <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
+                                <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-4">
+                                <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
+                                                            ?></label>
+                                <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
+                                <input type="text" name="jumlah" id="jumlah" placeholder="Jumlah" class="form-control" required>
+                            </div>
+                            <div class="col-4">
+                                <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
+                                <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                    <option value="">Pilih Gudang</option>
+                                    <?php
+
+                                    $sql = "SELECT `uuid_gudang`,`kode_gudang`,`nama_gudang` FROM `sys_gudang` ORDER by `nama_gudang` ASC";
+                                    foreach ($this->db->query($sql)->result() as $m) {
+                                        echo "<option value='$m->uuid_gudang' ";
+                                        echo ">  " . strtoupper($m->kode_gudang) . strtoupper($m->nama_gudang)  . "</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <div class="col-4">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                    <button type="submit" class="btn btn-primary">Simpan Tambah Barang Beli</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+</form>
+<!-- END OF MODAL EXTRA LARGE -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
