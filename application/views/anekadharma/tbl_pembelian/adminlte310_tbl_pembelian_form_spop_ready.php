@@ -710,6 +710,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
 
 
+<!-- SOLUSI MODAL DI TARUH DI PALING BAWAH HALAMAN PHP ==> AGAR MUNCUL SEARCH COMBO SELECT2 DI MODAL , SOLUSI SEMENTARA : MODAL TARUH DI PALING BAWAH FILE PHP-->
 
 <!-- TAMBAH BARANG MODAL EXTRA LARGE -->
 <form action="<?php echo $action_tambah_barang_per_spop . $uuid_spop; ?>" method="post">
