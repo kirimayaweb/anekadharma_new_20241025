@@ -104,7 +104,7 @@
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->nominal_pengajuan;
                                             } else {
                                                 // echo nominal($list_data->total_pembelian);
-                                                echo number_format($list_data->total_pembelian, 2, ',', '.');
+                                                echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
                                             }
                                             ?>
