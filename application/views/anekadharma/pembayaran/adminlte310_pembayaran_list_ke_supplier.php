@@ -135,14 +135,14 @@
                                                         // echo "-" . nominal($list_data->total_pembelian - $TOTAL_Nominal_pengajuan);
                                                         echo "<font color='red'> -" .  number_format($list_data->total_pembelian - $TOTAL_Nominal_pengajuan, 2, ',', '.') . "</font>";
 
-                                                        $Total_kekurangan = $Total_kekurangan + ($list_data->total_pembelian - $TOTAL_Nominal_pengajuan);
+                                                        // $Total_kekurangan = $Total_kekurangan + ($list_data->total_pembelian - $TOTAL_Nominal_pengajuan);
                                                     }
                                                 } else {
                                                     // echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                                     // echo "&nbsp &nbsp";
                                                     echo "<font color='red'> -" .  number_format($list_data->total_pembelian - $TOTAL_Nominal_pengajuan, 2, ',', '.') . "</font>";
 
-                                                    $Total_kekurangan = $Total_kekurangan + $list_data->total_pembelian - $TOTAL_Nominal_pengajuan;
+                                                    // $Total_kekurangan = $Total_kekurangan + $list_data->total_pembelian - $TOTAL_Nominal_pengajuan;
                                                 }
                                             } else {
                                                 echo "LUNAS";
@@ -205,7 +205,7 @@
                                     <th></th>
                                     <th style="text-align:right"><?php echo number_format($Total_pembelian, 2, ',', '.') ; ?> </th>
                                     <th style="text-align:right"><?php echo number_format($Total_pembayaran, 2, ',', '.') ; ?></th>
-                                    <th style="text-align:right"><?php echo number_format($Total_kekurangan, 2, ',', '.') ; ?></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_pembelian - $Total_pembayaran, 2, ',', '.') ; ?></th>
                                     <th></th>
                                 </tr>
 
