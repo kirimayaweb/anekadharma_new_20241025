@@ -1176,7 +1176,7 @@ class Tbl_bea_operasional extends CI_Controller
         $tgl_sekarang = date("d-m-Y H:i:s");
 
         $this->load->helper('exportexcel');
-        $namaFile = "KAS_KECIL_" . $tgl_sekarang . ".xls";
+        $namaFile = "BEA_OPERASIONAL_" . $tgl_sekarang . ".xls";
         $judul = "Tbl_bea_operasional";
         $tablehead = 0;
         $tablebody = 1;
