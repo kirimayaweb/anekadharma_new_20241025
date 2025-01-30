@@ -8,7 +8,7 @@ class Tbl_bea_operasional_model extends CI_Model
 
     public $table = 'tbl_bea_operasional';
     public $id = 'id';
-    public $uuid_kas_kecil = 'uuid_kas_kecil';
+    public $uuid_bea_operasional = 'uuid_bea_operasional';
     public $tanggal = 'tanggal';
     public $order = 'DESC';
     public $orderASC = 'ASC';
@@ -20,7 +20,7 @@ class Tbl_bea_operasional_model extends CI_Model
 
     // datatables
     function json() {
-        $this->datatables->select('id,uuid_kas_kecil,tanggal,unit,keterangan,debet,kredit,saldo,id_usr');
+        $this->datatables->select('id,uuid_bea_operasional,tanggal,unit,keterangan,debet,kredit,saldo,id_usr');
         $this->datatables->from('Tbl_bea_operasional');
         //add this line for join
         //$this->datatables->join('table2', 'Tbl_bea_operasional.field = table2.field');
@@ -43,16 +43,16 @@ class Tbl_bea_operasional_model extends CI_Model
     }
     
     // get data by id
-    function get_by_uuid_kas_kecil($uuid_kas_kecil)
+    function get_by_uuid_bea_operasional($uuid_bea_operasional)
     {
-        $this->db->where($this->uuid_kas_kecil, $uuid_kas_kecil);
+        $this->db->where($this->uuid_bea_operasional, $uuid_bea_operasional);
         return $this->db->get($this->table)->row();
     }
     
     // get total rows
     function total_rows($q = NULL) {
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_kas_kecil', $q);
+	$this->db->or_like('uuid_bea_operasional', $q);
 	$this->db->or_like('tanggal', $q);
 	$this->db->or_like('unit', $q);
 	$this->db->or_like('keterangan', $q);
@@ -68,7 +68,7 @@ class Tbl_bea_operasional_model extends CI_Model
     function get_limit_data($limit, $start = 0, $q = NULL) {
         $this->db->order_by($this->id, $this->order);
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_kas_kecil', $q);
+	$this->db->or_like('uuid_bea_operasional', $q);
 	$this->db->or_like('tanggal', $q);
 	$this->db->or_like('unit', $q);
 	$this->db->or_like('keterangan', $q);
@@ -83,7 +83,7 @@ class Tbl_bea_operasional_model extends CI_Model
     // insert data
     function insert($data)
     {
-        $this->db->set('uuid_kas_kecil', "replace(uuid(),'-','')", FALSE);
+        $this->db->set('uuid_bea_operasional', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
         $datainsert = array(
@@ -95,6 +95,12 @@ class Tbl_bea_operasional_model extends CI_Model
     // update data
     function update($id, $data)
     {
+        // print_r("model update");
+        // print_r("<br/>");
+        // print_r($id);
+        // print_r("<br/>");
+        // print_r($data);
+        // die;
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);
     }

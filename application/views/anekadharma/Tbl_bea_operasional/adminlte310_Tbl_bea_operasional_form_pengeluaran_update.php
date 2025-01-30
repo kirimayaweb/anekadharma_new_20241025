@@ -55,18 +55,17 @@
                     <div class="card-body">
 
                         <form action="<?php echo $action; ?>" method="post">
-
+<!-- 
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-3">
                                         <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-xl-select-unit">
                                             Pilih data pembelian
-                                            <?php //echo $Get_spop_lama; 
-                                            ?>
+                                          
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
 
                             <?php
@@ -245,7 +244,7 @@
                                     </div>
                                     <div class="col-3">
                                         <label for="double">Kredit <?php echo form_error('kredit') ?></label>
-                                        <input type="text" class="form-control uang" name="kredit" id="kredit" placeholder="kredit" value="<?php echo $kredit; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required />
+                                        <input type="text" class="form-control" name="kredit" id="kredit" placeholder="kredit" value="<?php echo $kredit; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required />
 
                                     </div>
                                 </div>

@@ -111,12 +111,12 @@
                                                                 <td style="text-align:left">
                                                                     <?php
                                                                     if ($list_data->debet > 0) {
-                                                                        echo anchor(site_url('Tbl_bea_operasional/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                        echo anchor(site_url('Tbl_bea_operasional/pembayaran_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                     } else {
                                                                         if ($list_data->uuid_spop) {
-                                                                            echo anchor(site_url('Tbl_bea_operasional/pengeluaran_kas_kecil_update/' . $list_data->id .'/'. $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                            echo anchor(site_url('Tbl_bea_operasional/pembayaran_update/' . $list_data->id .'/'. $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                         } else {
-                                                                            echo anchor(site_url('Tbl_bea_operasional/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                            echo anchor(site_url('Tbl_bea_operasional/pembayaran_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                         }
                                                                     }
                                                                     echo ' ';

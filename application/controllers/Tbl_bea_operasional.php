@@ -427,7 +427,7 @@ class Tbl_bea_operasional extends CI_Controller
                     'button' => 'Ubah',
                     'action' => site_url('Tbl_bea_operasional/pembayaran_update_action/' . $get_id),
                     'id' => $GET_DATA_KAS_KECIL->id,
-                    'uuid_kas_kecil' => $GET_DATA_KAS_KECIL->uuid_kas_kecil,
+                    'uuid_bea_operasional' => $GET_DATA_KAS_KECIL->uuid_bea_operasional,
                     'tanggal' => $GET_DATA_KAS_KECIL->tanggal,
                     'uuid_spop' => $get_spop,
                     'uuid_unit' => $get_uuid_unit,
@@ -441,6 +441,10 @@ class Tbl_bea_operasional extends CI_Controller
                     'Get_data_proses' => $Get_data_proses,
                     'Get_spop_lama' => $Get_data_SPOP_Lama_proses,
                 );
+
+                // print_r($data);
+                // die;
+
             }
 
             // $this->load->view('Tbl_bea_operasional/Tbl_bea_operasional_form', $data);
@@ -550,6 +554,10 @@ class Tbl_bea_operasional extends CI_Controller
             } else {
                 // Update data tabel kas kecil berdasarkan id secara langsung data tanpa ada data spop pembelian
 
+                // print_r("update");
+                // print_r("<br/>");
+                // print_r("<br/>");
+
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
                     'date_input' => date("Y-m-d H:i:s"),
@@ -568,6 +576,10 @@ class Tbl_bea_operasional extends CI_Controller
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
+
+                // print_r($data);
+                // die;
+
             }
 
 
@@ -689,6 +701,10 @@ class Tbl_bea_operasional extends CI_Controller
 
     public function pembayaran_action($get_spop = null)
     {
+
+        // print_r("pembayaran_action");
+        // die;
+
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
@@ -774,6 +790,8 @@ class Tbl_bea_operasional extends CI_Controller
                 
             } else {
 
+                // print_r("Simpan");
+                // die;
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
                     'date_input' => date("Y-m-d H:i:s"),
@@ -791,6 +809,10 @@ class Tbl_bea_operasional extends CI_Controller
                     // 'saldo' => $this->input->post('saldo', TRUE),
                     // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
+
+                // print_r($data);
+                // die;
+
                 $this->Tbl_bea_operasional_model->insert($data);
             }
 

@@ -55,27 +55,7 @@
                     <div class="card-body">
 
                         <form action="<?php echo $action; ?>" method="post">
-                            <!-- <div class="form-group">
-                                <label for="varchar">Uuid Kas Kecil <?php //echo form_error('uuid_kas_kecil') 
-                                                                    ?></label>
-                                <input type="text" class="form-control" name="uuid_kas_kecil" id="uuid_kas_kecil" placeholder="Uuid Kas Kecil" value="<?php //echo $uuid_kas_kecil; 
-                                                                                                                                                        ?>" />
-                            </div> -->
-
-
-
-
-
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-3">
-                                        <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-xl-select-unit">
-                                            Pilih data pembelian
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
+                           
 
                             <?php
 
@@ -216,7 +196,7 @@
                                     </div>
                                     <div class="col-9">
                                         <label for="keterangan">Keterangan <?php echo form_error('keterangan') ?></label>
-                                        <textarea class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="Keterangan"><?php echo $keterangan; ?></textarea>
+                                        <textarea class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="Keterangan" required><?php echo $keterangan; ?></textarea>
                                     </div>
 
 
@@ -244,93 +224,6 @@
                             </div>
 
 
-
-                            <!-- MODAL EXTRA LARGE -->
-
-                            <div class="modal fade" id="modal-xl-select-unit">
-                                <div class="modal-dialog modal-xl">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h4 class="modal-title">Data Pembelian</h4>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-
-                                        <div class="modal-body">
-
-
-
-                                            <table id="example9" class="display nowrap" style="width:100%">
-                                                <thead>
-                                                    <tr>
-                                                        <th width="80px">No</th>
-                                                        <th width="200px">Action</th>
-                                                        <th>Tanggal</th>
-                                                        <!-- <th>Unit</th> -->
-                                                        <th>Spop</th>
-                                                        <!-- <th>Pl</th> -->
-                                                        <th>Supplier</th>
-                                                        <!-- <th>Norek</th>
-                                                        <th>Rekening</th> -->
-                                                        <th>Jumlah</th>
-                                                        <!-- <th>Uu21101</th> -->
-
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php
-
-                                                    $start = 0;
-                                                    foreach ($Tbl_pembelian_data as $list_data) {
-
-                                                    ?>
-                                                        <tr>
-                                                            <td width="80px"><?php echo ++$start ?></td>
-                                                            <td width="200px">
-                                                                <?php
-                                                                echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Proses Bayar</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                                                ?>
-                                                            </td>
-                                                            <td><?php echo date("d-m-Y", strtotime($list_data->tanggal)); ?></td>
-                                                            <!-- <td>Unit</td> -->
-                                                            <td><?php echo $list_data->spop; ?></td>
-                                                            <!-- <td>Pl</td> -->
-                                                            <td><?php echo $list_data->nama_supplier_1; ?></td>
-                                                            <!-- <td>Norek</td>
-                                                            <td>Rekening</td> -->
-                                                            <td><?php echo nominal($list_data->sum_harga_total); ?></td>
-                                                            <!-- <td>Uu21101</td> -->
-
-                                                        </tr>
-
-                                                    <?php
-
-                                                    }
-
-                                                    ?>
-
-                                                </tbody>
-
-
-                                            </table>
-
-
-                                        </div>
-
-                                        <div class="modal-footer">
-
-                                            <!-- <button type="submit" class="btn btn-primary">Proses</button> -->
-
-                                        </div>
-                                    </div>
-                                    <!-- /.modal-content -->
-                                </div>
-                                <!-- /.modal-dialog -->
-                            </div>
-
-
-                            <!-- END OF MODAL EXTRA LARGE -->
 
 
                         </form>
