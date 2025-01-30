@@ -129,7 +129,7 @@ class Tbl_pembelian_model extends CI_Model
     function get_all()
     {
         $this->db->order_by($this->tgl_po, $this->order);
-        $this->db->order_by($this->id, $this->orderASC);
+        $this->db->order_by($this->spop, $this->order);
         return $this->db->get($this->table)->result();
     }
 
