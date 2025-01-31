@@ -60,6 +60,7 @@
                                     <th>Jumlah Tagihan</th>
                                     <th>Pembayaran</th>
                                     <th>Kekurangan</th>
+                                    <th>Kas/Bank</th>
                                     <th>Action</th>
 
                                 </tr>
@@ -102,16 +103,14 @@
                                                 // echo nominal($list_data->nominal_pengajuan);
                                                 echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->nominal_pengajuan;
-                                            } elseif ($list_data->statuslu == "L" AND $list_data->kas_bank == "kas") {
+                                            } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "kas") {
                                                 // echo nominal($list_data->total_pembelian);
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
-
-                                            } elseif ($list_data->statuslu == "L" AND $list_data->kas_bank == "bank") {
+                                            } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "bank") {
                                                 // echo nominal($list_data->total_pembelian);
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
-                                            
                                             } elseif ($list_data->statuslu == "L") {
                                                 // echo nominal($list_data->total_pembelian);
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
@@ -168,6 +167,11 @@
                                             ?>
                                         </td>
 
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kas_bank;
+                                            ?>
+                                        </td>
                                         <td align="right">
                                             <?php
 
@@ -213,13 +217,14 @@
 
                             <tfoot>
                                 <tr>
-                                <th style="text-align:center" width="10px"></th>
+                                    <th style="text-align:center" width="10px"></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th style="text-align:right"><?php echo number_format($Total_pembelian, 2, ',', '.') ; ?> </th>
-                                    <th style="text-align:right"><?php echo number_format($Total_pembayaran, 2, ',', '.') ; ?></th>
-                                    <th style="text-align:right"><?php echo number_format($Total_pembelian - $Total_pembayaran, 2, ',', '.') ; ?></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_pembelian, 2, ',', '.'); ?> </th>
+                                    <th style="text-align:right"><?php echo number_format($Total_pembayaran, 2, ',', '.'); ?></th>
+                                    <th style="text-align:right"></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_pembelian - $Total_pembayaran, 2, ',', '.'); ?></th>
                                     <th></th>
                                 </tr>
 
