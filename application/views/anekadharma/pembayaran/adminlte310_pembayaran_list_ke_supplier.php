@@ -103,14 +103,17 @@
                                                 // echo nominal($list_data->nominal_pengajuan);
                                                 echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->nominal_pengajuan;
+
                                             } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "kas") {
                                                 // echo nominal($list_data->total_pembelian);
-                                                echo number_format($list_data->total_pembelian, 2, ',', '.');
-                                                $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
+                                                echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
+                                                $Total_pembayaran = $Total_pembayaran + $list_data->nominal_pengajuan;
+
                                             } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "bank") {
                                                 // echo nominal($list_data->total_pembelian);
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
+                                            
                                             } elseif ($list_data->statuslu == "L") {
                                                 // echo nominal($list_data->total_pembelian);
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
