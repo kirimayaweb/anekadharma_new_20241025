@@ -666,6 +666,8 @@ class Tbl_pembelian extends CI_Controller
 		left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_a.uuid_spop
 
 		group by tbl_pembelian_a.uuid_spop,tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar
+
+		order by tbl_pembelian_a.tgl_po asc
         ";
 
 		// return $this->db->query($sql)->result();
