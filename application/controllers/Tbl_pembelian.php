@@ -670,7 +670,7 @@ class Tbl_pembelian extends CI_Controller
 
 		// return $this->db->query($sql)->result();
 
-		print_r($this->db->query($sql)->result());
+		// print_r($this->db->query($sql)->result());
 
 
 		$Data_supplier_tagihan = $this->db->query($sql)->result();
