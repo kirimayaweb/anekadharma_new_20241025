@@ -656,6 +656,7 @@ class Tbl_pembelian extends CI_Controller
         sum(tbl_pembelian_a.harga_total) as total_pembelian,
         tbl_pembelian_a.supplier_nama as supplier_nama,
         tbl_pembelian_a.statuslu as statuslu,
+        tbl_pembelian_a.kas_bank as kas_bank,
         tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
         tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
 
