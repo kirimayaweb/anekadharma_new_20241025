@@ -241,9 +241,9 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right"><?php echo number_format($Total_pembelian, 2, ',', '.'); ?> </th>
-                                    <th style="text-align:right"><?php echo number_format($Total_pembayaran, 2, ',', '.'); ?></th>
-                                    <th style="text-align:right"></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_pembayaran, 2, ',', '.'); ?></th>                                    
                                     <th style="text-align:right"><?php echo number_format($Total_pembelian - $Total_pembayaran, 2, ',', '.'); ?></th>
+                                    <th style="text-align:right"></th>
                                     <th></th>
                                 </tr>
 
