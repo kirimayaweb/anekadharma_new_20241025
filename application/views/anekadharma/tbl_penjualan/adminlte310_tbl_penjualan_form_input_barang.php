@@ -200,11 +200,11 @@
                                                         ?>
                                                     </td>
                                                     <td style="text-align:right">
-                                                        <?php 
+                                                        <?php
                                                         // echo nominal($list_data->harga_satuan); 
-                                                        echo number_format($list_data->harga_satuan, 2, ',', '.'); 
+                                                        echo number_format($list_data->harga_satuan, 2, ',', '.');
                                                         ?>
-                                                        </td>
+                                                    </td>
                                                     <td style="text-align:right">
                                                         <?php
                                                         // echo nominal($list_data->jumlah * $list_data->harga_satuan);
@@ -236,11 +236,11 @@
                                                 <th style="text-align:right"><?php echo nominal($get_jumlah_barang);  ?></th>
                                                 <th style="text-align:right"></th>
                                                 <th style="text-align:right">
-                                                    <?php 
+                                                    <?php
                                                     // echo nominal($get_total_harga); 
-                                                    echo number_format($get_total_harga, 2, ',', '.'); 
+                                                    echo number_format($get_total_harga, 2, ',', '.');
                                                     ?>
-                                                    </th>
+                                                </th>
 
                                             </tr>
                                         </tfoot>
@@ -259,9 +259,52 @@
                             </div>
                         </div>
 
-                        <!-- /.modal -->
+     
 
-                        <div class="modal fade" id="modal-xl">
+
+
+
+
+                        <!-- <input type="hidden" name="id" value="<?php //echo $id; 
+                                                                    ?>" /> -->
+
+
+
+                        <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
+                                                                            ?></button> -->
+                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Simpan</a>
+                        <?php
+                        if (isset($uuid_penjualan)) {
+                        ?>
+
+                            <a href="<?php echo site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $uuid_penjualan) ?>" class="btn btn-primary" target="_blank">Cetak Penjualan</a>
+
+                        <?php
+                        }
+                        ?>
+
+                        <!-- <a href="<?php //echo site_url('tbl_penjualan') 
+                                        ?>" class="btn btn-default">Cancel</a> -->
+                        <!-- </form> -->
+
+
+                    </div>
+
+                    <!-- /.card-body -->
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+</div>
+
+
+
+
+                   <!-- /.modal -->
+
+                   <div class="modal fade" id="modal-xl">
                             <div class="modal-dialog modal-xl">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -288,12 +331,28 @@
                                         // $Data_stock = $this->db->query($sql_data)->result();
 
 
-                                        $sql_stock = "SELECT persediaan.id as id, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan, persediaan.satuan as satuan_persediaan,
-                                                tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
-                                                tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+                                        $sql_stock = "SELECT persediaan.id as id, 
+                                        persediaan.tanggal_beli as tanggal_beli, 
+                                        persediaan.uuid_barang as uuid_barang, 
+                                        persediaan.kode_barang as kode_barang, 
+                                        persediaan.namabarang as nama_barang_beli,
+                                        persediaan.total_10 as jumlah_sediaan,  
+                                        persediaan.hpp as harga_satuan_persediaan, 
+                                        persediaan.satuan as satuan_persediaan,
+                                                -- tbl_pembelian.uuid_pembelian as uuid_pembelian,
+                                                -- tbl_pembelian.uraian as barang_beli, 
+                                                -- tbl_pembelian.jumlah as jumlah_belanja, 
+                                                -- tbl_pembelian.harga_satuan as harga_satuan_beli,  
+                                                -- tbl_pembelian.tgl_po as tgl_po,
+                                                -- tbl_pembelian.uuid_gudang as uuid_gudang, 
+                                                -- tbl_pembelian.nama_gudang as nama_gudang,  
+                                                -- tbl_pembelian.satuan as satuan,
+                                                -- tbl_penjualan.nama_barang as barang_jual, 
+                                                -- tbl_penjualan.jumlah as jumlah_terjual,
+                                                persediaan.penjualan as penjualan
                                                 FROM persediaan  
-                                                left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-                                                left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+                                                -- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+                                                -- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
                                                 WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
                                                 ORDER BY persediaan.uuid_barang ASC";
 
@@ -315,7 +374,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th style="text-align:center">No</th>
-                                                        <!-- <th style="text-align:center">Tgl Beli</th> -->
+                                                        <th style="text-align:center">Tgl PO</th>
                                                         <!-- <th style="text-align:center">UUID barang</th> -->
                                                         <th style="text-align:center">Nama barang</th>
                                                         <th style="text-align:right">Harga satuan</th>
@@ -346,11 +405,11 @@
                                                     ?>
                                                             <tr>
                                                                 <td align="right"><?php echo ++$start ?></td>
-                                                                <!-- <td>
+                                                                <td>
                                                                     <?php
-                                                                    // echo date("d M Y", strtotime($list_data->tgl_po));
+                                                                    echo date("d M Y", strtotime($list_data->tanggal_beli));
                                                                     ?>
-                                                                </td> -->
+                                                                </td>
 
 
                                                                 <!-- <td><?php //echo $list_data->uuid_barang; 
@@ -360,11 +419,11 @@
 
 
                                                                 <td align="right">
-                                                                    <?php 
+                                                                    <?php
                                                                     // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                    echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                    echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                                     ?>
-                                                                    </td>
+                                                                </td>
                                                                 <td align="left"><?php echo $list_data->satuan_persediaan; ?></td>
                                                                 <td align="right">
                                                                     <?php
@@ -388,27 +447,27 @@
                                                                     // echo "<br/>";
 
 
-                                                                    if ($list_data->jumlah_sediaan) {
-                                                                        $get_jumlah_sediaan = $list_data->jumlah_sediaan;
-                                                                    } else {
-                                                                        $get_jumlah_sediaan = 0;
-                                                                    }
+                                                                    // if ($list_data->jumlah_sediaan) {
+                                                                    //     $get_jumlah_sediaan = $list_data->jumlah_sediaan;
+                                                                    // } else {
+                                                                    //     $get_jumlah_sediaan = 0;
+                                                                    // }
 
-                                                                    if ($list_data->jumlah_belanja) {
-                                                                        $get_jumlah_belanja = $list_data->jumlah_belanja;
-                                                                    } else {
-                                                                        $get_jumlah_belanja = 0;
-                                                                    }
+                                                                    // if ($list_data->jumlah_belanja) {
+                                                                    //     $get_jumlah_belanja = $list_data->jumlah_belanja;
+                                                                    // } else {
+                                                                    //     $get_jumlah_belanja = 0;
+                                                                    // }
 
-                                                                    if ($list_data->jumlah_terjual) {
-                                                                        $get_jumlah_terjual = $list_data->jumlah_terjual;
-                                                                    } else {
-                                                                        $get_jumlah_terjual = 0;
-                                                                    }
+                                                                    // if ($list_data->jumlah_terjual) {
+                                                                    //     $get_jumlah_terjual = $list_data->jumlah_terjual;
+                                                                    // } else {
+                                                                    //     $get_jumlah_terjual = 0;
+                                                                    // }
 
 
 
-                                                                    $sisa_stock_data = $get_jumlah_sediaan + $get_jumlah_belanja - $get_jumlah_terjual;
+                                                                    $sisa_stock_data = $list_data->jumlah_sediaan - $list_data->penjualan;
 
 
                                                                     echo nominal($sisa_stock_data);
@@ -428,14 +487,14 @@
                                                                     if ($sisa_stock_data > 0) {
                                                                     ?>
                                                                         <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                            PILIH BARANG <?php //echo $list_data->id 
+                                                                            PILIH BARANG <?php //echo $list_data->id
                                                                                             ?>
                                                                         </button>
                                                                     <?php
                                                                     } else {
                                                                     ?>
                                                                         <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                                            PILIH BARANG <?php //echo $list_data->id 
+                                                                            PILIH BARANG <?php //echo $list_data->id
                                                                                             ?>
                                                                         </button>
                                                                     <?php
@@ -486,13 +545,13 @@
                                                                                                 <div class="row">
                                                                                                     <div class="col-4">
                                                                                                         <label for="nmrpesan">Harga Satuan </label>
-                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php 
-                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                        ?>" placeholder="<?php 
-                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                        ?>"> -->
+                                                                                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php
+                                                                                                                                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                                                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                                                                                                                                                                                        ?>" placeholder="<?php
+                                                                                                                            // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                                            echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                                                                                            ?>"> -->
                                                                                                     </div>
                                                                                                     <div class="col-4">
                                                                                                         <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
@@ -502,13 +561,13 @@
 
 
                                                                                                     <div class="col-4">
-                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php 
-                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                        ?>" placeholder="<?php 
-                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                        ?>">
+                                                                                                        <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php
+                                                                                                                                                                                                                // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                                                                                                                                echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                                                                                                                                                                                ?>" placeholder="<?php
+                                                                                                                            // echo nominal($list_data->harga_satuan_persediaan); 
+                                                                                                                            echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                                                                                            ?>">
                                                                                                     </div>
                                                                                                     <div class="col-4">
                                                                                                         <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
@@ -522,15 +581,24 @@
 
 
                                                                                         </div>
+
                                                                                         <div class="modal-footer justify-content-between">
-                                                                                            <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
-                                                                                            <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
-                                                                                            <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
-                                                                                            <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
-                                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                                                            
+                                                                                        <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
+                                                                                        
+                                                                                        <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
+                                                                                        
+                                                                                        <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
+                                                                                        
+                                                                                        <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
+                                                                                        
+                                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                                                                                             <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-                                                                                            <button type="submit" class="btn btn-primary">SIMPAN</button>
-                                                                                        </div>
+                                                                                        
+                                                                                        <button type="submit" class="btn btn-primary">SIMPAN</button>
+                                                                                        
+                                                                                    </div>
+                                                                                    
                                                                                     </div>
                                                                                     <!-- /.modal-content -->
                                                                                 </div>
@@ -566,47 +634,6 @@
                         </div>
 
                         <!-- /.modal -->
-
-
-
-
-                        <!-- <input type="hidden" name="id" value="<?php //echo $id; 
-                                                                    ?>" /> -->
-
-
-
-                        <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
-                                                                            ?></button> -->
-                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Simpan</a>
-                        <?php
-                        if (isset($uuid_penjualan)) {
-                        ?>
-
-                            <a href="<?php echo site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $uuid_penjualan) ?>" class="btn btn-primary" target="_blank">Cetak Penjualan</a>
-
-                        <?php
-                        }
-                        ?>
-
-                        <!-- <a href="<?php //echo site_url('tbl_penjualan') 
-                                        ?>" class="btn btn-default">Cancel</a> -->
-                        <!-- </form> -->
-
-
-                    </div>
-
-                    <!-- /.card-body -->
-                </div>
-
-            </div>
-
-        </div>
-    </section>
-</div>
-
-
-
-
 
 <!-- ============== -->
 

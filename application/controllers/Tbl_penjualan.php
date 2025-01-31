@@ -360,6 +360,12 @@ class Tbl_penjualan extends CI_Controller
 		$data_barang = $this->db->query($sql)->row();
 
 
+
+		// print_r("jumlah penjualan di persediaan");
+		// print_r("<br/>");
+		// print_r($data_barang->penjualan);
+		// print_r("<br/>");
+
 		// print_r($data_barang);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -491,8 +497,28 @@ class Tbl_penjualan extends CI_Controller
 		// =========SIMPAN DATA==================
 
 
+		// update field penjualan di tabel persediaan: dapatkan total penjualan, kemudian update penjualan field + penjulan baru
+		// $this->db->where('email', $email);
+		// $users = $this->db->get('persediaan');
+		// print_r("jumlah penjualan di persediaan");
+		// print_r("<br/>");
+		// print_r($data_barang->penjualan);
+
+
+		$Total_penjualan = $data_barang->penjualan + preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
+		// print_r($Total_penjualan);
+
+
+
+		$sql_stock = "UPDATE `persediaan` SET `penjualan`='$Total_penjualan' WHERE `id`='$id_persediaan_barang'";
+
+		$this->db->query($sql_stock);
+
+
+		// die;
+
 		// redirect("kasir_penjualan/".$uuid_penjualan);
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE) ));
+		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE)));
 	}
 
 	public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
@@ -508,7 +534,7 @@ class Tbl_penjualan extends CI_Controller
 
 		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual, $nmrkirim);
 
-		
+
 
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
@@ -531,7 +557,7 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
-	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null,$date_tgl_jual=null,$nmrkirim=null)
+	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)
 	{
 
 		// 2.a. PERSIAPAN LIBRARY
@@ -539,7 +565,7 @@ class Tbl_penjualan extends CI_Controller
 
 
 		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
-		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan,$date_tgl_jual,$nmrkirim);
+		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan, $date_tgl_jual, $nmrkirim);
 
 		// print_r($data_master_penjualan_per_uuidpenjualan);		
 		// print_r($data_master_penjualan_per_uuidpenjualan->nmrpesan);
@@ -553,7 +579,7 @@ class Tbl_penjualan extends CI_Controller
 
 		// 2.b. PERSIAPAN DATA
 		$data = array(
-			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($date_tgl_jual,$nmrkirim),
+			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($date_tgl_jual, $nmrkirim),
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
@@ -737,7 +763,7 @@ class Tbl_penjualan extends CI_Controller
 	public function update_action_proses($uuid_penjualan_proses = null)
 	{
 
-	
+
 		// $row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
