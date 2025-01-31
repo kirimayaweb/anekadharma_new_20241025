@@ -14,12 +14,92 @@ class Persediaan extends CI_Controller
 		$this->load->library('datatables');
 	}
 
+
+	// 
+	public function cek_barang_pembelian_tidakADA_di_persediaan()
+	{
+		$sql = "SELECT * FROM `tbl_pembelian` order by id";
+		// $sql = "SELECT * FROM `persediaan_all` order by id";
+
+		foreach ($this->db->query($sql)->result() as $m) {
+			print_r($m->uuid_spop);
+			print_r(" - ");
+			print_r($m->spop);
+			print_r(" - ");
+			print_r($m->uraian);
+			print_r(" - ");
+			print_r($m->jumlah);
+			print_r(" ----> ");
+
+			// cek di persediaan
+			// $sql = "SELECT `id`,`uuid_persediaan` FROM `persediaan` where `uuid_spop`='$m->uuid_spop' ";
+
+			// $data_persediaan=$this->db->query($sql)->row();
+			// print_r($data_persediaan->id);
+
+			$this->db->where('uuid_spop', $m->uuid_spop);
+			$data_persediaan = $this->db->get('persediaan');
+
+			if ($data_persediaan->num_rows() > 0) {
+				print_r("Ada data");
+			} else {
+				print_r("Tidak ada data");
+
+				// PROSES INPUT DATA KE PERSEDIAAN
+
+				$Total_Nilai_Persediaan = $m->jumlah * $m->harga_satuan;
+				$data_persediaan = array(
+					// 'id' => $this->input->post('id', TRUE),
+					'tanggal' => $m->date_input,
+					'tanggal_beli' => $m->tgl_po,
+					// 'kode' => $this->input->post('kode', TRUE),
+					'uuid_barang' => $m->uuid_barang,
+					'namabarang' => $m->uraian,
+					'satuan' => $m->satuan,
+					'hpp' => $m->harga_satuan,
+					'sa' => $m->jumlah,
+					'uuid_spop' => $m->uuid_spop,
+					'spop' => $m->spop,
+					// 'beli' => $this->input->post('beli', TRUE),
+					// 'tuj' => $this->input->post('tuj', TRUE),
+					// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+					// 'sekret' => $this->input->post('sekret', TRUE),
+					// 'cetak' => $this->input->post('cetak', TRUE),
+					// 'grafikita' => $this->input->post('grafikita', TRUE),
+					// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+					// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+					// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+					// 'kbs' => $this->input->post('kbs', TRUE),
+					// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+					// 'medis' => $this->input->post('medis', TRUE),
+					// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+					// 'sembako' => $this->input->post('sembako', TRUE),
+					// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+					// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+					// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+					'total_10' => $m->jumlah,
+					'nilai_persediaan' => $Total_Nilai_Persediaan,
+				);
+
+				$this->Persediaan_model->insert($data_persediaan);
+
+				print_r($data_persediaan);
+				// die;
+
+
+			}
+			print_r("<br/>");
+			print_r("<br/>");
+		}
+	}
+
 	// -------------- PROSES UPDATE DATA PERSEDIAAN (STOCK) -------------- 
 
-	public function cek_nominal_persediaan(){
+	public function cek_nominal_persediaan()
+	{
 		$sql = "SELECT `id`,`uuid_persediaan`,`nilai_persediaan` FROM `persediaan`";
 
-		$start=0;
+		$start = 0;
 		foreach ($this->db->query($sql)->result() as $m) {
 			print_r($m->id);
 			print_r(" : ");
@@ -27,28 +107,28 @@ class Persediaan extends CI_Controller
 			// print_r(" :=> ");
 			// print_r($start);
 			print_r(" :=====> ");
-			$start=$start+$m->nilai_persediaan;
+			$start = $start + $m->nilai_persediaan;
 			print_r($start);
 			print_r("<br/>");
-
-		}		
+		}
 	}
 
 
-	public function cek_uuid_persediaan_kosong(){
+	public function cek_uuid_persediaan_kosong()
+	{
 		$sql = "SELECT `id`,`uuid_persediaan`,`nilai_persediaan` FROM `persediaan` where `uuid_persediaan`='' ";
 
-		$start=0;
+		$start = 0;
 		foreach ($this->db->query($sql)->result() as $m) {
 
-			$get_id=$m->id;
+			$get_id = $m->id;
 			print_r($m->id);
 			print_r(" : ");
 			print_r($m->nilai_persediaan);
 			// print_r(" :=> ");
 			// print_r($start);
 			print_r(" :=====> ");
-			$start=$start+$m->nilai_persediaan;
+			$start = $start + $m->nilai_persediaan;
 			print_r($start);
 			print_r("<br/>");
 
@@ -66,10 +146,7 @@ class Persediaan extends CI_Controller
 			print_r("<br/>");
 
 			usleep(500000);
-
-
-
-		}		
+		}
 	}
 
 
