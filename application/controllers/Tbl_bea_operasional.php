@@ -458,7 +458,7 @@ class Tbl_bea_operasional extends CI_Controller
         }
     }
 
-    public function pembayaran_update_test($get_id = null, $get_spop = null)
+    public function pembayaran_updateX($get_id = null, $get_spop = null)
     {
 
         $this->db->where('id', $get_id);
