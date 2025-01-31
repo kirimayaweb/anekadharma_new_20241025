@@ -256,7 +256,7 @@ class Tbl_bea_operasional extends CI_Controller
         }
     }
 
-    public function pembayaran_update($get_id = null, $get_spop = null)
+    public function pembayaran_update_BU($get_id = null, $get_spop = null)
     {
 
         // List data pembelian
@@ -420,6 +420,8 @@ class Tbl_bea_operasional extends CI_Controller
                 );
             } else {
 
+
+
                 $Get_data_proses = "";
                 $Get_data_SPOP_Lama_proses = "";
 
@@ -456,6 +458,53 @@ class Tbl_bea_operasional extends CI_Controller
         }
     }
 
+    public function pembayaran_update_test($get_id = null, $get_spop = null)
+    {
+
+        $this->db->where('id', $get_id);
+        $get_data_bea_operasional = $this->db->get('tbl_bea_operasional')->row();
+
+        // print_r($get_data_bea_operasional);
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+        $data = array(
+            'button' => 'Ubah',
+            'action' => site_url('Tbl_bea_operasional/pembayaran_update_action/' . $get_id),
+            'id' => $get_data_bea_operasional->id,
+            'date_input' => $get_data_bea_operasional->date_input,
+            'uuid_bea_operasional' => $get_data_bea_operasional->uuid_bea_operasional,
+            'uuid_spop' => $get_data_bea_operasional->uuid_spop,
+            'tanggal' => $get_data_bea_operasional->tanggal,
+            'uuid_unit' => $get_data_bea_operasional->uuid_unit,
+            'unit' => $get_data_bea_operasional->unit,
+            'keterangan' => $get_data_bea_operasional->keterangan,
+            'status_data' => $get_data_bea_operasional->status_data,
+            'debet' => $get_data_bea_operasional->debet,
+            'kredit' => $get_data_bea_operasional->kredit,
+            'saldo' => $get_data_bea_operasional->saldo,
+
+        );
+
+        // print_r($data);
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+        // print_r($get_data_bea_operasional->status_data);
+
+        // die;
+
+        if ($get_data_bea_operasional->status_data == "pengeluaran") {
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_bea_operasional/adminlte310_Tbl_bea_operasional_form_pengeluaran_update', $data);
+        } else {
+
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_bea_operasional/adminlte310_Tbl_bea_operasional_form_pemasukan_update', $data);
+        }
+
+
+        // $this->load->view('Tbl_bea_operasional/Tbl_bea_operasional_form', $data);
+    }
+
 
     public function pembayaran_update_action($get_id = null, $get_spop = null, $Get_spop_lama = null)
     {
@@ -468,119 +517,82 @@ class Tbl_bea_operasional extends CI_Controller
         } else {
 
 
-            // print_r($get_id);
-            // print_r("<br/>");
-            // print_r($get_spop);
-            // print_r("<br/>");
-            // print_r($Get_spop_lama);
-            // print_r("<br/>");
-            // die;
+
+            $this->db->where('id', $get_id);
+            $get_data_bea_operasional = $this->db->get('tbl_bea_operasional')->row();
+
 
 
             if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
-                $date_kas_kecil = date("Y-m-d H:i:s");
+                $date_bea_operasional = date("Y-m-d H:i:s");
             } else {
-                $date_kas_kecil = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+                $date_bea_operasional = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
             }
 
 
+            // print_r($this->input->post('unit', TRUE));
+            // print_r("<br/>");
+
             $row_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('unit', TRUE));
+            // print_r($this->input->post('kredit', TRUE));
+            // print_r("<br/>");
+            // print_r(str_replace(",", ".", $this->input->post('kredit', TRUE)));
+            // print_r("<br/>");
+
+            // print_r($row_unit);
+
+            if ($get_data_bea_operasional->status_data == "pengeluaran") {
 
 
 
-            if ($get_spop) {
-                if ($Get_spop_lama) {
-
-                    // Update tabel pembelian : spop lama = U dan spop baru = L & tabel kas kecil berdasarkan id di update
-
-                    // Update spop lama pembelian ==> menjadi U kembali
-                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='U',`kas_bank`='kas',`tgl_bayar`='0000-00-00 00:00:00' WHERE `uuid_spop`='$Get_spop_lama'";
-                    $this->db->query($sql);
-
-                    // proses update tbl_pembelian ==> memproses Lunas jika sudah sesuai total nominal per spop nya
-                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
-                    $this->db->query($sql);
-
-                    // print_r("update uuid_spop");
-                    $data = array(
-                        // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
-                        'date_input' => date("Y-m-d H:i:s"),
-                        'tanggal' => $date_kas_kecil,
-                        'uuid_spop' => $get_spop,
-                        'uuid_unit' => $this->input->post('unit', TRUE),
-                        'unit' => $row_unit->nama_unit,
-                        'keterangan' => $this->input->post('keterangan', TRUE),
-                        'status_data' => "pengeluaran",
-
-                        // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-
-
-                        // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
-                        'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
-
-
-
-                        // 'saldo' => $this->input->post('saldo', TRUE),
-                        // 'id_usr' => $this->input->post('id_usr', TRUE),
-                    );
-                } else {
-                    // Update sesuai spop ( update tabel kas kecil berdasarkan id tanpa merubah status tabel pembelian )
-
-                    // proses update tbl_pembelian ==> memproses Lunas jika sudah sesuai total nominal per spop nya
-                    $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
-                    $this->db->query($sql);
-
-                    // print_r("update uuid_spop");
-                    $data = array(
-                        // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
-                        'date_input' => date("Y-m-d H:i:s"),
-                        'tanggal' => $date_kas_kecil,
-                        'uuid_spop' => $get_spop,
-                        'uuid_unit' => $this->input->post('unit', TRUE),
-                        'unit' => $row_unit->nama_unit,
-                        'keterangan' => $this->input->post('keterangan', TRUE),
-                        'status_data' => "pengeluaran",
-
-                        // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
-
-                        // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
-                        'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
-
-
-                        // 'saldo' => $this->input->post('saldo', TRUE),
-                        // 'id_usr' => $this->input->post('id_usr', TRUE),
-                    );
-                }
-            } else {
-                // Update data tabel kas kecil berdasarkan id secara langsung data tanpa ada data spop pembelian
-
-                // print_r("update");
+                // print_r("KREDIT");
                 // print_r("<br/>");
+                // print_r($this->input->post('kredit', TRUE));
                 // print_r("<br/>");
+                // print_r(str_replace(",", ".", $this->input->post('kredit', TRUE)));
+                // die;
 
                 $data = array(
                     // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
                     'date_input' => date("Y-m-d H:i:s"),
-                    'tanggal' => $date_kas_kecil,
+                    'tanggal' => $date_bea_operasional,
                     'uuid_unit' => $this->input->post('unit', TRUE),
                     'unit' => $row_unit->nama_unit,
                     'keterangan' => $this->input->post('keterangan', TRUE),
-                    'status_data' => "pengeluaran",
+                    // 'status_data' => "pengeluaran",
                     // 'debet' => preg_replace("/[^0-9]/", "", $this->input->post('debet', TRUE)),
 
-                    // 'kredit' => preg_replace("/[^0-9]/", "", $this->input->post('kredit', TRUE)),
-                    // 'kredit' => str_replace(".", "", $this->input->post('kredit', TRUE)),
-                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+                    'kredit' => str_replace(",", ".", $this->input->post('kredit', TRUE)),
 
-
-                    // 'saldo' => $this->input->post('saldo', TRUE),
-                    // 'id_usr' => $this->input->post('id_usr', TRUE),
                 );
+            } else {
 
-                // print_r($data);
+                // print_r("DEBET");
+                // print_r("<br/>");
+                // print_r($this->input->post('debet', TRUE));
+                // print_r("<br/>");
+                // print_r(str_replace(",", ".", $this->input->post('debet', TRUE)));
                 // die;
+                $data = array(
+                    // 'uuid_kas_kecil' => $this->input->post('uuid_kas_kecil', TRUE),
+                    'date_input' => date("Y-m-d H:i:s"),
+                    'tanggal' => $date_bea_operasional,
+                    'uuid_unit' => $this->input->post('unit', TRUE),
+                    'unit' => $row_unit->nama_unit,
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    // 'status_data' => "pengeluaran",
 
+                    'debet' => str_replace(",", ".", $this->input->post('debet', TRUE)),
+
+                    // 'kredit' => str_replace(",", ".", $this->input->post('kredit', TRUE)),
+
+                );
             }
+
+
+            // print_r($data);
+            // die;
+
 
 
 
@@ -777,17 +789,12 @@ class Tbl_bea_operasional extends CI_Controller
                 $sql_data_kas_kecil = "SELECT sum(`kredit`) as total_terbayar FROM `Tbl_bea_operasional` WHERE `uuid_spop`='$get_spop' GROUP BY `uuid_spop`";
 
                 $Ge_Total_terbayar = $this->db->query($sql_data_kas_kecil)->row()->total_terbayar;
-                
+
                 if ($Ge_Total_terbayar >= $jumlah_tagihan_total) {
                     // update record tabel pembelian dengan uuid_spop ==> L (Lunas)
                     $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
                     $this->db->query($sql);
                 }
-
-
-
-
-                
             } else {
 
                 // print_r("Simpan");

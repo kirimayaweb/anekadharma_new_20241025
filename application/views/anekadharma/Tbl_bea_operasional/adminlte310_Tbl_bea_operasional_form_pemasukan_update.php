@@ -101,9 +101,9 @@
 
                                             <?php
 
-                                            if ($unit) {
+                                            if ($uuid_unit) {
                                             ?>
-                                                <option value="<?php echo $unit; ?>"><?php echo $unit; ?></option>
+                                                <option value="<?php echo $uuid_unit; ?>"><?php echo $unit; ?></option>
                                             <?php
                                             } else {
                                             ?>

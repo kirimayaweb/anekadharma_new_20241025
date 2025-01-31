@@ -364,7 +364,7 @@
                                                                                                                 echo "kredit";
                                                                                                             } ?>" />
                                         <button type="submit" class="btn btn-success"><?php echo $button ?></button>
-                                        <a href="<?php echo site_url('tbl_kas_kecil') ?>" class="btn btn-default">Cancel</a>
+                                        <a href="<?php echo site_url('Tbl_bea_operasional') ?>" class="btn btn-default">Cancel</a>
 
                                     </div>
 

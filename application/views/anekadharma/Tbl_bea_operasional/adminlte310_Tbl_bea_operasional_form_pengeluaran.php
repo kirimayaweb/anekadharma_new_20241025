@@ -213,7 +213,7 @@
                                     <div class="col-6">
                                         <input type="hidden" name="id" value="<?php echo $id; ?>" />
                                         <button type="submit" class="btn btn-success"><?php echo $button ?></button>
-                                        <a href="<?php echo site_url('tbl_kas_kecil') ?>" class="btn btn-default">Cancel</a>
+                                        <a href="<?php echo site_url('Tbl_bea_operasional') ?>" class="btn btn-default">Cancel</a>
 
                                     </div>
 

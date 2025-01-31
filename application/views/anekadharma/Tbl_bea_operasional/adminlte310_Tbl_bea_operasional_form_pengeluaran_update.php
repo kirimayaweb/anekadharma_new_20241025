@@ -68,118 +68,7 @@
                             </div> -->
 
 
-                            <?php
-
-                            if ($Get_data_proses) {
-                                // print_r("ada pilih data");
-                            ?>
-                                <div class="form-group">
-                                    <div class="row">
-                                        <div class="col-12">
-
-
-                                            <!-- ================== -->
-                                            <?php
-                                            if ($Get_spop_lama) {
-
-
-                                            ?>
-                                                Mengganti SPOP lama yang sudah terbayarkan lunas:
-                                                <div class="col-12 col-sm-12 col-md-12">
-                                                    <div class="info-box bg-danger mb-12">
-                                                        <span class="info-box-icon bg-warning elevation-1" width="200px"><i class="fas fa-shopping-cart"></i></span>
-
-                                                        <div class="info-box-content">
-                                                            <div class="form-group">
-                                                                <div class="row">
-                                                                    <div class="col-3">
-                                                                        <span class="info-box-number"><?php echo "SPOP: " . ($Get_spop_lama->spop); ?></span>
-                                                                    </div>
-
-                                                                    <div class="col-3">
-                                                                        <span class="info-box-text"><?php echo "Supplier: " . ($Get_spop_lama->nama_supplier); ?></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <div class="form-group">
-                                                                <div class="row">
-
-
-                                                                    <div class="col-3">
-                                                                        <span class="info-box-text"><?php echo "Tanggal: " . ($Get_spop_lama->tanggal); ?></span>
-                                                                    </div>
-
-                                                                    <div class="col-3">
-                                                                        <span class="info-box-number"><?php echo "TOTAL TAGIHAN: " . (nominal($Get_spop_lama->sum_harga_total)); ?></span>
-                                                                    </div>
-
-                                                                </div>
-                                                            </div>
-
-
-
-                                                        </div>
-                                                        <!-- /.info-box-content -->
-                                                    </div>
-                                                    <!-- /.info-box -->
-                                                </div>
-
-                                                Diganti:
-                                            <?php
-                                            }
-                                            ?>
-                                            <div class="col-12 col-sm-12 col-md-12">
-                                                <div class="info-box bg-success mb-12">
-                                                    <span class="info-box-icon bg-warning elevation-1" width="200px"><i class="fas fa-shopping-cart"></i></span>
-
-                                                    <div class="info-box-content">
-                                                        <div class="form-group">
-                                                            <div class="row">
-                                                                <div class="col-3">
-                                                                    <span class="info-box-number"><?php echo "SPOP: " . ($Get_data_proses->spop); ?></span>
-                                                                </div>
-
-                                                                <div class="col-3">
-                                                                    <span class="info-box-text"><?php echo "Supplier: " . ($Get_data_proses->nama_supplier); ?></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="form-group">
-                                                            <div class="row">
-
-
-                                                                <div class="col-3">
-                                                                    <span class="info-box-text"><?php echo "Tanggal: " . ($Get_data_proses->tanggal); ?></span>
-                                                                </div>
-
-                                                                <div class="col-3">
-                                                                    <span class="info-box-number"><?php echo "TOTAL TAGIHAN: " . (nominal($Get_data_proses->sum_harga_total)); ?></span>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-
-
-
-                                                    </div>
-                                                    <!-- /.info-box-content -->
-                                                </div>
-                                                <!-- /.info-box -->
-                                            </div>
-
-                                            <!-- ================= -->
-
-                                        </div>
-                                    </div>
-                                </div>
-
-                            <?php
-                            }
-
-                            ?>
-
+                           
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-3">
@@ -273,7 +162,7 @@
                                     <div class="col-6">
                                         <input type="hidden" name="id" value="<?php echo $id; ?>" />
                                         <button type="submit" class="btn btn-success"><?php echo $button ?></button>
-                                        <a href="<?php echo site_url('tbl_kas_kecil') ?>" class="btn btn-default">Cancel</a>
+                                        <a href="<?php echo site_url('Tbl_bea_operasional') ?>" class="btn btn-default">Cancel</a>
 
                                     </div>
 
