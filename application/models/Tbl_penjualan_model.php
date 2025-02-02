@@ -77,6 +77,14 @@ class Tbl_penjualan_model extends CI_Model
     }
    
 
+    function get_ROW_by_uuid_penjualan_first_row($uuid_penjualan=null)
+    {
+        $this->db->where($this->uuid_penjualan, $uuid_penjualan);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->row();
+    }
+   
+
     function get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan=null,$tgl_jual=null,$nmrkirim=null)
     {
 

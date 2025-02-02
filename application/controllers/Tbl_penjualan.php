@@ -363,9 +363,13 @@ class Tbl_penjualan extends CI_Controller
 
 		// print_r("jumlah penjualan di persediaan");
 		// print_r("<br/>");
-		// print_r($data_barang->penjualan);
+		// print_r($id_persediaan_barang);
 		// print_r("<br/>");
-
+		// print_r($data_barang->id);
+		// print_r("<br/>");
+		// print_r($data_barang->uuid_persediaan);
+		// print_r("<br/>");
+		// die;
 		// print_r($data_barang);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -436,6 +440,7 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_persediaan' => $data_barang->uuid_persediaan,
 				'id_persediaan_barang' => $id_persediaan_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
@@ -476,6 +481,7 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
+				'uuid_persediaan' => $data_barang->uuid_persediaan,
 				'id_persediaan_barang' => $id_persediaan_barang,
 				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
 				'kode_barang' => $data_barang->kode_barang,
@@ -521,18 +527,38 @@ class Tbl_penjualan extends CI_Controller
 		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE)));
 	}
 
-	public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
+	// public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
+	public function kasir_penjualan($uuid_penjualan)
 	{
 
+		// Get tgl_jual dan nmrkirim dari uuid_penjualan
+
+		
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+
+		// print_r($data_penjualan_per_uuid_penjualan);
+		// print_r("<br/>");
+
+		// print_r($data_penjualan_per_uuid_penjualan->tgl_jual);
+		// print_r("<br/>");
+
+		$tgl_jual_X = date("Y-m-d", strtotime($data_penjualan_per_uuid_penjualan->tgl_jual));		
+
+// 		print_r($tgl_jual_X);
+// 		print_r("<br/>");
+// 		print_r($data_penjualan_per_uuid_penjualan->nmrkirim);
+// 		print_r("<br/>");
+// die;
+
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual, $nmrkirim);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 
 		// print_r($data_penjualan_per_uuid_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual, $nmrkirim);
+		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 
 
 
@@ -638,6 +664,9 @@ class Tbl_penjualan extends CI_Controller
 	public function update_penjualan($uuid_penjualan_proses)
 	{
 
+
+
+
 		$row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_proses($uuid_penjualan_proses);
 
 		if ($row) {
@@ -670,6 +699,8 @@ class Tbl_penjualan extends CI_Controller
 				'id_usr' => set_value('id_usr', $row->id_usr),
 				// 'Data_stock' => $Data_stock,
 			);
+
+			// Update Persediaan Field penjualan : uuid_proses lama di kurangi , uuid_proses baru di tambah
 
 			// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
 			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_update_new', $data);
@@ -895,14 +926,64 @@ class Tbl_penjualan extends CI_Controller
 		}
 	}
 
-	public function delete($id)
+	public function delete($id = null, $uuid_penjualan = null)
 	{
+
+		// print_r($id);
+		// print_r("<br/>");
+		// print_r($uuid_penjualan);
+		// print_r("<br/>");
+		// die;
+
 		$row = $this->Tbl_penjualan_model->get_by_id($id);
 
 		if ($row) {
+
+
+			// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
+
+			print_r($row->uuid_persediaan);
+			print_r("<br/>");
+			print_r($row->jumlah);
+			print_r("<br/>");
+			print_r($row->id_persediaan_barang);
+			$Get_id_persediaan_barang = $row->id_persediaan_barang;
+			print_r("<br/>");
+			print_r($Get_id_persediaan_barang);
+
+			// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
+
+			$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
+
+			print_r("<br/>");
+			print_r($row_data_persediaan->penjualan);
+			print_r("<br/>");
+
+			$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
+
+			if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+				print_r("Bisa hapus / kurangi");
+
+				$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
+				// Update field penjualan di tabel persediaan berdasarkan id persediaan
+				$sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
+				$this->db->query($sql_update_uuid_persediaan);
+
+			} else {
+				// print_r("Buat fieldnya jadi 0");
+			}
+
+			// die;
+
+			// Update field penjualan berdasarkan uuid_persediaan
+
+
+			// Hapus record di tabel penjualan
 			$this->Tbl_penjualan_model->delete($id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
-			redirect(site_url('tbl_penjualan'));
+
+
+			redirect(site_url('Tbl_penjualan/kasir_penjualan/'.$uuid_penjualan));
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
