@@ -47,6 +47,74 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
+	public function RekapPenjualanPerBarang()
+	{
+		// $sql_stock = "SELECT persediaan.id as id_persediaan_barang, persediaan.uuid_barang as uuid_barang, persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,  persediaan.satuan as satuan,
+		// 	-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
+		// 	-- tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
+		// 	persediaan.penjualan as penjualan
+		// 	FROM persediaan  
+		// 	-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+		// 	-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+		// 	Full Outer Join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+		// 	-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan 
+
+		// 	-- GROUP BY persediaan.uuid_barang)  
+
+		// 	ORDER BY persediaan.namabarang ASC";
+
+
+		$sql_persediaan = "SELECT persediaan.uuid_persediaan as uuid_persediaan,
+								persediaan.namabarang as namabarang_persediaan, 
+								persediaan.sa as saldo_awal_persediaan, 
+
+		 						tbl_penjualan.tgl_jual as tgl_jual_penjualan,
+		 						tbl_penjualan.nmrkirim as nmrkirim_penjualan,
+		 						tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
+		 						tbl_penjualan.konsumen_nama as konsumen_nama_penjualan,
+		 						tbl_penjualan.nama_barang as nama_barang_penjualan,
+		 						tbl_penjualan.jumlah as jumlah_penjualan,
+		 						tbl_penjualan.harga_satuan as harga_satuan_penjualan,
+		 						tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
+							FROM persediaan
+							right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
+							-- group by persediaan.namabarang, tbl_penjualan.nama_barang
+							ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
+
+		// print_r($this->db->query($sql_persediaan)->num_rows());
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
+		// print_r($this->db->query($sql_persediaan)->result());
+		// die;
+
+
+		$start = 0;
+		// print_r($Tbl_pembelian);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$data = array(
+			'Tbl_penjualan_data' => $this->db->query($sql_persediaan)->result(),
+			// 'q' => $q,
+			// 'pagination' => $this->pagination->create_links(),
+			// 'total_rows' => $config['total_rows'],
+			'start' => $start,
+
+			// 'action_cari_konsumen' => site_url('tbl_penjualan/rekap'),
+			// 'data_selection' => $data_selection,
+			// 'nama_konsumen_selection' => $nama_konsumen_selection,
+		);
+
+
+		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap', $data);
+
+
+	}
+
 	public function bayar()
 	{
 
@@ -314,12 +382,12 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
-		// print_r("create_action_simpan_barang");
-		// print_r("<br/>");
-		// print_r($uuid_penjualan);
-		// print_r("<br/>");
-		// print_r($id_persediaan_barang);
-		// print_r("<br/>");
+		print_r("create_action_simpan_barang");
+		print_r("<br/>");
+		print_r($uuid_penjualan);
+		print_r("<br/>");
+		print_r($id_persediaan_barang);
+		print_r("<br/>");
 		// die;
 
 		// print_r("create_action_simpan_barang");
@@ -524,7 +592,8 @@ class Tbl_penjualan extends CI_Controller
 		// die;
 
 		// redirect("kasir_penjualan/".$uuid_penjualan);
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE)));
+		// redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE)));
+		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 	}
 
 	// public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
@@ -533,34 +602,45 @@ class Tbl_penjualan extends CI_Controller
 
 		// Get tgl_jual dan nmrkirim dari uuid_penjualan
 
-		
+
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
 
 		// print_r($data_penjualan_per_uuid_penjualan);
+		// print_r("<br/>");
+		// print_r("<br/>");
 		// print_r("<br/>");
 
 		// print_r($data_penjualan_per_uuid_penjualan->tgl_jual);
 		// print_r("<br/>");
 
-		$tgl_jual_X = date("Y-m-d", strtotime($data_penjualan_per_uuid_penjualan->tgl_jual));		
+		$tgl_jual_X = date("Y-m-d", strtotime($data_penjualan_per_uuid_penjualan->tgl_jual));
 
-// 		print_r($tgl_jual_X);
-// 		print_r("<br/>");
-// 		print_r($data_penjualan_per_uuid_penjualan->nmrkirim);
-// 		print_r("<br/>");
-// die;
+		// print_r($tgl_jual_X);
+		// print_r("<br/>");
+		// print_r($data_penjualan_per_uuid_penjualan->nmrkirim);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// die;
 
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
+		// $data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
 
 		// print_r($data_penjualan_per_uuid_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 
+		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
+		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
 
+		// print_r($data_penjualan_per_uuid_penjualan_first_row);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// die;
 
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
@@ -583,17 +663,20 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
-	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)
+	// public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)
+	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null)
 	{
 
 		// 2.a. PERSIAPAN LIBRARY
 		// $this->load->library('PdfGenerator');
 
 
-		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
-		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan, $date_tgl_jual, $nmrkirim);
 
-		// print_r($data_master_penjualan_per_uuidpenjualan);		
+		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan, $date_tgl_jual, $nmrkirim);
+		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+
+		// print_r($data_master_penjualan_per_uuidpenjualan);
 		// print_r($data_master_penjualan_per_uuidpenjualan->nmrpesan);
 		// print_r(date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)));
 		// print_r($data_master_penjualan_per_uuidpenjualan->konsumen_nama);
@@ -605,7 +688,7 @@ class Tbl_penjualan extends CI_Controller
 
 		// 2.b. PERSIAPAN DATA
 		$data = array(
-			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($date_tgl_jual, $nmrkirim),
+			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan),
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
@@ -968,7 +1051,6 @@ class Tbl_penjualan extends CI_Controller
 				// Update field penjualan di tabel persediaan berdasarkan id persediaan
 				$sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
 				$this->db->query($sql_update_uuid_persediaan);
-
 			} else {
 				// print_r("Buat fieldnya jadi 0");
 			}
@@ -983,7 +1065,7 @@ class Tbl_penjualan extends CI_Controller
 			$this->session->set_flashdata('message', 'Delete Record Success');
 
 
-			redirect(site_url('Tbl_penjualan/kasir_penjualan/'.$uuid_penjualan));
+			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));

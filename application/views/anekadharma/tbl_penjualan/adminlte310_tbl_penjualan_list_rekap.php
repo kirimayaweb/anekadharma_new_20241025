@@ -44,31 +44,31 @@
                                         <div class="col-4" text-align="right"> <strong>KONSUMEN</strong></div>
                                         <div class="col-6" text-align="left">
 
-                                            <!-- <label for="konsumen_nama">Unit </label> -->
+<!--  
                                             <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 60px;" required>
 
-                                                <?php if (isset($data_selection)) {
+                                                <?php //if (isset($data_selection)) {
                                                 ?>
-                                                    <option value="<?php echo $data_selection; ?>"><?php echo $nama_konsumen_selection; ?></option>
+                                                    <option value="<?php //echo $data_selection; ?>"><?php //echo $nama_konsumen_selection; ?></option>
                                                 <?php
-                                                } else {
+                                                // } else {
                                                 ?>
                                                     <option value="">Pilih Konsumen</option>
                                                 <?php
-                                                }
+                                                // }
                                                 ?>
 
 
                                                 <option value="semua">TAMPIL SEMUA</option>
                                                 <?php
 
-                                                $sql = "SELECT `uuid_konsumen`,`konsumen_nama` FROM `tbl_penjualan` GROUP by `uuid_konsumen` order by konsumen_nama ASC ";
-                                                foreach ($this->db->query($sql)->result() as $m) {
-                                                    echo "<option value='$m->uuid_konsumen' ";
-                                                    echo ">  " . strtoupper($m->konsumen_nama)  . "</option>";
-                                                }
+                                                // $sql = "SELECT `uuid_konsumen`,`konsumen_nama` FROM `tbl_penjualan` GROUP by `uuid_konsumen` order by konsumen_nama ASC ";
+                                                // foreach ($this->db->query($sql)->result() as $m) {
+                                                //     echo "<option value='$m->uuid_konsumen' ";
+                                                //     echo ">  " . strtoupper($m->konsumen_nama)  . "</option>";
+                                                // }
                                                 ?>
-                                            </select>
+                                            </select> -->
 
                                         </div>
                                         <div class="col-2" text-align="right">
@@ -105,9 +105,8 @@
 
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
-                                <tr>
+                                <!-- <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
-                                    <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th rowspan="2">Tgl Jual</th>
                                     <th rowspan="2">nmrpesan</th>
                                     <th rowspan="2">nmrkirim</th>
@@ -119,222 +118,61 @@
                                     <th rowspan="2">Harga Satuan</th>
                                     <th rowspan="2">Jumlah</th>
 
-                                    <!-- Colspan -->
                                     <th colspan="2" style="text-align:center">Debit</th>
-                                    <th colspan="2" style="text-align:center">Kredit</th>
+                                    <th colspan="2" style="text-align:center">Kredit</th> -->
 
 
 
                                 <tr>
-                                    <th>UM PPH PSL 22</th>
-                                    <th>Piutang</th>
-                                    <th>Penjualan DPP</th>
-                                    <th>Utang PPN</th>
+                                    <th>No</th>
+                                    
+                                    <th>Nama Barang <br/> Persediaan</th>
+                                    <th>Tanggal Jual</th>
+                                    <th>Nomor Kirim</th>
+                                    <th>Konsumen</th>
+                                    <th>Nama Barang <br/> Penjualan</th>
+                                    <th>Jumlah</th>
+                                    <th>Harga Satuan</th>
                                 </tr>
 
                                 <!-- -------------- -->
 
+                                <!-- </tr> -->
 
-                                </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                $compare_nmr_kirim = 0;
-                                $Total_Jumlah_per_nmrkirim = 0;
-                                $Total_UMPPHPSL22_per_nmrkirim = 0;
-                                $Total_piutang_per_nmrkirim = 0;
-                                $Total_penjualandpp_per_nmrkirim = 0;
-                                $Total_utangppn_per_nmrkirim = 0;
-
-                                $TOTAL_ALL_JUMLAH = 0;
-                                $TOTAL_ALL_UMPPHPSL22 = 0;
-                                $TOTAL_ALL_piutang = 0;
-                                $TOTAL_ALL_penjualandpp = 0;
-                                $TOTAL_ALL_utangppn = 0;
+                                $start = 0;
                                 foreach ($Tbl_penjualan_data as $list_data) {
-                                    if (($compare_nmr_kirim <> $list_data->nmrkirim) and ($start >= 1)) {
-                                        // Buat 1 baris untuk total dan background = KUNING
+
+// get data penjualan filter uuid_barang dan spop
+
+
                                 ?>
-                                        <tr>
-                                            <td><?php echo ++$start ?></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-
-
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>" ?> </td>
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>" ?> </td>
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>" ?> </td>
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>" ?> </td>
-                                            <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" ?> </td>
-
-
-
-                                        </tr>
-                                    <?php
-                                    }
-                                    ?>
                                     <tr>
-                                        <?php
-                                        if ($compare_nmr_kirim == $list_data->nmrkirim) {
-                                        ?>
-                                            <td><?php echo ++$start ?></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-
-                                        <?php
-                                        } else {
-                                            // nmrkirim baru , me NOL kan total nmrkirim
-                                            $Total_Jumlah_per_nmrkirim = 0;
-                                            $Total_UMPPHPSL22_per_nmrkirim = 0;
-                                            $Total_piutang_per_nmrkirim = 0;
-                                            $Total_penjualandpp_per_nmrkirim = 0;
-                                            $Total_utangppn_per_nmrkirim = 0;
-                                        ?>
-                                            <td><?php echo ++$start ?></td>
-                                            <td>
-                                                <?php
-                                                echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                echo " ";
-                                                echo anchor(site_url('tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Penjualan</i>', 'class="btn btn-success btn-xs"  target="_blank"');
+                                        <td><?php echo ++$start; ?></td>
+                                        
+                                        <td><?php echo $list_data->namabarang_persediaan; ?></td>
+                                        <td><?php echo $list_data->tgl_jual_penjualan; ?></td>
+                                        <td><?php echo $list_data->nmrkirim_penjualan; ?></td>
+                                        <td><?php echo $list_data->konsumen_nama_penjualan; ?></td>
+                                        <td><?php echo $list_data->nama_barang_penjualan; ?></td>
+                                        <td><?php echo $list_data->jumlah_penjualan; ?></td>
+                                        <td><?php echo $list_data->harga_satuan_penjualan; ?></td>
+                                       
+                                       
 
 
 
-                                                ?>
-                                            </td>
-                                            <td align="center"><?php echo $list_data->nmrpesan; ?></td>
-                                            <td align="center"><?php echo $list_data->nmrkirim; ?></td>
-                                            <td align="center"><?php echo $list_data->konsumen_nama; ?></td>
-
-                                        <?php
-                                        }
-                                        ?>
-
-
-                                        <td align="left"><?php echo $list_data->kode_barang; ?></td>
-                                        <td align="left"><?php echo $list_data->nama_barang; ?></td>
-                                        <td align="left"><?php echo $list_data->unit; ?></td>
-                                        <td align="left"><?php echo $list_data->satuan; ?></td>
-                                        <td align="right"><?php echo $list_data->harga_satuan; ?></td>
-
-
-                                        <td align="right">
-                                            <?php
-
-                                            $jumlah_per_nmrkirim = $list_data->jumlah * $list_data->harga_satuan;
-
-                                            echo nominal($jumlah_per_nmrkirim);
-
-                                            $Total_Jumlah_per_nmrkirim = $Total_Jumlah_per_nmrkirim + $jumlah_per_nmrkirim;
-                                            $TOTAL_ALL_JUMLAH = $TOTAL_ALL_JUMLAH + $jumlah_per_nmrkirim;
-
-                                            // umpphpsl22
-                                            $x_var_umpphpsl22 = 1.351351;
-                                            $umpphpsl22_per_nmrkirim = ($jumlah_per_nmrkirim * $x_var_umpphpsl22) / 100;
-                                            $Total_UMPPHPSL22_per_nmrkirim = $Total_UMPPHPSL22_per_nmrkirim + $umpphpsl22_per_nmrkirim;
-                                            $TOTAL_ALL_UMPPHPSL22 = $TOTAL_ALL_UMPPHPSL22 + $umpphpsl22_per_nmrkirim;
-
-                                            $x_piutang_percentage = 11.261261;
-                                            $piutang_per_nmrkirim = ($jumlah_per_nmrkirim - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
-                                            $Total_piutang_per_nmrkirim = $Total_piutang_per_nmrkirim + $piutang_per_nmrkirim;
-                                            $TOTAL_ALL_piutang = $TOTAL_ALL_piutang + $piutang_per_nmrkirim;
-
-                                            $x_penjualandpp_percentage = 90.090090;
-                                            $penjualandpp_per_nmrkirim = ($jumlah_per_nmrkirim * $x_penjualandpp_percentage) / 100;
-                                            $Total_penjualandpp_per_nmrkirim = $Total_penjualandpp_per_nmrkirim + $penjualandpp_per_nmrkirim;
-                                            $TOTAL_ALL_penjualandpp = $TOTAL_ALL_penjualandpp + $penjualandpp_per_nmrkirim;
-
-
-                                            $x_utangppn_percentage = 9.909910;
-                                            $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * $x_utangppn_percentage) / 100;
-                                            $Total_utangppn_per_nmrkirim = $Total_utangppn_per_nmrkirim + $utangppn_per_nmrkirim;
-                                            $TOTAL_ALL_utangppn = $TOTAL_ALL_utangppn + $utangppn_per_nmrkirim;
-
-                                            ?>
-
-                                        </td>
-
-                                        <td align="right"> <?php echo nominal($umpphpsl22_per_nmrkirim); ?> </td>
-
-                                        <td align="right">
-                                            <?php
-                                            echo nominal($piutang_per_nmrkirim);
-                                            ?></td>
-
-                                        <td align="right">
-                                            <?php
-                                            echo nominal($penjualandpp_per_nmrkirim);
-                                            ?>
-                                        </td>
-                                        <td align="right">
-                                            <?php
-                                            echo nominal($utangppn_per_nmrkirim);
-                                            ?>
-                                        </td>
-
-
-                                        <?php
-                                        $compare_nmr_kirim = $list_data->nmrkirim;
-                                        ?>
                                     </tr>
+
                                 <?php
                                 }
                                 ?>
 
-                                <!-- TOTAL nmrkirim AKHIR -->
-                                <tr>
-                                    <td><?php echo ++$start ?></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>" ?> </td>
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>" ?> </td>
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>" ?> </td>
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>" ?> </td>
-                                    <td style="background-color:yellow;" align="right"> <?php echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" ?> </td>
-
-
-
-                                </tr>
                             </tbody>
 
-                            <tfoot>
 
-                                <tr>
-                                    <th>No</th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th style="text-align:right">TOTAL</th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_ALL_JUMLAH); ?></th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_ALL_UMPPHPSL22); ?></th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_ALL_piutang); ?></th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_ALL_penjualandpp); ?></th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_ALL_utangppn); ?></th>
-
-                                </tr>
-
-                            </tfoot>
 
                         </table>
                     </div>

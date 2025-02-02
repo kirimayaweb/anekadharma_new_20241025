@@ -178,16 +178,24 @@
 
                                             ?>
                                                 <tr>
-                                                    <td><?php echo ++$start ?></td>
+                                                    <td><?php echo ++$start; ?></td>
 
                                                     <!-- Ubah dan hapus -->
                                                     <td>
-                                                        <!-- <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-xl-update_<?php //echo $list_data->id; ?>">
-                                                            Ubah Barang <?php //echo $list_data->id; ?>
+                                                        <!-- <button type="button" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#modal-xl-update_<?php //echo $list_data->id; 
+                                                                                                                                                                    ?>">
+                                                            Ubah Barang <?php //echo $list_data->id; 
+                                                                        ?>
                                                         </button> -->
                                                         <?php
-                                                        echo anchor(site_url('tbl_penjualan/delete/'.$list_data->id .'/'.$list_data->uuid_penjualan),'Delete','onclick="javasciprt: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"'); 
+                                                        echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id . '/' . $list_data->uuid_penjualan), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"');
+
+                                                        // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id . '/' . $list_data->uuid_penjualan), 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"', '<i class="btn btn-outline-info btn-block btn-flat" aria-hidden="true">Hapus</i>', 'class="btn btn-block btn-flat"  ');
+
                                                         ?>
+
+                                                        <!-- <button type="button"  class="btn btn-outline-info btn-block btn-flat"> <i class="fa fa-book"></i> <?php // $button; 
+                                                                                                                                                                ?></button> -->
                                                     </td>
 
 
@@ -294,7 +302,7 @@
 
                         <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
                                                                             ?></button> -->
-                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Simpan</a>
+                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Kembali ke Halaman Data Penjualan</a>
                         <?php
                         if (isset($uuid_penjualan)) {
                         ?>
@@ -398,6 +406,7 @@
                         <thead>
                             <tr>
                                 <th style="text-align:center">No</th>
+                                <th style="text-align:center">Pilih</th>
                                 <th style="text-align:center">Tgl PO</th>
                                 <th style="text-align:center">SPOP</th>
                                 <th style="text-align:center">Nama barang</th>
@@ -433,6 +442,27 @@
                             ?>
                                         <tr>
                                             <td align="right"><?php echo ++$start ?></td>
+                                            <td align="right">
+                                                <?php
+                                                if ($sisa_stock_data > 0) {
+                                                ?>
+                                                    <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                        PILIH BARANG <?php //echo $list_data->id
+                                                                        ?>
+                                                    </button>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
+                                                        PILIH BARANG <?php //echo $list_data->id
+                                                                        ?>
+                                                    </button>
+                                                <?php
+                                                }
+                                                ?>
+
+
+                                            </td>
                                             <td>
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tanggal_beli));
@@ -680,10 +710,13 @@
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+
+
+
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 300,
+            "scrollY": 375,
             "scrollX": true
         });
     });
@@ -691,7 +724,7 @@
 <script>
     $(document).ready(function() {
         $('#example99').DataTable({
-            "scrollY": 500,
+            "scrollY": 600,
             "scrollX": true
         });
     });
@@ -699,7 +732,7 @@
 <script>
     $(document).ready(function() {
         $('#example1000').DataTable({
-            "scrollY": 500,
+            "scrollY": 600,
             "scrollX": true
         });
     });

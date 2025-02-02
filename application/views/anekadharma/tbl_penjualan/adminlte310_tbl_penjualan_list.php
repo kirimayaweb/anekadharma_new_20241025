@@ -65,8 +65,9 @@
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
                                     <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th rowspan="2">Tgl Jual</th>
-                                    <th rowspan="2">nmrpesan</th>
                                     <th rowspan="2">nmrkirim</th>
+                                    <th rowspan="2">nmrpesan</th>
+                                    
                                     <th rowspan="2">Konsumen</th>
                                     <th rowspan="2">Kode</th>
                                     <th rowspan="2">Nama Barang</th>
@@ -135,8 +136,13 @@
 
                                                                                                 ?>
                                             </td>
-                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  ?></td>
+
+                                            <!-- Kolom Nomor Kirim -->
                                             <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_kirim . "</strong></font>"; ?></td>
+                                            
+                                            <!-- kolom Nomor pesan -->
+                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  ?></td>
+                                            
                                             <td></td>
                                             <td></td>
                                             <td><?php //echo $list_data->nama_barang; 
@@ -205,24 +211,29 @@
                                                 echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
 
                                                 // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
-
+                                                
+                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
 
 
 
                                                 ?>
                                             </td>
+                                            
+                                            <!-- Kolom Nomor Kirim -->
+                                            <td><?php echo $list_data->nmrkirim; ?></td>
+
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
                                                 echo "<br/>";
 
-                                                echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
-                                                echo "";
-                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  ');
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
+                                                // echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
+                                                // echo "";
+                                                // HAPUS
+                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
                                                 ?>
                                             </td>
-                                            <td><?php echo $list_data->nmrkirim; ?></td>
+                                            
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -337,23 +348,25 @@
 
                                                 // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
 
+                                                // echo "<br/>";
 
+                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
+                                                // echo "";
+                                            //    HAPUS
+                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
+                                                
 
 
                                                 ?>
                                             </td>
+                                            
+                                            <td><?php echo $list_data->nmrkirim; ?></td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
-                                                echo "<br/>";
-
-                                                echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
-                                                echo "";
-                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Hapus</i>', 'class="btn btn-danger btn-xs"  ');
-                                                echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
                                                 ?>
                                             </td>
-                                            <td><?php echo $list_data->nmrkirim; ?></td>
+                                            
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -592,7 +605,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 900,
+            "scrollY": 1100,
             "scrollX": true
         });
     });
@@ -600,7 +613,7 @@
 <script>
     $(document).ready(function() {
         $('#example9').DataTable({
-            "scrollY": 900,
+            "scrollY": 1100,
             "scrollX": true
         });
     });

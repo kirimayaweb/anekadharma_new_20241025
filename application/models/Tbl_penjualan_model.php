@@ -101,10 +101,18 @@ class Tbl_penjualan_model extends CI_Model
         return $this->db->get($this->table)->row();
     }
 
+
+
     function get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual=null,$nmrkirim=null)
     {
 
-       
+    //     print_r("MODEL");
+    //     print_r("<br/>");
+    //    print_r($tgl_jual);
+    //    print_r("<br/>");
+    //    print_r($nmrkirim);
+    //    print_r("<br/>");
+    //    print_r("<br/>");
 
         // $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->where($this->tgl_jual, $tgl_jual);
