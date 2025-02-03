@@ -64,10 +64,12 @@ class Tbl_penjualan extends CI_Controller
 		// 	ORDER BY persediaan.namabarang ASC";
 
 
-		$sql_persediaan = "SELECT persediaan.uuid_persediaan as uuid_persediaan,
+		$sql_persediaan = "SELECT persediaan.id as id,
+								persediaan.uuid_persediaan as uuid_persediaan,
 								persediaan.namabarang as namabarang_persediaan, 
 								persediaan.sa as saldo_awal_persediaan, 
 
+		 						tbl_penjualan.id_persediaan_barang as id_persediaan_barang,
 		 						tbl_penjualan.tgl_jual as tgl_jual_penjualan,
 		 						tbl_penjualan.nmrkirim as nmrkirim_penjualan,
 		 						tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
@@ -77,7 +79,7 @@ class Tbl_penjualan extends CI_Controller
 		 						tbl_penjualan.harga_satuan as harga_satuan_penjualan,
 		 						tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
 							FROM persediaan
-							right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
+							right JOIN  tbl_penjualan ON persediaan.id= tbl_penjualan.id_persediaan_barang
 							-- group by persediaan.namabarang, tbl_penjualan.nama_barang
 							ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
 
@@ -86,7 +88,7 @@ class Tbl_penjualan extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
+		$data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
 		// print_r($this->db->query($sql_persediaan)->result());
 		// die;
 
