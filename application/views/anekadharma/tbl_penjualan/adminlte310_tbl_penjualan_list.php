@@ -43,7 +43,7 @@
                             </div>
 
                             <div class="col-2">
-                            <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); ?>
+                            <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); ?>
                             </div>
 
                             <div class="col-2">
