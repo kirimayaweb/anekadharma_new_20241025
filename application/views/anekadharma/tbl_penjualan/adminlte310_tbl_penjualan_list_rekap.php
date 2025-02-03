@@ -189,7 +189,7 @@
                                                         tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
                                                             FROM tbl_penjualan
                                                             --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
-                                                            WHERE tbl_penjualan.uuid_persediaan =  '$list_data_PERSEDIAAN->uuid_persediaan'
+                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
                                                             ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
 
                                         $Total_jumlah_Barang = 0;
@@ -292,7 +292,7 @@
                                                         tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
                                                             FROM tbl_penjualan
                                                             --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
-                                                            WHERE tbl_penjualan.uuid_persediaan =  '$list_data_PERSEDIAAN->uuid_persediaan'
+                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
                                                             ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
 
                                         $Total_jumlah_Barang = 0;
