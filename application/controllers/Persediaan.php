@@ -23,7 +23,7 @@ class Persediaan extends CI_Controller
 
 		foreach ($this->db->query($sql)->result() as $m) {
 			print_r($m->uuid_spop);
-			print_r(" - ");
+			print_r(" - SPOP:");
 			print_r($m->spop);
 			print_r(" - ");
 			print_r($m->uraian);
@@ -38,12 +38,14 @@ class Persediaan extends CI_Controller
 			// print_r($data_persediaan->id);
 
 			$this->db->where('uuid_spop', $m->uuid_spop);
+			$this->db->where('uuid_barang', $m->uuid_barang);
 			$data_persediaan = $this->db->get('persediaan');
 
 			if ($data_persediaan->num_rows() > 0) {
 				print_r("Ada data");
 			} else {
 				print_r("Tidak ada data");
+				print_r("<br/>");
 
 				// PROSES INPUT DATA KE PERSEDIAAN
 
