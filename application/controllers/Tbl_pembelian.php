@@ -139,8 +139,8 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.hpp as harga_satuan_persediaan,
 			persediaan.tanggal_beli as tanggal_beli_persediaan, 
 			persediaan.satuan as satuan, 
-			persediaan.satuan as satuan, 
-			persediaan.satuan as satuan, 
+			persediaan.spop as spop, 
+			-- persediaan.satuan as satuan, 
 			
 					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
 					-- 	tbl_pembelian.uraian as barang_beli, 
@@ -166,6 +166,9 @@ class Tbl_pembelian extends CI_Controller
 		}
 
 		// print_r($this->db->query($sql_stock)->num_rows());
+		// print_r("<br/>");
+		// print_r($Data_stock);
+		
 		// die;
 
 		$data = array(

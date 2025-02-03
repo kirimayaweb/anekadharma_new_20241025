@@ -111,7 +111,7 @@
                                     <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th>Tgl Po</th>
                                     <th>Gudang</th>
-                                    <!-- <th>kode <br />Barang</th> -->
+                                    <th>SPOP</th>
                                     <th>nama barang <br />beli</th>
                                     <th>harga satuan <br />beli</th>
                                     <th>satuan</th>
@@ -124,7 +124,7 @@
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
                                     <!-- <th>Nominal Stock</th> -->
-                                    <th>Nominal <br/>Persediaan</th>
+                                    <th>Nominal <br />Persediaan</th>
                                     <!-- <th>Total Persediaan</th> -->
 
                                 </tr>
@@ -177,6 +177,13 @@
 
                                             // echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_gudang . '</i>', 'class=""');
 
+                                            ?>
+
+                                        </td>
+                                        <td style="text-align:left;text-transform: uppercase;">
+                                            <?php
+
+                                            echo $list_data->spop;
                                             ?>
 
                                         </td>
@@ -301,7 +308,7 @@
                                             echo nominal($list_data->nilai_persediaan);
                                             ?>
 
-                                        </td> 
+                                        </td>
 
                                         <!-- TOTAL PERSEDIAAN -->
                                         <!-- <td style="text-align:right">
@@ -336,7 +343,8 @@
                                     <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); 
                                                                         ?></th> -->
                                     <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
-                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN_X); ?></th> -->
+                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN_X); 
+                                                                        ?></th> -->
 
                                 </tr>
                             </tfoot>
