@@ -214,9 +214,9 @@
                                                     $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
                                                     // echo "nomor spop : "; 
-                                                    if ($Get_data_persediaan_barang->spop) {
-                                                        echo "SPOP: ";
-                                                    }
+                                                    // if ($Get_data_persediaan_barang->spop) {
+                                                    //     echo "SPOP: ";
+                                                    // }
                                                     echo $Get_data_persediaan_barang->spop;
                                                     ?>
                                                 </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
@@ -342,9 +342,9 @@
                                                     // echo "nomor spop : "; 
 
 
-                                                    if ($Get_data_persediaan_barang->spop) {
-                                                        echo "SPOP: ";
-                                                    }
+                                                    // if ($Get_data_persediaan_barang->spop) {
+                                                    //     echo "SPOP: ";
+                                                    // }
                                                     echo $Get_data_persediaan_barang->spop;
 
                                                     ?>
