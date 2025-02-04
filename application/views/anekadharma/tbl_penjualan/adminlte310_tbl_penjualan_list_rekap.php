@@ -207,16 +207,19 @@
                                                 <td><?php echo ++$start; ?></td>
                                                 <td></td>
                                                 <td>
-                                                    <?php 
-                                                    
+                                                    <?php
+
                                                     $this->db->where('id', $list_data_PENJUALAN->id_persediaan_barang);
                                                     $Query_data_persediaan_barang = $this->db->get('persediaan');
                                                     $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
                                                     // echo "nomor spop : "; 
+                                                    if ($Get_data_persediaan_barang->spop) {
+                                                        echo "SPOP: ";
+                                                    }
                                                     echo $Get_data_persediaan_barang->spop;
                                                     ?>
-                                                    </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
+                                                </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
 
                                                 <td>
                                                     <?php
@@ -291,8 +294,8 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>  <!-- total 2 -->
-                                            
+                                            <td></td> <!-- total 2 -->
+
 
 
 
@@ -329,7 +332,7 @@
                                             <tr>
                                                 <td><?php echo ++$start; ?></td>
                                                 <td></td>
-                                                <td>
+                                                <td align="left">
                                                     <?php
 
                                                     $this->db->where('id', $list_data_PENJUALAN->id_persediaan_barang);
@@ -337,6 +340,11 @@
                                                     $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
                                                     // echo "nomor spop : "; 
+
+
+                                                    if ($Get_data_persediaan_barang->spop) {
+                                                        echo "SPOP: ";
+                                                    }
                                                     echo $Get_data_persediaan_barang->spop;
 
                                                     ?>
@@ -392,7 +400,7 @@
                                             <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; ?></td>
                                             <td style="background-color:yellow;"></td>
                                             <td style="background-color:yellow;" align="right">
-                                                <?php 
+                                                <?php
                                                 // echo "Total 4";
                                                 echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "</strong>"; ?></td>
                                         </tr>
