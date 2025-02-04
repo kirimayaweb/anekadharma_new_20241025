@@ -168,7 +168,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($this->db->query($sql_stock)->num_rows());
 		// print_r("<br/>");
 		// print_r($Data_stock);
-		
+
 		// die;
 
 		$data = array(
@@ -659,16 +659,17 @@ class Tbl_pembelian extends CI_Controller
         sum(tbl_pembelian_a.harga_total) as total_pembelian,
         tbl_pembelian_a.supplier_nama as supplier_nama,
         tbl_pembelian_a.statuslu as statuslu,
-        tbl_pembelian_a.kas_bank as kas_bank,
-        tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
-        tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
+        
+        -- tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
+        -- tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
 
+		tbl_pembelian_a.kas_bank as kas_bank
 
         FROM tbl_pembelian tbl_pembelian_a 
 		
-		left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_a.uuid_spop
+		-- left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_a.uuid_spop
 
-		group by tbl_pembelian_a.uuid_spop,tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar
+		group by tbl_pembelian_a.uuid_spop
 
 		order by tbl_pembelian_a.tgl_po asc
         ";
@@ -2181,7 +2182,6 @@ class Tbl_pembelian extends CI_Controller
 
 			$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
 			$get_uuid_spop_generating = $uuid_spop;
-	
 		} else {
 
 			// print_r("Tidak ada SPOP");
