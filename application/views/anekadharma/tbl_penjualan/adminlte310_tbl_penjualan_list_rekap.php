@@ -291,7 +291,8 @@
                                             <td></td>
                                             <td></td>
                                             <td></td>
-                                            <td></td>
+                                            <td></td>  <!-- total 2 -->
+                                            
 
 
 
@@ -362,6 +363,7 @@
                                                 </td>
                                                 <td align="right">
                                                     <?php
+                                                    // echo "total 3";
                                                     echo number_format($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan, 2, ',', '.');
 
                                                     $Total_Harga = $Total_Harga + ($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan);
@@ -385,10 +387,14 @@
 
                                             <td></td>
                                             <td></td>
+                                            <td></td>
                                             <td style="background-color:yellow;" align="right">TOTAL</td>
                                             <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; ?></td>
                                             <td style="background-color:yellow;"></td>
-                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "</strong>"; ?></td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php 
+                                                // echo "Total 4";
+                                                echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "</strong>"; ?></td>
                                         </tr>
 
 
