@@ -132,7 +132,9 @@
                                     <th>No</th>
 
                                     <th>Nama Barang <br /> Persediaan</th>
+                                    <th>SPOP</th>
                                     <th>Tanggal<br /> Jual</th>
+
                                     <th>Nomor<br /> Kirim</th>
                                     <th>Konsumen</th>
                                     <th>Nama Barang <br /> Penjualan</th>
@@ -159,6 +161,8 @@
                                         <tr>
                                             <td><?php echo ++$start; ?></td>
                                             <td><?php echo $list_data_PERSEDIAAN->namabarang_persediaan; ?></td>
+                                            <td></td><!-- SPOP list nama barang persediaan-->
+
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -180,6 +184,129 @@
 
                                         $sql_PENJUALAN_by_UUID_PERSEDIAAN = "SELECT 
                                                         tbl_penjualan.tgl_jual as tgl_jual_penjualan,
+                                                        tbl_penjualan.id_persediaan_barang as id_persediaan_barang,
+                                                        tbl_penjualan.nmrkirim as nmrkirim_penjualan,
+                                                        tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
+                                                        tbl_penjualan.konsumen_nama as konsumen_nama_penjualan,
+                                                        tbl_penjualan.nama_barang as nama_barang_penjualan,
+                                                        tbl_penjualan.jumlah as jumlah_penjualan,
+                                                        tbl_penjualan.harga_satuan as harga_satuan_penjualan,
+                                                        tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
+                                                            FROM tbl_penjualan
+                                                            --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
+                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
+                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
+
+                                        $Total_jumlah_Barang = 0;
+                                        $Total_Harga = 0;
+                                        foreach ($this->db->query($sql_PENJUALAN_by_UUID_PERSEDIAAN)->result() as $list_data_PENJUALAN) {
+                                            //LOOPING PENJUALAN BERDASARKAN UUID_PENJUALAN
+                                        ?>
+
+                                            <tr>
+                                                <td><?php echo ++$start; ?></td>
+                                                <td></td>
+                                                <td>
+                                                    <?php 
+                                                    
+                                                    $this->db->where('id', $list_data_PENJUALAN->id_persediaan_barang);
+                                                    $Query_data_persediaan_barang = $this->db->get('persediaan');
+                                                    $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
+
+                                                    // echo "nomor spop : "; 
+                                                    echo $Get_data_persediaan_barang->spop;
+                                                    ?>
+                                                    </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
+
+                                                <td>
+                                                    <?php
+                                                    echo date("d-m-Y", strtotime($list_data_PENJUALAN->tgl_jual_penjualan));
+                                                    ?>
+                                                </td>
+                                                <td><?php echo $list_data_PENJUALAN->nmrkirim_penjualan; ?></td>
+                                                <td><?php echo $list_data_PENJUALAN->konsumen_nama_penjualan; ?></td>
+                                                <td><?php echo $list_data_PENJUALAN->nama_barang_penjualan; ?></td>
+                                                <td align="right">
+                                                    <?php
+                                                    echo $list_data_PENJUALAN->jumlah_penjualan;
+                                                    $Total_jumlah_Barang = $Total_jumlah_Barang + $list_data_PENJUALAN->jumlah_penjualan;
+                                                    ?>
+                                                </td>
+                                                <td align="right">
+                                                    <?php
+                                                    echo number_format($list_data_PENJUALAN->harga_satuan_penjualan, 2, ',', '.');
+                                                    ?>
+                                                </td>
+                                                <td align="right">
+
+                                                    <?php
+                                                    echo number_format($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan, 2, ',', '.');
+
+                                                    $Total_Harga = $Total_Harga + ($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan);
+                                                    ?>
+                                                </td>
+
+
+
+
+
+                                            </tr>
+
+                                        <?php
+                                        } //END OF SELESAI LOOPING PENJUALAN BERDASARKAN UUID_PENJUALAN
+                                        ?>
+
+                                        <!-- TOTAL PER NAMA BARANG -->
+                                        <tr>
+                                            <td><?php echo ++$start; ?></td>
+                                            <td><?php //echo $list_data_PERSEDIAAN->namabarang_persediaan; 
+                                                ?></td>
+                                            <td></td><!-- SPOP Y kolom spop total -->
+
+                                            <td></td>
+
+                                            <td></td>
+                                            <td></td>
+                                            <td style="background-color:yellow;" align="right">TOTAL</td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "<strong>"; ?></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "<strong>"; ?></td>
+                                        </tr>
+
+
+                                    <?php
+                                    } else {
+                                        // -------------- BARIS KE 2 NAMA BARANG PERSEDIAAN DAN SETERUSNYA ------------
+                                    ?>
+
+                                        <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA PERSEDIAAN -->
+                                        <tr>
+                                            <td><?php echo ++$start; ?></td>
+                                            <td><?php echo $list_data_PERSEDIAAN->namabarang_persediaan; ?></td>
+                                            <td></td> <!-- SPOP C kolom spop nama barang persediaan setelah nama barang pertama -->
+
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+
+
+
+
+
+                                        </tr>
+
+                                        <!-- CEK DATA GROUPING DATA BERDASARKAN NAMA BARANG DI PERSEDIAAN -->
+                                        <!-- BARIS KE 2 DATA PENJUALAN BERDASARKAN NAMA PENJUALAN -->
+
+                                        <?php
+
+                                        $sql_PENJUALAN_by_UUID_PERSEDIAAN = "SELECT 
+                                                        tbl_penjualan.tgl_jual as tgl_jual_penjualan,
+                                                        tbl_penjualan.id_persediaan_barang as id_persediaan_barang,
                                                         tbl_penjualan.nmrkirim as nmrkirim_penjualan,
                                                         tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
                                                         tbl_penjualan.konsumen_nama as konsumen_nama_penjualan,
@@ -203,107 +330,17 @@
                                                 <td></td>
                                                 <td>
                                                     <?php
-                                                    echo date("d-m-Y", strtotime($list_data_PENJUALAN->tgl_jual_penjualan));
+
+                                                    $this->db->where('id', $list_data_PENJUALAN->id_persediaan_barang);
+                                                    $Query_data_persediaan_barang = $this->db->get('persediaan');
+                                                    $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
+
+                                                    // echo "nomor spop : "; 
+                                                    echo $Get_data_persediaan_barang->spop;
+
                                                     ?>
-                                                </td>
-                                                <td><?php echo $list_data_PENJUALAN->nmrkirim_penjualan; ?></td>
-                                                <td><?php echo $list_data_PENJUALAN->konsumen_nama_penjualan; ?></td>
-                                                <td><?php echo $list_data_PENJUALAN->nama_barang_penjualan; ?></td>
-                                                <td align="right">
-                                                    <?php
-                                                    echo $list_data_PENJUALAN->jumlah_penjualan;
-                                                    $Total_jumlah_Barang = $Total_jumlah_Barang + $list_data_PENJUALAN->jumlah_penjualan;
-                                                    ?>
-                                                </td>
-                                                <td align="right">
-                                                    <?php
-                                                    echo number_format($list_data_PENJUALAN->harga_satuan_penjualan, 2, ',', '.');
-                                                    ?>
-                                                </td>
-                                                <td align="right">
-                                                    <?php
-                                                    echo number_format($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan, 2, ',', '.');
+                                                </td> <!-- SPOP V : isi nomor spop spop nama barang ke 2 dst-->
 
-                                                    $Total_Harga = $Total_Harga + ($list_data_PENJUALAN->jumlah_penjualan * $list_data_PENJUALAN->harga_satuan_penjualan);
-                                                    ?>
-                                                </td>
-
-
-
-
-
-                                            </tr>
-
-                                        <?php
-                                        } //END OF SELESAI LOOPING PENJUALAN BERDASARKAN UUID_PENJUALAN
-                                        ?>
-
-                                        <!-- TOTAL PER NAMA BARANG -->
-                                        <tr>
-                                            <td><?php echo ++$start; ?></td>
-                                            <td><?php //echo $list_data_PERSEDIAAN->namabarang_persediaan; 
-                                                ?></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td style="background-color:yellow;" align="right">TOTAL</td>
-                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') ."<strong>"; ?></td>
-                                            <td style="background-color:yellow;"></td>
-                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" .number_format($Total_Harga, 2, ',', '.')."<strong>"; ?></td>
-                                        </tr>
-
-
-                                    <?php
-                                    } else {
-                                        // -------------- BARIS KE 2 NAMA BARANG PERSEDIAAN DAN SETERUSNYA ------------
-                                    ?>
-
-                                        <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA PERSEDIAAN -->
-                                        <tr>
-                                            <td><?php echo ++$start; ?></td>
-                                            <td><?php echo $list_data_PERSEDIAAN->namabarang_persediaan; ?></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-
-
-
-
-
-                                        </tr>
-
-                                        <!-- CEK DATA GROUPING DATA BERDASARKAN NAMA BARANG DI PERSEDIAAN -->
-                                        <!-- BARIS KE 2 DATA PENJUALAN BERDASARKAN NAMA PENJUALAN -->
-
-                                        <?php
-
-                                        $sql_PENJUALAN_by_UUID_PERSEDIAAN = "SELECT 
-                                                        tbl_penjualan.tgl_jual as tgl_jual_penjualan,
-                                                        tbl_penjualan.nmrkirim as nmrkirim_penjualan,
-                                                        tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
-                                                        tbl_penjualan.konsumen_nama as konsumen_nama_penjualan,
-                                                        tbl_penjualan.nama_barang as nama_barang_penjualan,
-                                                        tbl_penjualan.jumlah as jumlah_penjualan,
-                                                        tbl_penjualan.harga_satuan as harga_satuan_penjualan,
-                                                        tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
-                                                            FROM tbl_penjualan
-                                                            --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
-                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
-                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
-
-                                        $Total_jumlah_Barang = 0;
-                                        $Total_Harga = 0;
-                                        foreach ($this->db->query($sql_PENJUALAN_by_UUID_PERSEDIAAN)->result() as $list_data_PENJUALAN) {
-                                            //LOOPING PENJUALAN BERDASARKAN UUID_PENJUALAN
-                                        ?>
-
-                                            <tr>
-                                                <td><?php echo ++$start; ?></td>
-                                                <td></td>
                                                 <td>
                                                     <?php
                                                     echo date("d-m-Y", strtotime($list_data_PENJUALAN->tgl_jual_penjualan));
@@ -344,13 +381,14 @@
                                             <td><?php echo ++$start; ?></td>
                                             <td><?php //echo $list_data_PERSEDIAAN->namabarang_persediaan; 
                                                 ?></td>
-                                            <td></td>
+                                            <td></td> <!-- SPOP B total nama barang ke 2 dst -->
+
                                             <td></td>
                                             <td></td>
                                             <td style="background-color:yellow;" align="right">TOTAL</td>
-                                            <td style="background-color:yellow;" align="right"><?php  echo "<font color='red'><strong>" .number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; ?></td>
                                             <td style="background-color:yellow;"></td>
-                                            <td style="background-color:yellow;" align="right"><?php  echo "<font color='red'><strong>" .number_format($Total_Harga, 2, ',', '.') . "</strong>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "</strong>"; ?></td>
                                         </tr>
 
 

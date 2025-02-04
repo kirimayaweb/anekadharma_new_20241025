@@ -68,6 +68,7 @@ class Tbl_penjualan extends CI_Controller
 								persediaan.uuid_persediaan as uuid_persediaan,
 								persediaan.namabarang as namabarang_persediaan, 
 								persediaan.sa as saldo_awal_persediaan, 
+								persediaan.spop as spop, 
 
 		 						tbl_penjualan.id_persediaan_barang as id_persediaan_barang,
 		 						tbl_penjualan.tgl_jual as tgl_jual_penjualan,
