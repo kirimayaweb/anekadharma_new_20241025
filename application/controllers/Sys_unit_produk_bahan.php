@@ -8,15 +8,57 @@ class Sys_unit_produk_bahan extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        $this->load->model('Sys_unit_produk_bahan_model');
+        $this->load->model(array('Sys_unit_produk_bahan_model', 'Sys_unit_produk_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
+
+    public function UpdateSatuanHargaSatuan()
+    {
+
+        $sql_data_bahan_produksi = "SELECT * FROM `sys_unit_produk_bahan` order by id";
+
+        foreach ($this->db->query($sql_data_bahan_produksi)->result() as $get_data_produk_bahan) {
+            // filter data persediaan by UUID_PERSEDIAN dan cek satuan dan harga satuan kemudian update k eabel sys_unit_produk_bahan
+
+
+            
+        }
+    }
+
+    public function insertProdukBahan_to_sysUnitProduk()
+    {
+        $sql_data_bahan_produksi_group_by_unit_tgl_produksi = "SELECT * FROM `sys_unit_produk_bahan` GROUP BY `uuid_unit`,`tgl_transaksi`";
+        // $get_data_produk_bahan = $this->db->query($sql_data_bahan_produksi_group_by_unit_tgl_produksi)->result();
+
+        // `id`, ``, ``, ``, ``, ``, `uuid_produk`, `kode_barang_bahan`, `nama_barang_bahan`, `jumlah_bahan`, `satuan_bahan`, `harga_satuan_bahan`
+
+        foreach ($this->db->query($sql_data_bahan_produksi_group_by_unit_tgl_produksi)->result() as $get_data_produk_bahan) {
+            $data = array(
+                'uuid_persediaan' => $get_data_produk_bahan->uuid_persediaan,
+                'uuid_unit' => $get_data_produk_bahan->uuid_unit,
+                'kode_unit' => $get_data_produk_bahan->kode_unit,
+                'nama_unit' => $get_data_produk_bahan->nama_unit,
+                'tgl_transaksi' => $get_data_produk_bahan->tgl_transaksi,
+                // 'uuid_produk' => $get_data_produk_bahan->,
+                // 'kode_barang' => $get_data_produk_bahan->,
+                // 'nama_barang' => $get_data_produk_bahan->,
+                // 'jumlah_produksi' => ,
+                // 'satuan' => ,
+                // 'harga_satuan' => ,
+            );
+
+            $this->Sys_unit_produk_model->insert($data);
+        }
+    }
+
 
     public function index()
     {
         $this->load->view('sys_unit_produk_bahan/sys_unit_produk_bahan_list');
     }
+
+
 
     public function json()
     {
@@ -168,7 +210,7 @@ class Sys_unit_produk_bahan extends CI_Controller
         if ($row) {
             $this->Sys_unit_produk_bahan_model->delete($id);
             $this->session->set_flashdata('message', 'Delete Record Success');
-            if ($source_page_pref_1==null) {
+            if ($source_page_pref_1 == null) {
 
                 redirect(site_url('sys_unit_produk_bahan'));
             } else {
@@ -177,7 +219,7 @@ class Sys_unit_produk_bahan extends CI_Controller
             }
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
-            if ($source_page_pref_1==null) {
+            if ($source_page_pref_1 == null) {
 
                 redirect(site_url('sys_unit_produk_bahan'));
             } else {

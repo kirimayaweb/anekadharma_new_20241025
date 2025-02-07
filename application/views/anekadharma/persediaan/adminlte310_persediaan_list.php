@@ -85,7 +85,7 @@
                     <div class="card-body">
 
 
-                        <table id="ExampleOnFile" class="table table-bordered" style="width:100%">
+                        <table id="example" class="table table-bordered" style="width:100%">
                             <!-- <table class="table table-bordered table-striped" id="mytable"> -->
                             <thead>
                                 <tr>
@@ -184,7 +184,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 250,
+            "scrollY": 700,
             "scrollX": true
         });
     });
@@ -193,7 +193,7 @@
 
     $(document).ready(function() {
         var table = $('#ExampleOnFile').DataTable({
-            scrollX: true,
+            scrollX: "800",
             scrollY: "400px",
             scrollCollapse: true,
             paging: true,
