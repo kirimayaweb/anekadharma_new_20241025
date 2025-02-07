@@ -522,10 +522,6 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-                'uuid_unit' => $get_data_produk_unit->uuid_unit,
-                // 'kode_unit' => set_value('kode_unit'),
-                'nama_unit' =>  $get_data_produk_unit->nama_unit,
-                'tgl_transaksi' => $get_data_produk_unit->tgl_transaksi,
 
                 'id_persediaan_barang' => $id_persediaan_barang,
                 'uuid_barang' => $data_barang_selected->uuid_barang,
@@ -534,7 +530,12 @@ class Sys_unit_produk extends CI_Controller
                 'satuan' => $data_barang_selected->satuan,
                 'harga_satuan' => $data_barang_selected->hpp,
 
+                'uuid_unit' => $get_data_produk_unit->uuid_unit,
+                // 'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  $get_data_produk_unit->nama_unit,
+                'tgl_transaksi' => $get_data_produk_unit->tgl_transaksi,
                 'jumlah_produksi' => $get_data_produk_unit->jumlah_produksi,
+                'keterangan' => $get_data_produk_unit->keterangan,
             );
 
             // print_r($data);
@@ -558,10 +559,6 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-                'uuid_unit' => set_value('uuid_unit'),
-                'kode_unit' => set_value('kode_unit'),
-                'nama_unit' =>  set_value('nama_unit'),
-                'tgl_transaksi' => set_value('tgl_transaksi'),
 
                 'id_persediaan_barang' => set_value('id_persediaan_barang'),
                 'uuid_barang' => set_value('uuid_barang'),
@@ -570,7 +567,12 @@ class Sys_unit_produk extends CI_Controller
                 'satuan' => set_value('satuan'),
                 'harga_satuan' => set_value('harga_satuan'),
 
+                'uuid_unit' => set_value('uuid_unit'),
+                'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  set_value('nama_unit'),
+                'tgl_transaksi' => set_value('tgl_transaksi'),
                 'jumlah_produksi' => set_value('jumlah_produksi'),
+                'keterangan' => set_value('keterangan'),
             );
 
 
@@ -610,11 +612,7 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/UPDATE_action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-                'uuid_unit' => $get_data_produk_unit->uuid_unit,
-                // 'kode_unit' => set_value('kode_unit'),
-                'nama_unit' =>  $get_data_produk_unit->nama_unit,
-                'tgl_transaksi' => $get_data_produk_unit->tgl_transaksi,
-
+               
                 'id_persediaan_barang' => $id_persediaan_barang,
                 'uuid_barang' => $data_barang_selected->uuid_barang,
                 'kode_barang' => $data_barang_selected->kode_barang,
@@ -622,7 +620,12 @@ class Sys_unit_produk extends CI_Controller
                 'satuan' => $data_barang_selected->satuan,
                 'harga_satuan' => $data_barang_selected->hpp,
 
+                'uuid_unit' => $get_data_produk_unit->uuid_unit,
+                // 'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  $get_data_produk_unit->nama_unit,
+                'tgl_transaksi' => $get_data_produk_unit->tgl_transaksi,
                 'jumlah_produksi' => $get_data_produk_unit->jumlah_produksi,
+                'keterangan' => $get_data_produk_unit->keterangan,
             );
 
             // print_r($data);
@@ -646,11 +649,7 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/UPDATE_action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-                'uuid_unit' => set_value('uuid_unit'),
-                'kode_unit' => set_value('kode_unit'),
-                'nama_unit' =>  set_value('nama_unit'),
-                'tgl_transaksi' => set_value('tgl_transaksi'),
-
+                
                 'id_persediaan_barang' => set_value('id_persediaan_barang'),
                 'uuid_barang' => set_value('uuid_barang'),
                 'kode_barang' => set_value('kode_barang'),
@@ -658,7 +657,12 @@ class Sys_unit_produk extends CI_Controller
                 'satuan' => set_value('satuan'),
                 'harga_satuan' => set_value('harga_satuan'),
 
+                'uuid_unit' => set_value('uuid_unit'),
+                'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  set_value('nama_unit'),
+                'tgl_transaksi' => set_value('tgl_transaksi'),
                 'jumlah_produksi' => set_value('jumlah_produksi'),
+                'keterangan' => set_value('keterangan'),
             );
 
 
@@ -842,6 +846,7 @@ class Sys_unit_produk extends CI_Controller
             'jumlah_produksi' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
             'satuan' => $this->input->post('satuan', TRUE),
             'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+            'keterangan' => $this->input->post('keterangan', TRUE),
         );
 
         $this->Sys_unit_produk_model->insert($data);
@@ -1017,6 +1022,7 @@ class Sys_unit_produk extends CI_Controller
             'jumlah_produksi' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
             'satuan' => $this->input->post('satuan', TRUE),
             'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE)),
+            'keterangan' => $this->input->post('keterangan', TRUE),
         );
 
         $this->Sys_unit_produk_model->update($GET_id_sys_unit_produk, $data);

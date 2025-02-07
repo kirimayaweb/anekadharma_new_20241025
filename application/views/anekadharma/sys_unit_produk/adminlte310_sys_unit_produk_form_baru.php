@@ -621,8 +621,8 @@ if ($id_persediaan_barang) {
                                 <div class="col-6">
                                     <label for="keterangan">Keterangan </label>
 
-                                    <input type="text" class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="keterangan" value="<?php //echo $keterangan; 
-                                                                                                                                                        ?>" required>
+                                    <input type="text" class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="keterangan" value="<?php echo $keterangan; 
+                                                                                                                                                        ?>">
                                 </div>
 
 
