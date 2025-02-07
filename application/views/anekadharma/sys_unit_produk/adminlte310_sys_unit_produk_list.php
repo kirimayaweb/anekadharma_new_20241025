@@ -124,7 +124,7 @@
                                                                 <td style="text-align:left"><?php echo $list_data->nama_barang; ?> </td>
                                                                 <td style="text-align:right"><?php echo $list_data->jumlah_produksi; ?> </td>
                                                                 <td style="text-align:left"><?php echo $list_data->satuan; ?> </td>
-                                                                <td style="text-align:right"><?php echo $list_data->harga_satuan; ?> </td>
+                                                                <td style="text-align:right"><?php echo number_format($list_data->harga_satuan, 2, ',', '.') ; ?> </td>
 
 
                                                                 <!-- `id`, `uuid_unit`, `kode_unit`, `nama_unit`, ``, `uuid_produk`, `kode_barang`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan` -->
