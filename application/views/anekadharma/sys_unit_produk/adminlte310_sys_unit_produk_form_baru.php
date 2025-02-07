@@ -355,7 +355,7 @@
                                             if ($id_persediaan_barang) {
                                             ?>
                                                 <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input_nama_produk_baru">
-                                                    Input Nama Produk
+                                                    <?php echo $button_data_produk; ?>
                                                 </button>
                                             <?php
                                             }
@@ -605,7 +605,9 @@ if ($id_persediaan_barang) {
                                 </div>
                                 <div class="col-5">
                                     <label for="keterangan">Harga Satuan </label>
-                                    <input class="form-control uang" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php echo $harga_satuan; ?>" required>
+                                    
+                                    <input class="form-control uang" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php echo number_format($harga_satuan, 0, ',', '.') ; ?>" required>
+
                                     <?php echo "<p style='font-size:0.75em;color:#c50d0d;font-weight:bold;'> Total Harga Bahan: " . number_format($TOTAL_HARGA, 0, ',', '.') . "</p>" ?>
 
                                 </div>

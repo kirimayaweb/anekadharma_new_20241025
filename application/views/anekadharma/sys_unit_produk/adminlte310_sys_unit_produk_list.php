@@ -112,7 +112,7 @@
                                                                     $this->db->where('uuid_persediaan', $list_data->uuid_persediaan);
                                                                     $persediaan_nama_barang = $this->db->get('persediaan');
 
-                                                                    echo anchor(site_url('Sys_unit_produk/create_produksi/' . $persediaan_nama_barang->row()->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    echo anchor(site_url('Sys_unit_produk/update_produksi/' . $persediaan_nama_barang->row()->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                     // echo ' ';
                                                                     // echo anchor(site_url('Sys_unit_produk/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>

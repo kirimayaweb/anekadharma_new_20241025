@@ -116,6 +116,14 @@ class Sys_unit_produk_model extends CI_Model
     // update data
     function update($id, $data)
     {
+        // print_r("sys_unit_produk MODEL");
+        // print_r("<br/>");
+        // print_r($id);
+        // print_r("<br/>");
+        // print_r($data);
+        // print_r("<br/>");
+        // die;
+
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);
     }
