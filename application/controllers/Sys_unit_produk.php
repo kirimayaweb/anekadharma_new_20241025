@@ -696,7 +696,7 @@ class Sys_unit_produk extends CI_Controller
         // $Jumlah_nominal = $this->input->post('jumlah_produksi', TRUE) * $this->input->post('harga_satuan', TRUE);
 
         $Get_satuan = $this->input->post('satuan', TRUE);
-        $Get_harga_satuan = $this->input->post('harga_satuan', TRUE);
+        $Get_harga_satuan = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
         $Get_jumlah_produksi = preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE));
 
         $Jumlah_nominal = $Get_harga_satuan * $Get_jumlah_produksi;
