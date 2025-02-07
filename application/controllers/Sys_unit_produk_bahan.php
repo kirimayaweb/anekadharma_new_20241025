@@ -18,11 +18,11 @@ class Sys_unit_produk_bahan extends CI_Controller
 
         $sql_data_bahan_produksi = "SELECT * FROM `sys_unit_produk_bahan` order by id";
 
-        foreach ($this->db->query($sql_data_bahan_produksi)->result() as $get_data_produk_bahan) {
+        foreach ($this->db->query($sql_data_bahan_produksi)->result() as $list_data) {
             // filter data persediaan by UUID_PERSEDIAN dan cek satuan dan harga satuan kemudian update k eabel sys_unit_produk_bahan
 
 
-            
+
         }
     }
 
