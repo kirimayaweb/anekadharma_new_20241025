@@ -148,7 +148,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 300,
+            "scrollY": 900,
             "scrollX": true
         });
     });
