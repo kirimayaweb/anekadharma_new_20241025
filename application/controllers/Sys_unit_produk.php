@@ -338,16 +338,21 @@ class Sys_unit_produk extends CI_Controller
     public function create_action_produksi_input_bahan($id_persediaan_barang = null)
     {
 
-        print_r("create_action_produksi_input_bahan");
-        print_r("<br/>");
+        // print_r("create_action_produksi_input_bahan");
+        // print_r("<br/>");
+
+
 
         if ($id_persediaan_barang) {
-            print_r("Ada ID PERSEDIAAN");
-            print_r("<br/>");
+            // print_r("Ada ID PERSEDIAAN");
+            // print_r("<br/>");
 
             $data_barang_selected = $this->Persediaan_model->get_by_id($id_persediaan_barang);
-            $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
-            $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+
+            // $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            
+            // $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            
             $get_data_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
 
             // print_r($get_data_barang);
@@ -356,6 +361,12 @@ class Sys_unit_produk extends CI_Controller
             // print_r("<br/>");
 
             // Simpan bahan ke tabel sys_unit_produk_bahan berdasarkan id_persediaan barang
+            $get_data_barang_dipersediaan_by_uuid_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($this->input->post('uuid_persediaan', TRUE));
+
+            // print_r($get_data_barang_dipersediaan_by_uuid_persediaan);
+            // die;
+    
+
 
             $data = array(
 
@@ -367,12 +378,13 @@ class Sys_unit_produk extends CI_Controller
 
                 'tgl_transaksi' => $data_barang_selected->tanggal,
 
-                'uuid_produk' => $get_data_barang->uuid_barang,
-                'kode_barang_bahan' => $get_data_barang->kode_barang,
-                'nama_barang_bahan' => $get_data_barang->nama_barang,
+                'uuid_produk' => $get_data_barang_dipersediaan_by_uuid_persediaan->uuid_barang,
+                'kode_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->kode_barang,
+                'nama_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->namabarang,
+                'satuan_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->satuan,
+                'harga_satuan_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->hpp,
                 'jumlah_bahan' => $this->input->post('jumlah', TRUE),
-                // 'satuan_bahan' => $this->input->post('satuan_bahan', TRUE),
-                // 'harga_satuan_bahan' => $this->input->post('harga_satuan_bahan', TRUE),
+
             );
 
             $this->Sys_unit_produk_bahan_model->insert($data);
@@ -413,10 +425,10 @@ class Sys_unit_produk extends CI_Controller
             $sql_data_persediaan = "SELECT * FROM `persediaan` WHERE `id`='$id_persediaan_barang'";
             $get_uuid_persediaan = $this->db->query($sql_data_persediaan)->row()->uuid_persediaan;
 
-            print_r($id_persediaan_barang);
-            print_r("<br/>");
-            print_r("<br/>");
-            print_r("<br/>");
+            // print_r($id_persediaan_barang);
+            // print_r("<br/>");
+            // print_r("<br/>");
+            // print_r("<br/>");
 
 
             // End of Kemudian Insert ke tabel persediaan
@@ -443,11 +455,16 @@ class Sys_unit_produk extends CI_Controller
 
             $data_barang_selected = $this->Persediaan_model->get_by_id($id_persediaan_barang);
 
-            $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            // $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
 
-            $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            // $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
 
-            $get_data_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
+            // $get_data_barang = $this->Sys_nama_barang_model->get_by_uuid_barang($this->input->post('uuid_barang', TRUE));
+
+            
+
+            // print_r($get_data_barang);
+            $get_data_barang_dipersediaan_by_uuid_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($this->input->post('uuid_persediaan', TRUE));
 
 
             $data = array(
@@ -457,17 +474,21 @@ class Sys_unit_produk extends CI_Controller
                 // 'kode_unit' => $this->input->post('kode_unit', TRUE),
                 // 'nama_unit' => $get_data_produk_unit->nama_unit,
                 'tgl_transaksi' => $date_tgl_produksi,
-                'uuid_produk' => $get_data_barang->uuid_barang,
-                'kode_barang_bahan' => $get_data_barang->kode_barang,
-                'nama_barang_bahan' => $get_data_barang->nama_barang,
+                'uuid_produk' => $get_data_barang_dipersediaan_by_uuid_persediaan->uuid_barang,
+                'kode_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->kode_barang,
+                'nama_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->namabarang,
+                'satuan_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->satuan,
+                'harga_satuan_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->hpp,
+                
                 'jumlah_bahan' => $this->input->post('jumlah', TRUE),
-                // 'satuan_bahan' => $this->input->post('satuan_bahan', TRUE),
-                // 'harga_satuan_bahan' => $this->input->post('harga_satuan_bahan', TRUE),
+                
+                
+            
             );
 
             $this->Sys_unit_produk_bahan_model->insert($data);
 
-            print_r($this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($get_uuid_persediaan));
+            // print_r($this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($get_uuid_persediaan));
             // die;
 
             redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang));
@@ -516,6 +537,8 @@ class Sys_unit_produk extends CI_Controller
                 'jumlah_produksi' => $get_data_produk_unit->jumlah_produksi,
             );
 
+            // print_r($data);
+
             // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
 
             // $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
@@ -549,6 +572,9 @@ class Sys_unit_produk extends CI_Controller
 
                 'jumlah_produksi' => set_value('jumlah_produksi'),
             );
+
+
+            // print_r($data);
 
             // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
 
@@ -739,7 +765,8 @@ class Sys_unit_produk extends CI_Controller
         // print_r("Selesai SIMPAN");
         // die;
 
-        redirect(site_url('Sys_unit_produk/create_produksi/' . $Get_id_persediaan_barang));
+        // redirect(site_url('Sys_unit_produk/create_produksi/' . $Get_id_persediaan_barang));
+        redirect(site_url('Sys_unit_produk'));
     }
 
     public function create_action_produksi($id_persediaan_barang = null)

@@ -32,8 +32,19 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>TAMBAH PRODUK : <?php //echo $nama_unit; 
+                                    <div class="col-12" text-align="center" > <strong> <?php //echo $nama_unit; 
                                                                                                         ?> </strong></div>
+
+                                        <?php
+                                        if ($id_persediaan_barang) {
+                                            $this->db->where('id', $id_persediaan_barang);
+                                            $persediaan_nama_barang = $this->db->get('persediaan');
+
+                                            echo " <p style='font-size:1em;color:#c50d0d;font-weight:bold;'> NAMA PRODUK: " . $persediaan_nama_barang->row()->namabarang ."</p>";
+                                        }else{
+                                            echo "<p style='font-size:1em;color:#c50d0d;font-weight:bold;'> BELUM SETTING NAMA PRODUK </p>";
+                                        }
+                                        ?>
                                 </div>
 
 
@@ -166,7 +177,11 @@
                                 <div class="card-header">
 
                                     <div class="row">
-                                        <div class="col-2" text-align="center"> <strong>Detail Bahan-bahan</strong></div>
+                                        <div class="col-2" text-align="center"> <strong>Detail Bahan-bahan: </strong>
+                                        </div>
+                                      
+
+
                                         <div class="col-3" text-align="left">
                                             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-select-unit">
                                                 Input Bahan
@@ -178,6 +193,12 @@
 
                                 </div>
 
+
+                                <?php
+
+                                // print_r($data_bahan_produk_unit);
+
+                                ?>
 
                                 <div class="card-body">
 
@@ -203,7 +224,7 @@
                                             $Total_per_SPOP = 0;
                                             $TOTAL_LUNAS = 0;
                                             $TOTAL_HUTANG = 0;
-                                            // $TOTAL_HARGA=0;
+                                            $TOTAL_HARGA = 0;
                                             $start = 0;
                                             $jumlah_barang = 0;
                                             foreach ($data_bahan_produk_unit as $list_data) {
@@ -217,17 +238,18 @@
 
                                                     <td align="left">
 
-                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
+                                                        <!-- <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php //echo $list_data->id 
+                                                                                                                                                                            ?>">
                                                             UBAH <?php //echo $list_data->id 
                                                                     ?>
-                                                        </button>
+                                                        </button> -->
 
                                                         <?php
                                                         // echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
                                                         // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
 
-
+                                                        echo anchor(site_url('Sys_unit_produk_bahan/delete/' . $list_data->id . '/Sys_unit_produk/create_produksi/' . $id_persediaan_barang), '<i class="fa fa-trash-o" aria-hidden="true">Hapus Bahan</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
 
                                                         ?>
 
@@ -261,7 +283,7 @@
 
                                                         echo number_format($total_per_uraian, 2, ',', '.');
 
-                                                        $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
+                                                        $TOTAL_HARGA = $TOTAL_HARGA + $total_per_uraian;
 
 
                                                         ?>
@@ -296,7 +318,7 @@
                                                 <th style="text-align:right">
                                                     <?php
                                                     // echo $Total_per_SPOP; 
-                                                    echo number_format($Total_per_SPOP, 2, ',', '.');
+                                                    echo number_format($TOTAL_HARGA, 2, ',', '.');
                                                     ?>
                                                 </th>
                                             </tr>
@@ -329,9 +351,6 @@
                                             <!-- <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modal-xl-select-unit">
                                             Input Bahan
                                         </button> -->
-
-                                            <a href="<?php echo site_url('Sys_unit_produk') ?>" class="btn btn-success">Kembali ke data produk</a>
-
                                             <?php
                                             if ($id_persediaan_barang) {
                                             ?>
@@ -341,6 +360,23 @@
                                             <?php
                                             }
                                             ?>
+
+
+
+
+
+                                        </div>
+                                        <div class="col-4"></div>
+                                    </div>
+                                    <div class="row" align="center">
+                                        <div class="col-4"></div>
+                                        <div class="col-4">
+                                            <input type="hidden" name="id" value="<?php echo $id; ?>" />
+
+
+                                            <a href="<?php echo site_url('Sys_unit_produk') ?>" class="btn btn-success">Kembali ke data produk</a>
+
+
 
 
 
@@ -364,7 +400,7 @@
                                 <div class="modal-dialog modal-xl">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h4 class="modal-title">Input Bahan Produksi C</h4>
+                                            <h4 class="modal-title">Input Bahan Produksi</h4>
                                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                                 <span aria-hidden="true">&times;</span>
                                             </button>
@@ -376,17 +412,17 @@
 
                                                 <div class="row">
                                                     <div class="col-4">
-                                                        <label for="uuid_barang">Bahan <?php echo form_error('uuid_barang') ?></label>
+                                                        <label for="uuid_persediaan">Bahan <?php echo form_error('uuid_persediaan') ?></label>
 
-                                                        <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                                        <select name="uuid_persediaan" id="uuid_persediaan" class="form-control select2" style="width: 100%; height: 80px;" required>
                                                             <option value="">Pilih Bahan</option>
                                                             <?php
 
                                                             // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                                            $sql = "SELECT `uuid_barang`,`kode_barang`,`namabarang` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`satuan`";
+                                                            $sql = "SELECT `uuid_persediaan`,`uuid_barang`,`kode_barang`,`namabarang`,`spop` FROM `persediaan` WHERE `namabarang`<>'' GROUP by `namabarang`,`spop`,`satuan`";
                                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                                echo "<option value='$m->uuid_barang' ";
-                                                                echo ">  " . strtoupper($m->namabarang)  . "</option>";
+                                                                echo "<option value='$m->uuid_persediaan' ";
+                                                                echo ">  " . strtoupper($m->namabarang) . " --> SPOP: " . $m->spop . "</option>";
                                                             }
                                                             ?>
                                                         </select>
@@ -465,7 +501,8 @@ if ($id_persediaan_barang) {
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title">Input Nama Produk <?php //echo $action_simpan_nama_produk_baru; ?></h4>
+                        <h4 class="modal-title">Input Nama Produk <?php //echo $action_simpan_nama_produk_baru; 
+                                                                    ?></h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -475,28 +512,6 @@ if ($id_persediaan_barang) {
 
 
 
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-4">
-                                    <label for="keterangan">Nama Produk <?php echo form_error('nama_barang') ?></label>
-                                    <input type="hidden" name="id_persediaan_barang" id="id_persediaan_barang" value="<?php echo $id_persediaan_barang; ?>" />
-                                    <input type="hidden" name="uuid_barang" id="uuid_barang" value="<?php echo $uuid_barang; ?>" />
-                                    <input class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $nama_barang; ?>" required>
-                                </div>
-
-                                <div class="col-4">
-                                    <label for="keterangan">Satuan <?php echo form_error('satuan') ?></label>
-                                    <input class="form-control" rows="3" name="satuan" id="satuan" placeholder="satuan" value="<?php echo $satuan; ?>" required>
-
-                                </div>
-                                <div class="col-4">
-                                    <label for="keterangan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                    <input class="form-control uang" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php echo $harga_satuan; ?>" required>
-
-                                </div>
-
-                            </div>
-                        </div>
 
 
 
@@ -537,7 +552,8 @@ if ($id_persediaan_barang) {
                                 </div>
 
                                 <div class="col-4">
-                                    <label for="konsumen_nama">Unit <?php //echo form_error('konsumen_nama') ?></label>
+                                    <label for="konsumen_nama">Unit <?php //echo form_error('konsumen_nama') 
+                                                                    ?></label>
                                     <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
                                         <?php
                                         if ($uuid_unit) {
@@ -573,11 +589,34 @@ if ($id_persediaan_barang) {
                         </div>
 
 
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-4">
+                                    <label for="keterangan">Nama Produk <?php echo form_error('nama_barang') ?></label>
+                                    <input type="hidden" name="id_persediaan_barang" id="id_persediaan_barang" value="<?php echo $id_persediaan_barang; ?>" />
+                                    <input type="hidden" name="uuid_barang" id="uuid_barang" value="<?php echo $uuid_barang; ?>" />
+                                    <input class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $nama_barang; ?>" required>
+                                </div>
+
+                                <div class="col-3">
+                                    <label for="keterangan">Satuan <?php echo form_error('satuan') ?></label>
+                                    <input class="form-control" rows="3" name="satuan" id="satuan" placeholder="satuan" value="<?php echo $satuan; ?>" required>
+
+                                </div>
+                                <div class="col-5">
+                                    <label for="keterangan">Harga Satuan </label>
+                                    <input class="form-control uang" rows="3" name="harga_satuan" id="harga_satuan" placeholder="harga_satuan" value="<?php echo $harga_satuan; ?>" required>
+                                    <?php echo "<p style='font-size:0.75em;color:#c50d0d;font-weight:bold;'> Total Harga Bahan: " . number_format($TOTAL_HARGA, 0, ',', '.') . "</p>" ?>
+
+                                </div>
+
+                            </div>
+                        </div>
 
 
                         <div class="form-group">
                             <div class="row">
-                                <div class="col-4">
+                                <div class="col-6">
                                     <label for="keterangan">Keterangan </label>
 
                                     <input type="text" class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="keterangan" value="<?php //echo $keterangan; 
@@ -594,9 +633,11 @@ if ($id_persediaan_barang) {
                     </div>
 
                     <div class="modal-footer justify-content-between">
+
+
                         <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                        <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
                         <button type="submit" class="btn btn-primary">SIMPAN PRODUK</button>
+
                     </div>
                 </div>
                 <!-- /.modal-content -->

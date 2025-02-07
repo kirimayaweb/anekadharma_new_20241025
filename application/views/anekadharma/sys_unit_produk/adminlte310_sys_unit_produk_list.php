@@ -35,12 +35,12 @@
                                         <div class="col-12" text-align="center"> <strong>PRODUKSI</strong></div>
                                     </div>
                                     <div class="col-6">
-                                        <?php //echo anchor(site_url('Sys_unit_produk/create'), 'Tambah Produksi', 'class="btn btn-danger"');
+                                        <?php echo anchor(site_url('Sys_unit_produk/create_produksi'), 'Input Produksi', 'class="btn btn-danger"');
                                         ?>
-
+                                        <!-- 
                                         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-select-unit">
                                             Input Produksi
-                                        </button>
+                                        </button> -->
                                     </div>
                                 </div>
                             </div>
@@ -108,9 +108,13 @@
                                                                 <td style="text-align:center"><?php echo ++$start ?></td>
                                                                 <td style="text-align:left">
                                                                     <?php
-                                                                    echo anchor(site_url('Sys_unit_produk/update_produk/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                                                    echo ' ';
-                                                                    echo anchor(site_url('Sys_unit_produk/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+                                                                    $this->db->where('uuid_persediaan', $list_data->uuid_persediaan);
+                                                                    $persediaan_nama_barang = $this->db->get('persediaan');
+
+                                                                    echo anchor(site_url('Sys_unit_produk/create_produksi/' . $persediaan_nama_barang->row()->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    // echo ' ';
+                                                                    // echo anchor(site_url('Sys_unit_produk/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>
                                                                 </td>
 
@@ -227,7 +231,7 @@
                                     <label for="keterangan">Tanggal Produksi <?php echo form_error('tgl_transaksi') ?></label>
 
                                     <div class="input-group date" id="tgl_transaksi" name="tgl_transaksi" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_transaksi" id="tgl_transaksi" name="tgl_transaksi"  required />
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_transaksi" id="tgl_transaksi" name="tgl_transaksi" required />
                                         <div class="input-group-append" data-target="#tgl_transaksi" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
@@ -258,7 +262,7 @@
                                 <div class="col-4">
                                     <label for="keterangan">Satuan <?php //echo form_error('satuan') 
                                                                     ?></label>
-                                    <input class="form-control" rows="3" name="satuan" id="satuan" placeholder="satuan"  required>
+                                    <input class="form-control" rows="3" name="satuan" id="satuan" placeholder="satuan" required>
 
                                 </div>
                                 <div class="col-4">
