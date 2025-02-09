@@ -14,7 +14,20 @@ class Bukubank extends CI_Controller
         $this->load->library('datatables');
     }
 
-    public function index()
+    public function index(){
+        $data_buku_bank = $this->Bukubank_model->get_all();
+		$start = 0;
+
+		$data = array(
+			'data_buku_bank_data' => $data_buku_bank,
+			'start' => $start,
+		);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_list', $data);
+    }
+
+
+    public function index_server_side()
     {
         $this->load->view('bukubank/bukubank_list');
     }
