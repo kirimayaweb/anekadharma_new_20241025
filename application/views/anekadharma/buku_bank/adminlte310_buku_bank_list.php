@@ -44,7 +44,7 @@
                             </div>
 
                             <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); 
+                                <?php echo anchor(site_url('Bukubank/create'), 'Input Buku Bank', 'class="btn btn-success"'); 
                                 ?>
                             </div>
 
@@ -73,17 +73,17 @@
                                     <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th rowspan="2">Tanggal</th>
 
-                                    <th colspan="2" style="text-align:center">rekening</th>
+                                    <th colspan="2" style="text-align:center">Rekening</th>
 
-                                    <th rowspan="2">keterangan</th>
-                                    <th rowspan="2">kode</th>
-                                    <th rowspan="2">debet</th>
-                                    <th rowspan="2">kredit</th>
-                                    <th rowspan="2">saldo</th>
-
-
+                                    <th rowspan="2">Keterangan</th>
+                                    <th rowspan="2">Kode</th>
+                                    <th rowspan="2">Debet</th>
+                                    <th rowspan="2">Kredit</th>
+                                    <th rowspan="2">Saldo</th>
 
 
+
+                                </tr>
                                 <tr>
                                     <th>Bank</th>
                                     <th>Nomor rekening</th>
@@ -164,7 +164,32 @@
                                 ?>
                             </tbody>
 
+                            <tfoot>
 
+                                <tr>
+                                    <th style="text-align:center"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_DEBET, 2, ',', '.');
+                                        ?>
+                                    </th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_KREDIT, 2, ',', '.');
+                                        ?></th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_SALDO, 2, ',', '.');
+                                        ?>
+                                    </th>
+
+                                </tr>
+                            </tfoot>
 
                         </table>
                     </div>

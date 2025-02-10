@@ -92,7 +92,9 @@ class Bukubank extends CI_Controller
             'kredit' => set_value('kredit'),
             'saldo' => set_value('saldo'),
         );
-        $this->load->view('bukubank/bukubank_form', $data);
+        // $this->load->view('bukubank/bukubank_form', $data);
+        
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_form', $data);
     }
 
     public function create_action()
