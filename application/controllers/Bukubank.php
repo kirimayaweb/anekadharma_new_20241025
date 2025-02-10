@@ -16,15 +16,9 @@ class Bukubank extends CI_Controller
 
     public function index(){
         $data_buku_bank = $this->Bukubank_model->get_all_sort_by_tanggal();
-		// $start = 0;
-
-
-
 		$data = array(
 			'data_buku_bank' => $data_buku_bank,
-			// 'start' => $start,
 		);
-
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_list', $data);
     }
 
