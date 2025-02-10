@@ -612,7 +612,7 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/UPDATE_action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-               
+
                 'id_persediaan_barang' => $id_persediaan_barang,
                 'uuid_barang' => $data_barang_selected->uuid_barang,
                 'kode_barang' => $data_barang_selected->kode_barang,
@@ -649,7 +649,7 @@ class Sys_unit_produk extends CI_Controller
                 'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/UPDATE_action_simpan_nama_produk_baru/'),
 
                 'id' => set_value('id'),
-                
+
                 'id_persediaan_barang' => set_value('id_persediaan_barang'),
                 'uuid_barang' => set_value('uuid_barang'),
                 'kode_barang' => set_value('kode_barang'),
@@ -681,9 +681,11 @@ class Sys_unit_produk extends CI_Controller
         if (date("Y", strtotime($this->input->post('tgl_transaksi', TRUE))) < 2020) {
             $date_tgl_produksi = date("Y-m-d H:i:s");
             $KODE_tgl_produksi = date("Ymd");
+            $WAKTU_tgl_produksi = date("Hi");
         } else {
             $date_tgl_produksi = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_transaksi', TRUE)));
             $KODE_tgl_produksi = date("Ymd", strtotime($this->input->post('tgl_transaksi', TRUE)));
+            $WAKTU_tgl_produksi = date("Hi");
         }
 
 
@@ -782,10 +784,23 @@ class Sys_unit_produk extends CI_Controller
 
         // $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `uuid_persediaan`=replace(uuid(),'-','') WHERE `id`='$Get_id_persediaan_barang'";
 
-        $date_tgl_produksi = date("Y-m-d H:i:s");
-        $KODE_tgl_produksi = date("Ymd");
-        $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi;
-        // $Jumlah_nominal = $this->input->post('jumlah_produksi', TRUE) * $this->input->post('harga_satuan', TRUE);
+        // $date_tgl_produksi = date("Y-m-d H:i:s");
+        // $KODE_tgl_produksi = date("Ymd");
+        // $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi;
+        // // $Jumlah_nominal = $this->input->post('jumlah_produksi', TRUE) * $this->input->post('harga_satuan', TRUE);
+
+
+        $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi .  $WAKTU_tgl_produksi;
+
+        $this->db->where('spop', $SPOP_Produksi);
+        $data_spop_persediaan = $this->db->get('persediaan');
+
+        if ($data_spop_persediaan->num_rows() > 0) {
+            $Get_jumlah_produksi_dihari_sama = $data_spop_persediaan->num_rows() + 1;
+            $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi . "_" . $Get_jumlah_produksi_dihari_sama;
+        }
+
+
 
         $Get_satuan = $this->input->post('satuan', TRUE);
         $Get_harga_satuan = preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan', TRUE));
@@ -882,11 +897,15 @@ class Sys_unit_produk extends CI_Controller
         if (date("Y", strtotime($this->input->post('tgl_transaksi', TRUE))) < 2020) {
             $date_tgl_produksi = date("Y-m-d H:i:s");
             $KODE_tgl_produksi = date("Ymd");
+            $WAKTU_tgl_produksi = date("Hi");
         } else {
             $date_tgl_produksi = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_transaksi', TRUE)));
             $KODE_tgl_produksi = date("Ymd", strtotime($this->input->post('tgl_transaksi', TRUE)));
+            $WAKTU_tgl_produksi = date("Hi");
         }
 
+        // print_r($date_tgl_produksi);
+        // print_r("<br/>");
 
 
         // Simpan nama produk di tabel sys_nama_barang
@@ -904,7 +923,6 @@ class Sys_unit_produk extends CI_Controller
             $Get_uuid_barang = $Get_data_nama_barang->uuid_barang;
             $Get_kode_barang = $Get_data_nama_barang->kode_barang;
             $Get_nama_barang = $Get_data_nama_barang->nama_barang;
-
         } else {
 
             // Buat baru record di tabel sys_nama_barang
@@ -950,7 +968,6 @@ class Sys_unit_produk extends CI_Controller
             $Get_uuid_barang = $Get_data_barang->uuid_barang;
             $Get_kode_barang = $Get_data_barang->kode_barang;
             $Get_nama_barang = $Get_data_barang->nama_barang;
-
         }
 
         // die;
@@ -962,9 +979,24 @@ class Sys_unit_produk extends CI_Controller
 
         // $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `uuid_persediaan`=replace(uuid(),'-','') WHERE `id`='$Get_id_persediaan_barang'";
 
-        $date_tgl_produksi = date("Y-m-d H:i:s");
-        $KODE_tgl_produksi = date("Ymd");
-        $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi;
+        // $date_tgl_produksi = date("Y-m-d H:i:s");
+
+
+        // UNTUK UPDATE ==> TIDAK MERUBAH SPOP
+        // $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi .  $WAKTU_tgl_produksi;
+
+        // $this->db->where('spop', $SPOP_Produksi);
+        // $data_spop_persediaan = $this->db->get('persediaan');
+
+        // if ($data_spop_persediaan->num_rows() > 0) {
+        //     $Get_jumlah_produksi_dihari_sama = $data_spop_persediaan->num_rows() + 1;
+        //     $SPOP_Produksi = "PRODUKSI_" . $KODE_tgl_produksi . "_" . $Get_jumlah_produksi_dihari_sama;
+        // }
+
+        // print_r($SPOP_Produksi);
+        // print_r("<r/>");
+
+
         // $Jumlah_nominal = $this->input->post('jumlah_produksi', TRUE) * $this->input->post('harga_satuan', TRUE);
 
         $Get_satuan = $this->input->post('satuan', TRUE);
@@ -973,6 +1005,8 @@ class Sys_unit_produk extends CI_Controller
 
         $Jumlah_nominal = $Get_harga_satuan * $Get_jumlah_produksi;
 
+
+        // UPDATE DATA DI PERSEDIAAN TETAPI TIDAK MERUBAH SPOP
         $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `uuid_barang`='$Get_uuid_barang',
         `uuid_spop`=replace(uuid(),'-',''),
         `namabarang`='$Get_nama_barang',
@@ -982,7 +1016,7 @@ class Sys_unit_produk extends CI_Controller
         `satuan`='$Get_satuan',
         `hpp`='$Get_harga_satuan',
         `sa`='$Get_jumlah_produksi',
-        `spop`='$SPOP_Produksi',
+        -- `spop`='$SPOP_Produksi', 
         -- `beli`='[value-16]',
         -- `tuj`='[value-17]',
         `total_10`='$Get_jumlah_produksi',
@@ -1027,11 +1061,13 @@ class Sys_unit_produk extends CI_Controller
 
         $this->Sys_unit_produk_model->update($GET_id_sys_unit_produk, $data);
 
+        // print_r("Sys_unit_produk_model");
+        // print_r("<br/>");
         // print_r($data);
         // print_r("<br/>");
 
 
-        // print_r("Selesai SIMPAN");
+        // print_r("Selesai UPDATE");
         // die;
 
         // redirect(site_url('Sys_unit_produk/create_produksi/' . $Get_id_persediaan_barang));

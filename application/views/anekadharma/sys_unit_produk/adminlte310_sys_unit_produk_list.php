@@ -84,7 +84,8 @@
                                                             <!-- <th>Uuid Unit</th> -->
                                                             <!-- <th>Kode Unit</th> -->
 
-                                                            <th>Tgl Transaksi</th>
+                                                            <th>Tgl Transaksi<br /><strong>SPOP</strong></th>
+                                                            <!-- <th>SPOP</th> -->
                                                             <th>Nama Unit</th>
 
                                                             <!-- <th>Uuid Barang</th> -->
@@ -112,6 +113,8 @@
                                                                     $this->db->where('uuid_persediaan', $list_data->uuid_persediaan);
                                                                     $persediaan_nama_barang = $this->db->get('persediaan');
 
+
+
                                                                     echo anchor(site_url('Sys_unit_produk/update_produksi/' . $persediaan_nama_barang->row()->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                                                     // echo ' ';
                                                                     // echo anchor(site_url('Sys_unit_produk/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
@@ -119,12 +122,26 @@
                                                                 </td>
 
 
-                                                                <td style="text-align:left"><?php echo $list_data->tgl_transaksi; ?> </td>
+                                                                <td style="text-align:left">
+                                                                    <?php
+                                                                    echo date("d-M-Y", strtotime($list_data->tgl_transaksi));
+                                                                    echo "<br/>";
+                                                                    echo "<strong>".$persediaan_nama_barang->row()->spop."</strong>";
+                                                                    ?>
+
+                                                                </td>
+                                                                <!-- 
+                                                                <td style="text-align:left">
+                                                                    <?php
+                                                                    // echo $persediaan_nama_barang->row()->spop; 
+                                                                    ?>
+
+                                                                </td> -->
                                                                 <td style="text-align:left"><?php echo $list_data->nama_unit; ?> </td>
                                                                 <td style="text-align:left"><?php echo $list_data->nama_barang; ?> </td>
                                                                 <td style="text-align:right"><?php echo $list_data->jumlah_produksi; ?> </td>
                                                                 <td style="text-align:left"><?php echo $list_data->satuan; ?> </td>
-                                                                <td style="text-align:right"><?php echo number_format($list_data->harga_satuan, 2, ',', '.') ; ?> </td>
+                                                                <td style="text-align:right"><?php echo number_format($list_data->harga_satuan, 2, ',', '.'); ?> </td>
 
 
                                                                 <!-- `id`, `uuid_unit`, `kode_unit`, `nama_unit`, ``, `uuid_produk`, `kode_barang`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan` -->
