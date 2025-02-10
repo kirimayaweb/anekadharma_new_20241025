@@ -32,7 +32,8 @@
                             <div class="col-4">
                                 <div class="row">
                                     <div class="col-5" text-align="center"> <strong>BUKU BANK</strong></div>
-                                    <div class="col-7" text-align="center"> <strong><?php //echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); ?></strong></div>
+                                    <div class="col-7" text-align="center"> <strong><?php //echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); 
+                                                                                    ?></strong></div>
 
                                 </div>
 
@@ -43,11 +44,13 @@
                             </div>
 
                             <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); 
+                                ?>
                             </div>
 
                             <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                ?>
                             </div>
 
 
@@ -93,20 +96,64 @@
                             </thead>
                             <tbody>
                                 <?php
-
+                                // print_r($data_buku_bank);
                                 $start = 0;
+                                $TOTAL_DEBET = 0;
+                                $TOTAL_KREDIT = 0;
+                                $TOTAL_SALDO = 0;
+
                                 foreach ($data_buku_bank as $list_data) {
                                 ?>
                                     <tr>
-                                        <td><?php echo ++$start; ?></td>
-                                        <td>tanggal</td>
-                                        <td>bank</td>
-                                        <td>nomor rek</td>
-                                        <td>Keterangan</td>
-                                        <td>Kode</td>
-                                        <td>Debet</td>
-                                        <td>Kredit</td>
-                                        <td>Saldo</td>
+                                        <td align="left"><?php echo ++$start; ?></td>
+                                        <td align="left">
+                                            <?php
+                                            echo date("d-M-Y", strtotime($list_data->tanggal));
+                                            ?>
+                                        </td>
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->bank;
+                                            ?>
+                                        </td>
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->norek;
+                                            ?>
+                                        </td>
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->keterangan;
+                                            ?>
+                                        </td>
+                                        <td align="center">
+                                            <?php
+                                            echo $list_data->kode;
+                                            ?>
+                                        </td>
+                                        <td align="right">
+                                            <?php
+                                            // echo $list_data->debet;
+                                            // echo "<br/>";
+                                            echo number_format($list_data->debet, 2, ',', '.');
+
+                                            $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
+
+                                            ?>
+                                        </td>
+                                        <td align="right">
+                                            <?php
+                                            echo number_format($list_data->kredit, 2, ',', '.');
+                                            $TOTAL_KREDIT = $TOTAL_KREDIT + $list_data->kredit;
+                                            $TOTAL_SALDO = $TOTAL_DEBET - $TOTAL_KREDIT;
+
+                                            ?>
+                                        </td>
+                                        <td align="right">
+                                            <?php
+                                            echo number_format($TOTAL_SALDO, 2, ',', '.');
+                                            ?>
+                                        </td>
 
 
                                     </tr>

@@ -8,7 +8,9 @@ class Bukubank_model extends CI_Model
 
     public $table = 'bukubank';
     public $id = 'id';
+    public $tanggal = 'tanggal';
     public $order = 'DESC';
+    public $orderASC = 'SSC';
 
     function __construct()
     {
@@ -29,6 +31,13 @@ class Bukubank_model extends CI_Model
     function get_all()
     {
         $this->db->order_by($this->id, $this->order);
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_all_sort_by_tanggal()
+    {
+        $this->db->order_by($this->tanggal, $this->orderASC);
+        $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
 
