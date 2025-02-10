@@ -154,22 +154,6 @@
 
                                                     </tbody>
 
-                                                    <tfoot>
-                                                        <tr>
-                                                            <th width="80px"></th>
-                                                            <!-- <th>Uuid Kas Kecil</th> -->
-                                                            <th></th>
-                                                            <th></th>
-                                                            <th></th>
-                                                            <th></th>
-                                                            <th>SALDO</th>
-                                                            <th><?php echo nominal($get_saldo); ?></th>
-                                                            <!-- <th>Id Usr</th> -->
-                                                            <th width="200px"></th>
-                                                        </tr>
-
-                                                    </tfoot>
-
 
 
                                                 </table>
