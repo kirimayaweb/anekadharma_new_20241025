@@ -3835,6 +3835,100 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
 	}
 
+	public function jurnal_pembelian2_cekBelumAdaKodeAkun()
+	{
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$start = 0;
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'start' => $start,
+		);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
+	}
+
+	public function input_kode_akun($uuid_spop = null)
+	{
+		// print_r("input_kode_akun");
+		// print_r("<br/>");
+		// print_r($uuid_spop);
+		// die;
+
+		// Update field kode_akun by spop ==> open form input kode akun
+
+		$data_per_uuidspop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($spop);
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($data_per_uuidspop->spop);
+
+		// SELECT `status_spop` FROM `tbl_pembelian` WHERE `uuid_spop`="53d056417ed111ef95300021ccc9061e";
+
+
+
+		$start = 0;
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'spop' => $data_per_uuidspop->spop,
+			'action' => site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop),
+			'button' => 'Simpan Kode AKun',
+			'start' => $start,
+		);
+		// print_r($data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop_kode_akun', $data);
+	}
+
+	public function update_kode_akun($uuid_spop = null)
+	{
+		// print_r("update_kode_akun");
+		// die;
+
+		$data = array(
+			'kode_akun' => $this->input->post('kode_akun', TRUE),
+		);
+
+		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+
+		redirect(site_url('Tbl_pembelian/jurnal_pembelian2/'));
+	}
+
+	public function ubah_kode_akun($uuid_spop = null)
+	{
+
+		$data_per_uuidspop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($spop);
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($data_per_uuidspop->spop);
+
+		// SELECT `status_spop` FROM `tbl_pembelian` WHERE `uuid_spop`="53d056417ed111ef95300021ccc9061e";
+
+		// print_r($Tbl_pembelian);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// print_r($Tbl_pembelian->kode_akun);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		$sql = "SELECT `spop`,`kode_akun` FROM `tbl_pembelian` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`,`kode_akun`";
+
+		// $this->db->query($sql)->result();
+		// print_r($this->db->query($sql)->row()->kode_akun);
+
+		$get_kode_akun=$this->db->query($sql)->row()->kode_akun;
+		// die;
+
+		$start = 0;
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'spop' => $data_per_uuidspop->spop,
+			'action' => site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop),
+			'button' => 'Update Kode AKun',
+			'start' => $start,
+			'get_kode_akun' => $get_kode_akun,
+		);
+		// print_r($data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop_kode_akun', $data);
+	}
 
 	public function jurnal_pembelian_per_bulan()
 	{
