@@ -1065,24 +1065,58 @@ class Tbl_penjualan extends CI_Controller
 				print_r("Bisa hapus / kurangi");
 
 				$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
+
+				print_r($Get_total_penjualan_by_id_persediaan);
+				print_r("<br/>");
+				print_r($row->jumlah);
+				print_r("<br/>");
+				print_r($Get_total_penjualan_after_hapus);
+				print_r("<br/>");
+				
+
 				// Update field penjualan di tabel persediaan berdasarkan id persediaan
-				$sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
-				$this->db->query($sql_update_uuid_persediaan);
+				// $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
+				// $this->db->query($sql_update_uuid_persediaan);
+
+				$data = array(
+
+					'penjualan' => $Get_total_penjualan_after_hapus,
+				);
+		
+				// print_r($data);
+				// print_r("update");
+				// die;
+				$this->Persediaan_model->update($Get_id_persediaan_barang, $data);
+
+
+
+				// $row_persediaan = $this->Persediaan_model->get_by_id($id);
+
+				// print_r($row_persediaan);
+				// die;
+
+
+
 			} else {
 				// print_r("Buat fieldnya jadi 0");
 			}
 
 			// die;
 
-			// Update field penjualan berdasarkan uuid_persediaan
+			
 
 
 			// Hapus record di tabel penjualan
 			$this->Tbl_penjualan_model->delete($id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 
+			
+// die;
 
 			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+		
+		
+		
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
