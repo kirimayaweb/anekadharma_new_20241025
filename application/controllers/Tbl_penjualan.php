@@ -383,8 +383,8 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
-		print_r("create_action_simpan_barang");
-		print_r("<br/>");
+		// print_r("create_action_simpan_barang");
+		// print_r("<br/>");
 		// print_r($uuid_penjualan);
 		// print_r("<br/>");
 		// print_r($id_persediaan_barang);
