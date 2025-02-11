@@ -223,7 +223,8 @@
                                                     </td>
                                                     <td style="text-align:right">
                                                         <?php
-                                                        // echo nominal($list_data->harga_satuan); 
+                                                        echo nominal($list_data->harga_satuan); 
+                                                        echo "<br/>";
                                                         echo number_format($list_data->harga_satuan, 2, ',', '.');
                                                         ?>
                                                     </td>

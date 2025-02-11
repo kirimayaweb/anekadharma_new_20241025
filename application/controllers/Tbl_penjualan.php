@@ -114,8 +114,6 @@ class Tbl_penjualan extends CI_Controller
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap', $data);
-
-
 	}
 
 	public function bayar()
@@ -385,8 +383,8 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
-		// print_r("create_action_simpan_barang");
-		// print_r("<br/>");
+		print_r("create_action_simpan_barang");
+		print_r("<br/>");
 		// print_r($uuid_penjualan);
 		// print_r("<br/>");
 		// print_r($id_persediaan_barang);
@@ -497,6 +495,18 @@ class Tbl_penjualan extends CI_Controller
 		// =========SIMPAN DATA==================
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
 
+		// print_r($this->input->post('harga_satuan_beli', TRUE));
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)));
+		// print_r("<br/>");
+		// print_r("<br/>");
+		
+		// hilangkan titik dan ubah koma menjadi titik
+		// print_r(str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE)))); 
+		
+		// die;
+		// die;
 
 
 
@@ -522,8 +532,8 @@ class Tbl_penjualan extends CI_Controller
 				'proses_bayar' => "belum_bayar",
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
-				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
 				'id_usr' => 1,
 			);
 
@@ -563,10 +573,14 @@ class Tbl_penjualan extends CI_Controller
 				'proses_bayar' => "belum_bayar",
 				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
 				'satuan' => $data_barang->satuan,
-				'harga_satuan' => preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)),
+				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
 				'id_usr' => 1,
 			);
+
+			// print_r($data);
+			// die;
+
 			$this->Tbl_penjualan_model->insert_add_barang($data);
 		}
 
@@ -632,7 +646,7 @@ class Tbl_penjualan extends CI_Controller
 
 		// print_r($data_penjualan_per_uuid_penjualan);
 		// print_r("<br/>");
-		// print_r("<br/>");
+		// // print_r("<br/>");
 		// print_r("<br/>");
 
 
@@ -1225,6 +1239,40 @@ class Tbl_penjualan extends CI_Controller
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap', $data);
+	}
+
+
+
+	public function jurnal_penjualan()
+	{
+
+		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
+		$start = 0;
+		// print_r($Tbl_penjualan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$data = array(
+			'Tbl_penjualan_data' => $Tbl_penjualan,
+			// 'q' => $q,
+			// 'pagination' => $this->pagination->create_links(),
+			// 'total_rows' => $config['total_rows'],
+			'start' => $start,
+		);
+
+
+		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_jurnal', $data);
+	}
+
+
+	public function input_kode_akun($nmrkirim = null)
+	{
+
+		print_r("input_kode_akun");
+		print_r("<br/>");
+		print_r($nmrkirim);
+		die;
 	}
 }
 
