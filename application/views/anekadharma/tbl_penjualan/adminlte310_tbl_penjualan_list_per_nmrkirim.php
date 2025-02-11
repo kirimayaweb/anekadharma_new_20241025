@@ -29,31 +29,25 @@
                         <div class="row">
                         </div>
                         <div class="row">
-                            <div class="col-4">
+                            <div class="col-8">
                                 <div class="row">
-                                    <div class="col-5" text-align="center"> <strong>DATA PENJUALAN</strong> </div>
-                                    <div class="col-7" text-align="center"> 
-                                        <strong>
-                                        <?php 
-                                        // echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); 
-                                        ?>
-                                    </strong>
-                                </div>
+                                    <div class="col-5" text-align="center"> <strong>DETAIL PENJUALAN </strong><?php echo "Nomor kirim:" . $nmrkirim; ?></div>
+                                    <div class="col-7" text-align="center"> <strong><?php //echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); 
+                                                                                    ?></strong></div>
 
                                 </div>
 
 
                             </div>
-                            <div class="col-4">
 
+                            <div class="col-2">
+                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); 
+                                ?>
                             </div>
 
                             <div class="col-2">
-                            <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); ?>
-                            </div>
-
-                            <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                ?>
                             </div>
 
 
@@ -63,24 +57,99 @@
 
 
                     </div>
-                   
 
-                    <!--  -->
+                    <!-- Form INput Kode Akun -->
+                    <div class="card-body">
+                        <form action="<?php echo $action; ?>" method="post">
+                            <div class="row">
+
+                                <div class="col-3">
+                                    <label for="supplier_nama">Atur Kode Akun : <strong><?php echo "Nomor kirim:" . $nmrkirim; ?> </strong></label>
+
+                                    <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+                                        <?php
+
+                                        if ($get_kode_akun) {
+                                            // Get Nama akun dari kode akun
+
+                                            $sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`='$get_kode_akun'";
+                                            $Get_nama_akun = $this->db->query($sql)->row()->nama_akun
+
+                                        ?>
+                                            <option value="<?php echo $get_kode_akun; ?>"><?php echo $get_kode_akun . " ==> " . $Get_nama_akun; ?></option>
+                                        <?php
+                                        } else {
+                                        ?>
+                                            <option value="">Pilih Kode Akun</option>
+                                        <?php
+                                        }
+                                        ?>
+
+
+                                        <?php
+
+                                        $sql = "select * from sys_kode_akun order by kode_akun ASC";
+
+
+                                        foreach ($this->db->query($sql)->result() as $m) {
+                                            // foreach ($data_produk as $m) {
+                                            echo "<option value='$m->kode_akun' ";
+                                            echo ">  " . strtoupper($m->kode_akun)  . " ==> " . strtoupper($m->nama_akun)  . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+
+
+                                </div>
+
+                                <div class="col-4">
+
+                                </div>
+
+                                <div class="col-2">
+                                    <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                    ?>
+
+
+
+                                </div>
+
+                            </div>
+
+                            <div class="row">
+
+                                <div class="col-3">
+
+                                    <div class="modal-footer justify-content-between">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                        <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                                        <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                    <hr>
+
+                    <!-- End of Form INput Kode Akun -->
+
+
 
 
 
                     <div class="card-body">
-
+                        Detail penjualan dengan nomor kirim : <?php echo $nmrkirim; ?>
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
-                                    <th rowspan="2" style="text-align:center" width="10px">Kode Akun</th>
                                     <!-- <th style="text-align:center" width="100px">Action</th> -->
                                     <th rowspan="2">Tgl Jual</th>
                                     <th rowspan="2">nmrkirim</th>
                                     <th rowspan="2">nmrpesan</th>
-                                    
+
                                     <th rowspan="2">Konsumen</th>
                                     <th rowspan="2">Kode</th>
                                     <th rowspan="2">Nama Barang</th>
@@ -131,7 +200,7 @@
 
                                     $GET_tgl_jual = date("d-m-Y", strtotime($list_data->tgl_jual));
 
-                                    if (($start >= 1) and (($compare_nmr_kirim <> $list_data->nmrkirim)  )) {
+                                    if (($start >= 1) and (($compare_nmr_kirim <> $list_data->nmrkirim)  or ($compare_tgl_jual <> $list_data->tgl_jual))) {
                                         // Buat 1 baris untuk total dan background = KUNING
 
                                 ?>
@@ -141,18 +210,6 @@
                                         <tr>
                                             <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start; ?></td>
-                                            <td>
-                                                <?php 
-                                                // echo "Kode Akun 1"; 
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
-                                                ?>
-                                            </td>
                                             <td style="background-color:yellow;" align="right"><?php
                                                                                                 // echo date("d M Y", strtotime($list_data->tgl_jual));
                                                                                                 // echo $GET_tgl_jual;
@@ -164,10 +221,11 @@
 
                                             <!-- Kolom Nomor Kirim -->
                                             <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_kirim . "</strong></font>"; ?></td>
-                                            
+
                                             <!-- kolom Nomor pesan -->
-                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  ?></td>
-                                            
+                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  
+                                                                                                ?></td>
+
                                             <td></td>
                                             <td></td>
                                             <td><?php //echo $list_data->nama_barang; 
@@ -178,36 +236,36 @@
                                             <td></td>
 
 
-                                            <td style="background-color:yellow;" align="right"> 
-                                                <?php 
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
                                                 // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                                ?> 
-                                                </td>
-                                            <td style="background-color:yellow;" align="right"> 
-                                                <?php 
+                                                echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                                ?>
+                                            </td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
                                                 //echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                                ?> 
-                                                </td>
-                                            <td style="background-color:yellow;" align="right"> 
-                                                <?php 
+                                                echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                                ?>
+                                            </td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
                                                 // echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>" 
-                                                ?> 
-                                                </td>
-                                            <td style="background-color:yellow;" align="right"> 
-                                                <?php 
+                                                echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"
+                                                ?>
+                                            </td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
                                                 // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>";
                                                 echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                 ?> 
-                                                 </td>
-                                            <td style="background-color:yellow;" align="right"> 
-                                                <?php 
+                                                ?>
+                                            </td>
+                                            <td style="background-color:yellow;" align="right">
+                                                <?php
                                                 // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>" 
-                                                ?> 
-                                                </td>
+                                                echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"
+                                                ?>
+                                            </td>
                                             <?php
                                             // nmrkirim baru , me NOL kan total nmrkirim
                                             $Total_Jumlah_per_nmrkirim = 0;
@@ -225,19 +283,6 @@
 
                                             <td><?php echo ++$start; ?></td>
                                             <td>
-                                                <?php 
-                                                // echo "Kode Akun 2"; 
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
-                                                
-                                                ?>
-                                            </td>
-                                            <td>
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
                                                 // echo $GET_tgl_jual;
@@ -249,14 +294,14 @@
                                                 echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
 
                                                 // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
-                                                
+
                                                 echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
 
 
 
                                                 ?>
                                             </td>
-                                            
+
                                             <!-- Kolom Nomor Kirim -->
                                             <td><?php echo $list_data->nmrkirim; ?></td>
 
@@ -271,7 +316,7 @@
                                                 // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
                                                 ?>
                                             </td>
-                                            
+
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -284,10 +329,10 @@
                                                 // echo number_to_amount('123,456,789,012', 2, 'de_DE'); // Returns 123,46 billion
                                                 // echo "<br/>";
                                                 // echo nominal($list_data->harga_satuan); 
-                                                echo number_format($list_data->harga_satuan, 2, ',', '.'); 
-                                                
+                                                echo number_format($list_data->harga_satuan, 2, ',', '.');
+
                                                 ?>
-                                                
+
                                             </td>
 
 
@@ -329,12 +374,12 @@
                                             </td>
 
                                             <td align="right"> <?php echo nominal($jumlah_per_nmrkirim); ?> </td>
-                                            <td align="right"> 
-                                                <?php 
+                                            <td align="right">
+                                                <?php
                                                 // echo nominal($umpphpsl22_per_nmrkirim); 
-                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.'); 
-                                                ?> 
-                                                </td>
+                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
+                                                ?>
+                                            </td>
 
                                             <td align="right">
                                                 <?php
@@ -374,20 +419,6 @@
 
                                             <td><?php echo ++$start; ?></td>
                                             <td>
-                                                <?php 
-                                                // echo "Kode Akun 3"; 
-
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
-
-                                                ?>
-                                            </td>
-                                            <td>
                                                 <?php
                                                 echo date("d M Y", strtotime($list_data->tgl_jual));
                                                 // echo $GET_tgl_jual;
@@ -404,21 +435,21 @@
 
                                                 echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
                                                 // echo "";
-                                            //    HAPUS
+                                                //    HAPUS
                                                 // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
-                                                
+
 
 
                                                 ?>
                                             </td>
-                                            
+
                                             <td><?php echo $list_data->nmrkirim; ?></td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
                                                 ?>
                                             </td>
-                                            
+
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -431,9 +462,9 @@
                                                 // echo number_to_amount('123,456,789,012', 2, 'de_DE'); // Returns 123,46 billion
                                                 // echo "<br/>";
                                                 // echo nominal($list_data->harga_satuan); 
-                                                echo number_format($list_data->harga_satuan, 2, ',', '.'); 
+                                                echo number_format($list_data->harga_satuan, 2, ',', '.');
                                                 ?>
-                                                </td>
+                                            </td>
 
 
                                             <td align="right">
@@ -473,18 +504,18 @@
 
                                             </td>
 
-                                            <td align="right"> 
-                                                <?php 
+                                            <td align="right">
+                                                <?php
                                                 // echo nominal($jumlah_per_nmrkirim); 
-                                                echo number_format($jumlah_per_nmrkirim, 2, ',', '.'); 
-                                                ?> 
-                                                </td>
-                                            <td align="right"> 
-                                                <?php 
+                                                echo number_format($jumlah_per_nmrkirim, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
                                                 // echo nominal($umpphpsl22_per_nmrkirim); 
-                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.'); 
-                                                ?> 
-                                                </td>
+                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
+                                                ?>
+                                            </td>
 
                                             <td align="right">
                                                 <?php
@@ -514,7 +545,6 @@
                                         $compare_nmr_pesan = $list_data->nmrpesan;
                                         $compare_nmr_kirim = $list_data->nmrkirim;
                                         $compare_tgl_jual = $list_data->tgl_jual;
-                                        
                                     }
                                     ?>
 
@@ -539,20 +569,6 @@
                                 <!-- TOTAL nmrkirim AKHIR -->
                                 <tr>
                                     <td><?php echo ++$start; ?></td>
-                                    <td>
-                                        <?php 
-                                        // echo "Kode Akun 4"; 
-                                    
-                                        if ($list_data->kode_akun) {
-                                            echo $list_data->kode_akun;
-                                            echo "<br/>";
-                                            echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                        }else{
-                                            echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                        }
-
-                                    ?>
-                                    </td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -564,36 +580,36 @@
                                     <td></td>
                                     <td></td>
 
-                                    <td style="background-color:yellow; text-align: right" align="right"> 
-                                        <?php 
+                                    <td style="background-color:yellow; text-align: right" align="right">
+                                        <?php
                                         // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                        ?> 
-                                        </td>
-                                    <td style="background-color:yellow; text-align: right" align="right"> 
-                                        <?php 
+                                        echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
+                                    <td style="background-color:yellow; text-align: right" align="right">
+                                        <?php
                                         // echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                        ?> 
-                                        </td>
-                                    <td style="background-color:yellow;" align="right"> 
-                                        <?php 
+                                        echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
+                                    <td style="background-color:yellow;" align="right">
+                                        <?php
                                         //  echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>"; 
-                                         echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                        ?> 
-                                        </td>
-                                    <td style="background-color:yellow;" align="right"> 
-                                        <?php 
+                                        echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
+                                    <td style="background-color:yellow;" align="right">
+                                        <?php
                                         // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                        ?> 
-                                        </td>
-                                    <td style="background-color:yellow;" align="right"> 
-                                        <?php 
+                                        echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
+                                    <td style="background-color:yellow;" align="right">
+                                        <?php
                                         // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"; 
-                                        ?> 
-                                        </td>
+                                        echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>";
+                                        ?>
+                                    </td>
 
 
 
@@ -613,38 +629,37 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th></th>
                                     <th style="text-align:right">TOTAL</th>
                                     <th style="text-align:right" align="right">
-                                        <?php 
+                                        <?php
                                         // echo nominal($TOTAL_ALL_JUMLAH); 
-                                        echo number_format($TOTAL_ALL_JUMLAH, 2, ',', '.'); 
+                                        echo number_format($TOTAL_ALL_JUMLAH, 2, ',', '.');
                                         ?>
-                                        </th>
+                                    </th>
                                     <th style="text-align:right" align="right">
-                                        <?php 
+                                        <?php
                                         // echo nominal($TOTAL_ALL_UMPPHPSL22); 
-                                        echo number_format($TOTAL_ALL_UMPPHPSL22, 2, ',', '.'); 
+                                        echo number_format($TOTAL_ALL_UMPPHPSL22, 2, ',', '.');
                                         ?>
-                                        </th>
+                                    </th>
                                     <th style="text-align:right" align="right">
-                                        <?php 
+                                        <?php
                                         // echo nominal($TOTAL_ALL_piutang); 
-                                        echo number_format($TOTAL_ALL_piutang, 2, ',', '.'); 
+                                        echo number_format($TOTAL_ALL_piutang, 2, ',', '.');
                                         ?>
-                                        </th>
+                                    </th>
                                     <th style="text-align:right" align="right">
-                                        <?php 
+                                        <?php
                                         // echo nominal($TOTAL_ALL_penjualandpp); 
-                                        echo number_format($TOTAL_ALL_penjualandpp, 2, ',', '.'); 
+                                        echo number_format($TOTAL_ALL_penjualandpp, 2, ',', '.');
                                         ?>
-                                        </th>
+                                    </th>
                                     <th style="text-align:right" align="right">
-                                        <?php 
+                                        <?php
                                         // echo nominal($TOTAL_ALL_utangppn); 
-                                        echo number_format($TOTAL_ALL_utangppn, 2, ',', '.'); 
+                                        echo number_format($TOTAL_ALL_utangppn, 2, ',', '.');
                                         ?>
-                                        </th>
+                                    </th>
 
                                 </tr>
 

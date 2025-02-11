@@ -33,6 +33,15 @@ class Tbl_penjualan_model extends CI_Model
     }
 
     // get all
+    function get_all_by_nmr_kirim($nmrkirim)
+    {
+
+        $this->db->where($this->nmrkirim, $nmrkirim);
+
+        return $this->db->get($this->table)->result();
+    }
+   
+    // get all
     function get_all_group_by_tgl_jual_nmrpesan_nmr_kirim()
     {
 
@@ -334,6 +343,20 @@ class Tbl_penjualan_model extends CI_Model
         // die;
 
         $this->db->where($this->uuid_penjualan_proses, $uuid_penjualan_proses);
+        $this->db->update($this->table, $data);
+    }
+   
+    // update data by nomor kirim
+    function update_by_nmrkirim($nmrkirim, $data)
+    {
+        // print_r("update_by_nmrkirim");
+        // print_r("<br/>");
+        // print_r($nmrkirim);
+        // print_r("<br/>");
+        // print_r($data);
+        // die;
+
+        $this->db->where($this->nmrkirim, $nmrkirim);
         $this->db->update($this->table, $data);
     }
 

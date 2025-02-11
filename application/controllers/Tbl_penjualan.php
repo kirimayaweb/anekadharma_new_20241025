@@ -1281,17 +1281,14 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
-		$start = 0;
-		// print_r($Tbl_penjualan);
-		// print_r("<br/>");
-		// print_r("<br/>");
+		
+		
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan,
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
-			'start' => $start,
 		);
 
 
@@ -1303,10 +1300,74 @@ class Tbl_penjualan extends CI_Controller
 	public function input_kode_akun($nmrkirim = null)
 	{
 
-		print_r("input_kode_akun");
-		print_r("<br/>");
-		print_r($nmrkirim);
-		die;
+		// Update field kode_akun by spop ==> open form input kode akun
+
+		$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
+
+		// // $Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($spop);
+		// $Tbl_pembelian = $this->Tbl_penjualan_model->get_by_spop($data_per_uuidspop->spop);
+
+		// // SELECT `status_spop` FROM `tbl_pembelian` WHERE `uuid_spop`="53d056417ed111ef95300021ccc9061e";
+
+
+
+		// $start = 0;
+		$data = array(
+			'Tbl_penjualan_data' => $data_per_nmrkirim,
+			'nmrkirim' => $nmrkirim,
+			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim),
+			'button' => 'Simpan Kode AKun',
+			// 'start' => $start,
+		);
+		// print_r($data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
+
+
+	}
+
+	public function update_kode_akun($nmrkirim = null)
+	{
+
+		// print_r($this->input->post('kode_akun', TRUE));
+		// print_r("<br/>");
+
+		$data = array(
+			'kode_akun' => $this->input->post('kode_akun', TRUE),
+		);
+
+		// print_r($data);
+		// die;
+
+		$this->Tbl_penjualan_model->update_by_nmrkirim($nmrkirim, $data);
+
+		redirect(site_url('Tbl_penjualan/jurnal_penjualan/'));
+	}
+
+	
+	public function ubah_kode_akun($nmrkirim = null)
+	{
+
+		$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
+
+		$sql = "SELECT `nmrkirim`,`kode_akun` FROM `tbl_penjualan` WHERE `nmrkirim`='$nmrkirim' GROUP by `nmrkirim`,`kode_akun`";
+
+		// $this->db->query($sql)->result();
+		// print_r($this->db->query($sql)->row()->kode_akun);
+
+		$get_kode_akun=$this->db->query($sql)->row()->kode_akun;
+		// die;
+
+		// $start = 0;
+		$data = array(
+			'Tbl_penjualan_data' => $data_per_nmrkirim,
+			'nmrkirim' => $nmrkirim,
+			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim),
+			'button' => 'Update Kode AKun',
+			// 'start' => $start,
+			'get_kode_akun' => $get_kode_akun,
+		);
+		// print_r($data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
 	}
 }
 
