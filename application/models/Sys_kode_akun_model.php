@@ -8,8 +8,10 @@ class Sys_kode_akun_model extends CI_Model
 
     public $table = 'sys_kode_akun';
     public $id = 'id';
+    public $kode_akun = 'kode_akun';
     public $uuid_kode_akun = 'uuid_kode_akun';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
     function __construct()
     {
@@ -20,6 +22,12 @@ class Sys_kode_akun_model extends CI_Model
     function get_all()
     {
         $this->db->order_by($this->id, $this->order);
+        return $this->db->get($this->table)->result();
+    }
+    // get all
+    function get_all_order_by_kode_akun_ASC()
+    {
+        $this->db->order_by($this->kode_akun, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
 
