@@ -24,7 +24,7 @@ class Neraca_saldo extends CI_Controller
 		                    FROM tbl_pembelian    
 		                    group BY tbl_pembelian.kode_akun";
 
-		print_r($this->db->query($sql_pembelian)->result());
+		// print_r($this->db->query($sql_pembelian)->result());
 		// die;
 
 		// print_r("<br/>");

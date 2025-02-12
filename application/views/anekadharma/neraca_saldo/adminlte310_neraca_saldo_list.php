@@ -158,7 +158,7 @@
                                         <!-- <td>debet_akhir_tahun_lalu</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "debet_akhir_tahun_lalu";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
@@ -168,7 +168,7 @@
                                         <!-- <td>kredit_akhir_tahun_lalu</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "kredit_akhir_tahun_lalu";
+                                            echo "0";
                                             // echo $Get_kode_akun_PEMBELIAN_kredit;
                                             ?>
                                         </td>
@@ -177,7 +177,7 @@
                                         <!-- <td>debet_penyesuaian</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "debet_penyesuaian";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
@@ -194,7 +194,7 @@
                                         <!-- <td>debet_ns_setelah_penyesuaian</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "debet_ns_setelah_penyesuaian";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
@@ -203,7 +203,7 @@
                                         <!-- <td>kredit_ns_setelah_penyesuaian</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "kredit_ns_setelah_penyesuaian";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
@@ -211,7 +211,7 @@
                                         <!-- <td>debet_laba_rugi</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "debet_laba_rugi";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
@@ -220,7 +220,7 @@
                                         <!-- <td>kreditdebet_laba_rugi</td> -->
                                         <td align="left">
                                             <?php
-                                            echo "kreditdebet_laba_rugi";
+                                            echo "0";
                                             // echo $list_data->kode_akun;
                                             ?>
                                         </td>
