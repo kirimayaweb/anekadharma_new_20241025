@@ -8,6 +8,8 @@ class Persediaan_model extends CI_Model
 
     public $table = 'persediaan';
     public $id = 'id';
+    public $uuid_spop = 'uuid_spop';
+    public $uuid_barang = 'uuid_barang';
     public $uuid_persediaan = 'uuid_persediaan';
     public $order = 'DESC';
 
@@ -38,6 +40,14 @@ class Persediaan_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+   
+    // get data by id
+    function get_by_uuidspop_uuid_barang($uuid_spop,$uuid_barang)
+    {
+        $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->where($this->uuid_barang, $uuid_barang);
         return $this->db->get($this->table)->row();
     }
 

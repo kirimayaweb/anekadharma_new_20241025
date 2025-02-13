@@ -16,6 +16,55 @@ class Tbl_pembelian extends CI_Controller
 		$this->load->helper(array('nominal'));
 	}
 
+
+	public function update_uuidpersediaan_pembelian()
+	{
+
+
+
+		// LOOP TABEL PEMBELIAN
+		foreach ($this->Tbl_pembelian_model->get_all() as $list_data) {
+
+			// Cek uuid_persediaan berdasarkan uuid_spop dan uuid_barang , kemudian update field uuid_persediaan tbl_pembelian dari tabel persediaan
+
+			echo $list_data->id;
+			echo " , ";
+			echo $list_data->uuid_barang;
+			echo " , ";
+			echo $list_data->uraian;
+			echo " , ";
+			echo "<br/>";
+			echo "<br/>";
+
+			$Data_persediaan = $this->Persediaan_model->get_by_uuidspop_uuid_barang($list_data->uuid_spop, $list_data->uuid_barang);
+			print_r($Data_persediaan);
+			print_r("<br/>");
+			print_r("<br/>");
+			echo $Data_persediaan->id;
+			echo " , ";
+			echo $Data_persediaan->uuid_persediaan;
+			echo " , ";
+
+			// Update field uuid_persediaan dan id_persediaan di tabel tbl_pembelian
+
+			$data = array(
+				'uuid_persediaan' => $Data_persediaan->uuid_persediaan,
+				'id_persediaan_barang' => $Data_persediaan->id,
+			);
+
+			$this->Tbl_pembelian_model->update($list_data->id, $data);
+
+
+			print_r("<br/>");
+			print_r("<br/>");
+			print_r("<br/>");
+
+			// if ($list_data->id == 3) {
+			// 	die;
+			// }
+		}
+	}
+
 	public function index_BU()
 	{
 		$this->load->view('anekadharma/tbl_pembelian/tbl_pembelian_list');
@@ -1694,6 +1743,8 @@ class Tbl_pembelian extends CI_Controller
 		$sql_data_pembelian = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id'";
 		$get_uuid_spop = $this->db->query($sql_data_pembelian)->row()->uuid_spop;
 
+		// print_r($this->db->query($sql_data_pembelian)->row());
+		// die;
 		// print_r($get_uuid_spop);
 
 		// die;
@@ -1756,6 +1807,10 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 		$this->Tbl_pembelian_model->update($id, $data);
+
+
+		// UPDATE DATA DI PERSEDIAAN
+
 
 		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
 	}
@@ -3914,7 +3969,7 @@ class Tbl_pembelian extends CI_Controller
 		// $this->db->query($sql)->result();
 		// print_r($this->db->query($sql)->row()->kode_akun);
 
-		$get_kode_akun=$this->db->query($sql)->row()->kode_akun;
+		$get_kode_akun = $this->db->query($sql)->row()->kode_akun;
 		// die;
 
 		$start = 0;
