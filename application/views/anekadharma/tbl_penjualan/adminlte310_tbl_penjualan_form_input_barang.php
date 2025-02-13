@@ -194,6 +194,12 @@
 
                                                         ?>
 
+
+                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
+                                                            UBAH <?php //echo $list_data->id 
+                                                                    ?>
+                                                        </button>
+
                                                         <!-- <button type="button"  class="btn btn-outline-info btn-block btn-flat"> <i class="fa fa-book"></i> <?php // $button; 
                                                                                                                                                                 ?></button> -->
                                                     </td>
@@ -692,6 +698,104 @@
 <!-- ============== -->
 
 
+
+
+<?php
+
+foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
+?>
+    <!-- MODAL EXTRA LARGE UPDATE PER ID -->
+    <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post">
+        <div class="modal fade" id="modal-xl-input-barang_<?php echo $list_data->id ?>">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Update Barang <?php echo $list_data->id
+                                                                ?></h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+
+                    <?php
+                    // echo $action_ubah_per_id . $list_data->id;
+
+                    $row_data_barang_jual = $this->Tbl_penjualan_model->get_by_id($list_data->id);
+
+                    // cek data stock persediaan dengan filter by id_persediaan_barang dari tabel penjualan
+
+
+                    $get_data_Persediaan_by_id = $this->Persediaan_model->get_by_id($row_data_barang_jual->id_persediaan_barang);
+
+                    // Jumlah stock dikurangi , sudah terjual yang dikurang barang terjual di id penjualan ini
+                    $Get_stock_di_persediaan = $get_data_Persediaan_by_id->total_10 - ($get_data_Persediaan_by_id->penjualan - $row_data_barang_jual->jumlah);
+
+                    // print_r($row_data_barang_jual);
+
+                    // `id`, `uuid_penjualan_proses`, `uuid_penjualan`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`, `tgl_input`, `tgl_jual`, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, `umpphpsl22`, `piutang`, `penjualandpp`, `utangppn`, `cetak_bukti_penjualan`, `id_usr`, ``, ``, ``, ``, ``, ``
+
+
+                    ?>
+
+                    <div class="modal-body">
+
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-12">
+                                    <label for="konsumen_nama">Barang</label>
+                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $row_data_barang_jual->nama_barang ?>" disabled>
+                                </div>
+                            </div>
+
+
+
+                            <div class="row">
+                                <div class="col-4">
+                                    <label for="nmrpesan">Harga Satuan </label>
+                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php // echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); 
+                                                                                                                                                    ?>" placeholder="<?php // echo nominal($list_data->harga_satuan_persediaan);  echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                                                                                                                                                                ?>"> -->
+                                </div>
+                                <div class="col-4">
+                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $Get_stock_di_persediaan; ?></label>
+                                </div>
+                            </div>
+                            <div class="row">
+
+
+                                <div class="col-4">
+                                    <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" value="
+                                    <?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>" placeholder="<?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>">
+                                </div>
+                                <div class="col-4">
+                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
+                                    <input type="number" class="form-control" id="jumlah" name="jumlah" value="<?php echo $row_data_barang_jual->jumlah; ?>" min="1" max="<?php echo $Get_stock_di_persediaan ?>">
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="modal-footer justify-content-between">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                    </div>
+                </div>
+                <!-- /.modal-content -->
+            </div>
+            <!-- /.modal-dialog -->
+        </div>
+    </form>
+    <!-- END OF MODAL EXTRA LARGE -->
+<?php
+}
+?>
 
 
 

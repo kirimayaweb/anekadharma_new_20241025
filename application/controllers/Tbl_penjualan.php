@@ -501,10 +501,10 @@ class Tbl_penjualan extends CI_Controller
 		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)));
 		// print_r("<br/>");
 		// print_r("<br/>");
-		
+
 		// hilangkan titik dan ubah koma menjadi titik
 		// print_r(str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE)))); 
-		
+
 		// die;
 		// die;
 
@@ -669,7 +669,7 @@ class Tbl_penjualan extends CI_Controller
 			'uuid_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->uuid_konsumen,
 			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama,
 			'uuid_penjualan' => $uuid_penjualan,
-
+			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
 		);
 
 		// print_r($data);
@@ -677,6 +677,137 @@ class Tbl_penjualan extends CI_Controller
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_input_barang', $data);
+	}
+
+
+	public function create_action_nmrkirim_update_per_id_penjualan($id)
+	{
+
+		print_r("create_action_nmrkirim_update_per_id_penjualan");
+		print_r("<br/>");
+		print_r($id);
+		print_r("<br/>");
+		// print_r($this->input->post('uuid_konsumen', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('uuid_barang', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('satuan', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('jumlah', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('uuid_gudang', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('harga_satuan', TRUE));
+		// print_r("<br/>");
+		// die;
+
+		// Get uuid_spop from id
+		$sql_data_penjualan = "SELECT * FROM `tbl_penjualan` WHERE `id`='$id'";
+		// $get_uuid_spop = $this->db->query($sql_data_penjualan)->row()->uuid_spop;
+		$Get_uuid_penjualan = $this->db->query($sql_data_penjualan)->row()->uuid_penjualan;
+		$get_id_persediaan = $this->db->query($sql_data_penjualan)->row()->id_persediaan_barang;
+		$get_jmlh_penjualan_awal = $this->db->query($sql_data_penjualan)->row()->jumlah;
+
+		// print_r($this->db->query($sql_data_pembelian)->row());
+		// print_r("<br/>");
+
+		// print_r($this->db->query($sql_data_pembelian)->row()->uuid_persediaan);
+		// print_r("<br/>");
+
+		// die;
+		// print_r($get_uuid_spop);
+
+		// die;
+
+		// Data Persediaan berdasarkan uuid_persediaan
+		$sql_data_persediaan_by_uuid_persediaan = "SELECT * FROM `persediaan` WHERE `id`='$get_id_persediaan'";
+		$get_jmlh_penjualan_dipersediaan = $this->db->query($sql_data_persediaan_by_uuid_persediaan)->row()->penjualan;
+		$get_jmlh_STOCK_dipersediaan = $this->db->query($sql_data_persediaan_by_uuid_persediaan)->row()->total_10;
+
+
+
+
+
+
+
+
+		// $row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+
+		// GET KONSUMEN DATA
+		// $GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+
+		// $sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$GET_uuid_konsumen'";
+		// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_unit;
+		// $get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
+
+		// GET BARANG DATA
+		$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
+		$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
+		// $get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
+		// $get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+
+		$jumlah_Jual_ubah = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
+
+
+		print_r("jumlah jual awal:");
+		print_r($get_jmlh_penjualan_awal);
+		print_r("<br/>");
+		print_r($jumlah_Jual_ubah);
+		print_r("<br/>");
+
+		// $harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik		
+		// $harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
+		// Masukkan data ke database
+
+		$harga_satuan_x = str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan', TRUE))); // menghilangkan titik dan mengubah koma menjadi titik agar bisa masuk ke type data decimal di mysql
+
+		print_r($this->input->post('harga_satuan', TRUE));
+		print_r("<br/>");
+		print_r($harga_satuan_x);
+		// die;
+
+		$TOTAL_X = $jumlah_Jual_ubah * $harga_satuan_x;
+
+		// UPDATE DATA BARANG
+		$data = array(
+			// 'date_input' => date("Y-m-d H:i:s"),
+			'jumlah' => $jumlah_Jual_ubah,
+			'harga_satuan' => $harga_satuan_x,
+			'total_nominal' => $TOTAL_X,
+		);
+
+		print_r($id);
+		print_r("<br/>");
+		print_r($data);
+		// die;
+
+		$this->Tbl_penjualan_model->update($id, $data);
+
+		//KONTROL INI BELUM ADA:
+		// NOTE : HARUS CEK FIELD PENJUALAN , JIKA SUDAH ADA PROSES PENJUALAN, MAKA TIDAK BOLEH MENGUBAH NAMA BARANG, HANYA BISA MENGUBAH HPP DAN JUMLAH BELI (JUMLAH BELI HARUS LEBIH DARI TOTAL JUMLAH TERJUAL)
+
+		// UPDATE DATA DI PERSEDIAAN berdasarkan id persediaan atau uuid_persediaan
+
+
+		// fiel penjualan tabel persediaan: Kalkulasi total penjualan - jumlah jual awal kemudian total penjualan + jumlah jual akhir
+
+		$Total_jual_perubahan = ($get_jmlh_penjualan_dipersediaan - $get_jmlh_penjualan_awal) + $jumlah_Jual_ubah;
+
+		print_r($Total_jual_perubahan);
+		print_r("<br/>");
+
+		$Update_data_persediaan = array(
+			'penjualan' => $Total_jual_perubahan,
+		);
+
+		$this->Persediaan_model->update($get_id_persediaan, $Update_data_persediaan);
+
+		print_r("persediaan");
+		print_r("<br/>");
+		print_r($Update_data_persediaan);
+		// die;
+
+		redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $Get_uuid_penjualan));
 	}
 
 
@@ -1072,7 +1203,7 @@ class Tbl_penjualan extends CI_Controller
 				print_r("<br/>");
 				print_r($Get_total_penjualan_after_hapus);
 				print_r("<br/>");
-				
+
 
 				// Update field penjualan di tabel persediaan berdasarkan id persediaan
 				// $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
@@ -1082,7 +1213,7 @@ class Tbl_penjualan extends CI_Controller
 
 					'penjualan' => $Get_total_penjualan_after_hapus,
 				);
-		
+
 				// print_r($data);
 				// print_r("update");
 				// die;
@@ -1103,20 +1234,17 @@ class Tbl_penjualan extends CI_Controller
 
 			// die;
 
-			
+
 
 
 			// Hapus record di tabel penjualan
 			$this->Tbl_penjualan_model->delete($id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 
-			
-// die;
+
+			// die;
 
 			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
-		
-		
-		
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
@@ -1281,8 +1409,8 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
-		
-		
+
+
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan,
@@ -1321,8 +1449,6 @@ class Tbl_penjualan extends CI_Controller
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
-
-
 	}
 
 	public function update_kode_akun($nmrkirim = null)
@@ -1343,7 +1469,7 @@ class Tbl_penjualan extends CI_Controller
 		redirect(site_url('Tbl_penjualan/jurnal_penjualan/'));
 	}
 
-	
+
 	public function ubah_kode_akun($nmrkirim = null)
 	{
 
@@ -1354,7 +1480,7 @@ class Tbl_penjualan extends CI_Controller
 		// $this->db->query($sql)->result();
 		// print_r($this->db->query($sql)->row()->kode_akun);
 
-		$get_kode_akun=$this->db->query($sql)->row()->kode_akun;
+		$get_kode_akun = $this->db->query($sql)->row()->kode_akun;
 		// die;
 
 		// $start = 0;
