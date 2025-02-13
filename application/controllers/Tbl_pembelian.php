@@ -1742,8 +1742,15 @@ class Tbl_pembelian extends CI_Controller
 		// Get uuid_spop from id
 		$sql_data_pembelian = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id'";
 		$get_uuid_spop = $this->db->query($sql_data_pembelian)->row()->uuid_spop;
+		$get_uuid_persediaan = $this->db->query($sql_data_pembelian)->row()->uuid_persediaan;
+		$get_id_persediaan = $this->db->query($sql_data_pembelian)->row()->id_persediaan_barang;
 
 		// print_r($this->db->query($sql_data_pembelian)->row());
+		// print_r("<br/>");
+		
+		// print_r($this->db->query($sql_data_pembelian)->row()->uuid_persediaan);
+		// print_r("<br/>");
+
 		// die;
 		// print_r($get_uuid_spop);
 
@@ -1809,7 +1816,43 @@ class Tbl_pembelian extends CI_Controller
 		$this->Tbl_pembelian_model->update($id, $data);
 
 
-		// UPDATE DATA DI PERSEDIAAN
+		// UPDATE DATA DI PERSEDIAAN berdasarkan id persediaan atau uuid_persediaan
+		// $get_uuid_persediaan
+		// $Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
+		$Update_data_persediaan = array(
+			// 'id' => $this->input->post('id', TRUE),
+			// 'tanggal' => date("Y-m-d H:i:s"),
+			// 'tanggal_beli' => $row_per_uuid_spop->tgl_po,
+			// 'kode' => $this->input->post('kode', TRUE),
+			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'namabarang' => $get_nama_barang,
+			'satuan' => $this->input->post('satuan', TRUE),
+			'hpp' => $harga_satuan_x,
+			'sa' => $jumlah_x,
+			// 'uuid_spop' => $row_per_uuid_spop->uuid_spop,
+			// 'spop' => $row_per_uuid_spop->spop,
+			// 'beli' => $this->input->post('beli', TRUE),
+			// 'tuj' => $this->input->post('tuj', TRUE),
+			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
+			// 'sekret' => $this->input->post('sekret', TRUE),
+			// 'cetak' => $this->input->post('cetak', TRUE),
+			// 'grafikita' => $this->input->post('grafikita', TRUE),
+			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
+			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
+			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
+			// 'kbs' => $this->input->post('kbs', TRUE),
+			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
+			// 'medis' => $this->input->post('medis', TRUE),
+			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
+			// 'sembako' => $this->input->post('sembako', TRUE),
+			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
+			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
+			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+			'total_10' => $jumlah_x,
+			'nilai_persediaan' => $TOTAL_X,
+		);
+
+		$this->Persediaan_model->update($get_id_persediaan, $Update_data_persediaan);
 
 
 		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
@@ -2961,11 +3004,19 @@ class Tbl_pembelian extends CI_Controller
 
 
 		$get_id_pembelian = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
+		$get_id_persediaan_di_tbl_pembelian = $get_id_pembelian->id_persediaan_barang;
+
 
 		$row = $this->Tbl_pembelian_model->get_by_id($get_id_pembelian->id);
 
 		if ($row) {
+
+			// Hapus record di tabel pembelian
 			$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
+			
+			// hapus record di tabel persediaan
+			$this->Persediaan_model->delete($get_id_persediaan_di_tbl_pembelian);
+
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
 		} else {
