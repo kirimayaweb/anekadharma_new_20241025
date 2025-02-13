@@ -15,7 +15,7 @@ class Tbl_penyusutan extends CI_Controller
 
     public function index()
     {
-        $this->load->view('tbl_penyusutan/tbl_penyusutan_list');
+        $this->load->view('anekadharma/tbl_penyusutan/tbl_penyusutan_list');
     } 
     
     public function json() {
