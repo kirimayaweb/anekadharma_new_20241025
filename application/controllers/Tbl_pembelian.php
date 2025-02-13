@@ -1747,7 +1747,7 @@ class Tbl_pembelian extends CI_Controller
 
 		// print_r($this->db->query($sql_data_pembelian)->row());
 		// print_r("<br/>");
-		
+
 		// print_r($this->db->query($sql_data_pembelian)->row()->uuid_persediaan);
 		// print_r("<br/>");
 
@@ -1815,6 +1815,8 @@ class Tbl_pembelian extends CI_Controller
 
 		$this->Tbl_pembelian_model->update($id, $data);
 
+		//KONTROL INI BELUM ADA:
+		// NOTE : HARUS CEK FIELD PENJUALAN , JIKA SUDAH ADA PROSES PENJUALAN, MAKA TIDAK BOLEH MENGUBAH NAMA BARANG, HANYA BISA MENGUBAH HPP DAN JUMLAH BELI (JUMLAH BELI HARUS LEBIH DARI TOTAL JUMLAH TERJUAL)
 
 		// UPDATE DATA DI PERSEDIAAN berdasarkan id persediaan atau uuid_persediaan
 		// $get_uuid_persediaan
@@ -3013,7 +3015,7 @@ class Tbl_pembelian extends CI_Controller
 
 			// Hapus record di tabel pembelian
 			$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
-			
+
 			// hapus record di tabel persediaan
 			$this->Persediaan_model->delete($get_id_persediaan_di_tbl_pembelian);
 
