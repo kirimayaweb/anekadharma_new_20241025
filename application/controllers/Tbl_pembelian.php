@@ -309,7 +309,9 @@ class Tbl_pembelian extends CI_Controller
 			'nmrfakturkwitansi' => $row_per_uuid_spop->nmrfakturkwitansi,
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
-			'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
+			'nominal_pengajuan' => $x_total,
+			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
+			// 'nominal_pengajuan' => str_replace(",", ".", str_replace(".", "", $x_total)),
 			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
 			'supplier_nama' => $row_per_uuid_spop->supplier_nama,
 			'uuid_konsumen' => $row_per_uuid_spop->uuid_konsumen,
@@ -321,6 +323,8 @@ class Tbl_pembelian extends CI_Controller
 			'nama_kasirpemebelian' => $row_per_kasirpembelian->full_name,
 			'from_pembelian_page' => $from_pembelian_page,
 		);
+
+		// print_r($data);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_cetak_pengajuan_pembayaran', $data);
 	}
