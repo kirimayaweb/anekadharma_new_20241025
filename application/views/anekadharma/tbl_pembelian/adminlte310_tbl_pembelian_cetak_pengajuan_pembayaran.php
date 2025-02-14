@@ -133,9 +133,7 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348">
 										<input type="text" style="font-size:1.2em;" class="form-control" name="jumlah_nominal" id="jumlah_nominal" placeholder="Nomor Permohonan" value="<?php 
-										echo number_format($nominal_pengajuan, 2, ',', '.') ;
-										// $nominal_pengajuan_X=str_replace(".", ",", $nominal_pengajuan);
-										// echo $nominal_pengajuan_X; 
+										echo number_format($nominal_pengajuan, 2, ',', '.') ;										
 										?>">
 									</th>
 

@@ -386,6 +386,18 @@ class Tbl_pembelian extends CI_Controller
 		$data_unit = $this->Sys_unit_model->get_by_uuid_unit($get_uuid_unit);
 		$data_nama_unit = $data_unit->nama_unit;
 
+		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)));
+		// print_r("<br/>");
+		// print_r($this->input->post('jumlah_nominal', TRUE));
+		
+		// print_r("<br/>");
+		// print_r(number_format($this->input->post('jumlah_nominal', TRUE), 2, ',', '.') );
+		
+		// print_r("<br/>");
+		// print_r(str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)) );
+		
+		// die;
+
 		$data = array(
 			'uuid_spop' => $uuid_spop,
 			'date_input' => date("Y-m-d H:i:s"),
@@ -393,9 +405,10 @@ class Tbl_pembelian extends CI_Controller
 			'supplier_nama' => $this->input->post('supplier_nama', TRUE),
 
 
-			'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)),
+			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)),
+			'nominal_pengajuan' => str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)),
 			'nomor_permohonan' => $this->input->post('nomor_permohonan', TRUE),
-			'jumlah_nominal' => $this->input->post('jumlah_nominal', TRUE),
+			'jumlah_nominal' => str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)),
 
 			'tgl_permohonan' => $date_tgl_permohonan,
 			'tgl_pembayaran' => $date_tgl_permohonan,
@@ -519,6 +532,8 @@ class Tbl_pembelian extends CI_Controller
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
 		// die;
+
+		// print_r($row_per_uuid_pengajuan_bayar_terproses->nominal_pengajuan);
 
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,

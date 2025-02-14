@@ -131,7 +131,12 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348">
-										<?php echo  nominal($nominal_pengajuan); ?>
+										<?php 
+										// echo  nominal($nominal_pengajuan); 
+										
+										echo number_format($nominal_pengajuan, 2, ',', '.') ;										
+										
+										?>
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL</th>
