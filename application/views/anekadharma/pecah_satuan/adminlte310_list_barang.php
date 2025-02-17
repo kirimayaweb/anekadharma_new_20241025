@@ -171,7 +171,7 @@
                                             }
                                             ?>
                                         </td>
-                                        <td style="text-align:left"><?php echo date("Y-m-d", strtotime($list_data->tanggal)); ?></td>
+                                        <td style="text-align:left"><?php echo date("d-m-Y", strtotime($list_data->tanggal_beli_persediaan)); ?></td>
 
                                         <!-- Gudang -->
                                         <!-- <td style="text-align:left;text-transform: uppercase;">
