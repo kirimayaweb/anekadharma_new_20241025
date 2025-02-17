@@ -3287,7 +3287,12 @@ class Tbl_pembelian extends CI_Controller
 
 
 
+		$sql_penjualan_barang = "SELECT `uuid_penjualan`,`uuid_persediaan`,`id_persediaan_barang`,`uuid_barang`,`nama_barang`, SUM(`jumlah`) as Sum_jumlah_jual FROM `tbl_penjualan` WHERE `id_persediaan_barang`='$Get_id_persediaan_barang'";
 
+		$Data_Penjualan_barang = $this->db->query($sql_penjualan_barang)->row();
+
+		// print_r($Data_Penjualan_barang);
+		// print_r("<br/>");
 
 		$data = array(
 			'Data_Barang' => $Data_Barang,
@@ -3300,15 +3305,18 @@ class Tbl_pembelian extends CI_Controller
 			'kode_barang' => $Data_Barang->kode_barang_persediaan,
 			'nama_barang' => $Data_Barang->nama_barang_persediaan,
 			'jumlah_persediaan' => $Data_Barang->jumlah_sediaan,
-			'jumlah_beli' => $Data_Barang->sum_jumlah_beli,
-			'jumlah_jual' => $Data_Barang->sum_jumlah_jual,
 			'satuan' => $Data_Barang->satuan,
 			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
 			// 'nama_gudang' => $Data_Barang->nama_gudang,
 			'harga_satuan' => $Data_Barang->harga_satuan_persediaan,
 			'uuid_barang' => $Data_Barang->uuid_barang,
-
 			'uuid_persediaan' => $Data_Barang->uuid_persediaan,
+
+			'jumlah_beli' => $Data_Barang->jumlah_sediaan,
+			'jumlah_jual' => $Data_Penjualan_barang->Sum_jumlah_jual,
+
+
+
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_pecah_satuan_barang', $data);

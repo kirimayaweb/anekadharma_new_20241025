@@ -84,7 +84,8 @@
                                     </div>
                                     <div class="col-8">
                                         <?php 
-                                        $Get_Sisa_Stock = $jumlah_persediaan + $jumlah_beli - $jumlah_jual;
+                                        // $Get_Sisa_Stock = $jumlah_persediaan + $jumlah_beli - $jumlah_jual;
+                                        $Get_Sisa_Stock = $jumlah_persediaan - $jumlah_jual;
 
                                         echo " : " .  nominal($Get_Sisa_Stock) ;
                                         ?>
