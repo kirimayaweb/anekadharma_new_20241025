@@ -15,13 +15,16 @@ class Jurnal_kas extends CI_Controller
     }
 
     public function index(){
-        $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-		$start = 0;
+        $Data_kas = $this->Jurnal_kas_model->get_all();
+		// $start = 0;
+
+        // print_r($Data_kas);
+
 		$data = array(
-			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'start' => $start,
+			'Data_kas' => $Data_kas,
+			// 'start' => $start,
 		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
     }
 
     public function index_server_side()
