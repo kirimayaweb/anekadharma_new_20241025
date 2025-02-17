@@ -3196,7 +3196,7 @@ class Tbl_pembelian extends CI_Controller
 		// get_uuid_barang dengan filter uuid_barang di tbl_pembelian
 
 		// get uuid barang dari uuid_persediaan
-		$get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+		// $get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
 
 		// print_r($get_data_barang);
 		// print_r("<br/>");
@@ -3207,12 +3207,12 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$x = $get_data_barang->uuid_barang;
+		// $x = $get_data_barang->uuid_barang;
 
 
-		print_r($x);
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($x);
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		// $sql_stock = "SELECT persediaan.*,
 		// sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
@@ -3262,13 +3262,13 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($this->db->query($sql_stock)->result());
 		$Data_Barang = $this->db->query($sql_stock)->row();
 
-		print_r($Data_Barang);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r($Data_Barang->id_persediaan);
-		print_r("<br/>");
-		print_r("<br/>");
-		// die;
+		// print_r($Data_Barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($Data_Barang->id_persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// // die;
 
 		$Get_id_persediaan_barang = $Data_Barang->id_persediaan;
 
@@ -3278,9 +3278,9 @@ class Tbl_pembelian extends CI_Controller
 		$Data_Pembelian_barang = $this->db->query($sql_pembelian_barang)->row();
 
 
-		print_r($Data_Pembelian_barang);
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($Data_Pembelian_barang);
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		// jumlah jual berdasarkan $Data_Barang->id_persediaan
 
