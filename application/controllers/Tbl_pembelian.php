@@ -389,13 +389,13 @@ class Tbl_pembelian extends CI_Controller
 		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)));
 		// print_r("<br/>");
 		// print_r($this->input->post('jumlah_nominal', TRUE));
-		
+
 		// print_r("<br/>");
 		// print_r(number_format($this->input->post('jumlah_nominal', TRUE), 2, ',', '.') );
-		
+
 		// print_r("<br/>");
 		// print_r(str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)) );
-		
+
 		// die;
 
 		$data = array(
@@ -3209,22 +3209,81 @@ class Tbl_pembelian extends CI_Controller
 
 		$x = $get_data_barang->uuid_barang;
 
-		$sql_stock = "SELECT persediaan.*,
-		sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
-		sum(tbl_penjualan.jumlah) as sum_jumlah_jual
-				FROM persediaan  
-				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-				left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-				-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
-				where persediaan.uuid_barang='$x'
-				Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
-				ORDER BY persediaan.namabarang ASC";
+
+		print_r($x);
+		print_r("<br/>");
+		print_r("<br/>");
+
+		// $sql_stock = "SELECT persediaan.*,
+		// sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
+		// sum(tbl_penjualan.jumlah) as sum_jumlah_jual
+		// 		FROM persediaan  
+		// 		left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+		// 		left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+		// 		-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
+		// 		where persediaan.uuid_barang='$x'
+		// 		Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
+		// 		ORDER BY persediaan.namabarang ASC";
+
+
+
+		$sql_stock = "SELECT persediaan.id as id_persediaan, 
+						persediaan.uuid_persediaan as uuid_persediaan,
+						persediaan.kode_barang as kode_barang_persediaan,
+						persediaan.namabarang as nama_barang_persediaan,
+						persediaan.total_10 as jumlah_sediaan, 
+						persediaan.hpp as harga_satuan_persediaan,
+						persediaan.tanggal_beli as tanggal_beli_persediaan, 
+						persediaan.satuan as satuan, 
+						persediaan.spop as spop, 
+						-- persediaan.satuan as satuan, 
+
+								-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
+								-- 	tbl_pembelian.uraian as barang_beli, 
+								-- 	tbl_pembelian.jumlah as jumlah_belanja, 
+								-- 	tbl_pembelian.harga_satuan as harga_satuan_beli, 
+								-- 	tbl_pembelian.tgl_po as tgl_po, 
+								-- 	tbl_pembelian.uuid_gudang as uuid_gudang, 
+								-- 	tbl_pembelian.nama_gudang as nama_gudang,
+								-- 	tbl_pembelian.satuan as satuan,
+								-- tbl_penjualan.nama_barang as barang_jual, 
+								-- tbl_penjualan.jumlah as jumlah_terjual
+
+						persediaan.nilai_persediaan as nilai_persediaan
+		
+						FROM persediaan  
+						-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+						-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
+						-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
+						where persediaan.uuid_persediaan='$uuid_persediaan'
+						ORDER BY persediaan.uuid_barang ASC";
+
 
 		// print_r($this->db->query($sql_stock)->result());
 		$Data_Barang = $this->db->query($sql_stock)->row();
 
-		// print_r($Data_Barang);
+		print_r($Data_Barang);
+		print_r("<br/>");
+		print_r("<br/>");
+		print_r($Data_Barang->id_persediaan);
+		print_r("<br/>");
+		print_r("<br/>");
 		// die;
+
+		$Get_id_persediaan_barang = $Data_Barang->id_persediaan;
+
+		// jumlah beli berdasarkan $Data_Barang->id_persediaan
+		$sql_pembelian_barang = "SELECT `uuid_persediaan`,`id_persediaan_barang`,`uuid_barang`,`uraian`,sum(`jumlah`) as jumlah_beli FROM `tbl_pembelian` WHERE `id_persediaan_barang`='$Get_id_persediaan_barang'";
+
+		$Data_Pembelian_barang = $this->db->query($sql_pembelian_barang)->row();
+
+
+		print_r($Data_Pembelian_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+
+		// jumlah jual berdasarkan $Data_Barang->id_persediaan
+
 
 
 
@@ -3238,18 +3297,18 @@ class Tbl_pembelian extends CI_Controller
 			'uuid_barang' => $Data_Barang->uuid_barang,
 			// 'tgl_po' => $Data_Barang->tgl_po,
 			// 'uuid_spop' => $Data_Barang->uuid_spop,
-			'kode_barang' => $Data_Barang->kode_barang,
-			'nama_barang' => $Data_Barang->namabarang,
-			'jumlah_persediaan' => $Data_Barang->total_10,
+			'kode_barang' => $Data_Barang->kode_barang_persediaan,
+			'nama_barang' => $Data_Barang->nama_barang_persediaan,
+			'jumlah_persediaan' => $Data_Barang->jumlah_sediaan,
 			'jumlah_beli' => $Data_Barang->sum_jumlah_beli,
 			'jumlah_jual' => $Data_Barang->sum_jumlah_jual,
 			'satuan' => $Data_Barang->satuan,
 			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
 			// 'nama_gudang' => $Data_Barang->nama_gudang,
-			'harga_satuan' => $Data_Barang->hpp,
+			'harga_satuan' => $Data_Barang->harga_satuan_persediaan,
 			'uuid_barang' => $Data_Barang->uuid_barang,
 
-			'uuid_persediaan' => $uuid_persediaan,
+			'uuid_persediaan' => $Data_Barang->uuid_persediaan,
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_pecah_satuan_barang', $data);
@@ -3642,9 +3701,6 @@ class Tbl_pembelian extends CI_Controller
 
 			// print_r($this->db->query($sql_stock)->result());
 			$Data_stock = $this->db->query($sql_stock)->result();
-
-
-
 		}
 
 		// print_r($Data_stock);
