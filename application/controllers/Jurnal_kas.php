@@ -24,7 +24,7 @@ class Jurnal_kas extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
     }
 
-    public function index+server_side()
+    public function index_server_side()
     {
         $this->load->view('anekadharma/jurnal_kas/jurnal_kas_list');
     } 
