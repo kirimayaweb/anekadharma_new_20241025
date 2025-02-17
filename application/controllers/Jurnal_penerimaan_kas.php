@@ -16,7 +16,7 @@ class Jurnal_penerimaan_kas extends CI_Controller
 
     public function index()
     {
-        $this->load->view('jurnal_penerimaan_kas/jurnal_penerimaan_kas_list');
+        $this->load->view('anekadharma/jurnal_penerimaan_kas/jurnal_penerimaan_kas_list');
     } 
     
     public function json() {

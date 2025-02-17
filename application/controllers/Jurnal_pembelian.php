@@ -16,7 +16,7 @@ class Jurnal_pembelian extends CI_Controller
 
     public function index()
     {
-        $this->load->view('jurnal_pembelian/jurnal_pembelian_list');
+        $this->load->view('anekadharma/jurnal_pembelian/jurnal_pembelian_list');
     } 
     
     public function json() {

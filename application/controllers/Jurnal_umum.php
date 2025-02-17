@@ -16,7 +16,7 @@ class Jurnal_umum extends CI_Controller
 
     public function index()
     {
-        $this->load->view('jurnal_umum/jurnal_umum_list');
+        $this->load->view('anekadharma/jurnal_umum/jurnal_umum_list');
     } 
     
     public function json() {

@@ -16,7 +16,7 @@ class Jurnal_penjualan extends CI_Controller
 
     public function index()
     {
-        $this->load->view('jurnal_penjualan/jurnal_penjualan_list');
+        $this->load->view('anekadharma/jurnal_penjualan/jurnal_penjualan_list');
     } 
     
     public function json() {
