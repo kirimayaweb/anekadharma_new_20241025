@@ -14,9 +14,19 @@ class Jurnal_kas extends CI_Controller
 	$this->load->library('datatables');
     }
 
-    public function index()
+    public function index(){
+        $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$start = 0;
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'start' => $start,
+		);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
+    }
+
+    public function index+server_side()
     {
-        $this->load->view('jurnal_kas/jurnal_kas_list');
+        $this->load->view('anekadharma/jurnal_kas/jurnal_kas_list');
     } 
     
     public function json() {
