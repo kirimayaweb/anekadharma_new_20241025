@@ -117,7 +117,10 @@
                                     <th>Fc Psamya</th>
                                     <th>Total 10</th>
                                     <th>Nilai Persediaan</th>
-                                    <th width="200px">Action</th>
+                                    <th>Terjual</th>
+                                    <th>Jumlah Pecah Satuan</th>
+                                    <th>Sisa / Stock</th>
+                                    <!-- <th width="200px">Action</th> -->
                                 </tr>
 
                             </thead>
@@ -154,7 +157,10 @@
                                         <td><?php echo $persediaan->fc_psamya ?></td>
                                         <td><?php echo $persediaan->total_10 ?></td>
                                         <td><?php echo $persediaan->nilai_persediaan ?></td>
-                                        <td width="200px">Action</td>
+                                        <td><?php echo $persediaan->penjualan ?></td>
+                                        <td><?php echo $persediaan->pecah_satuan ?></td>
+                                        <td><?php echo $persediaan->total_10 - ($persediaan->penjualan + $persediaan->pecah_satuan) ?></td>
+                                        <!-- <td width="200px">Action</td> -->
                                     </tr>
                                 <?php
                                 }
