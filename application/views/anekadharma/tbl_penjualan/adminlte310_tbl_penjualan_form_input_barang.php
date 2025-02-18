@@ -65,76 +65,130 @@
 
 
 
+                        <form action="<?php echo $action_ubah_detail_nomor_kirim; ?>" id="form_update_nmrkirim" method="post">
 
+                            <div class="form-group">
+                                <label for="datetime">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
+                                <div class="col-4">
+                                    <?php
+                                    $tgl_jual_X = date("d-m-Y", strtotime($tgl_jual));
+                                    ?>
+                                    <!-- <input type="text" class="form-control" name="tgl_jual" id="tgl_jual" placeholder="Tgl Po" value="<?php echo $tgl_jual; ?>" /> -->
+                                    <div class="input-group date" id="tgl_jual" name="tgl_jual" data-target-input="nearest">
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_jual" id="tgl_jual" name="tgl_jual" value="<?php echo $tgl_jual_X; ?>" required />
+                                        <div class="input-group-append" data-target="#tgl_jual" data-toggle="datetimepicker">
+                                            <div class="input-group-text">
+                                                <i class="fa fa-calendar"></i>
+                                            </div>
 
-                        <div class="form-group">
-                            <label for="datetime">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
-                            <div class="col-4">
-                                <?php
-                                $tgl_jual_X = date("d-m-Y", strtotime($tgl_jual));
-                                ?>
-                                <!-- <input type="text" class="form-control" name="tgl_jual" id="tgl_jual" placeholder="Tgl Po" value="<?php echo $tgl_jual; ?>" /> -->
-                                <div class="input-group date" id="tgl_jual" name="tgl_jual" data-target-input="nearest">
-                                    <input type="text" class="form-control datetimepicker-input" data-target="#tgl_jual" id="tgl_jual" name="tgl_jual" value="<?php echo $tgl_jual_X; ?>" required />
-                                    <div class="input-group-append" data-target="#tgl_jual" data-toggle="datetimepicker">
-                                        <div class="input-group-text">
-                                            <i class="fa fa-calendar"></i>
                                         </div>
 
                                     </div>
-
                                 </div>
-                            </div>
-                            <!-- <div class="col-12">
+                                <!-- <div class="col-12">
                                     Jika tanggal tidak di pilih, maka akan di isi = tanggal saat ini secara otomatis oleh sistem
 
                                 </div> -->
 
-                        </div>
+                            </div>
 
 
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-4">
-                                    <label for="konsumen_nama">Konsumen <?php echo form_error('konsumen_nama') ?></label>
-                                    <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                        <option value="<?php echo $uuid_konsumen ?>"><?php echo $nama_konsumen ?></option>
-                                        <?php
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="konsumen_nama">Konsumen <?php echo form_error('konsumen_nama') ?></label>
+                                        <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                            <option value="<?php echo $uuid_konsumen ?>"><?php echo $nama_konsumen ?></option>
+                                            <?php
 
-                                        // Data Unit
-                                        $sql = "select * from sys_unit order by nama_unit ASC ";
-                                        foreach ($this->db->query($sql)->result() as $m) {
-                                            echo "<option value='$m->uuid_unit' ";
-                                            echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
-                                        }
-                                        // Data Sys_konsumen
-                                        $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                        foreach ($this->db->query($sql)->result() as $m) {
-                                            echo "<option value='$m->uuid_konsumen' ";
-                                            echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
-                                        }
-                                        ?>
-                                    </select>
+                                            // Data Unit
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+                                            }
+                                            // Data Sys_konsumen
+                                            $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_konsumen' ";
+                                                echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+                                            }
+                                            ?>
+                                        </select>
+
+
+                                    </div>
+
+                                    <div class="col-4">
+                                        <label for="nmrpesan">Nomor Pesan <?php echo form_error('nmrpesan') ?></label>
+                                        <input type="text" class="form-control" rows="3" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan ?>" placeholder="nmrpesan">
+                                    </div>
+
+                                    <div class="col-4">
+                                        <label for="nmrkirim">Nomor Kirim <?php echo form_error('nmrkirim') ?></label>
+                                        <input type="text" class="form-control" rows="3" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim ?>" placeholder="nmrkirim">
+                                    </div>
 
 
                                 </div>
-
-                                <div class="col-4">
-                                    <label for="nmrpesan">Nomor Pesan <?php echo form_error('nmrpesan') ?></label>
-                                    <input type="text" class="form-control" rows="3" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan ?>" placeholder="nmrpesan">
-                                </div>
-
-                                <div class="col-4">
-                                    <label for="nmrkirim">Nomor Kirim <?php echo form_error('nmrkirim') ?></label>
-                                    <input type="text" class="form-control" rows="3" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim ?>" placeholder="nmrkirim">
-                                </div>
-
 
                             </div>
 
-                        </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-4">
+                                    </div>
+                                    <div class="col-4">
 
 
+                                        <!-- <input type="text" name="id" value="<?php //echo $id; ?>" /> -->
+                                        <input type="hidden" name="uuid_penjualan_proses" id="uuid_penjualan_proses" value="<?php echo $uuid_penjualan; ?>" />
+                                        <input type="hidden" name="nmrkirim_proses" id="nmrkirim_proses" value="<?php echo $nmrkirim; ?>" />
+
+                                        <button type="submit" onclick="confirmUbahSPOP(event)" class="btn btn-primary"><?php echo $button_detail_nomor_kirim; ?></button>
+                                    </div>
+                                    <div class="col-4">
+                                    </div>
+                                </div>
+                            </div>
+
+
+
+                            <script>
+                                function confirmUbahSPOP(e) {
+
+                                    let input_spop = document.getElementById("nmrkirim").value;
+                                    let input_nmrkirim_proses = document.getElementById("nmrkirim_proses").value;
+
+                                    if (input_spop != input_nmrkirim_proses) {
+                                        let text = "Nomor Kirim terjadi PERBEDAAN: \n\n Nomor Kirim awal:" + input_nmrkirim_proses + "\n Nomor Kirim baru: " + input_spop + "\n\n Apakah Tetap diproses PERUBAHAN Nomor Kirim? ";
+
+                                        if (confirm(text))
+                                            // alert('Proses Ubah SPOP !');
+                                            // e.preventDefault();
+                                            document.getElementById("form_update_nmrkirim").submit();
+                                        else {
+                                            // alert('Cancelled! \n harap SPOP dikembalikan ke: ' + input_spop_proses);
+                                            e.preventDefault();
+                                        }
+
+                                    }
+
+
+                                }
+                            </script>
+
+
+
+
+
+
+                        </form>
+
+
+
+                        <br />
 
                         <div class="card card-success">
                             <div class="card-header">
@@ -755,7 +809,7 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
                                     <label for="nmrpesan">Harga Satuan </label>
                                     <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php // echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); 
                                                                                                                                                     ?>" placeholder="<?php // echo nominal($list_data->harga_satuan_persediaan);  echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                                                                                                                                                                ?>"> -->
+                                                                                                                                                                        ?>"> -->
                                 </div>
                                 <div class="col-4">
                                     <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $Get_stock_di_persediaan; ?></label>

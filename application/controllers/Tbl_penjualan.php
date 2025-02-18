@@ -662,6 +662,7 @@ class Tbl_penjualan extends CI_Controller
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
 			'button' => 'Simpan',
+			'button_detail_nomor_kirim' => 'Simpan Perubahan Detail Nomor Kirim',
 			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
 			'tgl_jual' => $data_penjualan_per_uuid_penjualan_first_row->tgl_jual,
 			'nmrpesan' => $data_penjualan_per_uuid_penjualan_first_row->nmrpesan,
@@ -670,6 +671,7 @@ class Tbl_penjualan extends CI_Controller
 			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama,
 			'uuid_penjualan' => $uuid_penjualan,
 			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
+			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $data_penjualan_per_uuid_penjualan_first_row->nmrkirim . '/' . $uuid_penjualan),
 		);
 
 		// print_r($data);
@@ -679,14 +681,94 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_input_barang', $data);
 	}
 
+	public function action_ubah_detail_nomor_kirim($NomorKirim = null, $uuid_penjualan = null)
+	{
+		// print_r("action_ubah_detail_nomor_kirim");
+		// print_r("<br/>");
+		// print_r($NomorKirim);
+		// print_r("<br/>");
+		// print_r($this->input->post('tgl_jual', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('uuid_konsumen', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('nmrpesan', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('nmrkirim', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('uuid_penjualan_proses', TRUE));
+		// print_r("<br/>");
+		// print_r($uuid_penjualan);
+		// print_r("<br/>");
+		// die;
+
+
+		if (date("Y", strtotime($this->input->post('tgl_jual', TRUE))) < 2020) {
+			// print_r("Tahun kurang dari 2020");
+			$date_jual = date("Y-m-d H:i:s");
+		} else {
+			// print_r("Tahun lebih dari 2020");
+			$date_jual = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_jual', TRUE)));
+		}
+
+
+
+
+		// $Get_uuid_penjualan = ;
+		$NomorKirim_baru = $this->input->post('nmrkirim', TRUE);
+		$NomorPesan_baru = $this->input->post('nmrpesan', TRUE);
+		$GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+
+		// // Data Unit
+		// $sql = "select * from sys_unit order by nama_unit ASC ";
+		// foreach ($this->db->query($sql)->result() as $m) {
+		// 	echo "<option value='$m->uuid_unit' ";
+		// 	echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+		// }
+		// // Data Sys_konsumen
+		// $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
+		// foreach ($this->db->query($sql)->result() as $m) {
+		// 	echo "<option value='$m->uuid_konsumen' ";
+		// 	echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+		// }
+
+
+		$this->db->where('uuid_unit', $GET_uuid_konsumen);
+        $GET_sys_unit = $this->db->get('sys_unit');
+        if ($GET_sys_unit->num_rows() > 0) {
+			$GET_DATA_sys_unit = $GET_sys_unit->row_array();
+
+        	// $kode_konsumen = $GET_DATA_sys_unit['kode_unit'],
+        	$nama_konsumen = $GET_DATA_sys_unit['nama_unit'];
+		}
+
+		$this->db->where('uuid_konsumen', $GET_uuid_konsumen);
+        $GET_sys_konsumen = $this->db->get('sys_konsumen');
+        if ($GET_sys_konsumen->num_rows() > 0) {
+			$GET_DATA_sys_konsumen = $GET_sys_konsumen->row_array();
+
+        	// $kode_konsumen = $GET_DATA_sys_konsumen['kode_konsumen'],
+        	$nama_konsumen = $GET_DATA_sys_konsumen['nama_konsumen'];
+		}
+
+
+		// $sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `nmrkirim`=$NomorKirim_baru , `tgl_jual`=$date_jual , `nmrpesan`=$NomorPesan_baru, `uuid_konsumen`=$GET_uuid_konsumen, `konsumen_nama`=$nama_konsumen  WHERE `uuid_penjualan`='$uuid_penjualan'";
+
+		$sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `tgl_jual`='$date_jual' , `nmrkirim`='$NomorKirim_baru', `nmrpesan`='$NomorPesan_baru', `uuid_konsumen`='$GET_uuid_konsumen', `konsumen_nama`='$nama_konsumen'  WHERE `uuid_penjualan`='$uuid_penjualan'";
+
+		$this->db->query($sql_update_penjualan_by_uuid_penjualan);
+	
+		
+		redirect(site_url('Tbl_penjualan/'));	
+	}
+
 
 	public function create_action_nmrkirim_update_per_id_penjualan($id)
 	{
 
-		print_r("create_action_nmrkirim_update_per_id_penjualan");
-		print_r("<br/>");
-		print_r($id);
-		print_r("<br/>");
+		// print_r("create_action_nmrkirim_update_per_id_penjualan");
+		// print_r("<br/>");
+		// print_r($id);
+		// print_r("<br/>");
 		// print_r($this->input->post('uuid_konsumen', TRUE));
 		// print_r("<br/>");
 		// print_r($this->input->post('uuid_barang', TRUE));
@@ -749,11 +831,11 @@ class Tbl_penjualan extends CI_Controller
 		$jumlah_Jual_ubah = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
 
-		print_r("jumlah jual awal:");
-		print_r($get_jmlh_penjualan_awal);
-		print_r("<br/>");
-		print_r($jumlah_Jual_ubah);
-		print_r("<br/>");
+		// print_r("jumlah jual awal:");
+		// print_r($get_jmlh_penjualan_awal);
+		// print_r("<br/>");
+		// print_r($jumlah_Jual_ubah);
+		// print_r("<br/>");
 
 		// $harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik		
 		// $harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
@@ -761,9 +843,9 @@ class Tbl_penjualan extends CI_Controller
 
 		$harga_satuan_x = str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan', TRUE))); // menghilangkan titik dan mengubah koma menjadi titik agar bisa masuk ke type data decimal di mysql
 
-		print_r($this->input->post('harga_satuan', TRUE));
-		print_r("<br/>");
-		print_r($harga_satuan_x);
+		// print_r($this->input->post('harga_satuan', TRUE));
+		// print_r("<br/>");
+		// print_r($harga_satuan_x);
 		// die;
 
 		$TOTAL_X = $jumlah_Jual_ubah * $harga_satuan_x;
@@ -776,9 +858,9 @@ class Tbl_penjualan extends CI_Controller
 			'total_nominal' => $TOTAL_X,
 		);
 
-		print_r($id);
-		print_r("<br/>");
-		print_r($data);
+		// print_r($id);
+		// print_r("<br/>");
+		// print_r($data);
 		// die;
 
 		$this->Tbl_penjualan_model->update($id, $data);
@@ -793,8 +875,8 @@ class Tbl_penjualan extends CI_Controller
 
 		$Total_jual_perubahan = ($get_jmlh_penjualan_dipersediaan - $get_jmlh_penjualan_awal) + $jumlah_Jual_ubah;
 
-		print_r($Total_jual_perubahan);
-		print_r("<br/>");
+		// print_r($Total_jual_perubahan);
+		// print_r("<br/>");
 
 		$Update_data_persediaan = array(
 			'penjualan' => $Total_jual_perubahan,
@@ -802,9 +884,9 @@ class Tbl_penjualan extends CI_Controller
 
 		$this->Persediaan_model->update($get_id_persediaan, $Update_data_persediaan);
 
-		print_r("persediaan");
-		print_r("<br/>");
-		print_r($Update_data_persediaan);
+		// print_r("persediaan");
+		// print_r("<br/>");
+		// print_r($Update_data_persediaan);
 		// die;
 
 		redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $Get_uuid_penjualan));
