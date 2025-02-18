@@ -154,9 +154,9 @@
 
                                     if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
                                         $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
-                                        $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan;
+                                        $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan;
                                     } else {
-                                        $Jumlah_penjualan_per_uuid_persediaan = 0;
+                                        $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan;
                                     }
 
 
