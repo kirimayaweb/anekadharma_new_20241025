@@ -378,6 +378,7 @@
                                         persediaan.total_10 as jumlah_sediaan,  
                                         persediaan.hpp as harga_satuan_persediaan, 
                                         persediaan.satuan as satuan_persediaan,
+                                        persediaan.pecah_satuan as pecah_satuan_persediaan,
                                                 -- tbl_pembelian.uuid_pembelian as uuid_pembelian,
                                                 -- tbl_pembelian.uraian as barang_beli, 
                                                 -- tbl_pembelian.jumlah as jumlah_belanja, 
@@ -443,7 +444,7 @@
 
                                 if ($list_data->uuid_barang) { //ada data barang
 
-                                    $sisa_stock_data = $list_data->jumlah_sediaan - $list_data->penjualan;
+                                    $sisa_stock_data = $list_data->jumlah_sediaan - ($list_data->penjualan + $list_data->pecah_satuan_persediaan);
 
                                     if ($sisa_stock_data > 0) { // stock lebih dari 0
                             ?>
