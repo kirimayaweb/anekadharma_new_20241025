@@ -3910,17 +3910,20 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		// Mengurangi stock uuid_persediaan yag di pecah $uuid_persediaan
-		$Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
-		$Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
 
-		$data_update_persediaan_setelah_di_pecah = array(
-			'sa' => $Get_jumlah_setelah_dipecah,
-			'total_10' => $Get_jumlah_setelah_dipecah,
-			'nilai_persediaan' => $Get_nominal_persediaan,
-		);
 
-		$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
+
+		// // Update Field Pecah satuan : ditambahkan sejumlah stock yang di pecah
+			// $Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
+			// $Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
+
+			$data_update_persediaan_setelah_di_pecah = array(
+				// 'sa' => $Get_jumlah_setelah_dipecah,
+				// 'total_10' => $Get_jumlah_setelah_dipecah,
+				'pecah_satuan' => $get_jumlah_barang_di_pecah,
+			);
+
+			$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
 
 
 		$get_id_persediaan_new_pecah_satuan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
