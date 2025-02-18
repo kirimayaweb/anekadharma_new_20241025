@@ -139,6 +139,7 @@
                                 $TOTAL_PERSEDIAAN = 0;
                                 $TOTAL_NILAI_PERSEDIAAN = 0;
                                 $TOTAL_PERSEDIAAN_X = 0;
+                                $Sisa_STOCK = 0;
                                 foreach ($Data_stock as $list_data) {
 
                                     // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) { //HIDE SISA STOCK =0;
@@ -277,14 +278,18 @@
                                             if ($Jumlah_penjualan_per_uuid_persediaan > 0) {
                                                 if ($list_data->jumlah_sediaan > 0) {
                                                     echo nominal($list_data->jumlah_sediaan - $Jumlah_penjualan_per_uuid_persediaan);
+                                                    $Sisa_STOCK = $list_data->jumlah_sediaan - $Jumlah_penjualan_per_uuid_persediaan;
                                                 } else {
                                                     echo "0";
+                                                    $Sisa_STOCK = 0;
                                                 }
                                             } else {
                                                 if ($list_data->jumlah_sediaan > 0) {
                                                     echo nominal($list_data->jumlah_sediaan);
+                                                    $Sisa_STOCK = $list_data->jumlah_sediaan;
                                                 } else {
                                                     echo "0";
+                                                    $Sisa_STOCK = 0;
                                                 }
                                             }
 
@@ -304,8 +309,15 @@
                                         <td style="text-align:right">
 
                                             <?php
-                                            $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $list_data->nilai_persediaan;
-                                            echo nominal($list_data->nilai_persediaan);
+
+                                            if ($Sisa_STOCK > 0) {
+                                                $GET_NominalBarang = $Sisa_STOCK * $list_data->harga_satuan_persediaan;
+                                                echo nominal($GET_NominalBarang);
+                                                $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $GET_NominalBarang;
+
+                                            } else {
+                                                echo "0";
+                                            }
                                             ?>
 
                                         </td>
