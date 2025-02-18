@@ -7,9 +7,17 @@ class Tbl_penjualan_accounting_model extends CI_Model
 {
 
     public $table = 'tbl_penjualan_accounting';
-    public $id = 'id';
+	public $id = 'id';
+    public $tgl_jual = 'tgl_jual';
+    public $nmrpesan = 'nmrpesan';
+    public $nmrkirim = 'nmrkirim';
+    public $uuid_penjualan_proses = 'uuid_penjualan_proses';
+    public $uuid_penjualan = 'uuid_penjualan';
+    public $uuid_konsumen = 'uuid_konsumen';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
+	
     function __construct()
     {
         parent::__construct();
@@ -24,6 +32,23 @@ class Tbl_penjualan_accounting_model extends CI_Model
         $this->datatables->add_column('action', anchor(site_url('tbl_penjualan_accounting/read/$1'),'Read')." | ".anchor(site_url('tbl_penjualan_accounting/update/$1'),'Update')." | ".anchor(site_url('tbl_penjualan_accounting/delete/$1'),'Delete','onclick="javasciprt: return confirm(\'Are You Sure ?\')"'), 'id');
         return $this->datatables->generate();
     }
+
+    // get all
+    function get_all_group_by_tgl_jual_nmrpesan_nmr_kirim()
+    {
+
+        // $this->db->group_by($this->tgl_jual, $this->orderASC);
+        // $this->db->group_by($this->nmrpesan, $this->orderASC);
+        // $this->db->group_by($this->nmrkirim, $this->orderASC);
+
+        $this->db->order_by($this->tgl_jual, $this->order);
+        // $this->db->order_by($this->nmrpesan, $this->orderASC);
+        $this->db->order_by($this->nmrkirim, $this->orderASC);
+        // $this->db->order_by($this->uuid_penjualan, $this->orderASC);
+
+        return $this->db->get($this->table)->result();
+    }
+
 
     // get all
     function get_all()
@@ -136,6 +161,102 @@ class Tbl_penjualan_accounting_model extends CI_Model
     {
         $this->db->where($this->id, $id);
         $this->db->delete($this->table);
+    }
+
+    function insert_new($data)
+    {
+
+        // print_r("inser new");
+        // die;
+
+        // $this->db->insert($this->table, $data);
+
+        // $this->db->set('uuid_spop', "replace(uuid(),'-','')", FALSE);
+        // $this->db->set('uuid_pembelian', "replace(uuid(),'-','')", FALSE);
+        // $this->db->insert($this->table, $data);
+
+        // $datainsert = array(
+        //     'PROCESS' => 'INSERT',
+        //     'id' => $this->db->insert_id()
+        // );
+
+
+        $this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
+        $this->db->set('uuid_penjualan', "replace(uuid(),'-','')", FALSE);
+        $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+
+        // print_r("<br/>");
+        // print_r($datainsert['id']);
+        // print_r("<br/>");
+        $this->db->where($this->id, $datainsert['id']);
+        $uuid_penjualan = $this->db->get($this->table)->row()->uuid_penjualan;
+        // print_r($uuid_penjualan);
+        // die;
+        return $uuid_penjualan;
+        // die;
+
+
+    }
+
+    function get_ROW_by_uuid_penjualan_first_row($uuid_penjualan=null)
+    {
+        $this->db->where($this->uuid_penjualan, $uuid_penjualan);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->row();
+    }
+   
+
+    function get_all_by_uuid_penjualan($uuid_penjualan=null)
+    {
+        $this->db->where($this->uuid_penjualan, $uuid_penjualan);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+   
+
+    function get_all_by_uuid_penjualan_first_row($uuid_penjualan=null)
+    {
+        $this->db->where($this->uuid_penjualan, $uuid_penjualan);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->row();
+    }
+
+    function insert_add_barang($data)
+    {
+
+        // print_r("insert_add_barang");
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r($data);
+        // die;
+
+        $this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
+        // $this->db->set('uuid_penjualan', "replace(uuid(),'-','')", FALSE);
+        $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+
+        // print_r("<br/>");
+        // print_r($datainsert['id']);
+        // print_r("<br/>");
+        $this->db->where($this->id, $datainsert['id']);
+        $uuid_penjualan = $this->db->get($this->table)->row()->uuid_penjualan;
+        // print_r($uuid_penjualan);
+        // die;
+        return $uuid_penjualan;
+        // die;
+
+
     }
 
 }
