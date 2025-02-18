@@ -3686,7 +3686,7 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.tanggal_beli as tanggal_beli_persediaan, 
 			persediaan.satuan as satuan, 
 			persediaan.spop as spop, 
-			-- persediaan.satuan as satuan, 
+			persediaan.pecah_satuan as pecah_satuan, 
 			
 					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
 					-- 	tbl_pembelian.uraian as barang_beli, 
@@ -3718,6 +3718,8 @@ class Tbl_pembelian extends CI_Controller
 			'Data_stock' => $Data_stock,
 		);
 
+
+		// print_r($data);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pecah_satuan/adminlte310_list_barang', $data);
 	}
