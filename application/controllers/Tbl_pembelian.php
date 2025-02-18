@@ -208,7 +208,7 @@ class Tbl_pembelian extends CI_Controller
 					-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
-					ORDER BY persediaan.uuid_barang ASC";
+					ORDER BY persediaan.tanggal_beli DESC";
 
 			// print_r($this->db->query($sql_stock)->result());
 			$Data_stock = $this->db->query($sql_stock)->result();
