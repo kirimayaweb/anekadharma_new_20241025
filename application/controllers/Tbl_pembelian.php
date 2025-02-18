@@ -3733,7 +3733,7 @@ class Tbl_pembelian extends CI_Controller
 		// $Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
 		$Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
 
-		// print_r("Data_Barang: ");
+		// print_r("Data_Barang Persediaan: ");
 		// print_r("<br/>");
 		// print_r($Data_Barang);
 		// print_r("<br/>");
@@ -3833,62 +3833,7 @@ class Tbl_pembelian extends CI_Controller
 
 		$uuid_barang_baru = $this->Sys_nama_barang_model->insert_dari_pecah_satuan($data_Sys_nama_barang);
 
-
-
-		$data_Tbl_pembelian_pecah_satuan = array(
-
-			'proses_input' => date("Y-m-d H:i:s"),
-			// 'uuid_pembelian' => $Data_Barang->uuid_pembelian,
-			'uuid_barang' => $Data_Barang->uuid_barang,
-			'uuid_persediaan' => $uuid_persediaan,
-			// 'tgl_po' => $Data_Barang->tgl_po,
-			// 'nmrsj' => $Data_Barang->nmrsj,
-			// 'nmrfakturkwitansi' => $Data_Barang->nmrfakturkwitansi,
-			// 'nmrbpb' => $Data_Barang->nmrbpb,
-			// 'uuid_spop' => $Data_Barang->uuid_spop,
-			// 'spop' => $Data_Barang->spop,
-			// 'status_spop' => $Data_Barang->status_spop,
-			// 'uuid_supplier' => $Data_Barang->uuid_supplier,
-			// 'supplier_kode' => $Data_Barang->supplier_kode,
-			// 'supplier_nama' => $Data_Barang->supplier_nama,
-			'kode_barang' => $Data_Barang->kode_barang,
-			'uraian' => $Data_Barang->namabarang,
-			'jumlah' => $get_jumlah_barang_di_pecah,
-			'satuan' => $Data_Barang->satuan,
-			// 'uuid_konsumen' => $Data_Barang->uuid_konsumen,
-			// 'konsumen' => $Data_Barang->konsumen,
-			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
-			// 'nama_gudang' => $Data_Barang->nama_gudang,
-			'harga_satuan' => $Data_Barang->hpp,
-			// 'uuid_gudang_baru' => $this->input->post('uuid_gudang', TRUE),
-
-			'uuid_barang_baru' => $uuid_barang_baru,
-			'kode_barang_baru' => $get_kode_barang,
-			'nama_barang_baru' => $this->input->post('nama_barang_baru', TRUE),
-			'jumlah_barang_baru' => $get_jumlah_barang_baru,
-			'satuan_barang_baru' => $this->input->post('satuan_barang_baru', TRUE),
-			'harga_satuan_barang_baru' => $get_harga_satuan_barang_baru,
-
-		);
-
-		// print_r("Tbl_pembelian_pecah_satuan: ");
-		// print_r("<br/>");
-		// print_r($data_Tbl_pembelian_pecah_satuan);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// die;
-
-		$this->Tbl_pembelian_pecah_satuan_model->insert($data_Tbl_pembelian_pecah_satuan);
-
-		// die;
-
-		// // GET GUDANG DATA
-		// $GET_uuid_gudang = $this->input->post('uuid_gudang', TRUE);
-		// $sql_uuid_gudang = "SELECT * FROM `sys_gudang` WHERE `uuid_gudang`='$GET_uuid_gudang'";
-		// $get_kode_gudang = $this->db->query($sql_uuid_gudang)->row()->kode_gudang;
-		// $get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
-
+		// Simpan ke tabel persediaan
 
 		$get_uuid_unit = $this->input->post('uuid_unit', TRUE);
 		$data_unit = $this->Sys_unit_model->get_by_uuid_unit($get_uuid_unit);
@@ -3935,11 +3880,7 @@ class Tbl_pembelian extends CI_Controller
 		// // print_r("<br/>");
 		// // print_r("<br/>");
 
-
 		// $this->Tbl_penjualan_model->insert_new($data_Tbl_penjualan);
-
-
-
 
 		// Proses simpan ke tbl_pembelian menjadi barang baru
 
@@ -3958,21 +3899,6 @@ class Tbl_pembelian extends CI_Controller
 			'spop' => "pecahsatuan",
 			'beli' => $get_jumlah_barang_baru,
 			'tuj' => $get_jumlah_barang_baru,
-			// 'tgl_keluar' => $m->tgl_keluar,
-			// 'sekret' => $m->sekret,
-			// 'cetak' => $m->cetak,
-			// 'grafikita' => $m->grafikita,
-			// 'dinas_umum' => $m->dinas_umum,
-			// 'atk_rsud' => $m->atk_rsud,
-			// 'ppbmp_kbs' => $m->ppbmp_kbs,
-			// 'kbs' => $m->kbs,
-			// 'ppbmp' => $m->ppbmp,
-			// 'medis' => $m->medis,
-			// 'siiplah_bosda' => $m->siiplah_bosda,
-			// 'sembako' => $m->sembako,
-			// 'fc_gose' => $m->fc_gose,
-			// 'fc_manding' => $m->fc_manding,
-			// 'fc_psamya' => $m->fc_psamya,
 			'total_10' => $get_jumlah_barang_baru,
 			'nilai_persediaan' => $get_harga_satuan_barang_baru * $get_jumlah_barang_baru,
 		);
@@ -3984,56 +3910,97 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		$this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
+		// Mengurangi stock uuid_persediaan yag di pecah $uuid_persediaan
+		$Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
+		$Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
 
-		// $GET_id_persediaan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
+		$data_update_persediaan_setelah_di_pecah = array(
+			'sa' => $Get_jumlah_setelah_dipecah,
+			'total_10' => $Get_jumlah_setelah_dipecah,
+			'nilai_persediaan' => $Get_nominal_persediaan,
+		);
 
-		// $GET_uuid_persediaan = $this->Persediaan_model->get_by_id($GET_id_persediaan)->uuid_persediaan;
-
-
-
-		// $data_Tbl_pembelian = array(
-		// 	'date_input' => date("Y-m-d H:i:s"),
-
-		// 	'tgl_po' => date("Y-m-d H:i:s"),
-		// 	'uuid_persediaan' => $GET_uuid_persediaan,
-		// 	'id_persediaan_barang' => $GET_id_persediaan,
+		$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
 
 
+		$get_id_persediaan_new_pecah_satuan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
 
-		// 	'spop' => "pecahsatuan",
-
-		// 	'uuid_supplier' => $get_uuid_unit,
-		// 	'supplier_nama' => $data_nama_unit,
-
-		// 	'nmrfakturkwitansi' => "pecahsatuan",
-
-		// 	'uuid_barang' => $uuid_barang_baru,
-		// 	'kode_barang' => $get_kode_barang,
-		// 	'uraian' => $this->input->post('nama_barang_baru', TRUE),
-
-		// 	'jumlah' => $get_jumlah_barang_baru,
-		// 	'satuan' => $this->input->post('satuan_barang_baru', TRUE),
-		// 	'harga_satuan' => $get_harga_satuan_barang_baru,
-
-		// 	'uuid_konsumen' => $get_uuid_unit,
-		// 	'konsumen' => $data_nama_unit,
-
-		// 	'harga_total' => $get_jumlah_barang_baru * $get_harga_satuan_barang_baru,
-
-		// );
-
-
-		// print_r("data_Tbl_pembelian: ");
-		// print_r("<br/>");
-		// print_r($data_Tbl_pembelian);
-		// print_r("<br/>");
+		// print_r($get_id_persediaan_new_pecah_satuan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		// $this->Tbl_pembelian_model->insert_spop($data_Tbl_pembelian);
+		$Get_data_persediaan_row_id = $this->Persediaan_model->get_by_id($get_id_persediaan_new_pecah_satuan);
+
+
+		// print_r($Get_data_persediaan_row_id);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($Get_data_persediaan_row_id->uuid_persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		// Simpan ke tabel pecah satuan
+
+		$data_Tbl_pembelian_pecah_satuan = array(
+
+			'proses_input' => date("Y-m-d H:i:s"),
+			// 'uuid_pembelian' => $Data_Barang->uuid_pembelian,
+			'uuid_barang' => $Data_Barang->uuid_barang,
+			'uuid_persediaan' => $uuid_persediaan,
+			'tgl_po' => date("Y-m-d H:i:s"),
+			// 'nmrsj' => $Data_Barang->nmrsj,
+			// 'nmrfakturkwitansi' => $Data_Barang->nmrfakturkwitansi,
+			// 'nmrbpb' => $Data_Barang->nmrbpb,
+			// 'uuid_spop' => $Data_Barang->uuid_spop,
+			// 'spop' => $Data_Barang->spop,
+			// 'status_spop' => $Data_Barang->status_spop,
+			// 'uuid_supplier' => $Data_Barang->uuid_supplier,
+			// 'supplier_kode' => $Data_Barang->supplier_kode,
+			// 'supplier_nama' => $Data_Barang->supplier_nama,
+			'kode_barang' => $Data_Barang->kode_barang,
+			'uraian' => $Data_Barang->namabarang,
+			'jumlah' => $get_jumlah_barang_di_pecah,
+			'satuan' => $Data_Barang->satuan,
+			// 'uuid_konsumen' => $Data_Barang->uuid_konsumen,
+			// 'konsumen' => $Data_Barang->konsumen,
+			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
+			// 'nama_gudang' => $Data_Barang->nama_gudang,
+			'harga_satuan' => $Data_Barang->hpp,
+			// 'uuid_gudang_baru' => $this->input->post('uuid_gudang', TRUE),
+
+			'id_persediaan_baru' => $get_id_persediaan_new_pecah_satuan,
+			'uuid_persediaan_baru' => $Get_data_persediaan_row_id->uuid_persediaan,
+			'uuid_barang_baru' => $uuid_barang_baru,
+			'kode_barang_baru' => $get_kode_barang,
+			'nama_barang_baru' => $this->input->post('nama_barang_baru', TRUE),
+			'jumlah_barang_baru' => $get_jumlah_barang_baru,
+			'satuan_barang_baru' => $this->input->post('satuan_barang_baru', TRUE),
+			'harga_satuan_barang_baru' => $get_harga_satuan_barang_baru,
+
+		);
+
+		// print_r("Tbl_pembelian_pecah_satuan: ");
+		// print_r("<br/>");
+		// print_r($data_Tbl_pembelian_pecah_satuan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// die;
+
+		$this->Tbl_pembelian_pecah_satuan_model->insert($data_Tbl_pembelian_pecah_satuan);
 
 		// die;
+
+		// // GET GUDANG DATA
+		// $GET_uuid_gudang = $this->input->post('uuid_gudang', TRUE);
+		// $sql_uuid_gudang = "SELECT * FROM `sys_gudang` WHERE `uuid_gudang`='$GET_uuid_gudang'";
+		// $get_kode_gudang = $this->db->query($sql_uuid_gudang)->row()->kode_gudang;
+		// $get_nama_gudang = $this->db->query($sql_uuid_gudang)->row()->nama_gudang;
+
+		// print_r($data_Tbl_pembelian_pecah_satuan);
+		// die;
+
 
 		redirect(site_url('tbl_pembelian/pecah_satuan'));
 	}
