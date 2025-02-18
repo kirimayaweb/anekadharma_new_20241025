@@ -1010,6 +1010,54 @@ class Tbl_penjualan_accounting extends CI_Controller
 		xlsEOF();
 		exit();
 	}
+
+
+	// public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)
+	public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null)
+	{
+
+		// 2.a. PERSIAPAN LIBRARY
+		// $this->load->library('PdfGenerator');
+
+
+
+		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		// $data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan, $date_tgl_jual, $nmrkirim);
+		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_accounting_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+
+		// print_r($data_master_penjualan_per_uuidpenjualan);
+		// print_r($data_master_penjualan_per_uuidpenjualan->nmrpesan);
+		// print_r(date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)));
+		// print_r($data_master_penjualan_per_uuidpenjualan->konsumen_nama);
+		// die;
+
+
+		// $date_po = date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual));
+		// die;
+
+		// 2.b. PERSIAPAN DATA
+		$data = array(
+			'data_penjualan' => $this->Tbl_penjualan_accounting_model->get_all_by_uuid_penjualan($uuid_penjualan),
+			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
+			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
+			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
+		);
+
+
+
+		// 2.C. MENAMPILKAN FILE DATA
+		// $data = array_merge($data);
+		$html = $this->load->view('anekadharma/tbl_penjualan_accounting/adminlte310_cetak_penjualan_accounting.php', $data, true);
+
+		// 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
+		$this->pdf->loadHtml($html);
+		$this->pdf->render();
+
+		$this->pdf->stream("NOTA_PENJUALAN_ACCOUNTING.pdf", array("Attachment" => 0));
+	}
+
+
+
 }
 
 /* End of file Tbl_penjualan_accounting.php */
