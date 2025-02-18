@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA PERSEDIAAN (STOCK BARANG)</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>PECAH SATUAN</strong></div>
                                 </div>
 
 
@@ -88,7 +88,8 @@
 
 
                     <div class="card-body">
-                        Pilih Salah Satu produk yang akan di pecah satuanya dengan klik nama barang atau klik tombol pecah satuan.
+                        Pilih Salah Satu produk yang akan di pecah satuanya dengan klik nama barang atau klik tombol pecah satuan. <br/>
+                        - DATA PERSEDIAAN (STOCK BARANG)
                         <table id="example" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
