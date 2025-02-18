@@ -366,6 +366,7 @@ class Tbl_penjualan extends CI_Controller
 
 		$data = array(
 			'button' => 'Simpan',
+			'button_detail_nomor_kirim' => 'Simpan Perubahan Detail Nomor Kirim',
 			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
 			'tgl_jual' => $this->input->post('tgl_jual', TRUE),
 			'nmrpesan' => $this->input->post('nmrpesan', TRUE),
