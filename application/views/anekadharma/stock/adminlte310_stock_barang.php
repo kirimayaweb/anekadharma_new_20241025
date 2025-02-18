@@ -112,14 +112,14 @@
                                     <th>Tgl Po</th>
                                     <th>Gudang</th>
                                     <th>SPOP</th>
-                                    <th>nama barang <br />beli</th>
-                                    <th>harga satuan <br />beli</th>
-                                    <th>satuan</th>
+                                    <th>Nama Barang </th>
+                                    <th>Harga Satuan</th>
+                                    <th>Satuan</th>
                                     <th>Persediaan</th>
-                                    <th>jumlah <br />beli</th>
+                                    <!-- <th>jumlah <br />beli</th> -->
 
                                     <!-- <th>nama_barang_jual</th> -->
-                                    <th>jumlah <br />terjual</th>
+                                    <th>Terjual</th>
                                     <!-- <th>harga_satuan_jual</th> -->
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
@@ -237,7 +237,7 @@
                                         </td>
 
                                         <!-- Jumlah belanja/beli -->
-                                        <td style="text-align:right">
+                                        <!-- <td style="text-align:right">
                                             <?php
 
                                             // DATA SPOP DENGAN BELANJA BARU
@@ -251,7 +251,7 @@
 
 
                                             ?>
-                                        </td>
+                                        </td> -->
 
                                         <!-- Jumlah penjualan -->
                                         <td style="text-align:right">
@@ -348,10 +348,10 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
+                                    <!-- <th></th> -->
                                     <th></th>
                                     <th></th>
-                                    <th></th>
-                                    <th>TOTAL</th>
+                                    <th>TOTAL PERSEDIAAN</th>
                                     <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); 
                                                                         ?></th> -->
                                     <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
