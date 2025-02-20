@@ -131,18 +131,20 @@
 
 
 
-                                    $get_uuid_persediaan = $list_data->uuid_persediaan;
+                                    // $get_uuid_persediaan = $list_data->uuid_persediaan;
 
-                                    $sql_penjualan_per_uuid_persediaan = "SELECT `uuid_persediaan`,`uuid_barang`,sum(`jumlah`) as jumlah_per_uuid_persediaan FROM `tbl_penjualan` WHERE `uuid_persediaan`='$get_uuid_persediaan' GROUP by `uuid_persediaan`;";
+                                    // $sql_penjualan_per_uuid_persediaan = "SELECT `uuid_persediaan`,`uuid_barang`,sum(`jumlah`) as jumlah_per_uuid_persediaan FROM `tbl_penjualan` WHERE `uuid_persediaan`='$get_uuid_persediaan' GROUP by `uuid_persediaan`;";
 
-                                    // print_r($this->db->query($sql_penjualan_per_uuid_persediaan)->row());
+                                    // // print_r($this->db->query($sql_penjualan_per_uuid_persediaan)->row());
 
-                                    if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
-                                        $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
-                                        $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan;
-                                    } else {
-                                        $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan;
-                                    }
+                                    // if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
+                                    //     $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
+                                    //     $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan;
+                                    // } else {
+                                    //     $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan;
+                                    // }
+
+                                    $Jumlah_penjualan_per_uuid_persediaan = $list_data->penjualan + $list_data->pecah_satuan + $list_data->bahan_produksi;
 
 
 

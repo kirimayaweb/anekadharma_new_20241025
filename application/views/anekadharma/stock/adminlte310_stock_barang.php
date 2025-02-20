@@ -147,18 +147,23 @@
                                     // Cek data penjualan berdasarkan uuid_persediaan
                                     // --> data pembelian sudah masuk ke spop persediaan (jika barang baru, maka menjadi uuid_persediaan baru dengan nama barang yang sama)
 
-                                    $get_uuid_persediaan = $list_data->uuid_persediaan;
+                                    // $get_uuid_persediaan = $list_data->uuid_persediaan;
 
-                                    $sql_penjualan_per_uuid_persediaan = "SELECT `uuid_persediaan`,`uuid_barang`,sum(`jumlah`) as jumlah_per_uuid_persediaan FROM `tbl_penjualan` WHERE `uuid_persediaan`='$get_uuid_persediaan' GROUP by `uuid_persediaan`;";
+                                    // $sql_penjualan_per_uuid_persediaan = "SELECT `uuid_persediaan`,`uuid_barang`,sum(`jumlah`) as jumlah_per_uuid_persediaan FROM `tbl_penjualan` WHERE `uuid_persediaan`='$get_uuid_persediaan' GROUP by `uuid_persediaan`;";
 
                                     // print_r($this->db->query($sql_penjualan_per_uuid_persediaan)->row());
 
-                                    if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
-                                        $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
-                                        $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan;
-                                    } else {
-                                        $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan;
-                                    }
+                                    // JUMLAH PENJUALAN + JUMLAH PECAH SATUAN + JUMLAH BAHAN PRODUKSI
+
+                                    // if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
+                                    //     $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
+                                    //     $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan + $list_data->bahan_produksi;
+                                    // } else {
+                                    //     $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan + $list_data->bahan_produksi;
+                                    // }
+
+                                    $Jumlah_penjualan_per_uuid_persediaan = $list_data->penjualan + $list_data->pecah_satuan + $list_data->bahan_produksi;
+
 
 
 
@@ -268,6 +273,15 @@
                                             //     $x_jumlah_terjual = 0;
                                             // }
 
+
+                                            // $Jumlah_penjualan_per_uuid_persediaan = $list_data->penjualan + $list_data->pecah_satuan + $list_data->bahan_produksi;
+                                            // echo "<br/>";
+                                            // echo $list_data->penjualan;
+                                            // echo "<br/>";
+                                            // echo $list_data->pecah_satuan;
+                                            // echo "<br/>";
+                                            // echo $list_data->bahan_produksi;
+
                                             ?>
                                         </td>
 
@@ -314,7 +328,6 @@
                                                 $GET_NominalBarang = $Sisa_STOCK * $list_data->harga_satuan_persediaan;
                                                 echo nominal($GET_NominalBarang);
                                                 $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $GET_NominalBarang;
-
                                             } else {
                                                 echo "0";
                                             }

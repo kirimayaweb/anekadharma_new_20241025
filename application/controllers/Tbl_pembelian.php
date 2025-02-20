@@ -189,7 +189,9 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.tanggal_beli as tanggal_beli_persediaan, 
 			persediaan.satuan as satuan, 
 			persediaan.spop as spop, 
+			persediaan.penjualan as penjualan, 
 			persediaan.pecah_satuan as pecah_satuan, 
+			persediaan.bahan_produksi as bahan_produksi, 
 			
 					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
 					-- 	tbl_pembelian.uraian as barang_beli, 
@@ -3686,7 +3688,9 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.tanggal_beli as tanggal_beli_persediaan, 
 			persediaan.satuan as satuan, 
 			persediaan.spop as spop, 
+			persediaan.penjualan as penjualan, 
 			persediaan.pecah_satuan as pecah_satuan, 
+			persediaan.bahan_produksi as bahan_produksi, 
 			
 					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
 					-- 	tbl_pembelian.uraian as barang_beli, 
