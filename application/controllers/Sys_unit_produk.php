@@ -391,6 +391,8 @@ class Sys_unit_produk extends CI_Controller
                 'tgl_transaksi' => $data_barang_selected->tanggal,
 
                 'uuid_produk' => $get_data_barang_dipersediaan_by_uuid_persediaan->uuid_barang,
+                'uuid_persediaan_bahan' => $this->input->post('uuid_persediaan', TRUE),
+
                 'kode_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->kode_barang,
                 'nama_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->namabarang,
                 'satuan_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->satuan,
@@ -515,6 +517,9 @@ class Sys_unit_produk extends CI_Controller
                 // 'kode_unit' => $this->input->post('kode_unit', TRUE),
                 // 'nama_unit' => $get_data_produk_unit->nama_unit,
                 'tgl_transaksi' => $date_tgl_produksi,
+                
+                'uuid_persediaan_bahan' => $this->input->post('uuid_persediaan', TRUE),
+
                 'uuid_produk' => $get_data_barang_dipersediaan_by_uuid_persediaan->uuid_barang,
                 'kode_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->kode_barang,
                 'nama_barang_bahan' => $get_data_barang_dipersediaan_by_uuid_persediaan->namabarang,

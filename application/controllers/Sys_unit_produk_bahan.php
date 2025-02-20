@@ -8,7 +8,7 @@ class Sys_unit_produk_bahan extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        $this->load->model(array('Sys_unit_produk_bahan_model', 'Sys_unit_produk_model'));
+        $this->load->model(array('Sys_unit_produk_bahan_model', 'Sys_unit_produk_model','Persediaan_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
@@ -208,7 +208,54 @@ class Sys_unit_produk_bahan extends CI_Controller
         // die;
 
         if ($row) {
+
+            // GET ID PERSEDIAAN / UUID_PERSEDIAAN UNTUK REKALKULASI FIELD bahan_produksi ( mengurangi jumlah bahan_produksi )
+
+
+            $GET_Detail_Data_Bahan = $this->Sys_unit_produk_bahan_model->get_by_id($id);
+
+            // print_r("<br/>");
+            // print_r($GET_Detail_Data_Bahan);
+            // print_r("<br/>");
+
+            $get_uuid_persediaan_bahan = $GET_Detail_Data_Bahan->uuid_persediaan_bahan;
+            $GET_jumlah_bahan_yang_dihapus = $GET_Detail_Data_Bahan->jumlah_bahan;
+
+            // print_r("<br/>");
+            // print_r($get_uuid_persediaan_bahan);
+            // print_r("<br/>");
+
+            $GET_Jumlah_Bahan_Produksi = $this->Persediaan_model->get_by_uuid_persediaan($get_uuid_persediaan_bahan);
+            // print_r($GET_Jumlah_Bahan_Produksi);
+            // print_r("<br/>");
+            // print_r($GET_Jumlah_Bahan_Produksi->bahan_produksi);
+            // print_r("<br/>");
+
+            $GET_id_persediaan_bahan=$GET_Jumlah_Bahan_Produksi->id;
+
+            $GET_jumlah_bahan_setelah_dikurangi=$GET_Jumlah_Bahan_Produksi->bahan_produksi-$GET_jumlah_bahan_yang_dihapus;
+
+            // print_r($GET_jumlah_bahan_setelah_dikurangi);
+            // print_r("<br/>");
+
+            // UPDATE jumlah field bahan_produksi di tabel persediaan
+
+            $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `bahan_produksi`='$GET_jumlah_bahan_setelah_dikurangi' WHERE `id`='$GET_id_persediaan_bahan'";
+    
+            $this->db->query($sql_update_uuid_persediaan);
+
+
+            // die;
+
+
+
+
+
+
             $this->Sys_unit_produk_bahan_model->delete($id);
+
+
+
             $this->session->set_flashdata('message', 'Delete Record Success');
             if ($source_page_pref_1 == null) {
 
