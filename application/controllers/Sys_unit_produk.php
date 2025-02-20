@@ -338,12 +338,24 @@ class Sys_unit_produk extends CI_Controller
     public function create_action_produksi_input_bahan($id_persediaan_barang = null)
     {
 
-        // print_r("create_action_produksi_input_bahan");
-        // print_r("<br/>");
+        print_r("create_action_produksi_input_bahan");
+        print_r("<br/>");
 
+        print_r($id_persediaan_barang);
+        print_r("<br/>");
+        print_r($this->input->post('jumlah', TRUE));
+        print_r("<br/>");
+        print_r($this->input->post('uuid_persediaan', TRUE));
+        print_r("<br/>");
+        print_r($this->input->post('id_persediaan', TRUE));
+        print_r("<br/>");
+        // die;
+        
+        $Get_id_persediaan_bahan = $this->input->post('id_persediaan', TRUE);
 
 
         if ($id_persediaan_barang) {
+
             // print_r("Ada ID PERSEDIAAN");
             // print_r("<br/>");
 
@@ -387,9 +399,38 @@ class Sys_unit_produk extends CI_Controller
 
             );
 
+            // print_r($data);
+            // die;
+
             $this->Sys_unit_produk_bahan_model->insert($data);
+
+            // PROSES MENGURANGI STOCK JUMLAH ==> DENGAN MEMASUKAN KE FIELD BAHAN PRODUKSI DI TABEL PERSEDIA berdasarkan uuid_persediaan
+            // cek apakah field bahan_produksi sudah ada nilai , jika sudah ada maka di tambahkan dengan nominal/jumlah yang baru dimasukan
+            $this->db->where('id', $this->input->post('id_persediaan', TRUE));
+            $GET_jumlah_bahan = $this->db->get('persediaan')->row()->bahan_produksi;
+
+            if ($GET_jumlah_bahan > 0) {
+                // print_r("lebih dari 0 : ");
+                // print_r($GET_jumlah_bahan);
+                $jumlah_bahan_update=$GET_jumlah_bahan+$this->input->post('jumlah', TRUE);
+            } else {
+                // print_r("Belum ada data");
+                $jumlah_bahan_update=$this->input->post('jumlah', TRUE);
+            }
+
+            // print_r("<br/>");
+            // print_r($jumlah_bahan_update);
+
+            // Update field bahan_produksi di tabel persediaan dengan $jumlah_bahan_update
+            $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `bahan_produksi`='$jumlah_bahan_update' WHERE `id`='$Get_id_persediaan_bahan'";
+    
+            $this->db->query($sql_update_uuid_persediaan);
+
+
+
             // print_r("selesai");
             // die;
+
             redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang));
         } else { // Belum ada id_persediaan_barang dan uuid_persediaan_barang
 
@@ -486,12 +527,41 @@ class Sys_unit_produk extends CI_Controller
 
             );
 
+            // print_r($data);
+            // die;
+
             $this->Sys_unit_produk_bahan_model->insert($data);
 
             // print_r($this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($get_uuid_persediaan));
             // die;
 
+            // PROSES MENGURANGI STOCK JUMLAH ==> DENGAN MEMASUKAN KE FIELD BAHAN PRODUKSI DI TABEL PERSEDIAAN berdasarkan uuid_persediaan
+            // cek apakah field bahan_produksi sudah ada nilai , jika sudah ada maka di tambahkan dengan nominal/jumlah yang baru dimasukan
+
+            $this->db->where('id', $this->input->post('id_persediaan', TRUE));
+            $GET_jumlah_bahan = $this->db->get('persediaan')->row()->bahan_produksi;
+
+            if ($GET_jumlah_bahan > 0) {
+                // print_r("lebih dari 0 : ");
+                // print_r($GET_jumlah_bahan);
+                $jumlah_bahan_update=$GET_jumlah_bahan+$this->input->post('jumlah', TRUE);
+            } else {
+                // print_r("Belum ada data");
+                $jumlah_bahan_update=$this->input->post('jumlah', TRUE);
+            }
+
+            // print_r("<br/>");
+            // print_r($jumlah_bahan_update);
+
+            // Update field bahan_produksi di tabel persediaan dengan $jumlah_bahan_update
+            $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `bahan_produksi`='$jumlah_bahan_update' WHERE `id`='$Get_id_persediaan_bahan'";
+    
+            $this->db->query($sql_update_uuid_persediaan);
+
+            // die;
+
             redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang));
+
         }
     }
 
