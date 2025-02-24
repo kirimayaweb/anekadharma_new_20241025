@@ -242,7 +242,7 @@ class Jurnal_kas extends CI_Controller
                     'kredit' => str_replace(".", ",", $row->kredit),
                 );
                 // $this->load->view('Jurnal_kas/jurnal_kas_form', $data);
-                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
+                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
             } else {
                 redirect(site_url('Jurnal_kas'));
             }
