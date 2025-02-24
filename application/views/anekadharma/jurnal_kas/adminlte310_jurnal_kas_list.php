@@ -34,18 +34,18 @@
                                         <div class="col-12" text-align="center"> <strong>KAS KECIL</strong></div>
                                     </div>
                                     <div class="col-2" align="left">
-                                        <?php echo anchor(site_url('Jurnal_kas/pemasukan_kas'), 'Pemasukan Kas', 'class="btn btn-danger"');
+                                        <?php echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'Pemasukan Kas', 'class="btn btn-danger"');
                                         ?>
 
                                     </div>
                                     <div class="col-2" align="left">
 
-                                        <?php echo anchor(site_url('Jurnal_kas/pengeluaran_kas'), 'Pengeluaran Kas', 'class="btn btn-success"');
+                                        <?php echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Pengeluaran Kas', 'class="btn btn-success"');
                                         ?>
                                     </div>
                                     <div class="col-6" align="right">
 
-                                        <?php echo anchor(site_url('Jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                                     </div>
                                 </div>
                             </div>
