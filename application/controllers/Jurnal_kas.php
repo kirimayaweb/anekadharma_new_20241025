@@ -58,7 +58,7 @@ class Jurnal_kas extends CI_Controller
             // 'Data_kas' => $Data_kas,
         );
         // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
-        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_N_pemasukan', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_pemasukan', $data);
     }
 
     public function pemasukan_kas_action()
