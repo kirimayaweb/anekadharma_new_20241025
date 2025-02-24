@@ -7,7 +7,7 @@ class Jurnal_kas_model extends CI_Model
 {
 
     public $table = 'jurnal_kas';
-    public $id = 'nomor';
+    public $id = 'id';
     public $order = 'DESC';
 
     function __construct()
@@ -69,7 +69,15 @@ class Jurnal_kas_model extends CI_Model
     // insert data
     function insert($data)
     {
+        // $this->db->insert($this->table, $data);
+
+        $this->db->set('uuid_jurnal_kas', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
     }
 
     // update data

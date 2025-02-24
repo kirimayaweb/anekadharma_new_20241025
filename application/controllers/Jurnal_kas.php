@@ -10,46 +10,168 @@ class Jurnal_kas extends CI_Controller
         parent::__construct();
         is_login();
         $this->load->model('Jurnal_kas_model');
-        $this->load->library('form_validation');        
-	$this->load->library('datatables');
+        $this->load->library('form_validation');
+        $this->load->library('datatables');
     }
 
-    public function index(){
+    public function index()
+    {
         $Data_kas = $this->Jurnal_kas_model->get_all();
-		// $start = 0;
+        // $start = 0;
 
         // print_r($Data_kas);
 
-		$data = array(
-			'Data_kas' => $Data_kas,
-			// 'start' => $start,
-		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
+        $data = array(
+            'Data_kas' => $Data_kas,
+            // 'start' => $start,
+        );
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
     }
 
     public function index_server_side()
     {
         $this->load->view('anekadharma/jurnal_kas/jurnal_kas_list');
-    } 
-    
-    public function json() {
+    }
+
+    public function json()
+    {
         header('Content-Type: application/json');
         echo $this->Jurnal_kas_model->json();
     }
 
-    public function read($id) 
+
+    public function pemasukan_kas()
+    {
+
+        // $Data_kas = $this->Jurnal_kas_model->get_all();
+
+        $data = array(
+            'button' => 'Simpan',
+            'action' => site_url('Jurnal_kas/pemasukan_kas_action'),
+            'nomor' => set_value('nomor'),
+            'tanggal' => set_value('tanggal'),
+            'bukti' => set_value('bukti'),
+            'keterangan' => set_value('keterangan'),
+            'kode_rekening' => set_value('kode_rekening'),
+            'debet' => set_value('debet'),
+            'kredit' => set_value('kredit'),
+            // 'Data_kas' => $Data_kas,
+        );
+        // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_Jurnal_kas_form_pemasukan', $data);
+    }
+
+    public function pemasukan_kas_action()
+    {
+        $this->_rules_pemasukan();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->pemasukan_kas();
+        } else {
+
+
+
+
+
+            if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                $date_jurnal_kas = date("Y-m-d H:i:s");
+            } else {
+                $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+            }
+
+
+            $data = array(
+                'tanggal' => $date_jurnal_kas,
+                'bukti' => $this->input->post('bukti', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+                'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
+                // 'kredit' => $this->input->post('kredit', TRUE),
+            );
+
+            $this->Jurnal_kas_model->insert($data);
+
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+
+
+    public function pengeluaran_kas()
+    {
+
+        // $Data_kas = $this->Jurnal_kas_model->get_all();
+
+        $data = array(
+            'button' => 'Simpan',
+            'action' => site_url('Jurnal_kas/pengeluaran_kas_action'),
+            'nomor' => set_value('nomor'),
+            'tanggal' => set_value('tanggal'),
+            'bukti' => set_value('bukti'),
+            'keterangan' => set_value('keterangan'),
+            'kode_rekening' => set_value('kode_rekening'),
+            'debet' => set_value('debet'),
+            'kredit' => set_value('kredit'),
+            // 'Data_kas' => $Data_kas,
+        );
+        // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
+    }
+
+    public function pengeluaran_kas_action()
+    {
+        $this->_rules_pengeluaran();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->pengeluaran_kas();
+        } else {
+
+            if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                $date_jurnal_kas = date("Y-m-d H:i:s");
+            } else {
+                $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+            }
+
+
+            $data = array(
+                'tanggal' => $date_jurnal_kas,
+                'bukti' => $this->input->post('bukti', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+                'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+
+            );
+
+            $this->Jurnal_kas_model->insert($data);
+
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+    public function read($id)
     {
         $row = $this->Jurnal_kas_model->get_by_id($id);
         if ($row) {
             $data = array(
-		'nomor' => $row->nomor,
-		'tanggal' => $row->tanggal,
-		'bukti' => $row->bukti,
-		'keterangan' => $row->keterangan,
-		'kode_rekening' => $row->kode_rekening,
-		'debet' => $row->debet,
-		'kredit' => $row->kredit,
-	    );
+                'nomor' => $row->nomor,
+                'tanggal' => $row->tanggal,
+                'bukti' => $row->bukti,
+                'keterangan' => $row->keterangan,
+                'kode_rekening' => $row->kode_rekening,
+                'debet' => $row->debet,
+                'kredit' => $row->kredit,
+            );
             $this->load->view('jurnal_kas/jurnal_kas_read', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
@@ -57,23 +179,23 @@ class Jurnal_kas extends CI_Controller
         }
     }
 
-    public function create() 
+    public function create()
     {
         $data = array(
             'button' => 'Create',
             'action' => site_url('jurnal_kas/create_action'),
-	    'nomor' => set_value('nomor'),
-	    'tanggal' => set_value('tanggal'),
-	    'bukti' => set_value('bukti'),
-	    'keterangan' => set_value('keterangan'),
-	    'kode_rekening' => set_value('kode_rekening'),
-	    'debet' => set_value('debet'),
-	    'kredit' => set_value('kredit'),
-	);
+            'nomor' => set_value('nomor'),
+            'tanggal' => set_value('tanggal'),
+            'bukti' => set_value('bukti'),
+            'keterangan' => set_value('keterangan'),
+            'kode_rekening' => set_value('kode_rekening'),
+            'debet' => set_value('debet'),
+            'kredit' => set_value('kredit'),
+        );
         $this->load->view('jurnal_kas/jurnal_kas_form', $data);
     }
-    
-    public function create_action() 
+
+    public function create_action()
     {
         $this->_rules();
 
@@ -81,21 +203,21 @@ class Jurnal_kas extends CI_Controller
             $this->create();
         } else {
             $data = array(
-		'tanggal' => $this->input->post('tanggal',TRUE),
-		'bukti' => $this->input->post('bukti',TRUE),
-		'keterangan' => $this->input->post('keterangan',TRUE),
-		'kode_rekening' => $this->input->post('kode_rekening',TRUE),
-		'debet' => $this->input->post('debet',TRUE),
-		'kredit' => $this->input->post('kredit',TRUE),
-	    );
+                'tanggal' => $this->input->post('tanggal', TRUE),
+                'bukti' => $this->input->post('bukti', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+                'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                'debet' => $this->input->post('debet', TRUE),
+                'kredit' => $this->input->post('kredit', TRUE),
+            );
 
             $this->Jurnal_kas_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('jurnal_kas'));
         }
     }
-    
-    public function update($id) 
+
+    public function update($id)
     {
         $row = $this->Jurnal_kas_model->get_by_id($id);
 
@@ -103,22 +225,22 @@ class Jurnal_kas extends CI_Controller
             $data = array(
                 'button' => 'Update',
                 'action' => site_url('jurnal_kas/update_action'),
-		'nomor' => set_value('nomor', $row->nomor),
-		'tanggal' => set_value('tanggal', $row->tanggal),
-		'bukti' => set_value('bukti', $row->bukti),
-		'keterangan' => set_value('keterangan', $row->keterangan),
-		'kode_rekening' => set_value('kode_rekening', $row->kode_rekening),
-		'debet' => set_value('debet', $row->debet),
-		'kredit' => set_value('kredit', $row->kredit),
-	    );
+                'nomor' => set_value('nomor', $row->nomor),
+                'tanggal' => set_value('tanggal', $row->tanggal),
+                'bukti' => set_value('bukti', $row->bukti),
+                'keterangan' => set_value('keterangan', $row->keterangan),
+                'kode_rekening' => set_value('kode_rekening', $row->kode_rekening),
+                'debet' => set_value('debet', $row->debet),
+                'kredit' => set_value('kredit', $row->kredit),
+            );
             $this->load->view('jurnal_kas/jurnal_kas_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('jurnal_kas'));
         }
     }
-    
-    public function update_action() 
+
+    public function update_action()
     {
         $this->_rules();
 
@@ -126,21 +248,21 @@ class Jurnal_kas extends CI_Controller
             $this->update($this->input->post('nomor', TRUE));
         } else {
             $data = array(
-		'tanggal' => $this->input->post('tanggal',TRUE),
-		'bukti' => $this->input->post('bukti',TRUE),
-		'keterangan' => $this->input->post('keterangan',TRUE),
-		'kode_rekening' => $this->input->post('kode_rekening',TRUE),
-		'debet' => $this->input->post('debet',TRUE),
-		'kredit' => $this->input->post('kredit',TRUE),
-	    );
+                'tanggal' => $this->input->post('tanggal', TRUE),
+                'bukti' => $this->input->post('bukti', TRUE),
+                'keterangan' => $this->input->post('keterangan', TRUE),
+                'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                'debet' => $this->input->post('debet', TRUE),
+                'kredit' => $this->input->post('kredit', TRUE),
+            );
 
             $this->Jurnal_kas_model->update($this->input->post('nomor', TRUE), $data);
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('jurnal_kas'));
         }
     }
-    
-    public function delete($id) 
+
+    public function delete($id)
     {
         $row = $this->Jurnal_kas_model->get_by_id($id);
 
@@ -154,17 +276,29 @@ class Jurnal_kas extends CI_Controller
         }
     }
 
-    public function _rules() 
+    public function _rules_pemasukan()
     {
-	$this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
-	$this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
-	$this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
-	$this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
-	$this->form_validation->set_rules('debet', 'debet', 'trim|required');
-	$this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
+        $this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
+        $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
+        $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
+        $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
+        $this->form_validation->set_rules('debet', 'debet', 'trim|required');
+        // $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
 
-	$this->form_validation->set_rules('nomor', 'nomor', 'trim');
-	$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+        // $this->form_validation->set_rules('nomor', 'nomor', 'trim');
+        $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+    public function _rules_pengeluaran()
+    {
+        $this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
+        $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
+        $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
+        $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
+        // $this->form_validation->set_rules('debet', 'debet', 'trim|required');
+        $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
+
+        // $this->form_validation->set_rules('nomor', 'nomor', 'trim');
+        $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
     public function excel()
@@ -189,33 +323,32 @@ class Jurnal_kas extends CI_Controller
 
         $kolomhead = 0;
         xlsWriteLabel($tablehead, $kolomhead++, "No");
-	xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
-	xlsWriteLabel($tablehead, $kolomhead++, "Bukti");
-	xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
-	xlsWriteLabel($tablehead, $kolomhead++, "Kode Rekening");
-	xlsWriteLabel($tablehead, $kolomhead++, "Debet");
-	xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
+        xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
+        xlsWriteLabel($tablehead, $kolomhead++, "Bukti");
+        xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
+        xlsWriteLabel($tablehead, $kolomhead++, "Kode Rekening");
+        xlsWriteLabel($tablehead, $kolomhead++, "Debet");
+        xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
 
-	foreach ($this->Jurnal_kas_model->get_all() as $data) {
+        foreach ($this->Jurnal_kas_model->get_all() as $data) {
             $kolombody = 0;
 
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->bukti);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
-	    xlsWriteNumber($tablebody, $kolombody++, $data->kode_rekening);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->debet);
-	    xlsWriteLabel($tablebody, $kolombody++, $data->kredit);
+            xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
+            xlsWriteLabel($tablebody, $kolombody++, $data->bukti);
+            xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
+            xlsWriteNumber($tablebody, $kolombody++, $data->kode_rekening);
+            xlsWriteLabel($tablebody, $kolombody++, $data->debet);
+            xlsWriteLabel($tablebody, $kolombody++, $data->kredit);
 
-	    $tablebody++;
+            $tablebody++;
             $nourut++;
         }
 
         xlsEOF();
         exit();
     }
-
 }
 
 /* End of file Jurnal_kas.php */
