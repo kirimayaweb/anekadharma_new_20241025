@@ -58,7 +58,7 @@ class Jurnal_kas extends CI_Controller
             // 'Data_kas' => $Data_kas,
         );
         // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
-        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_Jurnal_kas_form_pemasukan', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_N_pemasukan', $data);
     }
 
     public function pemasukan_kas_action()
@@ -116,7 +116,7 @@ class Jurnal_kas extends CI_Controller
                     // 'kredit' => $row->kredit,
                 );
                 // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
-                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_Jurnal_kas_form_pemasukan', $data);
+                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_pemasukan', $data);
             } else {
                 // Tidak ada id, kembali ke halaman jurnal kas
                 redirect(site_url('Jurnal_kas'));
@@ -183,8 +183,8 @@ class Jurnal_kas extends CI_Controller
             'kredit' => set_value('kredit'),
             // 'Data_kas' => $Data_kas,
         );
-        // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
-        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
+        // $this->load->view('Jurnal_kas/jurnal_kas_form', $data);
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
     }
 
     public function pengeluaran_kas_action()
@@ -241,7 +241,7 @@ class Jurnal_kas extends CI_Controller
                     // 'debet' => str_replace(".", ",", $row->debet),
                     'kredit' => str_replace(".", ",", $row->kredit),
                 );
-                // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
+                // $this->load->view('Jurnal_kas/jurnal_kas_form', $data);
                 $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
             } else {
                 redirect(site_url('Jurnal_kas'));
