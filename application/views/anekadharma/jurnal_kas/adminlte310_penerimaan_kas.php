@@ -45,7 +45,7 @@
                                     </div>
                                     <div class="col-6" align="right">
 
-                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                                     </div>
                                 </div>
                             </div>
@@ -61,13 +61,15 @@
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th style="text-align:left" width="10px">No</th>
+                                    <!-- <th style="text-align:left" width="10px">No</th> -->
                                     <th style="text-align:left">Tanggal</th>
-                                    <th style="text-align:left">Bukti</th>
-                                    <th style="text-align:left">Keterangan</th>
-                                    <th style="text-align:left">Kode Rekening</th>
-                                    <th style="text-align:right">debet</th>
-                                    <th style="text-align:right" >Kredit</th>
+                                    <th style="text-align:left">No. Bukti BKM</th>
+                                    <th style="text-align:left">PL</th>
+                                    <th style="text-align:left">KETERANGAN</th>
+                                    <th style="text-align:right">Debit 11101-Kas Besar</th>
+                                    <th style="text-align:right" >KREDIT 11301-PU Non Angsuran</th>
+                                    <th style="text-align:right" >KREDIT Serba-Serbi Rek</th>
+                                    <th style="text-align:right" >KREDIT Serba-Serbi Jumlah</th>
                                     <!-- <th style="text-align:center">Action</th> -->
                                 </tr>
                             </thead>
@@ -82,24 +84,24 @@
                                 ?>
 
                                     <tr>
-                                        <td><?php
-                                            echo ++$start;
+                                        <!-- <td><?php
+                                            //echo ++$start;
                                             ?></td>
-                                        <td>
+                                        <td> -->
                                             <?php
                                             echo date("d-m-Y", strtotime($list_data->tanggal));
-                                            echo "<br/>";
+                                            // echo "<br/>";
 
-                                            if ($list_data->debet > 0) {
-                                                // Ubah debet
-                                                echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            } else {
-                                                // Ubah Kredit
-                                                echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            }
+                                            // if ($list_data->debet > 0) {
+                                            //     // Ubah debet
+                                            //     echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            // } else {
+                                            //     // Ubah Kredit
+                                            //     echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            // }
 
-                                            echo ' ';
-                                            echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
+                                            // echo ' ';
+                                            // echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
 
 
 
@@ -143,11 +145,16 @@
 
                                             ?>
                                         </td>
-                                        <!-- <td>
+                                        <td>
                                             <?php
                                             // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
                                             ?>
-                                        </td> -->
+                                        </td>
+                                        <td>
+                                            <?php
+                                            // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
+                                            ?>
+                                        </td>
 
                                     </tr>
 
@@ -161,22 +168,23 @@
 
                             <tfoot>
                                 <tr>
-                                    <th style="text-align:center"></th>
+                                    <!-- <th style="text-align:center"></th> -->
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:right">
                                         <?php
-                                        echo number_format($TOTAL_debet, 2, ',', '.');
+                                        // echo number_format($TOTAL_debet, 2, ',', '.');
                                         ?>
                                     </th>
                                     <th style="text-align:right">
                                         <?php
-                                        echo number_format($TOTAL_kredit, 2, ',', '.');
+                                        // echo number_format($TOTAL_kredit, 2, ',', '.');
                                         ?>
                                     </th>
-                                    <!-- <th style="text-align:center">Action</th> -->
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
 
                                 </tr>
 

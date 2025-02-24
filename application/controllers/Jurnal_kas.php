@@ -28,6 +28,20 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
     }
 
+    public function jurnal_penerimaan_kas()
+    {
+        $Data_kas = $this->Jurnal_kas_model->get_all();
+
+        $data = array(
+            'Data_kas' => $Data_kas,
+        );
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
+    }
+
+
+
+
+
     public function index_server_side()
     {
         $this->load->view('anekadharma/jurnal_kas/jurnal_kas_list');
