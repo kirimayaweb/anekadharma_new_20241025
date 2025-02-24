@@ -97,6 +97,74 @@ class Jurnal_kas extends CI_Controller
     }
 
 
+    public function pemasukan_kas_update($id = null)
+    {
+
+        if ($id) {
+
+            $row = $this->Jurnal_kas_model->get_by_id($id);
+            if ($row) {
+                $data = array(
+                    'button' => 'Simpan Perubahan',
+                    'action' => site_url('Jurnal_kas/pemasukan_kas_update_action/' . $id),
+                    'nomor' => $row->nomor,
+                    'tanggal' => $row->tanggal,
+                    'bukti' => $row->bukti,
+                    'keterangan' => $row->keterangan,
+                    'kode_rekening' => $row->kode_rekening,
+                    'debet' => str_replace(".", ",", $row->debet),
+                    // 'kredit' => $row->kredit,
+                );
+                // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
+                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_Jurnal_kas_form_pemasukan', $data);
+            } else {
+                // Tidak ada id, kembali ke halaman jurnal kas
+                redirect(site_url('Jurnal_kas'));
+            }
+        } else {
+            // Tidak ada id, kembali ke halaman jurnal kas
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+    public function pemasukan_kas_update_action($id)
+    {
+        $this->_rules_pemasukan();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->pemasukan_kas();
+        } else {
+
+
+
+            $row = $this->Jurnal_kas_model->get_by_id($id);
+            if ($row) {
+
+                if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                    $date_jurnal_kas = date("Y-m-d H:i:s");
+                } else {
+                    $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+                }
+
+
+                $data = array(
+                    'tanggal' => $date_jurnal_kas,
+                    'bukti' => $this->input->post('bukti', TRUE),
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                    'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
+                    // 'kredit' => $this->input->post('kredit', TRUE),
+                );
+
+                $this->Jurnal_kas_model->update($id, $data);
+            }
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+
+
 
     public function pengeluaran_kas()
     {
@@ -145,6 +213,74 @@ class Jurnal_kas extends CI_Controller
 
             $this->Jurnal_kas_model->insert($data);
 
+            $this->session->set_flashdata('message', 'Create Record Success');
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+
+
+
+
+    public function pengeluaran_kas_update($id = null)
+    {
+
+
+        if ($id) {
+
+            $row = $this->Jurnal_kas_model->get_by_id($id);
+            if ($row) {
+                $data = array(
+                    'button' => 'Simpan Perubahan',
+                    'action' => site_url('Jurnal_kas/pengeluaran_kas_update_action/' . $id),
+                    'nomor' => $row->nomor,
+                    'tanggal' => $row->tanggal,
+                    'bukti' => $row->bukti,
+                    'keterangan' => $row->keterangan,
+                    'kode_rekening' => $row->kode_rekening,
+                    // 'debet' => str_replace(".", ",", $row->debet),
+                    'kredit' => str_replace(".", ",", $row->kredit),
+                );
+                // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
+                $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Jurnal_kas/adminlte310_jurnal_kas_form_pengeluaran', $data);
+            } else {
+                redirect(site_url('Jurnal_kas'));
+            }
+        } else {
+            redirect(site_url('Jurnal_kas'));
+        }
+    }
+
+    public function pengeluaran_kas_update_action($id)
+    {
+        $this->_rules_pengeluaran();
+
+        if ($this->form_validation->run() == FALSE) {
+            $this->pengeluaran_kas();
+        } else {
+
+            $row = $this->Jurnal_kas_model->get_by_id($id);
+            if ($row) {
+
+
+                if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
+                    $date_jurnal_kas = date("Y-m-d H:i:s");
+                } else {
+                    $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
+                }
+
+
+                $data = array(
+                    'tanggal' => $date_jurnal_kas,
+                    'bukti' => $this->input->post('bukti', TRUE),
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
+
+                );
+
+                $this->Jurnal_kas_model->update($id, $data);
+            }
             $this->session->set_flashdata('message', 'Create Record Success');
             redirect(site_url('Jurnal_kas'));
         }
@@ -303,8 +439,10 @@ class Jurnal_kas extends CI_Controller
 
     public function excel()
     {
+        $tgl_sekarang = date("d-m-Y H:i:s");
+
         $this->load->helper('exportexcel');
-        $namaFile = "jurnal_kas.xls";
+        $namaFile = "jurnal_kas_" . $tgl_sekarang . ".xls";
         $judul = "jurnal_kas";
         $tablehead = 0;
         $tablebody = 1;
