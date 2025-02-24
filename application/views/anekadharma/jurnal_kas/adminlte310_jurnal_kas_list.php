@@ -31,7 +31,7 @@
                             <div class="col-12">
                                 <div class="row">
                                     <div class="col-2" align="left">
-                                        <div class="col-12" text-align="center"> <strong>KAS KECIL</strong></div>
+                                        <div class="col-12" text-align="center"> <strong>JURNAL KAS</strong></div>
                                     </div>
                                     <div class="col-2" align="left">
                                         <?php echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'Pemasukan Kas', 'class="btn btn-danger"');
