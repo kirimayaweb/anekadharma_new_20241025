@@ -45,7 +45,8 @@
                                     </div>
                                     <div class="col-6" align="right">
 
-                                        <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                        ?>
                                     </div>
                                 </div>
                             </div>
@@ -62,15 +63,25 @@
                             <thead>
                                 <tr>
                                     <!-- <th style="text-align:left" width="10px">No</th> -->
-                                    <th style="text-align:left">Tanggal</th>
-                                    <th style="text-align:left">No. Bukti BKM</th>
-                                    <th style="text-align:left">PL</th>
-                                    <th style="text-align:left">KETERANGAN</th>
-                                    <th style="text-align:right">Debit 11101-Kas Besar</th>
-                                    <th style="text-align:right" >KREDIT 11301-PU Non Angsuran</th>
-                                    <th style="text-align:right" >KREDIT Serba-Serbi Rek</th>
-                                    <th style="text-align:right" >KREDIT Serba-Serbi Jumlah</th>
-                                    <!-- <th style="text-align:center">Action</th> -->
+                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
+                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
+                                    <th rowspan="3" style="text-align:center">PL</th>
+                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
+                                    <th colspan="1" style="text-align:right">Debit</th>
+
+
+                                    <th colspan="3" style="text-align:center">KREDIT</th>
+                                <tr>
+                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
+                                    <th rowspan="2" style="text-align:center">11301-PU <br />Non Angsuran</th>
+                                    <th colspan="2" style="text-align:center">Serba-Serbi</th>
+                                </tr>
+                                <tr>
+                                    <th rowspan="3" style="text-align:center">Rek</th>
+                                    <th style="text-align:center">Jumlah</th>
+                                </tr>
+
+                                <!-- <th style="text-align:center">Action</th> -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -85,9 +96,11 @@
 
                                     <tr>
                                         <!-- <td><?php
-                                            //echo ++$start;
-                                            ?></td>
-                                        <td> -->
+                                                    //echo ++$start;
+                                                    ?>
+                                            </td>-->
+
+                                        <td>
                                             <?php
                                             echo date("d-m-Y", strtotime($list_data->tanggal));
                                             // echo "<br/>";
@@ -104,7 +117,7 @@
                                             // echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
 
 
-
+                                            // `, `uuid_jurnal_kas`, `tanggal`, `bukti`, `keterangan`, `kode_rekening`, `debet`, `kredit`
                                             ?>
                                         </td>
                                         <td><?php
@@ -136,12 +149,12 @@
                                         <!-- Kredit -->
                                         <td style="text-align:right">
                                             <?php
-                                            if ($list_data->kredit > 0) {
-                                                echo number_format($list_data->kredit, 2, ',', '.');
-                                                $TOTAL_kredit = $TOTAL_kredit + $list_data->kredit;
-                                            } else {
-                                                echo "";
-                                            }
+                                            // if ($list_data->kredit > 0) {
+                                            //     echo number_format($list_data->kredit, 2, ',', '.');
+                                            //     $TOTAL_kredit = $TOTAL_kredit + $list_data->kredit;
+                                            // } else {
+                                            //     echo "";
+                                            // }
 
                                             ?>
                                         </td>
@@ -150,9 +163,14 @@
                                             // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
                                             ?>
                                         </td>
-                                        <td>
+                                        <td style="text-align:right">
                                             <?php
-                                            // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
+                                            if ($list_data->debet > 0) {
+                                                echo number_format($list_data->debet, 2, ',', '.');
+                                                $TOTAL_debet = $TOTAL_debet + $list_data->debet;
+                                            } else {
+                                                echo "";
+                                            }
                                             ?>
                                         </td>
 
@@ -166,29 +184,25 @@
 
                             <!-- tfoot -->
 
-                            <tfoot>
+                            <!-- <tfoot>
                                 <tr>
-                                    <!-- <th style="text-align:center"></th> -->
+
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:right">
-                                        <?php
-                                        // echo number_format($TOTAL_debet, 2, ',', '.');
-                                        ?>
+
                                     </th>
                                     <th style="text-align:right">
-                                        <?php
-                                        // echo number_format($TOTAL_kredit, 2, ',', '.');
-                                        ?>
+
                                     </th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
 
                                 </tr>
 
-                            </tfoot>
+                            </tfoot> -->
 
 
 
