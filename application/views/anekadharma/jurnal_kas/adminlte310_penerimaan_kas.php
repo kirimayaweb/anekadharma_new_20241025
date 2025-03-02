@@ -62,7 +62,7 @@
                         <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
                                 <tr>
-                                    <!-- <th style="text-align:left" width="10px">No</th> -->
+                                    <th rowspan="3" style="text-align:left" width="10px">No</th>
                                     <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
                                     <th rowspan="3" style="text-align:center">Kode Akun</th>
                                     <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
@@ -88,43 +88,28 @@
                             <tbody>
                                 <?php
                                 $start = 0;
-                                $TOTAL_debet = 0;
-                                $TOTAL_kredit = 0;
+                                $TOTAL_debet_11101 = 0;
+                                $TOTAL_kredit_jumlah = 0;
+                                $TOTAL_kredit_11301 = 0;
                                 $TOTAL_saldo = 0;
                                 foreach ($Data_kas as $list_data) {
-                                    // [0] => stdClass Object ( [nomor] => 4280 [tanggal] => 30/09/2024 [bukti] => BKK [keterangan] => Biaya PU/ATK : Putro Bengkel (Pembayaran SPOP No 558 Tgl 30/09/2024) [kode_rekening] => 4 [debet] => [kredit] => 1.750.000,00 )
+
                                 ?>
 
                                     <tr>
-                                        <!-- <td><?php
-                                                    //echo ++$start;
-                                                    ?>
-                                            </td>-->
-
+                                        <td>
+                                            <?php
+                                            echo ++$start;
+                                            ?>
+                                        </td>
                                         <td>
                                             <?php
                                             echo date("d-m-Y", strtotime($list_data->tanggal));
-                                            // echo "<br/>";
-
-                                            // if ($list_data->debet > 0) {
-                                            //     // Ubah debet
-                                            //     echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            // } else {
-                                            //     // Ubah Kredit
-                                            //     echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            // }
-
-                                            // echo ' ';
-                                            // echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
-
-
-                                            // `, `uuid_jurnal_kas`, `tanggal`, `bukti`, `keterangan`, `kode_rekening`, `debet`, `kredit`
                                             ?>
                                         </td>
 
                                         <!-- Kode Akun -->
                                         <td><?php
-                                            // echo "Kode Akun";
                                             if ($list_data->kode_akun) {
                                                 echo $list_data->kode_akun;
                                                 echo "<br/>";
@@ -154,7 +139,7 @@
                                             <?php
                                             if ($list_data->debet > 0) {
                                                 echo number_format($list_data->debet, 2, ',', '.');
-                                                $TOTAL_debet = $TOTAL_debet + $list_data->debet;
+                                                $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
                                             } else {
                                                 echo "";
                                             }
@@ -164,14 +149,17 @@
                                         <!-- Kredit -->
                                         <td style="text-align:right">
                                             <?php
-                                            // if ($list_data->kredit > 0) {
-                                            //     echo number_format($list_data->kredit, 2, ',', '.');
-                                            //     $TOTAL_kredit = $TOTAL_kredit + $list_data->kredit;
-                                            // } else {
-                                            //     echo "";
-                                            // }
+                                            if ($list_data->kode_akun == "11301") {
+                                                echo number_format($list_data->debet, 2, ',', '.');
+                                                $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                            } else {
+                                                echo "";
+                                            }
+
 
                                             ?>
+
+
                                         </td>
 
 
@@ -185,12 +173,13 @@
 
                                         <td style="text-align:right">
                                             <?php
-                                            if ($list_data->debet > 0) {
+                                            if ($list_data->kode_akun <> "11301") {
                                                 echo number_format($list_data->debet, 2, ',', '.');
-                                                $TOTAL_debet = $TOTAL_debet + $list_data->debet;
+                                                $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
                                             } else {
                                                 echo "";
                                             }
+
                                             ?>
                                         </td>
 
@@ -211,11 +200,24 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>                                    
-                                    <th style="text-align:center"></th> <!-- TOTAL DEBET -->
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th> <!-- TOTAL JUMLAH -->
+                                    <th style="text-align:center">
+                                        <?php
+                                        echo number_format($TOTAL_debet_11101, 2, ',', '.');
+                                        ?>
+                                    </th> <!-- TOTAL DEBET -->
+                                    <th style="text-align:center">
+                                    <?php
+                                        echo number_format($TOTAL_kredit_11301, 2, ',', '.');
+                                        ?>                                    
+                                    </th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center">
+                                        <?php
+                                        echo number_format($TOTAL_kredit_jumlah, 2, ',', '.');
+                                        ?>
+                                    </th> <!-- TOTAL JUMLAH -->
 
                                 </tr>
 

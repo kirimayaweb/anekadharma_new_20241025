@@ -278,7 +278,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 900,
+            "scrollY": 500,
             "scrollX": true
         });
     });
@@ -286,7 +286,7 @@
 <script>
     $(document).ready(function() {
         $('#example9').DataTable({
-            "scrollY": 900,
+            "scrollY": 500,
             "scrollX": true
         });
     });
