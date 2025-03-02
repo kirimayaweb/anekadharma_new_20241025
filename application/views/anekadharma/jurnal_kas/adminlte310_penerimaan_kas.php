@@ -59,7 +59,7 @@
 
                     <div class="card-body">
 
-                        <table id="example" class="display nowrap" style="width:100%">
+                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
                                 <tr>
                                     <!-- <th style="text-align:left" width="10px">No</th> -->
@@ -68,7 +68,7 @@
                                     <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
                                     <th rowspan="3" style="text-align:center">PL</th>
                                     <th rowspan="3" style="text-align:center">KETERANGAN</th>
-                                    <th colspan="1" style="text-align:right">Debit</th>
+                                    <th colspan="1" style="text-align:center">Debit</th>
 
 
                                     <th colspan="3" style="text-align:center">KREDIT</th>
