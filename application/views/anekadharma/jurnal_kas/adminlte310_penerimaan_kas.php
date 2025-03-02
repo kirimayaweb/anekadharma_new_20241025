@@ -30,7 +30,7 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="row">
-                                    <div class="col-2" align="left">
+                                    <div class="col-4" align="left">
                                         <div class="col-12" text-align="center"> <strong>JURNAL PENERIMAAN KAS</strong></div>
                                     </div>
                                     <div class="col-2" align="left">
@@ -43,7 +43,7 @@
                                         <?php //echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Pengeluaran Kas', 'class="btn btn-success"');
                                         ?>
                                     </div>
-                                    <div class="col-6" align="right">
+                                    <div class="col-4" align="right">
 
                                         <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
                                         ?>
