@@ -66,7 +66,7 @@
 
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-3">
+                                    <div class="col-2">
                                         <label for="date">Tanggal <?php echo form_error('tanggal') ?></label>
 
 
@@ -92,9 +92,14 @@
                                         </div>
                                     </div>
                                 
-                                    <div class="col-3">
+                                    <div class="col-2">
                                         <label for="bukti">Bukti <?php echo form_error('bukti') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="bukti" id="bukti" placeholder="bukti" value="<?php echo $bukti; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="bukti" id="bukti" placeholder="bukti" value="<?php echo $bukti; ?>">
+                                    </div>
+                                
+                                    <div class="col-2">
+                                        <label for="pl">PL <?php echo form_error('pl') ?></label>
+                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="bukti" value="<?php echo $pl; ?>" >
                                     </div>
                                 
                                     <div class="col-3">
@@ -104,16 +109,16 @@
                                     </div>
                                     <div class="col-3">
                                         <label for="kode_rekening">Kode rekening <?php echo form_error('kode_rekening') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" value="<?php echo $kode_rekening; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" value="<?php echo $kode_rekening; ?>">
                                     </div>
                                 </div>
                             </div>
                           
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-3">
+                                    <div class="col-2">
                                     </div>
-                                    <div class="col-9">
+                                    <div class="col-10">
                                         <label for="keterangan">Keterangan <?php echo form_error('keterangan') ?></label>
                                         <textarea class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="Keterangan"><?php echo $keterangan; ?></textarea>
                                     </div>

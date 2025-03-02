@@ -81,7 +81,7 @@
 
 
                                 <tr>
-                                    <th rowspan="2" style="text-align:center">No. Rek</th>
+                                    <th rowspan="2" style="text-align:left">No. Rek</th>
                                     <th rowspan="2" style="text-align:right">Jumlah</th>
                                     <th colspan="2" style="text-align:right">11101-Kas Besar</th>
                                 </tr>
@@ -139,20 +139,29 @@
                                             ?>
                                         </td>
 
-                                        <td><?php
+                                        <td>
+                                            <?php
                                             echo $list_data->bukti;
                                             ?>
                                         </td>
+                                        
+                                        <td>
+                                            <?php
+                                            echo $list_data->pl;
+                                            ?>
+                                        </td>
+                                        
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
                                             ?>
                                         </td>
-                                        <td align="left">
+
+                                        <!-- <td align="left">
                                             <?php
-                                            echo $list_data->kode_rekening;
+                                            // echo $list_data->kode_rekening;
                                             ?>
-                                        </td>
+                                        </td> -->
 
 
 
@@ -173,7 +182,7 @@
                                         <!-- Serbi-Serbi No. Rek -->
                                         <td>
                                             <?php
-                                            // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
+                                            // echo "no rek";
                                             ?>
                                         </td>
 

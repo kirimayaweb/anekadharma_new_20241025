@@ -78,7 +78,7 @@
                                     <th colspan="2" style="text-align:center">Serba-Serbi</th>
                                 </tr>
                                 <tr>
-                                    <th rowspan="3" style="text-align:center">Rek</th>
+                                    <th rowspan="3" style="text-align:left">Rek</th>
                                     <th style="text-align:center">Jumlah</th>
                                 </tr>
 
@@ -139,14 +139,13 @@
                                             echo $list_data->bukti;
                                             ?>
                                         </td>
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->keterangan;
+                                        <td><?php
+                                            echo $list_data->pl;
                                             ?>
                                         </td>
                                         <td align="left">
                                             <?php
-                                            echo $list_data->kode_rekening;
+                                            echo $list_data->keterangan;
                                             ?>
                                         </td>
 
@@ -174,11 +173,16 @@
 
                                             ?>
                                         </td>
-                                        <td>
-                                            <?php
-                                            // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
+
+
+                                        <!-- rekening -->
+                                        <td align="left">
+                                        <?php
+                                            echo $list_data->kode_rekening;
                                             ?>
                                         </td>
+
+
                                         <td style="text-align:right">
                                             <?php
                                             if ($list_data->debet > 0) {

@@ -171,6 +171,7 @@ class Jurnal_kas extends CI_Controller
             'nomor' => set_value('nomor'),
             'tanggal' => set_value('tanggal'),
             'bukti' => set_value('bukti'),
+            'pl' => set_value('pl'),
             'keterangan' => set_value('keterangan'),
             'kode_rekening' => set_value('kode_rekening'),
             'debet' => set_value('debet'),
@@ -203,6 +204,7 @@ class Jurnal_kas extends CI_Controller
             $data = array(
                 'tanggal' => $date_jurnal_kas,
                 'bukti' => $this->input->post('bukti', TRUE),
+                'pl' => $this->input->post('pl', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),
                 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                 'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
@@ -230,6 +232,7 @@ class Jurnal_kas extends CI_Controller
                     'nomor' => $row->nomor,
                     'tanggal' => $row->tanggal,
                     'bukti' => $row->bukti,
+                    'pl' => $row->pl,
                     'keterangan' => $row->keterangan,
                     'kode_rekening' => $row->kode_rekening,
                     'debet' => str_replace(".", ",", $row->debet),
@@ -270,6 +273,7 @@ class Jurnal_kas extends CI_Controller
                 $data = array(
                     'tanggal' => $date_jurnal_kas,
                     'bukti' => $this->input->post('bukti', TRUE),
+                    'pl' => $this->input->post('pl', TRUE),
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                     'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
@@ -297,6 +301,7 @@ class Jurnal_kas extends CI_Controller
             'nomor' => set_value('nomor'),
             'tanggal' => set_value('tanggal'),
             'bukti' => set_value('bukti'),
+            'pl' => set_value('pl'),
             'keterangan' => set_value('keterangan'),
             'kode_rekening' => set_value('kode_rekening'),
             'debet' => set_value('debet'),
@@ -325,6 +330,7 @@ class Jurnal_kas extends CI_Controller
             $data = array(
                 'tanggal' => $date_jurnal_kas,
                 'bukti' => $this->input->post('bukti', TRUE),
+                'pl' => $this->input->post('pl', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),
                 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                 'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
@@ -356,6 +362,7 @@ class Jurnal_kas extends CI_Controller
                     'nomor' => $row->nomor,
                     'tanggal' => $row->tanggal,
                     'bukti' => $row->bukti,
+                    'pl' => $row->pl,
                     'keterangan' => $row->keterangan,
                     'kode_rekening' => $row->kode_rekening,
                     // 'debet' => str_replace(".", ",", $row->debet),
@@ -393,6 +400,7 @@ class Jurnal_kas extends CI_Controller
                 $data = array(
                     'tanggal' => $date_jurnal_kas,
                     'bukti' => $this->input->post('bukti', TRUE),
+                    'pl' => $this->input->post('pl', TRUE),
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                     'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('kredit', TRUE))),
@@ -535,9 +543,9 @@ class Jurnal_kas extends CI_Controller
     public function _rules_pemasukan()
     {
         $this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
-        $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
+        // $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
         $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
-        $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
+        // $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
         $this->form_validation->set_rules('debet', 'debet', 'trim|required');
         // $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
 
@@ -547,9 +555,9 @@ class Jurnal_kas extends CI_Controller
     public function _rules_pengeluaran()
     {
         $this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
-        $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
+        // $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
         $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
-        $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
+        // $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
         // $this->form_validation->set_rules('debet', 'debet', 'trim|required');
         $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
 
@@ -583,6 +591,7 @@ class Jurnal_kas extends CI_Controller
         xlsWriteLabel($tablehead, $kolomhead++, "No");
         xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
         xlsWriteLabel($tablehead, $kolomhead++, "Bukti");
+        xlsWriteLabel($tablehead, $kolomhead++, "");
         xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
         xlsWriteLabel($tablehead, $kolomhead++, "Kode Rekening");
         xlsWriteLabel($tablehead, $kolomhead++, "Debet");
@@ -595,6 +604,7 @@ class Jurnal_kas extends CI_Controller
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
             xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
             xlsWriteLabel($tablebody, $kolombody++, $data->bukti);
+            xlsWriteLabel($tablebody, $kolombody++, $data->pl);
             xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
             xlsWriteNumber($tablebody, $kolombody++, $data->kode_rekening);
             xlsWriteLabel($tablebody, $kolombody++, $data->debet);

@@ -64,6 +64,7 @@
                                     <th style="text-align:left" width="10px">No</th>
                                     <th style="text-align:left">Tanggal</th>
                                     <th style="text-align:left">Bukti</th>
+                                    <th style="text-align:left"></th>
                                     <th style="text-align:left">Keterangan</th>
                                     <th style="text-align:left">Kode Rekening</th>
                                     <th style="text-align:right">debet</th>
@@ -107,7 +108,12 @@
                                         </td>
                                         <td><?php
                                             echo $list_data->bukti;
-                                            ?></td>
+                                            ?>
+                                        </td>
+                                        <td><?php
+                                            echo $list_data->pl;
+                                            ?>
+                                        </td>
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
@@ -161,6 +167,7 @@
 
                             <tfoot>
                                 <tr>
+                                    <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
