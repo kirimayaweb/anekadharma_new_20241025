@@ -10,6 +10,7 @@ class Jurnal_kas_model extends CI_Model
     public $id = 'id';
     public $uuid_jurnal_kas = 'uuid_jurnal_kas';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
     function __construct()
     {
@@ -29,6 +30,7 @@ class Jurnal_kas_model extends CI_Model
     // get all
     function get_all()
     {
+        $this->db->order_by($this->tanggal, $this->orderASC);
         $this->db->order_by($this->id, $this->order);
         return $this->db->get($this->table)->result();
     }
