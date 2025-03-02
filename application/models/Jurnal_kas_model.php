@@ -8,6 +8,7 @@ class Jurnal_kas_model extends CI_Model
 
     public $table = 'jurnal_kas';
     public $id = 'id';
+    public $uuid_jurnal_kas = 'uuid_jurnal_kas';
     public $order = 'DESC';
 
     function __construct()
@@ -37,6 +38,14 @@ class Jurnal_kas_model extends CI_Model
     {
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
+    }
+    
+    
+    // get data by uuid_jurnal_kas
+    function get_by_uuid_jurnal_kas($uuid_jurnal_kas)
+    {
+        $this->db->where($this->uuid_jurnal_kas, $uuid_jurnal_kas);
+        return $this->db->get($this->table)->result();
     }
     
     // get total rows
@@ -82,6 +91,12 @@ class Jurnal_kas_model extends CI_Model
 
     // update data
     function update($id, $data)
+    {
+        $this->db->where($this->id, $id);
+        $this->db->update($this->table, $data);
+    }
+    // update data
+    function update_kode_akun_per_uuid_jurnal_penerimaan($id, $data)
     {
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);

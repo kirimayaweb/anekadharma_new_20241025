@@ -64,6 +64,7 @@
                                 <tr>
                                     <!-- <th style="text-align:left" width="10px">No</th> -->
                                     <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
+                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
                                     <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
                                     <th rowspan="3" style="text-align:center">PL</th>
                                     <th rowspan="3" style="text-align:center">KETERANGAN</th>
@@ -120,9 +121,24 @@
                                             // `, `uuid_jurnal_kas`, `tanggal`, `bukti`, `keterangan`, `kode_rekening`, `debet`, `kredit`
                                             ?>
                                         </td>
+                                        
+                                        <!-- Kode Akun -->
+                                        <td><?php
+                                            // echo "Kode Akun";
+                                            if ($list_data->kode_akun) {
+                                                echo $list_data->kode_akun;
+                                                echo "<br/>";
+                                                echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                            }else{
+                                                echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                            }
+                                            ?>
+                                        </td>
+
                                         <td><?php
                                             echo $list_data->bukti;
-                                            ?></td>
+                                            ?>
+                                        </td>
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;

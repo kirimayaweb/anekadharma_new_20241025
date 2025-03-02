@@ -31,13 +31,9 @@ class Jurnal_kas extends CI_Controller
     public function jurnal_penerimaan_kas()
     {
 
-
         $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0";
 
         $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
-
-
-        // $Data_kas = $this->Jurnal_kas_model->get_all();
 
         $data = array(
             'Data_kas' => $Data_kas,
@@ -45,7 +41,74 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
     }
 
+    public function ubah_kode_akun_penerimaan($uuid_jurnal_kas = null)
+    {
 
+        $data_per_uuidjurnal = $this->Jurnal_kas_model->get_by_uuid_jurnal_kas($uuid_jurnal_kas);
+
+        // print_r($data_per_uuidjurnal);
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+        // $Tbl_pembelian = $this->Jurnal_kas_model->get_by_spop($data_per_uuidjurnal->uuid_jurnal_kas);
+
+        // $sql = "SELECT `uuid_jurnal_kas`,`kode_akun` FROM `jurnal_kas` WHERE `uuid_jurnal_kas`='$uuid_jurnal_kas' GROUP by `uuid_jurnal_kas`,`kode_akun`";
+
+        // $get_kode_akun = $this->db->query($sql)->row()->kode_akun;
+
+        // print_r($data_per_uuidjurnal);
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+
+        $data = array(
+            'Data_kas' => $data_per_uuidjurnal,
+            // 'spop' => $data_per_uuidjurnal->spop,
+            'action' => site_url('Jurnal_kas/update_kode_akun_penerimaan/' . $uuid_jurnal_kas),
+            'button' => 'Update Kode AKun',
+            'get_kode_akun' => $get_kode_akun,
+        );
+
+        // print_r($data['Data_kas']);
+        // print_r("<br/>");
+        // die;
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas_per_uuid_jurnal_kas', $data);
+    }
+
+    public function update_kode_akun_penerimaan($uuid_jurnal_kas = null)
+    {
+        // print_r("update_kode_akun_penerimaan");
+        // print_r("<br/>");
+        // print_r($uuid_jurnal_kas);
+        // print_r("<br/>");
+        // die;
+
+        // Get Id penerimaaan kas
+
+        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `uuid_jurnal_kas`='$uuid_jurnal_kas'";
+
+        $Data_jurnal_penerimaan_kas = $this->db->query($sql_kas_penerimaan)->row();
+
+        // print_r($Data_jurnal_penerimaan_kas);
+        // print_r("<br/>");
+        // print_r($Data_jurnal_penerimaan_kas->id);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+
+        $data = array(
+            'kode_akun' => $this->input->post('kode_akun', TRUE),
+        );
+
+        // print_r($data);
+        // die;
+
+        $this->Jurnal_kas_model->update_kode_akun_per_uuid_jurnal_penerimaan($Data_jurnal_penerimaan_kas->id, $data);
+
+        redirect(site_url('Jurnal_kas/Jurnal_penerimaan_kas'));
+    }
 
 
 
