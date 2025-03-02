@@ -96,7 +96,7 @@ class Jurnal_kas_model extends CI_Model
         $this->db->update($this->table, $data);
     }
     // update data
-    function update_kode_akun_per_uuid_jurnal_penerimaan($id, $data)
+    function update_kode_akun_per_uuid_jurnal_kas($id, $data)
     {
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);

@@ -41,8 +41,39 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
     }
 
+    public function Jurnal_pengeluaran_kas()
+    {
+
+        $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `kredit`>0";
+
+        $Data_kas = $this->db->query($sql_kas_pengeluaran)->result();
+
+        $data = array(
+            'Data_kas' => $Data_kas,
+        );
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas', $data);
+    }
+
+    public function ubah_kode_akun_pengeluaran($uuid_jurnal_kas = null)
+    {
+
+        $data_per_uuidjurnal = $this->Jurnal_kas_model->get_by_uuid_jurnal_kas($uuid_jurnal_kas);
+
+        $data = array(
+            'Data_kas' => $data_per_uuidjurnal,
+            'action' => site_url('Jurnal_kas/update_kode_akun/' . $uuid_jurnal_kas  . '/pengeluaran'),
+            'button' => 'Update Kode AKun',
+            'get_kode_akun' => $get_kode_akun,
+        );
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas_per_uuid_jurnal_kas', $data);
+    }
+
     public function ubah_kode_akun_penerimaan($uuid_jurnal_kas = null)
     {
+
+        // print_r("ubah_kode_akun_penerimaan");
+        // die;
 
         $data_per_uuidjurnal = $this->Jurnal_kas_model->get_by_uuid_jurnal_kas($uuid_jurnal_kas);
 
@@ -64,7 +95,7 @@ class Jurnal_kas extends CI_Controller
         $data = array(
             'Data_kas' => $data_per_uuidjurnal,
             // 'spop' => $data_per_uuidjurnal->spop,
-            'action' => site_url('Jurnal_kas/update_kode_akun_penerimaan/' . $uuid_jurnal_kas),
+            'action' => site_url('Jurnal_kas/update_kode_akun/' . $uuid_jurnal_kas . '/penerimaan'),
             'button' => 'Update Kode AKun',
             'get_kode_akun' => $get_kode_akun,
         );
@@ -76,7 +107,7 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas_per_uuid_jurnal_kas', $data);
     }
 
-    public function update_kode_akun_penerimaan($uuid_jurnal_kas = null)
+    public function update_kode_akun($uuid_jurnal_kas = null, $proses_form=null)
     {
         // print_r("update_kode_akun_penerimaan");
         // print_r("<br/>");
@@ -105,9 +136,14 @@ class Jurnal_kas extends CI_Controller
         // print_r($data);
         // die;
 
-        $this->Jurnal_kas_model->update_kode_akun_per_uuid_jurnal_penerimaan($Data_jurnal_penerimaan_kas->id, $data);
+        $this->Jurnal_kas_model->update_kode_akun_per_uuid_jurnal_kas($Data_jurnal_penerimaan_kas->id, $data);
 
-        redirect(site_url('Jurnal_kas/Jurnal_penerimaan_kas'));
+        if($proses_form=="penerimaan"){
+            redirect(site_url('Jurnal_kas/Jurnal_penerimaan_kas'));
+        }else{
+            redirect(site_url('Jurnal_kas/Jurnal_pengeluaran_kas'));
+        }
+        
     }
 
 
