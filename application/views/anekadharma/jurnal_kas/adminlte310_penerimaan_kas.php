@@ -121,7 +121,7 @@
                                             // `, `uuid_jurnal_kas`, `tanggal`, `bukti`, `keterangan`, `kode_rekening`, `debet`, `kredit`
                                             ?>
                                         </td>
-                                        
+
                                         <!-- Kode Akun -->
                                         <td><?php
                                             // echo "Kode Akun";
@@ -129,7 +129,7 @@
                                                 echo $list_data->kode_akun;
                                                 echo "<br/>";
                                                 echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                            }else{
+                                            } else {
                                                 echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
                                             }
                                             ?>
@@ -177,7 +177,7 @@
 
                                         <!-- rekening -->
                                         <td align="left">
-                                        <?php
+                                            <?php
                                             echo $list_data->kode_rekening;
                                             ?>
                                         </td>
@@ -204,25 +204,22 @@
 
                             <!-- tfoot -->
 
-                            <!-- <tfoot>
+                            <tfoot>
                                 <tr>
 
+                                    <th style="text-align:left" width="10px"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-
-                                    </th>
-                                    <th style="text-align:right">
-
-                                    </th>
+                                    <th style="text-align:center"></th>                                    
+                                    <th style="text-align:center"></th> <!-- TOTAL DEBET -->
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th> <!-- TOTAL JUMLAH -->
 
                                 </tr>
 
-                            </tfoot> -->
+                            </tfoot>
 
 
 

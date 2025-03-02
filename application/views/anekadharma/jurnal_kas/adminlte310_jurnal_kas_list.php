@@ -68,7 +68,7 @@
                                     <th style="text-align:left">Keterangan</th>
                                     <th style="text-align:left">Kode Rekening</th>
                                     <th style="text-align:right">debet</th>
-                                    <th style="text-align:right" >Kredit</th>
+                                    <th style="text-align:right">Kredit</th>
                                     <!-- <th style="text-align:center">Action</th> -->
                                 </tr>
                             </thead>
@@ -166,13 +166,15 @@
                             <!-- tfoot -->
 
                             <tfoot>
+
+                                <!-- JUMLAH DEBET / KREDIT -->
                                 <tr>
+                                    <!-- <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th> -->
+                                    <th colspan="6" style="text-align:right"> JUMLAH DEBET / KREDIT </th>
                                     <th style="text-align:right">
                                         <?php
                                         echo number_format($TOTAL_debet, 2, ',', '.');
@@ -182,6 +184,66 @@
                                         <?php
                                         echo number_format($TOTAL_kredit, 2, ',', '.');
                                         ?>
+                                    </th>
+                                    <!-- <th style="text-align:center">Action</th> -->
+
+                                </tr>
+
+                                <!-- Saldo akhir Kas Bulan September -->
+                                <tr>
+                                    <!-- <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th> -->
+                                    <th colspan="6" style="text-align:right">Saldo akhir Kas Bulan September </th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        // echo number_format($TOTAL_debet, 2, ',', '.');
+                                        ?>
+                                    </th>
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
+                                        $SALDO_AKHIR = $TOTAL_debet - $TOTAL_kredit;
+                                        ?>
+                                    </th>
+                                    <!-- <th style="text-align:center">Action</th> -->
+
+                                </tr>
+
+                                <!-- JUMLAH SEIMBANG -->
+                                <tr>
+                                    <!-- <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th> -->
+                                    <th colspan="6" style="text-align:right">JUMLAH SEIMBANG </th>
+                                    <th style="text-align:right">
+                                        <?php
+
+                                        if ($SALDO_AKHIR >= 0) {
+                                            echo number_format($TOTAL_debet, 2, ',', '.');
+                                        } else {
+                                            echo number_format($SALDO_AKHIR, 2, ',', '.');
+                                        }
+
+                                        ?>
+
+                                    </th>
+                                    <th style="text-align:right">
+                                        <?php
+
+                                        if ($SALDO_AKHIR >= 0) {
+                                            echo number_format($TOTAL_debet, 2, ',', '.');
+                                        } else {
+                                            echo number_format($SALDO_AKHIR, 2, ',', '.');
+                                        }
+
+
+                                        ?>
+
                                     </th>
                                     <!-- <th style="text-align:center">Action</th> -->
 

@@ -219,32 +219,24 @@
 
                             </tbody>
 
-                            <!-- tfoot -->
-
-                            <!-- <tfoot>
+                            <tfoot>
                                 <tr>
 
+                                    <th style="text-align:left" width="10px"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-
-                                    </th>
-                                    <th style="text-align:right">
-
-                                    </th>
+                                    <th style="text-align:center"></th>                                    
+                                    <th style="text-align:center"></th> <!-- TOTAL DEBET -->
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th> <!-- TOTAL JUMLAH -->
 
                                 </tr>
 
-                            </tfoot> -->
+                            </tfoot>
 
-
-
-                            <!-- end of tfoot -->
-
+                            
 
                         </table>
                     </div>
