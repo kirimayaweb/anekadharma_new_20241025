@@ -62,7 +62,7 @@
                         <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
                                 <tr>
-                                    <!-- <th style="text-align:left" width="10px">No</th> -->
+
                                     <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
                                     <th rowspan="3" style="text-align:center">Kode Akun</th>
                                     <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
@@ -73,7 +73,7 @@
 
 
                                     <th colspan="1" style="text-align:center">Kredit</th>
-
+                                </tr>
                                 <tr>
                                     <th rowspan="2" style="text-align:center">21101-UU Dagang</th>
                                     <th colspan="2" style="text-align:center">Serba-Serbi</th>
@@ -84,11 +84,9 @@
                                 <tr>
                                     <th rowspan="2" style="text-align:left">No. Rek</th>
                                     <th rowspan="2" style="text-align:right">Jumlah</th>
-                                    
+
                                 </tr>
 
-                                <!-- <th style="text-align:center">Action</th> -->
-                                </tr>
                             </thead>
                             <tbody>
                                 <?php
@@ -145,28 +143,28 @@
                                             echo $list_data->bukti;
                                             ?>
                                         </td>
-                                        
+
                                         <td>
                                             <?php
                                             echo $list_data->pl;
                                             ?>
                                         </td>
-                                        
+
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
                                             ?>
                                         </td>
 
-                                       
+
                                         <!-- 21101-UU Dagang -->
                                         <td style="text-align:right">
-                                            
+
                                         </td>
 
                                         <!-- Serbi-Serbi No. Rek -->
                                         <td>
-                                            
+
                                         </td>
 
                                         <!-- Serbi-Serbi Jumlah -->
@@ -202,7 +200,7 @@
 
                             </tbody>
 
-                           
+
 
                         </table>
                     </div>
