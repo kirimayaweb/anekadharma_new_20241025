@@ -136,13 +136,14 @@
 
                                     <?php
                                     // BARIS PERTAMA == ++START = 1
-                                    if (++$start == 1) {
+                                    $First_row= ++$start;
+                                    if ($First_row == 1) {
                                     ?>
 
                                         <tr>
                                             <td>
                                                 <?php
-                                                echo ++$start;
+                                                echo $First_row;
                                                 ?>
                                             </td>
                                             <td>
@@ -338,16 +339,9 @@
 
                                         <?php
                                         } else {
-                                            // PL beda    // 
-
-
-
-
-
-
+                                            // PL beda   
                                             // 1. BARIS TOTAL PL SEBELUMNYA
                                         ?>
-
 
                                             <!-- TOTAL DARI KELOMPOK PL -->
                                             <tr>
