@@ -99,7 +99,7 @@
                                 
                                     <div class="col-2">
                                         <label for="pl">PL <?php echo form_error('pl') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="bukti" value="<?php echo $pl; ?>" >
+                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="PL" value="<?php echo $pl; ?>" >
                                     </div>
                                 
                                     <div class="col-3">
