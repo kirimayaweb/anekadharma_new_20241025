@@ -109,13 +109,7 @@
                                     <th rowspan="3" style="text-align:right">Jumlah</th>                                 
                                     <th rowspan="3" style="text-align:right">11101-Kas Besar</th>
                                 </tr>
-                                <tr>
-                                </tr>
-
-
-                                <tr>
-
-                                </tr>
+                                
 
                             </thead>
                             <tbody>
