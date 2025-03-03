@@ -142,7 +142,6 @@
                                         // Baris pertama
                                     ?>
 
-
                                         <tr>
                                             <td>
                                                 <?php
@@ -195,6 +194,10 @@
                                                     echo number_format($list_data->kredit, 2, ',', '.');
                                                     $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
                                                     $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
+                                                    // echo "<br/>";
+                                                    // echo number_format($TOTAL_21101, 2, ',', '.');
+                                                    // echo "<br/>";
+                                                    // echo number_format($TOTAL_21101_SEMUA, 2, ',', '.');
                                                 } else {
                                                     echo "";
                                                 }
@@ -237,7 +240,6 @@
 
 
                                         </tr>
-
 
                                         <?php
 
@@ -346,8 +348,6 @@
 
                                             </tr>
 
-
-
                                         <?php
 
                                         } else {
@@ -405,7 +405,7 @@
                                                     // if ($list_data->kode_akun == "21101") {
 
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_21101, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_21101=0;
+                                                    $TOTAL_21101 = 0;
 
                                                     // $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
                                                     // $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
@@ -428,10 +428,10 @@
                                                     // if ($list_data->kode_akun == "21101") {
                                                     //     echo "";
                                                     // } else {
-                                                    
+
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_debet_jumlah=0;
-                                                    
+                                                    $TOTAL_debet_jumlah = 0;
+
                                                     //     $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
                                                     //     $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
                                                     // }
@@ -445,8 +445,8 @@
                                                     // if ($list_data->kredit > 0) {
 
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11101, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_kredit_11101=0;
-                                                    
+                                                    $TOTAL_kredit_11101 = 0;
+
                                                     //     $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
                                                     //     $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
                                                     // } else {
@@ -459,9 +459,9 @@
                                             </tr>
 
                                             <?php
-                                            $TOTAL_21101_SEMUA = 0;
-                                            $TOTAL_debet_jumlah_SEMUA = 0;
-                                            $TOTAL_kredit_11101_SEMUA = 0;
+                                            $TOTAL_21101 = 0;
+                                            $TOTAL_debet_jumlah = 0;
+                                            $TOTAL_kredit_11101 = 0;
 
                                             // BARIS DATA BARU DENGAN PL dari awal
                                             ?>
@@ -517,6 +517,10 @@
                                                         echo number_format($list_data->kredit, 2, ',', '.');
                                                         $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
                                                         $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
+                                                        // echo "<br/>";
+                                                        // echo number_format($TOTAL_21101, 2, ',', '.');
+                                                        // echo "<br/>";
+                                                        // echo number_format($TOTAL_21101_SEMUA, 2, ',', '.');
                                                     } else {
                                                         echo "";
                                                     }
@@ -677,7 +681,7 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_21101_SEMUA, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_21101_SEMUA + $TOTAL_debet_jumlah_SEMUA, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL DEBET -->
                                     <th style="text-align:right">
@@ -686,11 +690,11 @@
                                         ?>
                                     </th>
                                     <th style="text-align:center">
-                                    
+
                                     </th>
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_11101_SEMUA + $TOTAL_debet_jumlah_SEMUA, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_11101_SEMUA , 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL JUMLAH -->
 
