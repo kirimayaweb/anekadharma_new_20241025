@@ -130,8 +130,6 @@
 
                                 foreach ($Data_kas as $list_data) {
 
-
-
                                 ?>
 
                                     <?php
