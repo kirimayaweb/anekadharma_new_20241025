@@ -253,7 +253,7 @@
 <script>
     $(document).ready(function() {
         $('#example9').DataTable({
-            "scrollY": 900,
+            "scrollY": 450,
             "scrollX": true
         });
     });
