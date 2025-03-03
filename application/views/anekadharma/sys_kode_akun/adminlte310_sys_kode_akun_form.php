@@ -58,15 +58,25 @@
                            
                             <div class="form-group">
                                 <label for="kode_akun">Kode Akun <?php echo form_error('kode_akun') ?></label>
-                                <textarea class="form-control" rows="3" name="kode_akun" id="kode_akun" placeholder="Kode Akun"><?php echo $kode_akun; ?></textarea>
+                                <!-- <textarea class="form-control" rows="3" name="kode_akun" id="kode_akun" placeholder="Kode Akun"><?php //echo $kode_akun; ?></textarea> -->
+                            
+                                <input type="text" class="form-control" name="kode_akun" id="kode_akun" placeholder="Kode Akun" value="<?php echo $kode_akun; ?>">
+
+                            
                             </div>
                             <div class="form-group">
                                 <label for="nama_akun">Nama Akun <?php echo form_error('nama_akun') ?></label>
-                                <textarea class="form-control" rows="3" name="nama_akun" id="nama_akun" placeholder="Nama Akun"><?php echo $nama_akun; ?></textarea>
+                                <!-- <textarea class="form-control" rows="3" name="nama_akun" id="nama_akun" placeholder="Nama Akun"><?php //echo $nama_akun; ?></textarea> -->
+
+                                <input type="text" class="form-control" name="nama_akun" id="nama_akun" placeholder="Nama Akun" value="<?php echo $nama_akun; ?>">
+
                             </div>
                             <div class="form-group">
                                 <label for="group">Group <?php echo form_error('group') ?></label>
-                                <textarea class="form-control" rows="3" name="group" id="group" placeholder="Group"><?php echo $group; ?></textarea>
+                                <!-- <textarea class="form-control" rows="3" name="group" id="group" placeholder="Group"><?php echo $group; ?></textarea> -->
+
+                                <input type="text" class="form-control" name="group" id="group" placeholder="Group" value="<?php echo $group; ?>">
+
                             </div>
                             <input type="hidden" name="id" value="<?php echo $id; ?>" />
                             <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
