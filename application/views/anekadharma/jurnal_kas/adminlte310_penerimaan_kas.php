@@ -61,13 +61,15 @@
 
                         <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
-                                <tr>
+
+                                <!-- <tr>
                                     <th rowspan="3" style="text-align:left" width="10px">No</th>
                                     <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
                                     <th rowspan="3" style="text-align:center">Kode Akun</th>
                                     <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
                                     <th rowspan="3" style="text-align:center">PL</th>
                                     <th rowspan="3" style="text-align:center">KETERANGAN</th>
+
                                     <th colspan="1" style="text-align:center">Debit</th>
 
 
@@ -80,15 +82,41 @@
                                 <tr>
                                     <th rowspan="3" style="text-align:left">Rek</th>
                                     <th style="text-align:center">Jumlah</th>
+                                </tr> -->
+
+
+
+                                <tr>
+
+                                    <th rowspan="3" style="text-align:left" width="10px">No</th>
+                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
+                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
+                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
+                                    <th rowspan="3" style="text-align:center">PL</th>
+                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
+                                    <th colspan="1" style="text-align:center">DEBET</th>
+                                    <th colspan="3" style="text-align:center">KREDIT</th>
+
+                                </tr>
+                                <tr>
+                                    <th rowspan="2" style="text-align:center">11101-Kas Besar</th>
+                                    <th rowspan="2" style="text-align:center">11301-PU Non Angsuran</th>
+                                    <th colspan="2" style="text-align:right">Serba-Serbi</th>
+                                </tr>
+                                <tr>
+                                    <th style="text-align:left">No. Rek</th>
+                                    <th style="text-align:right">Jumlah</th>
                                 </tr>
 
-                                <!-- <th style="text-align:center">Action</th> -->
-                                </tr>
+
+
+
+
                             </thead>
                             <tbody>
                                 <?php
                                 $start = 0;
-                                $TOTAL_debet_11101 = 0;                                
+                                $TOTAL_debet_11101 = 0;
                                 $TOTAL_kredit_11301 = 0;
                                 $TOTAL_kredit_jumlah = 0;
                                 $TOTAL_saldo = 0;
@@ -99,7 +127,7 @@
                                 $TOTAL_saldo_SEMUA = 0;
 
                                 $PL_Data = 0;
-                                
+
                                 foreach ($Data_kas as $list_data) {
 
 
