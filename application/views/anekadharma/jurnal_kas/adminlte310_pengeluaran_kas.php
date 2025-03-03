@@ -1,3 +1,11 @@
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<style type="text/css">
+    div.dataTables_wrapper {
+        width: 100%;
+        margin: 0 auto;
+    }
+</style>
+
 <div class="content-wrapper">
 
 
@@ -61,7 +69,7 @@
 
                         <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
-                                <tr>
+                                <!-- <tr>
 
                                     <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
                                     <th rowspan="3" style="text-align:center">Kode Akun</th>
@@ -84,6 +92,28 @@
                                 <tr>
                                     <th rowspan="2" style="text-align:left">No. Rek</th>
                                     <th rowspan="2" style="text-align:right">Jumlah</th>
+
+                                </tr>
+                                 -->
+                                <!-- ============================================ -->
+
+                                <tr>
+
+                                    <th style="text-align:left" width="10px">Tanggal</th>
+                                    <th style="text-align:center">Kode Akun</th>
+                                    <th style="text-align:center">No. Bukti BKM</th>
+                                    <th style="text-align:center">PL</th>
+                                    <th style="text-align:center">KETERANGAN</th>
+                                    <th style="text-align:center">21101-UU Dagang</th>
+                                    <th style="text-align:left">No. Rek</th>
+                                    <th style="text-align:right">Jumlah</th>                                 
+                                    <th style="text-align:right">11101-Kas Besar</th>
+                                </tr>
+                                <tr>
+                                </tr>
+
+
+                                <tr>
 
                                 </tr>
 
@@ -159,12 +189,16 @@
 
                                         <!-- 21101-UU Dagang -->
                                         <td style="text-align:right">
-
+                                            <?php
+                                            echo "21101-UU Dagang";
+                                            ?>
                                         </td>
 
                                         <!-- Serbi-Serbi No. Rek -->
                                         <td>
-
+                                        <?php
+                                            echo "no rek";
+                                            ?>
                                         </td>
 
                                         <!-- Serbi-Serbi Jumlah -->
@@ -211,13 +245,7 @@
     </section>
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
-<style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
-    }
-</style>
+
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
