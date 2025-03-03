@@ -77,13 +77,14 @@
                                 <tr>
                                     <th rowspan="2" style="text-align:center">21101-UU Dagang</th>
                                     <th colspan="2" style="text-align:center">Serba-Serbi</th>
+                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
                                 </tr>
 
 
                                 <tr>
                                     <th rowspan="2" style="text-align:left">No. Rek</th>
                                     <th rowspan="2" style="text-align:right">Jumlah</th>
-                                    <th colspan="2" style="text-align:right">11101-Kas Besar</th>
+                                    
                                 </tr>
 
                                 <!-- <th style="text-align:center">Action</th> -->
@@ -230,7 +231,11 @@
                                     <th style="text-align:center"></th> <!-- TOTAL DEBET -->
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th> <!-- TOTAL JUMLAH -->
+                                    <th style="text-align:right">
+                                        <?php 
+                                        echo number_format($TOTAL_kredit, 2, ',', '.'); 
+                                        ?>
+                                    </th> <!-- TOTAL JUMLAH -->
 
                                 </tr>
 
