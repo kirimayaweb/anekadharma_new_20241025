@@ -158,33 +158,15 @@
                                             ?>
                                         </td>
 
-                                        <!-- <td align="left">
-                                            <?php
-                                            // echo $list_data->kode_rekening;
-                                            ?>
-                                        </td> -->
-
-
-
-
+                                       
                                         <!-- 21101-UU Dagang -->
                                         <td style="text-align:right">
-                                            <?php
-                                            // if ($list_data->kredit > 0) {
-                                            //     echo number_format($list_data->kredit, 2, ',', '.');
-                                            //     $TOTAL_kredit = $TOTAL_kredit + $list_data->kredit;
-                                            // } else {
-                                            //     echo "";
-                                            // }
-
-                                            ?>
+                                            
                                         </td>
 
                                         <!-- Serbi-Serbi No. Rek -->
                                         <td>
-                                            <?php
-                                            // echo "no rek";
-                                            ?>
+                                            
                                         </td>
 
                                         <!-- Serbi-Serbi Jumlah -->
@@ -220,27 +202,7 @@
 
                             </tbody>
 
-                            <!-- <tfoot>
-                                <tr>
-
-                                    <th style="text-align:left" width="10px"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>                                    
-                                    <th style="text-align:center"></th> 
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-                                        <?php 
-                                        // echo number_format($TOTAL_kredit, 2, ',', '.'); 
-                                        ?>
-                                    </th> 
-                                </tr>
-
-                            </tfoot> -->
-
-                            
+                           
 
                         </table>
                     </div>
