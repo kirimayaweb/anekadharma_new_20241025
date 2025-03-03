@@ -31,7 +31,8 @@ class Jurnal_kas extends CI_Controller
     public function jurnal_penerimaan_kas()
     {
 
-        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0";
+        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0";
+        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
         $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
 

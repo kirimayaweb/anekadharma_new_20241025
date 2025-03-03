@@ -88,106 +88,545 @@
                             <tbody>
                                 <?php
                                 $start = 0;
-                                $TOTAL_debet_11101 = 0;
-                                $TOTAL_kredit_jumlah = 0;
+                                $TOTAL_debet_11101 = 0;                                
                                 $TOTAL_kredit_11301 = 0;
+                                $TOTAL_kredit_jumlah = 0;
                                 $TOTAL_saldo = 0;
+
+                                $TOTAL_debet_11101_SEMUA = 0;
+                                $TOTAL_kredit_11301_SEMUA = 0;
+                                $TOTAL_kredit_jumlah_SEMUA = 0;
+                                $TOTAL_saldo_SEMUA = 0;
+
+                                $PL_Data = 0;
+                                
                                 foreach ($Data_kas as $list_data) {
 
+
+
                                 ?>
 
-                                    <tr>
-                                        <td>
+                                    <?php
+                                    // BARIS PERTAMA == ++START = 1
+                                    if (++$start == 1) {
+                                    ?>
+
+                                        <tr>
+                                            <td>
+                                                <?php
+                                                echo ++$start;
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php
+                                                echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                ?>
+                                            </td>
+
+                                            <!-- Kode Akun -->
+                                            <td><?php
+                                                if ($list_data->kode_akun) {
+                                                    echo $list_data->kode_akun;
+                                                    echo "<br/>";
+                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                } else {
+                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                }
+                                                ?>
+                                            </td>
+
+                                            <td><?php
+                                                echo $list_data->bukti;
+                                                ?>
+                                            </td>
+                                            <td><?php
+                                                echo $list_data->pl;
+                                                ?>
+                                            </td>
+                                            <td align="left">
+                                                <?php
+                                                echo $list_data->keterangan;
+                                                ?>
+                                            </td>
+
+                                            <!-- Debet -->
+                                            <td style="text-align:right">
+                                                <?php
+                                                if ($list_data->debet > 0) {
+                                                    echo number_format($list_data->debet, 2, ',', '.');
+                                                    $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
+                                                    $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
+                                                } else {
+                                                    echo "";
+                                                }
+                                                ?>
+                                            </td>
+
+                                            <!-- Kredit -->
+                                            <td style="text-align:right">
+                                                <?php
+                                                if ($list_data->kode_akun == "11301") {
+                                                    echo number_format($list_data->debet, 2, ',', '.');
+                                                    $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                                    $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
+                                                } else {
+                                                    echo "";
+                                                }
+
+
+                                                ?>
+
+
+                                            </td>
+
+
+                                            <!-- rekening -->
+                                            <td align="left">
+                                                <?php
+                                                echo $list_data->kode_rekening;
+                                                ?>
+                                            </td>
+
+
+                                            <td style="text-align:right">
+                                                <?php
+                                                if ($list_data->kode_akun <> "11301") {
+                                                    echo number_format($list_data->debet, 2, ',', '.');
+                                                    $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
+                                                    $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
+                                                } else {
+                                                    echo "";
+                                                }
+
+                                                ?>
+                                            </td>
+
+                                        </tr>
+
+                                        <?php
+                                        // Simpan data pl untuk referensi baris selanjutnya
+                                        $PL_Data = $list_data->pl;
+                                    } else {
+
+                                        // Baris 2 dst : cek apakah $PL_Data == $list_data->pl? jika ya, maka tampilkan baris baru , jika beda , maka tampilkan baris total pl lama 
+                                        // dan buat baris baru lagi untuk data selanjutrnya
+
+                                        if ($PL_Data == $list_data->pl) {
+                                        ?>
+
+                                            <tr>
+                                                <td>
+                                                    <?php
+                                                    echo ++$start;
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kode Akun -->
+                                                <td><?php
+                                                    if ($list_data->kode_akun) {
+                                                        echo $list_data->kode_akun;
+                                                        echo "<br/>";
+                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    } else {
+                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <td><?php
+                                                    echo $list_data->bukti;
+                                                    ?>
+                                                </td>
+                                                <td><?php
+                                                    echo $list_data->pl;
+                                                    ?>
+                                                </td>
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->keterangan;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Debet -->
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->debet > 0) {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
+                                                        $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
+                                                    } else {
+                                                        echo "";
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kredit -->
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->kode_akun == "11301") {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                                        $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
+                                                        // echo "<br/>";
+                                                        // echo number_format($TOTAL_kredit_11301, 2, ',', '.');
+                                                    } else {
+                                                        echo "";
+                                                    }
+
+
+                                                    ?>
+
+
+                                                </td>
+
+
+                                                <!-- rekening -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->kode_rekening;
+                                                    ?>
+                                                </td>
+
+
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->kode_akun <> "11301") {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
+                                                        $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
+                                                    } else {
+                                                        echo "";
+                                                    }
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
+
+                                        <?php
+                                        } else {
+                                            // PL beda    // 
+
+
+
+
+
+
+                                            // 1. BARIS TOTAL PL SEBELUMNYA
+                                        ?>
+
+
+                                            <!-- TOTAL DARI KELOMPOK PL -->
+                                            <tr>
+                                                <td>
+                                                    <?php
+                                                    echo ++$start;
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    // echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kode Akun -->
+                                                <td>
+                                                    <?php
+                                                    // if ($list_data->kode_akun) {
+                                                    //     echo $list_data->kode_akun;
+                                                    //     echo "<br/>";
+                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    // } else {
+                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    // }
+                                                    ?>
+                                                </td>
+
+                                                <td>
+                                                    <?php
+                                                    // echo $list_data->bukti;
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    // echo $list_data->pl;
+                                                    ?>
+                                                </td>
+                                                <td align="left">
+                                                    <?php
+                                                    // echo $list_data->keterangan;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Debet -->
+                                                <td style="background-color:yellow;text-align:right">
+                                                    <?php
+                                                    // if ($list_data->debet > 0) {
+                                                    echo "<font color='red'><strong>" . number_format($TOTAL_debet_11101, 2, ',', '.') . "</strong></font>";
+                                                    // $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
+                                                    // } else {
+                                                    //     echo "";
+                                                    // }
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kredit -->
+                                                <td style="background-color:yellow;text-align:right">
+                                                    <?php
+                                                    // if ($list_data->kode_akun == "11301") {
+                                                    echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11301, 2, ',', '.') . "</strong></font>";
+                                                    // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                                    // } else {
+                                                    //     echo "";
+                                                    // }
+
+
+                                                    ?>
+
+
+                                                </td>
+
+
+                                                <!-- rekening -->
+                                                <td style="background-color:yellow;text-align:right">
+                                                    <?php
+                                                    // echo $list_data->kode_rekening;
+                                                    ?>
+                                                </td>
+
+
+                                                <td style="background-color:yellow;text-align:right">
+                                                    <?php
+                                                    // if ($list_data->kode_akun <> "11301") {
+                                                    echo "<font color='red'><strong>" . number_format($TOTAL_kredit_jumlah, 2, ',', '.') . "</strong></font>";
+                                                    // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                                    // } else {
+                                                    //     echo "";
+                                                    // }
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
                                             <?php
-                                            echo ++$start;
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <?php
-                                            echo date("d-m-Y", strtotime($list_data->tanggal));
-                                            ?>
-                                        </td>
 
-                                        <!-- Kode Akun -->
-                                        <td><?php
-                                            if ($list_data->kode_akun) {
-                                                echo $list_data->kode_akun;
-                                                echo "<br/>";
-                                                echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                            } else {
-                                                echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <td><?php
-                                            echo $list_data->bukti;
-                                            ?>
-                                        </td>
-                                        <td><?php
-                                            echo $list_data->pl;
-                                            ?>
-                                        </td>
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->keterangan;
-                                            ?>
-                                        </td>
-
-                                        <!-- Debet -->
-                                        <td style="text-align:right">
-                                            <?php
-                                            if ($list_data->debet > 0) {
-                                                echo number_format($list_data->debet, 2, ',', '.');
-                                                $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                            } else {
-                                                echo "";
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <!-- Kredit -->
-                                        <td style="text-align:right">
-                                            <?php
-                                            if ($list_data->kode_akun == "11301") {
-                                                echo number_format($list_data->debet, 2, ',', '.');
-                                                $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                            } else {
-                                                echo "";
-                                            }
-
+                                            // 2. BARIS TOTAL PL BARU
+                                            // menol kan total per kelompok $list_data->pl , karena sudah beda pl
+                                            $TOTAL_debet_11101 = 0;
+                                            $TOTAL_kredit_jumlah = 0;
+                                            $TOTAL_kredit_11301 = 0;
+                                            $TOTAL_saldo = 0;
 
                                             ?>
 
+                                            <tr>
+                                                <td>
+                                                    <?php
+                                                    echo ++$start;
+                                                    ?>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                    ?>
+                                                </td>
 
-                                        </td>
+                                                <!-- Kode Akun -->
+                                                <td><?php
+                                                    if ($list_data->kode_akun) {
+                                                        echo $list_data->kode_akun;
+                                                        echo "<br/>";
+                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    } else {
+                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <td><?php
+                                                    echo $list_data->bukti;
+                                                    ?>
+                                                </td>
+                                                <td><?php
+                                                    echo $list_data->pl;
+                                                    ?>
+                                                </td>
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->keterangan;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Debet -->
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->debet > 0) {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
+                                                        $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
+                                                    } else {
+                                                        echo "";
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kredit -->
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->kode_akun == "11301") {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                                        $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
+                                                    } else {
+                                                        echo "";
+                                                    }
 
 
-                                        <!-- rekening -->
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->kode_rekening;
-                                            ?>
-                                        </td>
+                                                    ?>
 
 
-                                        <td style="text-align:right">
-                                            <?php
-                                            if ($list_data->kode_akun <> "11301") {
-                                                echo number_format($list_data->debet, 2, ',', '.');
-                                                $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                            } else {
-                                                echo "";
-                                            }
+                                                </td>
 
-                                            ?>
-                                        </td>
 
-                                    </tr>
+                                                <!-- rekening -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->kode_rekening;
+                                                    ?>
+                                                </td>
+
+
+                                                <td style="text-align:right">
+                                                    <?php
+                                                    if ($list_data->kode_akun <> "11301") {
+                                                        echo number_format($list_data->debet, 2, ',', '.');
+                                                        $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
+                                                        $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
+                                                    } else {
+                                                        echo "";
+                                                    }
+
+                                                    ?>
+                                                </td>
+
+                                            </tr>
+
+                                    <?php
+
+
+                                        }
+                                    }
+
+                                    ?>
+
+
+
+
 
                                 <?php
+                                    // END OF FOR EACH $Data_kas 
                                 }
                                 ?>
+
+                                <!-- BARIS TERAKHIR TOTAL DARI KELOMPOK PL -->
+                                <tr>
+                                    <td>
+                                        <?php
+                                        echo ++$start;
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        // echo date("d-m-Y", strtotime($list_data->tanggal));
+                                        ?>
+                                    </td>
+
+                                    <!-- Kode Akun -->
+                                    <td>
+                                        <?php
+                                        // if ($list_data->kode_akun) {
+                                        //     echo $list_data->kode_akun;
+                                        //     echo "<br/>";
+                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                        // } else {
+                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                        // }
+                                        ?>
+                                    </td>
+
+                                    <td>
+                                        <?php
+                                        // echo $list_data->bukti;
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        // echo $list_data->pl;
+                                        ?>
+                                    </td>
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->keterangan;
+                                        ?>
+                                    </td>
+
+                                    <!-- Debet -->
+                                    <td style="background-color:yellow;text-align:right">
+                                        <?php
+                                        // if ($list_data->debet > 0) {
+                                        echo "<font color='red'><strong>" . number_format($TOTAL_debet_11101, 2, ',', '.') . "</strong></font>";
+                                        // $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
+                                        // } else {
+                                        //     echo "";
+                                        // }
+                                        ?>
+                                    </td>
+
+                                    <!-- Kredit -->
+                                    <td style="background-color:yellow;text-align:right">
+                                        <?php
+                                        // if ($list_data->kode_akun == "11301") {
+                                        echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11301, 2, ',', '.') . "</strong></font>";
+                                        // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                        // } else {
+                                        //     echo "";
+                                        // }
+
+
+                                        ?>
+
+
+                                    </td>
+
+
+                                    <!-- rekening -->
+                                    <td style="background-color:yellow;text-align:right">
+                                        <?php
+                                        // echo $list_data->kode_rekening;
+                                        ?>
+                                    </td>
+
+
+                                    <td style="background-color:yellow;text-align:right">
+                                        <?php
+                                        // if ($list_data->kode_akun <> "11301") {
+                                        echo "<font color='red'><strong>" . number_format($TOTAL_kredit_jumlah, 2, ',', '.') . "</strong></font>";
+                                        // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
+                                        // } else {
+                                        //     echo "";
+                                        // }
+
+                                        ?>
+                                    </td>
+
+                                </tr>
+
+
 
                             </tbody>
 
@@ -202,20 +641,20 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center">
+                                    <th style="text-align:right">
                                         <?php
-                                        echo number_format($TOTAL_debet_11101, 2, ',', '.');
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_11101_SEMUA, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL DEBET -->
-                                    <th style="text-align:center">
-                                    <?php
-                                        echo number_format($TOTAL_kredit_11301, 2, ',', '.');
-                                        ?>                                    
+                                    <th style="text-align:right">
+                                        <?php
+                                        // echo number_format($TOTAL_kredit_11301_SEMUA, 2, ',', '.');
+                                        ?>
                                     </th>
                                     <th style="text-align:center"></th>
-                                    <th style="text-align:center">
+                                    <th style="text-align:right">
                                         <?php
-                                        echo number_format($TOTAL_kredit_jumlah, 2, ',', '.');
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_jumlah_SEMUA + $TOTAL_kredit_11301_SEMUA, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL JUMLAH -->
 
