@@ -67,7 +67,8 @@
 
                     <div class="card-body">
 
-                        <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
+                        <!-- <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <!-- <tr>
 
@@ -191,14 +192,14 @@
                                         <!-- 21101-UU Dagang -->
                                         <td style="text-align:right">
                                             <?php
-                                            echo "21101-UU Dagang";
+                                            // echo "21101-UU Dagang";
                                             ?>
                                         </td>
 
                                         <!-- Serbi-Serbi No. Rek -->
                                         <td>
                                             <?php
-                                            echo "no rek";
+                                            // echo "no rek";
                                             ?>
                                         </td>
 
