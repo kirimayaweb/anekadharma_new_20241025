@@ -99,20 +99,23 @@
 
                                 <tr>
 
-                                    <th rowspan="2" style="text-align:left" width="10px">Tanggal</th>
-                                    <th rowspan="2" style="text-align:center">Kode Akun</th>
-                                    <th rowspan="2" style="text-align:center">No. Bukti BKM</th>
-                                    <th rowspan="2" style="text-align:center">PL</th>
-                                    <th rowspan="2" style="text-align:center">KETERANGAN</th>
+                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
+                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
+                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
+                                    <th rowspan="3" style="text-align:center">PL</th>
+                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
                                     <th colspan="3" style="text-align:center">DEBET</th>
                                     <th colspan="1" style="text-align:center">KREDIT</th>
 
                                 </tr>
                                 <tr>
-                                    <th style="text-align:center">21101-UU Dagang</th>
+                                    <th rowspan="2" style="text-align:center">21101-UU Dagang</th>
+                                    <th colspan="2" style="text-align:center">serba-serbi</th>
+                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
+                                </tr>
+                                <tr>
                                     <th style="text-align:left">No. Rek</th>
                                     <th style="text-align:right">Jumlah</th>
-                                    <th style="text-align:right">11101-Kas Besar</th>
                                 </tr>
 
                             </thead>
