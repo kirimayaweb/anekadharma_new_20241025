@@ -353,7 +353,7 @@
                                         } else {
                                             // Jika berbeda maka tampilkan jumlah dari pl lama dan buat baris baru list data
 
-                                            // TOTAL PER PEL
+                                            // TOTAL PER PL
                                         ?>
                                             <tr>
                                                 <td>
@@ -399,12 +399,14 @@
                                                     ?>
                                                 </td>
 
-
                                                 <!-- 21101-UU Dagang -->
                                                 <td style="background-color:yellow;text-align:right">
                                                     <?php
                                                     // if ($list_data->kode_akun == "21101") {
+
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_21101, 2, ',', '.') . "</strong></font>";
+                                                    $TOTAL_21101=0;
+
                                                     // $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
                                                     // $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
                                                     // } else {
@@ -426,7 +428,10 @@
                                                     // if ($list_data->kode_akun == "21101") {
                                                     //     echo "";
                                                     // } else {
+                                                    
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
+                                                    $TOTAL_debet_jumlah=0;
+                                                    
                                                     //     $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
                                                     //     $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
                                                     // }
@@ -438,7 +443,10 @@
                                                 <td style="background-color:yellow;text-align:right">
                                                     <?php
                                                     // if ($list_data->kredit > 0) {
+
                                                     echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11101, 2, ',', '.') . "</strong></font>";
+                                                    $TOTAL_kredit_11101=0;
+                                                    
                                                     //     $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
                                                     //     $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
                                                     // } else {
