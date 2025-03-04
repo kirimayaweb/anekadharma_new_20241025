@@ -405,6 +405,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 
     // aneka dharma
+    $('#tgl_awal').datetimepicker({
+      format: 'D-M-YYYY'
+    });
+    $('#tgl_akhir').datetimepicker({
+      format: 'D-M-YYYY'
+    });
     $('#tgl_po').datetimepicker({
       format: 'D-M-YYYY'
     });
