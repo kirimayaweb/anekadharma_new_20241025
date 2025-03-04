@@ -64,7 +64,7 @@
                                     <th style="text-align:left" width="10px">No</th>
                                     <th style="text-align:left">Tanggal</th>
                                     <th style="text-align:left">Bukti</th>
-                                    <th style="text-align:left"></th>
+                                    <th style="text-align:left">PL</th>
                                     <th style="text-align:left">Keterangan</th>
                                     <th style="text-align:left">Kode Rekening</th>
                                     <th style="text-align:right">debet</th>

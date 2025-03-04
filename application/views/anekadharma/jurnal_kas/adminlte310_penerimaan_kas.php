@@ -709,7 +709,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 900,
+            "scrollY": 650,
             "scrollX": true
         });
     });
