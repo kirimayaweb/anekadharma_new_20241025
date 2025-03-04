@@ -204,7 +204,7 @@
                                                 }
                                                 ?>
                                             </td>
-                                            <td><?php echo "<strong>".$list_data->spop."</strong>"; ?></td>
+                                            <td><?php echo "<strong> SPOP: ".$list_data->spop."</strong>"; ?></td>
                                             <!-- <td><?php //echo "kode akun 3"; ?></td> -->
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
 
@@ -363,7 +363,7 @@
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td><?php echo "<strong>".$list_data->spop."</strong>"; ?></td>
+                                    <td><?php echo "<strong> SPOP: ".$list_data->spop."</strong>"; ?></td>
                                     <!-- <td><?php //echo "Kode akun 6"; ?></td> -->
                                     <td></td>
                                     <td></td>
