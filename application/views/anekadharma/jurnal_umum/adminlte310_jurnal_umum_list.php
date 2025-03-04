@@ -114,19 +114,9 @@
                             </thead>
                             <tbody>
                                 <?php
-                                $start = 0;
-                                $TOTAL_debet_11101 = 0;
-                                $TOTAL_kredit_11301 = 0;
-                                $TOTAL_kredit_jumlah = 0;
-                                $TOTAL_saldo = 0;
 
-                                $TOTAL_debet_11101_SEMUA = 0;
-                                $TOTAL_kredit_11301_SEMUA = 0;
-                                $TOTAL_kredit_jumlah_SEMUA = 0;
-                                $TOTAL_saldo_SEMUA = 0;
-
-                                $PL_Data = 0;
-
+                                $Total_debet = 0;
+                                $Total_kredit = 0;
                                 $start = 0;
                                 foreach ($Data_Jurnal_Umum as $list_data) {
 
@@ -194,13 +184,8 @@
                                         <!-- /DEBET -->
                                         <td style="text-align:right">
                                             <?php
-                                            // if ($list_data->kode_akun <> "11301") {
                                             echo number_format($list_data->debet, 2, ',', '.');
-                                            //     $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
-                                            //     $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
-                                            // } else {
-                                            //     echo "";
-                                            // }
+                                            $Total_debet = $Total_debet + $list_data->debet;
 
                                             ?>
                                         </td>
@@ -208,14 +193,9 @@
                                         <!-- /KREDIT -->
                                         <td style="text-align:right">
                                             <?php
-                                            // if ($list_data->kode_akun <> "11301") {
-                                            echo number_format($list_data->kredit, 2, ',', '.');
-                                            //     $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
-                                            //     $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
-                                            // } else {
-                                            //     echo "";
-                                            // }
 
+                                            echo number_format($list_data->kredit, 2, ',', '.');
+                                            $Total_kredit = $Total_kredit + $list_data->kredit;
                                             ?>
                                         </td>
 
@@ -228,9 +208,22 @@
 
                             </tbody>
 
+                            <tfoot>
+                                <tr>
 
+                                    <th style="text-align:left" width="10px"></th>
+                                    <th style="text-align:left" width="10px"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:center"></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_debet, 2, ',', '.'); ?></th>
+                                    <th style="text-align:right"><?php echo number_format($Total_kredit, 2, ',', '.'); ?></th>
 
+                                </tr>
 
+                            </tfoot>
                         </table>
                     </div>
                     <!-- /.card-body -->
@@ -239,6 +232,10 @@
         </div>
     </section>
 </div>
+
+
+
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
