@@ -394,29 +394,58 @@
                                         $jumlah_barang = 0;
                                         foreach ($data_ALL_per_SPOP as $list_data) {
 
+                                            // CEK dipersediaan apakah sisa stock masih ada, jika masih ada  bisa di ubah / dihapus, jika sudah terjual tidak bisa di ubah / hapus
+                                            // cek jumlah barang beli , jika lebih dari jumlah sisa stock , maka tombol ubah dan hapus bisa tampil
+
+                                            $this->db->where('uuid_persediaan', $list_data->uuid_persediaan);
+                                            //$this->db->where('password',  $test);
+                                            $Get_data_barang_dipersediaan = $this->db->get('persediaan')->row();
+
+
+                                            $GET_Sisa_Stock = $Get_data_barang_dipersediaan->total_10 - ($Get_data_barang_dipersediaan->penjualan + $Get_data_barang_dipersediaan->pecah_satuan + $Get_data_barang_dipersediaan->bahan_produksi);
+
+
                                         ?>
 
 
                                             <tr>
 
-                                                <td style="text-align:center"><?php echo ++$start ?></td>
+                                                <td style="text-align:center">
+                                                    <?php
+                                                    echo ++$start;
+                                                    // echo "<br/>";
+                                                    // // echo $list_data->uuid_persediaan;
+                                                    // echo $Get_data_barang_dipersediaan->total_10;
+                                                    // echo "<br/>";
+                                                    // echo $Get_data_barang_dipersediaan->penjualan;
+                                                    // echo "<br/>";
+                                                    // echo $Get_data_barang_dipersediaan->pecah_satuan;
+                                                    // echo "<br/>";
+                                                    // echo $Get_data_barang_dipersediaan->bahan_produksi;
+                                                    // echo "<br/>";
+                                                    // echo $GET_Sisa_Stock;
+                                                    ?></td>
 
                                                 <td align="left">
+                                                    <?php
 
-                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
-                                                        UBAH <?php //echo $list_data->id 
-                                                                ?>
-                                                    </button>
+                                                    if ($GET_Sisa_Stock > 0) {
+                                                    ?>
+
+                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
+                                                            UBAH <?php //echo $list_data->id 
+                                                                    ?>
+                                                        </button>
+
+                                                        <?php
+                                                        echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Pembelian Barang ini ?\')"');
+                                                        ?>
+
 
                                                     <?php
-                                                    // echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
-
-                                                    // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
-
-                                                    // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-trash-o" aria-hidden="true">Hapus DATA</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Anda Yakin akan MENGHAPUS ?\')"');
-
-                                                    echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Pembelian Barang ini ?\')"');
-
+                                                    } else {
+                                                        echo "SOLD";
+                                                    }
                                                     ?>
 
 
