@@ -221,7 +221,7 @@
                                         ?>
                                             <td><?php echo ++$start ?></td>
                                             <td><?php
-                                                // echo date("d M Y", strtotime($list_data->tgl_po));
+                                                echo date("d M Y", strtotime($list_data->tgl_po));
                                                 // echo "<br/>";
 
                                                 // User : Pembelian
@@ -236,13 +236,7 @@
                                                 // echo "Kode akun 4 Barang Pertama";
                                                 // Cek di record pertama dari spop, apakah field kode akun sudah ada isi ? , jika belum tampilkan tombol modal
                                                 
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
+                                                
 
                                                 ?>
 
@@ -250,11 +244,22 @@
                                             </td>
                                             <td align="left">
                                                 <?php
-                                                echo "<strong>".$list_data->spop."</strong>";
+                                                echo "<strong> SPOP: ".$list_data->spop."</strong>";
                                                 echo "<br/>";
-                                                echo date("d M Y", strtotime($list_data->tgl_po));
+                                                // echo date("d M Y", strtotime($list_data->tgl_po));
+
+
+                                                if ($list_data->kode_akun) {
+                                                    echo "Kode Akun: " . $list_data->kode_akun;
+                                                    echo "<br/>";
+                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                }else{
+                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                }
 
                                                 $x_button = $x_button + 1;
+                                                
+                                                
                                                 // echo "  ";
                                                 // if ($list_data->status_spop) {
                                                 //     echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->status_spop . '</i>', 'class="btn btn-success btn-xs"');
