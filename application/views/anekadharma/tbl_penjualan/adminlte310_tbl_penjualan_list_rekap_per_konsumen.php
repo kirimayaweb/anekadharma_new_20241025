@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>REKAP PENJUALAN PER BARANG</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>REKAP PENJUALAN PER KONSUMEN</strong></div>
                                 </div>
 
 
@@ -39,7 +39,7 @@
 
 
                             <div class="col-6">
-                            <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); ?>
+                                <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
                             </div>
 
 
@@ -64,28 +64,11 @@
 
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
-                                <!-- <tr>
-                                    <th rowspan="2" style="text-align:center" width="10px">No</th>
-                                    <th rowspan="2">Tgl Jual</th>
-                                    <th rowspan="2">nmrpesan</th>
-                                    <th rowspan="2">nmrkirim</th>
-                                    <th rowspan="2">Konsumen</th>
-                                    <th rowspan="2">Kode</th>
-                                    <th rowspan="2">Nama Barang</th>
-                                    <th rowspan="2">Unit</th>
-                                    <th rowspan="2">Satuan</th>
-                                    <th rowspan="2">Harga Satuan</th>
-                                    <th rowspan="2">Jumlah</th>
-
-                                    <th colspan="2" style="text-align:center">Debit</th>
-                                    <th colspan="2" style="text-align:center">Kredit</th> -->
-
-
 
                                 <tr>
                                     <th>No</th>
 
-                                    <th>Nama Barang <br /> Persediaan</th>
+                                    <th>Konsumen</th>
                                     <th>SPOP</th>
                                     <th>Tanggal<br /> Jual</th>
 
@@ -97,10 +80,6 @@
                                     <th>TOTAL</th>
                                 </tr>
 
-                                <!-- -------------- -->
-
-                                <!-- </tr> -->
-
                             </thead>
                             <tbody>
                                 <?php
@@ -111,10 +90,10 @@
                                     if ($start == 0) {
 
                                 ?>
-                                        <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA PERSEDIAAN -->
+                                        <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA KONSUMEN -->
                                         <tr>
                                             <td><?php echo ++$start; ?></td>
-                                            <td><?php echo $list_data_PERSEDIAAN->namabarang_persediaan; ?></td>
+                                            <td><?php echo $list_data_PERSEDIAAN->konsumen_nama_penjualan; ?></td>
                                             <td></td><!-- SPOP list nama barang persediaan-->
 
                                             <td></td>
@@ -131,7 +110,7 @@
 
                                         </tr>
 
-                                        <!-- CEK DATA GROUPING DATA BERDASARKAN NAMA BARANG DI PERSEDIAAN -->
+                                        <!-- CEK DATA GROUPING DATA BERDASARKAN NAMA UUID KONSUMEN -->
                                         <!-- BARIS KE 2 DATA PENJUALAN BERDASARKAN NAMA PENJUALAN -->
 
                                         <?php
@@ -148,8 +127,8 @@
                                                         tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
                                                             FROM tbl_penjualan
                                                             --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
-                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
-                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
+                                                            WHERE tbl_penjualan.uuid_konsumen =  '$list_data_PERSEDIAAN->uuid_konsumen_penjualan'
+                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.konsumen_nama ASC, tbl_penjualan.nmrkirim DESC;";
 
                                         $Total_jumlah_Barang = 0;
                                         $Total_Harga = 0;
@@ -181,7 +160,12 @@
                                                     ?>
                                                 </td>
                                                 <td><?php echo $list_data_PENJUALAN->nmrkirim_penjualan; ?></td>
-                                                <td><?php echo $list_data_PENJUALAN->konsumen_nama_penjualan; ?></td>
+                                                <td>
+                                                    <?php
+                                                    echo $list_data_PENJUALAN->konsumen_nama_penjualan;
+                                                    $Nama_Konsumen = $list_data_PENJUALAN->konsumen_nama_penjualan;
+                                                    ?>
+                                                </td>
                                                 <td><?php echo $list_data_PENJUALAN->nama_barang_penjualan; ?></td>
                                                 <td align="right">
                                                     <?php
@@ -223,7 +207,11 @@
                                             <td></td>
 
                                             <td></td>
-                                            <td></td>
+                                            <td>
+                                                <?php
+                                                echo $Nama_Konsumen;
+                                                ?>
+                                            </td>
                                             <td style="background-color:yellow;" align="right">TOTAL</td>
                                             <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "<strong>"; ?></td>
                                             <td style="background-color:yellow;"></td>
@@ -239,7 +227,7 @@
                                         <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA PERSEDIAAN -->
                                         <tr>
                                             <td><?php echo ++$start; ?></td>
-                                            <td><?php echo $list_data_PERSEDIAAN->namabarang_persediaan; ?></td>
+                                            <td><?php echo $list_data_PERSEDIAAN->konsumen_nama_penjualan; ?></td>
                                             <td></td> <!-- SPOP C kolom spop nama barang persediaan setelah nama barang pertama -->
 
                                             <td></td>
@@ -274,11 +262,12 @@
                                                         tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
                                                             FROM tbl_penjualan
                                                             --  right JOIN  tbl_penjualan ON persediaan.uuid_persediaan= tbl_penjualan.uuid_persediaan
-                                                            WHERE tbl_penjualan.id_persediaan_barang =  '$list_data_PERSEDIAAN->id'
-                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.nama_barang ASC, tbl_penjualan.nmrkirim DESC;";
+                                                            WHERE tbl_penjualan.uuid_konsumen =  '$list_data_PERSEDIAAN->uuid_konsumen_penjualan'
+                                                            ORDER BY tbl_penjualan.tgl_jual ASC, tbl_penjualan.konsumen_nama ASC, tbl_penjualan.nmrkirim DESC;";
 
                                         $Total_jumlah_Barang = 0;
                                         $Total_Harga = 0;
+
                                         foreach ($this->db->query($sql_PENJUALAN_by_UUID_PERSEDIAAN)->result() as $list_data_PENJUALAN) {
                                             //LOOPING PENJUALAN BERDASARKAN UUID_PENJUALAN
                                         ?>
@@ -310,7 +299,12 @@
                                                     ?>
                                                 </td>
                                                 <td><?php echo $list_data_PENJUALAN->nmrkirim_penjualan; ?></td>
-                                                <td><?php echo $list_data_PENJUALAN->konsumen_nama_penjualan; ?></td>
+                                                <td>
+                                                    <?php
+                                                    echo $list_data_PENJUALAN->konsumen_nama_penjualan;
+                                                    $Nama_Konsumen = $list_data_PENJUALAN->konsumen_nama_penjualan;
+                                                    ?>
+                                                </td>
                                                 <td><?php echo $list_data_PENJUALAN->nama_barang_penjualan; ?></td>
                                                 <td align="right">
                                                     <?php
@@ -349,7 +343,11 @@
 
                                             <td></td>
                                             <td></td>
-                                            <td></td>
+                                            <td>
+                                                <?php
+                                                echo $Nama_Konsumen;
+                                                ?>
+                                            </td>
                                             <td style="background-color:yellow;" align="right">TOTAL</td>
                                             <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; ?></td>
                                             <td style="background-color:yellow;"></td>

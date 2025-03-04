@@ -116,6 +116,39 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap', $data);
 	}
 
+	public function RekapPenjualanPerKonsumen()
+	{
+
+		$sql_persediaan = "SELECT 
+		-- persediaan.id as id,
+		-- 						persediaan.uuid_persediaan as uuid_persediaan,
+		-- 						persediaan.namabarang as namabarang_persediaan, 
+		-- 						persediaan.sa as saldo_awal_persediaan, 
+		-- 						persediaan.spop as spop, 
+
+		 						tbl_penjualan.id_persediaan_barang as id_persediaan_barang,
+		 						tbl_penjualan.tgl_jual as tgl_jual_penjualan,
+		 						tbl_penjualan.nmrkirim as nmrkirim_penjualan,
+		 						tbl_penjualan.uuid_konsumen as uuid_konsumen_penjualan,
+		 						tbl_penjualan.konsumen_nama as konsumen_nama_penjualan,
+		 						tbl_penjualan.nama_barang as nama_barang_penjualan,
+		 						tbl_penjualan.jumlah as jumlah_penjualan,
+		 						tbl_penjualan.harga_satuan as harga_satuan_penjualan,
+		 						tbl_penjualan.uuid_persediaan as uuid_persediaan_penjualan
+							FROM tbl_penjualan
+							-- right JOIN  tbl_penjualan ON persediaan.id= tbl_penjualan.id_persediaan_barang
+							GROUP BY tbl_penjualan.uuid_konsumen
+							ORDER BY tbl_penjualan.konsumen_nama ASC;";
+
+		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
+
+		$data = array(
+			'Tbl_penjualan_data' => $this->db->query($sql_persediaan)->result(),
+		);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_per_konsumen', $data);
+	}
+
 	public function bayar()
 	{
 
@@ -734,21 +767,21 @@ class Tbl_penjualan extends CI_Controller
 
 
 		$this->db->where('uuid_unit', $GET_uuid_konsumen);
-        $GET_sys_unit = $this->db->get('sys_unit');
-        if ($GET_sys_unit->num_rows() > 0) {
+		$GET_sys_unit = $this->db->get('sys_unit');
+		if ($GET_sys_unit->num_rows() > 0) {
 			$GET_DATA_sys_unit = $GET_sys_unit->row_array();
 
-        	// $kode_konsumen = $GET_DATA_sys_unit['kode_unit'],
-        	$nama_konsumen = $GET_DATA_sys_unit['nama_unit'];
+			// $kode_konsumen = $GET_DATA_sys_unit['kode_unit'],
+			$nama_konsumen = $GET_DATA_sys_unit['nama_unit'];
 		}
 
 		$this->db->where('uuid_konsumen', $GET_uuid_konsumen);
-        $GET_sys_konsumen = $this->db->get('sys_konsumen');
-        if ($GET_sys_konsumen->num_rows() > 0) {
+		$GET_sys_konsumen = $this->db->get('sys_konsumen');
+		if ($GET_sys_konsumen->num_rows() > 0) {
 			$GET_DATA_sys_konsumen = $GET_sys_konsumen->row_array();
 
-        	// $kode_konsumen = $GET_DATA_sys_konsumen['kode_konsumen'],
-        	$nama_konsumen = $GET_DATA_sys_konsumen['nama_konsumen'];
+			// $kode_konsumen = $GET_DATA_sys_konsumen['kode_konsumen'],
+			$nama_konsumen = $GET_DATA_sys_konsumen['nama_konsumen'];
 		}
 
 
@@ -757,9 +790,9 @@ class Tbl_penjualan extends CI_Controller
 		$sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `tgl_jual`='$date_jual' , `nmrkirim`='$NomorKirim_baru', `nmrpesan`='$NomorPesan_baru', `uuid_konsumen`='$GET_uuid_konsumen', `konsumen_nama`='$nama_konsumen'  WHERE `uuid_penjualan`='$uuid_penjualan'";
 
 		$this->db->query($sql_update_penjualan_by_uuid_penjualan);
-	
-		
-		redirect(site_url('Tbl_penjualan/'));	
+
+
+		redirect(site_url('Tbl_penjualan/'));
 	}
 
 

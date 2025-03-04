@@ -38,12 +38,16 @@
 
 
                             </div>
-                            <div class="col-4">
+                            <div class="col-2">
 
                             </div>
 
                             <div class="col-2">
-                            <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan', 'class="btn btn-success"'); ?>
+                            <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
+                            </div>
+
+                            <div class="col-2">
+                            <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); ?>
                             </div>
 
                             <div class="col-2">
