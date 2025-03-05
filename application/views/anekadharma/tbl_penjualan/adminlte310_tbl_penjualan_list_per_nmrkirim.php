@@ -65,7 +65,7 @@
 
                                 <div class="col-12">
 
-                                
+
                                     <div class="row">
 
                                         <div class="col-3">
@@ -107,7 +107,9 @@
                                             </select>
 
                                         </div>
+
                                         <div class="col-3">
+
                                             <label for="kode_pl">PL</label>
                                             <select name="kode_pl" id="kode_pl" class="form-control select2" style="width: 100%; height: 80px;" required>
 
@@ -143,9 +145,13 @@
                                                 ?>
                                             </select>
 
+
                                         </div>
 
-
+                                        <div class="col-3">
+                                            <label for="kode_pl">Kode Buku Besar <?php if($get_kode_bb){ echo $get_kode_bb;}else{echo "";}?> </label>
+                                            <input type="text" class="form-control" rows="1" name="kode_bb" id="kode_bb" placeholder="kode buku besar" value="<?php if($get_kode_bb){ echo $get_kode_bb;}else{echo "";}?>" >
+                                        </div>
 
                                     </div>
                                 </div>

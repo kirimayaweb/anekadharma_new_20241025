@@ -144,13 +144,13 @@
                                             <td>
                                                 <?php 
                                                 // echo "Kode Akun 1"; 
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
+                                                // if ($list_data->kode_akun) {
+                                                //     echo $list_data->kode_akun;
+                                                //     echo "<br/>";
+                                                //     echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                // }else{
+                                                //     echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                // }
                                                 ?>
                                             </td>
                                             <td style="background-color:yellow;" align="right"><?php
