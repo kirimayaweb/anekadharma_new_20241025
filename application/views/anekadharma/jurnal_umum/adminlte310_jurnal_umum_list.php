@@ -131,17 +131,17 @@
                                         </td>
                                         <td>
                                             <?php
-                                            echo date("d-m-Y", strtotime($list_data->tanggal));
+                                            // echo date("d-m-Y", strtotime($list_data->tanggal));
                                             ?>
                                         </td>
 
 
                                         <td><?php
-                                            echo $list_data->bukti;
+                                            // echo $list_data->bukti;
                                             ?>
                                         </td>
                                         <td><?php
-                                            echo $list_data->pl;
+                                            echo $list_data->kode_pl;
                                             ?>
                                         </td>
                                         <!-- Ref -->
@@ -154,7 +154,7 @@
                                         <!-- Kode rek -->
                                         <td style="text-align:left">
                                             <?php
-                                            echo $list_data->kode_rekening;
+                                            echo $list_data->kode_akun;
                                             ?>
                                         </td>
 
@@ -163,7 +163,7 @@
                                             <?php
                                             if ($list_data->rekening == "") {
 
-                                                $this->db->where('kode_akun', $list_data->kode_rekening);
+                                                $this->db->where('kode_akun', $list_data->kode_akun);
                                                 $data_akun = $this->db->get('sys_kode_akun');
 
                                                 if ($data_akun->num_rows() > 0) {
@@ -184,8 +184,8 @@
                                         <!-- /DEBET -->
                                         <td style="text-align:right">
                                             <?php
-                                            echo number_format($list_data->debet, 2, ',', '.');
-                                            $Total_debet = $Total_debet + $list_data->debet;
+                                            echo number_format($list_data->jumlah_total_per_kode_akun, 2, ',', '.');
+                                            $Total_debet = $Total_debet + $list_data->jumlah_total_per_kode_akun;
 
                                             ?>
                                         </td>
@@ -194,8 +194,8 @@
                                         <td style="text-align:right">
                                             <?php
 
-                                            echo number_format($list_data->kredit, 2, ',', '.');
-                                            $Total_kredit = $Total_kredit + $list_data->kredit;
+                                            // echo number_format($list_data->kredit, 2, ',', '.');
+                                            // $Total_kredit = $Total_kredit + $list_data->kredit;
                                             ?>
                                         </td>
 
@@ -250,7 +250,7 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 600,
+            "scrollY": 450,
             "scrollX": true
         });
     });

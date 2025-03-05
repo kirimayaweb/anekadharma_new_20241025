@@ -16,17 +16,21 @@ class Jurnal_umum extends CI_Controller
 
     public function index()
     {
-        $Data_Jurnal_Umum = $this->Jurnal_umum_model->get_all();
-        // $start = 0;
+        
+        // $sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
+        $sql = "SELECT `kode_akun`,`kode_pl`,`satuan`,`harga_satuan`,sum(`harga_satuan`) as total_harga_satuan,`jumlah`, sum(`jumlah`) as total_jumlah,`total_nominal`,sum(`total_nominal`) as SUM_total_nominal, SUM(`harga_satuan`*`jumlah`) as jumlah_total_per_kode_akun FROM `tbl_penjualan` GROUP BY `kode_akun` ORDER BY `kode_akun` ";
 
-        // print_r($Data_Jurnal_Umum);
+		print_r($this->db->query($sql)->result());
         // die;
 
+
+        // $Data_Jurnal_Umum = $this->Jurnal_umum_model->get_all();
+              
         $data = array(
-            'Data_Jurnal_Umum' => $Data_Jurnal_Umum,
-            // 'start' => $start,
+            'Data_Jurnal_Umum' => $this->db->query($sql)->result(),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_umum/adminlte310_jurnal_umum_list', $data);
+        
     }
 
     public function index_SERVER_SIDE()
