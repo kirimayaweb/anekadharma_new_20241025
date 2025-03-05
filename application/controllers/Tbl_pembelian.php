@@ -85,6 +85,10 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
+		$Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
+
+		print_r($Get_date_awal_proses);
+		print_r("<br/>");
 
 		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
 		// print_r($Get_date_akhir);
@@ -93,7 +97,7 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal_proses' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
 
 		// print_r($this->db->query($sql)->result());
 		// die;
@@ -121,13 +125,19 @@ class Tbl_pembelian extends CI_Controller
 
 		// $Get_date_awal = $this->input->post('tgl_awal', TRUE);
 		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-			$Get_date_awal = date("Y-m-d 00:00:00");
+			// $Get_date_awal = date("Y-m-d 00:00:00");
+			$Get_date_awal = date('Y-m-d',strtotime('-1 day'));
 		} else {
 			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
 		}
 		
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
+		print_r($Get_date_awal);
+		print_r("<br/>");
+
+		$Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
+
+		print_r($Get_date_awal_proses);
+		print_r("<br/>");
 
 		// $Get_date_akhir = $this->input->post('tgl_akhir', TRUE);
 		if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
@@ -139,7 +149,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 
-		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal_proses' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
 
 		// print_r($this->db->query($sql)->result());
 		// die;
