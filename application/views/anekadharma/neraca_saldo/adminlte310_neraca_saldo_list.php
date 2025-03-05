@@ -32,36 +32,50 @@
                                 </div>
                             </div>
 
-                            <div class="col-5">
-                                <!-- <form> -->
-                                <?php //echo form_open('neraca_saldo/cari_kode_akun'); 
+                            <div class="col-md-6">
+
+                                <?php
+                                // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
+                                $action_cari_between_date = site_url('neraca_saldo');
                                 ?>
-                                <!-- 
-                                <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
 
-                                    <?php
-                                    // if ($uuid_kode_akun) {
-                                    ?>
-                                        <option value="<?php //echo $uuid_kode_akun; 
-                                                        ?>"><?php //echo $kode_akun; 
-                                                            ?></option>
-                                    <?php
-                                    // } else {
-                                    ?>
-                                        <option value="">Pilih Kode Akun</option>
-                                    <?php
-                                    // }
-                                    ?>
+                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <div class="row">
 
-                                    <?php
-                                    // $sql = "select * from sys_kode_akun  order by  kode_akun ASC ";
-                                    // foreach ($this->db->query($sql)->result() as $m) {
-                                    //     // foreach ($data_produk as $m) {
-                                    //     echo "<option value='$m->uuid_kode_akun' ";
-                                    //     echo ">  " . strtoupper($m->kode_akun) . " ==> ( " . strtoupper($m->nama_akun) . ")</option>";
-                                    // }
-                                    ?>
-                                </select> -->
+                                        <div class="col-md-1" text-align="right" align="right"></div>
+
+                                        <div class="col-md-3" text-align="right">
+                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
+                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
+                                                    <div class="input-group-text">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
+
+                                        <div class="col-md-3" text-align="left" align="left">
+                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
+                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
+                                                    <div class="input-group-text">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-2" text-align="left" align="left">
+                                            <strong>
+                                                <button type="submit" class="btn btn-danger btn-block btn-flat" disabled><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                            </strong>
+                                        </div>
+
+                                    </div>
+                                </form>
 
                             </div>
 
@@ -83,21 +97,26 @@
 
                     <div class="card-body">
 
-                        <table id="example" class="display nowrap" style="width:100%">
+                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th style="text-align:center" width="10px">No</th>
-                                    <th>Kode Rek.</th>
-                                    <th>Uraian</th>
-                                    <th>debet_akhir_tahun_lalu</th>
-                                    <th>kredit_akhir_tahun_lalu</th>
-                                    <th>debet_penyesuaian</th>
-                                    <th>kredit_penyesuaian</th>
-                                    <th>debet_ns_setelah_penyesuaian</th>
-                                    <th>kredit_ns_setelah_penyesuaian</th>
-                                    <th>debet_laba_rugi</th>
-                                    <th>kreditdebet_laba_rugi</th>
-
+                                    <th rowspan="2" style="text-align:center" width="10px">No</th>
+                                    <th rowspan="2" style="text-align:center">Kode Rek.</th>
+                                    <th rowspan="2" style="text-align:center">Uraian</th>
+                                    <th colspan="2" style="text-align:center">NERACA SALDO 1 JANUARI 2023</th>
+                                    <th colspan="2" style="text-align:center">PENYESUAIAN</th>
+                                    <th colspan="2" style="text-align:center">NS SETELAH PENYESUAIAN</th>
+                                    <th colspan="2" style="text-align:center">LABA/ RUGI</th>
+                                </tr>
+                                <tr>
+                                    <th>debet</th>
+                                    <th>kredit</th>
+                                    <th>debet</th>
+                                    <th>kredit</th>
+                                    <th>debet</th>
+                                    <th>kredit</th>
+                                    <th>debet</th>
+                                    <th>kredit</th>
                                 </tr>
 
 
