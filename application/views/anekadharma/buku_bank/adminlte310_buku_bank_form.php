@@ -61,30 +61,63 @@
 
 
                                     <table class='table table-bordered'>
+
                                         <div class="form-group">
-                                            <label for="varchar">Bank <?php echo form_error('bank') ?></label>
-                                            <input type="text" class="form-control" name="bank" id="bank" placeholder="Bank" value="<?php echo $bank; ?>" />
+                                            <label for="datetime">Tanggal <?php echo form_error('tgl_po') ?></label>
+                                            <div class="col-5">
+                                                <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
+                                                    <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
+                                                    <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
+                                                        <div class="input-group-text">
+                                                            <i class="fa fa-calendar"></i>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-5">
+                                                    <label for="varchar">Bank <?php echo form_error('bank') ?></label>
+                                                    <input type="text" class="form-control" name="bank" id="bank" placeholder="Bank" value="<?php echo $bank; ?>" />
+                                                </div>
+                                                <div class="col-5">
+                                                    <label for="varchar">Norek <?php echo form_error('norek') ?></label>
+                                                    <input type="text" class="form-control" name="norek" id="norek" placeholder="Norek" value="<?php echo $norek; ?>" />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-4">
+                                                    <label for="int">Kode <?php echo form_error('kode') ?></label>
+                                                    <input type="text" class="form-control" name="kode" id="kode" placeholder="Kode" value="<?php echo $kode; ?>" />
+
+                                                </div>
+                                                <div class="col-8">
+                                                    <label for="varchar">Keterangan <?php echo form_error('keterangan') ?></label>
+                                                    <input type="text" class="form-control" name="keterangan" id="keterangan" placeholder="Keterangan" value="<?php echo $keterangan; ?>" />
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="form-group">
-                                            <label for="varchar">Norek <?php echo form_error('norek') ?></label>
-                                            <input type="text" class="form-control" name="norek" id="norek" placeholder="Norek" value="<?php echo $norek; ?>" />
+                                            <div class="row">
+                                                <div class="col-5">
+                                                    <label for="varchar">Debet <?php echo form_error('debet') ?></label>
+                                                    <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" />
+                                                </div>
+                                                <div class="col-5">
+                                                    <label for="varchar">Kredit <?php echo form_error('kredit') ?></label>
+                                                    <input type="text" class="form-control" name="kredit" id="kredit" placeholder="Kredit" value="<?php echo $kredit; ?>" />
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="form-group">
-                                            <label for="varchar">Keterangan <?php echo form_error('keterangan') ?></label>
-                                            <input type="text" class="form-control" name="keterangan" id="keterangan" placeholder="Keterangan" value="<?php echo $keterangan; ?>" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="int">Kode <?php echo form_error('kode') ?></label>
-                                            <input type="text" class="form-control" name="kode" id="kode" placeholder="Kode" value="<?php echo $kode; ?>" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="varchar">Debet <?php echo form_error('debet') ?></label>
-                                            <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="varchar">Kredit <?php echo form_error('kredit') ?></label>
-                                            <input type="text" class="form-control" name="kredit" id="kredit" placeholder="Kredit" value="<?php echo $kredit; ?>" />
-                                        </div>
+                                       
 
                                         <input type="hidden" name="id" value="<?php echo $id; ?>" />
                                         <tr>
@@ -97,7 +130,7 @@
                                     </table>
                                 </form>
                             </div>
-                            <div class="col-3"></div>
+                            <div class="col-5"></div>
                         </div>
                     </div>
                     <!-- /.card-body -->

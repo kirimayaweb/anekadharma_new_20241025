@@ -74,7 +74,7 @@ class Bukubank extends CI_Controller
     public function create()
     {
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('bukubank/create_action'),
             'id' => set_value('id'),
             'tanggal' => set_value('tanggal'),
@@ -98,15 +98,26 @@ class Bukubank extends CI_Controller
         if ($this->form_validation->run() == FALSE) {
             $this->create();
         } else {
+
+
+			if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
+				// print_r("Tahun kurang dari 2020");
+				$date_po = date("Y-m-d H:i:s");
+			} else {
+				// print_r("Tahun lebih dari 2020");
+				$date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+			}
+
+
             $data = array(
-                'tanggal' => $this->input->post('tanggal', TRUE),
+                'tanggal' => $date_po,
                 'bank' => $this->input->post('bank', TRUE),
                 'norek' => $this->input->post('norek', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),
                 'kode' => $this->input->post('kode', TRUE),
                 'debet' => $this->input->post('debet', TRUE),
                 'kredit' => $this->input->post('kredit', TRUE),
-                'saldo' => $this->input->post('saldo', TRUE),
+                // 'saldo' => $this->input->post('saldo', TRUE),
             );
 
             $this->Bukubank_model->insert($data);
@@ -180,14 +191,14 @@ class Bukubank extends CI_Controller
 
     public function _rules()
     {
-        $this->form_validation->set_rules('tanggal', 'tanggal', 'trim|required');
+        $this->form_validation->set_rules('tgl_po', 'tgl_po', 'trim|required');
         $this->form_validation->set_rules('bank', 'bank', 'trim|required');
         $this->form_validation->set_rules('norek', 'norek', 'trim|required');
         $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
-        $this->form_validation->set_rules('kode', 'kode', 'trim|required');
-        $this->form_validation->set_rules('debet', 'debet', 'trim|required');
-        $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
-        $this->form_validation->set_rules('saldo', 'saldo', 'trim|required');
+        // $this->form_validation->set_rules('kode', 'kode', 'trim|required');
+        // $this->form_validation->set_rules('debet', 'debet', 'trim|required');
+        // $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
+        // $this->form_validation->set_rules('saldo', 'saldo', 'trim|required');
 
         $this->form_validation->set_rules('id', 'id', 'trim');
         $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
