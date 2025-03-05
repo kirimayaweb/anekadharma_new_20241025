@@ -1,6 +1,3 @@
-
-
-
 <div class="content-wrapper">
 
 
@@ -50,7 +47,7 @@
                                     <?php
                                     if ($uuid_kode_akun) {
                                     ?>
-                                        <option value="<?php echo $uuid_kode_akun; ?>"><?php echo $kode_akun ; ?></option>
+                                        <option value="<?php echo $uuid_kode_akun; ?>"><?php echo $kode_akun; ?></option>
                                     <?php
                                     } else {
                                     ?>
@@ -58,7 +55,7 @@
                                     <?php
                                     }
                                     ?>
-
+                                    <option value="">Tampil Semua Data</option>
                                     <?php
                                     $sql = "select * from sys_kode_akun  order by  kode_akun ASC ";
                                     foreach ($this->db->query($sql)->result() as $m) {
@@ -94,9 +91,11 @@
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
                                     <th>Tanggal</th>
-                                    <th>Kode Akun</th>
-                                    <th>Keterangan</th>
                                     <th>Kode</th>
+                                    <th>Kode Akun</th>
+                                    <th>Nama Akun</th>
+                                    <th>Keterangan</th>
+
                                     <th>Debet</th>
                                     <th>Kredit</th>
                                     <th>Saldo</th>
@@ -123,20 +122,44 @@
                                             echo date("d-M-Y", strtotime($list_data->tanggal));
                                             ?>
                                         </td>
+
+                                        <!-- Kode -->
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_bb;
+                                            // echo "kode";
+                                            ?>
+                                        </td>
+
+                                        <!-- Kode akun -->
                                         <td align="left">
                                             <?php
                                             echo $list_data->kode_akun;
                                             ?>
                                         </td>
+
+                                        <td align="left">
+                                            <?php
+                                            if ($list_data->nama_akun == "") {
+
+                                                $this->db->where('kode_akun', $list_data->kode_akun);
+                                                $data_akun = $this->db->get('sys_kode_akun');
+
+                                                if ($data_akun->num_rows() > 0) {
+
+                                                    $Get_data_akun = $data_akun->row_array();
+                                                    echo $Get_data_akun['nama_akun'];
+                                                }
+                                            } else {
+                                                echo $list_data->nama_akun;
+                                            }
+                                            ?>
+                                        </td>
+
+
                                         <td align="left">
                                             <?php
                                             echo  $list_data->keterangan;
-                                            ?>
-                                        </td>
-                                        <td align="left">
-                                            <?php
-                                            // echo $list_data->kode;
-                                            // echo "kode";
                                             ?>
                                         </td>
 
@@ -193,22 +216,45 @@
                                             echo date("d-M-Y", strtotime($list_data->tanggal));
                                             ?>
                                         </td>
+
+
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_bb;
+                                            // echo "kode";
+                                            ?>
+                                        </td>
+
                                         <td align="left">
                                             <?php
                                             echo $list_data->kode_akun;
                                             ?>
                                         </td>
+
+                                        <td align="left">
+                                            <?php
+                                            if ($list_data->nama_akun == "") {
+
+                                                $this->db->where('kode_akun', $list_data->kode_akun);
+                                                $data_akun = $this->db->get('sys_kode_akun');
+
+                                                if ($data_akun->num_rows() > 0) {
+
+                                                    $Get_data_akun = $data_akun->row_array();
+                                                    echo $Get_data_akun['nama_akun'];
+                                                }
+                                            } else {
+                                                echo $list_data->nama_akun;
+                                            }
+                                            ?>
+                                        </td>
+
                                         <td align="left">
                                             <?php
                                             echo  $list_data->keterangan;
                                             ?>
                                         </td>
-                                        <td align="left">
-                                            <?php
-                                            // echo $list_data->kode;
-                                            // echo "kode";
-                                            ?>
-                                        </td>
+
 
                                         <td align="right">
                                             <?php

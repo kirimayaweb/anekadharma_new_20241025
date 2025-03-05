@@ -37,7 +37,9 @@ class Buku_besar extends CI_Controller
 		tbl_penjualan.jumlah as jumlah,
 		tbl_penjualan.harga_satuan as harga_satuan,
 		(tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
-		tbl_penjualan.kode_akun as kode_akun
+		tbl_penjualan.kode_akun as kode_akun,
+		tbl_penjualan.kode_pl as kode_pl,
+		tbl_penjualan.kode_bb as kode_bb
 		                    FROM tbl_penjualan    
 		                    ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
         // print_r($this->db->query($sql_penjualan)->result());
