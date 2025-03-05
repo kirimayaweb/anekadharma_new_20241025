@@ -63,57 +63,94 @@
                         <form action="<?php echo $action; ?>" method="post">
                             <div class="row">
 
-                                <div class="col-3">
-                                    <label for="supplier_nama">Atur Kode Akun : <strong><?php echo "Nomor kirim:" . $nmrkirim; ?> </strong></label>
+                                <div class="col-12">
 
-                                    <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                    <div class="row">
 
-                                        <?php
+                                        <div class="col-3">
 
-                                        if ($get_kode_akun) {
-                                            // Get Nama akun dari kode akun
+                                            <label for="kode_akun">Atur Kode Akun, Nomor kirim: <strong><?php echo  $nmrkirim; ?> </strong></label>
 
-                                            $sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`='$get_kode_akun'";
-                                            $Get_nama_akun = $this->db->query($sql)->row()->nama_akun
+                                            <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 80px;" required>
 
-                                        ?>
-                                            <option value="<?php echo $get_kode_akun; ?>"><?php echo $get_kode_akun . " ==> " . $Get_nama_akun; ?></option>
-                                        <?php
-                                        } else {
-                                        ?>
-                                            <option value="">Pilih Kode Akun</option>
-                                        <?php
-                                        }
-                                        ?>
+                                                <?php
 
+                                                if ($get_kode_akun) {
+                                                    // Get Nama akun dari kode akun
 
-                                        <?php
+                                                    $sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`='$get_kode_akun'";
+                                                    $Get_nama_akun = $this->db->query($sql)->row()->nama_akun
 
-                                        $sql = "select * from sys_kode_akun order by kode_akun ASC";
-
-
-                                        foreach ($this->db->query($sql)->result() as $m) {
-                                            // foreach ($data_produk as $m) {
-                                            echo "<option value='$m->kode_akun' ";
-                                            echo ">  " . strtoupper($m->kode_akun)  . " ==> " . strtoupper($m->nama_akun)  . "</option>";
-                                        }
-                                        ?>
-                                    </select>
+                                                ?>
+                                                    <option value="<?php echo $get_kode_akun; ?>"><?php echo $get_kode_akun . " ==> " . $Get_nama_akun; ?></option>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                    <option value="">Pilih Kode Akun</option>
+                                                <?php
+                                                }
+                                                ?>
 
 
+                                                <?php
+
+                                                $sql = "select * from sys_kode_akun order by kode_akun ASC";
+
+
+                                                foreach ($this->db->query($sql)->result() as $m) {
+                                                    // foreach ($data_produk as $m) {
+                                                    echo "<option value='$m->kode_akun' ";
+                                                    echo ">  " . strtoupper($m->kode_akun)  . " ==> " . strtoupper($m->nama_akun)  . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+
+                                        </div>
+                                        <div class="col-3">
+                                            <label for="kode_pl">PL</label>
+                                            <select name="kode_pl" id="kode_pl" class="form-control select2" style="width: 100%; height: 80px;" required>
+
+                                                <?php
+
+                                                if ($get_kode_pl) {
+                                                    // Get Nama akun dari kode akun
+
+                                                    $sql = "SELECT * FROM `sys_kode_pl` WHERE `kode_pl`='$get_kode_pl'";
+                                                    $Get_keterangan = $this->db->query($sql)->row()->keterangan
+
+                                                ?>
+                                                    <option value="<?php echo $get_kode_pl; ?>"><?php echo $get_kode_pl . " ==> " . $Get_keterangan; ?></option>
+                                                <?php
+                                                } else {
+                                                ?>
+                                                    <option value="">Pilih Kode PL</option>
+                                                <?php
+                                                }
+                                                ?>
+
+
+                                                <?php
+
+                                                $sql = "select * from sys_kode_pl order by kode_pl ASC";
+
+
+                                                foreach ($this->db->query($sql)->result() as $m) {
+                                                    // foreach ($data_produk as $m) {
+                                                    echo "<option value='$m->kode_pl' ";
+                                                    echo ">  " . strtoupper($m->kode_pl)  . " ==> " . strtoupper($m->keterangan)  . "</option>";
+                                                }
+                                                ?>
+                                            </select>
+
+                                        </div>
+
+
+
+                                    </div>
                                 </div>
 
-                                <div class="col-4">
-
-                                </div>
-
-                                <div class="col-2">
-                                    <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                    ?>
 
 
-
-                                </div>
 
                             </div>
 

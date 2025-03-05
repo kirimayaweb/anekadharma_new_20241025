@@ -1637,6 +1637,7 @@ class Tbl_penjualan extends CI_Controller
 
 		$data = array(
 			'kode_akun' => $this->input->post('kode_akun', TRUE),
+			'kode_pl' => $this->input->post('kode_pl', TRUE),
 		);
 
 		// print_r($data);
@@ -1653,12 +1654,13 @@ class Tbl_penjualan extends CI_Controller
 
 		$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
 
-		$sql = "SELECT `nmrkirim`,`kode_akun` FROM `tbl_penjualan` WHERE `nmrkirim`='$nmrkirim' GROUP by `nmrkirim`,`kode_akun`";
+		$sql = "SELECT `nmrkirim`,`kode_akun`,`kode_pl` FROM `tbl_penjualan` WHERE `nmrkirim`='$nmrkirim' GROUP by `nmrkirim`,`kode_akun`";
 
 		// $this->db->query($sql)->result();
 		// print_r($this->db->query($sql)->row()->kode_akun);
 
 		$get_kode_akun = $this->db->query($sql)->row()->kode_akun;
+		$get_kode_pl = $this->db->query($sql)->row()->kode_pl;
 		// die;
 
 		// $start = 0;
@@ -1669,6 +1671,7 @@ class Tbl_penjualan extends CI_Controller
 			'button' => 'Update Kode AKun',
 			// 'start' => $start,
 			'get_kode_akun' => $get_kode_akun,
+			'get_kode_pl' => $get_kode_pl,
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
