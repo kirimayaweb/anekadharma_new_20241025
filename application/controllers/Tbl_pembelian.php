@@ -85,10 +85,6 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
-		$Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
-
-		print_r($Get_date_awal_proses);
-		print_r("<br/>");
 
 		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
 		// print_r($Get_date_akhir);
@@ -97,7 +93,7 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal_proses' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
 
 		// print_r($this->db->query($sql)->result());
 		// die;
