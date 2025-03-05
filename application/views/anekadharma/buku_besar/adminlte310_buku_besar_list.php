@@ -91,6 +91,7 @@
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
                                     <th>Tanggal</th>
+                                    <th>PL</th>
                                     <th>Kode</th>
                                     <th>Kode Akun</th>
                                     <th>Nama Akun</th>
@@ -123,6 +124,13 @@
                                             ?>
                                         </td>
 
+                                        <!-- Kode pl -->
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_pl;
+                                            // echo "kode";
+                                            ?>
+                                        </td>
                                         <!-- Kode -->
                                         <td align="left">
                                             <?php
@@ -179,7 +187,7 @@
 
                                             echo number_format($list_data->kredit, 2, ',', '.');
 
-                                            // $TOTAL_KREDIT = $TOTAL_KREDIT + $list_data->kredit;
+                                            $TOTAL_KREDIT = $TOTAL_KREDIT + $list_data->kredit;
                                             // $TOTAL_SALDO = $TOTAL_DEBET - $TOTAL_KREDIT;
 
                                             ?>
@@ -203,9 +211,9 @@
                                 <?php
                                 // PENJUALAN
                                 // $start = 0;
-                                $TOTAL_DEBET = 0;
-                                $TOTAL_KREDIT = 0;
-                                $TOTAL_SALDO = 0;
+                                // $TOTAL_DEBET = 0;
+                                // $TOTAL_KREDIT = 0;
+                                // $TOTAL_SALDO = 0;
 
                                 foreach ($Data_penjualan as $list_data) {
                                 ?>
@@ -217,6 +225,13 @@
                                             ?>
                                         </td>
 
+                                        <!-- Kode pl -->
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_pl;
+                                            // echo "kode";
+                                            ?>
+                                        </td>
 
                                         <td align="left">
                                             <?php
@@ -263,7 +278,7 @@
                                             // echo "debet";
 
                                             echo number_format($list_data->debet, 2, ',', '.');
-                                            // $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
+                                            $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
 
                                             ?>
                                         </td>
@@ -297,6 +312,36 @@
 
 
                             </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <th style="text-align:center" width="10px"></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_DEBET, 2, ',', '.');
+                                        // $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
+                                        ?>
+                                    </th>
+                                    
+                                    <th style="text-align:right">
+                                        <?php
+                                        echo number_format($TOTAL_KREDIT, 2, ',', '.');
+                                        // $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
+                                        ?>
+                                    </th>
+
+                                    <th></th>
+                                </tr>
+
+
+                            </tfoot>
 
 
                         </table>

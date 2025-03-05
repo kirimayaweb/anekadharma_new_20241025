@@ -23,7 +23,9 @@ class Buku_besar extends CI_Controller
 		tbl_pembelian.jumlah as jumlah,
 		tbl_pembelian.harga_satuan as harga_satuan,
 		(tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
-		tbl_pembelian.kode_akun as kode_akun
+		tbl_pembelian.kode_akun as kode_akun,
+		tbl_pembelian.kode_pl as kode_pl,
+		tbl_pembelian.kode_bb as kode_bb
 		                    FROM tbl_pembelian    
 		                    ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
         // print_r($this->db->query($sql_pembelian)->result());
