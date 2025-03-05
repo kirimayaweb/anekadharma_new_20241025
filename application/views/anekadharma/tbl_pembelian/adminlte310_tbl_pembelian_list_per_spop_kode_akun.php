@@ -36,9 +36,10 @@
 
 
                             </div>
-                            <div class="col-6">
 
-                            </div>
+
+
+
 
 
 
@@ -115,17 +116,55 @@
 
                                 </div>
 
-                                <div class="col-4">
+                                <div class="col-3">
+
+                                    <label for="kode_pl">PL</label>
+                                    <select name="kode_pl" id="kode_pl" class="form-control select2" style="width: 100%; height: 80px;" required>
+
+                                        <?php
+
+                                        if ($get_kode_pl) {
+                                            // Get Nama akun dari kode akun
+
+                                            $sql = "SELECT * FROM `sys_kode_pl` WHERE `kode_pl`='$get_kode_pl'";
+                                            $Get_keterangan = $this->db->query($sql)->row()->keterangan
+
+                                        ?>
+                                            <option value="<?php echo $get_kode_pl; ?>"><?php echo $get_kode_pl . " ==> " . $Get_keterangan; ?></option>
+                                        <?php
+                                        } else {
+                                        ?>
+                                            <option value="">Pilih Kode PL</option>
+                                        <?php
+                                        }
+                                        ?>
+
+
+                                        <?php
+
+                                        $sql = "select * from sys_kode_pl order by kode_pl ASC";
+
+
+                                        foreach ($this->db->query($sql)->result() as $m) {
+                                            // foreach ($data_produk as $m) {
+                                            echo "<option value='$m->kode_pl' ";
+                                            echo ">  " . strtoupper($m->kode_pl)  . " ==> " . strtoupper($m->keterangan)  . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+
 
                                 </div>
 
-                                <div class="col-2">
-                                    <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                    ?>
-
-
-
+                                <div class="col-3">
+                                    <label for="kode_pl">Kode Buku Besar </label>
+                                    <input type="text" class="form-control" rows="1" name="kode_bb" id="kode_bb" placeholder="kode buku besar" value="<?php if ($get_kode_bb) {
+                                                                                                                                                            echo $get_kode_bb;
+                                                                                                                                                        } else {
+                                                                                                                                                            echo "";
+                                                                                                                                                        } ?>">
                                 </div>
+
 
                             </div>
 
@@ -134,7 +173,8 @@
                                 <div class="col-3">
 
                                     <div class="modal-footer justify-content-between">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                        <!-- <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button> -->
+                                        <a href="<?php echo site_url('Tbl_pembelian/jurnal_pembelian2/') ?>" class="btn btn-success">Batal</a>
                                         <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
                                         <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
                                     </div>
@@ -144,7 +184,6 @@
                         </form>
                         <hr>
                         Detail Data Pembelian Per SPOP: <strong><?php echo $spop; ?>
-
 
                             <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                                 <thead>
@@ -379,11 +418,6 @@
                                 </tfoot>
 
                             </table>
-
-
-
-
-
 
                     </div>
                     <!-- /.card-body -->

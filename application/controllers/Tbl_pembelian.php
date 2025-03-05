@@ -4141,13 +4141,13 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		$start = 0;
+		// $start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'spop' => $data_per_uuidspop->spop,
 			'action' => site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop),
 			'button' => 'Simpan Kode AKun',
-			'start' => $start,
+			// 'start' => $start,
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop_kode_akun', $data);
@@ -4160,6 +4160,8 @@ class Tbl_pembelian extends CI_Controller
 
 		$data = array(
 			'kode_akun' => $this->input->post('kode_akun', TRUE),
+			'kode_pl' => $this->input->post('kode_pl', TRUE),
+			'kode_bb' => $this->input->post('kode_bb', TRUE),
 		);
 
 		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
@@ -4186,12 +4188,14 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 
-		$sql = "SELECT `spop`,`kode_akun` FROM `tbl_pembelian` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`,`kode_akun`";
+		$sql = "SELECT `spop`,`kode_akun`,`kode_pl`,`kode_bb` FROM `tbl_pembelian` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`,`kode_akun`";
 
 		// $this->db->query($sql)->result();
 		// print_r($this->db->query($sql)->row()->kode_akun);
 
 		$get_kode_akun = $this->db->query($sql)->row()->kode_akun;
+		$get_kode_pl = $this->db->query($sql)->row()->kode_pl;
+		$get_kode_bb = $this->db->query($sql)->row()->kode_bb;
 		// die;
 
 		$start = 0;
@@ -4202,6 +4206,8 @@ class Tbl_pembelian extends CI_Controller
 			'button' => 'Update Kode AKun',
 			'start' => $start,
 			'get_kode_akun' => $get_kode_akun,
+			'get_kode_pl' => $get_kode_pl,
+			'get_kode_bb' => $get_kode_bb,
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_per_spop_kode_akun', $data);
