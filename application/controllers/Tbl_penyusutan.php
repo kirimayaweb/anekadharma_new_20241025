@@ -13,9 +13,23 @@ class Tbl_penyusutan extends CI_Controller
 	$this->load->library('datatables');
     }
 
-    public function index()
+    public function index_server_side()
     {
         $this->load->view('anekadharma/tbl_penyusutan/tbl_penyusutan_list');
+    }
+
+    public function index()
+    {
+
+        $data = array(
+			'Data_penyusutan' => "",
+			// 'action' => site_url('Buku_besar/cari_kode_akun'),
+		);
+		
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_list', $data);
+
+        
+    
     } 
     
     public function json() {
