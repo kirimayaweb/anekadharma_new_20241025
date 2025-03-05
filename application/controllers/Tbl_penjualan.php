@@ -1626,7 +1626,7 @@ class Tbl_penjualan extends CI_Controller
 			// 'start' => $start,
 		);
 		// print_r($data);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
 	}
 
 	public function update_kode_akun($nmrkirim = null)
@@ -1674,7 +1674,7 @@ class Tbl_penjualan extends CI_Controller
 			'get_kode_pl' => $get_kode_pl,
 		);
 		// print_r($data);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/Tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
 	}
 }
 
