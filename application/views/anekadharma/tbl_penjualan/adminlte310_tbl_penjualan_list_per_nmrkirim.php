@@ -149,7 +149,7 @@
                                         </div>
 
                                         <div class="col-3">
-                                            <label for="kode_pl">Kode Buku Besar <?php if($get_kode_bb){ echo $get_kode_bb;}else{echo "";}?> </label>
+                                            <label for="kode_pl">Kode Buku Besar </label>
                                             <input type="text" class="form-control" rows="1" name="kode_bb" id="kode_bb" placeholder="kode buku besar" value="<?php if($get_kode_bb){ echo $get_kode_bb;}else{echo "";}?>" >
                                         </div>
 
