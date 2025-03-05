@@ -1,3 +1,6 @@
+
+
+
 <div class="content-wrapper">
 
 
@@ -127,7 +130,7 @@
                                         </td>
                                         <td align="left">
                                             <?php
-                                            echo "Pembelian " . $list_data->keterangan;
+                                            echo  $list_data->keterangan;
                                             ?>
                                         </td>
                                         <td align="left">
@@ -197,7 +200,7 @@
                                         </td>
                                         <td align="left">
                                             <?php
-                                            echo "Penjualan " . $list_data->keterangan;
+                                            echo  $list_data->keterangan;
                                             ?>
                                         </td>
                                         <td align="left">
