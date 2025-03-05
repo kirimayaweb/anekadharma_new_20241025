@@ -27,18 +27,80 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 
-		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
-		$start = 0;
+
+		$Get_date_awal = date("Y-m-1 00:00:00");		
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+
+
+		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
+		// print_r($Get_date_akhir);
+		// print_r("<br/>");
+
+		// die;
+
+
+
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
+		// print_r($this->db->query($sql)->result());
+		// die;
+
+		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		// $Tbl_pembelian = $this->db->query($sql)->result();
+
+
+		// $Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
+		// $start = 0;
 		// print_r($Tbl_penjualan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 
 		$data = array(
-			'Tbl_penjualan_data' => $Tbl_penjualan,
+			// 'Tbl_penjualan_data' => $Tbl_penjualan,
+			'Tbl_penjualan_data' => $this->db->query($sql)->result(),
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
-			'start' => $start,
+			// 'start' => $start,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+		);
+
+
+		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list', $data);
+	}
+
+	public function cari_between_date()
+	{
+
+		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+			// $Get_date_awal = date("Y-m-d 00:00:00");
+			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+		} else {
+			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+		}
+
+		// $Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
+
+
+		if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+			$Get_date_akhir = date("Y-m-d 00:00:00");
+		} else {
+			$Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+		}
+
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
+
+		$data = array(
+			// 'Tbl_penjualan_data' => $Tbl_penjualan,
+			'Tbl_penjualan_data' => $this->db->query($sql)->result(),
+			// 'q' => $q,
+			// 'pagination' => $this->pagination->create_links(),
+			// 'total_rows' => $config['total_rows'],
+			// 'start' => $start,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
 		);
 
 
