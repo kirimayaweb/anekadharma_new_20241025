@@ -71,7 +71,6 @@ class Tbl_pembelian extends CI_Controller
 	}
 
 
-
 	public function json()
 	{
 		header('Content-Type: application/json');
@@ -80,7 +79,28 @@ class Tbl_pembelian extends CI_Controller
 
 	public function index()
 	{
-		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+
+
+		$Get_date_awal = date("Y-m-1 00:00:00");		
+		print_r($Get_date_awal);
+		print_r("<br/>");
+
+
+		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
+		print_r($Get_date_akhir);
+		print_r("<br/>");
+
+		// die;
+
+
+		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+
+		// print_r($this->db->query($sql)->result());
+		// die;
+
+		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$Tbl_pembelian = $this->db->query($sql)->result();
+
 		$start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
@@ -88,6 +108,52 @@ class Tbl_pembelian extends CI_Controller
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}
+
+
+	public function cari_between_date()
+	{
+
+		// print_r($this->input->post('tgl_awal', TRUE));
+		// print_r("<br/>");
+		// print_r($this->input->post('tgl_akhir', TRUE));
+		// print_r("<br/>");
+
+		// $Get_date_awal = $this->input->post('tgl_awal', TRUE);
+		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+			$Get_date_awal = date("Y-m-d 00:00:00");
+		} else {
+			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+		}
+		
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+
+		// $Get_date_akhir = $this->input->post('tgl_akhir', TRUE);
+		if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+			$Get_date_akhir = date("Y-m-d 00:00:00");
+		} else {
+			$Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+		}
+		// print_r($Get_date_akhir);
+		// print_r("<br/>");
+
+
+		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+
+		// print_r($this->db->query($sql)->result());
+		// die;
+
+		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$Tbl_pembelian = $this->db->query($sql)->result();
+		
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+		);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
+	}
+
 
 	public function stock($uuid_gudang = null)
 	{
@@ -3920,16 +3986,16 @@ class Tbl_pembelian extends CI_Controller
 
 
 		// // Update Field Pecah satuan : ditambahkan sejumlah stock yang di pecah
-			// $Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
-			// $Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
+		// $Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
+		// $Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
 
-			$data_update_persediaan_setelah_di_pecah = array(
-				// 'sa' => $Get_jumlah_setelah_dipecah,
-				// 'total_10' => $Get_jumlah_setelah_dipecah,
-				'pecah_satuan' => $get_jumlah_barang_di_pecah,
-			);
+		$data_update_persediaan_setelah_di_pecah = array(
+			// 'sa' => $Get_jumlah_setelah_dipecah,
+			// 'total_10' => $Get_jumlah_setelah_dipecah,
+			'pecah_satuan' => $get_jumlah_barang_di_pecah,
+		);
 
-			$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
+		$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
 
 
 		$get_id_persediaan_new_pecah_satuan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);

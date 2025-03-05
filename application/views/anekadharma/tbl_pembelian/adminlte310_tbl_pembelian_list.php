@@ -19,7 +19,37 @@
 
     <section class="content">
 
+    <?php 
+    echo $date_awal; 
+    echo "<br/>";
+    
+    if (date("Y", strtotime($date_awal)) < 2020) {
+        $Get_date_awal = date("d-m-Y");
+    } else {
+        $Get_date_awal = date("d-m-Y", strtotime($date_awal));
+    }
+    
+    echo $Get_date_awal;
+    echo "<br/>";
+    echo "<br/>";
 
+    
+    echo $date_akhir; 
+    echo "<br/>";
+    
+    if (date("Y", strtotime($date_akhir)) < 2020) {
+        $Get_date_akhir = date("d-m-Y");
+    } else {
+        $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
+    }
+    
+    echo $Get_date_akhir;
+    echo "<br/>";
+    echo "<br/>";
+
+
+
+    ?>
 
         <div class="box box-warning box-solid">
 
@@ -28,11 +58,59 @@
                     <div class="card-header">
 
                         <div class="row">
-                            <div class="col-3" text-align="left"> <strong>DATA PEMBELIAN</strong></div>
-                            <div class="col-6" text-align="left" align="left">
-                                <?php echo anchor(site_url('tbl_pembelian/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"'); ?>
+                            <div class="col-md-2" text-align="left"> <strong>DATA PEMBELIAN</strong></div>
+                            <div class="col-md-2" text-align="left" align="left">
+                                <?php echo anchor(site_url('tbl_pembelian/create'), 'Input Pembelian', 'class="btn btn-danger"'); ?>
                             </div>
-                            <div class="col-2" text-align="right" align="right">
+
+                            <div class="col-md-6">
+                                
+                            <?php 
+                            // $action_cari_between_date="cari_between_date" ;
+                            $action_cari_between_date=site_url('tbl_pembelian/cari_between_date') ;
+                            
+                            ?>
+
+                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <div class="row">
+
+                                        <div class="col-md-1" text-align="right" align="right"></div>
+                                        
+                                        <div class="col-md-3" text-align="right">
+                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
+                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
+                                                    <div class="input-group-text">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
+                                        
+                                        <div class="col-md-3" text-align="left" align="left">
+                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
+                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
+                                                    <div class="input-group-text">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-2" text-align="left" align="left">
+                                            <strong>
+                                                <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                            </strong>
+                                        </div>
+
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="col-md-2" text-align="right" align="right">
                                 <?php echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                             </div>
                         </div>
@@ -191,7 +269,7 @@
                                                     // echo " ";
 
                                                     // echo anchor(site_url('Tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS SPOP</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Anda Yakin akan Menghapus data SPOP ini?\')"');
-    
+
                                                 }
                                                 ?>
                                             </td>
