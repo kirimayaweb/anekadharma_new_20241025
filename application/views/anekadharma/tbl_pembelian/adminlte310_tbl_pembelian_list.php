@@ -20,8 +20,8 @@
     <section class="content">
 
     <?php 
-    echo $date_awal; 
-    echo "<br/>";
+    // echo $date_awal; 
+    // echo "<br/>";
     
     if (date("Y", strtotime($date_awal)) < 2020) {
         $Get_date_awal = date("d-m-Y");
@@ -29,13 +29,13 @@
         $Get_date_awal = date("d-m-Y", strtotime($date_awal));
     }
     
-    echo $Get_date_awal;
-    echo "<br/>";
-    echo "<br/>";
+    // echo $Get_date_awal;
+    // echo "<br/>";
+    // echo "<br/>";
 
     
-    echo $date_akhir; 
-    echo "<br/>";
+    // echo $date_akhir; 
+    // echo "<br/>";
     
     if (date("Y", strtotime($date_akhir)) < 2020) {
         $Get_date_akhir = date("d-m-Y");
@@ -43,9 +43,9 @@
         $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
     }
     
-    echo $Get_date_akhir;
-    echo "<br/>";
-    echo "<br/>";
+    // echo $Get_date_akhir;
+    // echo "<br/>";
+    // echo "<br/>";
 
 
 

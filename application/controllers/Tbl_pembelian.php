@@ -82,13 +82,13 @@ class Tbl_pembelian extends CI_Controller
 
 
 		$Get_date_awal = date("Y-m-1 00:00:00");		
-		print_r($Get_date_awal);
-		print_r("<br/>");
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
 
 
 		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
-		print_r($Get_date_akhir);
-		print_r("<br/>");
+		// print_r($Get_date_akhir);
+		// print_r("<br/>");
 
 		// die;
 
