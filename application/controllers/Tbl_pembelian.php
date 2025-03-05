@@ -101,10 +101,11 @@ class Tbl_pembelian extends CI_Controller
 		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
 		$Tbl_pembelian = $this->db->query($sql)->result();
 
-		$start = 0;
+		// $start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'start' => $start,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}
