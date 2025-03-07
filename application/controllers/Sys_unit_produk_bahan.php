@@ -197,10 +197,10 @@ class Sys_unit_produk_bahan extends CI_Controller
     public function delete($id = null, $source_page_pref_1 = null, $source_page_pref_2 = null, $source_page_pref_3 = null)
     {
 
-        print_r($source_page_pref_1); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        print_r($source_page_pref_2); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        print_r($source_page_pref_3); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        // die;
+        // print_r($source_page_pref_1); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
+        // print_r($source_page_pref_2); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
+        // print_r($source_page_pref_3); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
+        // // die;
 
         $row = $this->Sys_unit_produk_bahan_model->get_by_id($id);
 
