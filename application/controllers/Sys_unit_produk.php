@@ -338,18 +338,18 @@ class Sys_unit_produk extends CI_Controller
     public function create_action_produksi_input_bahan($id_persediaan_barang = null)
     {
 
-        print_r("create_action_produksi_input_bahan");
-        print_r("<br/>");
+        // print_r("create_action_produksi_input_bahan");
+        // print_r("<br/>");
 
-        print_r($id_persediaan_barang);
-        print_r("<br/>");
-        print_r($this->input->post('jumlah', TRUE));
-        print_r("<br/>");
-        print_r($this->input->post('uuid_persediaan', TRUE));
-        print_r("<br/>");
-        print_r($this->input->post('id_persediaan', TRUE));
-        print_r("<br/>");
-        // die;
+        // print_r($id_persediaan_barang);
+        // print_r("<br/>");
+        // print_r($this->input->post('jumlah', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('uuid_persediaan', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('id_persediaan', TRUE));
+        // print_r("<br/>");
+        // // die;
         
         $Get_id_persediaan_bahan = $this->input->post('id_persediaan', TRUE);
 
