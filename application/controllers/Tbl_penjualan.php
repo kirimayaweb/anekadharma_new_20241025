@@ -211,6 +211,44 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_per_konsumen', $data);
 	}
 
+	public function RekapData($field_rekap=null)
+	{
+		// $field_rekap="konsumen_nama";
+		// print_r($field_rekap);
+
+
+
+		if ($field_rekap == "unit") {
+			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
+
+		} elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
+			$field_rekap = "konsumen_nama";
+			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
+		
+		} elseif ($field_rekap == "nama_barang") {
+			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
+		
+		} else {
+			$field_rekap = "unit";
+			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
+		
+		}
+
+		
+
+		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
+
+		$data = array(
+			'Tbl_penjualan_data' => $this->db->query($sql_penjualan)->result(),
+			'field_rekap' => $field_rekap,
+		);
+
+		// print_r($data);
+		// die;
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_data', $data);
+	}
+
 	public function bayar()
 	{
 
