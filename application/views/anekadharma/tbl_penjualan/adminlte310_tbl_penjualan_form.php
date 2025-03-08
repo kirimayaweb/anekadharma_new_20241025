@@ -92,7 +92,29 @@
 
                             <div class="form-group">
                                 <div class="row">
-                                    <div class="col-4">
+                                    <!-- Unit -->
+                                    <div class="col-3">
+                                        <label for="unit_nama">Unit <?php echo form_error('unit') ?></label>
+                                        <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                            <option value="">Pilih Unit</option>
+                                            <?php
+
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->nama_unit)  . "</option>";
+                                            }
+
+                                            ?>
+                                        </select>
+
+
+                                    </div>
+
+
+                                    <!-- Konsumen -->
+
+                                    <div class="col-3">
                                         <label for="konsumen_nama">Konsumen <?php echo form_error('konsumen_nama') ?></label>
                                         <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
                                             <option value="">Pilih Konsumen</option>
@@ -115,12 +137,12 @@
 
                                     </div>
 
-                                    <div class="col-4">
+                                    <div class="col-3">
                                         <label for="nmrpesan">Nomor Pesan <?php echo form_error('nmrpesan') ?></label>
                                         <input type="text" class="form-control" rows="3" name="nmrpesan" id="nmrpesan" placeholder="nmrpesan" required>
                                     </div>
 
-                                    <div class="col-4">
+                                    <div class="col-3">
                                         <label for="nmrkirim">Nomor Kirim <?php echo form_error('nmrkirim') ?></label>
                                         <input type="text" class="form-control" rows="3" name="nmrkirim" id="nmrkirim" placeholder="nmrkirim" required>
                                     </div>

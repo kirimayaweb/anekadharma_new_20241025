@@ -28,7 +28,7 @@ class Tbl_penjualan extends CI_Controller
 
 
 
-		$Get_date_awal = date("Y-m-1 00:00:00");		
+		$Get_date_awal = date("Y-m-1 00:00:00");
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
@@ -321,8 +321,31 @@ class Tbl_penjualan extends CI_Controller
 
 			// =================
 
+			// unIT
+			$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+			$sys_unit_data = $this->db->get('sys_unit');
+
+			// print_r($sys_unit_data);
+			// print_r("<br/>");
+
+			if ($sys_unit_data->num_rows() > 0) {
+
+				$Get_unit_data = $sys_unit_data->row_array();
+
+				$Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+				$Get_kode_unit = $Get_unit_data['kode_unit'];
+				$Get_nama_unit = $Get_unit_data['nama_unit'];
+			}
+
+			// print_r($Get_kode_unit);
+			// print_r("<br/>");
+			// print_r($Get_nama_unit);
+			// print_r("<br/>");
+
+
+
+			// KONSUMEN
 			$this->db->where('uuid_konsumen', $this->input->post('uuid_konsumen', TRUE));
-			//$this->db->where('password',  $test);
 			$sys_konsumen_data = $this->db->get('sys_konsumen');
 
 			if ($sys_konsumen_data->num_rows() > 0) {
@@ -344,6 +367,9 @@ class Tbl_penjualan extends CI_Controller
 				// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
 				$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
 			}
+
+
+
 
 
 
@@ -378,7 +404,8 @@ class Tbl_penjualan extends CI_Controller
 						'uuid_konsumen' => $get_uuid_konsumen,
 						'konsumen_nama' => $get_nama_konsumen,
 						'nama_barang' => $namabarang,
-						'unit' => $unit,
+						'uuid_unit' => $Get_uuid_unit,
+						'unit' => $Get_nama_unit,
 						'satuan' => $satuan,
 
 						'harga_satuan' => preg_replace("/[^0-9]/", "", $hargasatuan),
@@ -386,9 +413,9 @@ class Tbl_penjualan extends CI_Controller
 					);
 
 					// print_r($data);
-					// print_r("<br/>");
-					// print_r("<br/>");
-
+					// // print_r("<br/>");
+					// // print_r("<br/>");
+					// die;
 					$this->Tbl_penjualan_model->insert($data);
 				}
 			}
@@ -428,20 +455,23 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_inisiasi($id_proses = null)
 	{
 
-		// $Data_stock = $this->Persediaan_model->get_all();
-		// print_r($Data_stock);
-		// die;
+		// unIT
+		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+		$sys_unit_data = $this->db->get('sys_unit');
 
-		// print_r($id_proses);
+		// print_r($sys_unit_data);
 		// print_r("<br/>");
-		// print_r($this->input->post('tgl_jual', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_konsumen', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('nmrpesan', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('nmrkirim', TRUE));
 
+		if ($sys_unit_data->num_rows() > 0) {
+
+			$Get_unit_data = $sys_unit_data->row_array();
+
+			$Get_UUID_unit = $this->input->post('uuid_unit', TRUE);
+			$Get_kode_unit = $Get_unit_data['kode_unit'];
+			$Get_nama_unit = $Get_unit_data['nama_unit'];
+		}
+
+		// KONSUMEN
 		$this->db->where('uuid_konsumen', $this->input->post('uuid_konsumen', TRUE));
 		//$this->db->where('password',  $test);
 		$sys_konsumen_data = $this->db->get('sys_konsumen');
@@ -468,9 +498,11 @@ class Tbl_penjualan extends CI_Controller
 			'nmrkirim' => $this->input->post('nmrkirim', TRUE),
 			'uuid_konsumen' => $uuid_konsumen,
 			'nama_konsumen' => $data_nama_konsumen,
+			'uuid_unit' => $Get_UUID_unit,
+			'unit' => $Get_nama_unit,
 		);
-		// print_r($data);
-
+		// 		print_r($data);
+		// die;
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_input_barang', $data);
 	}
@@ -479,86 +511,32 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
-		// print_r("create_action_simpan_barang");
-		// print_r("<br/>");
-		// print_r($uuid_penjualan);
-		// print_r("<br/>");
-		// print_r($id_persediaan_barang);
-		// print_r("<br/>");
-		// die;
-
-		// print_r("create_action_simpan_barang");
-		// die;
-		// print_r("<br/>");
-
-		// print_r("tgl_jual : ");
-		// print_r($this->input->post('tgl_jual', TRUE));
-		// print_r("<br/>");
-		// print_r("uuid_konsumen : ");
-		// print_r($this->input->post('uuid_konsumen', TRUE));
-		// print_r("<br/>");
-		// print_r("nmrpesan : ");
-		// print_r($this->input->post('nmrpesan', TRUE));
-		// print_r("<br/>");
-		// print_r("nmrkirim : ");
-		// print_r($this->input->post('nmrkirim', TRUE));
-		// print_r("<br/>");
-		// print_r("id_pembelian_barang : ");
-		// print_r($id_proses);
-		// print_r("<br/>");
-		// print_r("harga_satuan_beli : ");
-		// print_r($this->input->post('harga_satuan_beli', TRUE));
-		// print_r("<br/>");
-		// print_r("jumlah : ");
-		// print_r($this->input->post('jumlah', TRUE));
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// $x_1 = $id_proses;
-
-		// AMBIL DATA DARI PEMBELIAN
-		// $sql = "SELECT * FROM `tbl_pembelian` WHERE `id`='$id_proses'";
-		// $data_barang = $this->db->query($sql)->row();
-
 		// AMBIL DATA DARI PERSEDIAAN
 		$sql = "SELECT * FROM `persediaan` WHERE `id`='$id_persediaan_barang'";
 		$data_barang = $this->db->query($sql)->row();
 
+		// unIT
+		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+		$sys_unit_data = $this->db->get('sys_unit');
 
-
-		// print_r("jumlah penjualan di persediaan");
-		// print_r("<br/>");
-		// print_r($id_persediaan_barang);
-		// print_r("<br/>");
-		// print_r($data_barang->id);
-		// print_r("<br/>");
-		// print_r($data_barang->uuid_persediaan);
-		// print_r("<br/>");
-		// die;
-		// print_r($data_barang);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// die;
-
-
-
-		// print_r($data_barang);
-		// die;
-
-		// [uuid_pembelian] => 5d4b4221756411ef88650021ccc9061e [uuid_barang] => ae37d726715911ef9fe90021ccc906hh [tgl_po] => 2024-09-01 00:00:00 [nmrsj] => [nmrfakturkwitansi] => 1 [nmrbpb] => [uuid_spop] => 54548eeb756411ef88650021ccc9061e [spop] => 1 [uuid_supplier] => 458c5d176b2311ef80a80021ccc9061e [supplier_kode] => [supplier_nama] => Supplier 1 [uraian] => Buku [jumlah] => 2 [satuan] => rim [uuid_konsumen] => b728e22d6b5811ef80a80021ccc9061e [konsumen] => pj-atk [harga_satuan] => 100000 [harga_total] => 0 [statuslu] => L [kas_bank] => kas [tgl_bayar] => 0000-00-00 00:00:00 [id_usr] => 1 )
-
-		// print_r($data_barang->id);
-		// print_r("<br/>");
-		// print_r($data_barang->uuid_barang);
-		// print_r("<br/>");
-		// print_r($data_barang->uraian);
-		// print_r("<br/>");
-		// print_r($data_barang->satuan);
+		// print_r($sys_unit_data);
 		// print_r("<br/>");
 
+		if ($sys_unit_data->num_rows() > 0) {
 
-		// die;
+			$Get_unit_data = $sys_unit_data->row_array();
 
+			$Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+			$Get_kode_unit = $Get_unit_data['kode_unit'];
+			$Get_nama_unit = $Get_unit_data['nama_unit'];
+		}
+
+// 		print_r($Get_uuid_unit);
+// 		print_r("<br/>");
+// 		print_r($Get_nama_unit);
+// 		print_r("<br/>");
+// die;
+		// KONSUMEN
 		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
 
@@ -570,40 +548,8 @@ class Tbl_penjualan extends CI_Controller
 			$data_nama_konsumen = $data_konsumen->nama_konsumen;
 		}
 
-		// print_r($uuid_konsumen);
-		// print_r("<br/>");
-		// print_r($data_konsumen);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r($data_nama_konsumen);
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// die;
-
-		// $uuid_unit_selected = $this->input->post('uuid_unit', TRUE);
-		// $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit_selected);
-		// $data_nama_unit = $data_unit->nama_unit;
-
-		// print_r($data_nama_unit);
-		// print_r("<br/>");
-
 		// =========SIMPAN DATA==================
 		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
-
-		// print_r($this->input->post('harga_satuan_beli', TRUE));
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('harga_satuan_beli', TRUE)));
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// hilangkan titik dan ubah koma menjadi titik
-		// print_r(str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE)))); 
-
-		// die;
-		// die;
-
 
 
 		if ($uuid_penjualan == "new") {
@@ -614,6 +560,8 @@ class Tbl_penjualan extends CI_Controller
 				// 'uuid_penjualan' => "new",
 				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
 				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+				'uuid_unit' => $Get_uuid_unit,
+				'unit' => $Get_nama_unit,
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
@@ -655,6 +603,8 @@ class Tbl_penjualan extends CI_Controller
 				'uuid_penjualan' => $uuid_penjualan,
 				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
 				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+				'uuid_unit' => $Get_uuid_unit,
+				'unit' => $Get_nama_unit,
 				'uuid_konsumen' => $uuid_konsumen,
 				'konsumen_nama' => $data_nama_konsumen,
 				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
@@ -674,6 +624,8 @@ class Tbl_penjualan extends CI_Controller
 				'id_usr' => 1,
 			);
 
+			// print_r("Barang baru");
+			// print_r("<br/>");
 			// print_r($data);
 			// die;
 
@@ -714,7 +666,6 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 		// Get tgl_jual dan nmrkirim dari uuid_penjualan
-
 
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
 
@@ -763,6 +714,8 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_jual' => $data_penjualan_per_uuid_penjualan_first_row->tgl_jual,
 			'nmrpesan' => $data_penjualan_per_uuid_penjualan_first_row->nmrpesan,
 			'nmrkirim' => $data_penjualan_per_uuid_penjualan_first_row->nmrkirim,
+			'uuid_unit' => $data_penjualan_per_uuid_penjualan_first_row->uuid_unit,
+			'unit' => $data_penjualan_per_uuid_penjualan_first_row->unit,
 			'uuid_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->uuid_konsumen,
 			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama,
 			'uuid_penjualan' => $uuid_penjualan,
@@ -813,6 +766,7 @@ class Tbl_penjualan extends CI_Controller
 		$NomorKirim_baru = $this->input->post('nmrkirim', TRUE);
 		$NomorPesan_baru = $this->input->post('nmrpesan', TRUE);
 		$GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
+		// $GET_uuid_unit = $this->input->post('uuid_unit', TRUE);
 
 		// // Data Unit
 		// $sql = "select * from sys_unit order by nama_unit ASC ";
@@ -826,6 +780,24 @@ class Tbl_penjualan extends CI_Controller
 		// 	echo "<option value='$m->uuid_konsumen' ";
 		// 	echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
 		// }
+
+		// unIT
+		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+		$sys_unit_data = $this->db->get('sys_unit');
+
+		// print_r($sys_unit_data);
+		// print_r("<br/>");
+
+		if ($sys_unit_data->num_rows() > 0) {
+
+			$Get_unit_data = $sys_unit_data->row_array();
+
+			$Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+			$Get_kode_unit = $Get_unit_data['kode_unit'];
+			$Get_nama_unit = $Get_unit_data['nama_unit'];
+		}
+
+
 
 
 		$this->db->where('uuid_unit', $GET_uuid_konsumen);
@@ -849,10 +821,12 @@ class Tbl_penjualan extends CI_Controller
 
 		// $sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `nmrkirim`=$NomorKirim_baru , `tgl_jual`=$date_jual , `nmrpesan`=$NomorPesan_baru, `uuid_konsumen`=$GET_uuid_konsumen, `konsumen_nama`=$nama_konsumen  WHERE `uuid_penjualan`='$uuid_penjualan'";
 
-		$sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `tgl_jual`='$date_jual' , `nmrkirim`='$NomorKirim_baru', `nmrpesan`='$NomorPesan_baru', `uuid_konsumen`='$GET_uuid_konsumen', `konsumen_nama`='$nama_konsumen'  WHERE `uuid_penjualan`='$uuid_penjualan'";
+		$sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `tgl_jual`='$date_jual' , `nmrkirim`='$NomorKirim_baru', `nmrpesan`='$NomorPesan_baru', `uuid_konsumen`='$GET_uuid_konsumen', `konsumen_nama`='$nama_konsumen', `uuid_unit`='$Get_uuid_unit', `unit`='$Get_nama_unit'  WHERE `uuid_penjualan`='$uuid_penjualan'";
 
 		$this->db->query($sql_update_penjualan_by_uuid_penjualan);
 
+		// print_r($sql_update_penjualan_by_uuid_penjualan);
+		// die;
 
 		redirect(site_url('Tbl_penjualan/'));
 	}
