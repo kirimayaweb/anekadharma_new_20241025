@@ -20,37 +20,37 @@
     <section class="content">
 
 
-    <?php 
-    // echo $date_awal; 
-    // echo "<br/>";
-    
-    if (date("Y", strtotime($date_awal)) < 2020) {
-        $Get_date_awal = date("d-m-Y");
-    } else {
-        $Get_date_awal = date("d-m-Y", strtotime($date_awal));
-    }
-    
-    // echo $Get_date_awal;
-    // echo "<br/>";
-    // echo "<br/>";
+        <?php
+        // echo $date_awal; 
+        // echo "<br/>";
 
-    
-    // echo $date_akhir; 
-    // echo "<br/>";
-    
-    if (date("Y", strtotime($date_akhir)) < 2020) {
-        $Get_date_akhir = date("d-m-Y");
-    } else {
-        $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
-    }
-    
-    // echo $Get_date_akhir;
-    // echo "<br/>";
-    // echo "<br/>";
+        if (date("Y", strtotime($date_awal)) < 2020) {
+            $Get_date_awal = date("d-m-Y");
+        } else {
+            $Get_date_awal = date("d-m-Y", strtotime($date_awal));
+        }
+
+        // echo $Get_date_awal;
+        // echo "<br/>";
+        // echo "<br/>";
 
 
+        // echo $date_akhir; 
+        // echo "<br/>";
 
-    ?>
+        if (date("Y", strtotime($date_akhir)) < 2020) {
+            $Get_date_akhir = date("d-m-Y");
+        } else {
+            $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
+        }
+
+        // echo $Get_date_akhir;
+        // echo "<br/>";
+        // echo "<br/>";
+
+
+
+        ?>
 
 
 
@@ -231,9 +231,14 @@
 
                                             <td></td>
                                             <td></td>
-                                            <td><?php //echo $list_data->nama_barang; 
-                                                ?></td>
-                                            <td></td>
+                                            <td>
+                                                <?php //echo $list_data->nama_barang; 
+                                                ?>
+                                            </td>
+                                            <td>
+                                                <?php //echo $list_data->unit; 
+                                                ?>
+                                            </td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -294,11 +299,6 @@
 
                                                 $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
 
-                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
-
-                                                // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
-
-                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
 
 
 
@@ -306,7 +306,21 @@
                                             </td>
 
                                             <!-- Kolom Nomor Kirim -->
-                                            <td><?php echo $list_data->nmrkirim; ?></td>
+                                            <td>
+                                                <?php
+                                                echo $list_data->nmrkirim;
+
+                                                echo "<br/>";
+
+                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
+
+                                                // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
+
+                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
+
+
+                                                ?>
+                                            </td>
 
                                             <td align="left">
                                                 <?php
@@ -430,6 +444,18 @@
 
                                                 $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
 
+
+
+
+
+                                                ?>
+                                            </td>
+
+                                            <td>
+                                                <?php
+                                                echo $list_data->nmrkirim;
+                                                echo "<br/>";
+
                                                 echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
 
                                                 // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
@@ -440,13 +466,8 @@
                                                 // echo "";
                                                 //    HAPUS
                                                 // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
-
-
-
                                                 ?>
                                             </td>
-
-                                            <td><?php echo $list_data->nmrkirim; ?></td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->nmrpesan;
