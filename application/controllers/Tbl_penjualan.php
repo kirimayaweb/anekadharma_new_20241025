@@ -732,24 +732,6 @@ class Tbl_penjualan extends CI_Controller
 
 	public function action_ubah_detail_nomor_kirim($NomorKirim = null, $uuid_penjualan = null)
 	{
-		// print_r("action_ubah_detail_nomor_kirim");
-		// print_r("<br/>");
-		// print_r($NomorKirim);
-		// print_r("<br/>");
-		// print_r($this->input->post('tgl_jual', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_konsumen', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('nmrpesan', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('nmrkirim', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_penjualan_proses', TRUE));
-		// print_r("<br/>");
-		// print_r($uuid_penjualan);
-		// print_r("<br/>");
-		// die;
-
 
 		if (date("Y", strtotime($this->input->post('tgl_jual', TRUE))) < 2020) {
 			// print_r("Tahun kurang dari 2020");
@@ -759,27 +741,11 @@ class Tbl_penjualan extends CI_Controller
 			$date_jual = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_jual', TRUE)));
 		}
 
-
-
-
 		// $Get_uuid_penjualan = ;
 		$NomorKirim_baru = $this->input->post('nmrkirim', TRUE);
 		$NomorPesan_baru = $this->input->post('nmrpesan', TRUE);
 		$GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		// $GET_uuid_unit = $this->input->post('uuid_unit', TRUE);
-
-		// // Data Unit
-		// $sql = "select * from sys_unit order by nama_unit ASC ";
-		// foreach ($this->db->query($sql)->result() as $m) {
-		// 	echo "<option value='$m->uuid_unit' ";
-		// 	echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
-		// }
-		// // Data Sys_konsumen
-		// $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-		// foreach ($this->db->query($sql)->result() as $m) {
-		// 	echo "<option value='$m->uuid_konsumen' ";
-		// 	echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
-		// }
 
 		// unIT
 		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
