@@ -120,11 +120,18 @@
                             </div>
 
                             <div class="col-md-2">
-                                <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
+
+
                             </div>
 
                             <div class="col-md-2">
-                                <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); ?>
+                                
+                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-xl-select-unit">
+                                    REKAP DATA
+                                </button>
+
                             </div>
 
                             <div class="col-md-1">
@@ -697,6 +704,65 @@
         </div>
     </section>
 </div>
+
+
+
+<!-- TAMBAH BARANG MODAL EXTRA LARGE -->
+<form action="<?php //echo $action_simpan_bahan; 
+                ?>" method="post">
+    <div class="modal fade" id="modal-xl-select-unit">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">REKAP DATA</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="form-group">
+
+
+                        <div class="row">
+                            <div class="col-4">
+                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang'), 'Rekap Per Barang', 'class="btn btn-success" target="_blank"'); 
+                                ?>
+                            </div>
+                            <div class="col-4">
+                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama'), 'Rekap Per Konsumen', 'class="btn btn-success" target="_blank"'); 
+                                ?>
+                            </div>
+                            <div class="col-4">
+                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit'), 'Rekap Per Unit', 'class="btn btn-success" target="_blank"'); 
+                                ?>
+                            </div>
+
+                          
+
+                        </div>
+
+
+
+                    </div>
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                    <button type="submit" class="btn btn-primary">Proses</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+</form>
+<!-- END OF MODAL EXTRA LARGE -->
+
+
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">

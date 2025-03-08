@@ -31,8 +31,26 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>REKAP DATA <?php //echo $field_rekap; 
-                                                                                                ?></strong></div>
+                                    <div class="col-12" text-align="center">
+                                        <strong>
+                                            REKAP DATA
+                                            <?php
+                                            if ($field_rekap == "unit") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
+                                                echo "UNIT";
+                                            } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
+                                                echo "KONSUMEN";
+                                            } elseif ($field_rekap == "nama_barang") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->nama_barang;
+                                                echo "NAMA BARANG";
+                                            } else {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
+                                                echo "UNIT";
+                                            }
+                                            ?>
+                                        </strong>
+                                    </div>
                                 </div>
 
 
@@ -40,7 +58,9 @@
 
 
                             <div class="col-6">
-                                <?php echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang'), 'Rekap Per Barang', 'class="btn btn-warning"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama'), 'Rekap Per Konsumen', 'class="btn btn-warning"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit'), 'Rekap Per Unit', 'class="btn btn-warning"'); ?>
                             </div>
 
 
@@ -70,11 +90,11 @@
                                     <th>No</th>
 
                                     <th>
-                                        <?php 
-                                        
+                                        <?php
+
                                         if ($field_rekap == "unit") {
                                             // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
-                                            echo "UNIT"; 
+                                            echo "UNIT";
                                         } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
                                             // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
                                             echo "KONSUMEN";
@@ -85,8 +105,8 @@
                                             // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
                                             echo "UNIT";
                                         }
-                                    
-                                    ?>
+
+                                        ?>
                                     </th>
                                     <th>SPOP</th>
                                     <th>Tanggal<br /> Jual</th>
