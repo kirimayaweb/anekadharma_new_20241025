@@ -9,6 +9,9 @@ class Tbl_penjualan_model extends CI_Model
     public $table = 'tbl_penjualan';
     public $id = 'id';
     public $tgl_jual = 'tgl_jual';
+    public $unit = 'unit';
+    public $nama_barang = 'nama_barang';
+    public $konsumen_nama = 'konsumen_nama';
     public $nmrpesan = 'nmrpesan';
     public $nmrkirim = 'nmrkirim';
     public $uuid_penjualan_proses = 'uuid_penjualan_proses';
@@ -22,6 +25,37 @@ class Tbl_penjualan_model extends CI_Model
         parent::__construct();
     }
 
+
+    // get_all_order_by_barang
+    function get_all_order_by_barang()
+    {
+        $this->db->order_by($this->nama_barang, $this->orderASC);
+        $this->db->order_by($this->tgl_jual, $this->orderASC);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+
+    // get_all_order_by_konsumen_nama
+    function get_all_order_by_konsumen_nama()
+    {
+        $this->db->order_by($this->konsumen_nama, $this->orderASC);
+        $this->db->order_by($this->tgl_jual, $this->orderASC);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+
+    // get_all_order_by_unit
+    function get_all_order_by_unit()
+    {
+        $this->db->order_by($this->unit, $this->orderASC);
+        $this->db->order_by($this->tgl_jual, $this->orderASC);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+
     // get all
     function get_all()
     {
@@ -31,6 +65,7 @@ class Tbl_penjualan_model extends CI_Model
         $this->db->order_by($this->uuid_penjualan, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
+
 
     // get all
     function get_all_by_nmr_kirim($nmrkirim)

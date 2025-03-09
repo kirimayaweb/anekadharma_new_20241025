@@ -1502,6 +1502,202 @@ class Tbl_penjualan extends CI_Controller
 		exit();
 	}
 
+	public function excel_rekap_unit()
+	{
+		$tgl_jual_Now = date("Y-m-d H:i:sa");
+		$this->load->helper('exportexcel');
+		$namaFile = "Rekap_penjualan_per_Unit_" . $tgl_jual_Now . ".xls";
+		$judul = "Data Rekap Penjualan Per Unit";
+		$tablehead = 0;
+		$tablebody = 1;
+		$nourut = 1;
+		//penulisan header
+		header("Pragma: public");
+		header("Expires: 0");
+		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
+		header("Content-Type: application/force-download");
+		header("Content-Type: application/octet-stream");
+		header("Content-Type: application/download");
+		header("Content-Disposition: attachment;filename=" . $namaFile . "");
+		header("Content-Transfer-Encoding: binary ");
+
+		xlsBOF();
+
+		$kolomhead = 0;
+		xlsWriteLabel($tablehead, $kolomhead++, "No");
+		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
+		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
+		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Umpphpsl22");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+
+		foreach ($this->Tbl_penjualan_model->get_all_order_by_unit() as $data) {
+			$kolombody = 0;
+
+			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
+			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
+			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
+			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
+			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+			$tablebody++;
+			$nourut++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
+	public function excel_rekap_konsumen()
+	{
+		$tgl_jual_Now = date("Y-m-d H:i:sa");
+		$this->load->helper('exportexcel');
+		$namaFile = "Rekap_penjualan_per_konsumen_" . $tgl_jual_Now . ".xls";
+		$judul = "Data Rekap Penjualan Per konsumen";
+		$tablehead = 0;
+		$tablebody = 1;
+		$nourut = 1;
+		//penulisan header
+		header("Pragma: public");
+		header("Expires: 0");
+		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
+		header("Content-Type: application/force-download");
+		header("Content-Type: application/octet-stream");
+		header("Content-Type: application/download");
+		header("Content-Disposition: attachment;filename=" . $namaFile . "");
+		header("Content-Transfer-Encoding: binary ");
+
+		xlsBOF();
+
+		$kolomhead = 0;
+		xlsWriteLabel($tablehead, $kolomhead++, "No");
+		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
+		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
+		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Umpphpsl22");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+
+		foreach ($this->Tbl_penjualan_model->get_all_order_by_konsumen_nama() as $data) {
+			$kolombody = 0;
+
+			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
+			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
+			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
+			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
+			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+			$tablebody++;
+			$nourut++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
+
+	public function excel_rekap_barang()
+	{
+		$tgl_jual_Now = date("Y-m-d H:i:sa");
+		$this->load->helper('exportexcel');
+		$namaFile = "Rekap_penjualan_per_barang_" . $tgl_jual_Now . ".xls";
+		$judul = "Data Rekap Penjualan Per barang";
+		$tablehead = 0;
+		$tablebody = 1;
+		$nourut = 1;
+		//penulisan header
+		header("Pragma: public");
+		header("Expires: 0");
+		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
+		header("Content-Type: application/force-download");
+		header("Content-Type: application/octet-stream");
+		header("Content-Type: application/download");
+		header("Content-Disposition: attachment;filename=" . $namaFile . "");
+		header("Content-Transfer-Encoding: binary ");
+
+		xlsBOF();
+
+		$kolomhead = 0;
+		xlsWriteLabel($tablehead, $kolomhead++, "No");
+		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
+		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
+		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
+		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Umpphpsl22");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
+		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+
+		foreach ($this->Tbl_penjualan_model->get_all_order_by_barang() as $data) {
+			$kolombody = 0;
+
+			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
+			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
+			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
+			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
+			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
+			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+			$tablebody++;
+			$nourut++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
 
 	public function rekap($uuid_konsumen = null)
 	{

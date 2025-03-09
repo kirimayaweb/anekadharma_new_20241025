@@ -65,6 +65,32 @@
 
 
                             <div class="col-2">
+
+
+                            <?php
+                                            if ($field_rekap == "unit") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
+                                                // echo "UNIT";
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit'), 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
+                                            
+                                            } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
+                                                // echo "KONSUMEN";
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_konsumen'), 'Cetak ke Excel [Konsumen]', 'class="btn btn-success"');
+
+                                            } elseif ($field_rekap == "nama_barang") {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->nama_barang;
+                                                // echo "NAMA BARANG";
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_barang'), 'Cetak ke Excel [barang]', 'class="btn btn-success"');
+
+                                            } else {
+                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
+                                                // echo "UNIT";
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit'), 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
+
+                                            }
+                                            ?>
+
                                 <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
                                 ?>
                             </div>
