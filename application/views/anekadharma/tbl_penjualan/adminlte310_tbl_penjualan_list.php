@@ -751,7 +751,7 @@
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                    <button type="submit" class="btn btn-primary">Proses</button>
+                    <!-- <button type="submit" class="btn btn-primary">Proses</button> -->
                 </div>
             </div>
             <!-- /.modal-content -->
