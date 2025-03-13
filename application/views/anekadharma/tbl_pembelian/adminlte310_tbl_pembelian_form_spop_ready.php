@@ -429,7 +429,7 @@
                                                 <td align="left">
                                                     <?php
 
-                                                    if ($GET_Sisa_Stock > 0) {
+                                                    // if ($GET_Sisa_Stock > 0) {
                                                     ?>
 
                                                         <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
@@ -443,9 +443,9 @@
 
 
                                                     <?php
-                                                    } else {
-                                                        echo "SOLD";
-                                                    }
+                                                    // } else {
+                                                    //     echo "SOLD";
+                                                    // }
                                                     ?>
 
 
