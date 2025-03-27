@@ -214,8 +214,12 @@
 
                                             // if ($list_data->harga_satuan_persediaan and $list_data->harga_satuan_persediaan > 0) {
                                             if (!empty($list_data->harga_satuan_persediaan)) {
-                                                echo nominal($list_data->harga_satuan_persediaan);
-                                                $X_harga_satuan = $list_data->harga_satuan_persediaan;
+                                                // echo nominal($list_data->harga_satuan_persediaan);
+                                                // $X_harga_satuan = $list_data->harga_satuan_persediaan;
+
+                                                // echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                $X_harga_satuan = number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                echo $X_harga_satuan;
                                             } else {
                                                 echo "0";
                                                 $X_harga_satuan = 0;
