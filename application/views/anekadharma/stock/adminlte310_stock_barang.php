@@ -219,6 +219,8 @@
                                                 echo "<br>";
                                                 echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                 echo "<br>";
+                                                echo number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
+                                                echo "<br>";
                                                 echo $list_data->harga_satuan_persediaan;
                                                 // $X_harga_satuan = number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                 // echo $X_harga_satuan;
