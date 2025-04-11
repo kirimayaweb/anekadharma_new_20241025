@@ -888,7 +888,7 @@ class Tbl_pembelian extends CI_Controller
 			// 'Data_konsumen_tagihan' => $Data_konsumen_tagihan,
 		);
 
-		// print_r($data);
+		print_r($data);
 
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_list_ke_supplier', $data);
