@@ -841,6 +841,60 @@ class Tbl_pembelian extends CI_Controller
 	}
 
 
+	public function pembayaran_ke_supplier_test()
+	{
+		// Data pembayaran KE supplier
+		// $Data_supplier_tagihan = $this->Tbl_pembelian_model->supplier_tagihan();
+		// $Data_supplier_tagihan = $this->Tbl_pembelian_pengajuan_bayar_model->get_all();
+
+
+		$sql = "SELECT tbl_pembelian_a.uuid_spop as uuid_spop, 
+        tbl_pembelian_a.tgl_po as tgl_po,
+        tbl_pembelian_a.spop as spop,
+        tbl_pembelian_a.jumlah as jumlah,
+        tbl_pembelian_a.harga_satuan as harga_satuan,
+        sum(tbl_pembelian_a.harga_total) as total_pembelian,
+        tbl_pembelian_a.supplier_nama as supplier_nama,
+        tbl_pembelian_a.statuslu as statuslu,
+        
+        -- tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
+        -- tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
+
+		tbl_pembelian_a.kas_bank as kas_bank
+
+        FROM tbl_pembelian tbl_pembelian_a 
+		
+		-- left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_a.uuid_spop
+
+		group by tbl_pembelian_a.uuid_spop
+
+		order by tbl_pembelian_a.tgl_po asc
+        ";
+
+		// return $this->db->query($sql)->result();
+
+		// print_r($this->db->query($sql)->result());
+
+
+		$Data_supplier_tagihan = $this->db->query($sql)->result();
+
+
+		// $Data_konsumen_tagihan = $this->Tbl_penjualan_model->konsumen_tagihan();
+		// print_r($Data_konsumen_tagihan);
+		// die;
+
+		$data = array(
+			'Data_supplier_tagihan' => $Data_supplier_tagihan,
+			// 'Data_konsumen_tagihan' => $Data_konsumen_tagihan,
+		);
+
+		// print_r($data);
+
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_list_ke_supplier', $data);
+	}
+
+
 
 	public function pembayaran_dari_konsumen()
 	{
