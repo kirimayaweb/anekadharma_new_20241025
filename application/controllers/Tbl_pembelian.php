@@ -825,7 +825,7 @@ class Tbl_pembelian extends CI_Controller
 		$Data_supplier_tagihan = $this->db->query($sql)->result();
 
 
-		$Data_konsumen_tagihan = $this->Tbl_penjualan_model->konsumen_tagihan();
+		// $Data_konsumen_tagihan = $this->Tbl_penjualan_model->konsumen_tagihan();
 		// print_r($Data_konsumen_tagihan);
 		// die;
 
@@ -835,6 +835,7 @@ class Tbl_pembelian extends CI_Controller
 		);
 
 		// print_r($data);
+
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_list_ke_supplier', $data);
 	}

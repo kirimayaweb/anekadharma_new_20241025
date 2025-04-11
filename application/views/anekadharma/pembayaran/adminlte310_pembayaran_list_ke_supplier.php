@@ -146,9 +146,8 @@
                                                 // echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
                                                 // $Total_pembayaran = $Total_pembayaran + $Total_pengajuan_bayar;
 
-
-
                                             } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "kas") {
+                                                
                                                 // echo nominal($list_data->total_pembelian);
                                                 // if ($list_data->nominal_pengajuan > 0) {
                                                 //     echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
@@ -157,7 +156,9 @@
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
                                                 // }
+
                                             } elseif ($list_data->statuslu == "L" and $list_data->kas_bank == "bank") {
+                                                
                                                 // echo nominal($list_data->total_pembelian);
                                                 // if ($list_data->nominal_pengajuan > 0) {
                                                 //     echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
@@ -166,7 +167,9 @@
                                                 echo number_format($list_data->total_pembelian, 2, ',', '.');
                                                 $Total_pembayaran = $Total_pembayaran + $list_data->total_pembelian;
                                                 // }
+
                                             } elseif ($list_data->statuslu == "L") {
+
                                                 // echo nominal($list_data->total_pembelian);
                                                 // if ($list_data->nominal_pengajuan > 0) {
                                                 //     echo number_format($list_data->nominal_pengajuan, 2, ',', '.');
