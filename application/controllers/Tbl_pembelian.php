@@ -547,6 +547,8 @@ class Tbl_pembelian extends CI_Controller
 			$sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`";
 
 			$Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
+
+			
 			// print_r($Data_Pembayaran_uuid_spop);
 			// print_r("<br/>");
 
@@ -793,7 +795,6 @@ class Tbl_pembelian extends CI_Controller
 		// $Data_supplier_tagihan = $this->Tbl_pembelian_model->supplier_tagihan();
 		// $Data_supplier_tagihan = $this->Tbl_pembelian_pengajuan_bayar_model->get_all();
 
-
 		$sql = "SELECT tbl_pembelian_a.uuid_spop as uuid_spop, 
         tbl_pembelian_a.tgl_po as tgl_po,
         tbl_pembelian_a.spop as spop,
@@ -802,25 +803,16 @@ class Tbl_pembelian extends CI_Controller
         sum(tbl_pembelian_a.harga_total) as total_pembelian,
         tbl_pembelian_a.supplier_nama as supplier_nama,
         tbl_pembelian_a.statuslu as statuslu,
-        
         -- tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
         -- tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
-
 		tbl_pembelian_a.kas_bank as kas_bank
-
         FROM tbl_pembelian tbl_pembelian_a 
-		
 		-- left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_a.uuid_spop
-
 		group by tbl_pembelian_a.uuid_spop
-
 		order by tbl_pembelian_a.tgl_po asc
         ";
-
 		// return $this->db->query($sql)->result();
-
 		// print_r($this->db->query($sql)->result());
-
 
 		$Data_supplier_tagihan = $this->db->query($sql)->result();
 
