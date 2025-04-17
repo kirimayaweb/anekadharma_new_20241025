@@ -47,7 +47,8 @@ class KirimWa_model extends CI_Model
         ),
           CURLOPT_HTTPHEADER => array(
             // 'Authorization: 1BFYxDnYcsZjm9nahfEG' // 0858 0377 3981
-            'Authorization: GK#6@uPd5GvvA#xa_6z@'  // 0858 7725 7503
+            // 'Authorization: GK#6@uPd5GvvA#xa_6z@'  // 0858 7725 7503
+            'Authorization: jTPJooXZi9Sj7sFD7JLS'  // 085124671828 Rifai nomor april 2025
           ),
         ));
         
