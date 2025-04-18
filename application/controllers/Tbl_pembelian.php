@@ -81,7 +81,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 
-		$Get_date_awal = date("Y-m-1 00:00:00");		
+		$Get_date_awal = date("Y-m-1 00:00:00");
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
@@ -122,11 +122,11 @@ class Tbl_pembelian extends CI_Controller
 		// $Get_date_awal = $this->input->post('tgl_awal', TRUE);
 		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
 			// $Get_date_awal = date("Y-m-d 00:00:00");
-			$Get_date_awal = date('Y-m-d',strtotime('-1 day'));
+			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
 		} else {
 			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
 		}
-		
+
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
@@ -152,7 +152,7 @@ class Tbl_pembelian extends CI_Controller
 
 		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
 		$Tbl_pembelian = $this->db->query($sql)->result();
-		
+
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'date_awal' => $Get_date_awal,
@@ -364,6 +364,7 @@ class Tbl_pembelian extends CI_Controller
 
 		$RESULT_get_total_nominal_per_spop = $this->Tbl_pembelian_model->get_total_nominal_per_spop($uuid_spop);
 
+		// JUMLAH NOMINAL PEMBELIAN
 		$x_total = 0;
 		foreach ($RESULT_get_total_nominal_per_spop as $list_data) {
 			$x_total = $x_total + $list_data->total_pembelian;
@@ -375,6 +376,57 @@ class Tbl_pembelian extends CI_Controller
 			$from_pembelian_page = "BukanPembelian";
 		}
 
+
+		// JUMLAH NOMINAL SUDAH TERBAYAR : DARI TRANSFER DAN KAS KECIL
+		// PEMBAYARAN TRANSFER PER UID_SPOP
+		$this->db->where('uuid_spop', $uuid_spop);
+		$Query_data_pengajuan_bayar_by_uuid_spop = $this->db->get('tbl_pembelian_pengajuan_bayar');
+		$Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop = $Query_data_pengajuan_bayar_by_uuid_spop->result();
+
+
+		// $start_TRANSFER = 0;
+		$uuid_SPOP_TRANSFER = 0;
+		foreach ($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop as $list_data_TRANSFER) {
+			// if ($start_TRANSFER > 0) {
+			// 	echo "<br/>";
+			// }
+
+			// echo number_format($list_data_TRANSFER->nominal_pengajuan, 2, ',', '.');
+
+			$uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
+			// $TOTAL_BAYAR_TRANSFER = $TOTAL_BAYAR_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
+
+			// ++$start_TRANSFER;
+		}
+
+
+
+		// PEMBAYARAN KAS PER UUID_SPOP
+
+		$this->db->where('uuid_spop', $uuid_spop);
+		$Query_data_KAS_KECIL_by_uuid_spop = $this->db->get('tbl_kas_kecil');
+		$Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop = $Query_data_KAS_KECIL_by_uuid_spop->result();
+
+		// $start_KAS_KECIL = 0;
+		$UUID_SPOP_KAS_KECIL = 0;
+		foreach ($Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop as $list_data_KAS_KECIL) {
+			// if ($start_KAS_KECIL > 0) {
+			// 	echo "<br/>";
+			// }
+
+			// echo number_format($list_data_KAS_KECIL->kredit, 2, ',', '.');
+
+			$UUID_SPOP_KAS_KECIL = $UUID_SPOP_KAS_KECIL + $list_data_KAS_KECIL->kredit;
+			// $TOTAL_BAYAR_KAS_KECIL = $TOTAL_BAYAR_KAS_KECIL + $list_data_KAS_KECIL->kredit;
+
+			// ++$start_KAS_KECIL;
+		}
+
+		$Total_Nominal_Sisa_Tagihan = $x_total - ($uuid_SPOP_TRANSFER + $UUID_SPOP_KAS_KECIL);
+
+		// print_r($Total_Nominal_Sisa_Tagihan);
+		// die;
+
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
@@ -384,7 +436,7 @@ class Tbl_pembelian extends CI_Controller
 			'nmrfakturkwitansi' => $row_per_uuid_spop->nmrfakturkwitansi,
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
-			'nominal_pengajuan' => $x_total,
+			'nominal_pengajuan' => $Total_Nominal_Sisa_Tagihan,
 			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
 			// 'nominal_pengajuan' => str_replace(",", ".", str_replace(".", "", $x_total)),
 			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
@@ -548,7 +600,7 @@ class Tbl_pembelian extends CI_Controller
 
 			$Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
 
-			
+
 			// print_r($Data_Pembayaran_uuid_spop);
 			// print_r("<br/>");
 

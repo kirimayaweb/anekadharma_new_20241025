@@ -298,7 +298,7 @@
                                             if ($GET_KEKURANGAN > 0) {
                                                 // echo $GET_KEKURANGAN;
                                                 echo "<font color='red'> -" .  number_format($GET_KEKURANGAN, 2, ',', '.') . "</font>";
-                                                $Total_kekurangan=$Total_kekurangan+$GET_KEKURANGAN;
+                                                $Total_kekurangan = $Total_kekurangan + $GET_KEKURANGAN;
                                                 // echo $Total_kekurangan;
                                             } else {
                                                 echo "LUNAS";
@@ -371,22 +371,27 @@
                                                     }
                                                 }
 
+                                                if ($list_data->uuid_spop) {
+                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                }
+
+                                                // echo $list_data->nominal_pengajuan;
+
+                                                // if ($list_data->nominal_pengajuan > 0) {
+
+                                                //     // echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN</i>', 'class="btn btn-success btn-xs" target="_blank"');
+
+                                                //     if ($TOTAL_Nominal_pengajuan < $list_data->total_pembelian) {
+                                                //         echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran X</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                //     }
+                                                // } else {
+                                                //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran YY</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                // }
+                                            }
 
 
 
-                                                if ($list_data->nominal_pengajuan > 0) {
-                                                    echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN</i>', 'class="btn btn-success btn-xs" target="_blank"');
-                                                    if ($TOTAL_Nominal_pengajuan < $list_data->total_pembelian) {
-                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                    }
-                                                } else {
-                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                }   
-                                            } 
-
-
-
-?>
+                                            ?>
                                         </td>
 
 
