@@ -366,7 +366,7 @@
                                                             // echo $Total_pengajuan_bayar;
                                                             // echo "<br/>";
 
-                                                            echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN ' . number_format($Total_pengajuan_bayar, 2, ',', '.') . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                            echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan_bayar->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN ' . number_format($Total_pengajuan_bayar, 2, ',', '.') . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                         }
                                                     }
                                                 }
