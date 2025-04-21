@@ -636,7 +636,7 @@ class Tbl_kas_kecil extends CI_Controller
         FROM tbl_pembelian tbl_pembelian_a 
 
         left join   sys_supplier  sys_supplier_a ON  sys_supplier_a.nama_supplier = tbl_pembelian_a.supplier_nama
-        where tbl_pembelian_a.statuslu='U'
+        -- where tbl_pembelian_a.statuslu='U'
         group by tbl_pembelian_a.uuid_spop
         order by tbl_pembelian_a.spop ASC
         ";

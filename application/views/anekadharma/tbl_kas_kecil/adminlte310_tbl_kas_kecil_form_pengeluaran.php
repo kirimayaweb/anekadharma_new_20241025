@@ -135,20 +135,22 @@
 
 
                                                                 <div class="col-12">
-                                                                    <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); ?></span> -->
+                                                                    <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); 
+                                                                                                        ?></span> -->
 
 
                                                                     <div class="info-box">
-                                                                    <span class="info-box-icon bg-warning"><i class="far fa-copy"></i></span>
+                                                                        <span class="info-box-icon bg-warning"><i class="far fa-copy"></i></span>
 
-                                                                    <div class="info-box-content">
-                                                                        <span class="info-box-text">: <?php echo '<span style="color:#f30606;text-align:center;">TOTAL Pembelian: '. nominal($Total_PEMBELIAN) .'</span>'; ?></span>
-                                                                        <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar Transfer: '. nominal($Total_BAYAR_TRANSFER) .'</span>'; ?></span>
-                                                                        <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar dari Kas Kecil: '. nominal($UUID_SPOP_KAS_KECIL) .'</span>'; ?></span>
-                                                                        <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); ?></span> -->
+                                                                        <div class="info-box-content">
+                                                                            <span class="info-box-text">: <?php echo '<span style="color:#f30606;text-align:center;">TOTAL Pembelian: ' . nominal($Total_PEMBELIAN) . '</span>'; ?></span>
+                                                                            <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar Transfer: ' . nominal($Total_BAYAR_TRANSFER) . '</span>'; ?></span>
+                                                                            <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar dari Kas Kecil: ' . nominal($UUID_SPOP_KAS_KECIL) . '</span>'; ?></span>
+                                                                            <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); 
+                                                                                                                ?></span> -->
+                                                                        </div>
+
                                                                     </div>
-                                                                    
-                                                                </div>
 
 
                                                                 </div>
@@ -314,7 +316,7 @@
                                                         <th>Supplier</th>
                                                         <!-- <th>Norek</th>
                                                         <th>Rekening</th> -->
-                                                        <th>Jumlah</th>
+                                                        <th>Kekurangan</th>
                                                         <!-- <th>Uu21101</th> -->
 
                                                     </tr>
@@ -325,28 +327,58 @@
                                                     $start = 0;
                                                     foreach ($Tbl_pembelian_data as $list_data) {
 
-                                                    ?>
-                                                        <tr>
-                                                            <td width="80px"><?php echo ++$start ?></td>
-                                                            <td width="200px">
-                                                                <?php
-                                                                echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Proses Bayar</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                                                ?>
-                                                            </td>
-                                                            <td><?php echo date("d-m-Y", strtotime($list_data->tanggal)); ?></td>
-                                                            <!-- <td>Unit</td> -->
-                                                            <td><?php echo $list_data->spop; ?></td>
-                                                            <!-- <td>Pl</td> -->
-                                                            <td><?php echo $list_data->nama_supplier_1; ?></td>
-                                                            <!-- <td>Norek</td>
-                                                            <td>Rekening</td> -->
-                                                            <td><?php echo nominal($list_data->sum_harga_total); ?></td>
-                                                            <!-- <td>Uu21101</td> -->
+                                                        $this->db->where('uuid_spop', $list_data->uuid_spop);
+                                                        $Query_data_pengajuan_bayar_by_uuid_spop = $this->db->get('tbl_pembelian_pengajuan_bayar');
+                                                        $Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop = $Query_data_pengajuan_bayar_by_uuid_spop->result();
 
-                                                        </tr>
+                                                        $uuid_SPOP_TRANSFER = 0;
+                                                        foreach ($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop as $list_data_TRANSFER) {
+                                                            $uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
+                                                        }
+
+                                                        // PEMBAYARAN KAS PER UUID_SPOP
+
+                                                        $this->db->where('uuid_spop', $list_data->uuid_spop);
+                                                        $Query_data_KAS_KECIL_by_uuid_spop = $this->db->get('tbl_kas_kecil');
+                                                        $Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop = $Query_data_KAS_KECIL_by_uuid_spop->result();
+
+
+                                                        $UUID_SPOP_KAS_KECIL = 0;
+                                                        foreach ($Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop as $list_data_KAS_KECIL) {
+                                                            $UUID_SPOP_KAS_KECIL = $UUID_SPOP_KAS_KECIL + $list_data_KAS_KECIL->kredit;
+                                                        }
+
+
+                                                        $TOTAL_SISA_TAGIHAN = $list_data->sum_harga_total - ($uuid_SPOP_TRANSFER + $UUID_SPOP_KAS_KECIL);
+                                                        if ($TOTAL_SISA_TAGIHAN > 0) {
+
+
+
+                                                    ?>
+                                                            <tr>
+                                                                <td width="80px"><?php echo ++$start ?></td>
+                                                                <td width="200px">
+                                                                    <?php
+                                                                    echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Proses Bayar</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    ?>
+                                                                </td>
+                                                                <td><?php echo date("d-m-Y", strtotime($list_data->tanggal)); ?></td>
+                                                                <!-- <td>Unit</td> -->
+                                                                <td><?php echo $list_data->spop; ?></td>
+                                                                <!-- <td>Pl</td> -->
+                                                                <td><?php echo $list_data->nama_supplier_1; ?></td>
+                                                                <!-- <td>Norek</td>
+                                                            <td>Rekening</td> -->
+                                                                <td>
+                                                                    <?php //echo nominal($list_data->sum_harga_total); ?>
+                                                                    <?php echo nominal($TOTAL_SISA_TAGIHAN); ?>
+                                                                </td>
+                                                                <!-- <td>Uu21101</td> -->
+
+                                                            </tr>
 
                                                     <?php
-
+                                                        }
                                                     }
 
                                                     ?>
