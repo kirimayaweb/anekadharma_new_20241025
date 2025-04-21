@@ -647,6 +647,58 @@ class Tbl_kas_kecil extends CI_Controller
         // die;
 
         if ($get_spop) {
+
+            // CEK PEMBAYARAN TRANSFER DAN KAS KECIL
+            // PEMBAYARAN TRANSFER PER UID_SPOP
+            $this->db->where('uuid_spop', $get_spop);
+            $Query_data_pengajuan_bayar_by_uuid_spop = $this->db->get('tbl_pembelian_pengajuan_bayar');
+            $Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop = $Query_data_pengajuan_bayar_by_uuid_spop->result();
+
+            // print_r($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop);
+            // print_r("<br/>");
+            // print_r($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop->nominal_pengajuan);
+            // print_r("<br/>");
+            // print_r("<br/>");
+
+            // PEMBAYARAN KAS PER UUID_SPOP
+
+            $this->db->where('uuid_spop', $get_spop);
+            $Query_data_KAS_KECIL_by_uuid_spop = $this->db->get('tbl_kas_kecil');
+            $Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop = $Query_data_KAS_KECIL_by_uuid_spop->result();
+
+            // print_r($Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop);
+            // print_r("<br/>");
+
+            $uuid_SPOP_TRANSFER=0;
+            foreach ($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop as $list_data_TRANSFER) {
+                $uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
+            }
+
+            // print_r($uuid_SPOP_TRANSFER);
+            // print_r("<br/>");
+
+            $UUID_SPOP_KAS_KECIL = 0;
+            foreach ($Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop as $list_data_KAS_KECIL) {
+                $UUID_SPOP_KAS_KECIL = $UUID_SPOP_KAS_KECIL + $list_data_KAS_KECIL->kredit;
+            }
+
+            // print_r($UUID_SPOP_KAS_KECIL);
+            // print_r("<br/>");
+            // print_r("<br/>");
+
+
+            // print_r($Tbl_pembelian);
+            // print_r("<br/>");
+            // print_r("<br/>");
+           
+            // print_r($Get_data_proses->sum_harga_total);
+            // print_r("<br/>");
+            // print_r("<br/>");
+
+           $Total_tagihan_Generate = $Get_data_proses->sum_harga_total - ($uuid_SPOP_TRANSFER + $UUID_SPOP_KAS_KECIL);
+
+            // die;
+
             $data = array(
                 'button' => 'Simpan',
                 'action' => site_url('tbl_kas_kecil/pengeluaran_kas_kecil_action/' . $get_spop),
@@ -662,7 +714,15 @@ class Tbl_kas_kecil extends CI_Controller
                 'id_usr' => set_value('id_usr'),
                 'Tbl_pembelian_data' => $Tbl_pembelian,
                 'Get_data_proses' => $Get_data_proses,
+                'Total_tagihan_Generate' => $Total_tagihan_Generate,
+                'Total_PEMBELIAN' => $Get_data_proses->sum_harga_total,
+                'Total_BAYAR_TRANSFER' => $uuid_SPOP_TRANSFER,
+                'UUID_SPOP_KAS_KECIL' => $UUID_SPOP_KAS_KECIL,
+
             );
+
+
+
         } else {
             $data = array(
                 'button' => 'Simpan',
@@ -761,17 +821,12 @@ class Tbl_kas_kecil extends CI_Controller
                 $sql_data_kas_kecil = "SELECT sum(`kredit`) as total_terbayar FROM `tbl_kas_kecil` WHERE `uuid_spop`='$get_spop' GROUP BY `uuid_spop`";
 
                 $Ge_Total_terbayar = $this->db->query($sql_data_kas_kecil)->row()->total_terbayar;
-                
+
                 if ($Ge_Total_terbayar >= $jumlah_tagihan_total) {
                     // update record tabel pembelian dengan uuid_spop ==> L (Lunas)
                     $sql = "UPDATE `tbl_pembelian` SET `statuslu`='L',`kas_bank`='kas',`tgl_bayar`='$date_kas_kecil' WHERE `uuid_spop`='$get_spop'";
                     $this->db->query($sql);
                 }
-
-
-
-
-                
             } else {
 
                 $data = array(

@@ -96,34 +96,75 @@
                                                     <div class="info-box-content">
                                                         <div class="form-group">
                                                             <div class="row">
-                                                                <div class="col-3">
+                                                                <div class="col-6">
                                                                     <span class="info-box-number"><?php echo "SPOP: " . ($Get_data_proses->spop); ?></span>
                                                                 </div>
 
-                                                                <div class="col-3">
-                                                                <span class="info-box-text"><?php echo "Supplier: " . ($Get_data_proses->nama_supplier); ?></span>
+                                                                <div class="col-6">
+                                                                    <span class="info-box-text"><?php echo "Supplier: " . ($Get_data_proses->nama_supplier); ?></span>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         <div class="form-group">
                                                             <div class="row">
-                                                                
 
-                                                                <div class="col-3">
-                                                                <span class="info-box-text"><?php echo "Tanggal: " . ($Get_data_proses->tanggal); ?></span>
+
+                                                                <div class="col-6">
+                                                                    <span class="info-box-text"><?php echo "Tanggal: " . ($Get_data_proses->tanggal); ?></span>
                                                                 </div>
 
-                                                                <div class="col-3">
-                                                                    <span class="info-box-number"><?php echo "TOTAL TAGIHAN: " . (nominal($Get_data_proses->sum_harga_total)); ?></span>
+                                                                <div class="col-6">
+                                                                    <span class="info-box-number"><?php echo "TOTAL TAGIHAN: " . (nominal($Total_tagihan_Generate)); ?></span>
                                                                 </div>
 
                                                             </div>
                                                         </div>
 
-                                                        
+
 
                                                     </div>
+
+
+
+                                                    <div class="info-box-content">
+
+                                                        <div class="form-group">
+                                                            <div class="row">
+
+
+
+                                                                <div class="col-12">
+                                                                    <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); ?></span> -->
+
+
+                                                                    <div class="info-box">
+                                                                    <span class="info-box-icon bg-warning"><i class="far fa-copy"></i></span>
+
+                                                                    <div class="info-box-content">
+                                                                        <span class="info-box-text">: <?php echo '<span style="color:#f30606;text-align:center;">TOTAL Pembelian: '. nominal($Total_PEMBELIAN) .'</span>'; ?></span>
+                                                                        <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar Transfer: '. nominal($Total_BAYAR_TRANSFER) .'</span>'; ?></span>
+                                                                        <span class="info-box-text">: <?php echo '<span style="color:#059518;text-align:center;">Bayar dari Kas Kecil: '. nominal($UUID_SPOP_KAS_KECIL) .'</span>'; ?></span>
+                                                                        <!-- <span class="info-box-number"><?php //echo "PEMBELIAN: " . (nominal($Total_PEMBELIAN)); ?></span> -->
+                                                                    </div>
+                                                                    
+                                                                </div>
+
+
+                                                                </div>
+
+
+
+                                                            </div>
+
+
+                                                        </div>
+
+
+
+                                                    </div>
+
+
                                                     <!-- /.info-box-content -->
                                                 </div>
                                                 <!-- /.info-box -->
