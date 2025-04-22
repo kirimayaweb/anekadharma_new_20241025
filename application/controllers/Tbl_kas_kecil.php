@@ -660,6 +660,13 @@ class Tbl_kas_kecil extends CI_Controller
             // print_r("<br/>");
             // print_r("<br/>");
 
+
+            $uuid_SPOP_TRANSFER=0;
+            foreach ($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop as $list_data_TRANSFER) {
+                $uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
+            }
+            
+
             // PEMBAYARAN KAS PER UUID_SPOP
 
             $this->db->where('uuid_spop', $get_spop);
@@ -669,10 +676,6 @@ class Tbl_kas_kecil extends CI_Controller
             // print_r($Get_data_TERBAYAR_VIA_KAS_ECIL_by_uuid_spop);
             // print_r("<br/>");
 
-            $uuid_SPOP_TRANSFER=0;
-            foreach ($Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop as $list_data_TRANSFER) {
-                $uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
-            }
 
             // print_r($uuid_SPOP_TRANSFER);
             // print_r("<br/>");
