@@ -292,11 +292,23 @@ class Tbl_pembelian_model extends CI_Model
         // print_r("<br/>");
         // print_r($datainsert['id']);
         // print_r("<br/>");
-        $this->db->where($this->id, $datainsert['id']);
-        $uuid_spop = $this->db->get($this->table)->row()->uuid_spop;
+        // $this->db->where($this->id, $datainsert['id']);
+        // $uuid_spop = $this->db->get($this->table)->row()->uuid_spop;
         // print_r($uuid_spop);
-        return $uuid_spop;
+
+        // return $uuid_spop;
+
+        // print_r($datainsert['id']);
         // die;
+
+        return $datainsert['id'];
+
+
+
+        // die;
+
+
+
     }
 
     // update data
