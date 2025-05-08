@@ -119,7 +119,9 @@
                                     <!-- <th>jumlah <br />beli</th> -->
 
                                     <!-- <th>nama_barang_jual</th> -->
-                                    <th>Terjual</th>
+                                    <th style="text-align:right">Terjual</th>
+                                    <th style="text-align:right">Pecah Satuan</th>
+                                    <th style="text-align:right">Bahan Produksi</th>
                                     <!-- <th>harga_satuan_jual</th> -->
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
@@ -214,19 +216,23 @@
 
                                             // if ($list_data->harga_satuan_persediaan and $list_data->harga_satuan_persediaan > 0) {
                                             if (!empty($list_data->harga_satuan_persediaan)) {
-                                                echo nominal($list_data->harga_satuan_persediaan);
+                                                // echo nominal($list_data->harga_satuan_persediaan);
                                                 $X_harga_satuan = $list_data->harga_satuan_persediaan;
                                                 // echo "<br>";
-                                                // echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
+                                                echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                 // echo "<br>";
                                                 // echo number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
                                                 // echo "<br>";
-                                                // echo $list_data->harga_satuan_persediaan;
+                                                // echo nominal($list_data->harga_satuan_persediaan);
+
+                                                $X_harga_satuan_X = number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
+
                                                 // $X_harga_satuan = number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
                                                 // echo $X_harga_satuan;
                                             } else {
                                                 echo "0";
                                                 $X_harga_satuan = 0;
+                                                $X_harga_satuan_X =0;
                                             }
 
                                             ?>
@@ -269,26 +275,32 @@
                                         <!-- Jumlah penjualan -->
                                         <td style="text-align:right">
                                             <?php
-                                            // echo $this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows();
-                                            // echo "<br/>";
-                                            echo nominal($Jumlah_penjualan_per_uuid_persediaan);
-                                            // DATA PENJUALAN PER SPOP
-                                            // if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
-                                            //     echo nominal($list_data->jumlah_terjual);
-                                            //     $x_jumlah_terjual = $list_data->jumlah_terjual;
-                                            // } else {
-                                            //     echo "0";
-                                            //     $x_jumlah_terjual = 0;
-                                            // }
+
+                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
+                                            echo nominal($list_data->penjualan);
 
 
-                                            // $Jumlah_penjualan_per_uuid_persediaan = $list_data->penjualan + $list_data->pecah_satuan + $list_data->bahan_produksi;
-                                            // echo "<br/>";
-                                            // echo $list_data->penjualan;
-                                            // echo "<br/>";
-                                            // echo $list_data->pecah_satuan;
-                                            // echo "<br/>";
-                                            // echo $list_data->bahan_produksi;
+                                            ?>
+                                        </td>
+
+                                        <!-- Jumlah Pecah Satuan -->
+                                        <td style="text-align:right">
+                                            <?php
+
+                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
+                                            echo nominal($list_data->pecah_satuan);
+                                            
+
+
+                                            ?>
+                                        </td>
+
+                                        <!-- Jumlah penjualan -->
+                                        <td style="text-align:right">
+                                            <?php
+
+                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
+                                            echo nominal($list_data->bahan_produksi);
 
                                             ?>
                                         </td>
@@ -333,9 +345,45 @@
                                             <?php
 
                                             if ($Sisa_STOCK > 0) {
-                                                $GET_NominalBarang = $Sisa_STOCK * $list_data->harga_satuan_persediaan;
-                                                echo nominal($GET_NominalBarang);
-                                                $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $GET_NominalBarang;
+                                                // echo $X_harga_satuan_X;
+                                                // echo "<br/>";
+                                                // echo $Sisa_STOCK;
+                                                // echo "<br/>";
+                                                // echo $list_data->harga_satuan_persediaan;
+                                                // echo "<br/>";
+                                                // // $GET_NominalBarang = $Sisa_STOCK * $list_data->harga_satuan_persediaan;
+                                                // // $GET_NominalBarang = $Sisa_STOCK * $X_harga_satuan_X;
+
+                                                // $X_harga_satuan_X = number_format($X_harga_satuan_X, 0, ',', '.');
+                                                // echo $X_harga_satuan_X;
+                                                // echo "<br/>";
+
+                                                // $X_LIST_harga_satuan_X = number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
+                                                // $X_LIST_harga_satuan_X = number_format($X_LIST_harga_satuan_X, 0, '.', '');
+                                                // echo $X_LIST_harga_satuan_X;
+                                                // echo "<br/>";
+
+
+                                                $X_Sisa_STOCK_X = number_format($Sisa_STOCK, 0, ',', '.');
+
+
+                                                // $GET_NominalBarang = $X_Sisa_STOCK_X * $X_LIST_harga_satuan_X;
+                                                // echo $X_Sisa_STOCK_X;
+                                                // echo "<br/>";
+                                                // echo number_format($GET_NominalBarang, 0, ',', '.');
+                                                // echo "<br/>";
+
+
+                                                
+                                                $GET_NominalBarang_X = $X_Sisa_STOCK_X * $list_data->harga_satuan_persediaan;
+                                                // echo $GET_NominalBarang_X;
+                                                // echo "<br/>";
+                                                echo number_format($GET_NominalBarang_X, 2, ',', '.');
+                                                echo "<br/>";
+
+                                                
+
+                                                $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $GET_NominalBarang_X;
                                             } else {
                                                 echo "0";
                                             }
@@ -370,6 +418,8 @@
                                     <th></th>
                                     <th></th>
                                     <!-- <th></th> -->
+                                    <th></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th>TOTAL PERSEDIAAN</th>
