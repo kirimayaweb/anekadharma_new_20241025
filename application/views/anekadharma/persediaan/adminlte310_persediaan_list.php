@@ -119,6 +119,7 @@
                                     <th>Nilai Persediaan</th>
                                     <th>Terjual</th>
                                     <th>Jumlah Pecah Satuan</th>
+                                    <th>Bahan Produksi</th>
                                     <th>Sisa / Stock</th>
                                     <!-- <th width="200px">Action</th> -->
                                 </tr>
@@ -159,7 +160,8 @@
                                         <td><?php echo $persediaan->nilai_persediaan ?></td>
                                         <td><?php echo $persediaan->penjualan ?></td>
                                         <td><?php echo $persediaan->pecah_satuan ?></td>
-                                        <td><?php echo $persediaan->total_10 - ($persediaan->penjualan + $persediaan->pecah_satuan) ?></td>
+                                        <td><?php echo $persediaan->bahan_produksi ?></td>
+                                        <td><?php echo $persediaan->total_10 - ($persediaan->penjualan + $persediaan->pecah_satuan + $persediaan->bahan_produksi) ?></td>
                                         <!-- <td width="200px">Action</td> -->
                                     </tr>
                                 <?php
