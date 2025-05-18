@@ -422,6 +422,7 @@
                 // $Data_stock = $this->db->query($sql_data)->result();
 
 
+                
                 $sql_stock = "SELECT persediaan.id as id, 
                                         persediaan.tanggal_beli as tanggal_beli, 
                                         persediaan.uuid_spop as uuid_spop, 
@@ -433,6 +434,7 @@
                                         persediaan.hpp as harga_satuan_persediaan, 
                                         persediaan.satuan as satuan_persediaan,
                                         persediaan.pecah_satuan as pecah_satuan_persediaan,
+                                        persediaan.bahan_produksi as bahan_produksi,
                                                 -- tbl_pembelian.uuid_pembelian as uuid_pembelian,
                                                 -- tbl_pembelian.uraian as barang_beli, 
                                                 -- tbl_pembelian.jumlah as jumlah_belanja, 
@@ -441,12 +443,12 @@
                                                 -- tbl_pembelian.uuid_gudang as uuid_gudang, 
                                                 -- tbl_pembelian.nama_gudang as nama_gudang,  
                                                 -- tbl_pembelian.satuan as satuan,
-                                                -- tbl_penjualan_accounting.nama_barang as barang_jual, 
-                                                -- tbl_penjualan_accounting.jumlah as jumlah_terjual,
+                                                -- tbl_penjualan.nama_barang as barang_jual, 
+                                                -- tbl_penjualan.jumlah as jumlah_terjual,
                                                 persediaan.penjualan as penjualan
                                                 FROM persediaan  
                                                 -- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-                                                -- left join tbl_penjualan_accounting ON persediaan.uuid_barang = tbl_penjualan_accounting.uuid_barang  
+                                                -- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
                                                 -- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
                                                 ORDER BY persediaan.uuid_barang ASC";
 
@@ -498,7 +500,12 @@
 
                                 if ($list_data->uuid_barang) { //ada data barang
 
-                                    $sisa_stock_data = $list_data->jumlah_sediaan - ($list_data->penjualan + $list_data->pecah_satuan_persediaan);
+                                    // $sisa_stock_data = $list_data->jumlah_sediaan - ($list_data->penjualan + $list_data->pecah_satuan_persediaan);
+
+
+                                    $sisa_stock_data = $list_data->jumlah_sediaan - ($list_data->penjualan + $list_data->pecah_satuan_persediaan + $list_data->bahan_produksi);
+
+
 
                                     if ($sisa_stock_data > 0) { // stock lebih dari 0
                             ?>
