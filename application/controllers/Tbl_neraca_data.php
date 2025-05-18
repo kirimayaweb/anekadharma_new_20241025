@@ -61,15 +61,36 @@ class Tbl_neraca_data extends CI_Controller
 		// die;
 
 
-		$Tbl_neraca_data = $this->Tbl_neraca_data_model->get_all();
+		// $Tbl_neraca_data = $this->Tbl_neraca_data_model->get_all();
+
+		// SELECT year(`tgl_po`) FROM `tbl_pembelian` GROUP by year(`tgl_po`);
+
+
+		$sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+
+		$tahun_neraca_data = $this->db->query($sql)->result();
+
+
+		$sql = "SELECT year(`tgl_po`) as tahun_transaksi, month(`tgl_po`) as bulan_transaksi FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
+
+		$bulan_neraca_neraca_data = $this->db->query($sql)->result();
+
+		// print_r($Tbl_neraca_data);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
 		$start = 0;
 		$data = array(
-			'Tbl_neraca_data' => $Tbl_neraca_data,
+			'Tbl_neraca_data' => $tahun_neraca_data,
+			'Tbl_BULAN_neraca_data' => $bulan_neraca_neraca_data,
 			'start' => $start,
 			'status_laporan' => $status_laporan,
 			'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
 			'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
 		);
+
+		// print_r($data['Tbl_neraca_data']);
+		// die;
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_tbl_neraca_data_list', $data);
 	}
@@ -616,6 +637,51 @@ class Tbl_neraca_data extends CI_Controller
 			);
 		}
 
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
+	public function neraca_form_Tahunan($tahun_neraca = null)
+	{
+
+		// print_r($uuid_data_neraca);
+		// die;
+
+		if ($tahun_neraca) {
+			$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($tahun_neraca);
+		} else {
+			$year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
+			$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
+			// if ($data_detail) {
+			// 	print_r($data_detail->uuid_data_neraca);
+			// 	redirect(site_url('tbl_neraca_data/neraca_form/' . $data_detail->uuid_data_neraca));
+			// }
+		}
+
+		if ($data_detail) {
+			$data = array(
+				'button' => 'Update',
+				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $tahun_neraca),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $tahun_neraca,
+				'bulan_transaksi' => $data_detail->bulan_transaksi,
+			);
+		} else {
+			$data = array(
+				'button' => 'Simpan',
+				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
+				'id' => set_value('id'),
+				'data_detail' => $data_detail,
+				'uuid_data_neraca' => $uuid_data_neraca,
+				'tahun_neraca' => $tahun_neraca,
+				'bulan_transaksi' => 0,
+			);
+		}
+
+		// print_r($data);
+		// die;
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
 	}

@@ -124,14 +124,14 @@
 
                                                             <td><?php echo ++$start ?></td>
 
-                                                            <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
+                                                            <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
                                                             <td align="left">
                                                                 <?php
                                                                 if ($status_laporan == "bukan_laporan") {
-                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form_Tahunan/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                 }
 
-                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
 
                                                                 ?>
                                                             </td>
@@ -264,7 +264,7 @@
                                                 }
 
                                                 $start = 0;
-                                                foreach ($Tbl_neraca_data as $list_data) {
+                                                foreach ($Tbl_BULAN_neraca_data as $list_data) {
                                                     if ($list_data->bulan_transaksi > 0) {
                                                 ?>
 
