@@ -28,7 +28,7 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
     }
 
-    public function jurnal_penerimaan_kas()
+    public function Jurnal_penerimaan_kas()
     {
 
         // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0";
