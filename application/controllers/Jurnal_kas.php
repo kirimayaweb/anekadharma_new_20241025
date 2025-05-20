@@ -16,16 +16,81 @@ class Jurnal_kas extends CI_Controller
 
     public function index()
     {
-        $Data_kas = $this->Jurnal_kas_model->get_all();
+
+        // $Data_kas = $this->Jurnal_kas_model->get_all();
         // $start = 0;
 
         // print_r($Data_kas);
 
+
+		$Get_date_awal = date("Y-m-1 00:00:00");
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+
+
+		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+		// print_r($Get_date_akhir);
+		// print_r("<br/>");
+
+		// die;
+
+
+
+		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+
+		$Data_kas = $this->db->query($sql)->result();
+
+
+
         $data = array(
             'Data_kas' => $Data_kas,
             // 'start' => $start,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
         );
+
+        // print_r($data);
+
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
+    }
+
+
+    public function cari_between_date(){
+
+        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+            // $Get_date_awal = date("Y-m-d 00:00:00");
+            $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+        } else {
+            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+        }
+
+        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+            $Get_date_akhir = date("Y-m-d 00:00:00");
+        } else {
+            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+        }
+
+
+
+
+
+		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+
+		$Data_kas = $this->db->query($sql)->result();
+
+
+
+        $data = array(
+            'Data_kas' => $Data_kas,
+            // 'start' => $start,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
+        );
+
+        // print_r($data);
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
+    
     }
 
     public function Jurnal_penerimaan_kas()
@@ -109,7 +174,7 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas_per_uuid_jurnal_kas', $data);
     }
 
-    public function update_kode_akun($uuid_jurnal_kas = null, $proses_form=null)
+    public function update_kode_akun($uuid_jurnal_kas = null, $proses_form = null)
     {
         // print_r("update_kode_akun_penerimaan");
         // print_r("<br/>");
@@ -140,12 +205,11 @@ class Jurnal_kas extends CI_Controller
 
         $this->Jurnal_kas_model->update_kode_akun_per_uuid_jurnal_kas($Data_jurnal_penerimaan_kas->id, $data);
 
-        if($proses_form=="penerimaan"){
+        if ($proses_form == "penerimaan") {
             redirect(site_url('Jurnal_kas/Jurnal_penerimaan_kas'));
-        }else{
+        } else {
             redirect(site_url('Jurnal_kas/Jurnal_pengeluaran_kas'));
         }
-        
     }
 
 
