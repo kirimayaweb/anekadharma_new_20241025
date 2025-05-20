@@ -29,7 +29,8 @@ class Jurnal_kas extends CI_Controller
 
 
 		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-		// print_r($Get_date_akhir);
+		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+		// print_r($Get_month);
 		// print_r("<br/>");
 
 		// die;
@@ -47,6 +48,7 @@ class Jurnal_kas extends CI_Controller
             // 'start' => $start,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
         );
 
         // print_r($data);
@@ -66,12 +68,14 @@ class Jurnal_kas extends CI_Controller
 
         if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
             $Get_date_akhir = date("Y-m-d 00:00:00");
+            $Get_month_akhir = date("m");
         } else {
             $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
         }
 
 
-
+        
 
 
 		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
@@ -85,6 +89,7 @@ class Jurnal_kas extends CI_Controller
             // 'start' => $start,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
         );
 
         // print_r($data);
