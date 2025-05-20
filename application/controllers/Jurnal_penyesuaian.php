@@ -12,7 +12,7 @@ class Jurnal_penyesuaian extends CI_Controller
         $this->load->library('form_validation');
     }
 
-    public function index()
+    public function index_BU()
     {
         $q = urldecode($this->input->get('q', TRUE));
         $start = intval($this->input->get('start'));
@@ -41,6 +41,49 @@ class Jurnal_penyesuaian extends CI_Controller
             'start' => $start,
         );
         $this->load->view('jurnal_penyesuaian/jurnal_penyesuaian_list', $data);
+    }
+
+
+    public function index(){
+
+        // $Data_kas = $this->Jurnal_kas_model->get_all();
+        // $start = 0;
+
+        // print_r($Data_kas);
+
+
+		$Get_date_awal = date("Y-m-1 00:00:00");
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+
+
+		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+		// print_r($Get_month);
+		// print_r("<br/>");
+
+		// die;
+
+
+
+		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+
+		$Data_kas = $this->db->query($sql)->result();
+
+
+
+        $data = array(
+            'Data_kas' => $Data_kas,
+            // 'start' => $start,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
+        );
+
+        // print_r($data);
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);
+
     }
 
     public function read($id) 
