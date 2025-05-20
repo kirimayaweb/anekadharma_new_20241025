@@ -101,16 +101,80 @@ class Jurnal_kas extends CI_Controller
     public function Jurnal_penerimaan_kas()
     {
 
-        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0";
-        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+
+
+		$Get_date_awal = date("Y-m-1 00:00:00");
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+
+
+		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+		// print_r($Get_month);
+		// print_r("<br/>");
+
+		// die;
+
+
+
+		$sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
         $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
 
         $data = array(
             'Data_kas' => $Data_kas,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
     }
+
+
+    public function Jurnal_penerimaan_kas_cari_between_date(){
+
+        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+            // $Get_date_awal = date("Y-m-d 00:00:00");
+            $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+        } else {
+            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+        }
+
+        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+            $Get_date_akhir = date("Y-m-d 00:00:00");
+            $Get_month_akhir = date("m");
+        } else {
+            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
+        }
+
+
+        
+		$sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+        $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
+
+
+        $data = array(
+            'Data_kas' => $Data_kas,
+            // 'start' => $start,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
+        );
+
+        // print_r($data);
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
+    
+    }
+
+
 
     public function Jurnal_pengeluaran_kas()
     {
