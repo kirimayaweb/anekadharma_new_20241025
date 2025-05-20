@@ -65,7 +65,7 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="row">
-                                    <div class="col-1" align="left">
+                                    <div class="col-2" align="left">
                                         <div class="col-12" text-align="center"> <strong>JURNAL KAS</strong></div>
                                     </div>
                                     <div class="col-3" align="left">
@@ -129,9 +129,9 @@
 
                                     </div>
 
-                                    <div class="col-2" align="right">
+                                    <div class="col-1" align="right">
 
-                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak', 'class="btn btn-success"'); ?>
                                     </div>
 
 
