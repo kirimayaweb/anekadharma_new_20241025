@@ -28,6 +28,68 @@
     <section class="content">
 
 
+    <?php
+        // echo $date_awal; 
+        // echo "<br/>";
+
+        if (date("Y", strtotime($date_awal)) < 2020) {
+            $Get_date_awal = date("d-m-Y");
+        } else {
+            $Get_date_awal = date("d-m-Y", strtotime($date_awal));
+        }
+
+        // echo $Get_date_awal;
+        // echo "<br/>";
+        // echo "<br/>";
+
+
+        // echo $date_akhir; 
+        // echo "<br/>";
+
+        if (date("Y", strtotime($date_akhir)) < 2020) {
+            $Get_date_akhir = date("d-m-Y");
+        } else {
+            $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
+        }
+
+        // echo $Get_date_akhir;
+        // echo "<br/>";
+        // echo "<br/>";
+
+        function bulan_teks($angka_bulan)
+        {
+            if ($angka_bulan == 1) {
+                $bulan_teks = "Januari";
+            } elseif ($angka_bulan == 2) {
+                $bulan_teks = "Februari";
+            } elseif ($angka_bulan == 3) {
+                $bulan_teks = "Maret";
+            } elseif ($angka_bulan == 4) {
+                $bulan_teks = "April";
+            } elseif ($angka_bulan == 5) {
+                $bulan_teks = "Mei";
+            } elseif ($angka_bulan == 6) {
+                $bulan_teks = "Juni";
+            } elseif ($angka_bulan == 7) {
+                $bulan_teks = "Juli";
+            } elseif ($angka_bulan == 8) {
+                $bulan_teks = "Agustus";
+            } elseif ($angka_bulan == 9) {
+                $bulan_teks = "September";
+            } elseif ($angka_bulan == 10) {
+                $bulan_teks = "Oktober";
+            } elseif ($angka_bulan == 11) {
+                $bulan_teks = "November";
+            } elseif ($angka_bulan == 12) {
+                $bulan_teks = "Desember";
+            } else {
+                $bulan_teks = "";
+            }
+            return $bulan_teks;
+        }
+
+        ?>
+
 
         <div class="box box-warning box-solid">
 
@@ -41,17 +103,51 @@
                                     <div class="col-4" align="left">
                                         <div class="col-12" text-align="center"> <strong>JURNAL PENGELUARAN KAS</strong></div>
                                     </div>
-                                    <div class="col-2" align="left">
-                                        <?php //echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'Pemasukan Kas', 'class="btn btn-danger"');
+                                    
+                                    <div class="col-6" align="left">
+                                        <?php
+                                    $action_cari_between_date = site_url('Jurnal_kas/Jurnal_pengeluaran_kas_cari_between_date');
                                         ?>
 
-                                    </div>
-                                    <div class="col-2" align="left">
+                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                            <div class="row">
 
-                                        <?php //echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Pengeluaran Kas', 'class="btn btn-success"');
-                                        ?>
+                                                <div class="col-md-1" text-align="right" align="right"></div>
+
+                                                <div class="col-md-3" text-align="right">
+                                                    <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
+                                                        <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-1" text-align="center" align="center">s/d</div>
+
+                                                <div class="col-md-3" text-align="left" align="left">
+                                                    <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
+                                                        <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
+                                                            <div class="input-group-text">
+                                                                <i class="fa fa-calendar"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-2" text-align="left" align="left">
+                                                    <strong>
+                                                        <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                    </strong>
+                                                </div>
+
+                                            </div>
+                                        </form>
                                     </div>
-                                    <div class="col-4" align="right">
+                                    <div class="col-2" align="right">
 
                                         <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
                                         ?>
