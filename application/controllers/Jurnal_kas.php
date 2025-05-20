@@ -37,7 +37,7 @@ class Jurnal_kas extends CI_Controller
 
 
 
-		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
 
 		$Data_kas = $this->db->query($sql)->result();
 
