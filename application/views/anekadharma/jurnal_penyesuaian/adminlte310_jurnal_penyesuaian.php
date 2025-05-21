@@ -334,7 +334,7 @@
 <!-- MODAL -->
 
 <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-<?php $action_simpan = "Jurnal_penyesuaian/Simpan_input_data" ?>
+<?php $action_simpan = "Simpan_input_data" ?>
 <form action="<?php echo $action_simpan; ?>" method="post">
     <div class="modal fade" id="modal_input_jurnal_penyesuaian<?php //echo $list_data->id 
                                                                 ?>">
