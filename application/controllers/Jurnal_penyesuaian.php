@@ -186,7 +186,7 @@ class Jurnal_penyesuaian extends CI_Controller
 
             $this->Jurnal_penyesuaian_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('jurnal_penyesuaian'));
+            redirect(site_url('jurnal_penyesuaian/cari_between_date'));
         }
     }
 
