@@ -334,7 +334,7 @@
 <!-- MODAL -->
 
 <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-<?php $action_simpan = "Simpan_input_data" ?>
+<?php $action_simpan = "Jurnal_penyesuaian/Simpan_input_data" ?>
 <form action="<?php echo $action_simpan; ?>" method="post">
     <div class="modal fade" id="modal_input_jurnal_penyesuaian<?php //echo $list_data->id 
                                                                 ?>">
@@ -386,7 +386,7 @@
                             <div class="row">
 
                                 <div class="col-4">
-                                    <label for="supplier_nama">Kode Akun : <strong><?php echo "SPOP:" . $spop; ?> </strong></label>
+                                    <label for="supplier_nama">Kode Akun :  </strong></label>
 
                                     <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
 

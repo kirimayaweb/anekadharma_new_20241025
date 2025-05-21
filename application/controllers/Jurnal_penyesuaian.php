@@ -67,7 +67,7 @@ class Jurnal_penyesuaian extends CI_Controller
 
 
 
-        $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
 
         $Data_kas = $this->db->query($sql)->result();
 
@@ -186,7 +186,7 @@ class Jurnal_penyesuaian extends CI_Controller
 
             $this->Jurnal_penyesuaian_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('jurnal_penyesuaian/cari_between_date'));
+            redirect(site_url('Jurnal_penyesuaian'));
         }
     }
 
