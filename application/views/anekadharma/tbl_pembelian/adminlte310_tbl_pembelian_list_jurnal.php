@@ -30,10 +30,12 @@
                         <div class="row">
                             <div class="col-3" text-align="left"> <strong>DATA PEMBELIAN</strong></div>
                             <div class="col-6" text-align="left" align="left">
-                                <?php //echo anchor(site_url('tbl_pembelian/jurnal_pembelian2_cekBelumAdaKodeAkun'), 'Pembelian Belum Ada Kode Akun', 'class="btn btn-danger"'); ?>
+                                <?php //echo anchor(site_url('tbl_pembelian/jurnal_pembelian2_cekBelumAdaKodeAkun'), 'Pembelian Belum Ada Kode Akun', 'class="btn btn-danger"'); 
+                                ?>
                             </div>
                             <div class="col-2" text-align="right" align="right">
-                                <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                ?>
                             </div>
                         </div>
 
@@ -48,7 +50,7 @@
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
                                     <th style="text-align:center">Kode Akun</th>
-                                    <th style="text-align:center">Spop <br/> Tgl PO</th>
+                                    <th style="text-align:center">Spop <br /> Tgl PO</th>
                                     <!-- <th style="text-align:center">Kode Akun</th> -->
                                     <th style="text-align:center">No. faktur/ kwitansi</th>
                                     <th style="text-align:center">Supplier</th>
@@ -106,18 +108,28 @@
                                                 ?>
 
                                             </td>
-                                            <td><?php echo $compare_spop;  ?></td>
-                                            <!-- <td><?php //echo "Kode Akun 1"; ?></td> -->
-                                            <td></td>
+                                            <td style="background-color:yellow;" align="left">
+                                                <?php 
+                                                // "<strong> SPOP: " . $list_data->spop . "</strong>"
+                                                echo "<strong> SPOP: " . $compare_spop . "</strong>";  
+                                                // echo "<br/>";
+                                                // echo date("d M Y", strtotime($list_data->tgl_po));
+
+                                                
+                                                ?>
+                                                </td>
+                                            <!-- <td><?php //echo "Kode Akun 1"; 
+                                                        ?></td> -->
+                                            <td style="background-color:yellow;" align="right"></td>
                                             <!-- <td></td> -->
                                             <!-- <td></td> -->
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
+                                            <td style="background-color:yellow;" align="right"></td>
                                             <td style="background-color:yellow;" align="right">
                                                 <?php
                                                 // echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>"; 
@@ -186,8 +198,8 @@
                                                     // echo "jghjghjghhhhh";
                                                 } else {
                                                     // echo "oooooooooooo";
-                                                    echo date("d M Y", strtotime($list_data->tgl_po));
-                                                    echo "<br/>";
+                                                    // echo date("d M Y", strtotime($list_data->tgl_po));
+                                                    // echo "<br/>";
 
                                                     // User : Pembelian
                                                     // echo anchor(site_url('tbl_pembelian/create_add_uraian_update/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
@@ -197,15 +209,22 @@
                                                     // echo anchor(site_url('Tbl_pembelian/delete_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS SPOP</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Anda Yakin akan Menghapus data SPOP ini?\')"');
 
                                                     // User : Accounting
-                                                    
+
                                                     // echo "Kode Akun 2 barang ke 2 dst";
-    
+
 
                                                 }
                                                 ?>
                                             </td>
-                                            <td><?php echo "<strong> SPOP: ".$list_data->spop."</strong>"; ?></td>
-                                            <!-- <td><?php //echo "kode akun 3"; ?></td> -->
+                                            <td>
+                                                <?php 
+                                                echo "SPOP: " . $list_data->spop ; 
+                                                echo "<br/>";
+                                                echo date("d M Y", strtotime($list_data->tgl_po));
+                                                ?>
+                                                </td>
+                                            <!-- <td><?php //echo "kode akun 3"; 
+                                                        ?></td> -->
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
 
 
@@ -221,7 +240,17 @@
                                         ?>
                                             <td><?php echo ++$start ?></td>
                                             <td><?php
-                                                echo date("d M Y", strtotime($list_data->tgl_po));
+
+
+
+                                                if ($list_data->kode_akun) {
+                                                    echo "Kode Akun: " . $list_data->kode_akun;
+                                                    echo "<br/>";
+                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                } else {
+                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                }
+
                                                 // echo "<br/>";
 
                                                 // User : Pembelian
@@ -235,8 +264,8 @@
 
                                                 // echo "Kode akun 4 Barang Pertama";
                                                 // Cek di record pertama dari spop, apakah field kode akun sudah ada isi ? , jika belum tampilkan tombol modal
-                                                
-                                                
+
+
 
                                                 ?>
 
@@ -244,22 +273,15 @@
                                             </td>
                                             <td align="left">
                                                 <?php
-                                                echo "<strong> SPOP: ".$list_data->spop."</strong>";
+                                                echo "SPOP: " . $list_data->spop ;
                                                 echo "<br/>";
                                                 // echo date("d M Y", strtotime($list_data->tgl_po));
 
-
-                                                if ($list_data->kode_akun) {
-                                                    echo "Kode Akun: " . $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                }else{
-                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
+                                                echo date("d M Y", strtotime($list_data->tgl_po));
 
                                                 $x_button = $x_button + 1;
-                                                
-                                                
+
+
                                                 // echo "  ";
                                                 // if ($list_data->status_spop) {
                                                 //     echo anchor(site_url('tbl_pembelian/update_status_per_spop/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->status_spop . '</i>', 'class="btn btn-success btn-xs"');
@@ -270,7 +292,8 @@
                                                 ?>
                                             </td>
 
-                                            <!-- <td align="center"><?php //echo "kode AKun 5"; ?></td> -->
+                                            <!-- <td align="center"><?php //echo "kode AKun 5"; 
+                                                                    ?></td> -->
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
 
                                             <td align="left"><?php echo $list_data->supplier_nama; ?></td>
@@ -363,8 +386,20 @@
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td><?php echo "<strong> SPOP: ".$list_data->spop."</strong>"; ?></td>
-                                    <!-- <td><?php //echo "Kode akun 6"; ?></td> -->
+                                    <td style="background-color:yellow;" align="right">
+                                        <?php
+                                        echo "<strong> SPOP: " . $list_data->spop . "</strong>";
+                                        echo "<br/>";
+                                        // echo date("d M Y", strtotime($list_data->tgl_po));
+
+                                        echo date("d M Y", strtotime($list_data->tgl_po));
+
+                                        ?>
+
+
+                                    </td>
+                                    <!-- <td><?php //echo "Kode akun 6"; 
+                                                ?></td> -->
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -432,7 +467,7 @@
                             </tbody>
 
                             <!-- tfoot -->
-                        
+
                             <tfoot>
                                 <tr>
                                     <th></th>
@@ -484,11 +519,11 @@
                                 </tr>
                             </tfoot>
 
-                        
-                        
+
+
                             <!-- end of tfoot -->
-                        
-                        
+
+
                         </table>
                     </div>
                     <!-- /.card-body -->
