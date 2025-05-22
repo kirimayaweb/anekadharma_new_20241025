@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>Pemasukan Jurnal Kas</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>Bebet ( BKM )</strong></div>
                                 </div>
 
 
@@ -73,7 +73,7 @@
                                         <?php
 
                                         if ($this->input->post('tanggal', TRUE)) {
-                                            $get_tanggal=date("d-m-Y", strtotime($tanggal));
+                                            $get_tanggal = date("d-m-Y", strtotime($tanggal));
                                         } else {
                                             $get_tanggal = date("Y-m-d H:i:s");
                                         }
@@ -91,29 +91,78 @@
 
                                         </div>
                                     </div>
-                                
+
                                     <div class="col-3">
                                         <label for="bukti">Bukti <?php echo form_error('bukti') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="bukti" id="bukti" placeholder="bukti" value="<?php echo $bukti; ?>" >
-                                    </div>
-                                
-                                    <div class="col-2">
-                                        <label for="pl">PL <?php echo form_error('pl') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="PL" value="<?php echo $pl; ?>" >
-                                    </div>
-                                
-                                    <div class="col-3">
-                                        <label for="double">Debet <?php echo form_error('debet') ?></label>
-                                        <input type="text" class="form-control" name="debet" id="debet" placeholder="Debet" value="<?php echo $debet; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required/>
+                                        <!-- <input type="text" class="form-control" rows="3" name="bukti" id="bukti" placeholder="bukti" value="<?php //echo $bukti; 
+                                                                                                                                                    ?>" > -->
+
+                                        <select name="bukti" id="bukti" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+                                            <?php
+                                            if ($bukti) {
+                                                ?>
+                                                <option value="<?php echo $bukti; ?>">"<?php echo $bukti; ?>"</option>
+                                                <option value="BKM">BKM</option>
+                                                <option value="BKK">BKK</option>
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">Pilih Bukti</option>
+                                                <option value="BKM">BKM</option>
+                                                <option value="BKK">BKK</option>
+                                            <?php
+                                            }
+                                            ?>
+
+                                        </select>
 
                                     </div>
+
+                                    <!-- <div class="col-2">
+                                        <label for="pl">PL <?php //echo form_error('pl') ?></label>
+                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="PL" value="<?php //echo $pl; ?>">
+                                    </div> -->
+
                                     <div class="col-2">
-                                        <label for="kode_rekening">Kode rekening <?php echo form_error('kode_rekening') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" value="<?php echo $kode_rekening; ?>" >
+                                        <!-- <label for="kode_rekening">Kode <?php echo form_error('kode_rekening') ?></label> -->
+                                        <!-- <input type="text" class="form-control" rows="3" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" value="<?php echo $kode_rekening; ?>" > -->
+
+
+                                        <label for="unit_nama">Kode <?php //echo form_error('unit') 
+                                                                    ?></label>
+                                        <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                            <option value="">Pilih Unit</option>
+                                            <?php
+
+                                            $sql = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                echo "<option value='$m->uuid_unit' ";
+                                                echo ">  " . strtoupper($m->kode_unit) . " [ " . strtoupper($m->nama_unit)  . " ]</option>";
+                                            }
+
+                                            ?>
+                                        </select>
+
                                     </div>
+                                    
+                                    <div class="col-3">
+                                        <label for="double">Nominal <?php echo form_error('debet') ?></label>
+                                        <input type="text" class="form-control" name="nominal" id="nominal" placeholder="nominal" value="<?php 
+                                        //echo $debet; 
+                                        if($bukti=="BKM"){
+                                            echo $debet;
+                                        }else{
+                                            echo $kredit;
+                                        }
+                                        
+                                        ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required />
+
+                                    </div>
+                                    
                                 </div>
                             </div>
-                          
+
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-2">
@@ -172,7 +221,7 @@
 
 
 
-                      
+
 
 
                         </form>

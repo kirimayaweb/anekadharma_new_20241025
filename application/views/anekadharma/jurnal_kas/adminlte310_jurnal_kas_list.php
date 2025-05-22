@@ -1,5 +1,3 @@
-
-
 <div class="content-wrapper">
 
 
@@ -22,7 +20,15 @@
     <section class="content">
 
 
-    <?php
+        <?php
+
+
+
+        $Get_month_from_date = $month_selected;
+        $Get_year_Tahun_ini = $year_selected;
+        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+
+
         // echo $date_awal; 
         // echo "<br/>";
 
@@ -95,15 +101,15 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="row">
-                                    <div class="col-2" align="left">
-                                        <div class="col-12" text-align="center"> <strong>JURNAL KAS</strong></div>
-                                    </div>
                                     <div class="col-3" align="left">
-                                        
-                                        <?php echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'Pemasukan Kas', 'class="btn btn-danger"');
+                                        <div class="col-12" text-align="center"> <strong>JURNAL KAS</strong> <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?> </div>
+                                    </div>
+                                    <div class="col-2" align="left">
+
+                                        <?php echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'INPUT DATA', 'class="btn btn-danger"');
                                         ?>
 
-                                        <?php echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Pengeluaran Kas', 'class="btn btn-success"');
+                                        <?php //echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Kredit ( BKK )', 'class="btn btn-success"');
                                         ?>
 
                                     </div>
@@ -114,12 +120,12 @@
                                     </div> -->
 
                                     <div class="col-6" align="right">
-                                    
-                                        <?php
-                                        $action_cari_between_date = site_url('Jurnal_kas/cari_between_date');
+
+                                        <!-- <?php
+                                        // $action_cari_between_date = site_url('Jurnal_kas/cari_between_date');
                                         ?>
 
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                        <form action="<?php //echo $action_cari_between_date; ?>" method="post">
                                             <div class="row">
 
                                                 <div class="col-md-1" text-align="right" align="right"></div>
@@ -157,6 +163,26 @@
                                             </div>
                                         </form>
 
+
+                                        <br /> -->
+
+
+                                        <?php
+                                        $action_cari_between_date = site_url('Jurnal_kas/cari_between_date');
+                                        ?>
+
+                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                            <div class="row">
+                                                <div class="col-md-4" text-align="right" align="right">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns">
+                                                </div>
+                                                <div class="col-md-2" text-align="left" align="left">
+                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                </div>
+
+                                            </div>
+                                        </form>
+
                                     </div>
 
                                     <div class="col-1" align="right">
@@ -182,9 +208,9 @@
                                     <th style="text-align:left" width="10px">No</th>
                                     <th style="text-align:left">Tanggal</th>
                                     <th style="text-align:left">Bukti</th>
-                                    <th style="text-align:left">PL</th>
+                                    <!-- <th style="text-align:left">PL</th> -->
                                     <th style="text-align:left">Keterangan</th>
-                                    <th style="text-align:left">Kode Rekening</th>
+                                    <th style="text-align:left">Kode</th>
                                     <th style="text-align:right">debet</th>
                                     <th style="text-align:right">Kredit</th>
                                     <!-- <th style="text-align:center">Action</th> -->
@@ -228,10 +254,10 @@
                                             echo $list_data->bukti;
                                             ?>
                                         </td>
-                                        <td><?php
-                                            echo $list_data->pl;
-                                            ?>
-                                        </td>
+                                        <!-- <td><?php
+                                                    // echo $list_data->pl;
+                                                    ?>
+                                        </td> -->
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
@@ -239,7 +265,7 @@
                                         </td>
                                         <td align="left">
                                             <?php
-                                            echo $list_data->kode_rekening;
+                                            echo $list_data->kode_unit;
                                             ?>
                                         </td>
 
@@ -292,7 +318,7 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th> -->
-                                    <th colspan="6" style="text-align:right"> JUMLAH DEBET / KREDIT </th>
+                                    <th colspan="5" style="text-align:right"> JUMLAH DEBET / KREDIT </th>
                                     <th style="text-align:right">
                                         <?php
                                         echo number_format($TOTAL_debet, 2, ',', '.');
@@ -314,8 +340,8 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th> -->
-                                    <th colspan="6" style="text-align:right">Saldo akhir Kas Bulan 
-                                        <?php echo bulan_teks($month_akhir) ?> 
+                                    <th colspan="5" style="text-align:right">Saldo akhir Kas Bulan
+                                        <?php echo bulan_teks($month_akhir) ?>
                                     </th>
                                     <th style="text-align:right">
                                         <?php
@@ -339,7 +365,7 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th> -->
-                                    <th colspan="6" style="text-align:right">JUMLAH SEIMBANG </th>
+                                    <th colspan="5" style="text-align:right">JUMLAH SEIMBANG </th>
                                     <th style="text-align:right">
                                         <?php
 

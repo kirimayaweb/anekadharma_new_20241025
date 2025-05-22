@@ -23,23 +23,23 @@ class Jurnal_kas extends CI_Controller
         // print_r($Data_kas);
 
 
-		$Get_date_awal = date("Y-m-1 00:00:00");
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
+        $Get_date_awal = date("Y-m-1 00:00:00");
+        // print_r($Get_date_awal);
+        // print_r("<br/>");
 
 
-		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-		// print_r($Get_month);
-		// print_r("<br/>");
+        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+        // print_r($Get_month);
+        // print_r("<br/>");
 
-		// die;
+        // die;
 
 
 
-		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+        $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
 
-		$Data_kas = $this->db->query($sql)->result();
+        $Data_kas = $this->db->query($sql)->result();
 
 
 
@@ -57,30 +57,45 @@ class Jurnal_kas extends CI_Controller
     }
 
 
-    public function cari_between_date(){
-
-        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-            // $Get_date_awal = date("Y-m-d 00:00:00");
-            $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-        } else {
-            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
-        }
-
-        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-            $Get_date_akhir = date("Y-m-d 00:00:00");
-            $Get_month_akhir = date("m");
-        } else {
-            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
-        }
+    public function cari_between_date()
+    {
 
 
-        
+        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+
+        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
+
+        $Data_kas = $this->db->query($sql)->result();
 
 
-		$sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
 
-		$Data_kas = $this->db->query($sql)->result();
+    
+
+        // ------------------------------------------------------------------------------
+
+        // if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+        //     // $Get_date_awal = date("Y-m-d 00:00:00");
+        //     $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+        // } else {
+        //     $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+        // }
+
+        // if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+        //     $Get_date_akhir = date("Y-m-d 00:00:00");
+        //     $Get_month_akhir = date("m");
+        // } else {
+        //     $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+        //     $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
+        // }
+
+
+
+
+
+        // $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+
+        // $Data_kas = $this->db->query($sql)->result();
 
 
 
@@ -90,31 +105,32 @@ class Jurnal_kas extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
+            'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
         );
 
         // print_r($data);
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
-    
     }
 
     public function Jurnal_penerimaan_kas()
     {
 
-		$Get_date_awal = date("Y-m-1 00:00:00");
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
+        $Get_date_awal = date("Y-m-1 00:00:00");
+        // print_r($Get_date_awal);
+        // print_r("<br/>");
 
-		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-		// print_r($Get_month);
-		// print_r("<br/>");
+        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+        // print_r($Get_month);
+        // print_r("<br/>");
 
-		// die;
+        // die;
 
 
 
-		$sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
         // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
@@ -130,7 +146,8 @@ class Jurnal_kas extends CI_Controller
     }
 
 
-    public function Jurnal_penerimaan_kas_cari_between_date(){
+    public function Jurnal_penerimaan_kas_cari_between_date()
+    {
 
         if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
             // $Get_date_awal = date("Y-m-d 00:00:00");
@@ -148,8 +165,8 @@ class Jurnal_kas extends CI_Controller
         }
 
 
-        
-		$sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
         // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
@@ -167,7 +184,6 @@ class Jurnal_kas extends CI_Controller
         // print_r($data);
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
-    
     }
 
 
@@ -176,20 +192,20 @@ class Jurnal_kas extends CI_Controller
     {
 
 
-		$Get_date_awal = date("Y-m-1 00:00:00");
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
+        $Get_date_awal = date("Y-m-1 00:00:00");
+        // print_r($Get_date_awal);
+        // print_r("<br/>");
 
-		$Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-		$Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-		// print_r($Get_month);
-		// print_r("<br/>");
+        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+        // print_r($Get_month);
+        // print_r("<br/>");
 
-		// die;
+        // die;
 
 
 
-		$sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
+        $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
 
         // $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
 
@@ -204,7 +220,8 @@ class Jurnal_kas extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas', $data);
     }
 
-    public function Jurnal_pengeluaran_kas_cari_between_date(){
+    public function Jurnal_pengeluaran_kas_cari_between_date()
+    {
 
         if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
             // $Get_date_awal = date("Y-m-d 00:00:00");
@@ -222,8 +239,8 @@ class Jurnal_kas extends CI_Controller
         }
 
 
-        
-		$sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
+
+        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
         // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
 
@@ -241,7 +258,6 @@ class Jurnal_kas extends CI_Controller
         // print_r($data);
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas', $data);
-    
     }
 
 
@@ -381,26 +397,68 @@ class Jurnal_kas extends CI_Controller
             $this->pemasukan_kas();
         } else {
 
-
-
-
-
             if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
                 $date_jurnal_kas = date("Y-m-d H:i:s");
             } else {
                 $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
             }
 
+            // unIT
+            $this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+            $sys_unit_data = $this->db->get('sys_unit');
 
-            $data = array(
-                'tanggal' => $date_jurnal_kas,
-                'bukti' => $this->input->post('bukti', TRUE),
-                'pl' => $this->input->post('pl', TRUE),
-                'keterangan' => $this->input->post('keterangan', TRUE),
-                'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
-                // 'kredit' => $this->input->post('kredit', TRUE),
-            );
+
+
+            if ($sys_unit_data->num_rows() > 0) {
+
+                $Get_unit_data = $sys_unit_data->row_array();
+
+                // $Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+                $Get_kode_unit = $Get_unit_data['kode_unit'];
+                // $Get_nama_unit = $Get_unit_data['nama_unit'];
+            }
+
+
+            // print_r($this->input->post('uuid_unit', TRUE));
+            // print_r("<br/>");
+            // print_r($sys_unit_data);
+            // print_r("<br/>");
+            // print_r("<br/>");
+            // print_r($Get_unit_data['kode_unit']);
+            // print_r("<br/>");
+            // print_r("<br/>");
+            // print_r($Get_kode_unit);
+            // print_r("<br/>");
+
+            // die;
+
+            if ($this->input->post('bukti', TRUE) == "BKM") {
+                $data = array(
+                    'tanggal' => $date_jurnal_kas,
+                    'bukti' => $this->input->post('bukti', TRUE),
+                    // 'pl' => $this->input->post('pl', TRUE),
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                    'uuid_unit' => $this->input->post('uuid_unit', TRUE),
+                    'kode_unit' => $Get_kode_unit,
+                    'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
+                    // 'kredit' => $this->input->post('kredit', TRUE),
+                );
+            } else {
+                $data = array(
+                    'tanggal' => $date_jurnal_kas,
+                    'bukti' => $this->input->post('bukti', TRUE),
+                    // 'pl' => $this->input->post('pl', TRUE),
+                    'keterangan' => $this->input->post('keterangan', TRUE),
+                    // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                    'uuid_unit' => $this->input->post('uuid_unit', TRUE),
+                    'kode_unit' => $Get_kode_unit,
+                    // 'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
+                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
+                );
+            }
+
+
 
             $this->Jurnal_kas_model->insert($data);
 
@@ -737,7 +795,7 @@ class Jurnal_kas extends CI_Controller
         // $this->form_validation->set_rules('bukti', 'bukti', 'trim|required');
         $this->form_validation->set_rules('keterangan', 'keterangan', 'trim|required');
         // $this->form_validation->set_rules('kode_rekening', 'kode rekening', 'trim|required');
-        $this->form_validation->set_rules('debet', 'debet', 'trim|required');
+        $this->form_validation->set_rules('nominal', 'nominal', 'trim|required');
         // $this->form_validation->set_rules('kredit', 'kredit', 'trim|required');
 
         // $this->form_validation->set_rules('nomor', 'nomor', 'trim');
