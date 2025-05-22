@@ -19,6 +19,72 @@
 
     <section class="content">
 
+        <?php
+
+        $Get_month_from_date = $month_selected;
+        $Get_year_Tahun_ini = $year_selected;
+        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+        // $futureDate=date('Y', strtotime('-1 year'));
+
+        // if (date("Y", strtotime($date_awal)) < 2020) {
+        //     $Get_date_awal = date("d-m-Y");
+        // } else {
+        //     $Get_date_awal = date("d-m-Y", strtotime($date_awal));
+        // }
+
+        // if (date("Y", strtotime($date_akhir)) < 2020) {
+        //     $Get_date_akhir = date("d-m-Y");
+        // } else {
+        //     $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
+        // }
+
+        function bulan_teks($angka_bulan)
+        {
+            if ($angka_bulan == 1) {
+                $bulan_teks = "Januari";
+            } elseif ($angka_bulan == 2) {
+                $bulan_teks = "Februari";
+            } elseif ($angka_bulan == 3) {
+                $bulan_teks = "Maret";
+            } elseif ($angka_bulan == 4) {
+                $bulan_teks = "April";
+            } elseif ($angka_bulan == 5) {
+                $bulan_teks = "Mei";
+            } elseif ($angka_bulan == 6) {
+                $bulan_teks = "Juni";
+            } elseif ($angka_bulan == 7) {
+                $bulan_teks = "Juli";
+            } elseif ($angka_bulan == 8) {
+                $bulan_teks = "Agustus";
+            } elseif ($angka_bulan == 9) {
+                $bulan_teks = "September";
+            } elseif ($angka_bulan == 10) {
+                $bulan_teks = "Oktober";
+            } elseif ($angka_bulan == 11) {
+                $bulan_teks = "November";
+            } elseif ($angka_bulan == 12) {
+                $bulan_teks = "Desember";
+            } else {
+                $bulan_teks = "";
+            }
+            return $bulan_teks;
+        }
+
+        ?>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <div class="box box-warning box-solid">
 
             <div class="col-md-12">
@@ -28,61 +94,40 @@
                         <div class="row">
                             <div class="col-3">
                                 <div class="row">
-                                    <strong>NERACA SALDO</strong>
+                                    <strong>NERACA SALDO <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?></strong>
+
+
+
+
                                 </div>
                             </div>
 
                             <div class="col-md-6">
 
+
                                 <?php
                                 // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
-                                $action_cari_between_date = site_url('neraca_saldo');
+                                $action_cari_between_date = site_url('Neraca_saldo/Cari_bulan_data');
                                 ?>
 
                                 <form action="<?php echo $action_cari_between_date; ?>" method="post">
                                     <div class="row">
-
-                                        <div class="col-md-1" text-align="right" align="right"></div>
-
-                                        <div class="col-md-3" text-align="right">
-                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div class="col-md-4" text-align="right" align="right">
+                                            <input type="month" id="bulan_ns" name="bulan_ns">
                                         </div>
-
-                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                        <div class="col-md-3" text-align="left" align="left">
-                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
                                         <div class="col-md-2" text-align="left" align="left">
-                                            <strong>
-                                                <button type="submit" class="btn btn-danger btn-block btn-flat" disabled><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                            </strong>
+                                            <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                         </div>
 
                                     </div>
                                 </form>
 
+
+
+
                             </div>
 
 
-                            <div class="col-2" text-align="left" align="left">
-                                <!-- <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button> -->
-                            </div>
 
                         </div>
 
@@ -101,9 +146,10 @@
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
+                                    <th rowspan="2" style="text-align:center" width="10px">Tanggal</th>
                                     <th rowspan="2" style="text-align:center">Kode Rek.</th>
                                     <th rowspan="2" style="text-align:center">Uraian</th>
-                                    <th colspan="2" style="text-align:center">NERACA SALDO 1 JANUARI 2023</th>
+                                    <th colspan="2" style="text-align:center">NERACA SALDO 1 <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Setahun_lalu ?></th>
                                     <th colspan="2" style="text-align:center">PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">NS SETELAH PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">LABA/ RUGI</th>
@@ -134,6 +180,7 @@
 
                                     $Get_Kode_akun = $list_data->kode_akun;
 
+
                                     // // GET KODE AKUN DARI TABEL PEMBELIAN : terbayar sebagai kredit / pengeluaran
                                     // $sql_pembelian = "SELECT sum(tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit, tbl_pembelian.kode_akun as kode_akun
                                     // FROM tbl_pembelian    
@@ -142,6 +189,12 @@
 
                                     // // print_r($this->db->query($sql_pembelian)->result());
                                     // $Get_kode_akun_PEMBELIAN_kredit = $this->db->query($sql_pembelian)->row()->kredit;
+
+
+
+
+                                    // END OF  Cek di tabel neraca_saldo : masing-masing kode_akun , jika belum ada maka insert dulu
+
 
 
 
@@ -156,13 +209,101 @@
 
 
 
+                                    // CEK TABEL PEMBELIAN DAN PENJUALAN DENGAN KODE_AKUN YANG SESUAI, KEMUDIAN DI JUMLAHKAN
+
+                                    // PEMBELIAN
+                                    $sql_pembelian = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_pembelian_by_kode FROM `tbl_pembelian` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_po`)=$Get_month_from_date";
+
+                                    // /PENJUALAN
+                                    $sql_penjualan = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_penjualan_by_kode FROM `tbl_penjualan` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_jual`)=$Get_month_from_date";
+
+                                    // print_r($this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode);
+                                    // print_r("<br/>");
+                                    // print_r($this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode);
+                                    // print_r("<br/>");
+
+
+                                    // TOTAL DARI SEMUA DATA PER KODE AKUN : Mendapatkan nominal data dan di simpan ke tabel neraca_saldo
+                                    $GET_jumlah_data_PER_KODE_AKUN = $this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode + $this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
+
+
+                                    // print_r($GET_jumlah_data);
+                                    // print_r("<br/>");
+                                    // print_r("<br/>");
+                                    // print_r("<br/>");
+
+
+
+                                    // Cek di tabel neraca_saldo : masing-masing kode_akun , jika belum ada maka insert dulu
+
+                                    $sql_data = "SELECT * FROM `neraca_saldo` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tanggal`)=$Get_month_from_date";
+
+                                    $Get_data_record = $this->db->query($sql_data);
+
+                                    if ($Get_data_record->num_rows() > 0) {
+                                        $RECORD_data_per_kode_akun_bulan_ini = $Get_data_record->row();
+
+                                        // CEK FIELD DEBET PENYESUAIAN APAKAH SAMA DENGAN $GET_jumlah_data_PER_KODE_AKUN
+                                        if ($Get_data_record->row()->debet_penyesuaian == $GET_jumlah_data_PER_KODE_AKUN) {
+                                        } else {
+                                            // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
+                                            $data = array(
+                                                // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
+                                                // 'kode_akun' => $this->input->post('kode_akun', TRUE),
+                                                // 'nama_akun' => $this->input->post('nama_akun', TRUE),
+                                                // 'uraian' => $this->input->post('uraian', TRUE),
+                                                // 'group' => $this->input->post('group', TRUE),
+                                                // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
+                                                // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
+                                                'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
+                                                // 'kredit_penyesuaian' => $this->input->post('kredit_penyesuaian', TRUE),
+                                                // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
+                                                // 'kredit_ns_setelah_penyesuaian' => $this->input->post('kredit_ns_setelah_penyesuaian', TRUE),
+                                                // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
+                                                // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
+                                            );
+                                            // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
+                                            $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
+                                        }
+                                    } else {
+                                        // Proses insert record baru dengan kodeakun ini dan input data lengkap
+                                        $data = array(
+                                            // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
+                                            'tanggal' => date("Y-$month_selected-1"),
+                                            'kode_akun' => $Get_Kode_akun,
+                                            'nama_akun' => $list_data->nama_akun,
+                                            // 'uraian' => $this->input->post('uraian', TRUE),
+                                            // 'group' => $this->input->post('group', TRUE),
+                                            // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
+                                            // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
+                                            'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
+                                            // 'kredit_penyesuaian' => $this->input->post('kredit_penyesuaian', TRUE),
+                                            // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
+                                            // 'kredit_ns_setelah_penyesuaian' => $this->input->post('kredit_ns_setelah_penyesuaian', TRUE),
+                                            // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
+                                            // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
+                                        );
+
+                                        $this->Neraca_saldo_model->insert($data);
+                                    }
+
+                                    // print_r($Get_data_per_kode_akun_bulan_ini);
+
+                                    // kemudian isi data per field
+                                    $sql_data = "SELECT * FROM `neraca_saldo` WHERE `kode_akun`=$Get_Kode_akun AND MONTH(`tanggal`)=$Get_month_from_date";
+
+                                    $Get_data_record = $this->db->query($sql_data);
+                                    $Get_data_per_kode_akun_bulan_ini = $Get_data_record->row();
+
                                 ?>
                                     <tr>
                                         <td align="left"><?php echo ++$start; ?></td>
+                                        <td align="left"><?php echo $list_data->tanggal; ?></td>
 
                                         <td align="left">
                                             <?php
                                             echo $Get_Kode_akun;
+                                            // . " id" . $Get_data_per_kode_akun_bulan_ini->id
                                             ?>
                                         </td>
 
@@ -175,29 +316,59 @@
                                         </td>
 
                                         <!-- <td>debet_akhir_tahun_lalu</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            // echo $Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu;
+                                            if ($Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu > 0) {
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                                echo "<br/>";
+                                            }
+
+
+
                                             ?>
+
+                                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
+                                                Update Debet <?php //echo $list_data->id 
+                                                                ?>
+                                            </button>
+
                                         </td>
 
 
 
                                         <!-- <td>kredit_akhir_tahun_lalu</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $Get_kode_akun_PEMBELIAN_kredit;
+
+                                            if ($Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu, 2, ',', '.');
+                                                // echo $Get_kode_akun_PEMBELIAN_kredit;
+                                                echo "<br/>";
+                                            }
+
                                             ?>
+
+
+                                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
+                                                Update kredit <?php //echo $list_data->id 
+                                                                ?>
+                                            </button>
                                         </td>
 
 
                                         <!-- <td>debet_penyesuaian</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            if ($Get_data_per_kode_akun_bulan_ini->debet_penyesuaian > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->debet_penyesuaian;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->debet_penyesuaian, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                                echo "<br/>";
+                                            }
+                                            // print_r($GET_jumlah_data_PER_KODE_AKUN);
                                             ?>
                                         </td>
 
@@ -205,42 +376,61 @@
                                         <!-- <td>kredit_penyesuaian</td> -->
                                         <td align="right">
                                             <?php
-                                            // echo "kredit_penyesuaian";
-                                            echo number_format($Get_kode_akun_PENJUALAN_kredit, 2, ',', '.');
+                                            if ($Get_data_per_kode_akun_bulan_ini->kredit_penyesuaian > 0) {
+                                                // echo "kredit_penyesuaian";
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_penyesuaian, 2, ',', '.');
+                                            }
+
                                             ?>
                                         </td>
 
                                         <!-- <td>debet_ns_setelah_penyesuaian</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            if ($Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                            }
+
                                             ?>
                                         </td>
 
 
                                         <!-- <td>kredit_ns_setelah_penyesuaian</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            if ($Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                            }
+
                                             ?>
                                         </td>
 
                                         <!-- <td>debet_laba_rugi</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            if ($Get_data_per_kode_akun_bulan_ini->debet_laba_rugi > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->debet_laba_rugi;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->debet_laba_rugi, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                            }
+
                                             ?>
                                         </td>
 
 
                                         <!-- <td>kreditdebet_laba_rugi</td> -->
-                                        <td align="left">
+                                        <td align="right">
                                             <?php
-                                            echo "0";
-                                            // echo $list_data->kode_akun;
+                                            if ($Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi > 0) {
+                                                // echo $Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi;
+                                                echo number_format($Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi, 2, ',', '.');
+                                                // echo $list_data->kode_akun;
+                                            }
+
                                             ?>
                                         </td>
 
@@ -268,6 +458,172 @@
         </div>
     </section>
 </div>
+
+
+
+
+
+
+<!-- MODAL -->
+
+<!-- MODAL EXTRA LARGE UPDATE PER ID -->
+<?php $action_simpan = "Simpan_input_data" ?>
+<form action="<?php echo $action_simpan; ?>" method="post">
+    <div class="modal fade" id="modal_input_jurnal_penyesuaian<?php //echo $list_data->id 
+                                                                ?>">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">INPUT DATA PENYESUAIAN <?php //echo $list_data->id
+                                                                    ?></h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="form-group">
+
+
+
+                        <form action="<?php echo $action; ?>" method="post">
+                            <div class="row">
+                                <!-- <div class="col-6"> -->
+                                <div class="form-group">
+                                    <label for="datetime">Tanggal <?php echo form_error('tgl_po') ?></label>
+                                    <div class="col-3">
+                                        <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
+                                            <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
+                                            <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
+                                                <div class="input-group-text">
+                                                    <i class="fa fa-calendar"></i>
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!-- </dsiv> -->
+                                <div class="col-4">
+                                    <div class="form-group">
+                                        <label for="kode_pl">Kode Rekening:</label>
+                                        <div class="col-12">
+                                            <input type="text" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+
+                                <div class="col-4">
+                                    <label for="supplier_nama">Kode Akun : </strong></label>
+
+                                    <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+                                        <?php
+
+                                        if ($get_kode_akun) {
+                                            // Get Nama akun dari kode akun
+
+                                            $sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`='$get_kode_akun'";
+                                            $Get_nama_akun = $this->db->query($sql)->row()->nama_akun
+
+                                        ?>
+                                            <option value="<?php echo $get_kode_akun; ?>"><?php echo $get_kode_akun . " ==> " . $Get_nama_akun; ?></option>
+                                        <?php
+                                        } else {
+                                        ?>
+                                            <option value="">Pilih Kode Akun</option>
+                                        <?php
+                                        }
+                                        ?>
+
+
+                                        <?php
+
+                                        $sql = "select * from sys_kode_akun order by kode_akun ASC";
+
+
+                                        foreach ($this->db->query($sql)->result() as $m) {
+                                            // foreach ($data_produk as $m) {
+                                            echo "<option value='$m->kode_akun' ";
+                                            echo ">  " . strtoupper($m->kode_akun)  . " ==> " . strtoupper($m->nama_akun)  . "</option>";
+                                        }
+                                        ?>
+                                    </select>
+
+
+                                </div>
+
+                                <div class="col-4">
+
+                                    <label for="kode_pl">Debet / Kredit</label>
+                                    <select name="status_proses" id="status_proses" class="form-control select2" style="width: 100%; height: 80px;" required>
+
+                                        <option value=""></option>
+                                        <option value="debet">Debet</option>
+                                        <option value="kredit">Kredit</option>
+
+
+                                    </select>
+
+
+                                </div>
+
+                                <div class="col-4">
+                                    <label for="kode_pl">Nominal </label>
+                                    <input type="number" name="nominal_penyesuaian" id="nominal_penyesuaian" placeholder="nominal penyesuaian" class="form-control" required>
+                                </div>
+
+
+                            </div>
+                            <div class="row">
+                                <label for="kode_pl">Keterangan:</label>
+                                <div class="col-12">
+                                    <input type="text" name="keterangan" id="keterangan" placeholder="keterangan" class="form-control" required>
+                                </div>
+                            </div>
+
+
+
+
+                        </form>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                    <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                    <button type="submit" class="btn btn-primary">SIMPAN</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+</form>
+<!-- END OF MODAL EXTRA LARGE -->
+
+<!-- END OF MODAL -->
+
+
+
+
+
+
+
+
+
+
+
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">

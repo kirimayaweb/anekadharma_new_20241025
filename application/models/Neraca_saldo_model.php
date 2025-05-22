@@ -83,7 +83,16 @@ class Neraca_saldo_model extends CI_Model
     // insert data
     function insert($data)
     {
+        // $this->db->insert($this->table, $data);
+
+        $this->db->set('uuid_kode_akun', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
     }
 
     // update data

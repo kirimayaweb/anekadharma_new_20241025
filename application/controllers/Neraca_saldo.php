@@ -8,7 +8,7 @@ class Neraca_saldo extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
-		$this->load->model(array('Sys_kode_akun_model','Neraca_saldo_model'));
+		$this->load->model(array('Sys_kode_akun_model', 'Neraca_saldo_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 	}
@@ -16,6 +16,33 @@ class Neraca_saldo extends CI_Controller
 
 	public function index()
 	{
+
+
+		// $Get_date_awal = date("Y-m-1 00:00:00");
+
+		// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+		// $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+
+		// print_r($Get_date_awal);
+		// print_r("<br/>");
+		// print_r($Get_date_akhir);
+		// print_r("<br/>");
+		// print_r($Get_month_akhir);
+		// print_r("<br/>");
+
+
+		// // 1. hapus data bulan terpilih / bulan ini
+		// DELETE FROM `neraca_saldo_test` WHERE MONTH(`tanggal`) = 3;
+
+
+		// $sql_data = "SELECT * FROM `neraca_saldo_test` WHERE MONTH(`tanggal`) = $Get_month_akhir";
+
+		// $Get_sql_data = $this->db->query($sql_data)->result();
+		// print_r($Get_sql_data);
+		// die;
+
+
+
 		// $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
 
 		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
@@ -23,13 +50,6 @@ class Neraca_saldo extends CI_Controller
 		tbl_pembelian.kode_akun as kode_akun
 		                    FROM tbl_pembelian    
 		                    group BY tbl_pembelian.kode_akun";
-
-		// print_r($this->db->query($sql_pembelian)->result());
-		// die;
-
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
 
 		$sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
 		tbl_penjualan.nama_barang as keterangan,
@@ -39,15 +59,15 @@ class Neraca_saldo extends CI_Controller
 		tbl_penjualan.kode_akun as kode_akun
 		                    FROM tbl_penjualan    
 		                    ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
-		// print_r($this->db->query($sql_penjualan)->result());
 
-		// SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
+		// $Get_sys_kode_akun = $this->Sys_kode_akun_model->get_all();
 
-
+		// print_r($Get_sys_kode_akun);
 		// die;
 
 
-		// $sys_kode_akun = $this->Sys_kode_akun_model->get_all();
+		$Get_month_from_date = date("m");
+        $Get_year_Tahun_ini = date("Y");
 
 		$data = array(
 			// 'data_Buku_besar' => $data_Buku_besar,
@@ -55,8 +75,40 @@ class Neraca_saldo extends CI_Controller
 			// 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
 			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
 			'action' => site_url('Buku_besar/cari_kode_akun'),
+			'month_selected' => $Get_month_from_date,
+			'year_selected' => $Get_year_Tahun_ini,
 		);
+
+		// print_r($data);
+		// die;
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
+	}
+
+
+	public function Cari_bulan_data(){
+		// print_r("Cari_bulan_data");
+		// print_r("<br/>");
+		// print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
+		// print_r("<br/>");
+		// print_r(date("m", strtotime($this->input->post('bulan_ns', TRUE))));
+		// die;
+
+		$data = array(
+			// 'data_Buku_besar' => $data_Buku_besar,
+			// 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
+			// 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
+			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
+			'action' => site_url('Buku_besar/cari_kode_akun'),
+			'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
+			'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+		);
+
+		// print_r($data);
+		// die;
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
+
 	}
 
 	public function index_server_side()
@@ -128,7 +180,7 @@ class Neraca_saldo extends CI_Controller
 			$this->create();
 		} else {
 			$data = array(
-				'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
+				// 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
 				'kode_akun' => $this->input->post('kode_akun', TRUE),
 				'nama_akun' => $this->input->post('nama_akun', TRUE),
 				'uraian' => $this->input->post('uraian', TRUE),
