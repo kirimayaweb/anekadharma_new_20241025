@@ -59,7 +59,8 @@
 
                     <div class="card-body">
 
-                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
+                        <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
 
                                 <!-- <tr>

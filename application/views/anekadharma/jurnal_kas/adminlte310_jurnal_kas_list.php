@@ -122,10 +122,11 @@
                                     <div class="col-6" align="right">
 
                                         <!-- <?php
-                                        // $action_cari_between_date = site_url('Jurnal_kas/cari_between_date');
-                                        ?>
+                                                // $action_cari_between_date = site_url('Jurnal_kas/cari_between_date');
+                                                ?>
 
-                                        <form action="<?php //echo $action_cari_between_date; ?>" method="post">
+                                        <form action="<?php //echo $action_cari_between_date; 
+                                                        ?>" method="post">
                                             <div class="row">
 
                                                 <div class="col-md-1" text-align="right" align="right"></div>
@@ -202,7 +203,8 @@
 
                     <div class="card-body">
 
-                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
+                        <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th style="text-align:left" width="10px">No</th>
