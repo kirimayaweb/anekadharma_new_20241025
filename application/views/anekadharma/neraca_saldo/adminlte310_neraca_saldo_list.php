@@ -377,7 +377,7 @@
                                             ?>
 
                                             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
-                                                Update Debet <?php //echo $list_data->id 
+                                                Input Debet <?php //echo $list_data->id 
                                                                 ?>
                                             </button>
 
@@ -400,7 +400,7 @@
 
 
                                             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
-                                                Update kredit <?php //echo $list_data->id 
+                                                Input kredit <?php //echo $list_data->id 
                                                                 ?>
                                             </button>
                                         </td>
