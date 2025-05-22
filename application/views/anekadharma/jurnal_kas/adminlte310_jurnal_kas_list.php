@@ -343,7 +343,7 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th> -->
                                     <th colspan="5" style="text-align:right">Saldo akhir Kas Bulan
-                                        <?php echo bulan_teks($month_akhir) ?>
+                                        <?php echo bulan_teks($Get_month_from_date) ?>
                                     </th>
                                     <th style="text-align:right">
                                         <?php
