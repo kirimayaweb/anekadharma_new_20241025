@@ -47,30 +47,34 @@ class Jurnal_penyesuaian extends CI_Controller
     public function index()
     {
 
-        // $Data_kas = $this->Jurnal_kas_model->get_all();
-        // $start = 0;
-
-        // print_r($Data_kas);
-
-
-        $Get_date_awal = date("Y-m-1 00:00:00");
-        // print_r($Get_date_awal);
-        // print_r("<br/>");
-
-
-        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-        // print_r($Get_month);
-        // print_r("<br/>");
-
-        // die;
 
 
 
-        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+        // $Get_date_awal = date("Y-m-1 00:00:00");
+        // // print_r($Get_date_awal);
+        // // print_r("<br/>");
+
+
+        // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        // $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+        // // print_r($Get_month);
+        // // print_r("<br/>");
+
+        // // die;
+
+
+
+        // $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+
+        // $Data_kas = $this->db->query($sql)->result();
+        // ===========================================================================
+
+        $Get_month_selected = date("m");
+        $Get_YEAR_selected = date("Y");
+
+        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
-
 
 
         $data = array(
@@ -79,6 +83,8 @@ class Jurnal_penyesuaian extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'month_selected' => date("m"),
+            'year_selected' => date("Y"),
         );
 
         // print_r($data);
@@ -89,24 +95,40 @@ class Jurnal_penyesuaian extends CI_Controller
     public function cari_between_date()
     {
 
-        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-            // $Get_date_awal = date("Y-m-d 00:00:00");
-            $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-        } else {
-            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
-        }
+        // 'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
+        // 	'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+        // print_r(date("m", strtotime($this->input->post('bulan_ns', TRUE))));
+        // print_r("<br/>");
+        // print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
 
-        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-            $Get_date_akhir = date("Y-m-d 00:00:00");
-            $Get_month_akhir = date("m");
-        } else {
-            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
-        }
+        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
 
-        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
+
+        // print_r($Data_kas);
+        // die;
+
+        // if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
+        //     // $Get_date_awal = date("Y-m-d 00:00:00");
+        //     $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+        // } else {
+        //     $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+        // }
+
+        // if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+        //     $Get_date_akhir = date("Y-m-d 00:00:00");
+        //     $Get_month_akhir = date("m");
+        // } else {
+        //     $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+        //     $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
+        // }
+
+        // $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
+
+        // $Data_kas = $this->db->query($sql)->result();
 
         $data = array(
             'Data_kas' => $Data_kas,
@@ -114,6 +136,8 @@ class Jurnal_penyesuaian extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
+            'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
         );
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);

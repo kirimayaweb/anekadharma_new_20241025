@@ -21,6 +21,12 @@
 
 
         <?php
+
+
+        $Get_month_from_date = $month_selected;
+        $Get_year_Tahun_ini = $year_selected;
+        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+
         // echo $date_awal; 
         // echo "<br/>";
 
@@ -93,10 +99,10 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="row">
-                                    <div class="col-2" align="left">
-                                        <div class="col-12" text-align="center"> <strong>JURNAL PENYESUAIAN</strong></div>
-                                    </div>
                                     <div class="col-3" align="left">
+                                        <div class="col-12" text-align="center"> <strong>JURNAL PENYESUAIAN</strong> <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?> </div>
+                                    </div>
+                                    <div class="col-2" align="left">
 
                                         <?php //echo anchor(site_url('Jurnal_penyesuaian/input_data'), 'Input Data', 'class="btn btn-danger"');
                                         ?>
@@ -119,11 +125,12 @@
 
                                     <div class="col-6" align="right">
 
-                                        <?php
-                                        $action_cari_between_date = site_url('Jurnal_penyesuaian/cari_between_date');
-                                        ?>
+                                        <!-- <?php
+                                                // $action_cari_between_date = site_url('Jurnal_penyesuaian/cari_between_date');
+                                                ?>
 
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                        <form action="<?php //echo $action_cari_between_date; 
+                                                        ?>" method="post">
                                             <div class="row">
 
                                                 <div class="col-md-1" text-align="right" align="right"></div>
@@ -161,6 +168,25 @@
                                             </div>
                                         </form>
 
+                                        <br /> -->
+
+                                        <?php
+                                        $action_cari_between_date = site_url('Jurnal_penyesuaian/cari_between_date');
+                                        ?>
+
+                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                            <div class="row">
+                                                <div class="col-md-4" text-align="right" align="right">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns">
+                                                </div>
+                                                <div class="col-md-2" text-align="left" align="left">
+                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                </div>
+
+                                            </div>
+                                        </form>
+
+
                                     </div>
 
                                     <div class="col-1" align="right">
@@ -189,6 +215,7 @@
                                     <th style="text-align:left">PL</th>
                                     <th style="text-align:left">Keterangan</th>
                                     <th style="text-align:left">Kode Rekening</th>
+                                    <th style="text-align:left">Kode Akun</th>
                                     <th style="text-align:right">debet</th>
                                     <th style="text-align:right">Kredit</th>
                                     <!-- <th style="text-align:center">Action</th> -->
@@ -246,6 +273,11 @@
                                             echo $list_data->kode_rekening;
                                             ?>
                                         </td>
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_akun;
+                                            ?>
+                                        </td>
 
                                         <!-- Debet -->
                                         <td style="text-align:right">
@@ -296,7 +328,7 @@
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th>
                                     <th style="text-align:center"></th> -->
-                                    <th colspan="6" style="text-align:right"> JUMLAH DEBET / KREDIT </th>
+                                    <th colspan="7" style="text-align:right"> JUMLAH DEBET / KREDIT </th>
                                     <th style="text-align:right">
                                         <?php
                                         echo number_format($TOTAL_debet, 2, ',', '.');
@@ -334,7 +366,10 @@
 <!-- MODAL -->
 
 <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-<?php $action_simpan = "Simpan_input_data" ?>
+
+<!-- <?php //$action_simpan = "Simpan_input_data" ?> -->
+<?php $action_simpan = "Jurnal_penyesuaian/Simpan_input_data" ?>
+
 <form action="<?php echo $action_simpan; ?>" method="post">
     <div class="modal fade" id="modal_input_jurnal_penyesuaian<?php //echo $list_data->id 
                                                                 ?>">
@@ -386,7 +421,7 @@
                             <div class="row">
 
                                 <div class="col-4">
-                                    <label for="supplier_nama">Kode Akun :  </strong></label>
+                                    <label for="supplier_nama">Kode Akun : </strong></label>
 
                                     <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
 
