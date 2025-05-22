@@ -214,8 +214,12 @@
                                     // PEMBELIAN
                                     $sql_pembelian = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_pembelian_by_kode FROM `tbl_pembelian` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_po`)=$Get_month_from_date";
 
+                                    $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian=$this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode;
+
                                     // /PENJUALAN
                                     $sql_penjualan = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_penjualan_by_kode FROM `tbl_penjualan` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_jual`)=$Get_month_from_date";
+
+                                    $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan=$this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
 
                                     // print_r($this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode);
                                     // print_r("<br/>");
@@ -224,7 +228,7 @@
 
 
                                     // TOTAL DARI SEMUA DATA PER KODE AKUN : Mendapatkan nominal data dan di simpan ke tabel neraca_saldo
-                                    $GET_jumlah_data_PER_KODE_AKUN = $this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode + $this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
+                                    // $GET_jumlah_data_PER_KODE_AKUN = $this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode + $this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
 
 
                                     // print_r($GET_jumlah_data);
@@ -244,8 +248,8 @@
                                         $RECORD_data_per_kode_akun_bulan_ini = $Get_data_record->row();
 
                                         // CEK FIELD DEBET PENYESUAIAN APAKAH SAMA DENGAN $GET_jumlah_data_PER_KODE_AKUN
-                                        if ($Get_data_record->row()->debet_penyesuaian == $GET_jumlah_data_PER_KODE_AKUN) {
-                                        } else {
+                                        if ($Get_data_record->row()->debet_penyesuaian <> $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan) {
+                                        
                                             // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
                                             $data = array(
                                                 // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
@@ -255,7 +259,7 @@
                                                 // 'group' => $this->input->post('group', TRUE),
                                                 // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
                                                 // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                                'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
+                                                'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
                                                 // 'kredit_penyesuaian' => $this->input->post('kredit_penyesuaian', TRUE),
                                                 // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
                                                 // 'kredit_ns_setelah_penyesuaian' => $this->input->post('kredit_ns_setelah_penyesuaian', TRUE),
@@ -265,6 +269,29 @@
                                             // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
                                             $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
                                         }
+
+                                        if ($Get_data_record->row()->kredit_penyesuaian <> $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian) {
+                                        
+                                            // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
+                                            $data = array(
+                                                // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
+                                                // 'kode_akun' => $this->input->post('kode_akun', TRUE),
+                                                // 'nama_akun' => $this->input->post('nama_akun', TRUE),
+                                                // 'uraian' => $this->input->post('uraian', TRUE),
+                                                // 'group' => $this->input->post('group', TRUE),
+                                                // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
+                                                // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
+                                                // 'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
+                                                'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
+                                                // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
+                                                // 'kredit_ns_setelah_penyesuaian' => $this->input->post('kredit_ns_setelah_penyesuaian', TRUE),
+                                                // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
+                                                // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
+                                            );
+                                            // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
+                                            $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
+                                        }
+
                                     } else {
                                         // Proses insert record baru dengan kodeakun ini dan input data lengkap
                                         $data = array(
@@ -276,8 +303,8 @@
                                             // 'group' => $this->input->post('group', TRUE),
                                             // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
                                             // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                            'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
-                                            // 'kredit_penyesuaian' => $this->input->post('kredit_penyesuaian', TRUE),
+                                            'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
+                                            'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
                                             // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
                                             // 'kredit_ns_setelah_penyesuaian' => $this->input->post('kredit_ns_setelah_penyesuaian', TRUE),
                                             // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
