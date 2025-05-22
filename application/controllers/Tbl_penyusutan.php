@@ -14,7 +14,8 @@ class Tbl_penyusutan extends CI_Controller
     }
 
     // KODE - KODE YANG MASUK KE DATA PENYUSUTAN
-    // Itu persediaan pak, kalo penyusutan 13101, 13102, 13103, 13104, 13105, 13201
+    // Itu persediaan pak, kalo penyusutan 13101, 13102, 13103, 13104, 13105,
+    // Sama nanti ada akumulasi penyusutan 52501, 52502, 52503, 52505, 52504, 52505, 52511
 
 
     public function index_server_side()
