@@ -95,7 +95,7 @@
                                     <th>Kode</th>
                                     <th>Kode Akun</th>
                                     <th>Nama Akun</th>
-                                    <th>Keterangan</th>
+                                    <!-- <th>Keterangan</th> -->
 
                                     <th>Debet</th>
                                     <th>Kredit</th>
@@ -114,7 +114,7 @@
                                 $TOTAL_KREDIT = 0;
                                 $TOTAL_SALDO = 0;
 
-                                foreach ($Data_pembelian as $list_data) {
+                                foreach ($data_Buku_besar as $list_data) {
                                     if ($list_data->kode_akun) {
                                 ?>
                                         <tr>
@@ -128,14 +128,14 @@
                                             <!-- Kode pl -->
                                             <td align="left">
                                                 <?php
-                                                echo $list_data->kode_pl;
+                                                echo $list_data->pl;
                                                 // echo "kode";
                                                 ?>
                                             </td>
                                             <!-- Kode -->
                                             <td align="left">
                                                 <?php
-                                                echo $list_data->kode_bb;
+                                                echo $list_data->kode;
                                                 // echo "kode";
                                                 ?>
                                             </td>
@@ -166,11 +166,11 @@
                                             </td>
 
 
-                                            <td align="left">
+                                            <!-- <td align="left">
                                                 <?php
-                                                echo  $list_data->keterangan;
+                                                // echo  $list_data->keterangan;
                                                 ?>
-                                            </td>
+                                            </td> -->
 
                                             <td align="right">
                                                 <?php
@@ -210,107 +210,7 @@
                                 ?>
 
 
-                                <?php
-                                // PENJUALAN
-                                // $start = 0;
-                                // $TOTAL_DEBET = 0;
-                                // $TOTAL_KREDIT = 0;
-                                // $TOTAL_SALDO = 0;
-
-                                foreach ($Data_penjualan as $list_data) {
-                                    if ($list_data->kode_akun) {
-                                ?>
-                                    <tr>
-                                        <td align="left"><?php echo ++$start; ?></td>
-                                        <td align="left">
-                                            <?php
-                                            echo date("d-M-Y", strtotime($list_data->tanggal));
-                                            ?>
-                                        </td>
-
-                                        <!-- Kode pl -->
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->kode_pl;
-                                            // echo "kode";
-                                            ?>
-                                        </td>
-
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->kode_bb;
-                                            // echo "kode";
-                                            ?>
-                                        </td>
-
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->kode_akun;
-                                            ?>
-                                        </td>
-
-                                        <td align="left">
-                                            <?php
-                                            if ($list_data->nama_akun == "") {
-
-                                                $this->db->where('kode_akun', $list_data->kode_akun);
-                                                $data_akun = $this->db->get('sys_kode_akun');
-
-                                                if ($data_akun->num_rows() > 0) {
-
-                                                    $Get_data_akun = $data_akun->row_array();
-                                                    echo $Get_data_akun['nama_akun'];
-                                                }
-                                            } else {
-                                                echo $list_data->nama_akun;
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <td align="left">
-                                            <?php
-                                            echo  $list_data->keterangan;
-                                            ?>
-                                        </td>
-
-
-                                        <td align="right">
-                                            <?php
-                                            // echo $list_data->debet;
-                                            // echo "<br/>";
-                                            // echo "debet";
-
-                                            echo number_format($list_data->debet, 2, ',', '.');
-                                            $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
-
-                                            ?>
-                                        </td>
-                                        <td align="right">
-                                            <?php
-
-                                            // echo number_format($list_data->kredit, 2, ',', '.');
-
-                                            // $TOTAL_KREDIT = $TOTAL_KREDIT + $list_data->kredit;
-                                            // $TOTAL_SALDO = $TOTAL_DEBET - $TOTAL_KREDIT;
-
-                                            ?>
-                                        </td>
-                                        <td align="right">
-                                            <?php
-                                            // echo "saldo";
-                                            // echo number_format($TOTAL_SALDO, 2, ',', '.');
-                                            ?>
-                                        </td>
-
-
-                                    </tr>
-
-
-                                <?php
-                                    }
-                                }
-                                ?>
-
+                         
 
 
 
@@ -325,7 +225,7 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th></th>
+                                    <!-- <th></th> -->
 
                                     <th style="text-align:right">
                                         <?php

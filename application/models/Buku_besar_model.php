@@ -82,7 +82,31 @@ class Buku_besar_model extends CI_Model
     // insert data
     function insert($data)
     {
+        // $this->db->insert($this->table, $data);
+
+
+        // $this->db->set('uuid_spop', "replace(uuid(),'-','')", FALSE);
+        $this->db->set('uuid_buku_besar', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+        // print_r("<br/>");
+        // print_r($datainsert['id']);
+        // print_r("<br/>");
+        // $this->db->where($this->id, $datainsert['id']);
+        // $uuid_spop = $this->db->get($this->table)->row()->uuid_spop;
+        // print_r($uuid_spop);
+
+        // return $uuid_spop;
+
+        // print_r($datainsert['id']);
+        // die;
+
+        return $datainsert['id'];
+
     }
 
     // update data

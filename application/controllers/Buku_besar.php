@@ -17,44 +17,44 @@ class Buku_besar extends CI_Controller
     {
         $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
 
-        // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-        $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
-		tbl_pembelian.uraian as keterangan,
-		tbl_pembelian.jumlah as jumlah,
-		tbl_pembelian.harga_satuan as harga_satuan,
-		(tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
-		tbl_pembelian.kode_akun as kode_akun,
-		tbl_pembelian.kode_pl as kode_pl,
-		tbl_pembelian.kode_bb as kode_bb
-		                    FROM tbl_pembelian    
-		                    ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
-        // print_r($this->db->query($sql_pembelian)->result());
+        // // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+        // $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
+		// tbl_pembelian.uraian as keterangan,
+		// tbl_pembelian.jumlah as jumlah,
+		// tbl_pembelian.harga_satuan as harga_satuan,
+		// (tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
+		// tbl_pembelian.kode_akun as kode_akun,
+		// tbl_pembelian.kode_pl as kode_pl,
+		// tbl_pembelian.kode_bb as kode_bb
+		//                     FROM tbl_pembelian    
+		//                     ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
+        // // print_r($this->db->query($sql_pembelian)->result());
 
-        // print_r("<br/>");
-        // print_r("<br/>");
-        // print_r("<br/>");
+        // // print_r("<br/>");
+        // // print_r("<br/>");
+        // // print_r("<br/>");
 
-        $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
-		tbl_penjualan.nama_barang as keterangan,
-		tbl_penjualan.jumlah as jumlah,
-		tbl_penjualan.harga_satuan as harga_satuan,
-		(tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
-		tbl_penjualan.kode_akun as kode_akun,
-		tbl_penjualan.kode_pl as kode_pl,
-		tbl_penjualan.kode_bb as kode_bb
-		                    FROM tbl_penjualan    
-		                    ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
-        // print_r($this->db->query($sql_penjualan)->result());
+        // $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
+		// tbl_penjualan.nama_barang as keterangan,
+		// tbl_penjualan.jumlah as jumlah,
+		// tbl_penjualan.harga_satuan as harga_satuan,
+		// (tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
+		// tbl_penjualan.kode_akun as kode_akun,
+		// tbl_penjualan.kode_pl as kode_pl,
+		// tbl_penjualan.kode_bb as kode_bb
+		//                     FROM tbl_penjualan    
+		//                     ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
+        // // print_r($this->db->query($sql_penjualan)->result());
 
-        // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
+        // // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
 
 
-        // die;
+        // // die;
 
         $data = array(
             'data_Buku_besar' => $data_Buku_besar,
-            'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-            'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
+            // 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
+            // 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
             'action' => site_url('Buku_besar/cari_kode_akun'),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
