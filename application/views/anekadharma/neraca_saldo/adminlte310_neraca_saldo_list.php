@@ -142,7 +142,8 @@
 
                     <div class="card-body">
 
-                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
+                        <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
+                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
@@ -271,24 +272,24 @@
                                         // CEK FIELD DEBET PENYESUAIAN APAKAH SAMA DENGAN $GET_jumlah_data_PER_KODE_AKUN
                                         // if ($Get_data_record->row()->debet_penyesuaian <> $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan) {
 
-                                            // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
-                                            $data = array(
-                                                // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
-                                                // 'kode_akun' => $this->input->post('kode_akun', TRUE),
-                                                // 'nama_akun' => $this->input->post('nama_akun', TRUE),
-                                                // 'uraian' => $this->input->post('uraian', TRUE),
-                                                // 'group' => $this->input->post('group', TRUE),
-                                                // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
-                                                // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                                'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
-                                                'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
-                                                'debet_ns_setelah_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan + $Get_data_PENYESUAIAN->jumlah_debet,
-                                                'kredit_ns_setelah_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian + $Get_data_PENYESUAIAN->jumlah_kredit,
-                                                // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
-                                                // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
-                                            );
-                                            // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
-                                            $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
+                                        // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
+                                        $data = array(
+                                            // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
+                                            // 'kode_akun' => $this->input->post('kode_akun', TRUE),
+                                            // 'nama_akun' => $this->input->post('nama_akun', TRUE),
+                                            // 'uraian' => $this->input->post('uraian', TRUE),
+                                            // 'group' => $this->input->post('group', TRUE),
+                                            // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
+                                            // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
+                                            'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
+                                            'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
+                                            'debet_ns_setelah_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan + $Get_data_PENYESUAIAN->jumlah_debet,
+                                            'kredit_ns_setelah_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian + $Get_data_PENYESUAIAN->jumlah_kredit,
+                                            // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
+                                            // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
+                                        );
+                                        // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
+                                        $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
                                         // }
 
                                         // if ($Get_data_record->row()->kredit_penyesuaian <> $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian) {
@@ -378,7 +379,7 @@
 
                                             <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
                                                 Input Debet <?php //echo $list_data->id 
-                                                                ?>
+                                                            ?>
                                             </button>
 
                                         </td>
