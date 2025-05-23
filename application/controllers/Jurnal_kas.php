@@ -9,7 +9,7 @@ class Jurnal_kas extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model('Jurnal_kas_model');
+        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
@@ -292,6 +292,11 @@ class Jurnal_kas extends CI_Controller
         // print_r("ubah_kode_akun_penerimaan");
         // die;
 
+
+
+
+
+
         $data_per_uuidjurnal = $this->Jurnal_kas_model->get_by_uuid_jurnal_kas($uuid_jurnal_kas);
 
         // print_r($data_per_uuidjurnal);
@@ -326,17 +331,104 @@ class Jurnal_kas extends CI_Controller
 
     public function update_kode_akun($uuid_jurnal_kas = null, $proses_form = null)
     {
+
         // print_r("update_kode_akun_penerimaan");
         // print_r("<br/>");
         // print_r($uuid_jurnal_kas);
         // print_r("<br/>");
         // die;
-
         // Get Id penerimaaan kas
 
         $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `uuid_jurnal_kas`='$uuid_jurnal_kas'";
 
         $Data_jurnal_penerimaan_kas = $this->db->query($sql_kas_penerimaan)->row();
+
+        // print_r($Data_jurnal_penerimaan_kas->debet);
+        // die;
+
+        // ---------------------------------------------------
+
+        $GET_tanggal_Jurnal_kas = date("Y-m-d H:i:s", strtotime($Data_jurnal_penerimaan_kas->tanggal, TRUE));
+
+        if ($Data_jurnal_penerimaan_kas->id_buku_besar) {
+        } else {
+            $GET_ID_buku_besar = $Data_jurnal_penerimaan_kas->id_buku_besar;
+        }
+
+
+        // ---------------------------------------------------
+
+
+
+
+
+        if ($Data_jurnal_penerimaan_kas->id_buku_besar or $Data_jurnal_penerimaan_kas->id_buku_besar > 0) {
+            // print_r("ada ID");
+            // proses update di tabel buku besar
+
+            if ($proses_form == "penerimaan") {
+
+                $data = array(
+                    // 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+                    'tanggal' => $GET_tanggal_Jurnal_kas,
+                    'kode_akun' => $this->input->post('kode_akun', TRUE),
+                    'keterangan' => "Jurnal Kas " . $Data_jurnal_penerimaan_kas->uuid_jurnal_kas,
+                    // 'pl' => $this->input->post('kode_pl', TRUE),
+                    // 'kode' => $this->input->post('kode_bb', TRUE),
+                    'debet' => $Data_jurnal_penerimaan_kas->debet,
+                    // 'kredit' => $GET_TOTAL_PENJUALAN,
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                );
+            } else {
+                $data = array(
+                    // 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+                    'tanggal' => $GET_tanggal_Jurnal_kas,
+                    'kode_akun' => $this->input->post('kode_akun', TRUE),
+                    'keterangan' => "Jurnal Kas " . $Data_jurnal_penerimaan_kas->uuid_jurnal_kas,
+                    // 'pl' => $this->input->post('kode_pl', TRUE),
+                    // 'kode' => $this->input->post('kode_bb', TRUE),
+                    // 'debet' => $Data_jurnal_penerimaan_kas->debet,
+                    'kredit' => $Data_jurnal_penerimaan_kas->kredit,
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                );
+            }
+
+            $this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+        } else {
+            // print_r("TIDAK ADA ada ID");
+            // Insert data baru di tabel buku besar
+
+            if ($proses_form == "penerimaan") {
+                $data = array(
+                    // 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+                    'tanggal' => $GET_tanggal_Jurnal_kas,
+                    'kode_akun' => $this->input->post('kode_akun', TRUE),
+                    'keterangan' => "Jurnal Kas " . $Data_jurnal_penerimaan_kas->uuid_jurnal_kas,
+                    // 'pl' => $this->input->post('kode_pl', TRUE),
+                    // 'kode' => $this->input->post('kode_bb', TRUE),
+                    'debet' => $Data_jurnal_penerimaan_kas->debet,
+                    // 'kredit' => $GET_TOTAL_PENJUALAN,
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                );
+            } else {
+                $data = array(
+                    // 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+                    'tanggal' => $GET_tanggal_Jurnal_kas,
+                    'kode_akun' => $this->input->post('kode_akun', TRUE),
+                    'keterangan' => "Jurnal Kas " . $Data_jurnal_penerimaan_kas->uuid_jurnal_kas,
+                    // 'pl' => $this->input->post('kode_pl', TRUE),
+                    // 'kode' => $this->input->post('kode_bb', TRUE),
+                    // 'debet' => $Data_jurnal_penerimaan_kas->debet,
+                    'kredit' => $Data_jurnal_penerimaan_kas->kredit,
+                    // 'saldo' => $this->input->post('saldo', TRUE),
+                );
+            }
+
+            $GET_id_buku_besar = $this->Buku_besar_model->insert($data);
+        }
+
+
+
 
         // print_r($Data_jurnal_penerimaan_kas);
         // print_r("<br/>");
@@ -348,6 +440,7 @@ class Jurnal_kas extends CI_Controller
 
         $data = array(
             'kode_akun' => $this->input->post('kode_akun', TRUE),
+            'id_buku_besar' => $GET_id_buku_besar,
         );
 
         // print_r($data);
@@ -588,10 +681,10 @@ class Jurnal_kas extends CI_Controller
             $Get_YEAR_selected = date("Y", strtotime($this->input->post('tanggal', TRUE)));
             // }
             $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
-    
+
             $Data_kas = $this->db->query($sql)->result();
-    
-    
+
+
             $data = array(
                 'Data_kas' => $Data_kas,
                 // 'start' => $start,
@@ -601,13 +694,10 @@ class Jurnal_kas extends CI_Controller
                 'month_selected' => date("m", strtotime($this->input->post('tanggal', TRUE))),
                 'year_selected' => date("Y", strtotime($this->input->post('tanggal', TRUE))),
             );
-    
+
             // print_r($data);
-    
+
             $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
-
-
-
         }
     }
 

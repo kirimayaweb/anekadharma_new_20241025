@@ -99,7 +99,7 @@
 
                                     <th>Debet</th>
                                     <th>Kredit</th>
-                                    <th>Saldo</th>
+                                    <!-- <th>Saldo</th> -->
                                 </tr>
 
 
@@ -178,8 +178,8 @@
                                                 // echo "<br/>";
                                                 // echo "debet";
 
-                                                // echo number_format($list_data->debet, 2, ',', '.');
-                                                // $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
+                                                echo number_format($list_data->debet, 2, ',', '.');
+                                                $TOTAL_DEBET = $TOTAL_DEBET + $list_data->debet;
 
                                                 ?>
                                             </td>
@@ -193,12 +193,12 @@
 
                                                 ?>
                                             </td>
-                                            <td align="right">
+                                            <!-- <td align="right">
                                                 <?php
                                                 // echo "saldo";
                                                 // echo number_format($TOTAL_SALDO, 2, ',', '.');
                                                 ?>
-                                            </td>
+                                            </td> -->
 
 
                                         </tr>
@@ -241,7 +241,7 @@
                                         ?>
                                     </th>
 
-                                    <th></th>
+                                    <!-- <th></th> -->
                                 </tr>
 
 
