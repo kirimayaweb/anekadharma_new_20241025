@@ -49,6 +49,8 @@ class Jurnal_kas extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'month_selected' => date("m"),
+            'year_selected' => date("Y"),
         );
 
         // print_r($data);
