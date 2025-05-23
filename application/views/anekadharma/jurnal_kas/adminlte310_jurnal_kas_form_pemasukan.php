@@ -72,7 +72,7 @@
 
                                         <?php
 
-                                        if ($this->input->post('tanggal', TRUE)) {
+                                        if ($tanggal) {
                                             $get_tanggal = date("d-m-Y", strtotime($tanggal));
                                         } else {
                                             $get_tanggal = date("Y-m-d H:i:s");
@@ -101,8 +101,8 @@
 
                                             <?php
                                             if ($bukti) {
-                                                ?>
-                                                <option value="<?php echo $bukti; ?>">"<?php echo $bukti; ?>"</option>
+                                            ?>
+                                                <option value="<?php echo $bukti; ?>"><?php echo $bukti; ?></option>
                                                 <option value="BKM">BKM</option>
                                                 <option value="BKK">BKK</option>
                                             <?php
@@ -120,8 +120,10 @@
                                     </div>
 
                                     <!-- <div class="col-2">
-                                        <label for="pl">PL <?php //echo form_error('pl') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="PL" value="<?php //echo $pl; ?>">
+                                        <label for="pl">PL <?php //echo form_error('pl') 
+                                                            ?></label>
+                                        <input type="text" class="form-control" rows="3" name="pl" id="pl" placeholder="PL" value="<?php //echo $pl; 
+                                                                                                                                    ?>">
                                     </div> -->
 
                                     <div class="col-2">
@@ -132,7 +134,40 @@
                                         <label for="unit_nama">Kode <?php //echo form_error('unit') 
                                                                     ?></label>
                                         <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="">Pilih Unit</option>
+
+                                            <?php
+                                            if ($uuid_unit) {
+
+                                                // unIT
+                                                $this->db->where('uuid_unit', $uuid_unit);
+                                                $sys_unit_data = $this->db->get('sys_unit');
+
+
+
+                                                if ($sys_unit_data->num_rows() > 0) {
+
+                                                    $Get_unit_data = $sys_unit_data->row_array();
+
+                                                    // $Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+                                                    $Get_kode_unit = $Get_unit_data['kode_unit'];
+                                                    // $Get_nama_unit = $Get_unit_data['nama_unit'];
+                                                }
+
+                                            ?>
+                                                <option value="<?php echo $uuid_unit; ?>"><?php echo $Get_kode_unit; ?></option>
+
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">Pilih Unit</option>
+
+
+                                            <?php
+                                            }
+
+                                            ?>
+
+
                                             <?php
 
                                             $sql = "select * from sys_unit order by nama_unit ASC ";
@@ -145,21 +180,21 @@
                                         </select>
 
                                     </div>
-                                    
+
                                     <div class="col-3">
                                         <label for="double">Nominal <?php echo form_error('debet') ?></label>
-                                        <input type="text" class="form-control" name="nominal" id="nominal" placeholder="nominal" value="<?php 
-                                        //echo $debet; 
-                                        if($bukti=="BKM"){
-                                            echo $debet;
-                                        }else{
-                                            echo $kredit;
-                                        }
-                                        
-                                        ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required />
+                                        <input type="text" class="form-control" name="nominal" id="nominal" placeholder="nominal" value="<?php
+                                                                                                                                            //echo $debet; 
+                                                                                                                                            if ($bukti == "BKM") {
+                                                                                                                                                echo $debet;
+                                                                                                                                            } else {
+                                                                                                                                                echo $kredit;
+                                                                                                                                            }
+
+                                                                                                                                            ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:black;" min="1" max="9999999999999" ; required />
 
                                     </div>
-                                    
+
                                 </div>
                             </div>
 

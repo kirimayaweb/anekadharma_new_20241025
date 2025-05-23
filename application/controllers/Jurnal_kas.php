@@ -60,17 +60,24 @@ class Jurnal_kas extends CI_Controller
     public function cari_between_date()
     {
 
+        // if ($GET_DATE) {
+        //     print_r("GET_DATE");
+        //     print_r("<br/>");
+        //     print_r($GET_DATE);
+        // } else {
 
+        // print_r("NOTTTT GET_DATE");
+        // print_r("<br/>");
         $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
         $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-
+        // }
         $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
 
 
 
-    
+
 
         // ------------------------------------------------------------------------------
 
@@ -478,14 +485,16 @@ class Jurnal_kas extends CI_Controller
                 $data = array(
                     'button' => 'Simpan Perubahan',
                     'action' => site_url('Jurnal_kas/pemasukan_kas_update_action/' . $id),
-                    'nomor' => $row->nomor,
+                    'id' => $row->id,
                     'tanggal' => $row->tanggal,
                     'bukti' => $row->bukti,
-                    'pl' => $row->pl,
+                    // 'pl' => $row->pl,
                     'keterangan' => $row->keterangan,
-                    'kode_rekening' => $row->kode_rekening,
+                    'uuid_unit' => $row->uuid_unit,
+                    'kode_unit' => $row->kode_unit,
+                    // 'kode_rekening' => $row->kode_rekening,
                     'debet' => str_replace(".", ",", $row->debet),
-                    // 'kredit' => $row->kredit,
+                    'kredit' => str_replace(".", ",", $row->kredit),
                 );
                 // $this->load->view('Jurnal_kas/Jurnal_kas_form', $data);
                 $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_form_pemasukan', $data);
@@ -507,8 +516,6 @@ class Jurnal_kas extends CI_Controller
             $this->pemasukan_kas();
         } else {
 
-
-
             $row = $this->Jurnal_kas_model->get_by_id($id);
             if ($row) {
 
@@ -519,20 +526,86 @@ class Jurnal_kas extends CI_Controller
                 }
 
 
-                $data = array(
-                    'tanggal' => $date_jurnal_kas,
-                    'bukti' => $this->input->post('bukti', TRUE),
-                    'pl' => $this->input->post('pl', TRUE),
-                    'keterangan' => $this->input->post('keterangan', TRUE),
-                    'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                    'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
-                    // 'kredit' => $this->input->post('kredit', TRUE),
-                );
+                // unIT
+                $this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+                $sys_unit_data = $this->db->get('sys_unit');
+
+
+                // $Get_month_selected = date("m", strtotime($this->input->post('tanggal', TRUE)));
+                // $Get_YEAR_selected = date("Y", strtotime($this->input->post('tanggal', TRUE)));
+
+
+                if ($sys_unit_data->num_rows() > 0) {
+
+                    $Get_unit_data = $sys_unit_data->row_array();
+
+                    // $Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+                    $Get_kode_unit = $Get_unit_data['kode_unit'];
+                    // $Get_nama_unit = $Get_unit_data['nama_unit'];
+                }
+
+
+                if ($this->input->post('bukti', TRUE) == "BKM") {
+                    $data = array(
+                        'tanggal' => $date_jurnal_kas,
+                        'bukti' => $this->input->post('bukti', TRUE),
+                        // 'pl' => $this->input->post('pl', TRUE),
+                        'keterangan' => $this->input->post('keterangan', TRUE),
+                        // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                        'uuid_unit' => $this->input->post('uuid_unit', TRUE),
+                        'kode_unit' => $Get_kode_unit,
+                        'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
+                        'kredit' => 0,
+                    );
+                } else {
+                    $data = array(
+                        'tanggal' => $date_jurnal_kas,
+                        'bukti' => $this->input->post('bukti', TRUE),
+                        // 'pl' => $this->input->post('pl', TRUE),
+                        'keterangan' => $this->input->post('keterangan', TRUE),
+                        // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
+                        'uuid_unit' => $this->input->post('uuid_unit', TRUE),
+                        'kode_unit' => $Get_kode_unit,
+                        'debet' => 0,
+                        'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
+                    );
+                }
 
                 $this->Jurnal_kas_model->update($id, $data);
             }
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('Jurnal_kas'));
+
+
+
+
+            // redirect(site_url('Jurnal_kas'));
+
+            // date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)))
+
+            $Get_month_selected = date("m", strtotime($this->input->post('tanggal', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('tanggal', TRUE)));
+            // }
+            $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
+    
+            $Data_kas = $this->db->query($sql)->result();
+    
+    
+            $data = array(
+                'Data_kas' => $Data_kas,
+                // 'start' => $start,
+                'date_awal' => $Get_date_awal,
+                'date_akhir' => $Get_date_akhir,
+                'month_akhir' => $Get_month_akhir,
+                'month_selected' => date("m", strtotime($this->input->post('tanggal', TRUE))),
+                'year_selected' => date("Y", strtotime($this->input->post('tanggal', TRUE))),
+            );
+    
+            // print_r($data);
+    
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
+
+
+
         }
     }
 

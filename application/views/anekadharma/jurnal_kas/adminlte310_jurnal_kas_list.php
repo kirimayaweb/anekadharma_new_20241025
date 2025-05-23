@@ -237,13 +237,13 @@
                                             echo date("d-m-Y", strtotime($list_data->tanggal));
                                             echo "<br/>";
 
-                                            if ($list_data->debet > 0) {
-                                                // Ubah debet
+                                            // if ($list_data->debet > 0) {
+                                            //     // Ubah debet
                                                 echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            } else {
-                                                // Ubah Kredit
-                                                echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
-                                            }
+                                            // } else {
+                                            //     // Ubah Kredit
+                                            //     echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            // }
 
                                             echo ' ';
                                             echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
