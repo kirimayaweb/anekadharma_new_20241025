@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model', 'Buku_besar_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -4371,13 +4371,117 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("update_kode_akun");
 		// die;
 
+		// Cek data di buku_besar
+		$data_Pembelian_by_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+
+		// print_r($data_Pembelian_by_uuid_spop);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// GET id_buku_besar , jika belum ada maka insert , jika sudah ada maka update di 
+
+		$GET_TOTAL_PEMBELIAN = 0;
+
+		foreach ($data_Pembelian_by_uuid_spop as $list_data) {
+
+			// print_r($list_data->id);
+			// print_r("<br/>");
+			// print_r($list_data->uuid_spop);
+			// print_r("<br/>");
+			// print_r($list_data->spop);
+			// print_r("<br/>");
+			// print_r($list_data->uraian);
+			// print_r("<br/>");
+			// print_r($list_data->jumlah);
+			// print_r("<br/>");
+			// print_r($list_data->harga_satuan);
+			// print_r("<br/>");
+			// print_r($list_data->harga_total);
+			// print_r("<br/>");
+			// print_r($list_data->kode_akun);
+			// print_r("<br/>");
+			// print_r($list_data->kode_pl);
+			// print_r("<br/>");
+			// print_r($list_data->kode_bb);
+			// print_r("<br/>");
+			// print_r($list_data->id_buku_besar);
+			// print_r("<br/>");
+			// print_r("---------");
+			// print_r("<br/>");
+
+			if ($GET_tanggal_pembelian) {
+			} else {
+				$GET_tanggal_pembelian = $list_data->tgl_po;
+			}
+
+			if ($GET_SPOP_pembelian) {
+			} else {
+				$GET_SPOP_pembelian = $list_data->spop;
+			}
+
+
+			$GET_TOTAL_PEMBELIAN = $GET_TOTAL_PEMBELIAN + $list_data->harga_total;
+
+			if ($GET_ID_buku_besar) {
+			} else {
+				$GET_ID_buku_besar = $list_data->id_buku_besar;
+			}
+		}
+
+
+
+		if ($list_data->id_buku_besar OR $list_data->id_buku_besar>0) {
+			// print_r("ada ID");
+			// proses update di tabel buku besar
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				// 'debet' => $this->input->post('debet', TRUE),
+				'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+
+		} else {
+			// print_r("TIDAK ADA ada ID");
+			// Insert data baru di tabel buku besar
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				// 'debet' => $this->input->post('debet', TRUE),
+				'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+
+			$GET_id_buku_besar = $this->Buku_besar_model->insert($data);
+		}
+
+		// print_r("ID buku besar: ");
+		// print_r($GET_id_buku_besar);
+		// die;
+
 		$data = array(
 			'kode_akun' => $this->input->post('kode_akun', TRUE),
 			'kode_pl' => $this->input->post('kode_pl', TRUE),
 			'kode_bb' => $this->input->post('kode_bb', TRUE),
+			'id_buku_besar' => $GET_id_buku_besar,
 		);
 
 		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+
+
+		// Cek di tabel buku besar , jika belum ada data maka insert , jika sudah ada maka update
+
 
 		redirect(site_url('Tbl_pembelian/jurnal_pembelian2/'));
 	}
