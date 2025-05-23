@@ -75,6 +75,15 @@ class Tbl_penjualan_model extends CI_Model
 
         return $this->db->get($this->table)->result();
     }
+
+    // get all
+    function get_all_by_nmr_kirim_TGL_JUAL($nmrkirim,$Tgl_JUAL)
+    {
+
+        $this->db->where($this->nmrkirim, $nmrkirim);
+
+        return $this->db->get($this->table)->result();
+    }
    
     // get all
     function get_all_group_by_tgl_jual_nmrpesan_nmr_kirim()

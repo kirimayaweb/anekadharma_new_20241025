@@ -9,7 +9,7 @@ class Tbl_penjualan extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model'));
+		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model','Buku_besar_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
@@ -211,7 +211,7 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_per_konsumen', $data);
 	}
 
-	public function RekapData($field_rekap=null)
+	public function RekapData($field_rekap = null)
 	{
 		// $field_rekap="konsumen_nama";
 		// print_r($field_rekap);
@@ -220,21 +220,17 @@ class Tbl_penjualan extends CI_Controller
 
 		if ($field_rekap == "unit") {
 			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-
 		} elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
 			$field_rekap = "konsumen_nama";
 			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		
 		} elseif ($field_rekap == "nama_barang") {
 			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		
 		} else {
 			$field_rekap = "unit";
 			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		
 		}
 
-		
+
 
 		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
 
@@ -569,11 +565,11 @@ class Tbl_penjualan extends CI_Controller
 			$Get_nama_unit = $Get_unit_data['nama_unit'];
 		}
 
-// 		print_r($Get_uuid_unit);
-// 		print_r("<br/>");
-// 		print_r($Get_nama_unit);
-// 		print_r("<br/>");
-// die;
+		// 		print_r($Get_uuid_unit);
+		// 		print_r("<br/>");
+		// 		print_r($Get_nama_unit);
+		// 		print_r("<br/>");
+		// die;
 		// KONSUMEN
 		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
@@ -1526,13 +1522,13 @@ class Tbl_penjualan extends CI_Controller
 		$kolomhead = 0;
 		xlsWriteLabel($tablehead, $kolomhead++, "No");
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
-		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
 		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
 		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
 		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
@@ -1546,7 +1542,7 @@ class Tbl_penjualan extends CI_Controller
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);
 			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
 			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
 			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
@@ -1557,7 +1553,7 @@ class Tbl_penjualan extends CI_Controller
 			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
 			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
 			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 			$tablebody++;
 			$nourut++;
@@ -1592,12 +1588,12 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "No");
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
 		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
-		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
 		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
 		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
@@ -1611,7 +1607,7 @@ class Tbl_penjualan extends CI_Controller
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);
 			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
 			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
 			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
@@ -1622,7 +1618,7 @@ class Tbl_penjualan extends CI_Controller
 			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
 			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
 			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 			$tablebody++;
 			$nourut++;
@@ -1658,9 +1654,9 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "No");
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
 		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
 		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
-		xlsWriteLabel($tablehead, $kolomhead++, "Unit");		
+		xlsWriteLabel($tablehead, $kolomhead++, "Unit");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
@@ -1677,7 +1673,7 @@ class Tbl_penjualan extends CI_Controller
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);			
+			xlsWriteNumber($tablebody, $kolombody++, $nourut);
 			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
 			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
 			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
@@ -1688,7 +1684,7 @@ class Tbl_penjualan extends CI_Controller
 			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
 			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);	
+			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
 			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 			$tablebody++;
 			$nourut++;
@@ -1803,16 +1799,100 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
 	}
 
-	public function update_kode_akun($nmrkirim = null)
+	public function update_kode_akun($nmrkirim = null,$Tgl_JUAL=null)
 	{
 
 		// print_r($this->input->post('kode_akun', TRUE));
 		// print_r("<br/>");
 
+
+		// Cek data di buku_besar
+		$data_Penjualan_by_nmr_kirim_tgl_jual = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_TGL_JUAL($nmrkirim,$Tgl_JUAL);
+
+		// print_r($data_Pembelian_by_uuid_spop);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// GET id_buku_besar , jika belum ada maka insert , jika sudah ada maka update di 
+
+		$GET_TOTAL_PENJUALAN = 0;
+		$GET_tanggal_PENJUALAN=null;
+		$GET_nmrkirim_PENJUALAN=null;
+		foreach ($data_Penjualan_by_nmr_kirim_tgl_jual as $list_data) {
+
+
+			// print_r($list_data->tgl_jual);
+			// print_r("<br/>");
+			// if ($GET_tanggal_PENJUALAN OR $GET_tanggal_PENJUALAN <> null) {
+			// } else {
+				// $GET_tanggal_PENJUALAN = $list_data->tgl_jual;
+			// }
+
+			$GET_tanggal_PENJUALAN = date("Y-m-d H:i:s", strtotime($list_data->tgl_jual, TRUE));
+
+			// print_r($GET_tanggal_PENJUALAN);
+			// print_r("<br/>");
+
+
+			if ($GET_nmrkirim_PENJUALAN OR $GET_nmrkirim_PENJUALAN <> null) {
+			} else {
+				$GET_nmrkirim_PENJUALAN = $list_data->nmrkirim;
+			}
+
+
+			$Harga_TOtal = $list_data->jumlah * $list_data->harga_satuan;
+			$GET_TOTAL_PENJUALAN = $GET_TOTAL_PENJUALAN + $Harga_TOtal;
+
+			if ($GET_ID_buku_besar) {
+			} else {
+				$GET_ID_buku_besar = $list_data->id_buku_besar;
+			}
+		}
+
+
+
+		if ($list_data->id_buku_besar or $list_data->id_buku_besar > 0) {
+			// print_r("ada ID");
+			// proses update di tabel buku besar
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_PENJUALAN,
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'keterangan' => "Penjualan Nomor Kirim" . $GET_nmrkirim_PENJUALAN . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				'debet' => $GET_TOTAL_PENJUALAN,
+				// 'kredit' => $GET_TOTAL_PENJUALAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+		} else {
+			// print_r("TIDAK ADA ada ID");
+			// Insert data baru di tabel buku besar
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_PENJUALAN,
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'keterangan' => "Penjualan Nomor Kirim" . $GET_nmrkirim_PENJUALAN . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				'debet' => $GET_TOTAL_PENJUALAN,
+				// 'kredit' => $GET_TOTAL_PENJUALAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+
+			$GET_id_buku_besar = $this->Buku_besar_model->insert($data);
+		}
+
+
+
 		$data = array(
 			'kode_akun' => $this->input->post('kode_akun', TRUE),
 			'kode_pl' => $this->input->post('kode_pl', TRUE),
 			'kode_bb' => $this->input->post('kode_bb', TRUE),
+			'id_buku_besar' => $GET_id_buku_besar,
 		);
 
 		// print_r($data);
