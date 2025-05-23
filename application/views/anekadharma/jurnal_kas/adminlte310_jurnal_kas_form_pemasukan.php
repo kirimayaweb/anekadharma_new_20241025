@@ -31,7 +31,7 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>Bebet ( BKM )</strong></div>
+                                    <div class="col-12" text-align="center"> <strong>INPUT KAS</strong></div>
                                 </div>
 
 
