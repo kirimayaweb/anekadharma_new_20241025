@@ -4371,6 +4371,23 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("update_kode_akun");
 		// die;
 
+
+		// ================NOTE INPUT KE BUKU BESAR ==================
+
+		// Berarti di form input kode akun pembelian ini:
+
+		// 	pilihan kode akun tetap 1 saja , tinggal nanti pilih :
+		// 	11501 - persediaan 
+		// 	atau 
+		// 	51101 - BPP
+
+		// 	dan ketika di simpan,
+		// 	maka debitnya : 11501 atau 51101 DAN kreditnya otomatis 21101
+
+		// ================END OF NOTE INPUT KE BUKU BESAR ==================
+
+
+
 		// Cek data di buku_besar
 		$data_Pembelian_by_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
@@ -4431,7 +4448,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		if ($list_data->id_buku_besar OR $list_data->id_buku_besar>0) {
+		if ($list_data->id_buku_besar or $list_data->id_buku_besar > 0) {
 			// print_r("ada ID");
 			// proses update di tabel buku besar
 
@@ -4447,7 +4464,6 @@ class Tbl_pembelian extends CI_Controller
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
 			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
-
 		} else {
 			// print_r("TIDAK ADA ada ID");
 			// Insert data baru di tabel buku besar
