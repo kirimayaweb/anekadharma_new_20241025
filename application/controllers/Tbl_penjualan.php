@@ -9,7 +9,7 @@ class Tbl_penjualan extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model','Buku_besar_model'));
+		$this->load->model(array('Tbl_penjualan_model', 'Tbl_pembelian_model', 'Sys_konsumen_model', 'Sys_unit_model', 'Sys_nama_barang_model', 'Persediaan_model', 'Buku_besar_model'));
 		$this->load->library('form_validation');
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
@@ -1799,15 +1799,24 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
 	}
 
-	public function update_kode_akun($nmrkirim = null,$Tgl_JUAL=null)
+	public function update_kode_akun($nmrkirim = null, $Tgl_JUAL = null)
 	{
 
 		// print_r($this->input->post('kode_akun', TRUE));
 		// print_r("<br/>");
 
 
+		// ================ NOTE SETTING KODE AKUN UNTUK TRANSAKSI PENJUALAN =========
+
+		// dan 
+		// untuk penjualan otomatis 2 data di buku besar:
+		// 1. kode akun terpilih ( 11101, 41101 dan 21201 ) masuk kredit
+		// 2. 11301 ( debet )
+
+		// ================ END OF NOTE SETTING KODE AKUN UNTUK TRANSAKSI PENJUALAN =========
+
 		// Cek data di buku_besar
-		$data_Penjualan_by_nmr_kirim_tgl_jual = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_TGL_JUAL($nmrkirim,$Tgl_JUAL);
+		$data_Penjualan_by_nmr_kirim_tgl_jual = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_TGL_JUAL($nmrkirim, $Tgl_JUAL);
 
 		// print_r($data_Pembelian_by_uuid_spop);
 		// print_r("<br/>");
@@ -1817,8 +1826,8 @@ class Tbl_penjualan extends CI_Controller
 		// GET id_buku_besar , jika belum ada maka insert , jika sudah ada maka update di 
 
 		$GET_TOTAL_PENJUALAN = 0;
-		$GET_tanggal_PENJUALAN=null;
-		$GET_nmrkirim_PENJUALAN=null;
+		$GET_tanggal_PENJUALAN = null;
+		$GET_nmrkirim_PENJUALAN = null;
 		foreach ($data_Penjualan_by_nmr_kirim_tgl_jual as $list_data) {
 
 
@@ -1826,7 +1835,7 @@ class Tbl_penjualan extends CI_Controller
 			// print_r("<br/>");
 			// if ($GET_tanggal_PENJUALAN OR $GET_tanggal_PENJUALAN <> null) {
 			// } else {
-				// $GET_tanggal_PENJUALAN = $list_data->tgl_jual;
+			// $GET_tanggal_PENJUALAN = $list_data->tgl_jual;
 			// }
 
 			$GET_tanggal_PENJUALAN = date("Y-m-d H:i:s", strtotime($list_data->tgl_jual, TRUE));
@@ -1835,7 +1844,7 @@ class Tbl_penjualan extends CI_Controller
 			// print_r("<br/>");
 
 
-			if ($GET_nmrkirim_PENJUALAN OR $GET_nmrkirim_PENJUALAN <> null) {
+			if ($GET_nmrkirim_PENJUALAN or $GET_nmrkirim_PENJUALAN <> null) {
 			} else {
 				$GET_nmrkirim_PENJUALAN = $list_data->nmrkirim;
 			}
