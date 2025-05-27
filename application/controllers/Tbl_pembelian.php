@@ -4332,7 +4332,7 @@ class Tbl_pembelian extends CI_Controller
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'start' => $start,
 		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list_jurnal', $data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
 	}
 
 	public function jurnal_pembelian2_cekBelumAdaKodeAkun()
