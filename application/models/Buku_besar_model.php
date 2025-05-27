@@ -8,6 +8,7 @@ class Buku_besar_model extends CI_Model
 
     public $table = 'buku_besar';
     public $id = 'id';
+    public $source = 'source';
     public $tanggal = 'tanggal';
     public $order = 'DESC';
     public $orderASC = 'ASC';
@@ -46,6 +47,13 @@ class Buku_besar_model extends CI_Model
     {
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
+    }
+   
+    // get data by source
+    function get_by_source($GET_source)
+    {
+        $this->db->where($this->source, $GET_source);
+        return $this->db->get($this->table)->result();
     }
     
     // get total rows

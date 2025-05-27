@@ -4326,10 +4326,11 @@ class Tbl_pembelian extends CI_Controller
 	}
 	public function jurnal_pembelian2()
 	{
-		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$GET_Source = "pembelian";
+		$Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
 		$start = 0;
 		$data = array(
-			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'Buku_besar_DATA_data' => $Buku_besar_DATA,
 			'start' => $start,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
@@ -4396,15 +4397,15 @@ class Tbl_pembelian extends CI_Controller
 
 		// ================END OF NOTE INPUT KE BUKU BESAR ==================
 
-
-
 		// Cek data di buku_besar
 		$data_Pembelian_by_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
+		// print_r($uuid_spop);
+		// print_r("<br/>");
 		// print_r($data_Pembelian_by_uuid_spop);
 		// print_r("<br/>");
 		// print_r("<br/>");
-		// print_r("<br/>");
+		// // print_r("<br/>");
 
 		// GET id_buku_besar , jika belum ada maka insert , jika sudah ada maka update di 
 
@@ -4412,89 +4413,189 @@ class Tbl_pembelian extends CI_Controller
 
 		foreach ($data_Pembelian_by_uuid_spop as $list_data) {
 
-			// print_r($list_data->id);
-			// print_r("<br/>");
-			// print_r($list_data->uuid_spop);
-			// print_r("<br/>");
-			// print_r($list_data->spop);
-			// print_r("<br/>");
-			// print_r($list_data->uraian);
-			// print_r("<br/>");
-			// print_r($list_data->jumlah);
-			// print_r("<br/>");
-			// print_r($list_data->harga_satuan);
-			// print_r("<br/>");
-			// print_r($list_data->harga_total);
-			// print_r("<br/>");
-			// print_r($list_data->kode_akun);
-			// print_r("<br/>");
-			// print_r($list_data->kode_pl);
-			// print_r("<br/>");
-			// print_r($list_data->kode_bb);
-			// print_r("<br/>");
-			// print_r($list_data->id_buku_besar);
-			// print_r("<br/>");
-			// print_r("---------");
-			// print_r("<br/>");
-
+			// Tanggal
 			if ($GET_tanggal_pembelian) {
 			} else {
 				$GET_tanggal_pembelian = $list_data->tgl_po;
 			}
 
+			// SPOP
 			if ($GET_SPOP_pembelian) {
 			} else {
 				$GET_SPOP_pembelian = $list_data->spop;
 			}
 
+			$GET_Supplier = $list_data->supplier_nama;
 
+			// TOTAL PEMBELIAN
 			$GET_TOTAL_PEMBELIAN = $GET_TOTAL_PEMBELIAN + $list_data->harga_total;
 
+			// ID BUKU BESAR
 			if ($GET_ID_buku_besar) {
 			} else {
+
 				$GET_ID_buku_besar = $list_data->id_buku_besar;
 			}
 		}
 
 
+		// print_r($list_data->id_buku_besar);
+		// die;
 
 		if ($list_data->id_buku_besar or $list_data->id_buku_besar > 0) {
 			// print_r("ada ID");
 			// proses update di tabel buku besar
 
+			// KODE AKUN PILIHAN DARI FORM INPUT -----------------------------------------------------------------------
+
+			$Get_kode_akun = $this->input->post('kode_akun', TRUE);
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+			// print_r("Update data");
+			// print_r("<br/>");
+
 			$data = array(
 				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
 				'tanggal' => $GET_tanggal_pembelian,
 				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "pembelian",
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
 				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				// 'debet' => $this->input->post('debet', TRUE),
+				'debet' => $GET_TOTAL_PEMBELIAN,
+				// 'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+
+			// print_r($data);
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// die;
+
+			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+
+
+			// KODE AKUN 21101-UU -----------------------------------------------------------------------
+
+
+			$Get_kode_akun = 21101;
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+
+
+
+			// GET ID BUKU BESAR BY UUID_SPOP DAN KODE AKUN : 21101
+
+			$Get_kode_akun = 21101;
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$this->db->where('uuid_spop', $uuid_spop);
+			$GET_id_buku_besar_by_21101_by_uuid_spop = $this->db->get('buku_besar')->row()->id;
+
+
+
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => 21101,
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "pembelian",
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
+				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				// 'debet' => $GET_TOTAL_PEMBELIAN,
 				'kredit' => $GET_TOTAL_PEMBELIAN,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
-			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+			$this->Buku_besar_model->update($GET_id_buku_besar_by_21101_by_uuid_spop, $data);
+
+
+			// print_r($GET_ID_buku_besar);
+			// print_r("<br/>");
+			// print_r($data);
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// // print_r("<br/>");
+			// // die;
+
 		} else {
 			// print_r("TIDAK ADA ada ID");
 			// Insert data baru di tabel buku besar
+
+			// KODE AKUN PILIHAN DI FORM-------------------------------------------------------------
+
+
+			$Get_kode_akun = $this->input->post('kode_akun', TRUE);
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+
+			// print_r($GET_DATA_sys_kode_akun);
+			// die;
+
 			$data = array(
 				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
 				'tanggal' => $GET_tanggal_pembelian,
 				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "pembelian",
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
 				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				// 'debet' => $this->input->post('debet', TRUE),
-				'kredit' => $GET_TOTAL_PEMBELIAN,
+				'debet' => $GET_TOTAL_PEMBELIAN,
+				// 'kredit' => $GET_TOTAL_PEMBELIAN,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
 
 			$GET_id_buku_besar = $this->Buku_besar_model->insert($data);
+
+
+			// KODE AKUN 21101-UU-----------------------------------------------------------------------
+
+			$Get_kode_akun = 21101;
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+
+			// print_r($GET_DATA_sys_kode_akun);
+			// die;
+
+
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => 21101,
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "pembelian",
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
+				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				// 'debet' => $GET_TOTAL_PEMBELIAN,
+				'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+
+			$this->Buku_besar_model->insert($data);
 		}
 
 		// print_r("ID buku besar: ");
 		// print_r($GET_id_buku_besar);
 		// die;
+
+
 
 		$data = array(
 			'kode_akun' => $this->input->post('kode_akun', TRUE),
@@ -4509,7 +4610,7 @@ class Tbl_pembelian extends CI_Controller
 		// Cek di tabel buku besar , jika belum ada data maka insert , jika sudah ada maka update
 
 
-		redirect(site_url('Tbl_pembelian/jurnal_pembelian2/'));
+		redirect(site_url('Tbl_pembelian/setting_kode_akun_pembelian2/'));
 	}
 
 	public function ubah_kode_akun($uuid_spop = null)
