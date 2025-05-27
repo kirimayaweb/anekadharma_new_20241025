@@ -4314,6 +4314,16 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_jurnal_pembelian', $data);
 	}
 
+	public function setting_kode_akun_pembelian2()
+	{
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+		$start = 0;
+		$data = array(
+			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'start' => $start,
+		);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_setting_kode_akun', $data);
+	}
 	public function jurnal_pembelian2()
 	{
 		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
