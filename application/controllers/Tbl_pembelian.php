@@ -4440,6 +4440,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 		// print_r($list_data->id_buku_besar);
+		// print_r("<br/>");
 		// die;
 
 		if ($list_data->id_buku_besar or $list_data->id_buku_besar > 0) {
@@ -4518,6 +4519,18 @@ class Tbl_pembelian extends CI_Controller
 			$this->Buku_besar_model->update($GET_id_buku_besar_by_21101_by_uuid_spop, $data);
 
 
+
+
+			// UPDATE DI TABEL PEMBELIAN
+			$data = array(
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'kode_pl' => $this->input->post('kode_pl', TRUE),
+				'kode_bb' => $this->input->post('kode_bb', TRUE),
+				// 'id_buku_besar' => $GET_id_buku_besar,
+			);
+
+			$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+
 			// print_r($GET_ID_buku_besar);
 			// print_r("<br/>");
 			// print_r($data);
@@ -4589,6 +4602,17 @@ class Tbl_pembelian extends CI_Controller
 			);
 
 			$this->Buku_besar_model->insert($data);
+
+
+			// UPDATE DI TABEL PEMBELIAN
+			$data = array(
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'kode_pl' => $this->input->post('kode_pl', TRUE),
+				'kode_bb' => $this->input->post('kode_bb', TRUE),
+				'id_buku_besar' => $GET_id_buku_besar,
+			);
+
+			$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
 		}
 
 		// print_r("ID buku besar: ");
@@ -4596,15 +4620,6 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-
-		$data = array(
-			'kode_akun' => $this->input->post('kode_akun', TRUE),
-			'kode_pl' => $this->input->post('kode_pl', TRUE),
-			'kode_bb' => $this->input->post('kode_bb', TRUE),
-			'id_buku_besar' => $GET_id_buku_besar,
-		);
-
-		$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
 
 
 		// Cek di tabel buku besar , jika belum ada data maka insert , jika sudah ada maka update
