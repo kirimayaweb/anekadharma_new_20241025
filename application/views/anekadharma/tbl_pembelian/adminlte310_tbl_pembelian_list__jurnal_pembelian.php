@@ -447,7 +447,7 @@
                                                         <?php
                                                         // echo $list_data->supplier;
                                                         $this->db->where('kode_akun', $GET_KODE_PL);
-                                                        $GET_DATA_nama_PL = $this->db->get('sys_pl')->row()->nama_akun;
+                                                        $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->nama_akun;
 
                                                         echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
                                                         ?>
@@ -626,7 +626,7 @@
                                         <?php
                                         // echo $list_data->supplier;
                                         $this->db->where('kode_akun', $GET_KODE_PL);
-                                        $GET_DATA_nama_PL = $this->db->get('sys_pl')->row()->nama_akun;
+                                        $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->nama_akun;
 
                                         echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
                                         ?>
