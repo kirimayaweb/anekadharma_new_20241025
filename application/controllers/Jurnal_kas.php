@@ -339,6 +339,15 @@ class Jurnal_kas extends CI_Controller
         // die;
         // Get Id penerimaaan kas
 
+
+
+// ============ SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
+
+
+
+// ============ END OF SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
+
+
         $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `uuid_jurnal_kas`='$uuid_jurnal_kas'";
 
         $Data_jurnal_penerimaan_kas = $this->db->query($sql_kas_penerimaan)->row();
