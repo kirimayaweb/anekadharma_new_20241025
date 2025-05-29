@@ -4333,6 +4333,11 @@ class Tbl_pembelian extends CI_Controller
 
 			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
 			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+
+			if($Get_YEAR_selected<2020){
+
+			}
+
 		} else {
 
 
@@ -4361,8 +4366,8 @@ class Tbl_pembelian extends CI_Controller
 		$data = array(
 			'Buku_besar_DATA_data' => $Buku_besar_DATA,
 			// 'start' => $start,
-			'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
-			'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+			'month_selected' => $Get_month_selected,
+			'year_selected' => $Get_YEAR_selected,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
 	}
