@@ -4326,40 +4326,20 @@ class Tbl_pembelian extends CI_Controller
 	}
 	public function jurnal_pembelian2()
 	{
-
-
 		if ($this->input->post('bulan_ns', TRUE)) {
-
-
 			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
 			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-
-			if($Get_YEAR_selected<2020){
-
-			}
-
 		} else {
-
-
-
 			// $Get_date_awal = date("Y-m-1 00:00:00");
 			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
 			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
 			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
-
 		}
-
 
 		$GET_Source = "pembelian";
 		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
 
 		$Buku_besar_DATA = $this->db->query($sql)->result();
-
-
-
-
-
-
 
 		// $Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
 		// $start = 0;
