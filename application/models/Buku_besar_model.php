@@ -9,6 +9,7 @@ class Buku_besar_model extends CI_Model
     public $table = 'buku_besar';
     public $id = 'id';
     public $source = 'source';
+    public $pl = 'pl';
     public $tanggal = 'tanggal';
     public $order = 'DESC';
     public $orderASC = 'ASC';
@@ -53,6 +54,7 @@ class Buku_besar_model extends CI_Model
     function get_by_source($GET_source)
     {
         $this->db->where($this->source, $GET_source);
+        $this->db->order_by($this->pl, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
     

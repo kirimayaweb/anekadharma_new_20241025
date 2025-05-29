@@ -32,6 +32,13 @@
         // echo $date_awal; 
         // echo "<br/>";
 
+        $Get_month_from_date = $month_selected;
+        $Get_year_Tahun_ini = $year_selected;
+        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+
+
+
+
         if (date("Y", strtotime($date_awal)) < 2020) {
             $Get_date_awal = date("d-m-Y");
         } else {
@@ -101,51 +108,30 @@
                             <div class="col-12">
                                 <div class="row">
                                     <div class="col-4" align="left">
-                                        <div class="col-12" text-align="center"> <strong>JURNAL PEMBELIAN</strong></div>
+                                        <div class="col-12" text-align="center"> <strong>JURNAL PEMBELIAN</strong> <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?></div>
                                     </div>
 
                                     <div class="col-6" align="left">
+
+
+
+
                                         <?php
-                                        $action_cari_between_date = site_url('Jurnal_kas/Jurnal_pengeluaran_kas_cari_between_date');
+                                        $action_cari_between_date = site_url('Tbl_pembelian/jurnal_pembelian2');
                                         ?>
 
                                         <form action="<?php echo $action_cari_between_date; ?>" method="post">
                                             <div class="row">
-
-                                                <div class="col-md-1" text-align="right" align="right"></div>
-
-                                                <div class="col-md-3" text-align="right">
-                                                    <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                <div class="col-md-4" text-align="right" align="right">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns">
                                                 </div>
-
-                                                <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                                <div class="col-md-3" text-align="left" align="left">
-                                                    <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
                                                 <div class="col-md-2" text-align="left" align="left">
-                                                    <strong>
-                                                        <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                                    </strong>
+                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                                 </div>
 
                                             </div>
                                         </form>
+
                                     </div>
                                     <div class="col-2" align="right">
 
@@ -224,9 +210,20 @@
                                 $start = 0;
                                 $TOTAL_21101 = 0;
                                 $TOTAL_debet_jumlah = 0;
+                                $TOTAL_debet_ALL = 0;
                                 $TOTAL_kredit_21101 = 0;
+                                $TOTAL_kredit_ALL = 0;
+
+
                                 $TOTAL_saldo = 0;
+                                $GET_KODE_PL = "";
+
                                 foreach ($Buku_besar_DATA_data as $list_data) {
+
+
+
+
+                                    // BARIS KE 1 ----- PERTAMA
 
                                     if ($list_data->kode_akun <> 21101) {
 
@@ -242,85 +239,447 @@
                                         $this->db->where('uuid_spop', $list_data->uuid_spop);
                                         $GET_DATA_kode_akun_kredit = $this->db->get('buku_besar')->row()->kredit;
 
+
+                                        if ($start <= 0) {
+                                            // $start=++$start;
                                 ?>
+                                            <!-- BARIS KE 1 -->
+                                            <tr>
+                                                <td align="left">
+                                                    <?php
+                                                    echo ++$start;
+                                                    ?>
+                                                </td>
+
+                                                <td align="left">
+                                                    <?php
+                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                    ?>
+                                                </td>
+
+                                                <!-- SPOP -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->spop;
+                                                    ?>
+                                                </td>
+
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->pl;
+                                                    ?>
+                                                </td>
+
+                                                <!-- SUPPLIER -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->supplier;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kode Akun -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->kode_akun;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Kode Akun -->
+                                                <td align="left">
+                                                    <?php
+                                                    echo $list_data->nama_akun;
+                                                    ?>
+                                                </td>
+
+                                                <!-- Jumlah Debet -->
+                                                <td align="right">
+                                                    <?php
+                                                    // echo $list_data->debet;
+                                                    echo "<font color='black'>" . number_format($list_data->debet, 2, ',', '.') . "</font>";
+                                                    $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
+                                                    ?>
+                                                </td>
 
 
-                                        <tr>
-                                            <td align="left">
+                                                <!-- Jumlah Kredit -->
+                                                <td align="right">
+                                                    <?php
+                                                    // echo $GET_DATA_kode_akun_kredit;
+                                                    echo "<font color='black'>" . number_format($GET_DATA_kode_akun_kredit, 2, ',', '.') . "</font>";
+                                                    $TOTAL_kredit_21101 = $TOTAL_kredit_21101 + $GET_DATA_kode_akun_kredit;
+                                                    ?>
+                                                </td>
+
+
+
+                                            </tr>
+
+                                            <?php
+                                            $GET_KODE_PL = $list_data->pl; // UNTUK PENGELOMPOKAN PL , DAN MENJUMLAHKAN PER PL
+
+                                            // <!-- END OF BARIS KE 1 -->
+
+                                        } else {
+
+                                            // BARIS KE 2 -------- KEDUA
+                                            // CEK PL , JIKA SAMA MAKA TAMPILKAN LIST DATA , JIKA PL BEDA ==> BUAT BARIS TOTAL PER PL DAN LIST DATA PL BARU
+
+                                            if ($list_data->pl == $GET_KODE_PL) {
+                                                // PL SAMA ==> MAKA LIST DATA BARU
+
+                                            ?>
+
+
                                                 <?php
-                                                echo ++$start;
+                                                if ($list_data->kode_akun <> 21101) {
                                                 ?>
-                                            </td>
+                                                    <tr>
+                                                        <td align="left">
+                                                            <?php
+                                                            echo ++$start;
+                                                            ?>
+                                                        </td>
 
-                                            <td align="left">
+                                                        <td align="left">
+                                                            <?php
+                                                            echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                            ?>
+                                                        </td>
+
+                                                        <!-- SPOP -->
+                                                        <td align="left">
+                                                            <?php
+                                                            echo $list_data->spop;
+                                                            ?>
+                                                        </td>
+
+                                                        <td align="left">
+                                                            <?php
+                                                            echo $list_data->pl;
+                                                            ?>
+                                                        </td>
+
+                                                        <!-- SUPPLIER -->
+                                                        <td align="left">
+                                                            <?php
+                                                            echo $list_data->supplier;
+                                                            ?>
+                                                        </td>
+
+                                                        <!-- Kode Akun -->
+                                                        <td align="left">
+                                                            <?php
+                                                            echo $list_data->kode_akun;
+                                                            ?>
+                                                        </td>
+
+                                                        <!-- Kode Akun -->
+                                                        <td align="left">
+                                                            <?php
+                                                            echo $list_data->nama_akun;
+                                                            ?>
+                                                        </td>
+
+                                                        <!-- Jumlah Debet -->
+                                                        <td align="right">
+                                                            <?php
+                                                            // echo $list_data->debet;
+                                                            echo "<font color='black'>" . number_format($list_data->debet, 2, ',', '.') . "</font>";
+                                                            $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
+                                                            ?>
+                                                        </td>
+
+
+                                                        <!-- Jumlah Kredit -->
+                                                        <td align="right">
+                                                            <?php
+                                                            // echo $GET_DATA_kode_akun_kredit;
+                                                            echo "<font color='black'>" . number_format($GET_DATA_kode_akun_kredit, 2, ',', '.') . "</font>";
+                                                            $TOTAL_kredit_21101 = $TOTAL_kredit_21101 + $GET_DATA_kode_akun_kredit;
+                                                            ?>
+                                                        </td>
+
+
+
+                                                    </tr>
+
                                                 <?php
-                                                echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                ?>
-                                            </td>
+                                                } //if ($list_data->kode_akun <> 21101)
 
-                                            <!-- SPOP -->
-                                            <td align="left">
+                                                ?>
+
+
+                                            <?php
+                                            } else {
+                                                // PL BEDA ==> BUAT BARIS TOTAL PER PL DAN LIST DATA BARU DENGAN PL BERBEDA/SELANJUTNYA
+
+                                                // BARIS TOTAL =================
+                                            ?>
+
+                                                <tr style="background-color:yellow;">
+                                                    <td align="left">
+                                                        <?php
+                                                        echo ++$start;
+                                                        ?>
+                                                    </td>
+
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo "TOTAL";
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- SPOP -->
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo $list_data->spop;
+                                                        ?>
+                                                    </td>
+
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo $list_data->pl;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- SUPPLIER -->
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo $list_data->supplier;
+                                                        $this->db->where('kode_akun', $GET_KODE_PL);
+                                                        $GET_DATA_nama_PL = $this->db->get('sys_pl')->row()->nama_akun;
+
+                                                        echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Kode Akun -->
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo $list_data->kode_akun;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Kode Akun -->
+                                                    <td align="left">
+                                                        <?php
+                                                        // echo $list_data->nama_akun;
+                                                        // echo "TOTAL";
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Jumlah Debet -->
+                                                    <td align="right">
+
+                                                        <?php
+                                                        // echo $TOTAL_debet_jumlah;
+                                                        // $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
+                                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
+
+                                                        $TOTAL_debet_ALL = $TOTAL_debet_ALL + $TOTAL_debet_jumlah;
+
+                                                        ?>
+
+                                                    </td>
+
+
+                                                    <!-- Jumlah Kredit -->
+                                                    <td align="right">
+
+                                                        <?php
+                                                        // echo $TOTAL_kredit_21101;
+                                                        // $TOTAL_kredit_21101 = $TOTAL_kredit_21101 + $GET_DATA_kode_akun_kredit;
+                                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_21101, 2, ',', '.') . "</strong></font>";
+
+                                                        $TOTAL_kredit_ALL = $TOTAL_kredit_ALL + $TOTAL_kredit_21101;
+
+                                                        ?>
+
+                                                    </td>
+
+
+
+                                                </tr>
                                                 <?php
-                                                echo $list_data->spop;
-                                                ?>
-                                            </td>
+                                                $TOTAL_debet_jumlah = 0;
+                                                $TOTAL_kredit_21101 = 0;
 
-                                            <td align="left">
+                                                ?>
+                                                <!-- // END OF BARIS TOTAL ================= -->
+
+
+
+                                                <!-- ---------------------------------------------------------------------------------------------- -->
+
+
+                                                <!-- // BARIS DATA PL BARU -->
+                                                <tr>
+                                                    <td align="left">
+                                                        <?php
+                                                        echo ++$start;
+                                                        ?>
+                                                    </td>
+
+                                                    <td align="left">
+                                                        <?php
+                                                        echo date("d-m-Y", strtotime($list_data->tanggal));
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- SPOP -->
+                                                    <td align="left">
+                                                        <?php
+                                                        echo $list_data->spop;
+                                                        ?>
+                                                    </td>
+
+                                                    <td align="left">
+                                                        <?php
+                                                        echo $list_data->pl;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- SUPPLIER -->
+                                                    <td align="left">
+                                                        <?php
+                                                        echo $list_data->supplier;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Kode Akun -->
+                                                    <td align="left">
+                                                        <?php
+                                                        echo $list_data->kode_akun;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Kode Akun -->
+                                                    <td align="left">
+                                                        <?php
+                                                        echo $list_data->nama_akun;
+                                                        ?>
+                                                    </td>
+
+                                                    <!-- Jumlah Debet -->
+                                                    <td align="right">
+                                                        <?php
+                                                        // echo $list_data->debet;
+                                                        echo "<font color='black'>" . number_format($list_data->debet, 2, ',', '.') . "</font>";
+                                                        $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
+                                                        ?>
+                                                    </td>
+
+
+                                                    <!-- Jumlah Kredit -->
+                                                    <td align="right">
+                                                        <?php
+                                                        // echo $GET_DATA_kode_akun_kredit;
+                                                        echo "<font color='black'>" . number_format($GET_DATA_kode_akun_kredit, 2, ',', '.') . "</font>";
+                                                        $TOTAL_kredit_21101 = $TOTAL_kredit_21101 + $GET_DATA_kode_akun_kredit;
+                                                        ?>
+                                                    </td>
+
+
+
+                                                </tr>
+
                                                 <?php
-                                                echo $list_data->pl;
+                                                $GET_KODE_PL = $list_data->pl; // UNTUK PENGELOMPOKAN PL , DAN MENJUMLAHKAN PER PL
                                                 ?>
-                                            </td>
-
-                                            <!-- SUPPLIER -->
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->supplier;
-                                                ?>
-                                            </td>
-
-                                            <!-- Kode Akun -->
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->kode_akun;
-                                                ?>
-                                            </td>
-
-                                            <!-- Kode Akun -->
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->nama_akun;
-                                                ?>
-                                            </td>
-
-                                            <!-- Jumlah Debet -->
-                                            <td align="right">
-                                                <?php
-                                                echo $list_data->debet;
-                                                $TOTAL_debet_jumlah=$TOTAL_debet_jumlah+$list_data->debet;
-                                                ?>
-                                            </td>
-
-
-                                            <!-- Jumlah Kredit -->
-                                            <td align="right">
-                                                <?php
-                                                echo $GET_DATA_kode_akun_kredit;
-                                                $TOTAL_kredit_21101=$TOTAL_kredit_21101+$GET_DATA_kode_akun_kredit;
-                                                ?>
-                                            </td>
-
-
-
-                                        </tr>
-
-
-
+                                                <!-- // END OF BARIS DATA PL BARU -->
                                 <?php
+                                            }
+                                        }
                                     }
                                 }
                                 ?>
 
+                                <!-- BARIS TOTAL TERAKHIR -->
+                                <tr style="background-color:yellow;">
+                                    <td align="left">
+                                        <?php
+                                        echo ++$start;
+                                        ?>
+                                    </td>
 
+                                    <td align="left">
+                                        <?php
+                                        // echo "TOTAL";
+                                        ?>
+                                    </td>
+
+                                    <!-- SPOP -->
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->spop;
+                                        ?>
+                                    </td>
+
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->pl;
+                                        ?>
+                                    </td>
+
+                                    <!-- SUPPLIER -->
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->supplier;
+                                        $this->db->where('kode_akun', $GET_KODE_PL);
+                                        $GET_DATA_nama_PL = $this->db->get('sys_pl')->row()->nama_akun;
+
+                                        echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
+                                        ?>
+                                    </td>
+
+                                    <!-- Kode Akun -->
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->kode_akun;
+                                        ?>
+                                    </td>
+
+                                    <!-- Kode Akun -->
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->nama_akun;
+                                        // echo "TOTAL";
+                                        ?>
+                                    </td>
+
+                                    <!-- Jumlah Debet -->
+                                    <td align="right">
+
+                                        <?php
+                                        // echo $TOTAL_debet_jumlah;
+                                        // $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
+
+                                        $TOTAL_debet_ALL = $TOTAL_debet_ALL + $TOTAL_debet_jumlah;
+
+                                        ?>
+
+                                    </td>
+
+
+                                    <!-- Jumlah Kredit -->
+                                    <td align="right">
+
+                                        <?php
+                                        // echo $TOTAL_kredit_21101;
+                                        // $TOTAL_kredit_21101 = $TOTAL_kredit_21101 + $GET_DATA_kode_akun_kredit;
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_21101, 2, ',', '.') . "</strong></font>";
+
+                                        $TOTAL_kredit_ALL = $TOTAL_kredit_ALL + $TOTAL_kredit_21101;
+
+                                        ?>
+
+                                    </td>
+
+
+
+                                </tr>
+                                <!-- END OF BARIS TOTAL TERAKHIR -->
 
                             </tbody>
 
@@ -350,12 +709,12 @@
                                     <!-- TOTAL DEBET JUMLAH -->
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_ALL, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th>
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_21101, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_ALL, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL JUMLAH -->
 
