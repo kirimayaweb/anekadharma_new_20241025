@@ -31,8 +31,8 @@
                         <div class="row">
                             <div class="col-4">
                                 <div class="row">
-                                    <div class="col-5" text-align="center"> <strong>DATA PENJUALAN</strong> </div>
-                                    <div class="col-7" text-align="center"> 
+                                    <div class="col-10" text-align="center"> <strong>SETTING KODE AKUN PENJUALAN</strong> </div>
+                                    <div class="col-2" text-align="center"> 
                                         <strong>
                                         <?php 
                                         // echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); 

@@ -1753,7 +1753,7 @@ class Tbl_penjualan extends CI_Controller
 
 
 
-	public function jurnal_penjualan()
+	public function setting_kode_akun_penjualan2()
 	{
 
 		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
@@ -1772,6 +1772,37 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_jurnal', $data);
 	}
 
+	public function jurnal_penjualan2()
+	{
+		if ($this->input->post('bulan_ns', TRUE)) {
+			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+		} else {
+			// $Get_date_awal = date("Y-m-1 00:00:00");
+			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
+			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+		}
+
+		$GET_Source = "penjualan";
+		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
+
+		$Buku_besar_DATA = $this->db->query($sql)->result();
+
+		// $Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
+		// $start = 0;
+		$data = array(
+			'Buku_besar_DATA_data' => $Buku_besar_DATA,
+			// 'start' => $start,
+			'month_selected' => $Get_month_selected,
+			'year_selected' => $Get_YEAR_selected,
+		);
+
+		// print_r($data);
+		// die;
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list__jurnal_penjualan', $data);
+	}
 
 	public function input_kode_akun($nmrkirim = null)
 	{
@@ -1812,6 +1843,15 @@ class Tbl_penjualan extends CI_Controller
 		// untuk penjualan otomatis 2 data di buku besar:
 		// 1. kode akun terpilih ( 11101, 41101 dan 21201 ) masuk kredit
 		// 2. 11301 ( debet )
+
+
+		// Pak maaf ralat.. yg jurnal penjualan itu : 
+
+		// - Total penjualan masuk kode akun 11301 (otomatis)
+		// - kreditnya ada 2 : 41101 - 41131 (penjualan) dan 21201 (utang PPN)/21204 (utang pph 23)
+
+		// Untuk penjualan cetak, atk, kebersihan, medis
+
 
 		// ================ END OF NOTE SETTING KODE AKUN UNTUK TRANSAKSI PENJUALAN =========
 
@@ -1877,6 +1917,113 @@ class Tbl_penjualan extends CI_Controller
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
 			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+
+
+
+
+
+
+
+
+
+			// KODE AKUN PILIHAN DARI FORM INPUT -----------------------------------------------------------------------
+
+			$Get_kode_akun = $this->input->post('kode_akun', TRUE);
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+			// print_r("Update data");
+			// print_r("<br/>");
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_PENJUALAN,
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "penjualan",
+				// 'uuid_spop' => $uuid_spop,
+				// 'spop' => $GET_SPOP_pembelian,
+				// 'supplier' => $GET_Supplier,
+				'keterangan' => "Penjualan Nomor Kirim" . $GET_nmrkirim_PENJUALAN . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				'debet' => $GET_TOTAL_PENJUALAN,
+				// 'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+
+
+			);
+
+			// print_r($data);
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// die;
+
+			$this->Buku_besar_model->update($GET_ID_buku_besar, $data);
+
+			// KODE AKUN 21101-UU -----------------------------------------------------------------------
+
+			$Get_kode_akun = 21101;
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$GET_DATA_sys_kode_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+
+
+
+			// GET ID BUKU BESAR BY UUID_SPOP DAN KODE AKUN : 21101
+
+			$Get_kode_akun = 21101;
+			$this->db->where('kode_akun', $Get_kode_akun);
+			$this->db->where('uuid_spop', $uuid_spop);
+			$GET_id_buku_besar_by_21101_by_uuid_spop = $this->db->get('buku_besar')->row()->id;
+
+
+
+
+			$data = array(
+				// 'uuid_buku_besar' => $this->input->post('uuid_buku_besar', TRUE),
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => 21101,
+				'nama_akun' => $GET_DATA_sys_kode_akun,
+				'source' => "pembelian",
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
+				'keterangan' => "Pembelian UUID SPOP" . $uuid_spop . " SPOP: " . $GET_SPOP_pembelian . " " . $this->input->post('kode_bb', TRUE),
+				'pl' => $this->input->post('kode_pl', TRUE),
+				'kode' => $this->input->post('kode_bb', TRUE),
+				// 'debet' => $GET_TOTAL_PEMBELIAN,
+				'kredit' => $GET_TOTAL_PEMBELIAN,
+				// 'saldo' => $this->input->post('saldo', TRUE),
+			);
+			$this->Buku_besar_model->update($GET_id_buku_besar_by_21101_by_uuid_spop, $data);
+
+
+
+
+			// UPDATE DI TABEL PEMBELIAN
+			$data = array(
+				'kode_akun' => $this->input->post('kode_akun', TRUE),
+				'kode_pl' => $this->input->post('kode_pl', TRUE),
+				'kode_bb' => $this->input->post('kode_bb', TRUE),
+				// 'id_buku_besar' => $GET_id_buku_besar,
+			);
+
+			$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+
+			// print_r($GET_ID_buku_besar);
+			// print_r("<br/>");
+			// print_r($data);
+			// print_r("<br/>");
+			// print_r("<br/>");
+			// // print_r("<br/>");
+			// // die;
+
+
+
+
+
+
+
 		} else {
 			// print_r("TIDAK ADA ada ID");
 			// Insert data baru di tabel buku besar
