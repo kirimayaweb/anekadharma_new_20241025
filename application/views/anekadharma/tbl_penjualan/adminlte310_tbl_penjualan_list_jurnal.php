@@ -227,12 +227,19 @@
                                             <td>
                                                 <?php 
                                                 // echo "Kode Akun 2"; 
+
+
+                                                $Get_date = date("Y-m-d", strtotime($list_data->tgl_jual));
+
                                                 if ($list_data->kode_akun) {
                                                     echo $list_data->kode_akun;
                                                     echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+
+
+
+                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim . '/' . $Get_date ), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
                                                 }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim . '/' . $Get_date), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
                                                 }
                                                 
                                                 ?>
@@ -377,12 +384,14 @@
                                                 <?php 
                                                 // echo "Kode Akun 3"; 
 
+                                                $Get_date = date("Y-m-d", strtotime($list_data->tgl_jual));
+
                                                 if ($list_data->kode_akun) {
                                                     echo $list_data->kode_akun;
                                                     echo "<br/>";
-                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(site_url('Tbl_penjualan/ubah_kode_akun/' . $list_data->nmrkirim .'/'. $Get_date), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
                                                 }else{
-                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(site_url('Tbl_penjualan/input_kode_akun/' . $list_data->nmrkirim .'/'. $Get_date), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
                                                 }
 
                                                 ?>

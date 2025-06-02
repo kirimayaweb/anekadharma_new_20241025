@@ -194,14 +194,14 @@
 
                                 </tr>
                                 <tr>
-                                    <th style="text-align:left">11301</th>
-                                    <th style="text-align:left">41101</th>
+                                    <th style="text-align:right">11301</th>
+                                    <th style="text-align:right">41101</th>
                                     <th style="text-align:right">21201</th>
                                     <!-- <th style="text-align:center">11301-UU</th> -->
                                 </tr>
                                 <tr>
-                                    <th style="text-align:left">Piutang</th>
-                                    <th style="text-align:left">Penjualan DPP</th>
+                                    <th style="text-align:right">Piutang</th>
+                                    <th style="text-align:right">Penjualan DPP</th>
                                     <th style="text-align:right">Utang PPN</th>
                                     <!-- <th style="text-align:center">11301-UU</th> -->
                                 </tr>
@@ -214,12 +214,9 @@
                             <tbody>
                                 <?php
                                 $start = 0;
-                                $TOTAL_11301 = 0;
-                                $TOTAL_debet_jumlah = 0;
-                                $TOTAL_debet_ALL = 0;
-                                $TOTAL_kredit_11301 = 0;
-                                $TOTAL_kredit_ALL = 0;
-
+                                $TOTAL_debet_11301 = 0;
+                                $TOTAL_kredit_41101 = 0;
+                                $TOTAL_kredit_21201 = 0;
 
                                 $TOTAL_saldo = 0;
                                 $GET_KODE_PL = "";
@@ -231,7 +228,7 @@
 
                                     // BARIS KE 1 ----- PERTAMA
 
-                                    if ($list_data->kode_akun == 41101) {
+                                    if ($list_data->kode_akun == 11301) {
 
                                         // CEK dengan SPOP yang sama
                                         // // $Get_kode_akun = 11301;
@@ -240,13 +237,26 @@
                                         // $GET_debet_buku_besar_by_kode_akun_by_spop = $this->db->get('sys_kode_akun')->row()->debet;
 
 
-                                        $Get_kode_akun = 11301;
+                                        $Get_date = date("Y-m-d", strtotime($list_data->tanggal));
+
+
+                                        $Get_kode_akun = 41101;
                                         $this->db->where('kode_akun', $Get_kode_akun);
                                         $this->db->where('nokirim', $list_data->nokirim);
-                                        $GET_DATA_kode_akun_kredit = $this->db->get('buku_besar')->result();
-                                            ?>
+                                        $this->db->where('tanggal', $Get_date);
+                                        $GET_DATA_41101_kredit = $this->db->get('buku_besar')->row()->kredit;
 
-                                        <tr style="background-color:yellow;">
+                                        $Get_kode_akun = 21201;
+                                        $this->db->where('kode_akun', $Get_kode_akun);
+                                        $this->db->where('nokirim', $list_data->nokirim);
+                                        $this->db->where('tanggal', $Get_date);
+                                        $GET_DATA_21201_kredit = $this->db->get('buku_besar')->row()->kredit;
+
+
+
+                                ?>
+
+                                        <tr>
                                             <td align="left">
                                                 <?php
                                                 echo ++$start;
@@ -256,7 +266,7 @@
                                             <td align="left">
                                                 <?php
                                                 // echo "TOTAL";
-                                                echo "TANGGAL";
+                                                echo $Get_date;
                                                 ?>
                                             </td>
 
@@ -264,7 +274,7 @@
                                             <td align="left">
                                                 <?php
                                                 // echo $list_data->spop;
-                                                echo "Nomor Invoice";
+                                                // echo "Nomor Invoice";
                                                 ?>
                                             </td>
 
@@ -272,7 +282,7 @@
                                             <td align="left">
                                                 <?php
                                                 // echo $list_data->pl;
-                                                echo "Nomor Pesan";
+                                                // echo $list_data->nokirim;
                                                 ?>
                                             </td>
 
@@ -283,7 +293,7 @@
                                                 // $this->db->where('kode_pl', $GET_KODE_PL);
                                                 // $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->keterangan;
 
-                                                echo "Nomor Kirim ";
+                                                echo $list_data->nokirim;
                                                 ?>
                                             </td>
 
@@ -291,27 +301,29 @@
                                             <td align="left">
                                                 <?php
                                                 // echo $list_data->kode_akun;
-                                                echo "Konsumen";
+                                                echo $list_data->konsumen_nama;
                                                 ?>
                                             </td>
 
-                                            <!-- Nomor Kirim -->
-                                            <td align="left">
+                                            <!-- debet 11301 -->
+                                            <td align="right">
                                                 <?php
-                                                echo "<font color='blue'><strong>Piutang" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
-                                                // echo "TOTAL";
+                                                echo "<font color='black'><strong>" . number_format($list_data->debet, 2, ',', '.') . "</strong></font>";
+                                                $TOTAL_debet_11301 = $TOTAL_debet_11301+$list_data->debet;
+                
                                                 ?>
                                             </td>
 
-                                            <!-- Jumlah Debet -->
+                                            <!-- Jumlah kredit 41101 -->
                                             <td align="right">
 
                                                 <?php
                                                 // echo $TOTAL_debet_jumlah;
                                                 // $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->debet;
-                                                echo "<font color='blue'><strong>Penjualan DPP" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
+                                                echo "<font color='black'><strong>" . number_format($GET_DATA_41101_kredit, 2, ',', '.') . "</strong></font>";
 
-                                                $TOTAL_debet_ALL = $TOTAL_debet_ALL + $TOTAL_debet_jumlah;
+                                                $TOTAL_kredit_41101 = $TOTAL_kredit_41101+$GET_DATA_41101_kredit;
+                                                
 
                                                 ?>
 
@@ -324,9 +336,9 @@
                                                 <?php
                                                 // echo $TOTAL_kredit_11301;
                                                 // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $GET_DATA_kode_akun_kredit;
-                                                echo "<font color='blue'><strong>Utang PPN" . number_format($TOTAL_kredit_11301, 2, ',', '.') . "</strong></font>";
+                                                echo "<font color='black'><strong>" . number_format($GET_DATA_21201_kredit, 2, ',', '.') . "</strong></font>";
 
-                                                $TOTAL_kredit_ALL = $TOTAL_kredit_ALL + $TOTAL_kredit_11301;
+                                                $TOTAL_kredit_21201 = $TOTAL_kredit_21201+$GET_DATA_21201_kredit;
 
                                                 ?>
 
@@ -336,7 +348,10 @@
 
                                         </tr>
 
-                                            <?php
+                                    <?php
+
+
+                                    
 
 
                                     }
@@ -375,21 +390,21 @@
                                     <!-- TOTAL DEBET 11301-->
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_ALL, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_11301, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th>
 
                                     <!-- TOTAL kredit 41101 -->
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_ALL, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_41101, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th>
 
                                     <!-- kredit 21201 -->
                                     <th style="text-align:right">
                                         <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_ALL, 2, ',', '.') . "</strong></font>";
+                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_21201, 2, ',', '.') . "</strong></font>";
                                         ?>
                                     </th> <!-- TOTAL JUMLAH -->
 

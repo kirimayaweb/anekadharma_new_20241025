@@ -1784,6 +1784,12 @@ class Tbl_penjualan extends CI_Controller
 			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
 		}
 
+
+		// print_r($Get_month_selected);
+		// print_r("<br/>");
+		// print_r($Get_YEAR_selected);
+		// print_r("<br/>");
+
 		$GET_Source = "penjualan";
 		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
 
@@ -1804,8 +1810,19 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list__jurnal_penjualan', $data);
 	}
 
-	public function input_kode_akun($nmrkirim = null)
+	public function input_kode_akun($nmrkirim = null, $Tgl_JUAL = null)
 	{
+
+		// print_r($nmrkirim);
+		// print_r("<br/>");
+		// print_r($Tgl_JUAL);
+		// print_r("<br/>");
+
+		$Get_date = date("Y-m-d", strtotime($Tgl_JUAL));
+
+		// print_r($Get_date);
+		// print_r("<br/>");
+
 
 		// Update field kode_akun by spop ==> open form input kode akun
 
@@ -1822,7 +1839,7 @@ class Tbl_penjualan extends CI_Controller
 		$data = array(
 			'Tbl_penjualan_data' => $data_per_nmrkirim,
 			'nmrkirim' => $nmrkirim,
-			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim),
+			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim . '/' . $Get_date),
 			'button' => 'Simpan Kode AKun',
 			// 'start' => $start,
 		);
@@ -1834,11 +1851,11 @@ class Tbl_penjualan extends CI_Controller
 	{
 
 
-		// print_r($nmrkirim);
-		// print_r("<br/>");
-		// print_r($Tgl_JUAL);
-		// print_r("<br/>");
-
+		// 		print_r($nmrkirim);
+		// 		print_r("<br/>");
+		// 		print_r($Tgl_JUAL);
+		// 		print_r("<br/>");
+		// // die;
 		// print_r($this->input->post('kode_akun', TRUE));
 		// print_r("<br/>");
 
@@ -1862,7 +1879,17 @@ class Tbl_penjualan extends CI_Controller
 		// ================ END OF NOTE SETTING KODE AKUN UNTUK TRANSAKSI PENJUALAN =========
 
 		// Cek data di buku_besar
-		$data_Penjualan_by_nmr_kirim_tgl_jual = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_TGL_JUAL($nmrkirim, $Tgl_JUAL);
+		// $data_Penjualan_by_nmr_kirim_tgl_jual = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_TGL_JUAL($nmrkirim, $Tgl_JUAL);
+
+
+		// $GET_Source = "penjualan";
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='$Tgl_JUAL' AND `nmrkirim`='$nmrkirim'  ORDER BY `id`";
+
+		// SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='2025-05-12' and `nmrkirim`='qweqwewqewq';
+
+		$data_Penjualan_by_nmr_kirim_tgl_jual = $this->db->query($sql)->result();
+
+
 
 		// print_r($data_Penjualan_by_nmr_kirim_tgl_jual);
 		// print_r("<br/>");
@@ -1913,6 +1940,30 @@ class Tbl_penjualan extends CI_Controller
 		}
 
 
+		// TOTAL PENJUALAN
+
+		// debit umpphpsl22
+		$x_var_umpphpsl22 = 1.351351;
+		$umpphpsl22_per_nmrkirim = ($Harga_TOtal * $x_var_umpphpsl22) / 100;
+
+		// debet piutang 11301
+		$x_piutang_percentage = 11.261261;
+		$piutang_per_nmrkirim = ($Harga_TOtal - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
+
+		// kredit penjualan dpp 41101 --> pilihan combo box
+		$x_penjualandpp_percentage = 90.090090;
+		$penjualandpp_per_nmrkirim = ($Harga_TOtal * $x_penjualandpp_percentage) / 100;
+
+		// kredit utang ppn 21101
+		$x_utangppn_percentage = 9.909910;
+		$utangppn_per_nmrkirim = ($Harga_TOtal * $x_utangppn_percentage) / 100;
+
+		// END OF TOTAL PENJUALAN 
+
+
+
+
+
 
 		if ($list_data->id_buku_besar or $list_data->id_buku_besar > 0) {
 			// print_r("ada ID");
@@ -1940,8 +1991,8 @@ class Tbl_penjualan extends CI_Controller
 				'keterangan' => "Penjualan Nomor Kirim" . $nmrkirim,
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				// 'debet' => $GET_TOTAL_PENJUALAN,
-				'kredit' => $GET_TOTAL_PENJUALAN,
+				// 'debet' => $penjualandpp_per_nmrkirim,
+				'kredit' => $penjualandpp_per_nmrkirim,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 
 
@@ -1982,8 +2033,8 @@ class Tbl_penjualan extends CI_Controller
 				'keterangan' => "Penjualan Nomor Kirim" . $nmrkirim,
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				'debet' => $GET_TOTAL_PENJUALAN,
-				// 'kredit' => $GET_TOTAL_PENJUALAN,
+				// 'debet' => $utangppn_per_nmrkirim,
+				'kredit' => $utangppn_per_nmrkirim,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
 			$this->Buku_besar_model->update($GET_id_buku_besar_by_21201_by_uuid_spop, $data);
@@ -2017,7 +2068,7 @@ class Tbl_penjualan extends CI_Controller
 				'keterangan' => "Penjualan Nomor Kirim" . $nmrkirim,
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				'debet' => $GET_TOTAL_PENJUALAN,
+				'debet' => $piutang_per_nmrkirim,
 				// 'kredit' => $GET_TOTAL_PENJUALAN,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
@@ -2072,7 +2123,7 @@ class Tbl_penjualan extends CI_Controller
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
 				// 'debet' => $GET_TOTAL_PENJUALAN,
-				'kredit' => $GET_TOTAL_PENJUALAN,
+				'kredit' => $penjualandpp_per_nmrkirim,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 
 
@@ -2102,7 +2153,7 @@ class Tbl_penjualan extends CI_Controller
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
 				// 'debet' => $GET_TOTAL_PENJUALAN,
-				'kredit' => $GET_TOTAL_PENJUALAN,
+				'kredit' => $utangppn_per_nmrkirim,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
 			$GET_id_buku_besar = $this->Buku_besar_model->insert($data);
@@ -2128,7 +2179,7 @@ class Tbl_penjualan extends CI_Controller
 				'keterangan' => "Penjualan Nomor Kirim" . $nmrkirim,
 				'pl' => $this->input->post('kode_pl', TRUE),
 				'kode' => $this->input->post('kode_bb', TRUE),
-				'debet' => $GET_TOTAL_PENJUALAN,
+				'debet' => $piutang_per_nmrkirim,
 				// 'kredit' => $GET_TOTAL_PENJUALAN,
 				// 'saldo' => $this->input->post('saldo', TRUE),
 			);
