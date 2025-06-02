@@ -82,6 +82,8 @@
                                     if (($compare_uuid_spop <> $list_data->uuid_spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
+
+                                        <!-- BARIS TOTAL PER SPOP (BARIS KUNING) -->
                                         <tr>
                                             <td><?php
                                                 echo ++$start;
@@ -97,7 +99,7 @@
                                             <td>
                                                 <?php
                                                 // echo $compare_spop . " - " . $list_data->spop;
-
+                                                // echo "... 1 TOTAL SPOP";
 
                                                 // echo "baris x";
                                                 // if ($x_button == 1) {
@@ -109,15 +111,15 @@
 
                                             </td>
                                             <td style="background-color:yellow;" align="left">
-                                                <?php 
+                                                <?php
                                                 // "<strong> SPOP: " . $list_data->spop . "</strong>"
-                                                echo "<strong> SPOP: " . $compare_spop . "</strong>";  
+                                                echo "<strong> SPOP: " . $compare_spop . "</strong>";
                                                 // echo "<br/>";
                                                 // echo date("d M Y", strtotime($list_data->tgl_po));
 
-                                                
+
                                                 ?>
-                                                </td>
+                                            </td>
                                             <!-- <td><?php //echo "Kode Akun 1"; 
                                                         ?></td> -->
                                             <td style="background-color:yellow;" align="right"></td>
@@ -186,6 +188,15 @@
                                                 <?php
 
                                                 // echo $list_data->spop;
+                                                // echo "..... test 2";
+                                                if ($list_data->kode_akun) {
+                                                    echo "Kode Akun: " . $list_data->kode_akun;
+                                                    echo "<br/>";
+                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                } else {
+                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                }
+
 
 
                                                 if (($compare_uuid_spop == $list_data->uuid_spop) and $x_button == 1) {
@@ -217,12 +228,12 @@
                                                 ?>
                                             </td>
                                             <td>
-                                                <?php 
-                                                echo "SPOP: " . $list_data->spop ; 
+                                                <?php
+                                                echo "SPOP: " . $list_data->spop;
                                                 echo "<br/>";
                                                 echo date("d M Y", strtotime($list_data->tgl_po));
                                                 ?>
-                                                </td>
+                                            </td>
                                             <!-- <td><?php //echo "kode akun 3"; 
                                                         ?></td> -->
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
@@ -273,7 +284,7 @@
                                             </td>
                                             <td align="left">
                                                 <?php
-                                                echo "SPOP: " . $list_data->spop ;
+                                                echo "SPOP: " . $list_data->spop;
                                                 echo "<br/>";
                                                 // echo date("d M Y", strtotime($list_data->tgl_po));
 
