@@ -77,14 +77,14 @@ class Tbl_penjualan_model extends CI_Model
     }
 
     // get all
-    function get_all_by_nmr_kirim_TGL_JUAL($nmrkirim,$Tgl_JUAL)
+    function get_all_by_nmr_kirim_TGL_JUAL($nmrkirim, $Tgl_JUAL)
     {
 
         $this->db->where($this->nmrkirim, $nmrkirim);
 
         return $this->db->get($this->table)->result();
     }
-   
+
     // get all
     function get_all_group_by_tgl_jual_nmrpesan_nmr_kirim()
     {
@@ -98,10 +98,11 @@ class Tbl_penjualan_model extends CI_Model
         $this->db->order_by($this->nmrkirim, $this->orderASC);
         // $this->db->order_by($this->uuid_penjualan, $this->orderASC);
 
+
         return $this->db->get($this->table)->result();
     }
 
-    function get_all_by_uuid_penjualan_tgl_jual_nmrkirim($uuid_penjualan=null,$tgl_jual=null,$nmrkirim=null)
+    function get_all_by_uuid_penjualan_tgl_jual_nmrkirim($uuid_penjualan = null, $tgl_jual = null, $nmrkirim = null)
     {
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->where($this->tgl_jual, $tgl_jual);
@@ -109,83 +110,83 @@ class Tbl_penjualan_model extends CI_Model
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
-   
 
-   
 
-    function get_all_by_tgl_jual_nmrkirim($tgl_jual=null,$nmrkirim=null)
+
+
+    function get_all_by_tgl_jual_nmrkirim($tgl_jual = null, $nmrkirim = null)
     {
         $this->db->where($this->tgl_jual, $tgl_jual);
         $this->db->where($this->nmrkirim, $nmrkirim);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
-   
 
-    function get_all_by_uuid_penjualan($uuid_penjualan=null)
+
+    function get_all_by_uuid_penjualan($uuid_penjualan = null)
     {
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
-   
 
-    function get_ROW_by_uuid_penjualan_first_row($uuid_penjualan=null)
+
+    function get_ROW_by_uuid_penjualan_first_row($uuid_penjualan = null)
     {
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->row();
     }
-   
 
-    function get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan=null,$tgl_jual=null,$nmrkirim=null)
+
+    function get_all_by_uuid_penjualan_tgl_jual_nmrkirim_first_row($uuid_penjualan = null, $tgl_jual = null, $nmrkirim = null)
     {
 
-       
+
 
         // $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->where($this->tgl_jual, $tgl_jual);
         $this->db->where($this->nmrkirim, $nmrkirim);
         $this->db->order_by($this->id, $this->orderASC);
-       
+
         // print_r($this->db->get($this->table)->row());
         // die;
-       
+
         return $this->db->get($this->table)->row();
     }
 
 
 
-    function get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual=null,$nmrkirim=null)
+    function get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual = null, $nmrkirim = null)
     {
 
-    //     print_r("MODEL");
-    //     print_r("<br/>");
-    //    print_r($tgl_jual);
-    //    print_r("<br/>");
-    //    print_r($nmrkirim);
-    //    print_r("<br/>");
-    //    print_r("<br/>");
+        //     print_r("MODEL");
+        //     print_r("<br/>");
+        //    print_r($tgl_jual);
+        //    print_r("<br/>");
+        //    print_r($nmrkirim);
+        //    print_r("<br/>");
+        //    print_r("<br/>");
 
         // $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->where($this->tgl_jual, $tgl_jual);
         $this->db->where($this->nmrkirim, $nmrkirim);
         $this->db->order_by($this->id, $this->orderASC);
-       
+
         // print_r($this->db->get($this->table)->row());
         // die;
-       
+
         return $this->db->get($this->table)->row();
     }
 
-    function get_all_by_uuid_penjualan_first_row($uuid_penjualan=null)
+    function get_all_by_uuid_penjualan_first_row($uuid_penjualan = null)
     {
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->row();
     }
 
-    function get_all_by_uuid_penjualan_proses($uuid_penjualan_proses=null)
+    function get_all_by_uuid_penjualan_proses($uuid_penjualan_proses = null)
     {
         $this->db->where($this->uuid_penjualan_proses, $uuid_penjualan_proses);
         $this->db->order_by($this->id, $this->orderASC);
@@ -193,7 +194,7 @@ class Tbl_penjualan_model extends CI_Model
     }
 
 
-    function get_all_by_uuid_konsumen($uuid_konsumen=null)
+    function get_all_by_uuid_konsumen($uuid_konsumen = null)
     {
         $this->db->where($this->uuid_konsumen, $uuid_konsumen);
         $this->db->order_by($this->id, $this->orderASC);
@@ -389,7 +390,7 @@ class Tbl_penjualan_model extends CI_Model
         $this->db->where($this->uuid_penjualan_proses, $uuid_penjualan_proses);
         $this->db->update($this->table, $data);
     }
-   
+
     // update data by nomor kirim
     function update_by_nmrkirim($nmrkirim, $data)
     {
