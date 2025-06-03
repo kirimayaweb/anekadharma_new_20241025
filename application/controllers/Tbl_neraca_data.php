@@ -780,14 +780,87 @@ class Tbl_neraca_data extends CI_Controller
 
 	public function create_action_neraca_NEW($Get_tahun = null, $Get_bulan = null, $data_name = null)
 	{
-		print_r("create_action_neraca_NEW");
-		print_r("<br/>");
-		print_r($Get_tahun);
-		print_r("<br/>");
-		print_r($Get_bulan);
-		print_r("<br/>");
-		print_r($data_name);
-		print_r("<br/>");
+		// print_r("create_action_neraca_NEW");
+		// print_r("<br/>");
+		// print_r($Get_tahun);
+		// print_r("<br/>");
+		// print_r($Get_bulan);
+		// print_r("<br/>");
+		// print_r($data_name);
+		// print_r("<br/>");
+		// // die;
+
+		// CEK JIKA BELUM ADA RECORD PADA TAHUN DAN BULAN YANG TERPILIH , MAKA BUAT 1 RECORD BARU
+
+
+		if ($Get_bulan) {
+			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+			$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+		} else {
+			$Get_bulan = 0;
+			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+			$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+			
+		}
+
+
+		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+			// Proses update dan isi data
+
+			$data = array(
+				$data_name => str_replace('.', '', $this->input->post('input_box', TRUE)),
+			);
+
+			// print_r($data);
+			// die;
+
+			$this->Tbl_neraca_data_model->update($GET_tbl_neraca_data_RECORD->row()->id, $data);
+		} else {
+			// proses buat record baru dan isi data
+
+			$data = array(
+				'date_input' => date("Y-m-d H:i:s"),
+				'date_transaksi' => date("Y-m-d H:i:s"),
+				'tahun_transaksi' => $Get_tahun,
+				'bulan_transaksi' => $Get_bulan,
+
+			);
+
+			// print_r($data);
+			// print_r("<br/>");
+
+			$Get_id_RECORD_NEW = $this->Tbl_neraca_data_model->insert($data);
+			// print_r($Get_tahun);
+			// print_r("<br/>");
+			// print_r("BUlan: ");
+			// print_r($Get_bulan);
+			// print_r("<br/>");
+			// print_r("id: ");
+			// print_r($Get_id_RECORD_NEW);
+			// print_r("<br/>");
+			// die;
+			$data = array(
+				$data_name => str_replace('.', '', $this->input->post('input_box', TRUE)),
+			);
+
+			// print_r($data);
+			// die;
+
+			$this->Tbl_neraca_data_model->update($Get_id_RECORD_NEW, $data);
+		}
+
+		redirect(site_url('Tbl_neraca_data/neraca_form/' . $Get_tahun . '/' . $Get_bulan));
+	}
+	public function create_action_neraca_NEW_TAHUN($Get_tahun = null, $data_name = null)
+	{
+		// print_r("create_action_neraca_NEW");
+		// print_r("<br/>");
+		// print_r($Get_tahun);
+		// print_r("<br/>");
+		// print_r($Get_bulan);
+		// print_r("<br/>");
+		// print_r($data_name);
+		// print_r("<br/>");
 		// // die;
 
 		// CEK JIKA BELUM ADA RECORD PADA TAHUN DAN BULAN YANG TERPILIH , MAKA BUAT 1 RECORD BARU
