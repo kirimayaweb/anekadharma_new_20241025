@@ -146,6 +146,8 @@ class Tbl_neraca_data_model extends CI_Model
             'PROCESS' => 'INSERT',
             'id' => $this->db->insert_id()
         );
+
+         return $datainsert['id'];
     }
 
     // update data

@@ -114,40 +114,49 @@
                                             <tbody>
                                                 <?php
 
-                                                foreach ($Tbl_neraca_data as $list_data) {
+                                                foreach ($Tbl_TAHUN_neraca_data as $list_data) {
 
-                                                    if ($list_data->bulan_transaksi == 0) {
+                                                    // if ($list_data->tahun_neraca == 0) {
 
                                                 ?>
 
-                                                        <tr>
+                                                    <tr>
 
-                                                            <td><?php echo ++$start ?></td>
+                                                        <td><?php echo ++$start ?></td>
 
-                                                            <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
-                                                            <td align="left">
-                                                                <?php
+                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
+                                                        <td align="left">
+                                                            <?php
 
-                                                                // if ($status_laporan == "bukan_laporan") {
+                                                            // if ($status_laporan == "bukan_laporan") {
 
-                                                                
-                                                                // $this->session->userdata('id_user_level') == 1 //superadmin
-                                                                // $this->session->userdata('id_user_level') == 2 //admin
-                                                                // $this->session->userdata('id_user_level') == 9 //accounting
-                                                                
-                                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
-                                                                
-                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form_Tahunan/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                }
+
+                                                            // $this->session->userdata('id_user_level') == 1 //superadmin
+                                                            // $this->session->userdata('id_user_level') == 2 //admin
+                                                            // $this->session->userdata('id_user_level') == 9 //accounting
+
+                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                            }
+
+
+                                                            $Get_Bulan = 0;
+                                                            $sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$Get_Bulan' ";
+
+                                                            $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
 
                                                                 echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                            }
 
-                                                                ?>
-                                                            </td>
+                                                            ?>
+                                                        </td>
 
-                                                        </tr>
+                                                    </tr>
                                                 <?php
-                                                    }
+                                                    // }
                                                 }
                                                 ?>
 
@@ -274,37 +283,50 @@
 
                                                 $start = 0;
                                                 foreach ($Tbl_BULAN_neraca_data as $list_data) {
-                                                    if ($list_data->bulan_transaksi > 0) {
+                                                    // if ($list_data->bulan_transaksi > 0) {
                                                 ?>
 
-                                                        <tr>
+                                                    <tr>
 
-                                                            <td><?php echo ++$start ?></td>
+                                                        <td><?php echo ++$start ?></td>
 
-                                                            <td align="left"><?php echo $list_data->tahun_transaksi; ?></td>
-                                                            <td align="left"><?php echo $list_data->bulan_transaksi . " (" . bulan_teks($list_data->bulan_transaksi) . ")"; ?></td>
-                                                            <td align="left">
-                                                                <?php
+                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
+                                                        <td align="left"><?php echo $list_data->bulan_neraca . " (" . bulan_teks($list_data->bulan_neraca) . ")"; ?></td>
+                                                        <td align="left">
+                                                            <?php
 
-                                                                // if ($status_laporan == "bukan_laporan") {
+                                                            // if ($status_laporan == "bukan_laporan") {
 
-                                                                // $this->session->userdata('id_user_level') == 1 //superadmin
-                                                                // $this->session->userdata('id_user_level') == 2 //admin
-                                                                // $this->session->userdata('id_user_level') == 9 //accounting
+                                                            // $this->session->userdata('id_user_level') == 1 //superadmin
+                                                            // $this->session->userdata('id_user_level') == 2 //admin
+                                                            // $this->session->userdata('id_user_level') == 9 //accounting
 
-                                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                            // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
 
-                                                                    echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                }
+                                                            //     echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                            // }
 
-                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
 
-                                                                ?>
-                                                            </td>
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                            }
 
-                                                        </tr>
+
+
+                                                            $sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$list_data->bulan_neraca' ";
+
+                                                            $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                            }
+
+                                                            ?>
+                                                        </td>
+
+                                                    </tr>
                                                 <?php
-                                                    }
+                                                    // }
                                                 }
                                                 ?>
 
