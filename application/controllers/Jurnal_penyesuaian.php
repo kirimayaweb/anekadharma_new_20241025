@@ -68,10 +68,13 @@ class Jurnal_penyesuaian extends CI_Controller
 
         // $Data_kas = $this->db->query($sql)->result();
         // ===========================================================================
-
+        // if ($Get_date) {
+        //     $Get_month_selected = date("m", strtotime($Get_date));
+        //     $Get_YEAR_selected = date("Y", strtotime($Get_date));
+        // } else {
         $Get_month_selected = date("m");
         $Get_YEAR_selected = date("Y");
-
+        // }
         $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
@@ -92,7 +95,7 @@ class Jurnal_penyesuaian extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);
     }
 
-    public function cari_between_date()
+    public function cari_between_date($Bulan_Pilih = null)
     {
 
         // 'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
@@ -101,8 +104,16 @@ class Jurnal_penyesuaian extends CI_Controller
         // print_r("<br/>");
         // print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
 
-        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        // $Get_date = date("Y-m-d", strtotime($Bulan_Pilih));
+
+
+        if ($Bulan_Pilih) {
+            $Get_month_selected = date("m", strtotime($Bulan_Pilih));
+            $Get_YEAR_selected = date("Y", strtotime($Bulan_Pilih));
+        } else {
+            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        }
 
         $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
@@ -136,8 +147,8 @@ class Jurnal_penyesuaian extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
-            'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
-            'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+            'month_selected' => $Get_month_selected,
+            'year_selected' => $Get_YEAR_selected,
         );
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);
@@ -169,14 +180,21 @@ class Jurnal_penyesuaian extends CI_Controller
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
+            // print_r("Error");
+            // die;
             $this->index();
         } else {
 
+            // print_r("proses");
+            // print_r("<br/>");
+            // // die;
 
             if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
                 $date_jurnal_penyesuaian = date("Y-m-d H:i:s");
+                $date_cari_between = date("Y-m-d");
             } else {
                 $date_jurnal_penyesuaian = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+                $date_cari_between = date("Y-m-d", strtotime($this->input->post('tgl_po', TRUE)));
             }
 
             if ($this->input->post('status_proses', TRUE) == "debet") {
@@ -210,7 +228,7 @@ class Jurnal_penyesuaian extends CI_Controller
 
             $this->Jurnal_penyesuaian_model->insert($data);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('Jurnal_penyesuaian'));
+            redirect(site_url('Jurnal_penyesuaian/cari_between_date/' . $date_cari_between));
         }
     }
 
