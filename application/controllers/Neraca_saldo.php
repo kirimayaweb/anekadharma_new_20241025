@@ -67,7 +67,7 @@ class Neraca_saldo extends CI_Controller
 
 
 		$Get_month_from_date = date("m");
-        $Get_year_Tahun_ini = date("Y");
+		$Get_year_Tahun_ini = date("Y");
 
 		$data = array(
 			// 'data_Buku_besar' => $data_Buku_besar,
@@ -85,8 +85,165 @@ class Neraca_saldo extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
 	}
 
+	public function input_neraca_saldo_waktu_lalu($kode_akun = null, $debet_kredit = null, $tahun_proses = null, $bulan_proses = null)
+	{
 
-	public function Cari_bulan_data(){
+		// print_r("input_neraca_saldo_waktu_lalu");
+		// print_r("<br/>");
+		// print_r($kode_akun);
+		// print_r("<br/>");
+		// print_r($debet_kredit);
+		// print_r("<br/>");
+		// print_r($tahun_proses);
+		// print_r("<br/>");
+		// print_r($bulan_proses);
+		// die;
+
+		$data = array(
+			// 'Tbl_pembelian_data' => $Tbl_pembelian,
+			// 'spop' => $data_per_uuidspop->spop,
+			'action' => site_url('Neraca_saldo/Simpan_Nominal_tahun_lalu/' . $kode_akun . '/' . $debet_kredit . '/' . $tahun_proses . '/' . $bulan_proses),
+			'button' => 'Simpan',
+			// 'start' => $start,
+			// 'get_kode_akun' => $get_kode_akun,
+			// 'get_kode_pl' => $get_kode_pl,
+			// 'get_kode_bb' => $get_kode_bb,
+
+			'kode_akun' => $kode_akun,
+			'debet_kredit' => $debet_kredit,
+			'tahun_proses' => $tahun_proses,
+			'bulan_proses' => $bulan_proses,
+
+
+		);
+		// print_r($data);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_input_nominal_tahun_lalu', $data);
+	}
+
+	public function Simpan_Nominal_tahun_lalu($kode_akun = null, $debet_kredit = null, $tahun_proses = null, $bulan_proses = null)
+	{
+
+		// print_r("Simpan_Nominal_tahun_lalu");
+		// die;
+
+		// $this->_rules();
+
+		// if ($this->form_validation->run() == FALSE) {
+		// 	$this->create();
+		// } else {
+
+		// Cek apakah kode akun dan bulan tahun ini sudah ada record , jika sudah ada maka proses update
+		// jika belum ada maka proses insert
+
+		$sql = "SELECT * FROM `neraca_saldo` WHERE MONTH(`tanggal`)=$bulan_proses AND YEAR(`tanggal`)=$tahun_proses AND `kode_akun`=$kode_akun ";
+
+		$Neraca_Saldo_Data = $this->db->query($sql);
+
+
+
+		if ($Neraca_Saldo_Data->num_rows() > 0) {
+
+			// Get ID
+
+
+
+			// echo "ada data ---";
+			// echo "<br/>";
+			// echo $Neraca_Saldo_Data->row()->id;
+			// die;
+
+			// echo $Buku_besar_DATA->row()->debet;
+			if ($debet_kredit == "debet") {
+
+				$data = array(
+					'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+				);
+
+				$this->Neraca_saldo_model->update($Neraca_Saldo_Data->row()->id, $data);
+			} else {
+
+				$data = array(
+					'kredit_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+				);
+
+				$this->Neraca_saldo_model->update($Neraca_Saldo_Data->row()->id, $data);
+			}
+		} else {
+			// echo "Kosong";
+			// insert data
+
+			// GET TANGGAL
+			$date_Setting = $tahun_proses . '-' . $bulan_proses . '-1';
+
+			// GET DATA KODE AKUN
+			$sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`=$kode_akun ";
+
+			$sys_kode_akun_Data = $this->db->query($sql);
+
+
+
+
+			if ($debet_kredit == "debet") {
+
+				$data = array(
+					'tanggal' => $date_Setting,
+					'kode_akun' => $kode_akun,
+					'uuid_kode_akun' => $sys_kode_akun_Data->row()->uuid_kode_akun,
+					'nama_akun' => $sys_kode_akun_Data->row()->nama_akun,
+					// 'uraian' => $sys_kode_akun_Data->row()->,
+					// 'group' => $sys_kode_akun_Data->row()->,
+					'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					// 'kredit_akhir_tahun_lalu' => "",
+					// 'debet_penyesuaian' => "",
+					// 'kredit_penyesuaian' => "",
+					// 'debet_ns_setelah_penyesuaian' => "",
+					// 'kredit_ns_setelah_penyesuaian' => "",
+					// 'debet_laba_rugi' => "",
+					// 'kreditdebet_laba_rugi' => "",
+				);
+			} else {
+
+				// $data = array(
+				// 	'kredit_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+				// );
+
+				$data = array(
+					'tanggal' => $date_Setting,
+					'kode_akun' => $kode_akun,
+					'uuid_kode_akun' => $sys_kode_akun_Data->row()->uuid_kode_akun,
+					'nama_akun' => $sys_kode_akun_Data->row()->nama_akun,
+					'nama_akun' => "",
+					'uraian' => "",
+					'group' => "",
+					// 'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					'kredit_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					// 'debet_penyesuaian' => "",
+					// 'kredit_penyesuaian' => "",
+					// 'debet_ns_setelah_penyesuaian' => "",
+					// 'kredit_ns_setelah_penyesuaian' => "",
+					// 'debet_laba_rugi' => "",
+					// 'kreditdebet_laba_rugi' => "",
+				);
+
+
+				$this->Neraca_saldo_model->update($Neraca_Saldo_Data->row()->id, $data);
+			}
+
+
+
+			$this->Neraca_saldo_model->insert($data);
+		}
+		// die;
+
+
+		$this->session->set_flashdata('message', 'Create Record Success');
+		redirect(site_url('neraca_saldo'));
+		// }
+	}
+
+
+	public function Cari_bulan_data()
+	{
 		// print_r("Cari_bulan_data");
 		// print_r("<br/>");
 		// print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
@@ -116,7 +273,7 @@ class Neraca_saldo extends CI_Controller
 		// $Buku_besar_DATA = $this->db->query($sql)->result();
 
 		// print_r($Buku_besar_DATA);
-		
+
 
 		$data = array(
 			// 'data_Buku_besar' => $data_Buku_besar,
@@ -133,7 +290,6 @@ class Neraca_saldo extends CI_Controller
 		// die;
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
-
 	}
 
 	public function index_server_side()

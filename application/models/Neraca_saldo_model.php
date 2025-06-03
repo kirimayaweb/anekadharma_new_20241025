@@ -17,7 +17,7 @@ class Neraca_saldo_model extends CI_Model
 
     // datatables
     function json() {
-        $this->datatables->select('id,uuid_kode_akun,kode_akun,nama_akun,uraian,group,debet_akhir_tahun_lalu,kredit_akhir_tahun_lalu,debet_penyesuaian,kredit_penyesuaian,debet_ns_setelah_penyesuaian,kredit_ns_setelah_penyesuaian,debet_laba_rugi,kreditdebet_laba_rugi');
+        $this->datatables->select('id,uuid_neraca_saldo,kode_akun,nama_akun,uraian,group,debet_akhir_tahun_lalu,kredit_akhir_tahun_lalu,debet_penyesuaian,kredit_penyesuaian,debet_ns_setelah_penyesuaian,kredit_ns_setelah_penyesuaian,debet_laba_rugi,kreditdebet_laba_rugi');
         $this->datatables->from('neraca_saldo');
         //add this line for join
         //$this->datatables->join('table2', 'neraca_saldo.field = table2.field');
@@ -42,7 +42,7 @@ class Neraca_saldo_model extends CI_Model
     // get total rows
     function total_rows($q = NULL) {
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_kode_akun', $q);
+	$this->db->or_like('uuid_neraca_saldo', $q);
 	$this->db->or_like('kode_akun', $q);
 	$this->db->or_like('nama_akun', $q);
 	$this->db->or_like('uraian', $q);
@@ -63,7 +63,7 @@ class Neraca_saldo_model extends CI_Model
     function get_limit_data($limit, $start = 0, $q = NULL) {
         $this->db->order_by($this->id, $this->order);
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_kode_akun', $q);
+	$this->db->or_like('uuid_neraca_saldo', $q);
 	$this->db->or_like('kode_akun', $q);
 	$this->db->or_like('nama_akun', $q);
 	$this->db->or_like('uraian', $q);
@@ -85,7 +85,7 @@ class Neraca_saldo_model extends CI_Model
     {
         // $this->db->insert($this->table, $data);
 
-        $this->db->set('uuid_kode_akun', "replace(uuid(),'-','')", FALSE);
+        $this->db->set('uuid_neraca_saldo', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
         $datainsert = array(
@@ -98,6 +98,11 @@ class Neraca_saldo_model extends CI_Model
     // update data
     function update($id, $data)
     {
+        // print_r($id);
+        // print_r("<br/>");
+        // print_r($data);
+        // print_r("<br/>");
+        // die;
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);
     }
