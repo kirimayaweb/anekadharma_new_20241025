@@ -62,7 +62,7 @@ class Tbl_neraca_data extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-	
+
 		// die;
 
 		if ($laporan_status) {
@@ -502,7 +502,7 @@ class Tbl_neraca_data extends CI_Controller
 	}
 
 
-	public function neraca_form_input($tahun_selected=null,$bulan_selected=null)
+	public function neraca_form_input($tahun_selected = null, $bulan_selected = null)
 	{
 
 		// print_r("neraca_form_input");
@@ -616,7 +616,7 @@ class Tbl_neraca_data extends CI_Controller
 
 
 	// public function neraca_form($uuid_data_neraca = null)
-	public function neraca_form($Get_tahun = null, $Get_bulan=null)
+	public function neraca_form($Get_tahun = null, $Get_bulan = null)
 	{
 
 		// // print_r($uuid_data_neraca);
@@ -642,10 +642,10 @@ class Tbl_neraca_data extends CI_Controller
 
 
 
-		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0 ) {
+		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
 			$data = array(
 				'button' => 'Update',
-				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $GET_tbl_neraca_data_RECORD->row()->id),
+				'action' => site_url('Tbl_neraca_data/update_neraca_data/'  . $GET_tbl_neraca_data_RECORD->row()->id),
 				'id' => set_value('id'),
 				// 'data_detail' => $data_detail,
 				'data_tbl_neraca_data' => $GET_tbl_neraca_data_RECORD->row(),
@@ -656,17 +656,98 @@ class Tbl_neraca_data extends CI_Controller
 		} else {
 			$data = array(
 				'button' => 'Simpan',
-				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
+				'action' => site_url('Tbl_neraca_data/create_action_neraca_NEW/' . $Get_tahun . '/' . $Get_bulan),
 				'id' => set_value('id'),
 				// 'data_detail' => $data_detail,
 				// 'uuid_data_neraca' => "",
 				'tahun_neraca' => $Get_tahun,
-				'bulan_transaksi' => 0,
+				'bulan_transaksi' => $Get_bulan,
 			);
 		}
 
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
+	public function update_neraca_data($Get_id_RECORD = null, $data_name = null)
+	{
+		// print_r("update_neraca_data");
+		// print_r("<br/>");
+		// print_r($Get_id_RECORD);
+		// print_r("<br/>");
+		// print_r($data_name);
+		// print_r("<br/>");
+
+
+		$sql = "SELECT * FROM `tbl_neraca_data` WHERE `id`='$Get_id_RECORD'";
+
+		$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+		// print_r($GET_tbl_neraca_data_RECORD->row());
+		// die;
+
+		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+
+			$data = array(
+				$data_name => str_replace('.', '', $this->input->post('input_box', TRUE)),
+			);
+
+			print_r($data);
+			// die;
+
+			$this->Tbl_neraca_data_model->update($Get_id_RECORD, $data);
+		}
+
+
+		// Kembali ke form neraca
+		$sql = "SELECT * FROM `tbl_neraca_data` WHERE `id`='$Get_id_RECORD' ";
+
+		$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+		// print_r($GET_tbl_neraca_data_RECORD->row());
+		// die;
+
+
+
+		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+			$data = array(
+				'button' => 'Update',
+				'action' => site_url('Tbl_neraca_data/update_neraca_data/'  . $Get_id_RECORD),
+				'id' => set_value('id'),
+				// 'data_detail' => $data_detail,
+				'data_tbl_neraca_data' => $GET_tbl_neraca_data_RECORD->row(),
+				'uuid_data_neraca' => $GET_tbl_neraca_data_RECORD->row()->uuid_data_neraca,
+				'tahun_neraca' => $GET_tbl_neraca_data_RECORD->row()->tahun_transaksi,
+				'bulan_transaksi' => $GET_tbl_neraca_data_RECORD->row()->bulan_transaksi,
+			);
+		} else {
+			$data = array(
+				'button' => 'Simpan',
+				'action' => site_url('Tbl_neraca_data/create_action_neraca_NEW/' . $GET_tbl_neraca_data_RECORD->row()->tahun_transaksi . '/' . $GET_tbl_neraca_data_RECORD->row()->bulan_transaksi),
+				'id' => set_value('id'),
+				// 'data_detail' => $data_detail,
+				// 'uuid_data_neraca' => "",
+				'tahun_neraca' => $GET_tbl_neraca_data_RECORD->row()->tahun_transaksi,
+				'bulan_transaksi' => $GET_tbl_neraca_data_RECORD->row()->bulan_transaksi,
+			);
+		}
+
+
+		// $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+
+		redirect(site_url('Tbl_neraca_data/neraca_form/'.$GET_tbl_neraca_data_RECORD->row()->tahun_transaksi .'/'.$GET_tbl_neraca_data_RECORD->row()->bulan_transaksi));
+
+	}
+
+	public function create_action_neraca_NEW($Get_tahun = null, $Get_bulan = null)
+	{
+		print_r("create_action_neraca_NEW");
+		print_r("<br/>");
+		print_r($Get_tahun);
+		print_r("<br/>");
+		print_r($Get_bulan);
+		die;
 	}
 
 	public function neraca_form_Tahunan($tahun_neraca = null)
@@ -808,10 +889,10 @@ class Tbl_neraca_data extends CI_Controller
 		$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
 		// $year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
 
-				print_r($this->input->post('kas', TRUE));
-				print_r("<br/>");
-				print_r($this->input->post('bank', TRUE));
-				print_r("<br/>");
+		print_r($this->input->post('kas', TRUE));
+		print_r("<br/>");
+		print_r($this->input->post('bank', TRUE));
+		print_r("<br/>");
 
 		// die;
 
