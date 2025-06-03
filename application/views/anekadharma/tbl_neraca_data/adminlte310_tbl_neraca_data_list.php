@@ -133,9 +133,9 @@
 
                                                             // $this->session->userdata('id_user_level') == 1 //superadmin
                                                             // $this->session->userdata('id_user_level') == 2 //admin
-                                                            // $this->session->userdata('id_user_level') == 9 //accounting
+                                                            // $this->session->userdata('id_user_level') == 888 //KABAGKEUANGAN
 
-                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
 
                                                                 echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             }
@@ -299,9 +299,9 @@
 
                                                             // $this->session->userdata('id_user_level') == 1 //superadmin
                                                             // $this->session->userdata('id_user_level') == 2 //admin
-                                                            // $this->session->userdata('id_user_level') == 9 //accounting
+                                                            // $this->session->userdata('id_user_level') == 888 //kabagkeuangan
 
-                                                            // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                            // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
 
                                                             //     echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             // }
