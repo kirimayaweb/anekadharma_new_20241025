@@ -127,7 +127,16 @@
                                                             <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
                                                             <td align="left">
                                                                 <?php
-                                                                if ($status_laporan == "bukan_laporan") {
+
+                                                                // if ($status_laporan == "bukan_laporan") {
+
+                                                                
+                                                                // $this->session->userdata('id_user_level') == 1 //superadmin
+                                                                // $this->session->userdata('id_user_level') == 2 //admin
+                                                                // $this->session->userdata('id_user_level') == 9 //accounting
+                                                                
+                                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                                
                                                                     echo anchor(site_url('Tbl_neraca_data/neraca_form_Tahunan/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                 }
 
@@ -276,7 +285,15 @@
                                                             <td align="left"><?php echo $list_data->bulan_transaksi . " (" . bulan_teks($list_data->bulan_transaksi) . ")"; ?></td>
                                                             <td align="left">
                                                                 <?php
-                                                                if ($status_laporan == "bukan_laporan") {
+
+                                                                // if ($status_laporan == "bukan_laporan") {
+
+                                                                // $this->session->userdata('id_user_level') == 1 //superadmin
+                                                                // $this->session->userdata('id_user_level') == 2 //admin
+                                                                // $this->session->userdata('id_user_level') == 9 //accounting
+
+                                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+
                                                                     echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                 }
 

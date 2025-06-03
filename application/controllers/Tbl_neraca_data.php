@@ -50,11 +50,25 @@ class Tbl_neraca_data extends CI_Controller
 	public function index($laporan_status = null)
 	{
 
+		// print_r($this->session->userdata('id_user_level'));
+		// print_r("<br/>");
+		// print_r($this->session->userdata('email'));
+		// print_r("<br/>");
+		// print_r($this->session->userdata('id_users'));
+		// print_r("<br/>");
+		// print_r($this->session->userdata('full_name'));
+		// print_r("<br/>");
+		// print_r($this->session->userdata('no_hp'));
+		// print_r("<br/>");
+		// print_r("<br/>");
 
-		if (isset($laporan_status)) {
-			$status_laporan = "laporan";
+	
+		// die;
+
+		if ($laporan_status) {
+			$status_laporan = $laporan_status;
 		} else {
-			$status_laporan = "bukan_laporan";
+			$status_laporan = "laporan";
 		}
 
 		// print_r($status_laporan);
@@ -89,6 +103,9 @@ class Tbl_neraca_data extends CI_Controller
 			'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
 		);
 
+		// echo $this->session->userdata('id_user_level');
+		// print_r("<br/>");
+		// print_r($data);
 		// print_r($data['Tbl_neraca_data']);
 		// die;
 
@@ -485,7 +502,7 @@ class Tbl_neraca_data extends CI_Controller
 	}
 
 
-	public function neraca_form_input()
+	public function neraca_form_input($tahun_selected=null,$bulan_selected=null)
 	{
 
 		// print_r("neraca_form_input");
@@ -598,41 +615,52 @@ class Tbl_neraca_data extends CI_Controller
 
 
 
-	public function neraca_form($uuid_data_neraca = null)
+	// public function neraca_form($uuid_data_neraca = null)
+	public function neraca_form($Get_tahun = null, $Get_bulan=null)
 	{
 
-		// print_r($uuid_data_neraca);
+		// // print_r($uuid_data_neraca);
+		// // die;
+
+		// if ($uuid_data_neraca) {
+		// 	$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
+		// } else {
+		// 	$year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
+		// 	$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
+		// 	// if ($data_detail) {
+		// 	// 	print_r($data_detail->uuid_data_neraca);
+		// 	// 	redirect(site_url('tbl_neraca_data/neraca_form/' . $data_detail->uuid_data_neraca));
+		// 	// }
+		// }
+
+		$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+
+		$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+		// print_r($GET_tbl_neraca_data_RECORD->row());
 		// die;
 
-		if ($uuid_data_neraca) {
-			$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
-		} else {
-			$year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
-			$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
-			// if ($data_detail) {
-			// 	print_r($data_detail->uuid_data_neraca);
-			// 	redirect(site_url('tbl_neraca_data/neraca_form/' . $data_detail->uuid_data_neraca));
-			// }
-		}
 
-		if ($data_detail) {
+
+		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0 ) {
 			$data = array(
 				'button' => 'Update',
-				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $uuid_data_neraca),
+				'action' => site_url('Tbl_neraca_data/update_action_neraca/' . $GET_tbl_neraca_data_RECORD->row()->id),
 				'id' => set_value('id'),
-				'data_detail' => $data_detail,
-				'uuid_data_neraca' => $uuid_data_neraca,
-				'tahun_neraca' => $data_detail->tahun_transaksi,
-				'bulan_transaksi' => $data_detail->bulan_transaksi,
+				// 'data_detail' => $data_detail,
+				'data_tbl_neraca_data' => $GET_tbl_neraca_data_RECORD->row(),
+				'uuid_data_neraca' => $GET_tbl_neraca_data_RECORD->row()->uuid_data_neraca,
+				'tahun_neraca' => $Get_tahun,
+				'bulan_transaksi' => $Get_bulan,
 			);
 		} else {
 			$data = array(
 				'button' => 'Simpan',
 				'action' => site_url('Tbl_neraca_data/create_action_neraca'),
 				'id' => set_value('id'),
-				'data_detail' => $data_detail,
-				'uuid_data_neraca' => $uuid_data_neraca,
-				'tahun_neraca' => $data_detail->tahun_transaksi,
+				// 'data_detail' => $data_detail,
+				// 'uuid_data_neraca' => "",
+				'tahun_neraca' => $Get_tahun,
 				'bulan_transaksi' => 0,
 			);
 		}

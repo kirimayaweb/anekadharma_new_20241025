@@ -315,7 +315,7 @@
 
 										<!-- <input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="kas" id="kas" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
 
-										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="sum_total_aktiva_lancar();" name="kas" id="kas" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="sum_total_aktiva_lancar();" name="kas" id="kas" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="<?php echo $data_tbl_neraca_data->kas; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
 									</th>
@@ -341,10 +341,7 @@
 																																								?>"> -->
 
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->utang_usaha)) {
-																																																															echo nominal($data_detail->utang_usaha);
-																																																															$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_usaha;
-																																																														} ?>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_usaha; ?>" ; />
 
 									</th>
 
@@ -368,21 +365,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="bank" id="bank" placeholder="bank" value="<?php
-																																			// if (isset($data_detail->bank)) {
-																																			// 																									echo nominal($data_detail->bank);
-																																			// 																									$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->bank;
-																																			// 																								} 
-																																			?>"> -->
-
-
-										<!-- <input type="tel" pattern="[0-9()]{15}" class="form-control" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //if (isset($data_detail->bank)) {
-																																																																	//echo nominal($data_detail->bank);
-																																																																	//$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->bank;
-																																																																	//} 
-																																																																	?>" ; /> -->
-
-										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+										<input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="<?php echo $data_tbl_neraca_data->bank; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
 									</th>
@@ -401,18 +384,8 @@
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 
-										<!-- <input type="text" style="text-align:right;" name="utang_pajak" id="utang_pajak" placeholder="utang pajak" value="<?php
-																																								//  (isset($data_detail->utang_pajak)) {
-																																								// 																														echo nominal($data_detail->utang_pajak);
-																																								// 																														$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_pajak;
-																																								// 																													} 
-																																								?>"> -->
 
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_pajak" id="utang_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->utang_pajak)) {
-																																																															echo nominal($data_detail->utang_pajak);
-																																																															$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_pajak;
-																																																														} ?>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_pajak" id="utang_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_pajak; ?>" ; />
 
 									</th>
 
@@ -435,18 +408,8 @@
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 
-										<!-- <input type="text" style="text-align:right;" name="piutang_usaha" id="piutang_usaha" placeholder="piutang usaha" value="<?php
-																																										// if (isset($data_detail->piutang_usaha)) {
-																																										// 																															echo nominal($data_detail->piutang_usaha);
-																																										// 																															$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_usaha;
-																																										// 																														} 
-																																										?>"> -->
 
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_usaha" id="piutang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->piutang_usaha)) {
-																																																																echo nominal($data_detail->piutang_usaha);
-																																																																$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_usaha;
-																																																															} ?>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_usaha" id="piutang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_usaha; ?>" ; />
 
 
 
@@ -468,18 +431,9 @@
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 										<strong>
 
-											<!-- <input type="text" style="text-align:right;" name="utang_lain_lain" id="utang_lain_lain" placeholder="utang lain-lain" value="<?php
-																																												// if (isset($data_detail->utang_lain_lain)) {
-																																												// 																																	echo nominal($data_detail->utang_lain_lain);
-																																												// 																																	$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_lain_lain;
-																																												// 																																}  
-																																												?>"> -->
 
 
-											<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_lain_lain" id="utang_lain_lain" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->utang_lain_lain)) {
-																																																																		echo nominal($data_detail->utang_lain_lain);
-																																																																		$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_lain_lain;
-																																																																	} ?>" ; />
+											<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_lain_lain" id="utang_lain_lain" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_lain_lain; ?>" ; />
 
 										</strong>
 									</th>
@@ -504,18 +458,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="piutang_non_usaha" id="piutang_non_usaha" placeholder="piutang non usaha" value="<?php
-																																													// if (isset($data_detail->piutang_non_usaha)) {
-																																													// 																																		echo nominal($data_detail->piutang_non_usaha);
-																																													// 																																		$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_non_usaha;
-																																													// 																																	} 
-																																													?>"> -->
-
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha" id="piutang_non_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->piutang_non_usaha)) {
-																																																																		echo nominal($data_detail->piutang_non_usaha);
-																																																																		$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_non_usaha;
-																																																																	} ?>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha" id="piutang_non_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha; ?>" ; />
 
 									</th>
 
@@ -531,18 +474,9 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<?php //echo nominal($TOTAL_Utang_Lancar) 
-										?>
+										
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_utang_lancar" id="total_utang_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																																			if (isset($TOTAL_Utang_Lancar)) {
-
-																																																																				echo $TOTAL_Utang_Lancar;
-
-																																																																				// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																																			}
-																																																																			?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_utang_lancar" id="total_utang_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; ?>" ; />
 
 
 									</th>
@@ -569,18 +503,8 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="persediaan" id="persediaan" placeholder="persediaan" value="<?php
-																																							// if (isset($data_detail->persediaan)) {
-																																							// 																													echo nominal($data_detail->persediaan);
-																																							// 																													$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->persediaan;
-																																							// 																												} 
-																																							?>"> -->
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php
-																																																														if (isset($data_detail->persediaan)) {
-																																																															echo nominal($data_detail->persediaan);
-																																																															$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->persediaan;
-																																																														} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->persediaan; ?>" ; />
 
 									</th>
 
@@ -616,18 +540,8 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="uang muka pajak" value="<?php
-																																											// if (isset($data_detail->uang_muka_pajak)) {
-																																											// 																																	echo nominal($data_detail->uang_muka_pajak);
-																																											// 																																	$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
-																																											// 																																} 
-																																											?>"> -->
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php
-																																																																if (isset($data_detail->uang_muka_pajak)) {
-																																																																	echo nominal($data_detail->uang_muka_pajak);
-																																																																	$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
-																																																																} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->uang_muka_pajak; ?>" ; />
 
 
 									</th>
@@ -664,11 +578,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<strong><?php //echo nominal($TOTAL_AKIVA_LANCAR) 
-												?></strong>
-
-										<!-- <input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva_lancar" id="total_aktiva_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //if (isset($TOTAL_AKIVA_LANCAR)) { if (isset($data_detail->uang_muka_pajak)) { $TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak; echo nominal($TOTAL_AKIVA_LANCAR); } } elseif (isset($data_detail->uang_muka_pajak)) { $TOTAL_AKIVA_LANCAR = $data_detail->uang_muka_pajak; echo nominal($TOTAL_AKIVA_LANCAR);}	
-																																																																?>>" ; /> -->
+										<strong>
 
 										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="0,00" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
 
@@ -679,8 +589,6 @@
 
 									<!-- PASIVA  -->
 									<th style="font-size: 0.550em;text-align:left; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="310"><strong>Utang Jangka Panjang</strong></th>
-
-									<!-- <th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="10"></th> -->
 
 
 
@@ -728,24 +636,13 @@
 									<!-- AKTIVA -->
 									<th style="font-size: 0.550em; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse; text-align:left;" colspan="310"><strong>Aktiva Tetap</strong></th>
 
-									<!-- <th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="10"></th> -->
-
-
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="aktiva_tetap" id="aktiva_tetap" placeholder="aktiva tetap" value="<?php
-																																									// if (isset($data_detail->aktiva_tetap)) {
-																																									// 																															echo nominal($data_detail->aktiva_tetap);
-																																									// 																														} 
-																																									?>"> -->
 
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap" id="aktiva_tetap" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->aktiva_tetap)) {
-																																																																echo nominal($data_detail->aktiva_tetap);
-																																																															} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap" id="aktiva_tetap" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap; ?>" ; />
 
 									</th>
 
@@ -755,9 +652,6 @@
 
 
 									<th style="font-size: 0.550em;text-align:left; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="310"></th>
-
-									<!-- <th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="10"></th> -->
-
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
@@ -783,18 +677,10 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<!-- <input type="text" style="text-align:right;" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="aktiva tetap berwujud" value="<?php
-																																																// if (isset($data_detail->aktiva_tetap_berwujud)) {
-																																																// 																																					echo nominal($data_detail->aktiva_tetap_berwujud);
-																																																// 																																					$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->aktiva_tetap_berwujud;
-																																																// 																																				} 
-																																																?>"> -->
+										
 
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->aktiva_tetap_berwujud)) {
-																																																																				echo nominal($data_detail->aktiva_tetap_berwujud);
-																																																																				$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->aktiva_tetap_berwujud;
-																																																																			} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap_berwujud; ?>" ; />
 
 
 									</th>
@@ -812,13 +698,8 @@
 
 									<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="utang_afiliasi" id="utang_afiliasi" placeholder="utang afiliasi" value="<?php //if (isset($data_detail->utang_afiliasi)) { echo nominal($data_detail->utang_afiliasi); $TOTAL_Utang_Jangka_Panjang = $TOTAL_Utang_Jangka_Panjang + $data_detail->utang_afiliasi;} 
-																																										?>"> -->
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_afiliasi" id="utang_afiliasi" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->utang_afiliasi)) {
-																																																																	echo nominal($data_detail->utang_afiliasi);
-																																																																	$TOTAL_Utang_Jangka_Panjang = $TOTAL_Utang_Jangka_Panjang + $data_detail->utang_afiliasi;
-																																																																} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_afiliasi" id="utang_afiliasi" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_afiliasi; ?>" ; />
 
 
 									</th>
@@ -843,18 +724,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<!-- <input type="text" style="text-align:right;" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="akumulasi depresiasi atb" value="<?php
-																																																		// if (isset($data_detail->utang_afiliasi)) {
-																																																		// 																																								echo nominal($data_detail->akumulasi_depresiasi_atb);
-																																																		// 																																								$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->akumulasi_depresiasi_atb;
-																																																		// 																																							} 
-																																																		?>"> -->
-
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->utang_afiliasi)) {
-																																																																						echo nominal($data_detail->akumulasi_depresiasi_atb);
-																																																																						$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->akumulasi_depresiasi_atb;
-																																																																					} ?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" ; />
 
 									</th>
 
@@ -875,15 +745,7 @@
 											?>
 										</strong>
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="TOTAL_Utang_Lancar_dan_jangka_panjang" id="TOTAL_Utang_Lancar_dan_jangka_panjang" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																																												if (isset($Total_Aktiva_Tetap_Bersih)) {
-
-																																																																													echo $Total_Aktiva_Tetap_Bersih;
-
-																																																																													// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																																												}
-																																																																												?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="TOTAL_Utang_Lancar_dan_jangka_panjang" id="TOTAL_Utang_Lancar_dan_jangka_panjang" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" ; />
 
 
 									</th>
@@ -909,15 +771,7 @@
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php //echo nominal($Total_Aktiva_Tetap_Bersih) 
 																																																											?>
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																																						if (isset($Total_Aktiva_Tetap_Bersih)) {
-
-																																																																							echo $Total_Aktiva_Tetap_Bersih;
-
-																																																																							// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																																						}
-																																																																						?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" ; />
 
 									</th>
 
@@ -1029,18 +883,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-
-										<!-- <input type="text" style="text-align:right;" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="piutang non usaha pihak ketiga" value="<?php
-																																																						// if (isset($data_detail->piutang_non_usaha_pihak_ketiga)) {
-																																																						// 																																												echo nominal($data_detail->piutang_non_usaha_pihak_ketiga);
-																																																						// 																																												$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->piutang_non_usaha_pihak_ketiga;
-																																																						// 																																											}
-																																																						?>"> -->
-
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php if (isset($data_detail->piutang_non_usaha_pihak_ketiga)) {
-																																																																																										echo nominal($data_detail->piutang_non_usaha_pihak_ketiga);
-																																																																																										$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->piutang_non_usaha_pihak_ketiga;
-																																																																																									} ?>>" ; />
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; ?>" ; />
 
 									</th>
 
@@ -1058,10 +901,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="modal_dasar_dan_penyertaan" id="modal_dasar_dan_penyertaan" placeholder="Modal Dasar dan Penyertaan" value="<?php if (isset($data_detail->modal_dasar_dan_penyertaan)) {
-																																																																													echo nominal($data_detail->modal_dasar_dan_penyertaan);
-																																																																													$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->modal_dasar_dan_penyertaan;
-																																																																												} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="modal_dasar_dan_penyertaan" id="modal_dasar_dan_penyertaan" placeholder="Modal Dasar dan Penyertaan" value="<?php echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1085,10 +925,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_radio" id="piutang_non_usaha_radio" placeholder="piutang non usaha radio" value="<?php if (isset($data_detail->piutang_non_usaha_radio)) {
-																																																																											echo nominal($data_detail->piutang_non_usaha_radio);
-																																																																											$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->piutang_non_usaha_radio;
-																																																																										} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_radio" id="piutang_non_usaha_radio" placeholder="piutang non usaha radio" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_radio; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1105,10 +942,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="cadangan_umum" id="cadangan_umum" placeholder="Cadangan Umum" value="<?php if (isset($data_detail->cadangan_umum)) {
-																																																																			echo nominal($data_detail->cadangan_umum);
-																																																																			$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->cadangan_umum;
-																																																																		} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="cadangan_umum" id="cadangan_umum" placeholder="Cadangan Umum" value="<?php echo $data_tbl_neraca_data->cadangan_umum; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1131,10 +965,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php if (isset($data_detail->ljpj_taman_gedung_kesenian_gabusan)) {
-																																																																																			echo nominal($data_detail->ljpj_taman_gedung_kesenian_gabusan);
-																																																																																			$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_taman_gedung_kesenian_gabusan;
-																																																																																		} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1150,10 +981,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_bumd_pad" id="laba_bumd_pad" placeholder="Laba BUMD (PAD)" value="<?php if (isset($data_detail->laba_bumd_pad)) {
-																																																																				echo nominal($data_detail->laba_bumd_pad);
-																																																																				$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_bumd_pad;
-																																																																			} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_bumd_pad" id="laba_bumd_pad" placeholder="Laba BUMD (PAD)" value="<?php echo $data_tbl_neraca_data->laba_bumd_pad; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1172,10 +1000,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kompleks_gedung_kesenian" id="ljpj_kompleks_gedung_kesenian" placeholder="ljpj kompleks gedung kesenian" value="<?php if (isset($data_detail->ljpj_kompleks_gedung_kesenian)) {
-																																																																																echo nominal($data_detail->ljpj_kompleks_gedung_kesenian);
-																																																																																$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kompleks_gedung_kesenian;
-																																																																															} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kompleks_gedung_kesenian" id="ljpj_kompleks_gedung_kesenian" placeholder="ljpj kompleks gedung kesenian" value="<?php echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1216,10 +1041,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_radio" id="ljpj_radio" placeholder="ljpj radio" value="<?php if (isset($data_detail->ljpj_radio)) {
-																																																																	echo nominal($data_detail->ljpj_radio);
-																																																																	$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_radio;
-																																																																} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_radio" id="ljpj_radio" placeholder="ljpj radio" value="<?php echo $data_tbl_neraca_data->ljpj_radio; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1236,10 +1058,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_lalu" id="laba_rugi_tahun_lalu" placeholder="laba-rugi tahun lalu" value="<?php if (isset($data_detail->laba_rugi_tahun_lalu)) {
-																																																																									echo nominal($data_detail->laba_rugi_tahun_lalu);
-																																																																									$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_rugi_tahun_lalu;
-																																																																								} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_lalu" id="laba_rugi_tahun_lalu" placeholder="laba-rugi tahun lalu" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1262,10 +1081,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_operasi_apotek_dharma_usaha" id="ljpj_kerjasama_operasi_apotek_dharma_usaha" placeholder="ljpj kerjasama operasi apotek dharma usaha" value="<?php if (isset($data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha)) {
-																																																																																									echo nominal($data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha);
-																																																																																									$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha;
-																																																																																								} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_operasi_apotek_dharma_usaha" id="ljpj_kerjasama_operasi_apotek_dharma_usaha" placeholder="ljpj kerjasama operasi apotek dharma usaha" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1282,10 +1098,7 @@
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_berjalan" id="laba_rugi_tahun_berjalan" placeholder="laba-rugi tahun berjalan" value="<?php if (isset($data_detail->laba_rugi_tahun_berjalan)) {
-																																																																												echo nominal($data_detail->laba_rugi_tahun_berjalan);
-																																																																												$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_rugi_tahun_berjalan;
-																																																																											} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_berjalan" id="laba_rugi_tahun_berjalan" placeholder="laba-rugi tahun berjalan" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1309,10 +1122,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_peternakan" id="ljpj_peternakan" placeholder="ljpj peternakan" value="<?php if (isset($data_detail->ljpj_peternakan)) {
-																																																																					echo nominal($data_detail->ljpj_peternakan);
-																																																																					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_peternakan;
-																																																																				} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_peternakan" id="ljpj_peternakan" placeholder="ljpj peternakan" value="<?php echo $data_tbl_neraca_data->ljpj_peternakan; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1345,10 +1155,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_adwm" id="ljpj_kerjasama_adwm" placeholder="ljpj kerjasama adwm" value="<?php if (isset($data_detail->ljpj_kerjasama_adwm)) {
-																																																																								echo nominal($data_detail->ljpj_kerjasama_adwm);
-																																																																								$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_adwm;
-																																																																							} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_adwm" id="ljpj_kerjasama_adwm" placeholder="ljpj kerjasama adwm" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1383,10 +1190,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_pdu_cabean_panggungharjo" id="ljpj_kerjasama_pdu_cabean_panggungharjo" placeholder="ljpj kerjasama pdu cabean panggungharjo" value="<?php if (isset($data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo)) {
-																																																																																							echo nominal($data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo);
-																																																																																							$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo;
-																																																																																						} ?>">
+										<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_pdu_cabean_panggungharjo" id="ljpj_kerjasama_pdu_cabean_panggungharjo" placeholder="ljpj kerjasama pdu cabean panggungharjo" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1423,15 +1227,7 @@
 									<th style="font-size:0.550em; text-align:right;  width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php //echo nominal($Aktiva_Lain_Lain) 
 																																																					?></strong>
 
-										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_lain_lain" id="total_aktiva_lain_lain" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																																					if (isset($Aktiva_Lain_Lain)) {
-
-																																																																						echo $Aktiva_Lain_Lain;
-
-																																																																						// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																																					}
-																																																																					?>>" ; />
+										<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_lain_lain" id="total_aktiva_lain_lain" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" ; />
 
 
 									</th>
@@ -1449,19 +1245,8 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<?php
-										//echo nominal($TOTAL_Modal_dan_Laba_ditahan); 
-										?>
-
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_modal_dan_laba_ditahan" id="total_modal_dan_laba_ditahan" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																																								if (isset($TOTAL_Modal_dan_Laba_ditahan)) {
-
-																																																																									echo $TOTAL_Modal_dan_Laba_ditahan;
-
-																																																																									// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																																								}
-																																																																								?>>" ; />
+										
+										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_modal_dan_laba_ditahan" id="total_modal_dan_laba_ditahan" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" ; />
 
 									</th>
 
@@ -1544,21 +1329,9 @@
 									<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 									<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-										<strong>
-											<?php
-											//echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan); 
-											?>
-										</strong>
+										
 
-										<input type="text" class="form-control uang" name="TOTAL_PASIVA" id="TOTAL_PASIVA" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php
-																																																							if (isset($TOTAL_Utang_Lancar)) {
-
-																																																								echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan);
-
-																																																								// $Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->uang_muka_pajak; 
-
-																																																							}
-																																																							?>>" ; />
+										<input type="text" class="form-control uang" name="TOTAL_PASIVA" id="TOTAL_PASIVA" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" ; />
 
 									</th>
 
