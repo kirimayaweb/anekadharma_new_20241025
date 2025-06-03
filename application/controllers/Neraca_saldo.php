@@ -94,14 +94,39 @@ class Neraca_saldo extends CI_Controller
 		// print_r(date("m", strtotime($this->input->post('bulan_ns', TRUE))));
 		// die;
 
+		if ($this->input->post('bulan_ns', TRUE)) {
+			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+		} else {
+			// $Get_date_awal = date("Y-m-1 00:00:00");
+			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
+			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+		}
+
+
+		// print_r($Get_month_selected);
+		// print_r("<br/>");
+		// print_r($Get_YEAR_selected);
+		// print_r("<br/>");
+
+		// $GET_Source = "penjualan";
+		// $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected  ORDER BY `tanggal`,`id`";
+
+		// $Buku_besar_DATA = $this->db->query($sql)->result();
+
+		// print_r($Buku_besar_DATA);
+		
+
 		$data = array(
 			// 'data_Buku_besar' => $data_Buku_besar,
 			// 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
 			// 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
 			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
+			// 'Data_Kode_Akun' =>  $this->db->query($sql)->result(),
 			'action' => site_url('Buku_besar/cari_kode_akun'),
-			'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
-			'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+			'month_selected' => $Get_month_selected,
+			'year_selected' => $Get_YEAR_selected,
 		);
 
 		// print_r($data);
