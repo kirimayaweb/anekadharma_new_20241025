@@ -126,12 +126,55 @@
                                                                                                                                     ?>">
                                     </div> -->
 
+                                    <!-- PL -->
                                     <div class="col-2">
-                                        <!-- <label for="kode_rekening">Kode <?php echo form_error('kode_rekening') ?></label> -->
+
+                                        <label for="kode_pl">PL</label>
+                                        <select name="kode_pl" id="kode_pl" class="form-control select2" style="width: 100%; height: 80px;" required>
+
+                                            <?php
+
+                                            if ($get_kode_pl) {
+                                                // Get Nama akun dari kode akun
+
+                                                $sql = "SELECT * FROM `sys_kode_pl` WHERE `kode_pl`='$get_kode_pl'";
+                                                $Get_keterangan = $this->db->query($sql)->row()->keterangan
+
+                                            ?>
+                                                <option value="<?php echo $get_kode_pl; ?>"><?php echo $get_kode_pl . " ==> " . $Get_keterangan; ?></option>
+                                            <?php
+                                            } else {
+                                            ?>
+                                                <option value="">Pilih Kode PL</option>
+                                            <?php
+                                            }
+                                            ?>
+
+
+                                            <?php
+
+                                            $sql = "select * from sys_kode_pl order by kode_pl ASC";
+
+
+                                            foreach ($this->db->query($sql)->result() as $m) {
+                                                // foreach ($data_produk as $m) {
+                                                echo "<option value='$m->kode_pl' ";
+                                                echo ">  " . strtoupper($m->kode_pl)  . " ==> " . strtoupper($m->keterangan)  . "</option>";
+                                            }
+                                            ?>
+                                        </select>
+
+
+                                    </div>
+
+
+                                    <!-- UNit -->
+                                    <div class="col-2">
+                                        <!-- <label for="kode_rekening">Kode <?php //echo form_error('kode_rekening') ?></label> -->
                                         <!-- <input type="text" class="form-control" rows="3" name="kode_rekening" id="kode_rekening" placeholder="kode_rekening" value="<?php echo $kode_rekening; ?>" > -->
 
 
-                                        <label for="unit_nama">Kode <?php //echo form_error('unit') 
+                                        <label for="unit_nama">Unit <?php //echo form_error('unit') 
                                                                     ?></label>
                                         <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
 

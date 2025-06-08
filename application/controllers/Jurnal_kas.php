@@ -547,7 +547,7 @@ class Jurnal_kas extends CI_Controller
                 $data = array(
                     'tanggal' => $date_jurnal_kas,
                     'bukti' => $this->input->post('bukti', TRUE),
-                    // 'pl' => $this->input->post('pl', TRUE),
+                    'pl' => $this->input->post('kode_pl', TRUE),
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                     'uuid_unit' => $this->input->post('uuid_unit', TRUE),
@@ -559,7 +559,7 @@ class Jurnal_kas extends CI_Controller
                 $data = array(
                     'tanggal' => $date_jurnal_kas,
                     'bukti' => $this->input->post('bukti', TRUE),
-                    // 'pl' => $this->input->post('pl', TRUE),
+                    'pl' => $this->input->post('kode_pl', TRUE),
                     'keterangan' => $this->input->post('keterangan', TRUE),
                     // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
                     'uuid_unit' => $this->input->post('uuid_unit', TRUE),
