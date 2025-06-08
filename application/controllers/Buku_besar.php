@@ -15,52 +15,46 @@ class Buku_besar extends CI_Controller
 
     public function index()
     {
-        $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
-
-        // // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-        // $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
-		// tbl_pembelian.uraian as keterangan,
-		// tbl_pembelian.jumlah as jumlah,
-		// tbl_pembelian.harga_satuan as harga_satuan,
-		// (tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
-		// tbl_pembelian.kode_akun as kode_akun,
-		// tbl_pembelian.kode_pl as kode_pl,
-		// tbl_pembelian.kode_bb as kode_bb
-		//                     FROM tbl_pembelian    
-		//                     ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
-        // // print_r($this->db->query($sql_pembelian)->result());
-
-        // // print_r("<br/>");
-        // // print_r("<br/>");
-        // // print_r("<br/>");
-
-        // $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
-		// tbl_penjualan.nama_barang as keterangan,
-		// tbl_penjualan.jumlah as jumlah,
-		// tbl_penjualan.harga_satuan as harga_satuan,
-		// (tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
-		// tbl_penjualan.kode_akun as kode_akun,
-		// tbl_penjualan.kode_pl as kode_pl,
-		// tbl_penjualan.kode_bb as kode_bb
-		//                     FROM tbl_penjualan    
-		//                     ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
-        // // print_r($this->db->query($sql_penjualan)->result());
-
-        // // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
 
 
-        // // die;
+
+
+
+        // $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
+        if ($this->input->post('bulan_ns', TRUE)) {
+            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        } else {
+            // $Get_date_awal = date("Y-m-1 00:00:00");
+            // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+            $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
+            $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+        }
+
+        $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id` ASC";
+
+        $data_Buku_besar = $this->db->query($sql)->result();
+
+        print_r($Get_month_selected);
+        print_r("<br/>");
+        print_r($Get_YEAR_selected);
+        print_r("<br/>");
+        print_r($data_Buku_besar);
+        print_r("<br/>");
+        // die;
+
 
         $data = array(
             'data_Buku_besar' => $data_Buku_besar,
             // 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
             // 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
-            'action' => site_url('Buku_besar/cari_kode_akun'),
+            'action' => site_url('Buku_besar/cari_data'),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
     }
 
-    public function cari_data($kode_akun = null)
+    public function cari_data($uuid_kode_akun = null, $Get_Year_Selected = null, $Get_Month_Selected = null)
+    // public function cari_data()
     {
 
         // print_r("cari_data");
@@ -77,61 +71,153 @@ class Buku_besar extends CI_Controller
 
 
 
-        if ($kode_akun) {
+        // print_r($uuid_kode_akun);
+        // print_r("<br/>");
+        // print_r($Get_Year_Selected);
+        // print_r("<br/>");
+        // print_r($Get_Month_Selected);
+        // print_r("<br/>");
 
-            // Get kode akun dari uuid_kode_akun
-            $this->db->where('uuid_kode_akun', $kode_akun);
-            $get_kode_akun = $this->db->get('sys_kode_akun')->row()->kode_akun;
-            $get_nama_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+        // die;
 
+        // if ($this->input->post('bulan_ns', TRUE)) {
+        //     // $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+        //     // $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        //     $Get_month_selected = date("m", strtotime($Get_year_month));
+        //     $Get_YEAR_selected = date("Y", strtotime($Get_year_month));
+        // } else {
+        //     // $Get_date_awal = date("Y-m-1 00:00:00");
+        //     // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        //     $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
+        //     $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+        // }
+
+        // die;
+
+        // print_r($uuid_kode_akun);
+        // print_r("<br/>");
+        // print_r($Get_year_month);
+        // print_r("<br/>");
+        // print_r($Get_month_selected);
+        // print_r("<br/>");
+        // print_r($Get_YEAR_selected);
+        // print_r("<br/>");
+
+
+        if ($uuid_kode_akun) {
+
+
+
+            // print_r("Ada Kode akun");
+            // print_r("<br/>");
+            // print_r($uuid_kode_akun);
+            // print_r("<br/>");
+
+            if ($uuid_kode_akun == "tampil_semua") {
+
+
+                // print_r("IF tampil_semua");
+                // print_r("<br/>");
+
+                $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected  ORDER BY `tanggal`,`id` ASC";
+            } else {
+
+                // Get kode akun dari uuid_kode_akun
+                $this->db->where('uuid_kode_akun', $uuid_kode_akun);
+                $get_kode_akun = $this->db->get('sys_kode_akun')->row()->kode_akun;
+                $get_nama_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
+
+                // print_r($uuid_kode_akun);
+                // print_r("<br/>");
+                // print_r($get_kode_akun);
+                // print_r("<br/>");
+                // print_r($get_nama_akun);
+                // print_r("<br/>");
+
+                $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected AND `kode_akun`='$get_kode_akun'  ORDER BY `tanggal`,`id` ASC";
+            }
+
+            // // print_r($get_kode_akun);
+
+            // $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
+
+
+            $data_Buku_besar = $this->db->query($sql)->result();
+
+            // print_r($uuid_kode_akun);
+            // print_r("<br/>");
             // print_r($get_kode_akun);
+            // print_r("<br/>");
+
+            // print_r($Get_Year_Selected);
+            // print_r("<br/>");
+            //  print_r($Get_Month_Selected);
+            // print_r("<br/>");
+            // print_r($data_Buku_besar);
+            // print_r("<br/>");
+            // // die;
+
         } else {
-            redirect(site_url("Buku_besar"));
+
+            // print_r("TIDAK ADA KODE AKUN");
+            // print_r($uuid_kode_akun);
+            // print_r("<br/>");
+            // print_r($Get_month_selected);
+            // print_r("<br/>");
+            // print_r($Get_YEAR_selected);
+            // print_r("<br/>");
+            // // die;
+
+
+            // redirect(site_url("Buku_besar"));
+
+            $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected  ORDER BY `tanggal`,`id` ASC";
+
+            $data_Buku_besar = $this->db->query($sql)->result();
         }
 
-        // die;
-
-        $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
-
-        // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-        $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
-		tbl_pembelian.uraian as keterangan,
-		tbl_pembelian.jumlah as jumlah,
-		tbl_pembelian.harga_satuan as harga_satuan,
-		(tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
-		tbl_pembelian.kode_akun as kode_akun
-		                    FROM tbl_pembelian    
-                            WHERE tbl_pembelian.kode_akun = '$get_kode_akun'
-		                    ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
-        // print_r($this->db->query($sql_pembelian)->result());
-
-        // print_r("<br/>");
-        // print_r("<br/>");
-        // print_r("<br/>");
-
-        $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
-		tbl_penjualan.nama_barang as keterangan,
-		tbl_penjualan.jumlah as jumlah,
-		tbl_penjualan.harga_satuan as harga_satuan,
-		(tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
-		tbl_penjualan.kode_akun as kode_akun
-		                    FROM tbl_penjualan    
-                            WHERE tbl_penjualan.kode_akun = '$get_kode_akun'
-		                    ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
-        // print_r($this->db->query($sql_penjualan)->result());
-
-        // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
 
 
-        // die;
+
+        // // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
+        // $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
+        // tbl_pembelian.uraian as keterangan,
+        // tbl_pembelian.jumlah as jumlah,
+        // tbl_pembelian.harga_satuan as harga_satuan,
+        // (tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
+        // tbl_pembelian.kode_akun as kode_akun
+        //                     FROM tbl_pembelian    
+        //                     WHERE tbl_pembelian.kode_akun = '$get_kode_akun'
+        //                     ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
+        // // print_r($this->db->query($sql_pembelian)->result());
+
+        // // print_r("<br/>");
+        // // print_r("<br/>");
+        // // print_r("<br/>");
+
+        // $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
+        // tbl_penjualan.nama_barang as keterangan,
+        // tbl_penjualan.jumlah as jumlah,
+        // tbl_penjualan.harga_satuan as harga_satuan,
+        // (tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
+        // tbl_penjualan.kode_akun as kode_akun
+        //                     FROM tbl_penjualan    
+        //                     WHERE tbl_penjualan.kode_akun = '$get_kode_akun'
+        //                     ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
+        // // print_r($this->db->query($sql_penjualan)->result());
+
+        // // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
+
+
+        // // die;
 
         $data = array(
-            'uuid_kode_akun' => $kode_akun,
+            'uuid_kode_akun' => $uuid_kode_akun,
             'kode_akun' => $get_kode_akun,
             'nama_akun' => $get_nama_akun,
             'data_Buku_besar' => $data_Buku_besar,
-            'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-            'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
+            // 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
+            // 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
             'action' => site_url('Buku_besar/cari_kode_akun'),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
@@ -139,7 +225,19 @@ class Buku_besar extends CI_Controller
 
     public function cari_kode_akun()
     {
-        redirect(site_url('Buku_besar/cari_data/' . $this->input->post('kode_akun', TRUE)));
+
+        if ($this->input->post('bulan_ns', TRUE)) {
+            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        } else {
+            // $Get_date_awal = date("Y-m-1 00:00:00");
+            // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+            $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
+            $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+        }
+
+        // die;
+        redirect(site_url('Buku_besar/cari_data/' . $this->input->post('kode_akun', TRUE) . '/' . $Get_YEAR_selected . '/' . $Get_month_selected));
     }
 
 

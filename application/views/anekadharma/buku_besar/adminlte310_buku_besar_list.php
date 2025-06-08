@@ -26,7 +26,7 @@
             <div class="col-md-12">
                 <div class="card card-primary">
                     <div class="card-header">
-
+                        <?php echo form_open('Buku_besar/cari_kode_akun'); ?>
                         <div class="row">
                             <div class="col-3">
                                 <div class="row">
@@ -40,7 +40,7 @@
 
                             <div class="col-5">
                                 <!-- <form> -->
-                                <?php echo form_open('Buku_besar/cari_kode_akun'); ?>
+
 
                                 <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 40px;" required>
 
@@ -55,7 +55,7 @@
                                     <?php
                                     }
                                     ?>
-                                    <option value="">Tampil Semua Data</option>
+                                    <option value="tampil_semua">Tampil Semua Data</option>
                                     <?php
                                     $sql = "select * from sys_kode_akun  order by  kode_akun ASC ";
                                     foreach ($this->db->query($sql)->result() as $m) {
@@ -69,6 +69,25 @@
                             </div>
 
 
+                            <div class="col-2" text-align="left" align="left">
+
+                                <?php
+                                // $action_cari_between_date = site_url('Tbl_pembelian/jurnal_pembelian2');
+                                ?>
+
+                                <!-- <form action="<?php //echo $action_cari_between_date; 
+                                                    ?>" method="post"> -->
+                                <div class="row">
+                                    <div class="col-md-4" text-align="right" align="right">
+                                        <input type="month" id="bulan_ns" name="bulan_ns">
+                                    </div>
+                                    <!-- <div class="col-md-2" text-align="left" align="left">
+                                                        <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                    </div> -->
+
+                                </div>
+                                <!-- </form> -->
+                            </div>
                             <div class="col-2" text-align="left" align="left">
                                 <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                             </div>
@@ -210,7 +229,7 @@
                                 ?>
 
 
-                         
+
 
 
 
