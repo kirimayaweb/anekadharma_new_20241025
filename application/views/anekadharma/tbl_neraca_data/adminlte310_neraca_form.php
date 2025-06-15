@@ -279,8 +279,8 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
 										<div class="sm-4">
+
 											<?php
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 
 											// GET debet dari saldo akhir tahun sebelumnya
 											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
@@ -302,7 +302,7 @@
 											// $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca' AND Month(`tanggal`)='$bulan_transaksi' AND `kode_akun`='$Kode_akun'";
 
 											// TAHUNAN
-											$sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
+											$sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='11101'";
 											$GET_DATA_record_11101 = $this->db->query($sql);
 
 											if ($GET_DATA_record_11101->num_rows() > 0) {
@@ -330,20 +330,35 @@
 												// echo "Tidak ada debet_11101";
 											}
 
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_TOTAL_KAS = $GET_kas + $GET_debet_11101 - $GET_kredit_11101;
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "TOTAL Kas: " . $GET_TOTAL_KAS;
+											echo "Aplikasi Kas: " . $GET_TOTAL_KAS;
+
 											?>
+
 										</div>
 									</div>
 									<div class="row">
 										<form action="<?php echo $action . '/kas'; ?>" method="post">
 											<div class="row">
+
 												<div class="sm-6">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->kas; ?>" width: 40px; />
+
+													<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->kas; ?>" width: 40px; /> -->
+
+
+													<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+													$Data_titik_ke_koma = str_replace('.', ',', $data_tbl_neraca_data->kas);													
+													echo $Data_titik_ke_koma; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
+
 												</div>
+
+
+
 												<div class="sm-4">
 													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 												</div>
@@ -369,15 +384,61 @@
 
 
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
-									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
-																																																														?>" ; /> -->
+											<?php
 
-									<form action="<?php echo $action . '/utang_usaha'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_usaha; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
 
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_utang_usaha = $GET_tbl_neraca_data_RECORD->row()->utang_usaha;
+											} else {
+												$GET_utang_usaha = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_usaha'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_utang_usaha = 0;
+											$TOTAL_KREDIT_utang_usaha = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_utang_usaha = $TOTAL_DEBET_utang_usaha + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_utang_usaha = $TOTAL_KREDIT_utang_usaha + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_utang_usaha = $GET_utang_usaha + $TOTAL_DEBET_utang_usaha - $TOTAL_KREDIT_utang_usaha;
+
+											echo "Aplikasi utang_usaha: " . $GET_utang_usaha;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
+																																																																	?>" ; /> -->
+
+												<form action="<?php echo $action . '/utang_usaha'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->utang_usaha; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -401,18 +462,112 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- <input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="<?php //echo $data_tbl_neraca_data->bank; 
-																																																												?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
+									<!--  -->
 
 									<!-- <input type="tel" pattern="[0-9(,)]{15}" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="<?php //echo $data_tbl_neraca_data->bank; 
 																																																		?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
 
-									<form action="<?php echo $action . '/bank'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->bank; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row">
+										<div class="sm-4" align="left" style="color:#f9032f;text-align:left;">
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_bank = $GET_tbl_neraca_data_RECORD->row()->bank;
+											} else {
+												$GET_bank = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='BANK'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_BANK = 0;
+											$TOTAL_KREDIT_BANK = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_BANK = $TOTAL_DEBET_BANK + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_BANK = $TOTAL_KREDIT_BANK + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_BANK;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_BANK;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// die;
 
 
+
+											// $Kode_akun = "11101";
+											// // BULANAN
+											// // $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca' AND Month(`tanggal`)='$bulan_transaksi' AND `kode_akun`='$Kode_akun'";
+
+											// // TAHUNAN
+											// $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
+											// $GET_DATA_record_11101 = $this->db->query($sql);
+
+											// if ($GET_DATA_record_11101->num_rows() > 0) {
+											// 	// echo "Ada debet_11101";
+											// 	// print_r($GET_DATA_record_11101->row());
+											// 	$GET_debet_11101 = $GET_DATA_record_11101->row()->debet_11101;
+											// 	// echo $GET_debet_11101;
+											// } else {
+											// 	$GET_debet_11101 = 0;
+											// 	// echo "Tidak ada debet_11101";
+											// }
+
+
+											// // GET debet pengeluaran kas
+											// $sql = "SELECT sum(`kredit`) as kredit_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
+											// $GET_DATA_record_kredit_11101 = $this->db->query($sql);
+
+											// if ($GET_DATA_record_kredit_11101->num_rows() > 0) {
+											// 	// echo "Ada debet_11101";
+											// 	// print_r($GET_DATA_record_11101->row());
+											// 	$GET_kredit_11101 = $GET_DATA_record_kredit_11101->row()->kredit_11101;
+											// 	// echo $GET_kredit_11101;
+											// } else {
+											// 	$GET_kredit_11101 = 0;
+											// 	// echo "Tidak ada debet_11101";
+											// }
+
+											// bank : 11105 s/d 11111  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											// echo $TOTAL_DEBET_BANK;
+
+											$TOTAL_BANK = $GET_bank + $TOTAL_DEBET_BANK - $TOTAL_KREDIT_BANK;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi Bank: " . $TOTAL_BANK;
+
+											?>
+
+										</div>
+										<div class="sm-4">
+											<form action="<?php echo $action . '/bank'; ?>" method="post">
+												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->bank; ?>" width: 50px; />
+
+												<!-- 
+													<input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+
+										</div>
+									</div>
 
 
 
@@ -431,17 +586,58 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_pajak" id="utang_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_pajak; 
-																																																													?>" ; /> -->
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_utang_pajak = $GET_tbl_neraca_data_RECORD->row()->utang_pajak;
+											} else {
+												$GET_utang_pajak = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/utang_pajak'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_pajak; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_usaha'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_utang_pajak = 0;
+											$TOTAL_KREDIT_utang_pajak = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_utang_pajak = $TOTAL_DEBET_utang_pajak + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_utang_pajak = $TOTAL_KREDIT_utang_pajak + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_utang_pajak = $GET_utang_pajak + $TOTAL_DEBET_utang_pajak - $TOTAL_KREDIT_utang_pajak;
+
+											echo "Aplikasi utang_pajak: " . $GET_utang_pajak;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/utang_pajak'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_pajak; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -463,18 +659,68 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_usaha" id="piutang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_usaha; 
-																																																														?>" ; /> -->
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_piutang_usaha = $GET_tbl_neraca_data_RECORD->row()->piutang_usaha;
+											} else {
+												$GET_piutang_usaha = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_usaha; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGUSAHA'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
 
+											$TOTAL_DEBET_PIUTANGUSAHA = 0;
+											$TOTAL_KREDIT_PIUTANGUSAHA = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_PIUTANGUSAHA = $TOTAL_DEBET_PIUTANGUSAHA + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_PIUTANGUSAHA = $TOTAL_KREDIT_PIUTANGUSAHA + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_TOTAL_piutang_usaha = $GET_piutang_usaha + $TOTAL_DEBET_PIUTANGUSAHA - $TOTAL_KREDIT_PIUTANGUSAHA;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi PIUTANG USAHA: " . $GET_TOTAL_piutang_usaha;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+												<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->piutang_usaha; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -493,16 +739,58 @@
 									<strong>
 
 
-										<!-- 
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_lain_lain" id="utang_lain_lain" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_lain_lain; 
-																																																																?>" ; /> -->
+										<div class="row" align="left" style="color:#f9032f;text-align:left;">
+											<div class="sm-4">
+
+												<?php
+
+												// GET debet dari saldo akhir tahun sebelumnya
+												$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+												$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+												if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+													$GET_utang_lain_lain = $GET_tbl_neraca_data_RECORD->row()->utang_lain_lain;
+												} else {
+													$GET_utang_lain_lain = 0;
+												}
+
+												// GET debet per kode akun di penerimaan kas
 
 
-										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
-											<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_lain_lain; ?>" width: 50px; />
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
+												// LOOPING sys_kode filter group: bank
 
+												$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_lain_lain'";
+												// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+												$TOTAL_DEBET_utang_lain_lain = 0;
+												$TOTAL_KREDIT_utang_lain_lain = 0;
+												foreach ($this->db->query($sql)->result() as $list_data) {
+
+													$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+													$TOTAL_DEBET_utang_lain_lain = $TOTAL_DEBET_utang_lain_lain + $this->db->query($sql)->row()->debet;
+													$TOTAL_KREDIT_utang_lain_lain = $TOTAL_KREDIT_utang_lain_lain + $this->db->query($sql)->row()->kredit;
+												}
+
+
+												$GET_utang_lain_lain = $GET_utang_lain_lain + $TOTAL_DEBET_utang_lain_lain - $TOTAL_KREDIT_utang_lain_lain;
+
+												echo "Aplikasi utang_lain_lain: " . $GET_utang_lain_lain;
+
+												?>
+
+											</div>
+											<div class="row" align="right">
+												<div class="sm-12">
+
+
+													<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+														<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_lain_lain; ?>" width: 50px; />
+														<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+													</form>
+												</div>
+											</div>
+										</div>
 
 									</strong>
 								</th>
@@ -526,17 +814,69 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha" id="piutang_non_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
-																																																																?>" ; /> -->
 
 
 
-									<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_piutang_non_usaha = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha;
+											} else {
+												$GET_piutang_non_usaha = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGUSAHA'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_PIUTANGNONUSAHA = 0;
+											$TOTAL_KREDIT_PIUTANGNONUSAHA = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_PIUTANGNONUSAHA = $TOTAL_DEBET_PIUTANGNONUSAHA + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_PIUTANGNONUSAHA = $TOTAL_KREDIT_PIUTANGNONUSAHA + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_TOTAL_piutang_non_usaha = $GET_piutang_non_usaha + $TOTAL_DEBET_PIUTANGNONUSAHA - $TOTAL_KREDIT_PIUTANGNONUSAHA;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi PIUTANG NON USAHA: " . $GET_TOTAL_piutang_non_usaha;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+												<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha; ?>" width: 60px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -552,15 +892,23 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_utang_lancar" id="total_utang_lancar" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
-																																																																		?>"  />-->
 
-									<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
+																																																																?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -587,15 +935,74 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 
-									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan; 
-																																																														?>" ; /> -->
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_persediaan = $GET_tbl_neraca_data_RECORD->row()->persediaan;
+											} else {
+												$GET_persediaan = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/persediaan'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->persediaan; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PERSEDIAAN'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_persediaan = 0;
+											$TOTAL_KREDIT_persediaan = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_persediaan = $TOTAL_DEBET_persediaan + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_persediaan = $TOTAL_KREDIT_persediaan + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_persediaan = $GET_piutang_non_usaha + $TOTAL_DEBET_persediaan - $TOTAL_KREDIT_persediaan;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi PERSEDIAAN: " . $GET_persediaan;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan; 
+																																																																	?>" ; /> -->
+
+
+												<form action="<?php echo $action . '/persediaan'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->persediaan; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 
 
@@ -633,17 +1040,77 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->uang_muka_pajak; 
-																																																															?>" ; /> -->
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_uang_muka_pajak = $GET_tbl_neraca_data_RECORD->row()->uang_muka_pajak;
+											} else {
+												$GET_uang_muka_pajak = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='uang_muka_pajak'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_uang_muka_pajak = 0;
+											$TOTAL_KREDIT_uang_muka_pajak = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_uang_muka_pajak = $TOTAL_DEBET_uang_muka_pajak + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_uang_muka_pajak = $TOTAL_KREDIT_uang_muka_pajak + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_uang_muka_pajak = $GET_piutang_non_usaha + $TOTAL_DEBET_uang_muka_pajak - $TOTAL_KREDIT_uang_muka_pajak;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi UANG MUKA PAJAK: " . $GET_uang_muka_pajak;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
 
 
 
-									<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->uang_muka_pajak; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+												<!-- 
+												<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->uang_muka_pajak; 
+																																																																		?>" ; /> -->
 
+
+
+												<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->uang_muka_pajak; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -787,17 +1254,76 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud; 
-																																																																		?>" ; /> -->
 
 
-									<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap_berwujud; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_aktiva_tetap_berwujud = $GET_tbl_neraca_data_RECORD->row()->aktiva_tetap_berwujud;
+											} else {
+												$GET_aktiva_tetap_berwujud = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='aktiva_tetap_berwujud'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_uang_muka_pajak = 0;
+											$TOTAL_KREDIT_uang_muka_pajak = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_aktiva_tetap_berwujud = $TOTAL_DEBET_aktiva_tetap_berwujud + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_aktiva_tetap_berwujud = $TOTAL_KREDIT_aktiva_tetap_berwujud + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_aktiva_tetap_berwujud = $GET_aktiva_tetap_berwujud + $TOTAL_DEBET_aktiva_tetap_berwujud - $TOTAL_KREDIT_aktiva_tetap_berwujud;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi aktiva_tetap_berwujud: " . $GET_aktiva_tetap_berwujud;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<!-- 
+												<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud; 
+																																																																					?>" ; /> -->
+
+
+												<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap_berwujud; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -813,16 +1339,58 @@
 
 								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_afiliasi" id="utang_afiliasi" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_afiliasi; 
-																																																															?>" ; /> -->
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_utang_afiliasi = $GET_tbl_neraca_data_RECORD->row()->utang_afiliasi;
+											} else {
+												$GET_utang_afiliasi = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_afiliasi; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_afiliasi'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_utang_afiliasi = 0;
+											$TOTAL_KREDIT_utang_afiliasi = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_utang_afiliasi = $TOTAL_DEBET_utang_afiliasi + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_utang_afiliasi = $TOTAL_KREDIT_utang_afiliasi + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_utang_afiliasi = $GET_utang_afiliasi + $TOTAL_DEBET_utang_afiliasi - $TOTAL_KREDIT_utang_afiliasi;
+
+											echo "Aplikasi utang_afiliasi: " . $GET_utang_afiliasi;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_afiliasi; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -844,17 +1412,78 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
-																																																																				?>" ; /> -->
 
 
 
-									<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_akumulasi_depresiasi_atb = $GET_tbl_neraca_data_RECORD->row()->akumulasi_depresiasi_atb;
+											} else {
+												$GET_akumulasi_depresiasi_atb = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='akumulasi_depresiasi_atb'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_akumulasi_depresiasi_atb = 0;
+											$TOTAL_KREDIT_akumulasi_depresiasi_atb = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_akumulasi_depresiasi_atb = $TOTAL_DEBET_akumulasi_depresiasi_atb + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_akumulasi_depresiasi_atb = $TOTAL_KREDIT_akumulasi_depresiasi_atb + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_akumulasi_depresiasi_atb = $GET_akumulasi_depresiasi_atb + $TOTAL_DEBET_akumulasi_depresiasi_atb - $TOTAL_KREDIT_akumulasi_depresiasi_atb;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi akumulasi_depresiasi_atb: " . $GET_akumulasi_depresiasi_atb;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+												<!-- 
+														<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
+																																																																									?>" ; /> -->
+
+
+
+												<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1013,16 +1642,76 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; 
-																																																																																								?>" ; /> -->
 
 
-									<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_piutang_non_usaha_pihak_ketiga = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha_pihak_ketiga;
+											} else {
+												$GET_piutang_non_usaha_pihak_ketiga = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGNONUSAHAPIHAKKETIGA'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = 0;
+											$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = $TOTAL_DEBET_piutang_non_usaha_pihak_ketiga + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = $TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_piutang_non_usaha_pihak_ketiga = $GET_piutang_non_usaha_pihak_ketiga + $TOTAL_DEBET_piutang_non_usaha_pihak_ketiga - $TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi piutang_non_usaha_pihak_ketiga: " . $GET_piutang_non_usaha_pihak_ketiga;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+												<!-- 
+													<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga;
+																																																																																												?>" ; /> -->
+
+
+												<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1039,16 +1728,62 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="modal_dasar_dan_penyertaan" id="modal_dasar_dan_penyertaan" placeholder="Modal Dasar dan Penyertaan" value="<?php //echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; 
-																																																																											?>"> -->
 
 
-									<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_modal_dasar_dan_penyertaan = $GET_tbl_neraca_data_RECORD->row()->modal_dasar_dan_penyertaan;
+											} else {
+												$GET_modal_dasar_dan_penyertaan = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='modal_dasar_dan_penyertaan'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_modal_dasar_dan_penyertaan = 0;
+											$TOTAL_KREDIT_modal_dasar_dan_penyertaan = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_modal_dasar_dan_penyertaan = $TOTAL_DEBET_modal_dasar_dan_penyertaan + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_modal_dasar_dan_penyertaan = $TOTAL_KREDIT_modal_dasar_dan_penyertaan + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_modal_dasar_dan_penyertaan = $GET_modal_dasar_dan_penyertaan + $TOTAL_DEBET_modal_dasar_dan_penyertaan - $TOTAL_KREDIT_modal_dasar_dan_penyertaan;
+
+											echo "Aplikasi modal_dasar_dan_penyertaan: " . $GET_modal_dasar_dan_penyertaan;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+												<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1074,17 +1809,73 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_radio" id="piutang_non_usaha_radio" placeholder="piutang non usaha radio" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_radio; 
-																																																																									?>"> -->
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_PIUTANGNONUSAHARADIO = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha_radio;
+											} else {
+												$GET_PIUTANGNONUSAHARADIO = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_radio; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGNONUSAHARADIO'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_PIUTANGNONUSAHARADIO = 0;
+											$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_PIUTANGNONUSAHARADIO = $TOTAL_DEBET_PIUTANGNONUSAHARADIO + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = $TOTAL_KREDIT_PIUTANGNONUSAHARADIO + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_PIUTANGNONUSAHARADIO = $GET_PIUTANGNONUSAHARADIO + $TOTAL_DEBET_PIUTANGNONUSAHARADIO - $TOTAL_KREDIT_PIUTANGNONUSAHARADIO;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi PIUTANGNONUSAHARADIO: " . $GET_PIUTANGNONUSAHARADIO;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+												<!-- 
+												<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_radio" id="piutang_non_usaha_radio" placeholder="piutang non usaha radio" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_radio;
+																																																																												?>"> -->
 
 
+												<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_radio; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1101,17 +1892,60 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="cadangan_umum" id="cadangan_umum" placeholder="Cadangan Umum" value="<?php //echo $data_tbl_neraca_data->cadangan_umum; 
-																																																																	?>"> -->
 
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
-									<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->cadangan_umum; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											<?php
 
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_cadangan_umum = $GET_tbl_neraca_data_RECORD->row()->cadangan_umum;
+											} else {
+												$GET_cadangan_umum = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='cadangan_umum'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_cadangan_umum = 0;
+											$TOTAL_KREDIT_cadangan_umum = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_cadangan_umum = $TOTAL_DEBET_cadangan_umum + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_cadangan_umum = $TOTAL_KREDIT_cadangan_umum + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_cadangan_umum = $GET_cadangan_umum + $TOTAL_DEBET_cadangan_umum - $TOTAL_KREDIT_cadangan_umum;
+
+											echo "Aplikasi cadangan_umum: " . $GET_cadangan_umum;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->cadangan_umum; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1134,16 +1968,73 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; 
-																																																																																	?>">
-								 -->
 
-									<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
 
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_ljpj_taman_gedung_kesenian_gabusan = $GET_tbl_neraca_data_RECORD->row()->ljpj_taman_gedung_kesenian_gabusan;
+											} else {
+												$GET_ljpj_taman_gedung_kesenian_gabusan = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_taman_gedung_kesenian_gabusan'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = 0;
+											$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = $TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = $TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_ljpj_taman_gedung_kesenian_gabusan = $GET_ljpj_taman_gedung_kesenian_gabusan + $TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan - $TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi ljpj_taman_gedung_kesenian_gabusan: " . $GET_ljpj_taman_gedung_kesenian_gabusan;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+												<!-- 
+														<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
+																																																																																						?>">
+													-->
+
+												<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1160,16 +2051,59 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_bumd_pad" id="laba_bumd_pad" placeholder="Laba BUMD (PAD)" value="<?php //echo $data_tbl_neraca_data->laba_bumd_pad; 
-																																																																		?>"> -->
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_laba_bumd_pad = $GET_tbl_neraca_data_RECORD->row()->laba_bumd_pad;
+											} else {
+												$GET_laba_bumd_pad = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_bumd_pad; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_bumd_pad'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_laba_bumd_pad = 0;
+											$TOTAL_KREDIT_laba_bumd_pad = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_laba_bumd_pad = $TOTAL_DEBET_laba_bumd_pad + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_laba_bumd_pad = $TOTAL_KREDIT_laba_bumd_pad + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_laba_bumd_pad = $GET_laba_bumd_pad + $TOTAL_DEBET_laba_bumd_pad - $TOTAL_KREDIT_laba_bumd_pad;
+
+											echo "Aplikasi laba_bumd_pad: " . $GET_laba_bumd_pad;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_bumd_pad; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1188,16 +2122,69 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kompleks_gedung_kesenian" id="ljpj_kompleks_gedung_kesenian" placeholder="ljpj kompleks gedung kesenian" value="<?php //echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; 
-																																																																														?>"> -->
 
 
-									<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+												// echo "Ada record";
+												$GET_ljpj_kompleks_gedung_kesenian = $GET_tbl_neraca_data_RECORD->row()->ljpj_kompleks_gedung_kesenian;
+											} else {
+												$GET_ljpj_kompleks_gedung_kesenian = 0;
+												// echo "Tidak ada record";
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kompleks_gedung_kesenian'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = 0;
+											$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+												// echo $list_data->kode_akun;
+												// echo "<br/>";
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = $TOTAL_DEBET_ljpj_kompleks_gedung_kesenian + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = $TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian + $this->db->query($sql)->row()->kredit;
+												// echo $list_data->Kode_akun;
+												// echo "<br/>";
+												// echo $TOTAL_DEBET_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
+												// echo "<br/>";
+												// echo "<br/>";
+											}
+											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
+											$GET_ljpj_kompleks_gedung_kesenian = $GET_ljpj_kompleks_gedung_kesenian + $TOTAL_DEBET_ljpj_kompleks_gedung_kesenian - $TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian;
+											// echo "TOTAL Kas: " . $GET_kas ;
+											// echo "TOTAL Kas: " . $GET_debet_11101;
+											// echo "TOTAL Kas: " . $GET_kredit_11101;
+											echo "Aplikasi ljpj_kompleks_gedung_kesenian: " . $GET_ljpj_kompleks_gedung_kesenian;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+												<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1239,16 +2226,59 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_radio" id="ljpj_radio" placeholder="ljpj radio" value="<?php //echo $data_tbl_neraca_data->ljpj_radio; 
-																																																															?>"> -->
 
 
-									<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_radio; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_ljpj_radio = $GET_tbl_neraca_data_RECORD->row()->ljpj_radio;
+											} else {
+												$GET_ljpj_radio = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_radio'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_radio = 0;
+											$TOTAL_KREDIT_ljpj_radio = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_radio = $TOTAL_DEBET_ljpj_radio + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_radio = $TOTAL_KREDIT_ljpj_radio + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_ljpj_radio = $GET_ljpj_radio + $TOTAL_DEBET_ljpj_radio - $TOTAL_KREDIT_ljpj_radio;
+
+											echo "Aplikasi ljpj_radio: " . $GET_ljpj_radio;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+												<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_radio; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1265,16 +2295,60 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_lalu" id="laba_rugi_tahun_lalu" placeholder="laba-rugi tahun lalu" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; 
-																																																																							?>"> -->
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_laba_rugi_tahun_lalu = $GET_tbl_neraca_data_RECORD->row()->laba_rugi_tahun_lalu;
+											} else {
+												$GET_laba_rugi_tahun_lalu = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_rugi_tahun_lalu'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_laba_rugi_tahun_lalu = 0;
+											$TOTAL_KREDIT_laba_rugi_tahun_lalu = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_laba_rugi_tahun_lalu = $TOTAL_DEBET_laba_rugi_tahun_lalu + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_laba_rugi_tahun_lalu = $TOTAL_KREDIT_laba_rugi_tahun_lalu + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_laba_rugi_tahun_lalu = $GET_laba_rugi_tahun_lalu + $TOTAL_DEBET_laba_rugi_tahun_lalu - $TOTAL_KREDIT_laba_rugi_tahun_lalu;
+
+											echo "Aplikasi laba_rugi_tahun_lalu: " . $GET_laba_rugi_tahun_lalu;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+												<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
@@ -1297,16 +2371,60 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_operasi_apotek_dharma_usaha" id="ljpj_kerjasama_operasi_apotek_dharma_usaha" placeholder="ljpj kerjasama operasi apotek dharma usaha" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; 
-																																																																																							?>"> -->
 
 
-									<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_operasi_apotek_dharma_usaha;
+											} else {
+												$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_operasi_apotek_dharma_usaha'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
+											$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha - $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha;
+
+											echo "Aplikasi ljpj_kerjasama_operasi_apotek_dharma_usaha: " . $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1322,17 +2440,63 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="laba_rugi_tahun_berjalan" id="laba_rugi_tahun_berjalan" placeholder="laba-rugi tahun berjalan" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; 
-																																																																										?>"> -->
 
 
 
-									<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_laba_rugi_tahun_berjalan = $GET_tbl_neraca_data_RECORD->row()->laba_rugi_tahun_berjalan;
+											} else {
+												$GET_laba_rugi_tahun_berjalan = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_rugi_tahun_berjalan'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_laba_rugi_tahun_berjalan = 0;
+											$TOTAL_KREDIT_laba_rugi_tahun_berjalan = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_laba_rugi_tahun_berjalan = $TOTAL_DEBET_laba_rugi_tahun_berjalan + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_laba_rugi_tahun_berjalan = $TOTAL_KREDIT_laba_rugi_tahun_berjalan + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_laba_rugi_tahun_berjalan = $GET_laba_rugi_tahun_berjalan + $TOTAL_DEBET_laba_rugi_tahun_berjalan - $TOTAL_KREDIT_laba_rugi_tahun_berjalan;
+
+											echo "Aplikasi laba_rugi_tahun_berjalan: " . $GET_laba_rugi_tahun_berjalan;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+
+
+												<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1357,16 +2521,60 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_peternakan" id="ljpj_peternakan" placeholder="ljpj peternakan" value="<?php //echo $data_tbl_neraca_data->ljpj_peternakan; 
-																																																																			?>"> -->
 
 
-									<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_peternakan; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_ljpj_peternakan = $GET_tbl_neraca_data_RECORD->row()->ljpj_peternakan;
+											} else {
+												$GET_ljpj_peternakan = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_peternakan'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_peternakan = 0;
+											$TOTAL_KREDIT_ljpj_peternakan = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_peternakan = $TOTAL_DEBET_ljpj_peternakan + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_peternakan = $TOTAL_KREDIT_ljpj_peternakan + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_ljpj_peternakan = $GET_ljpj_peternakan + $TOTAL_DEBET_ljpj_peternakan - $TOTAL_KREDIT_ljpj_peternakan;
+
+											echo "Aplikasi ljpj_peternakan: " . $GET_ljpj_peternakan;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_peternakan; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1400,16 +2608,59 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_adwm" id="ljpj_kerjasama_adwm" placeholder="ljpj kerjasama adwm" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; 
-																																																																						?>"> -->
 
 
-									<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
 
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_ljpj_kerjasama_adwm = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_adwm;
+											} else {
+												$GET_ljpj_kerjasama_adwm = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
+
+
+											// LOOPING sys_kode filter group: bank
+
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_adwm'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_kerjasama_adwm = 0;
+											$TOTAL_KREDIT_ljpj_kerjasama_adwm = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_kerjasama_adwm = $TOTAL_DEBET_ljpj_kerjasama_adwm + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_kerjasama_adwm = $TOTAL_KREDIT_ljpj_kerjasama_adwm + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_ljpj_kerjasama_adwm = $GET_ljpj_kerjasama_adwm + $TOTAL_DEBET_ljpj_kerjasama_adwm - $TOTAL_KREDIT_ljpj_kerjasama_adwm;
+
+											echo "Aplikasi ljpj_kerjasama_adwm: " . $GET_ljpj_kerjasama_adwm;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+												<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 								</th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
@@ -1445,16 +2696,59 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<!-- 
-									<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_kerjasama_pdu_cabean_panggungharjo" id="ljpj_kerjasama_pdu_cabean_panggungharjo" placeholder="ljpj kerjasama pdu cabean panggungharjo" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; 
-																																																																																					?>"> -->
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+
+											<?php
+
+											// GET debet dari saldo akhir tahun sebelumnya
+											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
+											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+
+												$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_pdu_cabean_panggungharjo;
+											} else {
+												$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
+											}
+
+											// GET debet per kode akun di penerimaan kas
 
 
-									<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+											// LOOPING sys_kode filter group: bank
 
+											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_pdu_cabean_panggungharjo'";
+											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
+
+											$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
+											$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
+											foreach ($this->db->query($sql)->result() as $list_data) {
+
+												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
+												$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo + $this->db->query($sql)->row()->debet;
+												$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo + $this->db->query($sql)->row()->kredit;
+											}
+
+
+											$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_ljpj_kerjasama_pdu_cabean_panggungharjo + $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo - $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo;
+
+											echo "Aplikasi ljpj_kerjasama_pdu_cabean_panggungharjo: " . $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
+
+											?>
+
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post">
+													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" width: 50px; />
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
+											</div>
+										</div>
+									</div>
 
 								</th>
 
@@ -1679,9 +2973,6 @@
 							</tr>
 
 						</table>
-
-
-
 					</div>
 					<div class="col-1"></div>
 				</div>
