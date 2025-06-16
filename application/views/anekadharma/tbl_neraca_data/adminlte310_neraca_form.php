@@ -107,6 +107,10 @@
 	$TOTAL_Utang_Jangka_Panjang = 0;
 	$TOTAL_Modal_dan_Laba_ditahan = 0;
 
+	$TOTAL_UTANG_LANCAR = 0;
+	$TOTAL_UTANG_LANCAR_PLUS_AFILIASI = 0;
+	$TOTAL_MODAL_DAN_LABA_DITAHAN = 0;
+
 	?>
 
 	<div class="card-header">
@@ -211,7 +215,13 @@
 								</th>
 							</tr>
 
+							<?php
 
+							$GET_TOTAL_AKTIVA_LANCAR = 0;
+							$GET_Total_AKTIVA_TETAP_BERSIH = 0;
+							$GET_AKTIVA_LAIN_LAIN = 0;
+
+							?>
 
 
 
@@ -342,28 +352,26 @@
 										</div>
 									</div>
 									<div class="row">
-										<form action="<?php echo $action . '/kas'; ?>" method="post">
-											<div class="row">
 
-												<div class="sm-6">
+										<div class="sm-4">
+											<?php
+											// $Data_titik_ke_koma = str_replace('.', ',', $data_tbl_neraca_data->kas);
+											// echo $Data_titik_ke_koma;
+											// echo "<br/>";
+											// $data_1=number_format($Data_titik_ke_koma, 2, ',', '.');
+											// echo $data_1;
+											// echo "<br/>";
+											// $data_1=number_format($Data_titik_ke_koma, 2, ',', '.');
+											?>
+											<form action="<?php echo $action . '/kas'; ?>" method="post">
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php // echo number_format($Data_titik_ke_koma, 2, ',', '.'); 
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->kas);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->kas;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+										</div>
 
-													<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->kas; ?>" width: 40px; /> -->
-
-
-													<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
-													$Data_titik_ke_koma = str_replace('.', ',', $data_tbl_neraca_data->kas);													
-													echo $Data_titik_ke_koma; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
-
-
-												</div>
-
-
-
-												<div class="sm-4">
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</div>
-											</div>
-										</form>
 
 									</div>
 
@@ -425,18 +433,25 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
-																																																																	?>" ; /> -->
+											<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
+																																																																?>" ; /> -->
 
-												<form action="<?php echo $action . '/utang_usaha'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->utang_usaha; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/utang_usaha'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
+																																																																	?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_usaha);
+																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_usaha;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -557,10 +572,15 @@
 										</div>
 										<div class="sm-4">
 											<form action="<?php echo $action . '/bank'; ?>" method="post">
-												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->bank; ?>" width: 50px; />
-
 												<!-- 
-													<input type="tel" pattern="[0-9(,)]{15}" onkeyup="TEST_sum_total_aktiva_lancar();" name="bank" id="bank" onKeyPress="return goodchars(event,'0123456789.,-',this)" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
+											<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->bank;
+																																																															?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->bank);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->bank;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
 												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
@@ -627,15 +647,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/utang_pajak'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_pajak; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/utang_pajak'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_pajak;
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_pajak);
+																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_pajak;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -710,15 +737,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
-												<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php echo $data_tbl_neraca_data->piutang_usaha; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
+											<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post">
+												<!-- 													
+												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->piutang_usaha;
+																																																																?>" width: 50px; /> -->
 
-											</div>
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_usaha);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_usaha;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+
 										</div>
 									</div>
 
@@ -740,7 +774,7 @@
 
 
 										<div class="row" align="left" style="color:#f9032f;text-align:left;">
-											<div class="sm-4">
+											<div class="sm-6">
 
 												<?php
 
@@ -780,15 +814,24 @@
 												?>
 
 											</div>
-											<div class="row" align="right">
-												<div class="sm-12">
+											<div class="sm-4">
 
 
-													<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
-														<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_lain_lain; ?>" width: 50px; />
-														<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-													</form>
-												</div>
+												<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+													<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_lain_lain; 
+																																																																	?>" width: 50px; /> -->
+
+
+													<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																																echo str_replace('.', ',', $data_tbl_neraca_data->utang_lain_lain);
+																																																$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_lain_lain;
+																																																?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+
+													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form>
 											</div>
 										</div>
 
@@ -868,13 +911,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
-												<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha; ?>" width: 60px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+										<div class="sm-4">
+											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
+												<!-- 													
+												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
+																																																															?>" width: 60px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_non_usaha;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -901,11 +953,16 @@
 											<div class="sm-12">
 
 
-												<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
-																																																																?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
+												<!-- <form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post"> -->
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha;
+																																																																?>" width: 50px; /> -->
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_UTANG_LANCAR; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
+
+												<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form> -->
 											</div>
 										</div>
 									</div>
@@ -987,20 +1044,27 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan; 
-																																																																	?>" ; /> -->
+											<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="persediaan" id="persediaan" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan; 
+																																																																?>" ; /> -->
 
 
-												<form action="<?php echo $action . '/persediaan'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->persediaan; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/persediaan'; ?>" method="post">
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan;
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->persediaan);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->persediaan;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -1093,22 +1157,29 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<!-- 
+											<!-- 
 												<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="uang_muka_pajak" id="uang_muka_pajak" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->uang_muka_pajak; 
 																																																																		?>" ; /> -->
 
 
 
-												<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->uang_muka_pajak; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->uang_muka_pajak; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->uang_muka_pajak);
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->uang_muka_pajak;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -1147,7 +1218,7 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 									<strong>
 
-										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="0,00" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
+										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_TOTAL_AKTIVA_LANCAR; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
 
 
 								</th>
@@ -1204,7 +1275,7 @@
 								<th style="font-size: 0.550em; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse; text-align:left;" colspan="310"><strong>Aktiva Tetap</strong></th>
 
 
-								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
@@ -1213,10 +1284,20 @@
 																																																															?>" ; /> -->
 
 
-									<form action="<?php echo $action . '/aktiva_tetap'; ?>" method="post">
-										<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap; ?>" width: 50px; />
-										<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-									</form>
+									<!-- <form action="<?php //echo $action . '/aktiva_tetap'; 
+														?>" method="post"> -->
+
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap; 
+																																																													?>" width: 50px; /> -->
+
+									<!-- <input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																														// echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap); 
+																																														// $GET_Total_AKTIVA_TETAP_BERSIH=$GET_Total_AKTIVA_TETAP_BERSIH+$data_tbl_neraca_data->aktiva_tetap;
+																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+ -->
+
+									<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+									<!-- </form> -->
 
 
 								</th>
@@ -1307,21 +1388,29 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<!-- 
+											<!-- 
 												<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="aktiva_tetap_berwujud" id="aktiva_tetap_berwujud" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud; 
 																																																																					?>" ; /> -->
 
 
-												<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->aktiva_tetap_berwujud; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
+											<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post">
 
-											</div>
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud;
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap_berwujud);
+																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->aktiva_tetap_berwujud;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+
 										</div>
 									</div>
 								</th>
@@ -1380,15 +1469,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->utang_afiliasi; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_afiliasi;
+																																																																?>" width: 50px; /> -->
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_afiliasi);
+																																															$TOTAL_UTANG_LANCAR_PLUS_AFILIASI = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_afiliasi;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -1466,22 +1562,30 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<!-- 
+											<!-- 
 														<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="akumulasi_depresiasi_atb" id="akumulasi_depresiasi_atb" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
 																																																																									?>" ; /> -->
 
 
 
-												<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->akumulasi_depresiasi_atb);
+																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->akumulasi_depresiasi_atb;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -1503,9 +1607,9 @@
 										?>
 									</strong>
 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="TOTAL_Utang_Lancar_dan_jangka_panjang" id="TOTAL_Utang_Lancar_dan_jangka_panjang" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
-																																																																											?>" ; />
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="TOTAL_Utang_Lancar_dan_jangka_panjang" id="TOTAL_Utang_Lancar_dan_jangka_panjang" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_UTANG_LANCAR_PLUS_AFILIASI; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -1530,8 +1634,10 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php //echo nominal($Total_Aktiva_Tetap_Bersih) 
 																																																										?>
 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
-																																																																					?>" ; />
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
+
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_Total_AKTIVA_TETAP_BERSIH; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
 
 								</th>
 
@@ -1695,21 +1801,29 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<!-- 
+											<!-- 
 													<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_pihak_ketiga" id="piutang_non_usaha_pihak_ketiga" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga;
 																																																																																												?>" ; /> -->
 
 
-												<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -1772,16 +1886,24 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->modal_dasar_dan_penyertaan);
+																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->modal_dasar_dan_penyertaan;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -1860,20 +1982,28 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
-												<!-- 
+											<!-- 
 												<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="piutang_non_usaha_radio" id="piutang_non_usaha_radio" placeholder="piutang non usaha radio" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_radio;
 																																																																												?>"> -->
 
 
-												<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->piutang_non_usaha_radio; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
+											<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post">
 
-											</div>
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_radio; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_radio);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->piutang_non_usaha_radio;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+
 										</div>
 									</div>
 
@@ -1935,15 +2065,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->cadangan_umum; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->cadangan_umum; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->cadangan_umum);
+																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->cadangan_umum;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2021,18 +2158,26 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
-												<!-- 
+										<div class="sm-4">
+											<!-- 
 														<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
 																																																																																						?>">
 													-->
 
-												<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; 
+																																																																?>" width: 50px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -2093,15 +2238,23 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_bumd_pad; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_bumd_pad; 
+																																																																?>" width: 50px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_bumd_pad);
+																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_bumd_pad;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2175,14 +2328,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
-												<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; 
+																																																																?>" width: 50px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -2269,14 +2430,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
-												<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_radio; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_radio; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_radio);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_radio;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2337,16 +2506,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
-												<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; 
+																																																																?>" width: 50px; /> -->
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_lalu);
+																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_rugi_tahun_lalu;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2414,15 +2589,24 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post">
+
+
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2484,17 +2668,26 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
 
 
-												<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; 
+																																																																?>" width: 50px; />
+												 -->
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_berjalan);
+																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_rugi_tahun_berjalan;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -2564,15 +2757,22 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_peternakan; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_peternakan; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_peternakan);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_peternakan;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -2651,14 +2851,24 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
-												<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post">
+
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; 
+																																																																?>" width: 50px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_adwm);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_adwm;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 								</th>
@@ -2738,15 +2948,24 @@
 											?>
 
 										</div>
-										<div class="row" align="right">
-											<div class="sm-12">
+										<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post">
-													<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; ?>" width: 50px; />
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-												</form>
-											</div>
+											<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; 
+																																																																?>" width: 50px; />
+													 -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo);
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
 										</div>
 									</div>
 
@@ -2786,9 +3005,9 @@
 								<th style="font-size:0.550em; text-align:right;  width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php //echo nominal($Aktiva_Lain_Lain) 
 																																																				?></strong>
 
-									<input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_lain_lain" id="total_aktiva_lain_lain" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo;
-																																																																				?>" ; />
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_lain_lain" id="total_aktiva_lain_lain" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_AKTIVA_LAIN_LAIN; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -2806,8 +3025,10 @@
 
 								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_modal_dan_laba_ditahan" id="total_modal_dan_laba_ditahan" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo;
-																																																																							?>" ; />
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_modal_dan_laba_ditahan" id="total_modal_dan_laba_ditahan" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
+
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_MODAL_DAN_LABA_DITAHAN; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
 
 								</th>
 
@@ -2870,7 +3091,10 @@
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
-									<input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva" id="total_aktiva" placeholder="" value="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" ; />
+									<!-- <input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva" id="total_aktiva" placeholder="" value="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" ; /> -->
+
+
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_TOTAL_AKTIVA_LANCAR + $GET_Total_AKTIVA_TETAP_BERSIH + $GET_AKTIVA_LAIN_LAIN; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -2892,8 +3116,9 @@
 								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 
 
-									<input type="text" class="form-control uang" name="TOTAL_PASIVA" id="TOTAL_PASIVA" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; 
-																																																						?>" ; />
+									<!-- <input type="text" class="form-control uang" name="TOTAL_PASIVA" id="TOTAL_PASIVA" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
+
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo 	$TOTAL_UTANG_LANCAR_PLUS_AFILIASI + $TOTAL_MODAL_DAN_LABA_DITAHAN; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -3014,12 +3239,12 @@
 				</div>
 
 				<div class="col-4">
-					<button type="submit" class="btn btn-primary"><?php echo $button; ?></button>
+					<!-- <button type="submit" class="btn btn-primary"><?php //echo $button; ?></button> -->
 
 					<?php
 					if ($button == "Update") {
 					?>
-						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $uuid_data_neraca)
+						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $tahun_neraca .'/'.$bulan_transaksi)
 									?>" class="btn btn-success" target="_blank">Cetak Neraca (PDF)</a>
 					<?php } ?>
 

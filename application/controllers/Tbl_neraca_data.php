@@ -710,13 +710,27 @@ class Tbl_neraca_data extends CI_Controller
 
 	public function update_neraca_data($Get_id_RECORD = null, $data_name = null)
 	{
+
+		// $data_name = str_replace('.', '', $this->input->post('input_box', TRUE));
+		// print_r($data_name);
+		// print_r("<br/>");
+		// $data_name = str_replace(',', '.', $this->input->post('input_box', TRUE));
+		// print_r($data_name);
+		// print_r("<br/>");
+		// $data_name = $data_name + $data_name;
+		// print_r($data_name);
+		// print_r("<br/>");
+
+		// print_r("<br/>");
+		// print_r("<br/>");
+
 		// print_r("update_neraca_data");
 		// print_r("<br/>");
 		// print_r($Get_id_RECORD);
 		// print_r("<br/>");
 		// print_r($data_name);
 		// print_r("<br/>");
-
+		// die;
 
 		$sql = "SELECT * FROM `tbl_neraca_data` WHERE `id`='$Get_id_RECORD'";
 
@@ -728,8 +742,19 @@ class Tbl_neraca_data extends CI_Controller
 		if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
 
 
+			$data_input_box = str_replace('.', '', $this->input->post('input_box', TRUE));
+			// print_r($data_name);
+			// print_r("<br/>");
+			$data_input_box = str_replace(',', '.', $data_input_box);
+			// 			print_r($data_input_box);
+			// 			print_r("<br/>");
+			// die;
+
+	
+
+
 			$data = array(
-				$data_name => str_replace('.', '', $this->input->post('input_box', TRUE)),
+				$data_name => $data_input_box,
 			);
 
 			// print_r($data);
@@ -800,7 +825,6 @@ class Tbl_neraca_data extends CI_Controller
 			$Get_bulan = 0;
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
 			$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-			
 		}
 
 
@@ -873,7 +897,6 @@ class Tbl_neraca_data extends CI_Controller
 			$Get_bulan = 0;
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
 			$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-			
 		}
 
 
@@ -1159,7 +1182,7 @@ class Tbl_neraca_data extends CI_Controller
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
 			$data_detail = $this->db->query($sql)->row();
 		} else {
-			$Get_bulan=0;
+			$Get_bulan = 0;
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
 			$data_detail = $this->db->query($sql)->row();
 			// $Get_bulan=0;
