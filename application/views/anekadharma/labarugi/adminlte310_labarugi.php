@@ -111,7 +111,17 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 200px;" colspan="200"><?php echo nominal(234323432) ?></th>
+									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -126,7 +136,17 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(234324323432) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -141,7 +161,17 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black; border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200"><?php echo nominal(23423423445645) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -186,7 +216,16 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(234323234324432) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+									
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -204,7 +243,16 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(23432442) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -218,7 +266,16 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(23432442) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -234,7 +291,17 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(2343242) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -253,7 +320,17 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -270,7 +347,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(23432987874332) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+										<!-- </form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -283,7 +369,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(23432987874332) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -310,7 +405,17 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -326,7 +431,17 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -341,7 +456,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+										<!-- </form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -369,7 +493,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -385,7 +518,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form>
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -401,7 +543,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php echo nominal(2342343445) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+										<!-- </form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -432,7 +583,16 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(234323432) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+										<!-- </form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -447,7 +607,16 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php echo nominal(234323432) ?></th>
+									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button>
+										</form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
 
 								</tr>
@@ -462,7 +631,16 @@
 
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 10px;" colspan="10"></th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200"><?php echo nominal(234323432) ?></th>
+									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200">
+
+										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; ?>" method="post"> -->
+
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+											<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+										<!-- </form> -->
+
+									</th>
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
 
 								</tr>
