@@ -9,11 +9,11 @@ class Laporan extends CI_Controller
     {
         parent::__construct();
         // is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model'));
-		$this->load->library('form_validation');
-		$this->load->library('datatables');
-		$this->load->library('Pdf');
-		$this->load->helper(array('nominal'));
+        $this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model'));
+        $this->load->library('form_validation');
+        $this->load->library('datatables');
+        $this->load->library('Pdf');
+        $this->load->helper(array('nominal'));
     }
 
     public function index()
@@ -124,62 +124,151 @@ class Laporan extends CI_Controller
     }
 
 
-	public function labarugi()
-	{
+    public function create_action_laba_rugi_NEW($Get_tahun = null, $Get_bulan = null, $data_name = null)
+    {
+        print_r("create_action_laba_rugi_NEW");
+        print_r("<br/>");
+        print_r($Get_tahun);
+        print_r("<br/>");
+        print_r($Get_bulan);
+        print_r("<br/>");
+        print_r($data_name);
+        print_r("<br/>");
+        die;
+    }
 
-		$data = array(
-		
-			'button' => 'Simpan',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/'),
-			'id' => set_value('id'),
-			
+    public function update_laba_rugi($Get_id_RECORD = null, $data_name = null)
+    {
 
-		);
+        print_r("update_laba_rugi");
+        print_r("<br/>");
+        print_r($Get_id_RECORD);
+        print_r("<br/>");
+        print_r($data_name);
+        print_r("<br/>");
+        die;
+    }
 
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/labarugi/adminlte310_labarugi', $data);
-
-	}
-
-	public function labarugi_print()
-	{
-
-		// $data = array(
-		
-		// 	'button' => 'Simpan',
-		// 	'action' => site_url('tbl_pembelian/create_pembayaran_action/'),
-		// 	'id' => set_value('id'),
-			
-
-		// );
-
-		// $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/labarugi/adminlte310_labarugi_cetak', $data);
+    public function labarugi($Get_tahun = null, $Get_bulan = null)
+    {
 
 
-		// 2.a. PERSIAPAN LIBRARY
-		$this->load->library('PdfGenerator');
 
-		// 2.b. PERSIAPAN DATA
-		$data = array(
-			// 'button' => 'Simpan',
-			// 'action' => site_url('Tbl_neraca_data/create_action_neraca'),
-			// 'id' => set_value('id'),
-			'id' => set_value('id'),
-		);
+        if ($Get_bulan) {
+            // Neraca bulanan
+            // print_r("Bulanan");
+            // print_r("<br/>");
+            $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+            $GET_tbl_laba_rugi_RECORD = $this->db->query($sql);
 
 
-		// 2.C. MENAMPILKAN FILE DATA
-		// $data = array_merge($data);
-		$html = $this->load->view('anekadharma/labarugi/adminlte310_labarugi_cetak.php', $data, true);
+            if ($GET_tbl_laba_rugi_RECORD->num_rows() > 0) {
+                $data = array(
+                    'button' => 'Update',
+                    'action' => site_url('Laporan/update_laba_rugi/'  . $GET_tbl_laba_rugi_RECORD->row()->id),
+                    'id' => set_value('id'),
+                    // 'data_detail' => $data_detail,
+                    'data_tbl_laba_rugi' => $GET_tbl_laba_rugi_RECORD->row(),
+                    'uuid_data_neraca' => $GET_tbl_laba_rugi_RECORD->row()->uuid_data_neraca,
+                    'tahun_neraca' => $Get_tahun,
+                    'bulan_transaksi' => $Get_bulan,
+                );
+            } else {
+                $data = array(
+                    'button' => 'Simpan',
+                    'action' => site_url('Laporan/create_action_neraca_NEW/' . $Get_tahun . '/' . $Get_bulan),
+                    'id' => set_value('id'),
+                    // 'data_detail' => $data_detail,
+                    // 'uuid_data_neraca' => "",
+                    'tahun_neraca' => $Get_tahun,
+                    'bulan_transaksi' => $Get_bulan,
+                );
+            }
+        } else {
+            // Neraca tahunan
+            // print_r("Tahunan");
+            // print_r("<br/>");
 
-		// 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
-		$this->pdf->loadHtml($html);
-		$this->pdf->render();
+            $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='' ";
 
-		$this->pdf->stream("CETAK_LABA_RUGI.pdf", array("Attachment" => 0));
+            $GET_tbl_laba_rugi_RECORD = $this->db->query($sql);
 
 
-	}
+
+            if ($GET_tbl_laba_rugi_RECORD->num_rows() > 0) {
+                $data = array(
+                    'button' => 'Update',
+                    'action' => site_url('Laporan/update_laba_rugi/'  . $GET_tbl_laba_rugi_RECORD->row()->id),
+                    'id' => set_value('id'),
+                    // 'data_detail' => $data_detail,
+                    'data_tbl_laba_rugi' => $GET_tbl_laba_rugi_RECORD->row(),
+                    'uuid_data_neraca' => $GET_tbl_laba_rugi_RECORD->row()->uuid_data_neraca,
+                    'tahun_neraca' => $Get_tahun,
+                    'bulan_transaksi' => 0,
+                );
+            } else {
+                $data = array(
+                    'button' => 'Simpan',
+                    'action' => site_url('Laporan/create_action_neraca_NEW/' . $Get_tahun . '/' . $Get_bulan),
+                    'id' => set_value('id'),
+                    // 'data_detail' => $data_detail,
+                    // 'uuid_data_neraca' => "",
+                    'tahun_neraca' => $Get_tahun,
+                    'bulan_transaksi' => 0,
+                );
+            }
+        }
 
 
-    
+
+
+        // $data = array(
+
+        //     'button' => 'Simpan',
+        //     'action' => site_url('tbl_pembelian/create_pembayaran_action/'),
+        //     'id' => set_value('id'),
+
+
+        // );
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/labarugi/adminlte310_labarugi', $data);
+    }
+
+    public function labarugi_print()
+    {
+
+        // $data = array(
+
+        // 	'button' => 'Simpan',
+        // 	'action' => site_url('tbl_pembelian/create_pembayaran_action/'),
+        // 	'id' => set_value('id'),
+
+
+        // );
+
+        // $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/labarugi/adminlte310_labarugi_cetak', $data);
+
+
+        // 2.a. PERSIAPAN LIBRARY
+        $this->load->library('PdfGenerator');
+
+        // 2.b. PERSIAPAN DATA
+        $data = array(
+            // 'button' => 'Simpan',
+            // 'action' => site_url('Laporan/create_action_neraca'),
+            // 'id' => set_value('id'),
+            'id' => set_value('id'),
+        );
+
+
+        // 2.C. MENAMPILKAN FILE DATA
+        // $data = array_merge($data);
+        $html = $this->load->view('anekadharma/labarugi/adminlte310_labarugi_cetak.php', $data, true);
+
+        // 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
+        $this->pdf->loadHtml($html);
+        $this->pdf->render();
+
+        $this->pdf->stream("CETAK_LABA_RUGI.pdf", array("Attachment" => 0));
+    }
 }
