@@ -149,6 +149,9 @@ class Laporan extends CI_Controller
         die;
     }
 
+
+    public function labarugi_form() {}
+
     public function labarugi($Get_tahun = null, $Get_bulan = null)
     {
 
