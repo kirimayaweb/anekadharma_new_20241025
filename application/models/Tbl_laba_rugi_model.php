@@ -28,36 +28,49 @@ class Tbl_laba_rugi_model extends CI_Model
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
-    
+
     // get total rows
-    function total_rows($q = NULL) {
+    function total_rows($q = NULL)
+    {
         $this->db->like('id', $q);
-	$this->db->or_like('date_input', $q);
-	$this->db->or_like('date_transaksi', $q);
-	$this->db->or_like('tahun_transaksi', $q);
-	$this->db->or_like('bulan_transaksi', $q);
-	$this->db->or_like('uuid_data_neraca', $q);
-	$this->db->from($this->table);
+        $this->db->or_like('date_input', $q);
+        $this->db->or_like('date_transaksi', $q);
+        $this->db->or_like('tahun_transaksi', $q);
+        $this->db->or_like('bulan_transaksi', $q);
+        $this->db->or_like('uuid_data_neraca', $q);
+        $this->db->from($this->table);
         return $this->db->count_all_results();
     }
 
     // get data with limit and search
-    function get_limit_data($limit, $start = 0, $q = NULL) {
+    function get_limit_data($limit, $start = 0, $q = NULL)
+    {
         $this->db->order_by($this->id, $this->order);
         $this->db->like('id', $q);
-	$this->db->or_like('date_input', $q);
-	$this->db->or_like('date_transaksi', $q);
-	$this->db->or_like('tahun_transaksi', $q);
-	$this->db->or_like('bulan_transaksi', $q);
-	$this->db->or_like('uuid_data_neraca', $q);
-	$this->db->limit($limit, $start);
+        $this->db->or_like('date_input', $q);
+        $this->db->or_like('date_transaksi', $q);
+        $this->db->or_like('tahun_transaksi', $q);
+        $this->db->or_like('bulan_transaksi', $q);
+        $this->db->or_like('uuid_data_neraca', $q);
+        $this->db->limit($limit, $start);
         return $this->db->get($this->table)->result();
     }
 
     // insert data
     function insert($data)
     {
+        // $this->db->insert($this->table, $data);
+
+
+        $this->db->set('uuid_data_laba_rugi', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
+
+        return $datainsert['id'];
     }
 
     // update data
@@ -73,7 +86,6 @@ class Tbl_laba_rugi_model extends CI_Model
         $this->db->where($this->id, $id);
         $this->db->delete($this->table);
     }
-
 }
 
 /* End of file Tbl_laba_rugi_model.php */

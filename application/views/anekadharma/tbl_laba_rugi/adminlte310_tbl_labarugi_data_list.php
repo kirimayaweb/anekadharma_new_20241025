@@ -137,7 +137,7 @@
 
                                                             if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
 
-                                                                echo anchor(site_url('Tbl_laba_rugi/neraca_form/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_form/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             }
 
 
@@ -303,12 +303,12 @@
 
                                                             // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
 
-                                                            //     echo anchor(site_url('Tbl_laba_rugi/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                            //     echo anchor(site_url('Tbl_laba_rugi/labarugi_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             // }
 
                                                             if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
 
-                                                                echo anchor(site_url('Tbl_laba_rugi/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             }
 
 
