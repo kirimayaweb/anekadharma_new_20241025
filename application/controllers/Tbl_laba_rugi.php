@@ -8,8 +8,14 @@ class Tbl_laba_rugi extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        $this->load->model('Tbl_laba_rugi_model');
+        // $this->load->model('Tbl_laba_rugi_model');
+        // $this->load->library('form_validation');
+
+        $this->load->model(array('Tbl_laba_rugi_model', 'Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model'));
         $this->load->library('form_validation');
+        $this->load->library('datatables');
+        $this->load->library('Pdf');
+        $this->load->helper(array('nominal'));
     }
 
     public function index()
@@ -497,8 +503,23 @@ class Tbl_laba_rugi extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/labarugi/adminlte310_labarugi', $data);
     }
 
-    public function labarugi_print()
+    public function labarugi_print($Get_tahun = null, $Get_bulan = null)
     {
+
+
+
+        if ($Get_bulan) {
+            $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+            $data_detail = $this->db->query($sql)->row();
+        } else {
+            $Get_bulan = 0;
+            $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
+            $data_detail = $this->db->query($sql)->row();
+            // $Get_bulan=0;
+        }
+
+        // print_r($data_detail);
+        // die;
 
         // $data = array(
 
@@ -520,13 +541,20 @@ class Tbl_laba_rugi extends CI_Controller
             // 'button' => 'Simpan',
             // 'action' => site_url('Laporan/create_action_neraca'),
             // 'id' => set_value('id'),
-            'id' => set_value('id'),
+            // 'id' => set_value('id'),
+
+            'data_tbl_laba_rugi' => $data_detail,
+            'tahun_laba_rugi' => $data_detail->tahun_transaksi,
+            'bulan_laba_rugi' => $data_detail->bulan_transaksi,
+
         );
 
+        // print_r($data);
+        // die;
 
         // 2.C. MENAMPILKAN FILE DATA
         // $data = array_merge($data);
-        $html = $this->load->view('anekadharma/labarugi/adminlte310_labarugi_cetak.php', $data, true);
+        $html = $this->load->view('anekadharma/tbl_laba_rugi/adminlte310_labarugi_cetak.php', $data, true);
 
         // 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
         $this->pdf->loadHtml($html);

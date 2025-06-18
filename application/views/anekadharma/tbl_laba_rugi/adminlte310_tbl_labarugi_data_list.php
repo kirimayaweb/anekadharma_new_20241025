@@ -148,7 +148,7 @@
 
                                                             if ($GET_tbl_labarugi_data_RECORD->num_rows() > 0) {
 
-                                                                echo anchor(site_url('Tbl_laba_rugi/neraca_cetak/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_print/' . $list_data->tahun_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Laba-Rugi</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                             }
 
                                                             ?>
@@ -318,7 +318,7 @@
                                                             $GET_tbl_labarugi_data_RECORD = $this->db->query($sql);
 
                                                             if ($GET_tbl_labarugi_data_RECORD->num_rows() > 0) {
-                                                                echo anchor(site_url('Tbl_laba_rugi/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_print/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Laba-Rugi</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                             }
 
                                                             ?>
