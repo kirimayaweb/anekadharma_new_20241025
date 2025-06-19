@@ -345,7 +345,8 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi Kas: " . $GET_TOTAL_KAS;
+											
+											echo $GET_TOTAL_KAS;
 
 											?>
 
@@ -428,7 +429,7 @@
 
 											$GET_utang_usaha = $GET_utang_usaha + $TOTAL_DEBET_utang_usaha - $TOTAL_KREDIT_utang_usaha;
 
-											echo "Aplikasi utang_usaha: " . $GET_utang_usaha;
+											echo  $GET_utang_usaha;
 
 											?>
 
@@ -565,7 +566,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi Bank: " . $TOTAL_BANK;
+											echo $TOTAL_BANK;
 
 											?>
 
@@ -642,7 +643,7 @@
 
 											$GET_utang_pajak = $GET_utang_pajak + $TOTAL_DEBET_utang_pajak - $TOTAL_KREDIT_utang_pajak;
 
-											echo "Aplikasi utang_pajak: " . $GET_utang_pajak;
+											echo  $GET_utang_pajak;
 
 											?>
 
@@ -732,7 +733,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi PIUTANG USAHA: " . $GET_TOTAL_piutang_usaha;
+											echo  $GET_TOTAL_piutang_usaha;
 
 											?>
 
@@ -809,7 +810,7 @@
 
 												$GET_utang_lain_lain = $GET_utang_lain_lain + $TOTAL_DEBET_utang_lain_lain - $TOTAL_KREDIT_utang_lain_lain;
 
-												echo "Aplikasi utang_lain_lain: " . $GET_utang_lain_lain;
+												echo $GET_utang_lain_lain;
 
 												?>
 
@@ -906,7 +907,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi PIUTANG NON USAHA: " . $GET_TOTAL_piutang_non_usaha;
+											echo $GET_TOTAL_piutang_non_usaha;
 
 											?>
 
@@ -1039,7 +1040,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi PERSEDIAAN: " . $GET_persediaan;
+											echo  $GET_persediaan;
 
 											?>
 
@@ -1152,7 +1153,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi UANG MUKA PAJAK: " . $GET_uang_muka_pajak;
+											echo $GET_uang_muka_pajak;
 
 											?>
 
@@ -1383,7 +1384,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi aktiva_tetap_berwujud: " . $GET_aktiva_tetap_berwujud;
+											echo  $GET_aktiva_tetap_berwujud;
 
 											?>
 
@@ -1464,7 +1465,7 @@
 
 											$GET_utang_afiliasi = $GET_utang_afiliasi + $TOTAL_DEBET_utang_afiliasi - $TOTAL_KREDIT_utang_afiliasi;
 
-											echo "Aplikasi utang_afiliasi: " . $GET_utang_afiliasi;
+											echo  $GET_utang_afiliasi;
 
 											?>
 
@@ -1557,7 +1558,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi akumulasi_depresiasi_atb: " . $GET_akumulasi_depresiasi_atb;
+											echo  $GET_akumulasi_depresiasi_atb;
 
 											?>
 
@@ -1796,7 +1797,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi piutang_non_usaha_pihak_ketiga: " . $GET_piutang_non_usaha_pihak_ketiga;
+											echo  $GET_piutang_non_usaha_pihak_ketiga;
 
 											?>
 
@@ -1881,7 +1882,7 @@
 
 											$GET_modal_dasar_dan_penyertaan = $GET_modal_dasar_dan_penyertaan + $TOTAL_DEBET_modal_dasar_dan_penyertaan - $TOTAL_KREDIT_modal_dasar_dan_penyertaan;
 
-											echo "Aplikasi modal_dasar_dan_penyertaan: " . $GET_modal_dasar_dan_penyertaan;
+											echo  $GET_modal_dasar_dan_penyertaan;
 
 											?>
 
@@ -1977,7 +1978,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi PIUTANGNONUSAHARADIO: " . $GET_PIUTANGNONUSAHARADIO;
+											echo  $GET_PIUTANGNONUSAHARADIO;
 
 											?>
 
@@ -2060,7 +2061,7 @@
 
 											$GET_cadangan_umum = $GET_cadangan_umum + $TOTAL_DEBET_cadangan_umum - $TOTAL_KREDIT_cadangan_umum;
 
-											echo "Aplikasi cadangan_umum: " . $GET_cadangan_umum;
+											echo  $GET_cadangan_umum;
 
 											?>
 
@@ -2153,7 +2154,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi ljpj_taman_gedung_kesenian_gabusan: " . $GET_ljpj_taman_gedung_kesenian_gabusan;
+											echo  $GET_ljpj_taman_gedung_kesenian_gabusan;
 
 											?>
 
@@ -2233,7 +2234,7 @@
 
 											$GET_laba_bumd_pad = $GET_laba_bumd_pad + $TOTAL_DEBET_laba_bumd_pad - $TOTAL_KREDIT_laba_bumd_pad;
 
-											echo "Aplikasi laba_bumd_pad: " . $GET_laba_bumd_pad;
+											echo  $GET_laba_bumd_pad;
 
 											?>
 
@@ -2323,7 +2324,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo "Aplikasi ljpj_kompleks_gedung_kesenian: " . $GET_ljpj_kompleks_gedung_kesenian;
+											echo  $GET_ljpj_kompleks_gedung_kesenian;
 
 											?>
 
@@ -2425,7 +2426,7 @@
 
 											$GET_ljpj_radio = $GET_ljpj_radio + $TOTAL_DEBET_ljpj_radio - $TOTAL_KREDIT_ljpj_radio;
 
-											echo "Aplikasi ljpj_radio: " . $GET_ljpj_radio;
+											echo  $GET_ljpj_radio;
 
 											?>
 
@@ -2501,7 +2502,7 @@
 
 											$GET_laba_rugi_tahun_lalu = $GET_laba_rugi_tahun_lalu + $TOTAL_DEBET_laba_rugi_tahun_lalu - $TOTAL_KREDIT_laba_rugi_tahun_lalu;
 
-											echo "Aplikasi laba_rugi_tahun_lalu: " . $GET_laba_rugi_tahun_lalu;
+											echo  $GET_laba_rugi_tahun_lalu;
 
 											?>
 
@@ -2584,7 +2585,7 @@
 
 											$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha - $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha;
 
-											echo "Aplikasi ljpj_kerjasama_operasi_apotek_dharma_usaha: " . $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
+											echo $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
 
 											?>
 
@@ -2663,7 +2664,7 @@
 
 											$GET_laba_rugi_tahun_berjalan = $GET_laba_rugi_tahun_berjalan + $TOTAL_DEBET_laba_rugi_tahun_berjalan - $TOTAL_KREDIT_laba_rugi_tahun_berjalan;
 
-											echo "Aplikasi laba_rugi_tahun_berjalan: " . $GET_laba_rugi_tahun_berjalan;
+											echo  $GET_laba_rugi_tahun_berjalan;
 
 											?>
 
@@ -2752,7 +2753,7 @@
 
 											$GET_ljpj_peternakan = $GET_ljpj_peternakan + $TOTAL_DEBET_ljpj_peternakan - $TOTAL_KREDIT_ljpj_peternakan;
 
-											echo "Aplikasi ljpj_peternakan: " . $GET_ljpj_peternakan;
+											echo  $GET_ljpj_peternakan;
 
 											?>
 
@@ -2846,7 +2847,7 @@
 
 											$GET_ljpj_kerjasama_adwm = $GET_ljpj_kerjasama_adwm + $TOTAL_DEBET_ljpj_kerjasama_adwm - $TOTAL_KREDIT_ljpj_kerjasama_adwm;
 
-											echo "Aplikasi ljpj_kerjasama_adwm: " . $GET_ljpj_kerjasama_adwm;
+											echo  $GET_ljpj_kerjasama_adwm;
 
 											?>
 
@@ -2943,7 +2944,7 @@
 
 											$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_ljpj_kerjasama_pdu_cabean_panggungharjo + $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo - $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo;
 
-											echo "Aplikasi ljpj_kerjasama_pdu_cabean_panggungharjo: " . $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
+											echo  $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
 
 											?>
 
