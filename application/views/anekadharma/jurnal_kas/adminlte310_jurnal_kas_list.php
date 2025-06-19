@@ -106,7 +106,13 @@
                                     </div>
                                     <div class="col-2" align="left">
 
-                                        <?php echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'INPUT DATA', 'class="btn btn-danger"');
+
+
+                                        <?php
+                                        if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                            echo anchor(site_url('jurnal_kas/pemasukan_kas'), 'INPUT DATA', 'class="btn btn-danger"');
+                                        }
+
                                         ?>
 
                                         <?php //echo anchor(site_url('jurnal_kas/pengeluaran_kas'), 'Kredit ( BKK )', 'class="btn btn-success"');
@@ -239,7 +245,7 @@
 
                                             // if ($list_data->debet > 0) {
                                             //     // Ubah debet
-                                                echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
                                             // } else {
                                             //     // Ubah Kredit
                                             //     echo anchor(site_url('Jurnal_kas/pengeluaran_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
