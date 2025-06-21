@@ -80,6 +80,20 @@ class Tbl_laba_rugi extends CI_Controller
     public function labarugi_form($Get_tahun = null, $Get_bulan = null)
     {
 
+        // $angka = 778899991234.5678;
+
+        // // Memformat angka dengan 2 digit desimal
+        // $angka_format_1 = number_format($angka, 2);
+        // echo "Angka diformat dengan 2 desimal: " . $angka_format_1 . "<br>";
+
+        // // Memformat angka dengan 3 digit desimal dan titik sebagai pemisah ribuan
+        // $angka_format_2 = number_format($angka, 3, ',', '.');
+        // echo "Angka diformat dengan 3 desimal dan pemisah ribuan: " . $angka_format_2 . "<br>";
+
+        // die;
+
+
+
         // print_r("labarugi_form");
         // print_r("<br/>");
         // print_r($Get_tahun);

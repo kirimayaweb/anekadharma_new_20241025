@@ -172,7 +172,11 @@
 
 										<form action="<?php echo $action . '/penjualan'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan);  ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan);
+											// echo "<br/>";  
+											echo number_format($data_tbl_laba_rugi->penjualan, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -196,7 +200,10 @@
 
 										<form action="<?php echo $action . '/beban_pokok_penjualan'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pokok_penjualan); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pokok_penjualan); 
+											echo number_format($data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -222,7 +229,10 @@
 										<!-- <form action="<?php //echo $action . '/laba_rugi_bruto'; 
 															?>" method="post"> -->
 
-										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+										// echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan); 
+										echo number_format($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.');
+										?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 										<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form> -->
@@ -277,7 +287,10 @@
 
 										<form action="<?php echo $action . '/beban_depresiasi_dan_amortisasi'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi); 
+											echo number_format($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -298,7 +311,10 @@
 
 										<form action="<?php echo $action . '/beban_operasional_karyawan'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_karyawan); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_karyawan); 
+											echo number_format($data_tbl_laba_rugi->beban_operasional_karyawan, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -319,7 +335,10 @@
 
 										<form action="<?php echo $action . '/beban_operasional_promosi'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_promosi); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_promosi); 
+											echo number_format($data_tbl_laba_rugi->beban_operasional_promosi, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -346,7 +365,10 @@
 
 										<form action="<?php echo $action . '/beban_perjalanan_dinas'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_perjalanan_dinas); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_perjalanan_dinas); 
+											echo number_format($data_tbl_laba_rugi->beban_perjalanan_dinas, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -369,7 +391,10 @@
 
 										<form action="<?php echo $action . '/beban_transportasi'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_transportasi); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_transportasi); 
+											echo number_format($data_tbl_laba_rugi->beban_transportasi, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -395,7 +420,10 @@
 
 										<form action="<?php echo $action . '/beban_pemeliharaan'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pemeliharaan); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pemeliharaan); 
+											echo number_format($data_tbl_laba_rugi->beban_pemeliharaan, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -424,7 +452,10 @@
 
 										<form action="<?php echo $action . '/total_beban_operasional_umum'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->total_beban_operasional_umum); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->total_beban_operasional_umum); 
+											echo number_format($data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -451,7 +482,13 @@
 										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; 
 															?>" method="post"> -->
 
-										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+										
+										// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum); 
+										
+										
+										echo number_format($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.');
+										?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 										<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
 										<!-- </form> -->
@@ -476,8 +513,11 @@
 
 										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
 
-																																													echo str_replace('.', ',', ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum));
+																																													// echo str_replace('.', ',', ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum));
 
+
+										
+										echo number_format(($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum), 2, ',', '.');																																			
 																																													$GET_Labar_rugi_operasional = ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum);
 																																													?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
@@ -515,7 +555,11 @@
 
 										<form action="<?php echo $action . '/pendapatan_bunga_bank'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank); 
+											
+										echo number_format(($data_tbl_laba_rugi->pendapatan_bunga_bank), 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -541,7 +585,10 @@
 
 										<form action="<?php echo $action . '/pendapatan_rupa_rupa'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_rupa_rupa); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_rupa_rupa); 
+											echo number_format($data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -569,8 +616,9 @@
 
 										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
 
-																																													echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa);
+																																													// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa);
 
+																																													echo number_format($data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
 																																													$GET_Total_Pendapatan_Lain_Lain = $data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa;
 																																													?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
@@ -609,7 +657,10 @@
 
 										<form action="<?php echo $action . '/beban_bunga_dan_adm_bank'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank); 
+											echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -634,7 +685,10 @@
 
 										<form action="<?php echo $action . '/beban_rupa_rupa'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->beban_rupa_rupa); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_rupa_rupa); 
+											echo number_format($data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -662,8 +716,9 @@
 
 										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
 
-																																													echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa);
+																																													// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa);
 
+																																													echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
 																																													$GET_Total_beban_lain_lain = $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa;
 																																													?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
@@ -708,8 +763,9 @@
 
 										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
 
-																																													echo str_replace('.', ',', $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain);
+																																													// echo str_replace('.', ',', $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain);
 
+																																														echo number_format($GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain, 2, ',', '.');
 																																													$GET_Laba_rugi_sebelum_pajak = $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain;
 																																													?> " style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
@@ -735,7 +791,10 @@
 
 										<form action="<?php echo $action . '/pajak'; ?>" method="post">
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $data_tbl_laba_rugi->pajak); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+											// echo str_replace('.', ',', $data_tbl_laba_rugi->pajak); /
+																echo number_format($data_tbl_laba_rugi->pajak, 2, ',', '.');
+											?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 										</form>
@@ -760,7 +819,10 @@
 										<!-- <form action="<?php //echo $action . '/utang_lain_lain'; 
 															?>" method="post"> -->
 
-										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo str_replace('.', ',', $GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak); ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+										<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+										// echo str_replace('.', ',', $GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak); 
+										echo number_format($GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak, 2, ',', '.');
+										?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 										<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
 										<!-- </form> -->
