@@ -345,7 +345,7 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											
+
 											echo $GET_TOTAL_KAS;
 
 											?>
@@ -366,7 +366,9 @@
 											?>
 											<form action="<?php echo $action . '/kas'; ?>" method="post">
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php // echo number_format($Data_titik_ke_koma, 2, ',', '.'); 
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->kas);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->kas);
+
+																																															echo number_format($data_tbl_neraca_data->kas, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->kas;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
@@ -447,7 +449,10 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_usaha);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->utang_usaha);
+
+																																															echo number_format($data_tbl_neraca_data->utang_usaha, 2, ',', '.');
+
 																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -579,7 +584,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->bank);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->bank);
+
+																																															echo number_format($data_tbl_neraca_data->bank, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->bank;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -643,7 +650,8 @@
 
 											$GET_utang_pajak = $GET_utang_pajak + $TOTAL_DEBET_utang_pajak - $TOTAL_KREDIT_utang_pajak;
 
-											echo  $GET_utang_pajak;
+											// echo  $GET_utang_pajak;
+											echo number_format($GET_utang_pajak, 2, ',', '.');
 
 											?>
 
@@ -658,7 +666,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_pajak);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->utang_pajak);
+
+																																															echo number_format($data_tbl_neraca_data->utang_pajak, 2, ',', '.');
 																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_pajak;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -747,7 +757,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_usaha);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_usaha);
+
+																																															echo number_format($data_tbl_neraca_data->piutang_usaha, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -825,7 +837,9 @@
 
 
 													<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																																echo str_replace('.', ',', $data_tbl_neraca_data->utang_lain_lain);
+																																																// echo str_replace('.', ',', $data_tbl_neraca_data->utang_lain_lain);
+
+																																																echo number_format($data_tbl_neraca_data->utang_lain_lain, 2, ',', '.');
 																																																$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_lain_lain;
 																																																?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -921,7 +935,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha);
+
+																																															echo number_format($data_tbl_neraca_data->piutang_non_usaha, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_non_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -959,7 +975,12 @@
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha;
 																																																																?>" width: 50px; /> -->
 
-												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_UTANG_LANCAR; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+
+																																															// echo $TOTAL_UTANG_LANCAR; 
+																																															echo number_format($TOTAL_UTANG_LANCAR, 2, ',', '.');
+
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 
 												<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button>
@@ -1059,7 +1080,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->persediaan);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->persediaan);
+
+																																															echo number_format($data_tbl_neraca_data->persediaan, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->persediaan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1153,7 +1176,10 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo $GET_uang_muka_pajak;
+											// echo $GET_uang_muka_pajak;
+
+
+											echo number_format($GET_uang_muka_pajak, 2, ',', '.');
 
 											?>
 
@@ -1175,7 +1201,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->uang_muka_pajak);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->uang_muka_pajak);
+
+																																															echo number_format($data_tbl_neraca_data->uang_muka_pajak, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->uang_muka_pajak;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1219,7 +1247,11 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 									<strong>
 
-										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_TOTAL_AKTIVA_LANCAR; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
+										<input type="tel" pattern="[0-9(,)]{15}" name="total_aktiva_lancar" id="total_aktiva_lancar" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																																		// echo $GET_TOTAL_AKTIVA_LANCAR; 
+
+																																																		echo number_format($GET_TOTAL_AKTIVA_LANCAR, 2, ',', '.');
+																																																		?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" disabled />
 
 
 								</th>
@@ -1384,7 +1416,8 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_aktiva_tetap_berwujud;
+											// echo  $GET_aktiva_tetap_berwujud;
+											echo number_format($GET_aktiva_tetap_berwujud, 2, ',', '.');
 
 											?>
 
@@ -1404,7 +1437,10 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap_berwujud);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap_berwujud);
+
+																																															echo number_format($data_tbl_neraca_data->aktiva_tetap_berwujud, 2, ',', '.');
+
 																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->aktiva_tetap_berwujud;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1465,7 +1501,10 @@
 
 											$GET_utang_afiliasi = $GET_utang_afiliasi + $TOTAL_DEBET_utang_afiliasi - $TOTAL_KREDIT_utang_afiliasi;
 
-											echo  $GET_utang_afiliasi;
+											// echo  $GET_utang_afiliasi;
+
+											echo number_format($GET_utang_afiliasi, 2, ',', '.');
+
 
 											?>
 
@@ -1479,7 +1518,9 @@
 																																																																?>" width: 50px; /> -->
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->utang_afiliasi);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->utang_afiliasi);
+
+																																															echo number_format($data_tbl_neraca_data->utang_afiliasi, 2, ',', '.');
 																																															$TOTAL_UTANG_LANCAR_PLUS_AFILIASI = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_afiliasi;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1558,7 +1599,10 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_akumulasi_depresiasi_atb;
+											// echo  $GET_akumulasi_depresiasi_atb;
+
+											echo number_format($GET_akumulasi_depresiasi_atb, 2, ',', '.');
+
 
 											?>
 
@@ -1580,7 +1624,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->akumulasi_depresiasi_atb);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->akumulasi_depresiasi_atb);
+
+																																															echo number_format($data_tbl_neraca_data->akumulasi_depresiasi_atb, 2, ',', '.');
 																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->akumulasi_depresiasi_atb;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1610,7 +1656,10 @@
 
 									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="TOTAL_Utang_Lancar_dan_jangka_panjang" id="TOTAL_Utang_Lancar_dan_jangka_panjang" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_UTANG_LANCAR_PLUS_AFILIASI; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																												// echo $TOTAL_UTANG_LANCAR_PLUS_AFILIASI; 
+																																												echo number_format($TOTAL_UTANG_LANCAR_PLUS_AFILIASI, 2, ',', '.');
+																																												?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -1637,7 +1686,10 @@
 
 									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_Total_AKTIVA_TETAP_BERSIH; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																												// echo $GET_Total_AKTIVA_TETAP_BERSIH; 
+																																												echo number_format($GET_Total_AKTIVA_TETAP_BERSIH, 2, ',', '.');
+																																												?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 
 								</th>
@@ -1797,7 +1849,8 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_piutang_non_usaha_pihak_ketiga;
+											// echo  $GET_piutang_non_usaha_pihak_ketiga;
+											echo number_format($GET_piutang_non_usaha_pihak_ketiga, 2, ',', '.');
 
 											?>
 
@@ -1818,7 +1871,10 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga);
+
+																																															echo number_format($data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga, 2, ',', '.');
+
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1882,7 +1938,9 @@
 
 											$GET_modal_dasar_dan_penyertaan = $GET_modal_dasar_dan_penyertaan + $TOTAL_DEBET_modal_dasar_dan_penyertaan - $TOTAL_KREDIT_modal_dasar_dan_penyertaan;
 
-											echo  $GET_modal_dasar_dan_penyertaan;
+											// echo  $GET_modal_dasar_dan_penyertaan;
+
+											echo number_format($GET_modal_dasar_dan_penyertaan, 2, ',', '.');
 
 											?>
 
@@ -1898,7 +1956,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->modal_dasar_dan_penyertaan);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->modal_dasar_dan_penyertaan);
+
+																																															echo number_format($data_tbl_neraca_data->modal_dasar_dan_penyertaan, 2, ',', '.');
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->modal_dasar_dan_penyertaan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -1978,7 +2038,9 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_PIUTANGNONUSAHARADIO;
+											// echo  $GET_PIUTANGNONUSAHARADIO;
+
+											echo number_format($GET_PIUTANGNONUSAHARADIO, 2, ',', '.');
 
 											?>
 
@@ -1997,7 +2059,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_radio);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha_radio);
+
+																																															echo number_format($data_tbl_neraca_data->piutang_non_usaha_radio, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->piutang_non_usaha_radio;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2061,7 +2125,9 @@
 
 											$GET_cadangan_umum = $GET_cadangan_umum + $TOTAL_DEBET_cadangan_umum - $TOTAL_KREDIT_cadangan_umum;
 
-											echo  $GET_cadangan_umum;
+											// echo  $GET_cadangan_umum;
+
+											echo number_format($GET_cadangan_umum, 2, ',', '.');
 
 											?>
 
@@ -2076,7 +2142,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->cadangan_umum);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->cadangan_umum);
+
+																																															echo number_format($data_tbl_neraca_data->cadangan_umum, 2, ',', '.');
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->cadangan_umum;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2154,8 +2222,9 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_ljpj_taman_gedung_kesenian_gabusan;
+											// echo  $GET_ljpj_taman_gedung_kesenian_gabusan;
 
+											echo number_format($GET_ljpj_taman_gedung_kesenian_gabusan, 2, ',', '.');
 											?>
 
 										</div>
@@ -2173,7 +2242,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan);
+
+																																															echo number_format($data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2234,7 +2305,9 @@
 
 											$GET_laba_bumd_pad = $GET_laba_bumd_pad + $TOTAL_DEBET_laba_bumd_pad - $TOTAL_KREDIT_laba_bumd_pad;
 
-											echo  $GET_laba_bumd_pad;
+											// echo  $GET_laba_bumd_pad;
+
+											echo number_format($GET_laba_bumd_pad, 2, ',', '.');
 
 											?>
 
@@ -2250,7 +2323,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_bumd_pad);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->laba_bumd_pad);
+
+																																															echo number_format($data_tbl_neraca_data->laba_bumd_pad, 2, ',', '.');
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_bumd_pad;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2324,7 +2399,9 @@
 											// echo "TOTAL Kas: " . $GET_kas ;
 											// echo "TOTAL Kas: " . $GET_debet_11101;
 											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_ljpj_kompleks_gedung_kesenian;
+											// echo  $GET_ljpj_kompleks_gedung_kesenian;
+
+											echo number_format($GET_ljpj_kompleks_gedung_kesenian, 2, ',', '.');
 
 											?>
 
@@ -2339,7 +2416,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian);
+
+																																															echo number_format($data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2426,7 +2505,9 @@
 
 											$GET_ljpj_radio = $GET_ljpj_radio + $TOTAL_DEBET_ljpj_radio - $TOTAL_KREDIT_ljpj_radio;
 
-											echo  $GET_ljpj_radio;
+											// echo  $GET_ljpj_radio;
+
+											echo number_format($GET_ljpj_radio, 2, ',', '.');
 
 											?>
 
@@ -2440,7 +2521,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_radio);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_radio);
+
+																																															echo number_format($data_tbl_neraca_data->ljpj_radio, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_radio;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2502,7 +2585,9 @@
 
 											$GET_laba_rugi_tahun_lalu = $GET_laba_rugi_tahun_lalu + $TOTAL_DEBET_laba_rugi_tahun_lalu - $TOTAL_KREDIT_laba_rugi_tahun_lalu;
 
-											echo  $GET_laba_rugi_tahun_lalu;
+											// echo  $GET_laba_rugi_tahun_lalu;
+
+											echo number_format($GET_laba_rugi_tahun_lalu, 2, ',', '.');
 
 											?>
 
@@ -2517,7 +2602,9 @@
 																																																																?>" width: 50px; /> -->
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_lalu);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_lalu);
+																										
+												echo number_format($data_tbl_neraca_data->laba_rugi_tahun_lalu, 2, ',', '.');																										
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_rugi_tahun_lalu;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2585,7 +2672,9 @@
 
 											$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha - $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha;
 
-											echo $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
+											// echo $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
+
+echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.');
 
 											?>
 
@@ -2602,7 +2691,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha);
+																				
+												echo number_format($data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2664,7 +2755,9 @@
 
 											$GET_laba_rugi_tahun_berjalan = $GET_laba_rugi_tahun_berjalan + $TOTAL_DEBET_laba_rugi_tahun_berjalan - $TOTAL_KREDIT_laba_rugi_tahun_berjalan;
 
-											echo  $GET_laba_rugi_tahun_berjalan;
+											// echo  $GET_laba_rugi_tahun_berjalan;
+
+echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 											?>
 
@@ -2681,7 +2774,9 @@
 												 -->
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_berjalan);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->laba_rugi_tahun_berjalan);
+																
+												echo number_format($data_tbl_neraca_data->laba_rugi_tahun_berjalan, 2, ',', '.');																
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_rugi_tahun_berjalan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2753,7 +2848,10 @@
 
 											$GET_ljpj_peternakan = $GET_ljpj_peternakan + $TOTAL_DEBET_ljpj_peternakan - $TOTAL_KREDIT_ljpj_peternakan;
 
-											echo  $GET_ljpj_peternakan;
+											// echo  $GET_ljpj_peternakan;
+
+											echo number_format($GET_ljpj_peternakan, 2, ',', '.');
+
 
 											?>
 
@@ -2768,7 +2866,10 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_peternakan);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_peternakan);
+																								
+												echo number_format($data_tbl_neraca_data->ljpj_peternakan, 2, ',', '.');												
+
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_peternakan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2847,7 +2948,9 @@
 
 											$GET_ljpj_kerjasama_adwm = $GET_ljpj_kerjasama_adwm + $TOTAL_DEBET_ljpj_kerjasama_adwm - $TOTAL_KREDIT_ljpj_kerjasama_adwm;
 
-											echo  $GET_ljpj_kerjasama_adwm;
+											// echo  $GET_ljpj_kerjasama_adwm;
+
+echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
 
 											?>
 
@@ -2863,7 +2966,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_adwm);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_adwm);
+														
+														echo number_format($data_tbl_neraca_data->ljpj_kerjasama_adwm, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_adwm;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -2944,7 +3049,10 @@
 
 											$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_ljpj_kerjasama_pdu_cabean_panggungharjo + $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo - $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo;
 
-											echo  $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
+											// echo  $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
+
+echo number_format($GET_ljpj_kerjasama_pdu_cabean_panggungharjo, 2, ',', '.');
+
 
 											?>
 
@@ -2960,7 +3068,9 @@
 
 
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo);
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo);
+																			
+echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo, 2, ',', '.');																			
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
@@ -3008,7 +3118,10 @@
 
 									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_lain_lain" id="total_aktiva_lain_lain" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_AKTIVA_LAIN_LAIN; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+									// echo $GET_AKTIVA_LAIN_LAIN; 
+									echo number_format($GET_AKTIVA_LAIN_LAIN, 2, ',', '.');
+									?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -3028,7 +3141,10 @@
 
 									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="total_modal_dan_laba_ditahan" id="total_modal_dan_laba_ditahan" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $TOTAL_MODAL_DAN_LABA_DITAHAN; ?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+									// echo $TOTAL_MODAL_DAN_LABA_DITAHAN; 
+									echo number_format($TOTAL_MODAL_DAN_LABA_DITAHAN, 2, ',', '.');
+									?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 
 								</th>
@@ -3095,7 +3211,10 @@
 									<!-- <input type="text" class="form-control uang" onkeyup="sum();" name="total_aktiva" id="total_aktiva" placeholder="" value="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" ; /> -->
 
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo $GET_TOTAL_AKTIVA_LANCAR + $GET_Total_AKTIVA_TETAP_BERSIH + $GET_AKTIVA_LAIN_LAIN; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+									// echo $GET_TOTAL_AKTIVA_LANCAR + $GET_Total_AKTIVA_TETAP_BERSIH + $GET_AKTIVA_LAIN_LAIN; 
+									echo number_format($GET_TOTAL_AKTIVA_LANCAR + $GET_Total_AKTIVA_TETAP_BERSIH + $GET_AKTIVA_LAIN_LAIN, 2, ',', '.');
+									?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -3119,7 +3238,10 @@
 
 									<!-- <input type="text" class="form-control uang" name="TOTAL_PASIVA" id="TOTAL_PASIVA" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
 
-									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php echo 	$TOTAL_UTANG_LANCAR_PLUS_AFILIASI + $TOTAL_MODAL_DAN_LABA_DITAHAN; ?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php 
+									// echo 	$TOTAL_UTANG_LANCAR_PLUS_AFILIASI + $TOTAL_MODAL_DAN_LABA_DITAHAN; 
+									echo number_format($TOTAL_UTANG_LANCAR_PLUS_AFILIASI + $TOTAL_MODAL_DAN_LABA_DITAHAN, 2, ',', '.');
+									?>" style="font-size:1.5vw;font-weight: bold;text-align:right;color:red;" />
 
 								</th>
 
@@ -3240,12 +3362,13 @@
 				</div>
 
 				<div class="col-4">
-					<!-- <button type="submit" class="btn btn-primary"><?php //echo $button; ?></button> -->
+					<!-- <button type="submit" class="btn btn-primary"><?php //echo $button; 
+																		?></button> -->
 
 					<?php
 					if ($button == "Update") {
 					?>
-						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $tahun_neraca .'/'.$bulan_transaksi)
+						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $tahun_neraca . '/' . $bulan_transaksi)
 									?>" class="btn btn-success" target="_blank">Cetak Neraca (PDF)</a>
 					<?php } ?>
 

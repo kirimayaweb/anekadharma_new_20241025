@@ -181,9 +181,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->kas)) {
-					echo nominal($data_detail->kas);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->kas;
+				<?php if (isset($data_tbl_neraca_data->kas)) {
+					// echo nominal($data_tbl_neraca_data->kas);
+					echo number_format($data_tbl_neraca_data->kas, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->kas;
 				} ?>
 			</th>
 
@@ -200,9 +201,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 				<?php
-				if (isset($data_detail->utang_usaha)) {
-					echo nominal($data_detail->utang_usaha);
-					$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_usaha;
+				if (isset($data_tbl_neraca_data->utang_usaha)) {
+					// echo nominal($data_tbl_neraca_data->utang_usaha);
+					echo number_format($data_tbl_neraca_data->utang_usaha, 2, ',', '.');
+					$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_tbl_neraca_data->utang_usaha;
 				} ?>
 			</th>
 
@@ -225,9 +227,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->bank)) {
-					echo nominal($data_detail->bank);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->bank;
+				<?php if (isset($data_tbl_neraca_data->bank)) {
+					// echo nominal($data_tbl_neraca_data->bank);
+					echo number_format($data_tbl_neraca_data->bank, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->bank;
 				} ?>
 			</th>
 
@@ -243,9 +246,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->utang_pajak)) {
-					echo nominal($data_detail->utang_pajak);
-					$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_pajak;
+				<?php if (isset($data_tbl_neraca_data->utang_pajak)) {
+					// echo nominal($data_tbl_neraca_data->utang_pajak);
+					echo number_format($data_tbl_neraca_data->utang_pajak, 2, ',', '.');
+					$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_tbl_neraca_data->utang_pajak;
 				} ?>
 			</th>
 
@@ -266,9 +270,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->piutang_usaha)) {
-					echo nominal($data_detail->piutang_usaha);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_usaha;
+				<?php if (isset($data_tbl_neraca_data->piutang_usaha)) {
+					// echo nominal($data_tbl_neraca_data->piutang_usaha);
+					echo number_format($data_tbl_neraca_data->piutang_usaha, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->piutang_usaha;
 				} ?>
 			</th>
 
@@ -285,9 +290,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
 				<strong>
-					<?php if (isset($data_detail->utang_lain_lain)) {
-						echo nominal($data_detail->utang_lain_lain);
-						$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_detail->utang_lain_lain;
+					<?php if (isset($data_tbl_neraca_data->utang_lain_lain)) {
+						// echo nominal($data_tbl_neraca_data->utang_lain_lain);
+						echo number_format($data_tbl_neraca_data->utang_lain_lain, 2, ',', '.');
+						$TOTAL_Utang_Lancar = $TOTAL_Utang_Lancar + $data_tbl_neraca_data->utang_lain_lain;
 					}  ?>
 				</strong>
 			</th>
@@ -311,9 +317,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->piutang_non_usaha)) {
-					echo nominal($data_detail->piutang_non_usaha);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->piutang_non_usaha;
+				<?php if (isset($data_tbl_neraca_data->piutang_non_usaha)) {
+					// echo nominal($data_tbl_neraca_data->piutang_non_usaha);
+					echo number_format($data_tbl_neraca_data->piutang_non_usaha, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->piutang_non_usaha;
 				} ?>
 			</th>
 
@@ -328,7 +335,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php echo nominal($TOTAL_Utang_Lancar) ?></th>
+			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php 
+			// echo nominal($TOTAL_Utang_Lancar) 
+			echo number_format($TOTAL_Utang_Lancar, 2, ',', '.');
+			?></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
 
@@ -351,9 +361,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->persediaan)) {
-					echo nominal($data_detail->persediaan);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->persediaan;
+				<?php if (isset($data_tbl_neraca_data->persediaan)) {
+					// echo nominal($data_tbl_neraca_data->persediaan);
+					echo number_format($data_tbl_neraca_data->persediaan, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->persediaan;
 				} ?>
 			</th>
 
@@ -388,9 +399,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->uang_muka_pajak)) {
-					echo nominal($data_detail->uang_muka_pajak);
-					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_detail->uang_muka_pajak;
+				<?php if (isset($data_tbl_neraca_data->uang_muka_pajak)) {
+					// echo nominal($data_tbl_neraca_data->uang_muka_pajak);
+					echo number_format($data_tbl_neraca_data->uang_muka_pajak, 2, ',', '.');
+					$TOTAL_AKIVA_LANCAR = $TOTAL_AKIVA_LANCAR + $data_tbl_neraca_data->uang_muka_pajak;
 				} ?>
 			</th>
 
@@ -425,7 +437,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($TOTAL_AKIVA_LANCAR) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php 
+			// echo nominal($TOTAL_AKIVA_LANCAR) 
+			echo number_format($TOTAL_AKIVA_LANCAR, 2, ',', '.');
+			?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
@@ -487,8 +502,9 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->aktiva_tetap)) {
-					echo nominal($data_detail->aktiva_tetap);
+				<?php if (isset($data_tbl_neraca_data->aktiva_tetap)) {
+					// echo nominal($data_tbl_neraca_data->aktiva_tetap);
+					echo number_format($data_tbl_neraca_data->aktiva_tetap, 2, ',', '.');
 				} ?>
 			</th>
 
@@ -526,9 +542,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->aktiva_tetap_berwujud)) {
-					echo nominal($data_detail->aktiva_tetap_berwujud);
-					$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->aktiva_tetap_berwujud;
+				<?php if (isset($data_tbl_neraca_data->aktiva_tetap_berwujud)) {
+					// echo nominal($data_tbl_neraca_data->aktiva_tetap_berwujud);
+					echo number_format($data_tbl_neraca_data->aktiva_tetap_berwujud, 2, ',', '.');
+					$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_tbl_neraca_data->aktiva_tetap_berwujud;
 				} ?>
 			</th>
 
@@ -544,9 +561,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->utang_afiliasi)) {
-					echo nominal($data_detail->utang_afiliasi);
-					$TOTAL_Utang_Jangka_Panjang = $TOTAL_Utang_Jangka_Panjang + $data_detail->utang_afiliasi;
+				<?php if (isset($data_tbl_neraca_data->utang_afiliasi)) {
+					// echo nominal($data_tbl_neraca_data->utang_afiliasi);
+					echo number_format($data_tbl_neraca_data->utang_afiliasi, 2, ',', '.');
+					$TOTAL_Utang_Jangka_Panjang = $TOTAL_Utang_Jangka_Panjang + $data_tbl_neraca_data->utang_afiliasi;
 				} ?>
 			</th>
 
@@ -569,9 +587,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->utang_afiliasi)) {
-					echo nominal($data_detail->akumulasi_depresiasi_atb);
-					$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_detail->akumulasi_depresiasi_atb;
+				<?php if (isset($data_tbl_neraca_data->utang_afiliasi)) {
+					// echo nominal($data_tbl_neraca_data->akumulasi_depresiasi_atb);
+					echo number_format($data_tbl_neraca_data->akumulasi_depresiasi_atb, 2, ',', '.');
+					$Total_Aktiva_Tetap_Bersih = $Total_Aktiva_Tetap_Bersih + $data_tbl_neraca_data->akumulasi_depresiasi_atb;
 				} ?>
 			</th>
 
@@ -586,7 +605,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php 
+			// echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang) 
+			echo number_format(($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang), 2, ',', '.');
+			?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none;  border-top:none;border-bottom:none;border-collapse: collapse;" colspan="20"></th>
 
@@ -606,7 +628,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php echo nominal($Total_Aktiva_Tetap_Bersih) ?></th>
+			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php 
+			// echo nominal($Total_Aktiva_Tetap_Bersih) 
+			echo number_format($Total_Aktiva_Tetap_Bersih, 2, ',', '.');
+			?></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
@@ -715,9 +740,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->piutang_non_usaha_pihak_ketiga)) {
-					echo nominal($data_detail->piutang_non_usaha_pihak_ketiga);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->piutang_non_usaha_pihak_ketiga;
+				<?php if (isset($data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga)) {
+					// echo nominal($data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga);
+					echo number_format($data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga;
 				} ?>
 			</th>
 
@@ -734,9 +760,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->modal_dasar_dan_penyertaan)) {
-					echo nominal($data_detail->modal_dasar_dan_penyertaan);
-					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->modal_dasar_dan_penyertaan;
+				<?php if (isset($data_tbl_neraca_data->modal_dasar_dan_penyertaan)) {
+					// echo nominal($data_tbl_neraca_data->modal_dasar_dan_penyertaan);
+					echo number_format($data_tbl_neraca_data->modal_dasar_dan_penyertaan, 2, ',', '.');
+					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_tbl_neraca_data->modal_dasar_dan_penyertaan;
 				} ?>
 			</th>
 
@@ -761,9 +788,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->piutang_non_usaha_radio)) {
-					echo nominal($data_detail->piutang_non_usaha_radio);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->piutang_non_usaha_radio;
+				<?php if (isset($data_tbl_neraca_data->piutang_non_usaha_radio)) {
+					// echo nominal($data_tbl_neraca_data->piutang_non_usaha_radio);
+					echo number_format($data_tbl_neraca_data->piutang_non_usaha_radio, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->piutang_non_usaha_radio;
 				} ?>
 			</th>
 
@@ -780,9 +808,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->cadangan_umum)) {
-					echo nominal($data_detail->cadangan_umum);
-					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->cadangan_umum;
+				<?php if (isset($data_tbl_neraca_data->cadangan_umum)) {
+					// echo nominal($data_tbl_neraca_data->cadangan_umum);
+					echo number_format($data_tbl_neraca_data->cadangan_umum, 2, ',', '.');
+					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_tbl_neraca_data->cadangan_umum;
 				} ?>
 			</th>
 
@@ -806,9 +835,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_taman_gedung_kesenian_gabusan)) {
-					echo nominal($data_detail->ljpj_taman_gedung_kesenian_gabusan);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_taman_gedung_kesenian_gabusan;
+				<?php if (isset($data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan);
+					echo number_format($data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
 				} ?>
 			</th>
 
@@ -825,9 +855,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->laba_bumd_pad)) {
-					echo nominal($data_detail->laba_bumd_pad);
-					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_bumd_pad;
+				<?php if (isset($data_tbl_neraca_data->laba_bumd_pad)) {
+					// echo nominal($data_tbl_neraca_data->laba_bumd_pad);
+					echo number_format($data_tbl_neraca_data->laba_bumd_pad, 2, ',', '.');
+					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_tbl_neraca_data->laba_bumd_pad;
 				} ?>
 			</th>
 
@@ -847,9 +878,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_kompleks_gedung_kesenian)) {
-					echo nominal($data_detail->ljpj_kompleks_gedung_kesenian);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kompleks_gedung_kesenian;
+				<?php if (isset($data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian);
+					echo number_format($data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian;
 				} ?>
 			</th>
 
@@ -891,9 +923,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_radio)) {
-					echo nominal($data_detail->ljpj_radio);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_radio;
+				<?php if (isset($data_tbl_neraca_data->ljpj_radio)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_radio);
+					echo number_format($data_tbl_neraca_data->ljpj_radio, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_radio;
 				} ?>
 			</th>
 
@@ -910,9 +943,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->laba_rugi_tahun_lalu)) {
-					echo nominal($data_detail->laba_rugi_tahun_lalu);
-					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_rugi_tahun_lalu;
+				<?php if (isset($data_tbl_neraca_data->laba_rugi_tahun_lalu)) {
+					// echo nominal($data_tbl_neraca_data->laba_rugi_tahun_lalu);
+					echo number_format($data_tbl_neraca_data->laba_rugi_tahun_lalu, 2, ',', '.');
+					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_tbl_neraca_data->laba_rugi_tahun_lalu;
 				} ?>
 			</th>
 
@@ -936,9 +970,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha)) {
-					echo nominal($data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_operasi_apotek_dharma_usaha;
+				<?php if (isset($data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha);
+					echo number_format($data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha;
 				} ?>
 			</th>
 
@@ -955,9 +990,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->laba_rugi_tahun_berjalan)) {
-					echo nominal($data_detail->laba_rugi_tahun_berjalan);
-					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_detail->laba_rugi_tahun_berjalan;
+				<?php if (isset($data_tbl_neraca_data->laba_rugi_tahun_berjalan)) {
+					// echo nominal($data_tbl_neraca_data->laba_rugi_tahun_berjalan);
+					echo number_format($data_tbl_neraca_data->laba_rugi_tahun_berjalan, 2, ',', '.');
+					$TOTAL_Modal_dan_Laba_ditahan = $TOTAL_Modal_dan_Laba_ditahan + $data_tbl_neraca_data->laba_rugi_tahun_berjalan;
 				} ?>
 			</th>
 
@@ -982,9 +1018,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_peternakan)) {
-					echo nominal($data_detail->ljpj_peternakan);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_peternakan;
+				<?php if (isset($data_tbl_neraca_data->ljpj_peternakan)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_peternakan);
+					echo number_format($data_tbl_neraca_data->ljpj_peternakan, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_peternakan;
 				} ?>
 			</th>
 
@@ -1018,9 +1055,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_kerjasama_adwm)) {
-					echo nominal($data_detail->ljpj_kerjasama_adwm);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_adwm;
+				<?php if (isset($data_tbl_neraca_data->ljpj_kerjasama_adwm)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_kerjasama_adwm);
+					echo number_format($data_tbl_neraca_data->ljpj_kerjasama_adwm, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_kerjasama_adwm;
 				} ?>
 			</th>
 
@@ -1056,11 +1094,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
 			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="150">
-				<?php if (isset($data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo)) {
-					echo nominal(
-						$data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo
-					);
-					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_detail->ljpj_kerjasama_pdu_cabean_panggungharjo;
+				<?php if (isset($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo)) {
+					// echo nominal($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo);
+					echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo, 2, ',', '.');
+					$Aktiva_Lain_Lain = $Aktiva_Lain_Lain + $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo;
 				} ?>
 			</th>
 
@@ -1095,7 +1132,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right;  width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($Aktiva_Lain_Lain) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right;  width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php 
+			// echo nominal($Aktiva_Lain_Lain) 
+			echo number_format($Aktiva_Lain_Lain, 2, ',', '.');
+			?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
@@ -1109,7 +1149,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php echo nominal($TOTAL_Modal_dan_Laba_ditahan) ?></th>
+			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><?php 
+			// echo nominal($TOTAL_Modal_dan_Laba_ditahan) 
+			echo number_format($TOTAL_Modal_dan_Laba_ditahan, 2, ',', '.');
+			?></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="20"></th>
 
@@ -1168,7 +1211,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; border-top:none;width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($TOTAL_AKIVA_LANCAR + $Total_Aktiva_Tetap_Bersih + $Aktiva_Lain_Lain) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right; border-top:none;width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php 
+			// echo nominal($TOTAL_AKIVA_LANCAR + $Total_Aktiva_Tetap_Bersih + $Aktiva_Lain_Lain) 
+			echo number_format($TOTAL_AKIVA_LANCAR + $Total_Aktiva_Tetap_Bersih + $Aktiva_Lain_Lain, 2, ',', '.');
+			?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-bottom:none;border-top:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20"></th>
 
@@ -1185,7 +1231,10 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="20">Rp.</th>
 
-			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan) ?></strong></th>
+			<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="150"><strong><?php 
+			// echo nominal($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan) 
+			echo number_format(($TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan), 2, ',', '.');
+			?></strong></th>
 
 			<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-bottom:none;  border-left:none; border-top:none;border-collapse: collapse;" colspan="20"></th>
 

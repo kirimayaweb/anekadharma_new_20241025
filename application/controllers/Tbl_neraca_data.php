@@ -1197,7 +1197,7 @@ class Tbl_neraca_data extends CI_Controller
 			// 'button' => 'Simpan',
 			// 'action' => site_url('Tbl_neraca_data/create_action_neraca'),
 			// 'id' => set_value('id'),
-			'data_detail' => $data_detail,
+			'data_tbl_neraca_data' => $data_detail,
 			'tahun_neraca' => $data_detail->tahun_transaksi,
 			'bulan_neraca' => $data_detail->bulan_transaksi,
 		);
