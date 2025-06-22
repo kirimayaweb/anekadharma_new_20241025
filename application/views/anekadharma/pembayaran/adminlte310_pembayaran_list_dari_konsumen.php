@@ -70,8 +70,7 @@
 
                                     $Data_konsumen_pembayaran = $this->db->query($sql)->row();
 
-                                    // TERBAYAR
-                                    $Total_terbayar = $Data_konsumen_pembayaran->nominal_bayar;
+
 
 
 
@@ -99,7 +98,28 @@
                                     }
                                     // CEK PENJUALAN ACCOUNTING
 
-                                    $x_kekurangan = ($list_data->total_belanja + $Data_konsumen_tagihan_accounting) - ($Data_konsumen_pembayaran->nominal_bayar);
+
+
+                                    // PEMBAYARAN ACCOUNTING
+
+                                    // $uuid_konsumen_proses = $list_data->uuid_konsumen;
+
+                                    $sql = "SELECT uuid_konsumen, SUM(tbl_penjualan_accounting_pembayaran.nominal_bayar) as nominal_bayar FROM tbl_penjualan_accounting_pembayaran WHERE tbl_penjualan_accounting_pembayaran.uuid_konsumen='$uuid_konsumen_proses' GROUP BY tbl_penjualan_accounting_pembayaran.uuid_konsumen";
+
+                                    $Data_konsumen_pembayaran_accounting = $this->db->query($sql)->row();
+
+                                    // TERBAYAR
+                                    // $Total_terbayar_accounting = $Data_konsumen_pembayaran_accounting->nominal_bayar;
+
+                                    // END OF PEMBAYARAN ACCOUNTING
+
+
+
+                                    // TERBAYAR
+                                    $Total_terbayar = $Data_konsumen_pembayaran->nominal_bayar + $Data_konsumen_pembayaran_accounting->nominal_bayar;
+
+
+                                    $x_kekurangan = ($list_data->total_belanja + $Data_konsumen_tagihan_accounting) - ($Data_konsumen_pembayaran->nominal_bayar + $Data_konsumen_pembayaran_accounting->nominal_bayar);
                                 ?>
                                     <tr>
                                         <td><?php echo ++$start ?></td>
@@ -126,14 +146,14 @@
                                         </td>
                                         <!-- <td align="left"><?php //echo $list_data->jumlah_belanja; 
                                                                 ?></td> -->
-                                        <td align="right"><?php 
-                                        echo '<span style="color:green;text-align:right;"> ' . nominal(number_format($Total_terbayar, 2, ',', '.')) . '</span>'; 
-                                        ?></td>
+                                        <td align="right"><?php
+                                                            echo '<span style="color:green;text-align:right;"> ' . number_format($Total_terbayar, 2, ',', '.') . '</span>';
+                                                            ?></td>
 
-                                        <td align="right"><?php 
-                                        // echo nominal($list_data->total_belanja); 
-                                        echo number_format($list_data->total_belanja, 2, ',', '.');
-                                        ?>
+                                        <td align="right"><?php
+                                                            // echo nominal($list_data->total_belanja); 
+                                                            echo number_format($list_data->total_belanja, 2, ',', '.');
+                                                            ?>
                                         </td>
 
 
