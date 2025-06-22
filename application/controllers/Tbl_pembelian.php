@@ -989,20 +989,20 @@ class Tbl_pembelian extends CI_Controller
 		$sql = "SELECT * FROM `tbl_penjualan` WHERE `uuid_konsumen`='$uuid_konsumen' and `proses_bayar` <> '$proses_text' and `proses_bayar` <> '$bayar_text' ";
 		$Data_konsumen_tagihan = $this->db->query($sql)->result();
 
-		print_r($Data_konsumen_tagihan);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($Data_konsumen_tagihan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		// RIWAYAT PEMBAYARAN
 		$sql = "SELECT * FROM `tbl_penjualan_pembayaran` WHERE `uuid_konsumen`='$uuid_konsumen'";
 		$Data_konsumen_pembayaran = $this->db->query($sql)->result();
 
 
-		print_r($Data_konsumen_pembayaran);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($Data_konsumen_pembayaran);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 
 		// RIWAYAT TRANSAKSI PENJUALAN
@@ -1018,10 +1018,10 @@ class Tbl_pembelian extends CI_Controller
 		//     if ($users->num_rows() > 0) {
 
 
-		print_r($Data_konsumen_proses_bayar);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($Data_konsumen_proses_bayar);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		// print_r($Data_konsumen_proses_bayar);
 
@@ -1036,7 +1036,7 @@ class Tbl_pembelian extends CI_Controller
 		$bayar_text = "bayar";
 		$proses_text = "proses";
 		// $sql = "SELECT * FROM ` tbl_penjualan_accounting` WHERE `uuid_konsumen`='$uuid_konsumen' and `proses_bayar` <> '$proses_text' or `proses_bayar` <> '$bayar_text' ";
-		$sql = "SELECT * FROM `tbl_penjualan_accounting` WHERE `uuid_konsumen`='$uuid_konsumen' and (`proses_bayar` <> '$proses_text' or `proses_bayar` <> '$bayar_text') ";
+		$sql = "SELECT SUM( tbl_penjualan_accounting.jumlah *  tbl_penjualan_accounting.harga_satuan) as total_belanja_accounting FROM `tbl_penjualan_accounting` WHERE `uuid_konsumen`='$uuid_konsumen' and (`proses_bayar` <> '$proses_text' or `proses_bayar` <> '$bayar_text') ";
 		$Data_konsumen_tagihan_accounting = $this->db->query($sql)->num_rows();
 
 		//  $this->db->where('uuid_konsumen', $uuid_konsumen);
@@ -1044,11 +1044,15 @@ class Tbl_pembelian extends CI_Controller
 		//     $users = $this->db->get('tbl_penjualan_accounting');
 
 		if ($this->db->query($sql)->num_rows() > 0) {
+			$GET_Data_konsumen_tagihan_accounting=$this->db->query($sql)->row()->total_belanja_accounting;
+		}else{
+			$GET_Data_konsumen_tagihan_accounting=0;
 		}
 
 
-		print_r($Data_konsumen_tagihan_accounting);
-		die;
+
+		// print_r($GET_Data_konsumen_tagihan_accounting);
+		// die;
 
 		// RIWAYAT PEMBAYARAN PENJUALAN ACCOUNTING
 
@@ -1100,6 +1104,7 @@ class Tbl_pembelian extends CI_Controller
 			'Data_konsumen_proses_bayar' => $Data_konsumen_proses_bayar,
 			'Data_konsumen_tagihan' => $Data_konsumen_tagihan,
 			'Data_konsumen_pembayaran' => $Data_konsumen_pembayaran,
+			'GET_Data_konsumen_tagihan_accounting' => $GET_Data_konsumen_tagihan_accounting,
 
 			'kode_konsumen' => $get_kode_konsumen,
 			'nama_konsumen' => $get_nama_konsumen,

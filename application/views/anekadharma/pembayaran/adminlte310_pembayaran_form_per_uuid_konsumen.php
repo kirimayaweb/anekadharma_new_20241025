@@ -55,7 +55,7 @@
                                         <div class="col-12">
 
 
-
+                                            <strong>PENJUALAN:</strong>
                                             <table id="tglSPOPFreeze2" class="display nowrap" style="width:100%">
                                                 <thead>
                                                     <tr>
@@ -145,23 +145,24 @@
                                         </div>
                                     </div>
 
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <strong>ACCOUNTING: <?php echo number_format($GET_Data_konsumen_tagihan_accounting, 2, ',', '.');  ?></strong>
+                                        </div>
+                                    </div>
 
-                                    <div class="form-group">
 
-                                        <div class="row">
+                                   <hr/>
 
-                                            <div class="col-4">
-                                            </div>
-                                            <div class="col-4">
-                                            </div>
-                                            <div class="col-4">
-                                                <div class="form-group">
-                                                    <label for="int" style="color:green" >TOTAL PEMBAYARAN: </label>
-                                                    <div class="col-10" style="text-align:right;color:red">
-                                                        <?php echo '<span style="color:red;"><strong> ' . nominal($TOTAL_NOMINAL_TRANSAKSI_PILIH) . '</strong></span>'; ?>
-                                                    </div>
+                                        <div class="row" align="left">
+                                            <div class="col-12">
+                                                <!-- <div class="form-group"> -->
+                                                    <label for="int" style="color:green">TOTAL TAGIHAN: <?php echo '<span style="color:red;"><strong> ' . number_format($GET_Data_konsumen_tagihan_accounting + $TOTAL_NOMINAL_TRANSAKSI_PILIH, 2, ',', '.') . '</strong></span>'; ?></label>
+                                                    <!-- <div class="col-10" style="text-align:right;color:red">
+                                                        
+                                                    </div> -->
 
-                                                </div>
+                                                <!-- </div> -->
                                             </div>
                                         </div>
 
@@ -254,7 +255,7 @@
 
 
 
-                                    </div>
+                                  
 
                                     <div class="row">
 
@@ -374,7 +375,7 @@
                                                         : &nbsp;&nbsp;&nbsp; <select name="uuid_kode_akun_nominal" id="uuid_kode_akun_nominal" class="form-control select2" style="width: 90%; height: 40px;" required>
                                                             <!-- <option value="<?php //echo $uuid_kode_akun; 
                                                                                 ?>"><?php //echo $kode_akun . " - " . $nama_akun; 
-                                                                                ?></option> -->
+                                                                                    ?></option> -->
                                                             <option value="">Pilih Kode Akun</option>
                                                             <?php
 
