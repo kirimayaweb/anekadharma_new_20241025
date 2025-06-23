@@ -26,132 +26,116 @@
                     <div class="card-header">
 
                         <div class="row">
-                            <div class="col-4">
+                            <div class="col-12">
                                 <div class="row">
-                                    DAFTAR AKTIVA TETAP: <br/>Harga Perolehan, Depresiasi, Ak Depresiasi, & Nilai Buku
-                                </div>
-                            </div>
+                                    <div class="col-4" align="left">
+                                        <div class="row">
+                                            DAFTAR AKTIVA TETAP: <br />Harga Perolehan, Depresiasi, Ak Depresiasi, & Nilai Buku
+                                        </div>
+                                    </div>
 
-                            <div class="col-md-6">
+                                    <div class="col-6" align="center">
 
-                                <?php
-                                // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
-                                $action_cari_between_date = site_url('neraca_saldo');
-                                ?>
+                                        <?php
+                                        // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
+                                        $action_cari_between_date = site_url('neraca_saldo');
+                                        ?>
 
-                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
-                                    <div class="row">
+                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
 
-                                        <div class="col-md-1" text-align="right" align="right"></div>
-
-                                        <div class="col-md-3" text-align="right">
-                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
+                                            <div class="row">
+                                                <div class="col-md-4" text-align="right" align="right">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns">
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                        <div class="col-md-3" text-align="left" align="left">
-                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
+                                                <div class="col-md-2" text-align="left" align="left">
+                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <div class="col-md-2" text-align="left" align="left">
-                                            <strong>
-                                                <button type="submit" class="btn btn-danger btn-block btn-flat" disabled><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                            </strong>
-                                        </div>
+                                            </div>
+
+
+
+                                        </form>
 
                                     </div>
-                                </form>
+
+
+                                    <div class="col-2" text-align="left" align="right">
+                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak', 'class="btn btn-success"'); ?>
+                                    </div>
+                                </div>
+
+
+
+
+
+
 
                             </div>
-
-
-                            <div class="col-2" text-align="left" align="left">
-                                <!-- <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button> -->
-                            </div>
-
                         </div>
-
-                        <!-- </form> -->
-
-
-
                     </div>
+                </div>
 
 
 
 
-                    <div class="card-body">
+                <div class="card-body">
 
-                        <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
-                            <thead>
+                    <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center" width="10px">No</th>
+                                <th style="text-align:center">Kelompok/Jenis Harta</th>
+                                <th style="text-align:center">Bulan/Tahun <br />Perolehan</th>
+                                <th style="text-align:center">Harga Perolehan <br /> Rupiah</th>
+                                <th style="text-align:center">User</th>
+                                <th style="text-align:center">Amorts Penyst <br />31/12/2023</th>
+                                <th style="text-align:center">Nilai Buku<br />31/12/2023</th>
+                                <th style="text-align:center">Penyusutan<br />tahun 2024</th>
+                                <th style="text-align:center">Amorts Penyst<br />tahun 2024</th>
+                                <th style="text-align:center">Nilai Buku<br />tahun 2024</th>
+                            </tr>
+
+
+                        </thead>
+                        <tbody>
+                            <?php
+
+                            // PEMBELIAN
+                            $start = 0;
+                            $TOTAL_DEBET = 0;
+                            $TOTAL_KREDIT = 0;
+                            $TOTAL_SALDO = 0;
+
+                            foreach ($Data_penyusutan as $list_data) {
+
+
+
+                            ?>
                                 <tr>
-                                    <th style="text-align:center" width="10px">No</th>
-                                    <th style="text-align:center">Kelompok/Jenis Harta</th>
-                                    <th style="text-align:center">Bulan/Tahun <br/>Perolehan</th>
-                                    <th style="text-align:center">Harga Perolehan <br/> Rupiah</th>
-                                    <th style="text-align:center">User</th>
-                                    <th style="text-align:center">Amorts Penyst <br/>31/12/2023</th>
-                                    <th style="text-align:center">Nilai Buku<br/>31/12/2023</th>
-                                    <th style="text-align:center">Penyusutan<br/>tahun 2024</th>
-                                    <th style="text-align:center">Amorts Penyst<br/>tahun 2024</th>
-                                    <th style="text-align:center">Nilai Buku<br/>tahun 2024</th>
+                                    <td align="left"><?php echo ++$start; ?></td>
+
+
                                 </tr>
 
 
-                            </thead>
-                            <tbody>
-                                <?php
-
-                                // PEMBELIAN
-                                $start = 0;
-                                $TOTAL_DEBET = 0;
-                                $TOTAL_KREDIT = 0;
-                                $TOTAL_SALDO = 0;
-
-                                foreach ($Data_penyusutan as $list_data) {
-
-
-
-                                ?>
-                                    <tr>
-                                        <td align="left"><?php echo ++$start; ?></td>
-
-
-                                    </tr>
-
-
-                                <?php
-                                }
-                                ?>
+                            <?php
+                            }
+                            ?>
 
 
 
 
 
-                            </tbody>
+                        </tbody>
 
 
-                        </table>
-                    </div>
-                    <!-- /.card-body -->
+                    </table>
                 </div>
+                <!-- /.card-body -->
             </div>
         </div>
+
     </section>
 </div>
 

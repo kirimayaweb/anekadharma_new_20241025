@@ -28,11 +28,16 @@ class Tbl_penyusutan extends CI_Controller
 
     public function index()
     {
+        // $GET_data_penyusutan = $this->Tbl_penyusutan_model->get_all();
+
 
         $data = array(
-            'Data_penyusutan' => "",
+            'Data_penyusutan' => $this->Tbl_penyusutan_model->get_all(),
             // 'action' => site_url('Buku_besar/cari_kode_akun'),
         );
+
+        // print_r($data);
+        // die;
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_list', $data);
     }
