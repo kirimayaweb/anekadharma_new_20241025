@@ -35,27 +35,44 @@
                                     </div>
 
                                     <div class="col-6" align="center">
+                                        <div class="row">
+                                            <div class="col-3" align="left">
+                                                <?php
+                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                    echo anchor(site_url('Tbl_penyusutan/Input_list_data_baru'), 'INPUT DATA', 'class="btn btn-danger"');
+                                                }
 
-                                        <?php
-                                        // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
-                                        $action_cari_between_date = site_url('neraca_saldo');
-                                        ?>
-
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
-
-                                            <div class="row">
-                                                <div class="col-md-4" text-align="right" align="right">
-                                                    <input type="month" id="bulan_ns" name="bulan_ns">
-                                                </div>
-                                                <div class="col-md-2" text-align="left" align="left">
-                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                                </div>
+                                                ?>
 
                                             </div>
+                                            <div class="col-9" align="center">
+
+                                                <?php
+                                                // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
+                                                $action_cari_between_date = site_url('Tbl_penyusutan/cari_between_date');
+                                                ?>
+
+                                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+
+                                                    <div class="row">
+                                                        <div class="col-md-4" text-align="right" align="right">
+                                                            <input type="month" id="bulan_ns" name="bulan_ns">
+                                                        </div>
+                                                        <div class="col-md-2" text-align="left" align="left">
+                                                            <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                        </div>
+
+                                                    </div>
 
 
 
-                                        </form>
+                                                </form>
+
+
+                                            </div>
+                                        </div>
+
+
 
                                     </div>
 

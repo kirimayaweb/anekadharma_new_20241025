@@ -42,6 +42,73 @@ class Tbl_penyusutan extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_list', $data);
     }
 
+    public function cari_between_date()
+    {
+
+        print_r("cari_between_date");
+        print_r("<br/>");
+        print_r("<br/>");
+        print_r("<br/>");
+
+        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+
+
+        print_r($Get_month_selected);
+        print_r("<br/>");
+        print_r("<br/>");
+        print_r($Get_YEAR_selected);
+        print_r("<br/>");
+        print_r("<br/>");
+        // die;
+
+
+        // $sql = "SELECT * FROM `tbl_penyusutan` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `group_kelompok_harta`,`id`";
+
+        // $Data_kas = $this->db->query($sql)->result();
+
+        $sql = "SELECT * FROM `tbl_penyusutan` WHERE `tahun_transaksi`='$Get_YEAR_selected' And `bulan_transaksi`='$Get_month_selected' ";
+        $GET_Penyusutan_data_RECORD = $this->db->query($sql);
+
+        print_r($GET_Penyusutan_data_RECORD->num_rows());
+        die;
+
+
+        if ($GET_Penyusutan_data_RECORD->num_rows() > 0) {
+            // Buat dat master semua list data dari master record tahun: 2025 bulan: 0
+
+        } else {
+            // Tampilkan data sesuai tahun dan bulan
+
+        }
+    }
+
+
+    public function Input_list_data_baru()
+    {
+        $data = array(
+            'button' => 'Create',
+            'action' => site_url('Tbl_penyusutan/Simpan_Input_list_data_baru_action'),
+            'id' => set_value('id'),
+            'uuid_penyusutan' => set_value('uuid_penyusutan'),
+            'kelompok_harta' => set_value('kelompok_harta'),
+            'tanggal_perolehan' => set_value('tanggal_perolehan'),
+            'harga_perolehan' => set_value('harga_perolehan'),
+            'user' => set_value('user'),
+            'armorst_penyusutan_thn_lalu' => set_value('armorst_penyusutan_thn_lalu'),
+            'nilai_buku_thn_lalu' => set_value('nilai_buku_thn_lalu'),
+            'penyusutan_bulan_ini' => set_value('penyusutan_bulan_ini'),
+            'armorst_penyusutan_bulan_ini' => set_value('armorst_penyusutan_bulan_ini'),
+            'nilai_buku_bulan_ini' => set_value('nilai_buku_bulan_ini'),
+        );
+
+
+        // $this->load->view('tbl_penyusutan/tbl_penyusutan_form', $data);        
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_form_input_list_baru', $data);
+    }
+
+
     public function json()
     {
         header('Content-Type: application/json');
