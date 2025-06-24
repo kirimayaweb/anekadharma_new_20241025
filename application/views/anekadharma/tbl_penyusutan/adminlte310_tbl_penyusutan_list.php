@@ -137,7 +137,13 @@
 
                                     <tr>
                                         <td align="left"><?php echo ++$start; ?></td>
-                                        <td align="left"><?php echo "Action"; ?></td>
+                                        <td align="left">
+
+                                            <!-- // echo "Action";  -->
+
+
+
+                                        </td>
                                         <td align="left" colspan="3">
                                             <?php
 
@@ -175,7 +181,19 @@
                                     <!-- Record awal group baru -->
                                     <tr>
                                         <td align="left"><?php echo ++$start; ?></td>
-                                        <td align="left"><?php echo "Action"; ?></td>
+                                        <td align="left">
+                                            <?php
+                                            // echo "Action"; 
+
+
+
+                                            echo anchor(site_url('Tbl_penyusutan/update_list_data/' . $list_data->uuid_penyusutan), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-sm"');
+                                            echo '  ';
+                                            echo anchor(site_url('Tbl_penyusutan/delete/' . $list_data->id), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+
+                                            ?>
+                                        </td>
                                         <td align="left">
                                             <?php
                                             echo $list_data->kelompok_harta;
@@ -217,7 +235,17 @@
                                         <!-- Record awal group baru -->
                                         <tr>
                                             <td align="left"><?php echo ++$start; ?></td>
-                                            <td align="left"><?php echo "Action"; ?></td>
+                                            <td align="left">
+                                                <?php
+                                                // echo "Action"; 
+
+                                                echo anchor(site_url('Tbl_penyusutan/update_list_data/' . $list_data->uuid_penyusutan), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-sm"');
+                                                echo '  ';
+                                                echo anchor(site_url('Tbl_penyusutan/delete/' . $list_data->id), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+
+                                                ?>
+                                            </td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->kelompok_harta;
@@ -252,8 +280,9 @@
                                         <!-- NAMA GROUP -->
                                         <tr>
                                             <td align="left"><?php echo ++$start; ?></td>
-                                            <td align="left"><?php echo "Action"; ?></td>
-                                            <td align="left"  colspan="3">
+                                            <td align="left"><?php //echo "Action"; 
+                                                                ?></td>
+                                            <td align="left" colspan="3">
                                                 <?php
                                                 // echo "<strong>" . $list_data->group_kelompok_harta . "</strong>";
 
@@ -288,7 +317,17 @@
                                         <!-- Record awal group baru -->
                                         <tr>
                                             <td align="left"><?php echo ++$start; ?></td>
-                                            <td align="left"><?php echo "Action"; ?></td>
+                                            <td align="left">
+                                                <?php
+                                                // echo "Action"; 
+
+                                                echo anchor(site_url('Tbl_penyusutan/update_list_data/' . $list_data->uuid_penyusutan), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-sm"');
+                                                echo '  ';
+                                                echo anchor(site_url('Tbl_penyusutan/delete/' . $list_data->id), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+
+                                                ?>
+                                            </td>
                                             <td align="left">
                                                 <?php
                                                 echo $list_data->kelompok_harta;

@@ -89,14 +89,12 @@ class Tbl_penyusutan extends CI_Controller
             $data = array(
                 'Data_penyusutan' => $GET_Penyusutan_data_RECORD->result(),
             );
-
         } else {
 
             // print_r("proses copy");
             $data = array(
                 'Data_penyusutan' => "",
             );
-
         }
 
         // print_r($data);
@@ -109,7 +107,7 @@ class Tbl_penyusutan extends CI_Controller
     public function Input_list_data_baru()
     {
         $data = array(
-            'button' => 'Create',
+            'button' => 'Simpan',
             'action' => site_url('Tbl_penyusutan/Simpan_Input_list_data_baru_action'),
             'id' => set_value('id'),
             'uuid_penyusutan' => set_value('uuid_penyusutan'),
@@ -187,6 +185,66 @@ class Tbl_penyusutan extends CI_Controller
         $this->Tbl_penyusutan_model->insert($data);
         $this->session->set_flashdata('message', 'Create Record Success');
         redirect(site_url('Tbl_penyusutan/cari_between_date/' . $year_selected . '/' . $month_selected));
+    }
+
+
+
+    public function update_list_data($uuid_penyusutan)
+    {
+        $row = $this->Tbl_penyusutan_model->get_by_uuid_penyusutan($uuid_penyusutan);
+
+        if ($row) {
+            $data = array(
+                'button' => 'Update',
+                'action' => site_url('tbl_penyusutan/update_list_data_action/' . $uuid_penyusutan),
+                'id' => set_value('id', $row->id),
+                'uuid_penyusutan' => set_value('uuid_penyusutan', $row->uuid_penyusutan),
+                'group_kelompok_harta' => set_value('group_kelompok_harta', $row->group_kelompok_harta),
+                'kelompok_harta' => set_value('kelompok_harta', $row->kelompok_harta),
+                'tanggal_perolehan' => set_value('tanggal_perolehan', $row->tanggal_perolehan),
+                'harga_perolehan' => set_value('harga_perolehan', $row->harga_perolehan),
+                'user' => set_value('user', $row->user),
+                'armorst_penyusutan_thn_lalu' => set_value('armorst_penyusutan_thn_lalu', $row->armorst_penyusutan_thn_lalu),
+                'nilai_buku_thn_lalu' => set_value('nilai_buku_thn_lalu', $row->nilai_buku_thn_lalu),
+                'penyusutan_bulan_ini' => set_value('penyusutan_bulan_ini', $row->penyusutan_bulan_ini),
+                'armorst_penyusutan_bulan_ini' => set_value('armorst_penyusutan_bulan_ini', $row->armorst_penyusutan_bulan_ini),
+                'nilai_buku_bulan_ini' => set_value('nilai_buku_bulan_ini', $row->nilai_buku_bulan_ini),
+            );
+
+            // $this->load->view('tbl_penyusutan/tbl_penyusutan_form', $data);
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_form_input_list_update', $data);
+        } else {
+
+            $this->session->set_flashdata('message', 'Record Not Found');
+            redirect(site_url('tbl_penyusutan'));
+        }
+    }
+
+    public function update_list_data_action($uuid_penyusutan = null)
+    {
+
+        $row = $this->Tbl_penyusutan_model->get_by_uuid_penyusutan($uuid_penyusutan);
+
+        $data = array(
+                // 'uuid_penyusutan' => $this->input->post('uuid_penyusutan', TRUE),
+                'group_kelompok_harta' => $this->input->post('group_kelompok_harta', TRUE),
+                'kelompok_harta' => $this->input->post('KlmpkJenisHarta', TRUE),
+                'tanggal_perolehan' => date("Y-m-d H:i:s", strtotime($this->input->post('tanggal_perolehan', TRUE))),
+                'harga_perolehan' => $this->input->post('HargaPerolehan', TRUE),
+                'user' => $this->input->post('User', TRUE),
+                'armorst_penyusutan_thn_lalu' => $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE),
+                'nilai_buku_thn_lalu' => $this->input->post('NilaiBukuTahunLalu', TRUE),
+                'penyusutan_bulan_ini' => $this->input->post('Penyusutan', TRUE),
+                'armorst_penyusutan_bulan_ini' => $this->input->post('AmortisasiPenyusutanTahunIni', TRUE),
+                'nilai_buku_bulan_ini' => $this->input->post('nilaibukubulanini', TRUE),
+
+
+
+            );
+
+            $this->Tbl_penyusutan_model->update($row->id, $data);
+            $this->session->set_flashdata('message', 'Update Record Success');
+            redirect(site_url('Tbl_penyusutan'));
     }
 
 

@@ -77,8 +77,7 @@
 
 
 
-
-                        <form action="Simpan_Input_list_data_baru_action" method="post">
+                        <form action="<?php echo $action; ?>" method="post">
 
 
 
@@ -263,7 +262,7 @@
 
 
 
-                            <div class="form-group">
+                            <!-- <div class="form-group">
                                 <div class="row">
                                     <div class="col-12" align="center">
                                         <button type="submit" class="btn btn-success" data-toggle="modal" data-target="#modal-xl">
@@ -271,7 +270,7 @@
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div> -->
 
 
                             <div class="form-group">
@@ -279,8 +278,7 @@
                                     <div class="col-12" align="center">
                                         <!-- <input type="hidden" name="id" value="<?php //echo $id; 
                                                                                     ?>" /> -->
-                                        <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
-                                                                                            ?></button> -->
+                                        <button type="submit" class="btn btn-primary"><?php echo $button; ?></button> 
                                         <a href="<?php echo site_url('Tbl_penyusutan') ?>" class="btn btn-default">Cancel</a>
                                     </div>
                                 </div>

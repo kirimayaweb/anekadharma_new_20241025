@@ -8,6 +8,7 @@ class Tbl_penyusutan_model extends CI_Model
 
     public $table = 'tbl_penyusutan';
     public $id = 'id';
+    public $uuid_penyusutan = 'uuid_penyusutan';
     public $order = 'DESC';
 
     function __construct()
@@ -37,6 +38,13 @@ class Tbl_penyusutan_model extends CI_Model
     function get_by_id($id)
     {
         $this->db->where($this->id, $id);
+        return $this->db->get($this->table)->row();
+    }
+
+    // get data by id
+    function get_by_uuid_penyusutan($uuid_penyusutan)
+    {
+        $this->db->where($this->uuid_penyusutan, $uuid_penyusutan);
         return $this->db->get($this->table)->row();
     }
 
