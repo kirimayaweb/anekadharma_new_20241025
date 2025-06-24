@@ -42,45 +42,67 @@ class Tbl_penyusutan extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_list', $data);
     }
 
-    public function cari_between_date()
+    public function cari_between_date($GET_tahun = null, $GET_bulan = null)
     {
 
-        print_r("cari_between_date");
-        print_r("<br/>");
-        print_r("<br/>");
-        print_r("<br/>");
+        // print_r("cari_between_date");
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
 
-        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        if ($GET_tahun) {
 
+            $Get_month_selected = $GET_bulan;
+            $Get_YEAR_selected = $GET_tahun;
+        } else {
 
-        print_r($Get_month_selected);
-        print_r("<br/>");
-        print_r("<br/>");
-        print_r($Get_YEAR_selected);
-        print_r("<br/>");
-        print_r("<br/>");
-        // die;
+            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        }
+
+        // print_r($Get_month_selected);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r($Get_YEAR_selected);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // // die;
 
 
         // $sql = "SELECT * FROM `tbl_penyusutan` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `group_kelompok_harta`,`id`";
 
         // $Data_kas = $this->db->query($sql)->result();
 
-        $sql = "SELECT * FROM `tbl_penyusutan` WHERE `tahun_transaksi`='$Get_YEAR_selected' And `bulan_transaksi`='$Get_month_selected' ";
+        $sql = "SELECT * FROM `tbl_penyusutan` WHERE `tahun_transaksi`='$Get_YEAR_selected' And `bulan_transaksi`='$Get_month_selected' order by group_kelompok_harta, id";
         $GET_Penyusutan_data_RECORD = $this->db->query($sql);
 
-        print_r($GET_Penyusutan_data_RECORD->num_rows());
-        die;
+        // print_r($GET_Penyusutan_data_RECORD->num_rows());
+        // die;
 
 
         if ($GET_Penyusutan_data_RECORD->num_rows() > 0) {
-            // Buat dat master semua list data dari master record tahun: 2025 bulan: 0
+            // Buat data master semua list data dari master record tahun: 2025 bulan: 0
 
-        } else {
+
             // Tampilkan data sesuai tahun dan bulan
 
+            $data = array(
+                'Data_penyusutan' => $GET_Penyusutan_data_RECORD->result(),
+            );
+
+        } else {
+
+            // print_r("proses copy");
+            $data = array(
+                'Data_penyusutan' => "",
+            );
+
         }
+
+        // print_r($data);
+        // die;
+
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_list', $data);
     }
 
 
@@ -106,6 +128,65 @@ class Tbl_penyusutan extends CI_Controller
         // $this->load->view('tbl_penyusutan/tbl_penyusutan_form', $data);        
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penyusutan/adminlte310_tbl_penyusutan_form_input_list_baru', $data);
+    }
+
+    public function Simpan_Input_list_data_baru_action()
+    {
+
+        // print_r("Simpan_Input_list_data_baru_action");
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+        $month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+        $year_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+
+        // print_r($month_selected);
+        // print_r("<br/>");
+        // print_r($year_selected);
+        // print_r("<br/>");
+        // print_r($this->input->post('group_kelompok_harta', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('KlmpkJenisHarta', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('HargaPerolehan', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('User', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('AmortisasiPenyusutanTahunLalu', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('NilaiBuku', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('Penyusutan', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('AmortisasiPenyusutanTahunIni', TRUE));
+        // print_r("<br/>");
+        // print_r($this->input->post('nilaibuku', TRUE));
+        // print_r("<br/>");
+
+        // die;
+
+        // $Get_date_input = date("Y-m-d H:i:s");
+
+        $data = array(
+            'tgl_input' => date("Y-m-d H:i:s"),
+            'tahun_transaksi' => $year_selected,
+            'bulan_transaksi' => $month_selected,
+            'tanggal_perolehan' => date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE))),
+            'group_kelompok_harta' => $this->input->post('group_kelompok_harta', TRUE),
+            'kelompok_harta' => $this->input->post('KlmpkJenisHarta', TRUE),
+            // 'tanggal_perolehan' => $this->input->post('', TRUE),
+            'harga_perolehan' => $this->input->post('HargaPerolehan', TRUE),
+            'user' => $this->input->post('User', TRUE),
+            'armorst_penyusutan_thn_lalu' => $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE),
+            'nilai_buku_thn_lalu' => $this->input->post('NilaiBukuTahunLalu', TRUE),
+            'penyusutan_bulan_ini' => $this->input->post('Penyusutan', TRUE),
+            'armorst_penyusutan_bulan_ini' => $this->input->post('AmortisasiPenyusutanTahunIni', TRUE),
+            'nilai_buku_bulan_ini' => $this->input->post('nilaibukubulanini', TRUE),
+        );
+
+        $this->Tbl_penyusutan_model->insert($data);
+        $this->session->set_flashdata('message', 'Create Record Success');
+        redirect(site_url('Tbl_penyusutan/cari_between_date/' . $year_selected . '/' . $month_selected));
     }
 
 
