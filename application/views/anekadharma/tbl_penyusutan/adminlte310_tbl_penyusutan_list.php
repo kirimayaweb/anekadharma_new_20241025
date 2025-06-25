@@ -129,10 +129,16 @@
 
                             $Total_Harga_Perolehan = 0;
                             $Total_Armost_Penyusutan_tahun_lalu = 0;
-                            $TOTAL_Nilai_buku_tahun_lalu=0;
-                            $TOTAL_penyusutan_bulan_ini=0;
-                            $Total_armost_penyusutan_bulan_ini=0;
-                            $Nilai_buku_bulan_ini=0;
+                            $TOTAL_Nilai_buku_tahun_lalu = 0;
+                            $TOTAL_penyusutan_bulan_ini = 0;
+                            $Total_armost_penyusutan_bulan_ini = 0;
+                            $TOTAL_Nilai_buku_bulan_ini = 0;
+
+                            $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN = 0;
+                            $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN = 0;
+                            $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN = 0;
+                            $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN = 0;
+                            $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN = 0;
 
                             foreach ($Data_penyusutan as $list_data) {
 
@@ -215,41 +221,41 @@
                                         </td>
                                         <td align="center"><?php echo $list_data->user; ?></td>
                                         <td align="right">
-                                            <?php 
+                                            <?php
                                             // echo $list_data->armorst_penyusutan_thn_lalu; 
                                             echo number_format($list_data->armorst_penyusutan_thn_lalu, 2, ',', '.');
-                                        $Total_Armost_Penyusutan_tahun_lalu=$Total_Armost_Penyusutan_tahun_lalu+$list_data->armorst_penyusutan_thn_lalu;
-                                        
-                                        ?>
+                                            $Total_Armost_Penyusutan_tahun_lalu = $Total_Armost_Penyusutan_tahun_lalu + $list_data->armorst_penyusutan_thn_lalu;
+
+                                            ?>
                                         </td>
                                         <td align="right">
-                                            <?php 
+                                            <?php
                                             // echo $list_data->nilai_buku_thn_lalu; 
                                             echo number_format($list_data->nilai_buku_thn_lalu, 2, ',', '.');
-                                        $TOTAL_Nilai_buku_tahun_lalu=$TOTAL_Nilai_buku_tahun_lalu+$list_data->nilai_buku_thn_lalu;
-                                        ?>
+                                            $TOTAL_Nilai_buku_tahun_lalu = $TOTAL_Nilai_buku_tahun_lalu + $list_data->nilai_buku_thn_lalu;
+                                            ?>
                                         </td>
                                         <td align="right">
-                                            <?php 
+                                            <?php
                                             // echo $list_data->penyusutan_bulan_ini; 
                                             echo number_format($list_data->penyusutan_bulan_ini, 2, ',', '.');
-                                            $TOTAL_penyusutan_bulan_ini=$TOTAL_penyusutan_bulan_ini+$list_data->penyusutan_bulan_ini;
+                                            $TOTAL_penyusutan_bulan_ini = $TOTAL_penyusutan_bulan_ini + $list_data->penyusutan_bulan_ini;
                                             ?>
-                                            </td>
-                                        <td align="right">
-                                            <?php 
-                                            // echo $list_data->armorst_penyusutan_bulan_ini; 
-                                            echo number_format($list_data->armorst_penyusutan_bulan_ini, 2, ',', '.');
-                                            $Total_armost_penyusutan_bulan_ini=$Total_armost_penyusutan_bulan_ini+$list_data->armorst_penyusutan_bulan_ini;
-                                        ?>
                                         </td>
                                         <td align="right">
-                                            <?php 
+                                            <?php
+                                            // echo $list_data->armorst_penyusutan_bulan_ini; 
+                                            echo number_format($list_data->armorst_penyusutan_bulan_ini, 2, ',', '.');
+                                            $Total_armost_penyusutan_bulan_ini = $Total_armost_penyusutan_bulan_ini + $list_data->armorst_penyusutan_bulan_ini;
+                                            ?>
+                                        </td>
+                                        <td align="right">
+                                            <?php
                                             // echo $list_data->nilai_buku_bulan_ini; 
                                             echo number_format($list_data->nilai_buku_bulan_ini, 2, ',', '.');
-                                            $Nilai_buku_bulan_ini=$Nilai_buku_bulan_ini+$list_data->nilai_buku_bulan_ini;
+                                            $TOTAL_Nilai_buku_bulan_ini = $TOTAL_Nilai_buku_bulan_ini + $list_data->nilai_buku_bulan_ini;
                                             ?>
-                                            </td>
+                                        </td>
                                     </tr>
 
 
@@ -304,40 +310,40 @@
                                             </td>
                                             <td align="center"><?php echo $list_data->user; ?></td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->armorst_penyusutan_thn_lalu; 
                                                 echo number_format($list_data->armorst_penyusutan_thn_lalu, 2, ',', '.');
-                                            $Total_Armost_Penyusutan_tahun_lalu=$Total_Armost_Penyusutan_tahun_lalu+$list_data->armorst_penyusutan_thn_lalu;
-                                            ?>
+                                                $Total_Armost_Penyusutan_tahun_lalu = $Total_Armost_Penyusutan_tahun_lalu + $list_data->armorst_penyusutan_thn_lalu;
+                                                ?>
                                             </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->nilai_buku_thn_lalu; 
                                                 echo number_format($list_data->nilai_buku_thn_lalu, 2, ',', '.');
-                                                $TOTAL_Nilai_buku_tahun_lalu=$TOTAL_Nilai_buku_tahun_lalu+$list_data->nilai_buku_thn_lalu;
+                                                $TOTAL_Nilai_buku_tahun_lalu = $TOTAL_Nilai_buku_tahun_lalu + $list_data->nilai_buku_thn_lalu;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->penyusutan_bulan_ini; 
                                                 echo number_format($list_data->penyusutan_bulan_ini, 2, ',', '.');
-                                                $TOTAL_penyusutan_bulan_ini=$TOTAL_penyusutan_bulan_ini+$list_data->penyusutan_bulan_ini;
+                                                $TOTAL_penyusutan_bulan_ini = $TOTAL_penyusutan_bulan_ini + $list_data->penyusutan_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->armorst_penyusutan_bulan_ini; 
                                                 echo number_format($list_data->armorst_penyusutan_bulan_ini, 2, ',', '.');
-                                                $Total_armost_penyusutan_bulan_ini=$Total_armost_penyusutan_bulan_ini+$list_data->armorst_penyusutan_bulan_ini;
+                                                $Total_armost_penyusutan_bulan_ini = $Total_armost_penyusutan_bulan_ini + $list_data->armorst_penyusutan_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->nilai_buku_bulan_ini; 
                                                 echo number_format($list_data->nilai_buku_bulan_ini, 2, ',', '.');
-                                                $Nilai_buku_bulan_ini=$Nilai_buku_bulan_ini+$list_data->nilai_buku_bulan_ini;
+                                                $TOTAL_Nilai_buku_bulan_ini = $TOTAL_Nilai_buku_bulan_ini + $list_data->nilai_buku_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                         </tr>
 
 
@@ -362,41 +368,59 @@
                                             <td align="right">
                                                 <?php
                                                 // echo $Total_Harga_Perolehan;
-                                                echo number_format($Total_Harga_Perolehan, 2, ',', '.');
+                                                echo "<strong>" . number_format($Total_Harga_Perolehan, 2, ',', '.') . "</strong>";
+
+                                                if ($GET_GroupName == "group_1") {
+                                                    $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                                } else if ($GET_GroupName == "group_2") {
+                                                    $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                                } else if ($GET_GroupName == "group_3") {
+                                                    $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                                } else if ($GET_GroupName == "group_4") {
+                                                    $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                                } else if ($GET_GroupName == "group_5") {
+                                                    $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                                }
+
+
+
+
+
+
                                                 $Total_Harga_Perolehan = 0;
                                                 ?>
                                             </td>
                                             <td align="right"></td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $Total_Armost_Penyusutan_tahun_lalu;
-                                                echo number_format($Total_Armost_Penyusutan_tahun_lalu, 2, ',', '.');
+                                                echo "<strong>" . number_format($Total_Armost_Penyusutan_tahun_lalu, 2, ',', '.') . "</strong>";
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $TOTAL_Nilai_buku_tahun_lalu;
-                                                echo number_format($TOTAL_Nilai_buku_tahun_lalu, 2, ',', '.');
+                                                echo "<strong>" . number_format($TOTAL_Nilai_buku_tahun_lalu, 2, ',', '.') . "</strong>";
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $TOTAL_penyusutan_bulan_ini;
-                                                echo number_format($TOTAL_penyusutan_bulan_ini, 2, ',', '.');
+                                                echo "<strong>" . number_format($TOTAL_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $Total_armost_penyusutan_bulan_ini;
-                                                echo number_format($Total_armost_penyusutan_bulan_ini, 2, ',', '.');
+                                                echo "<strong>" . number_format($Total_armost_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
                                                 ?>
-                                        </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
-                                                // echo $Nilai_buku_bulan_ini;
-                                                echo number_format($Nilai_buku_bulan_ini, 2, ',', '.');
+                                                <?php
+                                                // echo $TOTAL_Nilai_buku_bulan_ini;
+                                                echo "<strong>" . number_format($TOTAL_Nilai_buku_bulan_ini, 2, ',', '.') . "</strong>";
                                                 ?>
-                                                </td>
+                                            </td>
                                         </tr>
 
 
@@ -477,40 +501,40 @@
                                             </td>
                                             <td align="center"><?php echo $list_data->user; ?></td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->armorst_penyusutan_thn_lalu; 
                                                 echo number_format($list_data->armorst_penyusutan_thn_lalu, 2, ',', '.');
-                                            $Total_Armost_Penyusutan_tahun_lalu=$Total_Armost_Penyusutan_tahun_lalu+$list_data->armorst_penyusutan_thn_lalu;
-                                            ?>
+                                                $Total_Armost_Penyusutan_tahun_lalu = $Total_Armost_Penyusutan_tahun_lalu + $list_data->armorst_penyusutan_thn_lalu;
+                                                ?>
                                             </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->nilai_buku_thn_lalu; 
                                                 echo number_format($list_data->nilai_buku_thn_lalu, 2, ',', '.');
-                                                $TOTAL_Nilai_buku_tahun_lalu=$TOTAL_Nilai_buku_tahun_lalu+$list_data->nilai_buku_thn_lalu;
+                                                $TOTAL_Nilai_buku_tahun_lalu = $TOTAL_Nilai_buku_tahun_lalu + $list_data->nilai_buku_thn_lalu;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->penyusutan_bulan_ini; 
                                                 echo number_format($list_data->penyusutan_bulan_ini, 2, ',', '.');
-                                                $TOTAL_penyusutan_bulan_ini=$TOTAL_penyusutan_bulan_ini+$list_data->penyusutan_bulan_ini;
+                                                $TOTAL_penyusutan_bulan_ini = $TOTAL_penyusutan_bulan_ini + $list_data->penyusutan_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->armorst_penyusutan_bulan_ini; 
                                                 echo number_format($list_data->armorst_penyusutan_bulan_ini, 2, ',', '.');
-                                                $Total_armost_penyusutan_bulan_ini=$Total_armost_penyusutan_bulan_ini+$list_data->armorst_penyusutan_bulan_ini;
+                                                $Total_armost_penyusutan_bulan_ini = $Total_armost_penyusutan_bulan_ini + $list_data->armorst_penyusutan_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                             <td align="right">
-                                                <?php 
+                                                <?php
                                                 // echo $list_data->nilai_buku_bulan_ini; 
                                                 echo number_format($list_data->nilai_buku_bulan_ini, 2, ',', '.');
-                                                $Nilai_buku_bulan_ini=$Nilai_buku_bulan_ini+$list_data->nilai_buku_bulan_ini;
+                                                $TOTAL_Nilai_buku_bulan_ini = $TOTAL_Nilai_buku_bulan_ini + $list_data->nilai_buku_bulan_ini;
                                                 ?>
-                                                </td>
+                                            </td>
                                         </tr>
 
                                 <?php
@@ -544,23 +568,95 @@
                                 <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                                     <thead>
                                         <tr>
-                                            <th style="text-align:center" width="10px">No</th>
-                                            <th style="text-align:center">Tgl Po</th>
-                                            <th style="text-align:center">Spop</th>
+                                            <th style="text-align:center" width="10px">REKAP <?php echo date('Y'); ?></th>
+                                            <th style="text-align:center">HARGA PEROLEHAN / <?php echo date('Y'); ?></th>
+                                            <th style="text-align:center">PENYUSUTAN</th>
+                                            <th style="text-align:center">AMORTISASI</th>
+                                            <th style="text-align:center">NILAI BUKU</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php
-                                        foreach ($Tbl_pembelian_data as $list_data) {
+                                        // foreach ($Tbl_pembelian_data as $list_data) {
                                         ?>
                                             <tr>
-                                                <td><?php echo ++$start; ?></td>
+                                                <td>BANGUNAN TETAP</td>
+                                                <td align="right">
+                                                    <?php 
+                                                    // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
+                                                    echo number_format($TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+                                                    ?>
+                                                    </td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+
+                                            </tr>
+                                            <tr>
+                                                <td>BANGUNAN TIDAK TETAP</td>
+                                                <td align="right">
+                                                    <?php 
+                                                    // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
+                                                    echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+                                                    ?>
+                                                    </td>
+
+
+
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+
+                                            </tr>
+                                            <tr>
+                                                <td>INVENTARIS GOL.1</td>
+                                                <td align="right">
+                                                    <?php 
+                                                    // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
+                                                    echo number_format($TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN, 2, ',', '.');
+                                                    ?>
+                                                    </td>
+
+
+
+
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+
+                                            </tr>
+                                            <tr>
+                                                <td>INVENTARIS GOL.2</td>
+                                                <td align="right">
+                                                    <?php 
+                                                    // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
+                                                    echo number_format($TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN, 2, ',', '.');
+                                                    ?>
+                                                    </td>
+
+
+
+
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+
+                                            </tr>
+                                            <tr>
+                                                <td>INVENTARIS GOL.3</td>
+                                                <td align="right">
+                                                    <?php 
+                                                    // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
+                                                    echo number_format($TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN, 2, ',', '.');
+                                                    ?>
+                                                    </td>
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
 
                                             </tr>
                                         <?php
-                                        }
+                                        // }
                                         ?>
 
 
@@ -569,6 +665,8 @@
 
                                     <tfoot>
                                         <tr>
+                                            <th></th>
+                                            <th></th>
                                             <th></th>
                                             <th></th>
                                             <th></th>
