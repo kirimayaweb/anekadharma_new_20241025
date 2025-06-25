@@ -8,6 +8,9 @@ class Tbl_penyusutan_model extends CI_Model
 
     public $table = 'tbl_penyusutan';
     public $id = 'id';
+    public $tahun_transaksi = 'tahun_transaksi';
+    public $bulan_transaksi = 'bulan_transaksi';
+    public $group_kelompok_harta = 'group_kelompok_harta';
     public $uuid_penyusutan = 'uuid_penyusutan';
     public $order = 'DESC';
     public $orderASC = 'ASC';
@@ -31,6 +34,9 @@ class Tbl_penyusutan_model extends CI_Model
     // get all
     function get_all()
     {
+        $this->db->order_by($this->tahun_transaksi, $this->orderASC);
+        $this->db->order_by($this->bulan_transaksi, $this->orderASC);
+        $this->db->order_by($this->group_kelompok_harta, $this->orderASC);
         $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }

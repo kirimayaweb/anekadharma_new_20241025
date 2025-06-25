@@ -73,7 +73,7 @@ class Tbl_penyusutan extends CI_Controller
 
         // $Data_kas = $this->db->query($sql)->result();
 
-        $sql = "SELECT * FROM `tbl_penyusutan` WHERE `tahun_transaksi`='$Get_YEAR_selected' And `bulan_transaksi`='$Get_month_selected' order by group_kelompok_harta, id";
+        $sql = "SELECT * FROM `tbl_penyusutan` WHERE `tahun_transaksi`='$Get_YEAR_selected' And `bulan_transaksi`='$Get_month_selected' order by tahun_transaksi,bulan_transaksi,group_kelompok_harta, id";
         $GET_Penyusutan_data_RECORD = $this->db->query($sql);
 
         // print_r($GET_Penyusutan_data_RECORD->num_rows());
