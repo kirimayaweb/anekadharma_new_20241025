@@ -165,6 +165,26 @@ class Tbl_penyusutan extends CI_Controller
 
         // $Get_date_input = date("Y-m-d H:i:s");
 
+
+        $data_input_box_HargaPerolehan = str_replace('.', '', $this->input->post('HargaPerolehan', TRUE));
+        $data_input_box_HargaPerolehan = str_replace(',', '.', $data_input_box_HargaPerolehan);
+
+        $data_input_box_AmortisasiPenyusutanTahunLalu = str_replace('.', '', $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE));
+        $data_input_box_AmortisasiPenyusutanTahunLalu = str_replace(',', '.', $data_input_box_AmortisasiPenyusutanTahunLalu);
+
+        $data_input_box_NilaiBukuTahunLalu = str_replace('.', '', $this->input->post('NilaiBukuTahunLalu', TRUE));
+        $data_input_box_NilaiBukuTahunLalu = str_replace(',', '.', $data_input_box_NilaiBukuTahunLalu);
+
+        $data_input_box_Penyusutan = str_replace('.', '', $this->input->post('Penyusutan', TRUE));
+        $data_input_box_Penyusutan = str_replace(',', '.', $data_input_box_Penyusutan);
+
+        $data_input_box_AmortisasiPenyusutanTahunIni = str_replace('.', '', $this->input->post('AmortisasiPenyusutanTahunIni', TRUE));
+        $data_input_box_AmortisasiPenyusutanTahunIni = str_replace(',', '.', $data_input_box_AmortisasiPenyusutanTahunIni);
+
+        $data_input_box_nilaibukubulanini = str_replace('.', '', $this->input->post('nilaibukubulanini', TRUE));
+        $data_input_box_nilaibukubulanini = str_replace(',', '.', $data_input_box_nilaibukubulanini);
+
+
         $data = array(
             'tgl_input' => date("Y-m-d H:i:s"),
             'tahun_transaksi' => $year_selected,
@@ -173,13 +193,13 @@ class Tbl_penyusutan extends CI_Controller
             'group_kelompok_harta' => $this->input->post('group_kelompok_harta', TRUE),
             'kelompok_harta' => $this->input->post('KlmpkJenisHarta', TRUE),
             // 'tanggal_perolehan' => $this->input->post('', TRUE),
-            'harga_perolehan' => $this->input->post('HargaPerolehan', TRUE),
+            'harga_perolehan' => $data_input_box_HargaPerolehan,
             'user' => $this->input->post('User', TRUE),
-            'armorst_penyusutan_thn_lalu' => $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE),
-            'nilai_buku_thn_lalu' => $this->input->post('NilaiBukuTahunLalu', TRUE),
-            'penyusutan_bulan_ini' => $this->input->post('Penyusutan', TRUE),
-            'armorst_penyusutan_bulan_ini' => $this->input->post('AmortisasiPenyusutanTahunIni', TRUE),
-            'nilai_buku_bulan_ini' => $this->input->post('nilaibukubulanini', TRUE),
+            'armorst_penyusutan_thn_lalu' => $data_input_box_AmortisasiPenyusutanTahunLalu,
+            'nilai_buku_thn_lalu' => $data_input_box_NilaiBukuTahunLalu,
+            'penyusutan_bulan_ini' => $data_input_box_Penyusutan,
+            'armorst_penyusutan_bulan_ini' => $data_input_box_AmortisasiPenyusutanTahunIni,
+            'nilai_buku_bulan_ini' => $data_input_box_nilaibukubulanini,
         );
 
         $this->Tbl_penyusutan_model->insert($data);
@@ -226,25 +246,25 @@ class Tbl_penyusutan extends CI_Controller
         $row = $this->Tbl_penyusutan_model->get_by_uuid_penyusutan($uuid_penyusutan);
 
         $data = array(
-                // 'uuid_penyusutan' => $this->input->post('uuid_penyusutan', TRUE),
-                'group_kelompok_harta' => $this->input->post('group_kelompok_harta', TRUE),
-                'kelompok_harta' => $this->input->post('KlmpkJenisHarta', TRUE),
-                'tanggal_perolehan' => date("Y-m-d H:i:s", strtotime($this->input->post('tanggal_perolehan', TRUE))),
-                'harga_perolehan' => $this->input->post('HargaPerolehan', TRUE),
-                'user' => $this->input->post('User', TRUE),
-                'armorst_penyusutan_thn_lalu' => $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE),
-                'nilai_buku_thn_lalu' => $this->input->post('NilaiBukuTahunLalu', TRUE),
-                'penyusutan_bulan_ini' => $this->input->post('Penyusutan', TRUE),
-                'armorst_penyusutan_bulan_ini' => $this->input->post('AmortisasiPenyusutanTahunIni', TRUE),
-                'nilai_buku_bulan_ini' => $this->input->post('nilaibukubulanini', TRUE),
+            // 'uuid_penyusutan' => $this->input->post('uuid_penyusutan', TRUE),
+            'group_kelompok_harta' => $this->input->post('group_kelompok_harta', TRUE),
+            'kelompok_harta' => $this->input->post('KlmpkJenisHarta', TRUE),
+            'tanggal_perolehan' => date("Y-m-d H:i:s", strtotime($this->input->post('tanggal_perolehan', TRUE))),
+            'harga_perolehan' => $this->input->post('HargaPerolehan', TRUE),
+            'user' => $this->input->post('User', TRUE),
+            'armorst_penyusutan_thn_lalu' => $this->input->post('AmortisasiPenyusutanTahunLalu', TRUE),
+            'nilai_buku_thn_lalu' => $this->input->post('NilaiBukuTahunLalu', TRUE),
+            'penyusutan_bulan_ini' => $this->input->post('Penyusutan', TRUE),
+            'armorst_penyusutan_bulan_ini' => $this->input->post('AmortisasiPenyusutanTahunIni', TRUE),
+            'nilai_buku_bulan_ini' => $this->input->post('nilaibukubulanini', TRUE),
 
 
 
-            );
+        );
 
-            $this->Tbl_penyusutan_model->update($row->id, $data);
-            $this->session->set_flashdata('message', 'Update Record Success');
-            redirect(site_url('Tbl_penyusutan'));
+        $this->Tbl_penyusutan_model->update($row->id, $data);
+        $this->session->set_flashdata('message', 'Update Record Success');
+        redirect(site_url('Tbl_penyusutan'));
     }
 
 

@@ -229,7 +229,7 @@
                                     <div class="col-4">
                                         <label for="NilaiBukuTahunLalu">Nilai Buku Bulan lalu<?php //echo form_error('nmrkirim') 
                                                                                                 ?></label>
-                                        <input type="text" class="form-control" rows="3" name="NilaiBukuTahunLalu" id="NilaiBukuTahunLalu" placeholder="Nilai Buku Tahun Lalu" value="<?php echo $nilai_buku_thn_lalu; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="NilaiBukuTahunLalu" id="NilaiBukuTahunLalu" placeholder="Nilai Buku Tahun Lalu" value="<?php echo $nilai_buku_thn_lalu; ?>" >
                                     </div>
 
 
@@ -242,18 +242,18 @@
                                     <div class="col-4">
                                         <label for="Penyusutan">Penyusutan <?php //echo form_error('nmrkirim') 
                                                                             ?></label>
-                                        <input type="text" class="form-control" rows="3" name="Penyusutan" id="Penyusutan" placeholder="Penyusutan" value="<?php echo $penyusutan_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="Penyusutan" id="Penyusutan" placeholder="Penyusutan" value="<?php echo $penyusutan_bulan_ini; ?>" >
                                     </div>
 
                                     <div class="col-4">
                                         <label for="AmortisasiPenyusutanTahunIni">Amortisasi Penyusutan Tahun Ini</label>
-                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunIni" id="AmortisasiPenyusutanTahunIni" placeholder="Amortisasi Penyusutan Tahun Ini" value="<?php echo $armorst_penyusutan_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunIni" id="AmortisasiPenyusutanTahunIni" placeholder="Amortisasi Penyusutan Tahun Ini" value="<?php echo $armorst_penyusutan_bulan_ini; ?>" >
                                     </div>
 
                                     <div class="col-4">
                                         <label for="nilaibukubulanini">Nilai Buku <?php //echo form_error('nmrkirim') 
                                                                                     ?></label>
-                                        <input type="text" class="form-control" rows="3" name="nilaibukubulanini" id="nilaibukubulanini" placeholder="Nilai Buku Bulan Ini" value="<?php echo $nilai_buku_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="nilaibukubulanini" id="nilaibukubulanini" placeholder="Nilai Buku Bulan Ini" value="<?php echo $nilai_buku_bulan_ini; ?>" >
                                     </div>
 
 
