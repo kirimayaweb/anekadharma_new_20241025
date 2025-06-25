@@ -218,7 +218,7 @@
                                         <td align="left">
                                             <?php
                                             // echo $list_data->kelompok_harta;
-                                            echo number_format($list_data->kelompok_harta, 2, ',', '.');
+                                            echo $list_data->kelompok_harta;
                                             $GET_GroupName = $list_data->group_kelompok_harta; //Ubah Variabel group ke GROUP BARU
                                             ?>
                                         </td>
