@@ -140,6 +140,24 @@
                             $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN = 0;
                             $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN = 0;
 
+                            $TOTAL_BANGUNAN_TETAP_PENYUSUTAN = 0;
+                            $TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN = 0;
+                            $TOTAL_INVENTARIS_GOL_1_PENYUSUTAN = 0;
+                            $TOTAL_INVENTARIS_GOL_2_PENYUSUTAN = 0;
+                            $TOTAL_INVENTARIS_GOL_3_PENYUSUTAN = 0;
+
+                            $TOTAL_BANGUNAN_TETAP_AMORTISASI = 0;
+                            $TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI = 0;
+                            $TOTAL_INVENTARIS_GOL_1_AMORTISASI = 0;
+                            $TOTAL_INVENTARIS_GOL_2_AMORTISASI = 0;
+                            $TOTAL_INVENTARIS_GOL_3_AMORTISASI = 0;
+
+                            $TOTAL_BANGUNAN_TETAP_NILAI_BUKU = 0;
+                            $TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU = 0;
+                            $TOTAL_INVENTARIS_GOL_1_NILAI_BUKU = 0;
+                            $TOTAL_INVENTARIS_GOL_2_NILAI_BUKU = 0;
+                            $TOTAL_INVENTARIS_GOL_3_NILAI_BUKU = 0;
+
                             foreach ($Data_penyusutan as $list_data) {
 
                                 if ($start == 0) {
@@ -257,11 +275,6 @@
                                             ?>
                                         </td>
                                     </tr>
-
-
-
-
-
 
                                 <?php
                                 } else {
@@ -382,11 +395,6 @@
                                                     $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
                                                 }
 
-
-
-
-
-
                                                 $Total_Harga_Perolehan = 0;
                                                 ?>
                                             </td>
@@ -395,30 +403,78 @@
                                                 <?php
                                                 // echo $Total_Armost_Penyusutan_tahun_lalu;
                                                 echo "<strong>" . number_format($Total_Armost_Penyusutan_tahun_lalu, 2, ',', '.') . "</strong>";
+                                                $Total_Armost_Penyusutan_tahun_lalu = 0;
+
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_Nilai_buku_tahun_lalu;
                                                 echo "<strong>" . number_format($TOTAL_Nilai_buku_tahun_lalu, 2, ',', '.') . "</strong>";
+
+                                                $TOTAL_Nilai_buku_tahun_lalu = 0;
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_penyusutan_bulan_ini;
                                                 echo "<strong>" . number_format($TOTAL_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
+
+                                                if ($GET_GroupName == "group_1") {
+                                                    $TOTAL_BANGUNAN_TETAP_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_2") {
+                                                    $TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_3") {
+                                                    $TOTAL_INVENTARIS_GOL_1_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_4") {
+                                                    $TOTAL_INVENTARIS_GOL_2_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_5") {
+                                                    $TOTAL_INVENTARIS_GOL_3_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                                }
+                                                $TOTAL_penyusutan_bulan_ini = 0;
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $Total_armost_penyusutan_bulan_ini;
                                                 echo "<strong>" . number_format($Total_armost_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
+
+                                                if ($GET_GroupName == "group_1") {
+                                                    $TOTAL_BANGUNAN_TETAP_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_2") {
+                                                    $TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_3") {
+                                                    $TOTAL_INVENTARIS_GOL_1_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_4") {
+                                                    $TOTAL_INVENTARIS_GOL_2_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                                } else if ($GET_GroupName == "group_5") {
+                                                    $TOTAL_INVENTARIS_GOL_3_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                                }
+
+                                                $Total_armost_penyusutan_bulan_ini = 0;
+
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_Nilai_buku_bulan_ini;
                                                 echo "<strong>" . number_format($TOTAL_Nilai_buku_bulan_ini, 2, ',', '.') . "</strong>";
+
+
+                                                if ($GET_GroupName == "group_1") {
+                                                    $TOTAL_BANGUNAN_TETAP_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                                } else if ($GET_GroupName == "group_2") {
+                                                    $TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                                } else if ($GET_GroupName == "group_3") {
+                                                    $TOTAL_INVENTARIS_GOL_1_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                                } else if ($GET_GroupName == "group_4") {
+                                                    $TOTAL_INVENTARIS_GOL_2_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                                } else if ($GET_GroupName == "group_5") {
+                                                    $TOTAL_INVENTARIS_GOL_3_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                                }
+
+                                                $TOTAL_Nilai_buku_bulan_ini = 0;
+
                                                 ?>
                                             </td>
                                         </tr>
@@ -446,16 +502,11 @@
                                             </td>
 
 
-                                            <td align="left"><?php //echo $list_data->user; 
-                                                                ?></td>
-                                            <td align="left"><?php //echo $list_data->armorst_penyusutan_thn_lalu; 
-                                                                ?></td>
-                                            <td align="left"><?php //echo $list_data->nilai_buku_thn_lalu; 
-                                                                ?></td>
-                                            <td align="left"><?php //echo $list_data->penyusutan_bulan_ini; 
-                                                                ?></td>
-                                            <td align="left"><?php //echo $list_data->armorst_penyusutan_bulan_ini; 
-                                                                ?></td>
+                                            <td align="left"></td>
+                                            <td align="left"></td>
+                                            <td align="left"></td>
+                                            <td align="left"></td>
+                                            <td align="left"></td>
                                             <td align="left"></td>
                                             <td align="left"></td>
                                             <td align="left"></td>
@@ -548,7 +599,126 @@
                             }
                             ?>
 
+                            <!-- TOTAL BARIS TERAKHIR -->
 
+
+
+                            <!-- TOTAL PER GROUP SEBELUM DATA GROUP BARU -->
+
+                            <tr>
+                                <td align="left"><?php echo ++$start; ?></td>
+                                <td align="left"><?php //echo "Action"; 
+                                                    ?></td>
+                                <td align="left">
+                                    <!-- TOTAL -->
+                                </td>
+
+                                <td align="right"></td>
+                                <td align="right">
+                                    <?php
+                                    // echo $Total_Harga_Perolehan;
+                                    echo "<strong>" . number_format($Total_Harga_Perolehan, 2, ',', '.') . "</strong>";
+
+                                    if ($GET_GroupName == "group_1") {
+                                        $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                    } else if ($GET_GroupName == "group_2") {
+                                        $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                    } else if ($GET_GroupName == "group_3") {
+                                        $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                    } else if ($GET_GroupName == "group_4") {
+                                        $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                    } else if ($GET_GroupName == "group_5") {
+                                        $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN = $Total_Harga_Perolehan;
+                                    }
+
+                                    $Total_Harga_Perolehan = 0;
+                                    ?>
+                                </td>
+                                <td align="right"></td>
+                                <td align="right">
+                                    <?php
+                                    // echo $Total_Armost_Penyusutan_tahun_lalu;
+                                    echo "<strong>" . number_format($Total_Armost_Penyusutan_tahun_lalu, 2, ',', '.') . "</strong>";
+                                    $Total_Armost_Penyusutan_tahun_lalu = 0;
+
+                                    ?>
+                                </td>
+                                <td align="right">
+                                    <?php
+                                    // echo $TOTAL_Nilai_buku_tahun_lalu;
+                                    echo "<strong>" . number_format($TOTAL_Nilai_buku_tahun_lalu, 2, ',', '.') . "</strong>";
+
+                                    $TOTAL_Nilai_buku_tahun_lalu = 0;
+                                    ?>
+                                </td>
+                                <td align="right">
+                                    <?php
+                                    // echo $TOTAL_penyusutan_bulan_ini;
+                                    echo "<strong>" . number_format($TOTAL_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
+
+                                    if ($GET_GroupName == "group_1") {
+                                        $TOTAL_BANGUNAN_TETAP_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_2") {
+                                        $TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_3") {
+                                        $TOTAL_INVENTARIS_GOL_1_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_4") {
+                                        $TOTAL_INVENTARIS_GOL_2_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_5") {
+                                        $TOTAL_INVENTARIS_GOL_3_PENYUSUTAN = $TOTAL_penyusutan_bulan_ini;
+                                    }
+                                    $TOTAL_penyusutan_bulan_ini = 0;
+                                    ?>
+                                </td>
+                                <td align="right">
+                                    <?php
+                                    // echo $Total_armost_penyusutan_bulan_ini;
+                                    echo "<strong>" . number_format($Total_armost_penyusutan_bulan_ini, 2, ',', '.') . "</strong>";
+
+                                    if ($GET_GroupName == "group_1") {
+                                        $TOTAL_BANGUNAN_TETAP_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_2") {
+                                        $TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_3") {
+                                        $TOTAL_INVENTARIS_GOL_1_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_4") {
+                                        $TOTAL_INVENTARIS_GOL_2_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                    } else if ($GET_GroupName == "group_5") {
+                                        $TOTAL_INVENTARIS_GOL_3_AMORTISASI = $Total_armost_penyusutan_bulan_ini;
+                                    }
+
+                                    $Total_armost_penyusutan_bulan_ini = 0;
+
+                                    ?>
+                                </td>
+                                <td align="right">
+                                    <?php
+                                    // echo $TOTAL_Nilai_buku_bulan_ini;
+                                    echo "<strong>" . number_format($TOTAL_Nilai_buku_bulan_ini, 2, ',', '.') . "</strong>";
+
+
+                                    if ($GET_GroupName == "group_1") {
+                                        $TOTAL_BANGUNAN_TETAP_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                    } else if ($GET_GroupName == "group_2") {
+                                        $TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                    } else if ($GET_GroupName == "group_3") {
+                                        $TOTAL_INVENTARIS_GOL_1_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                    } else if ($GET_GroupName == "group_4") {
+                                        $TOTAL_INVENTARIS_GOL_2_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                    } else if ($GET_GroupName == "group_5") {
+                                        $TOTAL_INVENTARIS_GOL_3_NILAI_BUKU = $TOTAL_Nilai_buku_bulan_ini;
+                                    }
+
+                                    $TOTAL_Nilai_buku_bulan_ini = 0;
+
+                                    ?>
+                                </td>
+                            </tr>
+
+
+                            <!-- END OF TOTAL PER GROUP SEBELUM DATA GROUP BARU -->
+
+                            <!-- END OF TOTAL BARIS TERAKHIR -->
 
 
 
@@ -579,82 +749,177 @@
                                         <?php
                                         // foreach ($Tbl_pembelian_data as $list_data) {
                                         ?>
-                                            <tr>
-                                                <td>BANGUNAN TETAP</td>
-                                                <td align="right">
-                                                    <?php 
-                                                    // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
-                                                    echo number_format($TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
-                                                    ?>
-                                                    </td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
+                                        <tr>
+                                            <td>BANGUNAN TETAP</td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
+                                                echo number_format($TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
+                                                echo number_format($TOTAL_BANGUNAN_TETAP_PENYUSUTAN, 2, ',', '.');
+                                                ?>
 
-                                            </tr>
-                                            <tr>
-                                                <td>BANGUNAN TIDAK TETAP</td>
-                                                <td align="right">
-                                                    <?php 
-                                                    // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
-                                                    echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
-                                                    ?>
-                                                    </td>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
+                                                echo number_format($TOTAL_BANGUNAN_TETAP_AMORTISASI, 2, ',', '.');
+                                                ?>
 
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
+                                                echo number_format($TOTAL_BANGUNAN_TETAP_NILAI_BUKU, 2, ',', '.');
+                                                ?>
 
+                                            </td>
 
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-
-                                            </tr>
-                                            <tr>
-                                                <td>INVENTARIS GOL.1</td>
-                                                <td align="right">
-                                                    <?php 
-                                                    // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
-                                                    echo number_format($TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN, 2, ',', '.');
-                                                    ?>
-                                                    </td>
+                                        </tr>
 
 
 
 
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-
-                                            </tr>
-                                            <tr>
-                                                <td>INVENTARIS GOL.2</td>
-                                                <td align="right">
-                                                    <?php 
-                                                    // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
-                                                    echo number_format($TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN, 2, ',', '.');
-                                                    ?>
-                                                    </td>
+                                        <tr>
+                                            <td>BANGUNAN TIDAK TETAP</td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+                                                ?>
+                                            </td>
 
 
 
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN, 2, ',', '.');
+                                                ?>
 
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI, 2, ',', '.');
+                                                ?>
 
-                                            </tr>
-                                            <tr>
-                                                <td>INVENTARIS GOL.3</td>
-                                                <td align="right">
-                                                    <?php 
-                                                    // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
-                                                    echo number_format($TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN, 2, ',', '.');
-                                                    ?>
-                                                    </td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU, 2, ',', '.');
+                                                ?>
 
-                                            </tr>
+                                            </td>
+
+                                        </tr>
+
+
+
+
+
+
+                                        <tr>
+                                            <td>INVENTARIS GOL.1</td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN, 2, ',', '.');
+                                                ?>
+                                            </td>
+
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_1_PENYUSUTAN, 2, ',', '.');
+                                                ?>
+
+
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_1_AMORTISASI, 2, ',', '.');
+                                                ?>
+
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_1_NILAI_BUKU, 2, ',', '.');
+                                                ?>
+
+                                            </td>
+
+                                        </tr>
+
+
+                                        <tr>
+                                            <td>INVENTARIS GOL.2</td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_2_PENYUSUTAN, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_2_AMORTISASI, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_2_NILAI_BUKU, 2, ',', '.');
+                                                ?>
+                                            </td>
+
+                                        </tr>
+
+                                        <tr>
+                                            <td>INVENTARIS GOL.3</td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN, 2, ',', '.');
+                                                ?>
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_3_PENYUSUTAN, 2, ',', '.');
+                                                ?>
+
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_3_AMORTISASI, 2, ',', '.');
+                                                ?>
+
+                                            </td>
+                                            <td align="right">
+                                                <?php
+                                                // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
+                                                echo number_format($TOTAL_INVENTARIS_GOL_3_NILAI_BUKU, 2, ',', '.');
+                                                ?>
+
+                                            </td>
+
+                                        </tr>
+
                                         <?php
                                         // }
                                         ?>
