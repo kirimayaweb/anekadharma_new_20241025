@@ -10,6 +10,7 @@ class Tbl_penyusutan_model extends CI_Model
     public $id = 'id';
     public $uuid_penyusutan = 'uuid_penyusutan';
     public $order = 'DESC';
+    public $orderASC = 'ASC';
 
     function __construct()
     {
@@ -30,7 +31,7 @@ class Tbl_penyusutan_model extends CI_Model
     // get all
     function get_all()
     {
-        $this->db->order_by($this->id, $this->order);
+        $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
 
