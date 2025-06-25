@@ -18,105 +18,19 @@ class Dashboard extends CI_Controller
     {
 
 
-        if ($this->input->post('tahun_setting', TRUE) and $this->input->post('semester_selected', TRUE) and $this->input->post('listcover_selected', TRUE)) {
-            $tahun_selected = $this->input->post('tahun_setting', TRUE);
-            $semester_selected = $this->input->post('semester_selected', TRUE);
-            $listcover_selected = $this->input->post('listcover_selected', TRUE);
-            $id_user_active= $_SESSION['sess_iduser'];
-
-        
-            // $sql = "select * from tbl_user where `id_users`='$id_user_active';";
-           
-            // update tbl_user : cover_display
-            $sql = "UPDATE `tbl_user` SET `cover_display`='$listcover_selected' WHERE `id_users`='$id_user_active';";
-		    $this->db->query($sql);
-
-
-        } else {
-            if (isset($_SESSION['semester_selected']) or isset($_SESSION['thn_selected'])) {
-
-
-                $tahun_selected = $_SESSION['thn_selected'];
-                if (isset($_SESSION['semester_selected'])) {
-                    $semester_selected = $_SESSION['semester_selected'];
-                } else {
-                    $date_sekarang = date('Y-m-d H:i:s');
-                    $variabel_date_awal_selected = date('Y-m-d', strtotime('+0 month', strtotime($date_sekarang)));
-                    $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                    $data_month = date('m', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                    if (($data_month < 3)) {
-                        $semester_selected = 2;
-                        $tahun_selected = date('Y', strtotime('-1 year', strtotime($variabel_date_awal_selected)));
-                    } elseif (($data_month > 8)) {
-                        $semester_selected = 2;
-                        $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                    } else {
-                        $semester_selected = 1;
-                        $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                    }
-                }
-            } else {
-                $date_sekarang = date('Y-m-d H:i:s');
-                $variabel_date_awal_selected = date('Y-m-d', strtotime('+0 month', strtotime($date_sekarang)));
-                $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                $data_month = date('m', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                if (($data_month < 3)) {
-                    $semester_selected = 2;
-                    $tahun_selected = date('Y', strtotime('-1 year', strtotime($variabel_date_awal_selected)));
-                } elseif (($data_month > 8)) {
-                    $semester_selected = 2;
-                    $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                } else {
-                    $semester_selected = 1;
-                    $tahun_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-                }
-            }
-
-
-            
-
-
-        }
-
-
-
-        if (isset($_SESSION['listcover_selected'])) {
-
-            if ($this->input->post('listcover_selected', TRUE)){
-               
-                $sql = "UPDATE `tbl_user` SET `cover_display`='$listcover_selected' WHERE `id_users`='$id_user_active';";
-                $this->db->query($sql);
-
-                $listcover_selected=$this->input->post('listcover_selected', TRUE);
-                
-            }else{
-             
-                $listcover_selected = $_SESSION['listcover_selected'];
-                
-            }
-        }else{
-            $id_user_active= $_SESSION['sess_iduser'];
-            $sql = "select cover_display from tbl_user where `id_users`='$id_user_active';";
-            // print_r( $this->db->query($sql)->row());
-            $data_user = $this->db->query($sql)->row_array();
-
-            // $data_user['cover_display'];
-            $listcover_selected=$data_user['cover_display'];
-
-        }
 
         $_SESSION['thn_selected'] = $tahun_selected;
         $_SESSION['semester_selected'] = $semester_selected;
-        $_SESSION['listcover_selected'] = $listcover_selected;
+        // $_SESSION['listcover_selected'] = $listcover_selected;
 
         $data = array(
-            'button' => 'Refresh Tahun dan Semester',
+            // 'button' => 'Refresh Tahun dan Semester',
             'action' => site_url('Dashboard'),
             // 'date_sekarang' => $date_sekarang,
             'thn_sekarang' => $_SESSION['thn_selected'],
             'semester_sekarang' => $_SESSION['semester_selected'],
-            'listcover_sekarang' => $_SESSION['listcover_selected'],
-            'link_penjualan' => 'Tbl_penjualan/',
+            // 'listcover_sekarang' => $_SESSION['listcover_selected'],
+            // 'link_penjualan' => 'Tbl_penjualan/',
         );
 
         // $this->template->load('template', 'dashboard/dashboard', $data);
