@@ -747,6 +747,12 @@
                                     </thead>
                                     <tbody>
                                         <?php
+                                        $GET_TOTAL_REKAP_HARGA_PEROLEHAN = 0;
+                                        $GET_TOTAL_REKAP_PENYUSUTAN = 0;
+                                        $GET_TOTAL_REKAP_AMORTISASI = 0;
+                                        $GET_TOTAL_REKAP_NILAI_BUKU = 0;
+
+
                                         // foreach ($Tbl_pembelian_data as $list_data) {
                                         ?>
                                         <tr>
@@ -755,12 +761,17 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
                                                 echo number_format($TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_HARGA_PEROLEHAN = $GET_TOTAL_REKAP_HARGA_PEROLEHAN + $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN;
+
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
                                                 echo number_format($TOTAL_BANGUNAN_TETAP_PENYUSUTAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_PENYUSUTAN = $GET_TOTAL_REKAP_PENYUSUTAN + $TOTAL_BANGUNAN_TETAP_PENYUSUTAN;
                                                 ?>
 
                                             </td>
@@ -768,6 +779,8 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
                                                 echo number_format($TOTAL_BANGUNAN_TETAP_AMORTISASI, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_AMORTISASI = $GET_TOTAL_REKAP_AMORTISASI + $TOTAL_BANGUNAN_TETAP_AMORTISASI;
                                                 ?>
 
                                             </td>
@@ -775,6 +788,8 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TETAP_HARGA_PEROLEHAN 
                                                 echo number_format($TOTAL_BANGUNAN_TETAP_NILAI_BUKU, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_NILAI_BUKU = $GET_TOTAL_REKAP_NILAI_BUKU + $TOTAL_BANGUNAN_TETAP_NILAI_BUKU;
                                                 ?>
 
                                             </td>
@@ -790,6 +805,9 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_HARGA_PEROLEHAN = $GET_TOTAL_REKAP_HARGA_PEROLEHAN + $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN;
+
                                                 ?>
                                             </td>
 
@@ -799,6 +817,8 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_PENYUSUTAN = $GET_TOTAL_REKAP_PENYUSUTAN + $TOTAL_BANGUNAN_TIDAK_TETAP_PENYUSUTAN;
                                                 ?>
 
                                             </td>
@@ -806,6 +826,8 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_AMORTISASI = $GET_TOTAL_REKAP_AMORTISASI + $TOTAL_BANGUNAN_TIDAK_TETAP_AMORTISASI;
                                                 ?>
 
                                             </td>
@@ -813,6 +835,8 @@
                                                 <?php
                                                 // echo $TOTAL_BANGUNAN_TIDAK_TETAP_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_NILAI_BUKU = $GET_TOTAL_REKAP_NILAI_BUKU + $TOTAL_BANGUNAN_TIDAK_TETAP_NILAI_BUKU;
                                                 ?>
 
                                             </td>
@@ -830,13 +854,18 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_HARGA_PEROLEHAN = $GET_TOTAL_REKAP_HARGA_PEROLEHAN + $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN;
                                                 ?>
+
                                             </td>
 
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_1_PENYUSUTAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_PENYUSUTAN = $GET_TOTAL_REKAP_PENYUSUTAN + $TOTAL_INVENTARIS_GOL_1_PENYUSUTAN;
                                                 ?>
 
 
@@ -845,6 +874,9 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_1_AMORTISASI, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_AMORTISASI = $GET_TOTAL_REKAP_AMORTISASI + $TOTAL_INVENTARIS_GOL_1_AMORTISASI;
+
                                                 ?>
 
                                             </td>
@@ -852,6 +884,8 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_1_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_1_NILAI_BUKU, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_NILAI_BUKU = $GET_TOTAL_REKAP_NILAI_BUKU + $TOTAL_INVENTARIS_GOL_1_NILAI_BUKU;
                                                 ?>
 
                                             </td>
@@ -865,24 +899,36 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_HARGA_PEROLEHAN = $GET_TOTAL_REKAP_HARGA_PEROLEHAN + $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN;
+
                                                 ?>
+
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_2_PENYUSUTAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_PENYUSUTAN = $GET_TOTAL_REKAP_PENYUSUTAN + $TOTAL_INVENTARIS_GOL_2_PENYUSUTAN;
                                                 ?>
+
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_2_AMORTISASI, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_AMORTISASI = $GET_TOTAL_REKAP_AMORTISASI + $TOTAL_INVENTARIS_GOL_2_AMORTISASI;
                                                 ?>
+
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_2_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_2_NILAI_BUKU, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_NILAI_BUKU = $GET_TOTAL_REKAP_NILAI_BUKU + $TOTAL_INVENTARIS_GOL_2_NILAI_BUKU;
                                                 ?>
                                             </td>
 
@@ -894,12 +940,18 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_HARGA_PEROLEHAN = $GET_TOTAL_REKAP_HARGA_PEROLEHAN + $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN;
+
                                                 ?>
+
                                             </td>
                                             <td align="right">
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_3_PENYUSUTAN, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_PENYUSUTAN = $GET_TOTAL_REKAP_PENYUSUTAN + $TOTAL_INVENTARIS_GOL_3_PENYUSUTAN;
                                                 ?>
 
                                             </td>
@@ -907,6 +959,8 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_3_AMORTISASI, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_AMORTISASI = $GET_TOTAL_REKAP_AMORTISASI + $TOTAL_INVENTARIS_GOL_3_AMORTISASI;
                                                 ?>
 
                                             </td>
@@ -914,6 +968,8 @@
                                                 <?php
                                                 // echo $TOTAL_INVENTARIS_GOL_3_HARGA_PEROLEHAN; 
                                                 echo number_format($TOTAL_INVENTARIS_GOL_3_NILAI_BUKU, 2, ',', '.');
+
+                                                $GET_TOTAL_REKAP_NILAI_BUKU = $GET_TOTAL_REKAP_NILAI_BUKU + $TOTAL_INVENTARIS_GOL_3_NILAI_BUKU;
                                                 ?>
 
                                             </td>
@@ -930,11 +986,11 @@
 
                                     <tfoot>
                                         <tr>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
-                                            <th></th>
+                                            <th style="text-align:right"><strong>TOTAL</strong></th>
+                                            <th style="text-align:right"> <?php echo "<strong>".number_format($GET_TOTAL_REKAP_HARGA_PEROLEHAN, 2, ',', '.')."</strong>"; ?> </th>
+                                            <th style="text-align:right"><?php echo "<strong>".number_format($GET_TOTAL_REKAP_PENYUSUTAN, 2, ',', '.')."</strong>"; ?></th>
+                                            <th style="text-align:right"><?php echo "<strong>".number_format($GET_TOTAL_REKAP_AMORTISASI, 2, ',', '.')."</strong>"; ?></th>
+                                            <th style="text-align:right"><?php echo "<strong>".number_format($GET_TOTAL_REKAP_NILAI_BUKU, 2, ',', '.')."</strong>"; ?></th>
                                         </tr>
 
                                     </tfoot>
