@@ -203,7 +203,10 @@
                                     <div class="col-4">
                                         <label for="HargaPerolehan">Harga Perolehan <?php //echo form_error('nmrkirim') 
                                                                                     ?></label>
-                                        <input type="text" class="form-control" rows="3" name="HargaPerolehan" id="HargaPerolehan" placeholder="Harga Perolehan" value="<?php echo $harga_perolehan; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="HargaPerolehan" id="HargaPerolehan" placeholder="Harga Perolehan" value="<?php 
+                                        // echo $harga_perolehan; 
+                                        echo number_format($harga_perolehan, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
                                     <div class="col-4">
@@ -222,13 +225,21 @@
 
                                     <div class="col-4">
                                         <label for="AmortisasiPenyusutanTahunLalu">Amortisasi Penyusutan tahun lalu</label>
-                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunLalu" id="AmortisasiPenyusutanTahunLalu" placeholder="Amortisasi Penyusutan Tahun Lalu" value="<?php echo $armorst_penyusutan_thn_lalu; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunLalu" id="AmortisasiPenyusutanTahunLalu" placeholder="Amortisasi Penyusutan Tahun Lalu" value="
+                                        <?php 
+                                        // echo $armorst_penyusutan_thn_lalu; 
+                                        echo number_format($armorst_penyusutan_thn_lalu, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
                                     <div class="col-4">
                                         <label for="NilaiBukuTahunLalu">Nilai Buku Bulan lalu<?php //echo form_error('nmrkirim') 
                                                                                                 ?></label>
-                                        <input type="text" class="form-control" rows="3" name="NilaiBukuTahunLalu" id="NilaiBukuTahunLalu" placeholder="Nilai Buku Tahun Lalu" value="<?php echo $nilai_buku_thn_lalu; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="NilaiBukuTahunLalu" id="NilaiBukuTahunLalu" placeholder="Nilai Buku Tahun Lalu" value="
+                                        <?php 
+                                        // echo $nilai_buku_thn_lalu; 
+                                        echo number_format($nilai_buku_thn_lalu, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
 
@@ -241,18 +252,30 @@
                                     <div class="col-4">
                                         <label for="Penyusutan">Penyusutan <?php //echo form_error('nmrkirim') 
                                                                             ?></label>
-                                        <input type="text" class="form-control" rows="3" name="Penyusutan" id="Penyusutan" placeholder="Penyusutan" value="<?php echo $penyusutan_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="Penyusutan" id="Penyusutan" placeholder="Penyusutan" value="
+                                        <?php 
+                                        // echo $penyusutan_bulan_ini; 
+                                        echo number_format($penyusutan_bulan_ini, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
                                     <div class="col-4">
                                         <label for="AmortisasiPenyusutanTahunIni">Amortisasi Penyusutan Tahun Ini</label>
-                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunIni" id="AmortisasiPenyusutanTahunIni" placeholder="Amortisasi Penyusutan Tahun Ini" value="<?php echo $armorst_penyusutan_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="AmortisasiPenyusutanTahunIni" id="AmortisasiPenyusutanTahunIni" placeholder="Amortisasi Penyusutan Tahun Ini" value="
+                                        <?php 
+                                        // echo $armorst_penyusutan_bulan_ini; 
+                                        echo number_format($armorst_penyusutan_bulan_ini, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
                                     <div class="col-4">
                                         <label for="nilaibukubulanini">Nilai Buku <?php //echo form_error('nmrkirim') 
                                                                                     ?></label>
-                                        <input type="text" class="form-control" rows="3" name="nilaibukubulanini" id="nilaibukubulanini" placeholder="Nilai Buku Bulan Ini" value="<?php echo $nilai_buku_bulan_ini; ?>" required>
+                                        <input type="text" class="form-control" rows="3" name="nilaibukubulanini" id="nilaibukubulanini" placeholder="Nilai Buku Bulan Ini" value="
+                                        <?php 
+                                        // echo $nilai_buku_bulan_ini; 
+                                        echo number_format($nilai_buku_bulan_ini, 2, ',', '.');
+                                        ?>" required>
                                     </div>
 
 
