@@ -183,18 +183,18 @@
                                     <!-- HIDE UNTUK SEMUA ICON -->
 
                                     <div class="col-lg-3 col-xs-6">
-                                        <!-- <a href="tbl_pembelian">
-                                        <div class="small-box bg-green">
-                                            <div class="inner">
-                                                <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PEMBELIAN</h3>
-                                                <p style="color:#171313">Belanja Perusahaan</p>
+                                        <a href="Tbl_pembelian/stock">
+                                            <div class="small-box bg-yellow">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">STOCK / PERSEDIAAN</h3>
+                                                    <p style="color:#171313">Persediaan Barang</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_pembelian/stock" class="small-box-footer">STOCK / PERSEDIAAN <i class="fa fa-arrow-circle-right"></i></a>
                                             </div>
-                                            <div class="icon">
-                                                <i class="ion ion-stats-bars"></i>
-                                            </div>
-                                            <a href="tbl_pembelian" class="small-box-footer">Pembelian <i class="fa fa-arrow-circle-right"></i></a>
-                                        </div>
-                                    </a> -->
+                                        </a>
                                     </div>
 
                                     <div class="col-lg-3 col-xs-6">
@@ -216,7 +216,7 @@
 
                                     <div class="col-lg-3 col-xs-6">
                                         <a href="Tbl_pembelian/pembayaran_dari_konsumen">
-                                            <div class="small-box bg-blue">
+                                            <div class="small-box bg-orange">
                                                 <div class="inner">
                                                     <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PEMBAYARAN DARI KONSUMEN</h3>
                                                     <p style="color:#171313">PEMBAYARAN</p>
@@ -231,7 +231,88 @@
 
 
                                     <div class="col-lg-3 col-xs-6">
+                                        <a href="Sys_unit_produk">
+                                            <div class="small-box bg-teal">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">INPUT PRODUK</h3>
+                                                    <p style="color:#171313">Input Produk</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Sys_unit_produk" class="small-box-footer">INPUT PRODUK<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
+                                    </div>
 
+                                </div>
+                                <!-- end of Baris penjualan -->
+                                <div class="row">
+
+
+                                    <!-- HIDE UNTUK SEMUA ICON -->
+
+                                    <div class="col-lg-3 col-xs-6">
+                                        <a href="Tbl_pembelian/pecah_satuan">
+                                            <div class="small-box bg-pink">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PECAH SATUAN</h3>
+                                                    <p style="color:#171313">Pecah Satuan</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_pembelian/pecah_satuan" class="small-box-footer">PECAH SATUAN<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    <div class="col-lg-3 col-xs-6">
+                                        <a href="Tbl_penjualan/RekapData/unit">
+                                            <div class="small-box bg-purple">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">REKAP PENJUALAN PER UNIT</h3>
+                                                    <p style="color:#171313">Rekap Penjualan Per Unit</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_penjualan/RekapData/unit" class="small-box-footer">REKAP PENJUALAN PER UNIT<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
+                                    </div>
+                                    <!-- END OF HIDE UNTUK SEMUA ICON -->
+
+
+                                    <div class="col-lg-3 col-xs-6">
+                                        <a href="Tbl_penjualan/RekapData/konsumen_nama">
+                                            <div class="small-box bg-gray">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">REKAP PENJUALAN PER KONSUMEN</h3>
+                                                    <p style="color:#171313">Rekap Penjualan Per Konsumen</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_penjualan/RekapData/konsumen_nama" class="small-box-footer">REKAP PENJUALAN PER KONSUMEN<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
+                                    </div>
+
+
+                                    <div class="col-lg-3 col-xs-6">
+                                        <a href="Tbl_penjualan/RekapData/nama_barang">
+                                            <div class="small-box bg-yellow">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">REKAP PENJUALAN PER BARANG</h3>
+                                                    <p style="color:#171313">Rekap Penjualan Per Barang</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_penjualan/RekapData/nama_barang" class="small-box-footer">REKAP PENJUALAN PER BARANG<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
                                     </div>
 
                                 </div>
@@ -314,7 +395,7 @@
 
                                     <div class="col-lg-3 col-xs-6">
                                         <a href="Tbl_penjualan/jurnal_penjualan2">
-                                            <div class="small-box bg-green">
+                                            <div class="small-box bg-yellow">
                                                 <div class="inner">
                                                     <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">JURNAL PENJUALAN</h3>
                                                     <p style="color:#171313">Jurnal Penjualan</p>
@@ -347,7 +428,7 @@
 
                                     <div class="col-lg-3 col-xs-6">
                                         <a href="Tbl_penjualan/setting_kode_akun_penjualan2">
-                                            <div class="small-box bg-blue">
+                                            <div class="small-box bg-red">
                                                 <div class="inner">
                                                     <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">SETTING KODE PENJUALAN</h3>
                                                     <p style="color:#171313">Setting kode akun penjualan</p>
@@ -418,32 +499,18 @@
 
                                     <!-- HIDE UNTUK SEMUA ICON -->
 
-                                    <div class="col-lg-3 col-xs-6">
-                                        <!-- <a href="tbl_pembelian">
-                                        <div class="small-box bg-green">
-                                            <div class="inner">
-                                                <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PEMBELIAN</h3>
-                                                <p style="color:#171313">Belanja Perusahaan</p>
-                                            </div>
-                                            <div class="icon">
-                                                <i class="ion ion-stats-bars"></i>
-                                            </div>
-                                            <a href="tbl_pembelian" class="small-box-footer">Pembelian <i class="fa fa-arrow-circle-right"></i></a>
-                                        </div>
-                                    </a> -->
-                                    </div>
 
                                     <div class="col-lg-3 col-xs-6">
-                                        <a href="tbl_penjualan">
+                                        <a href="Buku_besar">
                                             <div class="small-box bg-green">
                                                 <div class="inner">
-                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PENJUALAN</h3>
-                                                    <p style="color:#171313">Penjualan ke customer</p>
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">BUKU BESAR</h3>
+                                                    <p style="color:#171313">Buku Besar</p>
                                                 </div>
                                                 <div class="icon">
                                                     <i class="ion ion-person-add"></i>
                                                 </div>
-                                                <a href="tbl_penjualan" class="small-box-footer">Penjualan ke customer <i class="fa fa-arrow-circle-right"></i></a>
+                                                <a href="Buku_besar" class="small-box-footer">Buku Besar<i class="fa fa-arrow-circle-right"></i></a>
                                             </div>
                                         </a>
                                     </div>
@@ -451,24 +518,54 @@
 
 
                                     <div class="col-lg-3 col-xs-6">
-                                        <a href="Tbl_pembelian/pembayaran_dari_konsumen">
+                                        <a href="neraca_saldo">
                                             <div class="small-box bg-blue">
                                                 <div class="inner">
-                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">PEMBAYARAN DARI KONSUMEN</h3>
-                                                    <p style="color:#171313">PEMBAYARAN</p>
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">NERACA SALDO</h3>
+                                                    <p style="color:#171313">Neraca Saldo</p>
                                                 </div>
                                                 <div class="icon">
                                                     <i class="ion ion-person-add"></i>
                                                 </div>
-                                                <a href="Tbl_pembelian/pembayaran_dari_konsumen" class="small-box-footer">PEMBAYARAN DARI KONSUMEN <i class="fa fa-arrow-circle-right"></i></a>
+                                                <a href="neraca_saldo" class="small-box-footer">Neraca Saldo<i class="fa fa-arrow-circle-right"></i></a>
                                             </div>
                                         </a>
                                     </div>
 
 
                                     <div class="col-lg-3 col-xs-6">
-
+                                        <a href="Tbl_kas_kecil">
+                                            <div class="small-box bg-yellow">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">KAS KECIL</h3>
+                                                    <p style="color:#171313">Kas Kecil</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Tbl_kas_kecil" class="small-box-footer">Kas Kecil<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
                                     </div>
+
+
+                                    <div class="col-lg-3 col-xs-6">
+                                        <a href="Bukubank">
+                                            <div class="small-box bg-red">
+                                                <div class="inner">
+                                                    <h3 style="font-size:25px;font-weight: bold;color:#FFFFFF">BUKU BANK</h3>
+                                                    <p style="color:#171313">Buku Bank</p>
+                                                </div>
+                                                <div class="icon">
+                                                    <i class="ion ion-person-add"></i>
+                                                </div>
+                                                <a href="Bukubank" class="small-box-footer">Buku Bank<i class="fa fa-arrow-circle-right"></i></a>
+                                            </div>
+                                        </a>
+                                    </div>
+
+
+
 
                                 </div>
                                 <!-- end of Baris penjualan -->
@@ -781,7 +878,7 @@
                                                             <tbody>
                                                                 <?php
 
-                                                                
+
 
                                                                 $start = 0;
                                                                 foreach ($Tbl_BULAN_neraca_data as $list_data) {
