@@ -23,6 +23,47 @@ class Dashboard extends CI_Controller
         $_SESSION['semester_selected'] = $semester_selected;
         // $_SESSION['listcover_selected'] = $listcover_selected;
 
+
+        if ($laporan_status) {
+            $status_laporan = $laporan_status;
+        } else {
+            $status_laporan = "laporan";
+        }
+
+
+        // LABA-RUGI
+
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+
+        $tahun_labarugi_data = $this->db->query($sql)->result();
+
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
+
+        $bulan_neraca_labarugi_data = $this->db->query($sql)->result();
+
+
+
+        // NERACA
+
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+
+        $tahun_neraca_data = $this->db->query($sql)->result();
+
+
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
+
+        $bulan_neraca_neraca_data = $this->db->query($sql)->result();
+
+        // print_r($Tbl_neraca_data);
+        // print_r("<br/>");
+        // print_r("<br/>");
+
+        $start = 0;
+
+
+
+
+
         $data = array(
             // 'button' => 'Refresh Tahun dan Semester',
             'action' => site_url('Dashboard'),
@@ -31,6 +72,27 @@ class Dashboard extends CI_Controller
             'semester_sekarang' => $_SESSION['semester_selected'],
             // 'listcover_sekarang' => $_SESSION['listcover_selected'],
             // 'link_penjualan' => 'Tbl_penjualan/',
+
+
+
+            // Laba-rugi
+            'Tbl_TAHUN_labarugi_data' => $tahun_labarugi_data,
+            'Tbl_BULAN_labarugi_data' => $bulan_neraca_labarugi_data,
+            'start' => $start,
+            'status_laporan' => $status_laporan,
+            'action_input_labarugi_baru' => site_url('Tbl_laba_rugi/labarugi_form_input/'),
+            'action_input_labarugi_baru_bulanan' => site_url('Tbl_laba_rugi/labarugi_form_input_bulanan/'),
+
+
+            // NERACA
+            'Tbl_TAHUN_neraca_data' => $tahun_neraca_data,
+            'Tbl_BULAN_neraca_data' => $bulan_neraca_neraca_data,
+            'start' => $start,
+            'status_laporan' => $status_laporan,
+            'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
+            'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
+
+
         );
 
         // $this->template->load('template', 'dashboard/dashboard', $data);
@@ -172,7 +234,7 @@ class Dashboard extends CI_Controller
         $cek_data_stock = $this->db->get_where('tbl_user', array('id_users' => $this->session->userdata('sess_iduser')))->row();
 
         // print_r($cek_data_stock);
-        
+
 
         $data = array(
             'button' => 'Ubah Password',
@@ -273,8 +335,8 @@ class Dashboard extends CI_Controller
     }
 
 
-    public function cek_data($tingkat=null){
+    public function cek_data($tingkat = null)
+    {
         $this->Modul_data_model->get_ALL_DATA_ARRAY($tingkat);
     }
-
 }
