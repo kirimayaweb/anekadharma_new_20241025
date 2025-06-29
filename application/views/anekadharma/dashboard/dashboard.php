@@ -661,7 +661,7 @@
 
                                     <!-- HIDE UNTUK SEMUA ICON -->
 
-
+                                    <!-- LABA-RUGI -->
                                     <div class="col-lg-6 col-xs-12">
                                         <div class="card card-primary">
 
@@ -799,9 +799,11 @@
 
                                         </div>
                                     </div>
+                                    <!-- END OF LABA-RUGI -->
                                     <!-- END OF HIDE UNTUK SEMUA ICON -->
 
 
+                                    <!-- NERACA DATA -->
                                     <div class="col-lg-6 col-xs-12">
                                         <div class="card card-primary">
 
@@ -939,11 +941,153 @@
 
                                         </div>
                                     </div>
+                                    <!-- END OF NERACA DATA -->
 
 
 
 
                                 </div>
+
+
+                                <div class="row">
+
+                                    <div class="col-lg-3 col-xs-12"></div>
+
+                                    <!-- JURNAL KAS -->
+                                    <div class="col-lg-6 col-xs-12">
+                                        <div class="card card-primary">
+
+                                            <div class="card-header">
+                                                <div class="row">
+                                                    <div class="col-12">
+
+                                                        <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
+                                                            <div class="row">
+                                                                <?php
+                                                                if ($status_laporan == "bukan_laporan") {
+                                                                ?>
+                                                                    <div class="col-5" text-align="right"> <strong>INPUT JURNAL KAS:</strong></div>
+                                                                <?php
+                                                                } else {
+                                                                ?>
+                                                                    <div class="col-5" text-align="right"> <strong> JURNAL KAS</strong></div>
+
+                                                                <?php
+                                                                }
+                                                                ?>
+                                                                <div class="col-4" text-align="left">
+                                                                    <?php
+                                                                    if ($status_laporan == "bukan_laporan") {
+                                                                    ?>
+                                                                        <div class="col-4" text-align="left">
+
+                                                                            <!-- <form action="/action_page.php"> -->
+                                                                            <!-- <label for="bulan">BULAN :</label> -->
+                                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
+                                                                            <!-- <input type="submit"> -->
+                                                                            <!-- </form> -->
+
+                                                                        </div>
+                                                                    <?php
+                                                                    }
+                                                                    ?>
+
+                                                                </div>
+                                                                <div class="col-3" text-align="right">
+
+                                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
+                                                                    if ($status_laporan == "bukan_laporan") {
+                                                                    ?>
+
+                                                                        <button type="submit" class="btn btn-danger">Tambah</button>
+                                                                    <?php
+                                                                    }
+                                                                    ?>
+                                                                </div>
+                                                            </div>
+
+                                                        </form>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-12">
+
+                                                        <table id="example" class="display nowrap" style="width:100%">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th style="text-align:center" width="10px">No</th>
+                                                                    <th>Tahun</th>
+                                                                    <th>Bulan</th>
+                                                                    <th>Action</th>
+
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php
+
+
+
+                                                                $start = 0;
+                                                                foreach ($Tbl_BULAN_neraca_data as $list_data) {
+                                                                    // if ($list_data->bulan_transaksi > 0) {
+                                                                ?>
+
+                                                                    <tr>
+
+                                                                        <td><?php echo ++$start ?></td>
+
+                                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
+                                                                        <td align="left"><?php echo $list_data->bulan_neraca . " (" . bulan_teks($list_data->bulan_neraca) . ")"; ?></td>
+                                                                        <td align="left">
+                                                                            <?php
+
+                                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+
+                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                            }
+
+
+
+                                                                            $sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$list_data->bulan_neraca' ";
+
+                                                                            $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+
+                                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                            }
+
+                                                                            ?>
+                                                                        </td>
+
+                                                                    </tr>
+                                                                <?php
+                                                                    // }
+                                                                }
+                                                                ?>
+
+
+                                                            </tbody>
+                                                        </table>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <!-- END OF JURNAL KAS -->
+
+                                    <div class="col-lg-3 col-xs-12"></div>
+                                
+                                </div>
+
+
+
                                 <!-- end of Baris penjualan -->
                             <?php } ?>
 

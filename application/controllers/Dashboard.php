@@ -60,6 +60,29 @@ class Dashboard extends CI_Controller
 
         $start = 0;
 
+        // JURNAL KAS
+        $Get_date_awal = date("Y-m-1 00:00:00");
+
+        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
+        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
+        $Get_YEAR_akhir = date("Y"); // TANGGAL AKHIR BULAN -t
+
+
+        // print_r($Get_month_akhir);
+        // print_r("<br/>");
+        // print_r($Get_YEAR_akhir);
+        // print_r("<br/>");
+
+        // $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
+        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`) = '$Get_month_akhir'  and YEAR(`tanggal`) = '$Get_YEAR_akhir' ORDER BY `tanggal`,`id` DESC";
+
+        $Data_Jurnal_kas = $this->db->query($sql)->result();
+
+        // print_r($Data_Jurnal_kas);
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // print_r("<br/>");
+        // END OF JURNAL KAS
 
 
 
@@ -91,6 +114,9 @@ class Dashboard extends CI_Controller
             'status_laporan' => $status_laporan,
             'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
             'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
+            
+            // JURNAL KAS
+            'Data_kas' => $Data_Jurnal_kas,
 
 
         );
