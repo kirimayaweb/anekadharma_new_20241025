@@ -84,7 +84,11 @@ class Dashboard extends CI_Controller
         // print_r("<br/>");
         // END OF JURNAL KAS
 
+        $sql_group_by_month = "SELECT month(`tanggal`) as month_process, year(`tanggal`) as year_process FROM `jurnal_kas` GROUP by month_process;";
 
+        $Data_group_by_month_Jurnal_kas = $this->db->query($sql_group_by_month)->result();
+
+        // print_r($Data_group_by_month_Jurnal_kas);
 
 
         $data = array(
@@ -114,9 +118,10 @@ class Dashboard extends CI_Controller
             'status_laporan' => $status_laporan,
             'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
             'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
-            
+
             // JURNAL KAS
             'Data_kas' => $Data_Jurnal_kas,
+            'Data_group_by_month_Jurnal_kas' => $Data_group_by_month_Jurnal_kas,
 
 
         );

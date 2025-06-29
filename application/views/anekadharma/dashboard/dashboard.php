@@ -1033,32 +1033,35 @@
 
 
                                                                 $start = 0;
-                                                                foreach ($Tbl_BULAN_neraca_data as $list_data) {
+                                                                // $Year_process=0;
+                                                                // $Month_process=0;
+                                                                foreach ($Data_group_by_month_Jurnal_kas as $list_data) {
                                                                     // if ($list_data->bulan_transaksi > 0) {
+                                                                
                                                                 ?>
 
                                                                     <tr>
 
                                                                         <td><?php echo ++$start ?></td>
 
-                                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
-                                                                        <td align="left"><?php echo $list_data->bulan_neraca . " (" . bulan_teks($list_data->bulan_neraca) . ")"; ?></td>
+                                                                        <td align="left"><?php echo $list_data->year_process; ?></td>
+                                                                        <td align="left"><?php echo $list_data->month_process . " (" . bulan_teks($list_data->month_process) . ")"; ?></td>
                                                                         <td align="left">
                                                                             <?php
 
                                                                             if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
 
-                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                                echo anchor(site_url('jurnal_kas/pemasukan_kas/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                             }
 
 
 
-                                                                            $sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$list_data->bulan_neraca' ";
+                                                                            $sql = "SELECT * FROM `jurnal_kas` WHERE year(`tanggal`)='$list_data->year_process' And month(`tanggal`)='$list_data->month_process' ";
 
-                                                                            $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
+                                                                            $GET_jurnal_kas_data_RECORD = $this->db->query($sql);
 
-                                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                            if ($GET_jurnal_kas_data_RECORD->num_rows() > 0) {
+                                                                                echo anchor(site_url('Jurnal_kas/cari_between_date/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Jurnal Kas</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                                             }
 
                                                                             ?>

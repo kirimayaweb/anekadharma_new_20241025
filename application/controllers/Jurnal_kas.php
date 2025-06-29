@@ -59,7 +59,7 @@ class Jurnal_kas extends CI_Controller
     }
 
 
-    public function cari_between_date()
+    public function cari_between_date($Tahun_selected = null, $Bulan_selected = null)
     {
 
         // if ($GET_DATE) {
@@ -70,9 +70,20 @@ class Jurnal_kas extends CI_Controller
 
         // print_r("NOTTTT GET_DATE");
         // print_r("<br/>");
-        $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-        $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+
         // }
+
+
+        if ($Bulan_selected) {
+            $Get_month_selected = $Bulan_selected;
+            $Get_YEAR_selected = $Tahun_selected;
+        } else {
+            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
+            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+        }
+
+
+
         $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
@@ -341,11 +352,11 @@ class Jurnal_kas extends CI_Controller
 
 
 
-// ============ SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
+        // ============ SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
 
 
 
-// ============ END OF SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
+        // ============ END OF SETTING KODE AKUN UNTUK PENERIMAAN KAS KE BUKU BESAR =======
 
 
         $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `uuid_jurnal_kas`='$uuid_jurnal_kas'";
