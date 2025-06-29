@@ -125,8 +125,8 @@ class Jurnal_kas extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
-            'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
-            'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
+            'month_selected' => $Get_month_selected,
+            'year_selected' => $Get_YEAR_selected,
         );
 
         // print_r($data);
