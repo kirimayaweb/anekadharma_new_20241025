@@ -1051,7 +1051,7 @@
 
                                                                             if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
 
-                                                                                echo anchor(site_url('jurnal_kas/pemasukan_kas/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
+                                                                                echo anchor(site_url('jurnal_kas/cari_between_date/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                             }
 
 
