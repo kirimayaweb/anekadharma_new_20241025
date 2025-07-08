@@ -68,7 +68,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
       <div class="container">
         <!-- <a href="#" class="navbar-brand">
-          <img src="<?php //echo base_url() ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+          <img src="<?php //echo base_url() 
+                    ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
           <span class="brand-text font-weight-light">ANEKA DHARMA</span>
         </a> -->
 
@@ -83,6 +84,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
               <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
             </li>
 
+            <li class="nav-item d-none d-sm-inline-block">
+              <a href="<?php echo base_url("index.php/Dashboard")  ?>" class="nav-link">Dashboard</a>
+            </li>
 
             <?php
             $id_user_active = $this->session->userdata('sess_iduser');
@@ -124,7 +128,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
                       <li>
                         <a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo $detail_menu['name']; ?>
-                      </a>
+                        </a>
                       </li>
 
 
