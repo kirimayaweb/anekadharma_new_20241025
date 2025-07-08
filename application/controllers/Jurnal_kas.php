@@ -999,12 +999,36 @@ class Jurnal_kas extends CI_Controller
         $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
     }
 
-    public function excel()
+    public function excel($Tahun_selected = null, $Bulan_selected = null)
     {
+
+        $date_sekarang = date('Y-m-d H:i:s');
+        $variabel_date_awal_selected = date('Y-m-d', strtotime('+0 month', strtotime($date_sekarang)));
+
+
+        if ($Bulan_selected) {
+            $Get_month_selected = $Bulan_selected;
+            $Get_YEAR_selected = $Tahun_selected;
+        } else {
+            $Get_month_selected = date('m', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
+            $Get_YEAR_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
+        }
+
+        // print_r($Get_month_selected);
+        // print_r("<br/>");
+        // print_r($Get_YEAR_selected);
+        // print_r("<br/>");
+        // die;
+
+        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
+
+        $Data_kas = $this->db->query($sql)->result();
+
+
         $tgl_sekarang = date("d-m-Y H:i:s");
 
         $this->load->helper('exportexcel');
-        $namaFile = "jurnal_kas_" . $tgl_sekarang . ".xls";
+        $namaFile = "jurnal_kas_"  . $Get_month_selected . "_". $Get_YEAR_selected . "_Dicetak_" . $tgl_sekarang  .".xls";
         $judul = "jurnal_kas";
         $tablehead = 0;
         $tablebody = 1;
@@ -1031,7 +1055,8 @@ class Jurnal_kas extends CI_Controller
         xlsWriteLabel($tablehead, $kolomhead++, "Debet");
         xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
 
-        foreach ($this->Jurnal_kas_model->get_all() as $data) {
+        // foreach ($this->Jurnal_kas_model->get_all() as $data) {
+        foreach ($Data_kas as $data) {
             $kolombody = 0;
 
             //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric

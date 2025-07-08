@@ -139,7 +139,7 @@
 
                                                 <div class="col-md-3" text-align="right">
                                                     <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php //echo $Get_date_awal; ?>" required />
                                                         <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
@@ -152,7 +152,7 @@
 
                                                 <div class="col-md-3" text-align="left" align="left">
                                                     <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php //echo $Get_date_akhir; ?>" required />
                                                         <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
@@ -193,8 +193,7 @@
                                     </div>
 
                                     <div class="col-1" align="right">
-
-                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('jurnal_kas/excel/'.$Get_year_Tahun_ini.'/'.$Get_month_from_date), 'Cetak', 'class="btn btn-success"'); ?>
                                     </div>
 
 
