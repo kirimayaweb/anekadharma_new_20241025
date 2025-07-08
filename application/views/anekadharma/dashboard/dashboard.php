@@ -1061,7 +1061,7 @@
                                                                             $GET_jurnal_kas_data_RECORD = $this->db->query($sql);
 
                                                                             if ($GET_jurnal_kas_data_RECORD->num_rows() > 0) {
-                                                                                echo anchor(site_url('Jurnal_kas/cari_between_date/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Jurnal Kas</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                                echo anchor(site_url('Jurnal_kas/excel/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Jurnal Kas</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                                             }
 
                                                                             ?>
