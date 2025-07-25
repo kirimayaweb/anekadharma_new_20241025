@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model', 'Buku_besar_model','Tbl_penjualan_accounting_pembayaran_model','Tbl_penjualan_accounting_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model', 'Buku_besar_model', 'Tbl_penjualan_accounting_pembayaran_model', 'Tbl_penjualan_accounting_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -847,7 +847,9 @@ class Tbl_pembelian extends CI_Controller
 		// $Data_supplier_tagihan = $this->Tbl_pembelian_model->supplier_tagihan();
 		// $Data_supplier_tagihan = $this->Tbl_pembelian_pengajuan_bayar_model->get_all();
 
-		$sql = "SELECT tbl_pembelian_a.uuid_spop as uuid_spop, 
+		$sql = "SELECT 
+		tbl_pembelian_a.id as id, 
+		tbl_pembelian_a.uuid_spop as uuid_spop, 
         tbl_pembelian_a.tgl_po as tgl_po,
         tbl_pembelian_a.spop as spop,
         tbl_pembelian_a.jumlah as jumlah,
@@ -884,6 +886,130 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_list_ke_supplier', $data);
 	}
 
+
+	// public function update_pembayaran_ke_supplier($id_data = null)
+	// {
+	// 	print_r("update_pembayaran_ke_supplier");
+	// 	print_r("<br/>");
+	// 	print_r($id_data);
+
+
+	// 	die;
+
+	// 	return ('pembayaran_ke_supplier');
+	// }
+
+	// public function update_pembayaran_ke_supplier($uuid_spop = null, $from_pembelian_page = null)
+	public function update_pembayaran_ke_supplier($id_data = null)
+	{
+
+		// direktur
+		$id_user_level = 999;
+		$row_per_direktur = $this->User_model->get_by_id_user_level($id_user_level);
+
+		// kabagkeuangan
+		$id_user_level = 888;
+		$row_per_kabagkeuangan = $this->User_model->get_by_id_user_level($id_user_level);
+
+		// kasirpembelian
+		$id_user_level = 777;
+		$row_per_kasirpembelian = $this->User_model->get_by_id_user_level($id_user_level);
+
+		// print_r("update_pembayaran_ke_supplier");
+		// print_r("<br/>");
+		// print_r($id_data);
+		// print_r("<br/>");
+
+		// PEMBAYARAN TRANSFER PER UID_SPOP
+		$this->db->where('id', $id_data);
+		$Query_data_pengajuan_bayar_by_id = $this->db->get('tbl_pembelian_pengajuan_bayar')->row();
+		// $Get_data_TERBAYAR_VIA_TRANSFER_by_uuid_spop = $Query_data_pengajuan_bayar_by_uuid_spop->row();
+
+		// print_r($Query_data_pengajuan_bayar_by_id);
+		// print_r("<br/>");
+
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// GET DATA MASTER PEMBELIAN UNTUK MENDAPATKAN DATA UMUM PEMBELIAN
+		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($Query_data_pengajuan_bayar_by_id->uuid_spop);
+
+		// print_r($row_per_uuid_spop);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($row_per_uuid_spop->uuid_supplier);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		// $RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+
+		$from_pembelian_page = "BukanPembelian";
+		$UPDATE_PROSES = "UPDATE_PROSES";
+		// die;
+
+		$data = array(
+			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
+			'button' => 'Update',
+			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'id' => $Query_data_pengajuan_bayar_by_id->id,
+			'tgl_po' => $row_per_uuid_spop->tgl_po,
+			'nmrfakturkwitansi' => $Query_data_pengajuan_bayar_by_id->nomor_faktur,
+			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
+			'spop' => $row_per_uuid_spop->spop,
+			'nominal_pengajuan' => $Query_data_pengajuan_bayar_by_id->nominal_pengajuan,
+			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
+			// 'nominal_pengajuan' => str_replace(",", ".", str_replace(".", "", $x_total)),
+			'supplier_uuid' => $row_per_uuid_spop->uuid_supplier,
+			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
+			'supplier_nama' => $Query_data_pengajuan_bayar_by_id->supplier_nama,
+			'uuid_konsumen' => $Query_data_pengajuan_bayar_by_id->uuid_konsumen,
+			'konsumen' => $Query_data_pengajuan_bayar_by_id->konsumen,
+			'statuslu' => $Query_data_pengajuan_bayar_by_id->statuslu,
+
+			'uuid_bank' => $Query_data_pengajuan_bayar_by_id->uuid_bank,
+			'nama_bank' => $Query_data_pengajuan_bayar_by_id->nama_bank,
+			'kas_bank' => $Query_data_pengajuan_bayar_by_id->uuid_bank,
+			
+			
+			'nama_direktur' => $Query_data_pengajuan_bayar_by_id->nama_direktur,
+			'nama_kabagkeuangan' => $Query_data_pengajuan_bayar_by_id->nama_kabagkeuangan,
+			'nama_kasirpemebelian' => $Query_data_pengajuan_bayar_by_id->nama_kasirpemebelian,
+			
+			'nomor_permohonan' => $Query_data_pengajuan_bayar_by_id->nomor_permohonan,
+			'keterangan' => $Query_data_pengajuan_bayar_by_id->keterangan,
+			'nomor_bkk' => $Query_data_pengajuan_bayar_by_id->nomor_bkk,
+			'nomor_rekening' => $Query_data_pengajuan_bayar_by_id->nomor_rekening,
+			'atas_nama_rekening' => $Query_data_pengajuan_bayar_by_id->atas_nama_rekening,
+			'nomor_cek_giro' => $Query_data_pengajuan_bayar_by_id->nomor_cek_giro,
+			
+			'uuid_account_unit' => $Query_data_pengajuan_bayar_by_id->uuid_account_unit,
+			'account' => $Query_data_pengajuan_bayar_by_id->account,
+			
+			
+			
+			'from_pembelian_page' => $from_pembelian_page,
+			'UPDATE_DATA' => $UPDATE_PROSES,
+
+
+		);
+
+		// print_r($data);
+
+		// die;
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_cetak_pengajuan_pembayaran', $data);
+	}
+
+
+	public function delete_pembayaran_dari_supplier($id_data = null)
+	{
+		print_r("PROCESSING delete_pembayaran_dari_supplier");
+		print_r("<br/>");
+		// print_r($id_data);
+		die;
+	}
 
 	public function pembayaran_ke_supplier_test()
 	{
@@ -1061,7 +1187,6 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($Data_konsumen_tagihan);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_form_per_uuid_konsumen', $data);
-
 	}
 
 
@@ -1089,10 +1214,10 @@ class Tbl_pembelian extends CI_Controller
 	public function create_pembayaran_per_uuid_konsumen_by_transaksi_action($uuid_konsumen = null)
 	{
 
-		print_r($uuid_konsumen);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// print_r($uuid_konsumen);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
 
 		$get_data_kode_akun = $this->Sys_kode_akun_model->get_by_uuid_kode_akun($this->input->post('uuid_kode_akun', TRUE));
 
@@ -1167,15 +1292,15 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 		// PENJUALAN ACCOUNTING
-		
-		
+
+
 		print_r($uuid_konsumen);
 		print_r("<br/>");
 		print_r("<br/>");
 		print_r("<br/>");
 
-		
-		$start=0;
+
+		$start = 0;
 		$sql = "select * from `tbl_penjualan_accounting` where  `uuid_konsumen`='$uuid_konsumen' and (`proses_bayar`='proses' or `proses_bayar`='belum_bayar' )";
 
 		print_r($this->db->query($sql)->result());

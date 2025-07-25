@@ -107,7 +107,7 @@
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">NO.</th>
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-										<input type="text" name="nomor_permohonan" id="nomor_permohonan" placeholder="Nomor Permohonan" value="" required>
+										<input type="text" name="nomor_permohonan" id="nomor_permohonan" placeholder="Nomor Permohonan" value="<?php echo $nomor_permohonan; ?>" required>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="98"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
@@ -132,9 +132,9 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348">
-										<input type="text" style="font-size:1.2em;" class="form-control" name="jumlah_nominal" id="jumlah_nominal" placeholder="Nomor Permohonan" value="<?php 
-										echo number_format($nominal_pengajuan, 2, ',', '.') ;										
-										?>">
+										<input type="text" style="font-size:1.2em;" class="form-control" name="jumlah_nominal" id="jumlah_nominal" placeholder="Nomor Permohonan" value="<?php
+																																															echo number_format($nominal_pengajuan, 2, ',', '.');
+																																															?>">
 									</th>
 
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL PEMBAYARAN</th>
@@ -185,7 +185,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">KETERANGAN</th>
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
-										<input type="text" name="keterangan" id="keterangan" placeholder="keterangan" value="">
+										<input type="text" name="keterangan" id="keterangan" placeholder="keterangan" value="<?php echo $keterangan ?>">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -212,7 +212,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 150px;" colspan="150">No. Faktur</th>
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="450">
-										<input type="text" name="nomor_faktur" id="nomor_faktur" placeholder="nomor_faktur" value="">
+										<input type="text" name="nomor_faktur" id="nomor_faktur" placeholder="nomor_faktur" value="<?php echo $nmrfakturkwitansi ?>">
 									</th>
 
 
@@ -221,8 +221,21 @@
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="398">ditransfer ke Rek.
 										<select name="uuid_bank" id="uuid_bank" class="form-control select2" style="width: 80%; height: 5px;" required>
-											<option value="">Pilih Bank</option>
+
 											<?php
+											if ($uuid_bank) {
+											?>
+
+												<option value="<?php echo $uuid_bank ?>"><?php echo $nama_bank ?></option>
+											<?php
+											} else {
+											?>
+
+												<option value="">Pilih Bank</option>
+											<?php
+											}
+
+
 
 											$sql = "select * from sys_bank  order by  nama_bank ASC ";
 
@@ -297,7 +310,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"><?php echo $spop; ?></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">BKK NO.</th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">
-										<input type="text" name="nomor_bkk" id="nomor_bkk" placeholder="Nomor BKK" value="" required>
+										<input type="text" name="nomor_bkk" id="nomor_bkk" placeholder="Nomor BKK" value="<?php echo $nomor_bkk ?>" required>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="98"></th> -->
@@ -383,7 +396,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="">
+										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="<?php echo $nomor_rekening ?>">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -406,7 +419,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="">
+										<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="<?php echo $atas_nama_rekening ?>">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -440,10 +453,23 @@
 									<th style="font-size:0.550em; text-align:left; width: 300px;" colspan="300">
 										<!-- <input type="text" name="account" id="account" placeholder="Nama Unit" value="" required> -->
 										<select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 80%; height: 3px;" required>
-											<option value="<?php //echo $uuid_konsumen 
-															?>"><?php //echo $nama_konsumen 
-																?></option>
+
 											<?php
+											if ($uuid_account_unit) {
+											?>
+
+												<option value="<?php echo $uuid_account_unit ?>"><?php echo $account ?></option>
+											<?php
+											} else {
+											?>
+
+												<option value="<?php //echo $uuid_konsumen 
+																?>"><?php //echo $nama_konsumen 
+																	?></option>
+											<?php
+											}
+
+
 
 											// Data Unit
 											$sql = "select * from sys_unit order by nama_unit ASC ";
@@ -458,7 +484,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 50px" colspan="50">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">CEK/GIRO NO</th>
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-										<input type="text" name="nomor_cek_giro" id="nomor_cek_giro" placeholder="Nomor CEK/GIRO" value="" required>
+										<input type="text" name="nomor_cek_giro" id="nomor_cek_giro" placeholder="Nomor CEK/GIRO" value="<?php echo $nomor_cek_giro ?>" required>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="398">KAS &ensp; (&ensp;&ensp;)</th> -->
@@ -612,7 +638,19 @@
 							<!-- <a href="<?php //echo site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $uuid_spop) 
 											?>" class="btn btn-success" target="_blank">Cetak Pengajuan Pembayaran (PDF)</a> -->
 
-							<button type="submit" class="btn btn-primary">SIMPAN</button>
+							<?php
+							if ($button == "Simpan") {
+							?>
+								<button type="submit" class="btn btn-primary">SIMPAN</button>
+
+							<?php
+							} else {
+							?>
+								<button type="submit" class="btn btn-danger">UPDATE</button>
+
+							<?php
+							}
+							?>
 
 						</div>
 						<div class="col-4"></div>

@@ -103,7 +103,13 @@
 
                                     <tr>
                                         <td><?php echo ++$start ?></td>
-                                        <td><?php echo date("d M Y", strtotime($data_pembelian_per_spop->tgl_po));  ?></td>
+                                        <td>
+                                            <?php
+                                            echo date("d M Y", strtotime($data_pembelian_per_spop->tgl_po));
+
+
+                                            ?>
+                                        </td>
                                         <td><?php echo $data_pembelian_per_spop->spop ?></td>
                                         <td align="left"><?php echo $list_data->supplier_nama; ?></td>
 
@@ -222,6 +228,15 @@
                                                 $uuid_SPOP_TRANSFER = $uuid_SPOP_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
                                                 $TOTAL_BAYAR_TRANSFER = $TOTAL_BAYAR_TRANSFER + $list_data_TRANSFER->nominal_pengajuan;
 
+
+                                                // echo "<br/>";
+
+                                                echo anchor(site_url('tbl_pembelian/update_pembayaran_ke_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH  </i>', 'class="btn btn-warning btn-xs"');
+
+                                                // echo anchor(site_url('tbl_pembelian/delete_pembayaran_dari_supplier/' . $list_data->uuid_spop), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+
+                                                echo anchor(site_url('tbl_pembelian/delete_pembayaran_dari_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-trash-o">HAPUS</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin Akan MENGHAPUS Data ini ?\')"');
+                                           
                                                 ++$start_TRANSFER;
                                             }
 
