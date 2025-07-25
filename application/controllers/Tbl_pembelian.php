@@ -899,6 +899,14 @@ class Tbl_pembelian extends CI_Controller
 	// 	return ('pembayaran_ke_supplier');
 	// }
 
+
+	public function update_pembayaran_ke_supplier_action($id_data = null)
+	{
+		print_r("update_pembayaran_ke_supplier_action");
+		die;
+	}
+
+
 	// public function update_pembayaran_ke_supplier($uuid_spop = null, $from_pembelian_page = null)
 	public function update_pembayaran_ke_supplier($id_data = null)
 	{
@@ -960,7 +968,7 @@ class Tbl_pembelian extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Update',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian/update_pembayaran_ke_supplier_action/' . $id_data),
 			'id' => $Query_data_pengajuan_bayar_by_id->id,
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			'tgl_permohonan' => $Query_data_pengajuan_bayar_by_id->tgl_permohonan,

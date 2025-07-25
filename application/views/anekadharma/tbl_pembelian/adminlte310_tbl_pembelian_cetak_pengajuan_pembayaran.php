@@ -143,7 +143,13 @@
 									<?php
 									// $date_tgl_permohonan = date("d-m-Y", strtotime($tgl_permohonan));
 									// $date_po_tgl_jatuh_tempo = date("d-m-Y", strtotime($tgl_jatuh_tempo));
-									$tgl_pembayaran_X = date("d-m-Y", strtotime($tgl_permohonan));
+
+									if ($tgl_permohonan > 2020 - 01 - 01) {
+										$tgl_pembayaran_X = date("d-m-Y", strtotime($tgl_permohonan));
+									} else {
+										$tgl_pembayaran_X = "";
+									}
+
 									// echo $tgl_permohonan;
 									?>
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
@@ -217,9 +223,20 @@
 									<th style="font-size:0.550em; width: 100px;" colspan="298">
 
 										<?php
-										$tgl_jatuh_tempo_X = date("d-m-Y", strtotime($tgl_jatuh_tempo));
-										// echo $tgl_jatuh_tempo;
+
+
+										if ($tgl_jatuh_tempo > 2020 - 01 - 01) {
+											$tgl_jatuh_tempo_X = date("d-m-Y", strtotime($tgl_jatuh_tempo));
+											// echo $tgl_jatuh_tempo;
+
+										} else {
+											$tgl_jatuh_tempo_X = "";
+										}
+
 										?>
+
+
+
 
 										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_jatuh_tempo" id="tgl_jatuh_tempo" name="tgl_jatuh_tempo" value="<?php echo $tgl_jatuh_tempo_X ?>" required />
 										<div class="input-group-append" data-target="#tgl_jatuh_tempo" data-toggle="datetimepicker">
@@ -346,7 +363,17 @@
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL BKK</th>
 									<th style="font-size:0.550em; text-align:left; width: 200px;" colspan="200">
 										<?php
-										$tgl_bkk = date("d-m-Y", strtotime($tgl_nomor_bkk));
+
+
+										if ($tgl_nomor_bkk > 2020 - 01 - 01) {
+											$tgl_bkk = date("d-m-Y", strtotime($tgl_nomor_bkk));
+										} else {
+											$tgl_bkk = "";
+										}
+
+										?>
+
+
 										?>
 
 										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_nomor_bkk" id="tgl_nomor_bkk" name="tgl_nomor_bkk" value="<?php echo $tgl_bkk; ?>" required />
@@ -394,21 +421,21 @@
 										BANK &ensp;
 										<!-- ( <input type="checkbox" class="radio" value="1" name="bank_checkbox" id="bank_checkbox" />) -->
 										<select name="uuid_bank_bkk" id="uuid_bank_bkk" class="form-control select2" style="width: 80%;">
-											
-											<?php 
-											if($uuid_bank_bkk){
-	?>
-										
-										<option value="<?php echo $uuid_bank_bkk ?>"><?php echo $nama_bank_bkk ?> </option>
+
 											<?php
-											}else{
-	?>
-										
-										<option value="">Pilih Bank </option>
+											if ($uuid_bank_bkk) {
+											?>
+
+												<option value="<?php echo $uuid_bank_bkk ?>"><?php echo $nama_bank_bkk ?> </option>
+											<?php
+											} else {
+											?>
+
+												<option value="">Pilih Bank </option>
 											<?php
 											}
-											
-										
+
+
 
 											$sql = "select * from sys_bank  order by  nama_bank ASC ";
 
