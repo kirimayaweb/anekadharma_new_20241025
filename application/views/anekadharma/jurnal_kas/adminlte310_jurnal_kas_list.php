@@ -139,7 +139,8 @@
 
                                                 <div class="col-md-3" text-align="right">
                                                     <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php //echo $Get_date_awal; ?>" required />
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php //echo $Get_date_awal; 
+                                                                                                                                                                                    ?>" required />
                                                         <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
@@ -152,7 +153,8 @@
 
                                                 <div class="col-md-3" text-align="left" align="left">
                                                     <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php //echo $Get_date_akhir; ?>" required />
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php //echo $Get_date_akhir; 
+                                                                                                                                                                                        ?>" required />
                                                         <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
@@ -193,7 +195,7 @@
                                     </div>
 
                                     <div class="col-1" align="right">
-                                        <?php echo anchor(site_url('jurnal_kas/excel/'.$Get_year_Tahun_ini.'/'.$Get_month_from_date), 'Cetak', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('jurnal_kas/excel/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), 'Cetak', 'class="btn btn-success"'); ?>
                                     </div>
 
 
@@ -359,6 +361,37 @@
                                         <?php
                                         echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
                                         $SALDO_AKHIR = $TOTAL_debet - $TOTAL_kredit;
+
+
+
+                                        // SIMPAN KE TABEL jurnal_kas_saldo_akhir_bulan SALDO BULAN TERPILIH
+
+                                        $Get_bulan_saldo = date("$Get_year_Tahun_ini-$Get_month_from_date-01");
+
+                                        $this->db->where('tanggal', $Get_bulan_saldo);
+                                        $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
+
+                                        if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
+                                            print_r("<br/>");
+                                            print_r("ada data");
+                                            print_r("<br/>");
+                                            print_r($GET_jurnal_kas_saldo_akhir_bulan->row()->id);
+
+                                            $data = array(
+                                                'saldo' => $SALDO_AKHIR,
+                                            );
+
+                                            $this->Jurnal_kas_saldo_akhir_bulan_model->update($GET_jurnal_kas_saldo_akhir_bulan->row()->id, $data);
+                                        } else {
+                                        $data = array(
+                                                'tanggal' => $Get_bulan_saldo,
+                                                'saldo' => $SALDO_AKHIR,
+                                            );
+
+                                            $this->Jurnal_kas_saldo_akhir_bulan_model->insert( $data);
+                                              
+                                        }
+
                                         ?>
                                     </th>
                                     <!-- <th style="text-align:center">Action</th> -->

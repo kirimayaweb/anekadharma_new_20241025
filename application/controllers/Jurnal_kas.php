@@ -9,7 +9,7 @@ class Jurnal_kas extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model'));
+        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model','Jurnal_kas_saldo_akhir_bulan_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }

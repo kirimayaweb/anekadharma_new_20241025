@@ -28,52 +28,60 @@ class Jurnal_kas_saldo_akhir_bulan_model extends CI_Model
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
-    
+
     // get total rows
-    function total_rows($q = NULL) {
+    function total_rows($q = NULL)
+    {
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_jurnal_kas_saldo_akhir_bulan', $q);
-	$this->db->or_like('kode_akun', $q);
-	$this->db->or_like('id_buku_besar', $q);
-	$this->db->or_like('tanggal', $q);
-	$this->db->or_like('bukti', $q);
-	$this->db->or_like('pl', $q);
-	$this->db->or_like('keterangan', $q);
-	$this->db->or_like('kode_rekening', $q);
-	$this->db->or_like('uuid_unit', $q);
-	$this->db->or_like('kode_unit', $q);
-	$this->db->or_like('debet', $q);
-	$this->db->or_like('kredit', $q);
-	$this->db->or_like('saldo', $q);
-	$this->db->from($this->table);
+        $this->db->or_like('uuid_jurnal_kas_saldo_akhir_bulan', $q);
+        $this->db->or_like('kode_akun', $q);
+        $this->db->or_like('id_buku_besar', $q);
+        $this->db->or_like('tanggal', $q);
+        $this->db->or_like('bukti', $q);
+        $this->db->or_like('pl', $q);
+        $this->db->or_like('keterangan', $q);
+        $this->db->or_like('kode_rekening', $q);
+        $this->db->or_like('uuid_unit', $q);
+        $this->db->or_like('kode_unit', $q);
+        $this->db->or_like('debet', $q);
+        $this->db->or_like('kredit', $q);
+        $this->db->or_like('saldo', $q);
+        $this->db->from($this->table);
         return $this->db->count_all_results();
     }
 
     // get data with limit and search
-    function get_limit_data($limit, $start = 0, $q = NULL) {
+    function get_limit_data($limit, $start = 0, $q = NULL)
+    {
         $this->db->order_by($this->id, $this->order);
         $this->db->like('id', $q);
-	$this->db->or_like('uuid_jurnal_kas_saldo_akhir_bulan', $q);
-	$this->db->or_like('kode_akun', $q);
-	$this->db->or_like('id_buku_besar', $q);
-	$this->db->or_like('tanggal', $q);
-	$this->db->or_like('bukti', $q);
-	$this->db->or_like('pl', $q);
-	$this->db->or_like('keterangan', $q);
-	$this->db->or_like('kode_rekening', $q);
-	$this->db->or_like('uuid_unit', $q);
-	$this->db->or_like('kode_unit', $q);
-	$this->db->or_like('debet', $q);
-	$this->db->or_like('kredit', $q);
-	$this->db->or_like('saldo', $q);
-	$this->db->limit($limit, $start);
+        $this->db->or_like('uuid_jurnal_kas_saldo_akhir_bulan', $q);
+        $this->db->or_like('kode_akun', $q);
+        $this->db->or_like('id_buku_besar', $q);
+        $this->db->or_like('tanggal', $q);
+        $this->db->or_like('bukti', $q);
+        $this->db->or_like('pl', $q);
+        $this->db->or_like('keterangan', $q);
+        $this->db->or_like('kode_rekening', $q);
+        $this->db->or_like('uuid_unit', $q);
+        $this->db->or_like('kode_unit', $q);
+        $this->db->or_like('debet', $q);
+        $this->db->or_like('kredit', $q);
+        $this->db->or_like('saldo', $q);
+        $this->db->limit($limit, $start);
         return $this->db->get($this->table)->result();
     }
 
     // insert data
     function insert($data)
     {
+        $this->db->set('uuid_jurnal_kas_saldo_akhir_bulan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
+
+        $datainsert = array(
+            'PROCESS' => 'INSERT',
+            'id' => $this->db->insert_id()
+        );
     }
 
     // update data
@@ -89,7 +97,6 @@ class Jurnal_kas_saldo_akhir_bulan_model extends CI_Model
         $this->db->where($this->id, $id);
         $this->db->delete($this->table);
     }
-
 }
 
 /* End of file Jurnal_kas_saldo_akhir_bulan_model.php */
