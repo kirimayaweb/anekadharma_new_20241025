@@ -900,10 +900,176 @@ class Tbl_pembelian extends CI_Controller
 	// }
 
 
+	// public function update_pembayaran_ke_supplier_action($id_data = null)
+	// {
+	// 	print_r("update_pembayaran_ke_supplier_action");
+	// 	die;
+	// }
+
 	public function update_pembayaran_ke_supplier_action($id_data = null)
 	{
-		print_r("update_pembayaran_ke_supplier_action");
-		die;
+
+	
+		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
+
+		if (date("Y", strtotime($this->input->post('tgl_permohonan', TRUE))) < 2020) {
+			$date_tgl_permohonan = date("Y-m-d H:i:s");
+		} else {
+			$date_tgl_permohonan = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_permohonan', TRUE)));
+		}
+
+
+		if (date("Y", strtotime($this->input->post('tgl_nomor_bkk', TRUE))) < 2020) {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s");
+		} else {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_nomor_bkk', TRUE)));
+		}
+
+		if (date("Y", strtotime($this->input->post('tgl_jatuh_tempo', TRUE))) < 2020) {
+			$date_tgl_jatuh_tempo = date("Y-m-d H:i:s");
+		} else {
+			$date_tgl_jatuh_tempo = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_jatuh_tempo', TRUE)));
+		}
+
+		if (date("Y", strtotime($this->input->post('tgl_nomor_bkk', TRUE))) < 2020) {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s");
+		} else {
+			$date_tgl_nomor_bkk = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_nomor_bkk', TRUE)));
+		}
+
+		$get_uuid_unit = $this->input->post('uuid_unit', TRUE);
+		$data_unit = $this->Sys_unit_model->get_by_uuid_unit($get_uuid_unit);
+		$data_nama_unit = $data_unit->nama_unit;
+
+		// print_r(preg_replace("/[^0-9]/", "", $this->input->post('jumlah_nominal', TRUE)));
+		// print_r("<br/>");
+		// print_r($this->input->post('jumlah_nominal', TRUE));
+
+		// print_r("<br/>");
+		// print_r(number_format($this->input->post('jumlah_nominal', TRUE), 2, ',', '.') );
+
+		// print_r("<br/>");
+		// print_r(str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)) );
+
+		// die;
+
+
+	// $this->db->where('id', $id_data);
+	// 	$Query_data_pengajuan_bayar_by_id = $this->db->get('tbl_pembelian_pengajuan_bayar')->row();
+
+
+		$data = array(
+			// 'uuid_spop' => $uuid_spop,
+			'date_input' => date("Y-m-d H:i:s"),
+			'tgl_pengajuan' => date("Y-m-d H:i:s"),
+			'supplier_nama' => $this->input->post('supplier_nama', TRUE),
+
+			'nominal_pengajuan' => str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)),
+			'nomor_permohonan' => $this->input->post('nomor_permohonan', TRUE),
+			'jumlah_nominal' => str_replace('.', '', $this->input->post('jumlah_nominal', TRUE)),
+
+			'tgl_permohonan' => $date_tgl_permohonan,
+			'tgl_pembayaran' => $date_tgl_permohonan,
+
+			'terbilang' => $this->input->post('terbilang', TRUE),
+			'keterangan' => $this->input->post('keterangan', TRUE),
+			'tgl_jatuh_tempo' => $date_tgl_jatuh_tempo,
+			'nomor_faktur' => $this->input->post('nomor_faktur', TRUE),
+			'uuid_bank' => $this->input->post('uuid_bank', TRUE),
+
+			// ditransfer ke
+			'nama_bank' => $row_per_uuid_bank->nama_bank,
+			'nomor_rekening' => $this->input->post('nomor_rekening', TRUE),
+			'atas_nama_rekening' => $this->input->post('atas_nama_rekening', TRUE),
+
+			'nomor_bkk' => $this->input->post('nomor_bkk', TRUE),
+			'tgl_nomor_bkk' => $date_tgl_nomor_bkk,
+
+			// 'bank_checkbox' => $this->input->post('bank_checkbox', TRUE),
+			'uuid_bank_bkk' => $this->input->post('uuid_bank_bkk', TRUE),
+			'nomor_rekening_bkk' => $this->input->post('nomor_rekening_bkk', TRUE),
+			'atas_nama_rekening_bkk' => $this->input->post('atas_nama_rekening_bkk', TRUE),
+
+
+			'kas_checkbox' => $this->input->post('kas_checkbox', TRUE),
+
+			'uuid_account_unit' => $this->input->post('uuid_unit', TRUE),
+			'account' => $data_nama_unit,
+
+			'nomor_cek_giro' => $this->input->post('nomor_cek_giro', TRUE),
+			'nama_direktur' => $this->input->post('nama_direktur', TRUE),
+			'nama_kabagkeuangan' => $this->input->post('nama_kabagkeuangan', TRUE),
+			'nama_kasirpemebelian' => $this->input->post('nama_kasirpemebelian', TRUE),
+		);
+
+
+
+		$uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->update($id_data,$data);
+
+		// print_r("uuid_pengajuan_bayar_terproses : ");
+		// print_r($uuid_pengajuan_bayar_terproses);
+		// die;
+
+		// UPDATE TABEL PEMBELIAN : Jika nominal pembayaran = jumlah tagihan maka  statuslu ==> Lunas
+		// $data_status = $this->Sys_status_transaksi_model->get_by_uuid_status_transaksi($this->input->post('uuid_status_transaksi', TRUE));
+
+		// CEK TAGIHAN DAN CEK JUMLAH PEMBAYARAN
+
+		$this->db->where('id', $id_data);
+		$Get_data_pembayaran_pembelian = $this->db->get('tbl_pembelian_pengajuan_bayar');
+
+		// print_r($Get_data_pembayaran_pembelian);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		if ($Get_data_pembayaran_pembelian->num_rows() > 0) {
+
+			// $RowArray_data_kas_Kecil = $Get_data_kas_Kecil->row_array();
+			// $get_id = $RowArray_data_kas_Kecil['id'];
+
+			$sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `id`='$id_data' GROUP by `uuid_spop`";
+
+			$Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
+
+
+			// print_r($Data_Pembayaran_uuid_spop);
+			// print_r("<br/>");
+
+			// print_r($Data_Pembayaran_uuid_spop->total_sudah_terbayar);
+			// print_r("<br/>");
+
+			// GET TAGIHAN DI TABEL PEMBELIAN
+
+			$sql_data_pembelian = "SELECT `uuid_spop`,`spop`,`jumlah`,`harga_satuan` FROM `tbl_pembelian` WHERE `uuid_spop`='$uuid_spop'";
+			$jumlah_tagihan_total = 0;
+			foreach ($this->db->query($sql_data_pembelian)->result() as $list_data) {
+				// print_r($list_data->jumlah);
+				// print_r("<br/>");
+				// print_r($list_data->harga_satuan);
+				// print_r("<br/>");
+				$jumlah_tagihan_total = $jumlah_tagihan_total + ($list_data->jumlah * $list_data->harga_satuan);
+
+				// print_r($jumlah_tagihan_total);
+				// print_r("<br/>");
+				// print_r("<br/>");
+			}
+
+			if ($Data_Pembayaran_uuid_spop->total_sudah_terbayar >= $jumlah_tagihan_total) {
+				$data = array(
+					'statuslu' => "L",
+				);
+
+				$this->Tbl_pembelian_model->update_statuslu_per_spop($uuid_spop, $data);
+			}
+		}
+
+		// print_r($Data_Pembayaran_uuid_spop->total_sudah_terbayar);
+		// print_r("<br/>");
+		// print_r($jumlah_tagihan_total);
+		// print_r("<br/>");
+		// die;
+
+		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}
 
 

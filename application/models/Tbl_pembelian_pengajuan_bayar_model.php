@@ -120,6 +120,8 @@ class Tbl_pembelian_pengajuan_bayar_model extends CI_Model
     {
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);
+
+        return $this->get_by_id($id)->uuid_pengajuan_bayar;
     }
 
     // delete data
