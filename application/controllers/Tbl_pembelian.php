@@ -909,7 +909,7 @@ class Tbl_pembelian extends CI_Controller
 	public function update_pembayaran_ke_supplier_action($id_data = null)
 	{
 
-	
+
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
 
 		if (date("Y", strtotime($this->input->post('tgl_pembayaran', TRUE))) < 2020) {
@@ -954,8 +954,8 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-	// $this->db->where('id', $id_data);
-	// 	$Query_data_pengajuan_bayar_by_id = $this->db->get('tbl_pembelian_pengajuan_bayar')->row();
+		// $this->db->where('id', $id_data);
+		// 	$Query_data_pengajuan_bayar_by_id = $this->db->get('tbl_pembelian_pengajuan_bayar')->row();
 
 
 		$data = array(
@@ -1004,7 +1004,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		$uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->update($id_data,$data);
+		$uuid_pengajuan_bayar_terproses = $this->Tbl_pembelian_pengajuan_bayar_model->update($id_data, $data);
 
 		// print_r("uuid_pengajuan_bayar_terproses : ");
 		// print_r($uuid_pengajuan_bayar_terproses);
@@ -1196,13 +1196,34 @@ class Tbl_pembelian extends CI_Controller
 	}
 
 
-	public function delete_pembayaran_dari_supplier($id_data = null)
+	// public function delete_pembayaran_dari_supplier($id_data = null)
+	// {
+	// 	print_r("PROCESSING delete_pembayaran_dari_supplier");
+	// 	print_r("<br/>");
+	// 	// print_r($id_data);
+	// 	die;
+	// }
+
+	public function delete_pembayaran_dari_supplier($id_data)
 	{
-		print_r("PROCESSING delete_pembayaran_dari_supplier");
-		print_r("<br/>");
-		// print_r($id_data);
-		die;
+		$row = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_id($id_data);
+
+		// print_r($row);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// die;
+
+		if ($row) {
+			$this->Tbl_pembelian_pengajuan_bayar_model->delete($id_data);
+			$this->session->set_flashdata('message', 'Delete Record Success');
+			redirect(site_url('Tbl_pembelian/pembayaran_ke_supplier'));
+		} else {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(site_url('Tbl_pembelian/pembayaran_ke_supplier'));
+		}
 	}
+
 
 	public function pembayaran_ke_supplier_test()
 	{
