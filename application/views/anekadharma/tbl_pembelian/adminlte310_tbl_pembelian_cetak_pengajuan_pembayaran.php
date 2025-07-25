@@ -139,14 +139,37 @@
 
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL PEMBAYARAN</th>
 
+
+									<?php
+									// $date_tgl_permohonan = date("d-m-Y", strtotime($tgl_permohonan));
+									// $date_po_tgl_jatuh_tempo = date("d-m-Y", strtotime($tgl_jatuh_tempo));
+									$tgl_pembayaran_X = date("d-m-Y", strtotime($tgl_permohonan));
+									// echo $tgl_permohonan;
+									?>
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_pembayaran" id="tgl_pembayaran" name="tgl_pembayaran" required />
+										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_pembayaran" id="tgl_pembayaran" name="tgl_pembayaran" value="<?php echo $tgl_pembayaran_X; ?>" required />
 										<div class="input-group-append" data-target="#tgl_pembayaran" data-toggle="datetimepicker">
 											<div class="input-group-text">
 												<i class="fa fa-calendar"></i>
 											</div>
 
 										</div>
+
+
+
+
+										<!-- <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
+											<input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php //echo $date_tgl_permohonan; 
+																																								?>" required />
+											<div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
+												<div class="input-group-text">
+													<i class="fa fa-calendar"></i>
+												</div>
+
+											</div>
+
+										</div> -->
+
 									</th>
 
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -192,7 +215,13 @@
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">JATUH TEMPO</th>
 									<th style="font-size:0.550em; width: 100px;" colspan="298">
-										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_jatuh_tempo" id="tgl_jatuh_tempo" name="tgl_jatuh_tempo" required />
+
+										<?php
+										$tgl_jatuh_tempo_X = date("d-m-Y", strtotime($tgl_jatuh_tempo));
+										// echo $tgl_jatuh_tempo;
+										?>
+
+										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_jatuh_tempo" id="tgl_jatuh_tempo" name="tgl_jatuh_tempo" value="<?php echo $tgl_jatuh_tempo_X ?>" required />
 										<div class="input-group-append" data-target="#tgl_jatuh_tempo" data-toggle="datetimepicker">
 											<div class="input-group-text">
 												<i class="fa fa-calendar"></i>
@@ -265,7 +294,7 @@
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="398">
-										<input type="text" name="nomor_rekening" id="nomor_rekening" placeholder="Nomor rekening" value="" required>
+										<input type="text" name="nomor_rekening" id="nomor_rekening" placeholder="Nomor rekening" value="<?php echo $nomor_rekening; ?>" required>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="298"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
@@ -286,7 +315,7 @@
 
 
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="398">a.n
-										<input type="text" name="atas_nama_rekening" id="atas_nama_rekening" placeholder="Atas Nama" value="" required>
+										<input type="text" name="atas_nama_rekening" id="atas_nama_rekening" placeholder="Atas Nama" value="<?php echo $atas_nama_rekening; ?>" required>
 									</th>
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="298"></th> -->
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="100"></th> -->
@@ -316,7 +345,11 @@
 									<!-- <th style="font-size:0.550em; width: 100px;" colspan="98"></th> -->
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">TANGGAL BKK</th>
 									<th style="font-size:0.550em; text-align:left; width: 200px;" colspan="200">
-										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_nomor_bkk" id="tgl_nomor_bkk" name="tgl_nomor_bkk" required />
+										<?php
+										$tgl_bkk = date("d-m-Y", strtotime($tgl_nomor_bkk));
+										?>
+
+										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_nomor_bkk" id="tgl_nomor_bkk" name="tgl_nomor_bkk" value="<?php echo $tgl_bkk; ?>" required />
 										<div class="input-group-append" data-target="#tgl_nomor_bkk" data-toggle="datetimepicker">
 											<div class="input-group-text">
 												<i class="fa fa-calendar"></i>
@@ -361,8 +394,21 @@
 										BANK &ensp;
 										<!-- ( <input type="checkbox" class="radio" value="1" name="bank_checkbox" id="bank_checkbox" />) -->
 										<select name="uuid_bank_bkk" id="uuid_bank_bkk" class="form-control select2" style="width: 80%;">
-											<option value="">Pilih Bank </option>
+											
+											<?php 
+											if($uuid_bank_bkk){
+	?>
+										
+										<option value="<?php echo $uuid_bank_bkk ?>"><?php echo $nama_bank_bkk ?> </option>
 											<?php
+											}else{
+	?>
+										
+										<option value="">Pilih Bank </option>
+											<?php
+											}
+											
+										
 
 											$sql = "select * from sys_bank  order by  nama_bank ASC ";
 

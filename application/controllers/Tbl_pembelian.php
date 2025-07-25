@@ -927,6 +927,14 @@ class Tbl_pembelian extends CI_Controller
 
 		// print_r($Query_data_pengajuan_bayar_by_id);
 		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($Query_data_pengajuan_bayar_by_id->uuid_bank_bkk);
+
+		$GET_NAMA_BANK_BKK = $row_per_uuid_bank->nama_bank;
+		// print_r($GET_NAMA_BANK_BKK);
 
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -955,6 +963,11 @@ class Tbl_pembelian extends CI_Controller
 			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
 			'id' => $Query_data_pengajuan_bayar_by_id->id,
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
+			'tgl_permohonan' => $Query_data_pengajuan_bayar_by_id->tgl_permohonan,
+			'tgl_jatuh_tempo' => $Query_data_pengajuan_bayar_by_id->tgl_jatuh_tempo,
+			'tgl_nomor_bkk' => $Query_data_pengajuan_bayar_by_id->tgl_nomor_bkk,
+
+
 			'nmrfakturkwitansi' => $Query_data_pengajuan_bayar_by_id->nomor_faktur,
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
@@ -970,25 +983,31 @@ class Tbl_pembelian extends CI_Controller
 
 			'uuid_bank' => $Query_data_pengajuan_bayar_by_id->uuid_bank,
 			'nama_bank' => $Query_data_pengajuan_bayar_by_id->nama_bank,
+			'nomor_rekening' => $Query_data_pengajuan_bayar_by_id->nomor_rekening,
+			'atas_nama_rekening' => $Query_data_pengajuan_bayar_by_id->atas_nama_rekening,
+
 			'kas_bank' => $Query_data_pengajuan_bayar_by_id->uuid_bank,
-			
-			
+
+			'uuid_bank_bkk' => $Query_data_pengajuan_bayar_by_id->uuid_bank_bkk,
+			'nama_bank_bkk' => $GET_NAMA_BANK_BKK,
+
+
 			'nama_direktur' => $Query_data_pengajuan_bayar_by_id->nama_direktur,
 			'nama_kabagkeuangan' => $Query_data_pengajuan_bayar_by_id->nama_kabagkeuangan,
 			'nama_kasirpemebelian' => $Query_data_pengajuan_bayar_by_id->nama_kasirpemebelian,
-			
+
 			'nomor_permohonan' => $Query_data_pengajuan_bayar_by_id->nomor_permohonan,
 			'keterangan' => $Query_data_pengajuan_bayar_by_id->keterangan,
 			'nomor_bkk' => $Query_data_pengajuan_bayar_by_id->nomor_bkk,
 			'nomor_rekening' => $Query_data_pengajuan_bayar_by_id->nomor_rekening,
 			'atas_nama_rekening' => $Query_data_pengajuan_bayar_by_id->atas_nama_rekening,
 			'nomor_cek_giro' => $Query_data_pengajuan_bayar_by_id->nomor_cek_giro,
-			
+
 			'uuid_account_unit' => $Query_data_pengajuan_bayar_by_id->uuid_account_unit,
 			'account' => $Query_data_pengajuan_bayar_by_id->account,
-			
-			
-			
+
+
+
 			'from_pembelian_page' => $from_pembelian_page,
 			'UPDATE_DATA' => $UPDATE_PROSES,
 
