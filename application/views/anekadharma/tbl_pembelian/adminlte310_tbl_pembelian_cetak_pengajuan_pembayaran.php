@@ -145,15 +145,15 @@
 									// $date_po_tgl_jatuh_tempo = date("d-m-Y", strtotime($tgl_jatuh_tempo));
 
 									if ($tgl_permohonan > 2020 - 01 - 01) {
-										$tgl_pembayaran_X = date("d-m-Y", strtotime($tgl_permohonan));
+										$tgl_permohonan_X = date("d-m-Y", strtotime($tgl_permohonan));
 									} else {
-										$tgl_pembayaran_X = "";
+										$tgl_permohonan_X = "";
 									}
 
 									// echo $tgl_permohonan;
 									?>
 									<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_pembayaran" id="tgl_pembayaran" name="tgl_pembayaran" value="<?php echo $tgl_pembayaran_X; ?>" required />
+										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_pembayaran" id="tgl_pembayaran" name="tgl_pembayaran" value="<?php echo $tgl_permohonan_X; ?>" required />
 										<div class="input-group-append" data-target="#tgl_pembayaran" data-toggle="datetimepicker">
 											<div class="input-group-text">
 												<i class="fa fa-calendar"></i>

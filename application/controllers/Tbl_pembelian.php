@@ -912,10 +912,10 @@ class Tbl_pembelian extends CI_Controller
 	
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($this->input->post('uuid_bank', TRUE));
 
-		if (date("Y", strtotime($this->input->post('tgl_permohonan', TRUE))) < 2020) {
+		if (date("Y", strtotime($this->input->post('tgl_pembayaran', TRUE))) < 2020) {
 			$date_tgl_permohonan = date("Y-m-d H:i:s");
 		} else {
-			$date_tgl_permohonan = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_permohonan', TRUE)));
+			$date_tgl_permohonan = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_pembayaran', TRUE)));
 		}
 
 
