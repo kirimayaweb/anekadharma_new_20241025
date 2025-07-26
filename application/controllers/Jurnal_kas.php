@@ -9,7 +9,7 @@ class Jurnal_kas extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model','Jurnal_kas_saldo_akhir_bulan_model'));
+        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model', 'Jurnal_kas_saldo_akhir_bulan_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
@@ -62,18 +62,6 @@ class Jurnal_kas extends CI_Controller
     public function cari_between_date($Tahun_selected = null, $Bulan_selected = null)
     {
 
-        // if ($GET_DATE) {
-        //     print_r("GET_DATE");
-        //     print_r("<br/>");
-        //     print_r($GET_DATE);
-        // } else {
-
-        // print_r("NOTTTT GET_DATE");
-        // print_r("<br/>");
-
-        // }
-
-
         if ($Bulan_selected) {
             $Get_month_selected = $Bulan_selected;
             $Get_YEAR_selected = $Tahun_selected;
@@ -82,14 +70,12 @@ class Jurnal_kas extends CI_Controller
             $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
         }
 
-
-
         $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
         $Data_kas = $this->db->query($sql)->result();
 
-
-
+        // print_r($Data_kas);
+        // die;
 
 
         // ------------------------------------------------------------------------------
@@ -117,7 +103,23 @@ class Jurnal_kas extends CI_Controller
 
         // $Data_kas = $this->db->query($sql)->result();
 
+        // GET SALDO BULAN LALU
+        // print_r($Bulan_selected);
+        // die;
+        // if ($Bulan_selected > 1) {
+        //     // $Get_Tanggal_saldo_bulan_lalu = date("Y-m-01", strtotime($this->input->post('bulan_ns', TRUE)));
 
+        //     $sql = "SELECT * FROM `jurnal_kas_saldo_akhir_bulan` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
+
+        //     $Data_SALDO = $this->db->query($sql)->row();
+
+        //     print_r($Data_SALDO);
+        // } else {
+
+        //     print_r("desember tahun lalu");
+        // }
+
+        // die;
 
         $data = array(
             'Data_kas' => $Data_kas,
@@ -1006,6 +1008,9 @@ class Jurnal_kas extends CI_Controller
         $variabel_date_awal_selected = date('Y-m-d', strtotime('+0 month', strtotime($date_sekarang)));
 
 
+
+
+
         if ($Bulan_selected) {
             $Get_month_selected = $Bulan_selected;
             $Get_YEAR_selected = $Tahun_selected;
@@ -1013,6 +1018,20 @@ class Jurnal_kas extends CI_Controller
             $Get_month_selected = date('m', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
             $Get_YEAR_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
         }
+
+
+        $Get_month_from_date = $Get_month_selected;
+        $Get_month_from_date_lalu = $Get_month_selected - 1;
+        $Get_year_Tahun_ini = $Get_YEAR_selected;
+        // $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+
+        if ($Get_month_selected > 1) {
+            $Tahun_saldo_akhir_bulan_lalu = $Get_YEAR_selected;
+        } else {
+            $Tahun_saldo_akhir_bulan_lalu = $Get_YEAR_selected - 1;
+        }
+
+
 
         // print_r($Get_month_selected);
         // print_r("<br/>");
@@ -1027,8 +1046,115 @@ class Jurnal_kas extends CI_Controller
 
         $tgl_sekarang = date("d-m-Y H:i:s");
 
+        function bulan_teks($angka_bulan)
+        {
+            if ($angka_bulan == 1) {
+                $bulan_teks = "Januari";
+            } elseif ($angka_bulan == 2) {
+                $bulan_teks = "Februari";
+            } elseif ($angka_bulan == 3) {
+                $bulan_teks = "Maret";
+            } elseif ($angka_bulan == 4) {
+                $bulan_teks = "April";
+            } elseif ($angka_bulan == 5) {
+                $bulan_teks = "Mei";
+            } elseif ($angka_bulan == 6) {
+                $bulan_teks = "Juni";
+            } elseif ($angka_bulan == 7) {
+                $bulan_teks = "Juli";
+            } elseif ($angka_bulan == 8) {
+                $bulan_teks = "Agustus";
+            } elseif ($angka_bulan == 9) {
+                $bulan_teks = "September";
+            } elseif ($angka_bulan == 10) {
+                $bulan_teks = "Oktober";
+            } elseif ($angka_bulan == 11) {
+                $bulan_teks = "November";
+            } elseif ($angka_bulan == 12) {
+                $bulan_teks = "Desember";
+            } else {
+                $bulan_teks = "";
+            }
+            return $bulan_teks;
+        }
+
+
+
+
+
+        if ($Get_month_selected > 1) {
+            // $Get_month_from_date = $Get_month_from_date_lalu;
+            // echo "Saldo akhir bulan: " . bulan_teks($Get_month_from_date_lalu) . " " . $Get_year_Tahun_ini;
+
+            $Get_Nama_bulan_lalu = bulan_teks($Get_month_from_date_lalu) . " " . $Get_YEAR_selected ;
+
+            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN KEMARIN
+            $Get_bulan_saldo = date("$Get_year_Tahun_ini-$Get_month_from_date_lalu-01");
+
+            $this->db->where('tanggal', $Get_bulan_saldo);
+            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
+
+            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
+                // $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+
+                if ($GET_jurnal_kas_saldo_akhir_bulan->row()->saldo > 0) {
+                    $SALDO_DEBET = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                    $SALDO_KREDIT = 0;
+                } else {
+                    $SALDO_KREDIT = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                    $SALDO_DEBET = 0;
+                }
+            } else {
+                $SALDO_KREDIT = 0;
+                $SALDO_DEBET = 0;
+            }
+        } else {
+
+            // echo "Saldo akhir bulan: Desember " . $Get_year_Setahun_lalu;
+
+            $Get_Nama_bulan_lalu = "Desember " . $Tahun_saldo_akhir_bulan_lalu;
+
+            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN DESEMBER KEMARIN
+            $Get_bulan_saldo = date("$Get_year_Setahun_lalu-12-01");
+
+            $this->db->where('tanggal', $Get_bulan_saldo);
+            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
+
+            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
+                // echo $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                // $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+
+                if ($GET_jurnal_kas_saldo_akhir_bulan->row()->saldo > 0) {
+                    $SALDO_DEBET = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                    $SALDO_KREDIT = 0;
+                } else {
+                    $SALDO_KREDIT = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                    $SALDO_DEBET = 0;
+                }
+            } else {
+                // echo "0";
+                // $SALDO_AKHIR_BULAN_LALU = 0;
+
+                $SALDO_KREDIT = 0;
+                $SALDO_DEBET = 0;
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         $this->load->helper('exportexcel');
-        $namaFile = "jurnal_kas_"  . $Get_month_selected . "_". $Get_YEAR_selected . "_Dicetak_" . $tgl_sekarang  .".xls";
+        $namaFile = "jurnal_kas_"  . $Get_month_selected . "_" . $Get_YEAR_selected . "_Dicetak_" . $tgl_sekarang  . ".xls";
         $judul = "jurnal_kas";
         $tablehead = 0;
         $tablebody = 1;
@@ -1049,11 +1175,32 @@ class Jurnal_kas extends CI_Controller
         xlsWriteLabel($tablehead, $kolomhead++, "No");
         xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
         xlsWriteLabel($tablehead, $kolomhead++, "Bukti");
-        xlsWriteLabel($tablehead, $kolomhead++, "");
+        // xlsWriteLabel($tablehead, $kolomhead++, "");
         xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kode Rekening");
+        xlsWriteLabel($tablehead, $kolomhead++, "Kode");
         xlsWriteLabel($tablehead, $kolomhead++, "Debet");
         xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
+
+        // BARIS SALDO BULAN LALU
+
+        $kolombody = 0;
+
+        //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
+        xlsWriteNumber($tablebody, $kolombody++, $nourut);
+        xlsWriteLabel($tablebody, $kolombody++, "");
+        xlsWriteLabel($tablebody, $kolombody++, "");
+        // xlsWriteLabel($tablebody, $kolombody++, "");
+        xlsWriteLabel($tablebody, $kolombody++, "SALDO  BULAN: " . $Get_Nama_bulan_lalu);
+        xlsWriteLabel($tablebody, $kolombody++, "");
+        xlsWriteLabel($tablebody, $kolombody++, $SALDO_DEBET);
+        xlsWriteLabel($tablebody, $kolombody++, $SALDO_KREDIT);
+
+        $tablebody++;
+        $nourut++;
+
+        // END OF BARIS SALDO BULAN LALU
+
+
 
         // foreach ($this->Jurnal_kas_model->get_all() as $data) {
         foreach ($Data_kas as $data) {
@@ -1063,9 +1210,9 @@ class Jurnal_kas extends CI_Controller
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
             xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
             xlsWriteLabel($tablebody, $kolombody++, $data->bukti);
-            xlsWriteLabel($tablebody, $kolombody++, $data->pl);
+            // xlsWriteLabel($tablebody, $kolombody++, $data->pl);
             xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
-            xlsWriteNumber($tablebody, $kolombody++, $data->kode_rekening);
+            xlsWriteLabel($tablebody, $kolombody++, $data->kode_unit);
             xlsWriteLabel($tablebody, $kolombody++, $data->debet);
             xlsWriteLabel($tablebody, $kolombody++, $data->kredit);
 

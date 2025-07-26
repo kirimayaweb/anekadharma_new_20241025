@@ -1344,6 +1344,11 @@ class Tbl_penjualan extends CI_Controller
 
 			$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
 
+			print_r("Data persediaan");
+			print_r("<br/>");
+			print_r($Get_total_penjualan_by_id_persediaan);
+			die;
+
 			if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
 				print_r("Bisa hapus / kurangi");
 
@@ -1397,6 +1402,7 @@ class Tbl_penjualan extends CI_Controller
 			// die;
 
 			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+		
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
