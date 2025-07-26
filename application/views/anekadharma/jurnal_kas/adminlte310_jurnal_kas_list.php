@@ -27,7 +27,8 @@
         $Get_month_from_date = $month_selected;
         $Get_month_from_date_lalu = $month_selected - 1;
         $Get_year_Tahun_ini = $year_selected;
-        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+        // $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
+        $Get_year_Setahun_lalu = $year_selected-1;
 
 
         // echo $date_awal; 
@@ -387,19 +388,18 @@
 
                                             ?>
                                         </td>
+
                                         <td><?php
                                             echo $list_data->bukti;
                                             ?>
                                         </td>
-                                        <!-- <td><?php
-                                                    // echo $list_data->pl;
-                                                    ?>
-                                        </td> -->
+
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
                                             ?>
                                         </td>
+
                                         <td align="left">
                                             <?php
                                             echo $list_data->kode_unit;
@@ -430,11 +430,7 @@
 
                                             ?>
                                         </td>
-                                        <!-- <td>
-                                            <?php
-                                            // echo number_format($TOTAL_debet - $TOTAL_kredit, 2, ',', '.');
-                                            ?>
-                                        </td> -->
+
 
                                     </tr>
 
