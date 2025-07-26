@@ -25,6 +25,7 @@
 
 
         $Get_month_from_date = $month_selected;
+        $Get_month_from_date_lalu = $month_selected - 1;
         $Get_year_Tahun_ini = $year_selected;
         $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
 
@@ -231,6 +232,133 @@
                                 $TOTAL_debet = 0;
                                 $TOTAL_kredit = 0;
                                 $TOTAL_saldo = 0;
+
+
+
+                                ?>
+
+
+                                <!-- // LIST SALDO BULAN LALU -->
+
+                                <tr>
+
+                                    <!-- TANGGAL -->
+                                    <td><?php
+                                        echo ++$start;
+                                        ?>
+                                    </td>
+
+                                    <!-- TANGGAL -->
+                                    <td>
+                                        <?php
+                                        // echo date("d-m-Y", strtotime($list_data->tanggal));
+                                        // echo "<br/>";
+
+                                        // echo anchor(site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+
+                                        // echo ' ';
+                                        // echo anchor(site_url('jurnal_kas/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin akan menghapus data ini ?\')"');
+
+                                        ?>
+                                    </td>
+
+                                    <!-- BUKTI -->
+                                    <td><?php
+                                        // echo $list_data->bukti;
+                                        ?>
+                                    </td>
+
+                                    <!-- KETERANGAN -->
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->keterangan;
+                                        if ($Get_month_from_date > 1) {
+                                            // $Get_month_from_date = $Get_month_from_date_lalu;
+                                            echo "Saldo akhir bulan: " . bulan_teks($Get_month_from_date_lalu) . " " . $Get_year_Tahun_ini;
+
+
+                                            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN KEMARIN
+                                            $Get_bulan_saldo = date("$Get_year_Tahun_ini-$Get_month_from_date_lalu-01");
+
+                                            $this->db->where('tanggal', $Get_bulan_saldo);
+                                            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
+
+                                            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
+                                                // echo $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                                                $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                                            } else {
+                                                // echo "0";
+                                                $SALDO_AKHIR_BULAN_LALU = 0;
+                                            }
+                                        } else {
+
+                                            echo "Saldo akhir bulan: Desember " . $Get_year_Setahun_lalu;
+
+                                            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN DESEMBER KEMARIN
+                                            $Get_bulan_saldo = date("$Get_year_Setahun_lalu-12-01");
+
+                                            $this->db->where('tanggal', $Get_bulan_saldo);
+                                            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
+
+                                            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
+                                                // echo $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                                                $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
+                                            } else {
+                                                // echo "0";
+                                                $SALDO_AKHIR_BULAN_LALU = 0;
+                                            }
+                                        }
+
+                                        ?>
+                                    </td>
+
+                                    <td align="left">
+                                        <?php
+                                        // echo $list_data->kode_unit;
+                                        ?>
+                                    </td>
+
+                                    <!-- Debet -->
+                                    <td style="text-align:right">
+                                        <?php
+                                        // if ($list_data->debet > 0) {
+                                        //     echo number_format($list_data->debet, 2, ',', '.');
+                                        //     $TOTAL_debet = $TOTAL_debet + $list_data->debet;
+                                        // } else {
+                                        //     echo "";
+                                        // }
+                                        if ($SALDO_AKHIR_BULAN_LALU > 0) {
+                                            echo number_format($SALDO_AKHIR_BULAN_LALU, 2, ',', '.');
+                                            $TOTAL_debet = $TOTAL_debet + $SALDO_AKHIR_BULAN_LALU;
+                                        }
+
+                                        ?>
+                                    </td>
+
+                                    <!-- Kredit -->
+                                    <td style="text-align:right">
+                                        <?php
+                                        // if ($list_data->kredit > 0) {
+                                        //     echo number_format($list_data->kredit, 2, ',', '.');
+                                        //     $TOTAL_kredit = $TOTAL_kredit + $list_data->kredit;
+                                        // } else {
+                                        //     echo "";
+                                        // }
+                                        if ($SALDO_AKHIR_BULAN_LALU < 1) {
+                                            echo number_format($SALDO_AKHIR_BULAN_LALU, 2, ',', '.');
+                                            $TOTAL_kredit = $TOTAL_kredit + $SALDO_AKHIR_BULAN_LALU;
+                                        }
+                                        ?>
+                                    </td>
+
+                                </tr>
+
+                                <!-- // END OF LIST SALDO BULAN LALU -->
+
+
+                                <?php
+
+
                                 foreach ($Data_kas as $list_data) {
                                     // [0] => stdClass Object ( [nomor] => 4280 [tanggal] => 30/09/2024 [bukti] => BKK [keterangan] => Biaya PU/ATK : Putro Bengkel (Pembayaran SPOP No 558 Tgl 30/09/2024) [kode_rekening] => 4 [debet] => [kredit] => 1.750.000,00 )
                                 ?>
@@ -372,10 +500,10 @@
                                         $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
 
                                         if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
-                                            print_r("<br/>");
-                                            print_r("ada data");
-                                            print_r("<br/>");
-                                            print_r($GET_jurnal_kas_saldo_akhir_bulan->row()->id);
+                                            // print_r("<br/>");
+                                            // print_r("ada data");
+                                            // print_r("<br/>");
+                                            // print_r($GET_jurnal_kas_saldo_akhir_bulan->row()->id);
 
                                             $data = array(
                                                 'saldo' => $SALDO_AKHIR,
@@ -383,13 +511,12 @@
 
                                             $this->Jurnal_kas_saldo_akhir_bulan_model->update($GET_jurnal_kas_saldo_akhir_bulan->row()->id, $data);
                                         } else {
-                                        $data = array(
+                                            $data = array(
                                                 'tanggal' => $Get_bulan_saldo,
                                                 'saldo' => $SALDO_AKHIR,
                                             );
 
-                                            $this->Jurnal_kas_saldo_akhir_bulan_model->insert( $data);
-                                              
+                                            $this->Jurnal_kas_saldo_akhir_bulan_model->insert($data);
                                         }
 
                                         ?>
