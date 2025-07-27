@@ -1322,52 +1322,63 @@ class Tbl_penjualan extends CI_Controller
 
 		if ($row) {
 
-
 			// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
 
-			print_r($row->uuid_persediaan);
-			print_r("<br/>");
-			print_r($row->jumlah);
-			print_r("<br/>");
-			print_r($row->id_persediaan_barang);
+			// print_r($row->uuid_persediaan);
+			// print_r("<br/>");
+			// print_r($row->jumlah);
+			// print_r("<br/>");
+			// print_r($row->id_persediaan_barang);
 			$Get_id_persediaan_barang = $row->id_persediaan_barang;
-			print_r("<br/>");
-			print_r($Get_id_persediaan_barang);
+			$Get_Nama_persediaan_barang = $row->nama_barang;
+			// print_r("<br/>");
+			// print_r($Get_id_persediaan_barang);
+			// print_r("<br/>");
+			// print_r($Get_Nama_persediaan_barang);
 
 			// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
 
 			$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
 
-			print_r("<br/>");
-			print_r($row_data_persediaan->penjualan);
-			print_r("<br/>");
+			// print_r("<br/>");
+			// print_r($row_data_persediaan->penjualan);
+			// print_r("<br/>");
 
 			$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
+			$Get_total_persediaan_total_10_di_tbl_persediaan = $row_data_persediaan->total_10;
 
-			print_r("Data persediaan");
-			print_r("<br/>");
-			print_r($Get_total_penjualan_by_id_persediaan);
-			die;
+			// print_r("Data persediaan");
+			// print_r("<br/>");
+			// print_r($Get_total_penjualan_by_id_persediaan);
+			// print_r("<br/>");
+			// die;
 
-			if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
-				print_r("Bisa hapus / kurangi");
+			// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+			if ($Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+
+				// print_r("Bisa hapus / kurangi");
+				// print_r("<br/>");
 
 				$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
+				$Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus = $Get_total_persediaan_total_10_di_tbl_persediaan + $row->jumlah;
 
-				print_r($Get_total_penjualan_by_id_persediaan);
-				print_r("<br/>");
-				print_r($row->jumlah);
-				print_r("<br/>");
-				print_r($Get_total_penjualan_after_hapus);
-				print_r("<br/>");
-
+				// print_r($Get_total_penjualan_by_id_persediaan);
+				// print_r("<br/>");
+				// print_r($row->jumlah);
+				// print_r("<br/>");
+				// print_r($Get_total_penjualan_after_hapus);
+				// print_r("<br/>");
+				// print_r($Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus);
+				// print_r("<br/>");
+				// die;
 
 				// Update field penjualan di tabel persediaan berdasarkan id persediaan
 				// $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
 				// $this->db->query($sql_update_uuid_persediaan);
 
+				// UPDATE TABEL PERSEDIAAN ==> MENGEMBALIKAN JUMLAH PENJUALAN , DIKURANGI DENGAN JUMLAH  PENJUALAN YANG DI CANCEL DAN MENAMBAHKAN JUMLAH PERSEDIAAN total-10
 				$data = array(
-
+					// 'total_10' => $Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus,
 					'penjualan' => $Get_total_penjualan_after_hapus,
 				);
 
@@ -1375,8 +1386,6 @@ class Tbl_penjualan extends CI_Controller
 				// print_r("update");
 				// die;
 				$this->Persediaan_model->update($Get_id_persediaan_barang, $data);
-
-
 
 				// $row_persediaan = $this->Persediaan_model->get_by_id($id);
 
@@ -1387,6 +1396,9 @@ class Tbl_penjualan extends CI_Controller
 
 			} else {
 				// print_r("Buat fieldnya jadi 0");
+				// print_r("<br/>");
+				// print_r("tidak ada yang dikurangi");
+				// die;
 			}
 
 			// die;
@@ -1402,7 +1414,6 @@ class Tbl_penjualan extends CI_Controller
 			// die;
 
 			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
-		
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
 			redirect(site_url('tbl_penjualan'));
