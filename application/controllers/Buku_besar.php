@@ -35,12 +35,12 @@ class Buku_besar extends CI_Controller
 
         $data_Buku_besar = $this->db->query($sql)->result();
 
-        print_r($Get_month_selected);
-        print_r("<br/>");
-        print_r($Get_YEAR_selected);
-        print_r("<br/>");
-        print_r($data_Buku_besar);
-        print_r("<br/>");
+        // print_r($Get_month_selected);
+        // print_r("<br/>");
+        // print_r($Get_YEAR_selected);
+        // print_r("<br/>");
+        // print_r($data_Buku_besar);
+        // print_r("<br/>");
         // die;
 
 
