@@ -446,10 +446,14 @@
                                                     <td align="left">
                                                         <?php
                                                         // echo $list_data->supplier;
+                                                        if($GET_KODE_PL){
                                                         $this->db->where('kode_akun', $GET_KODE_PL);
                                                         $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->nama_akun;
 
                                                         echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
+                                                        }else{
+                                                            echo "";
+                                                        }
                                                         ?>
                                                     </td>
 
