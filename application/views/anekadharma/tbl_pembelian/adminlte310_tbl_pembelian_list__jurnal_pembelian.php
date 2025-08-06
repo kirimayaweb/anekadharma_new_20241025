@@ -242,7 +242,7 @@
 
                                         if ($start <= 0) {
                                             // $start=++$start;
-                                ?>
+                                                ?>
                                             <!-- BARIS KE 1 -->
                                             <tr>
                                                 <td align="left">
@@ -327,7 +327,7 @@
                                             if ($list_data->pl == $GET_KODE_PL) {
                                                 // PL SAMA ==> MAKA LIST DATA BARU
 
-                                            ?>
+                                                    ?>
 
 
                                                 <?php
@@ -447,7 +447,7 @@
                                                         <?php
                                                         // echo $list_data->supplier;
                                                         if($GET_KODE_PL){
-                                                        $this->db->where('kode_akun', $GET_KODE_PL);
+                                                        $this->db->where('kode_pl', $GET_KODE_PL);
                                                         $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->nama_akun;
 
                                                         echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
