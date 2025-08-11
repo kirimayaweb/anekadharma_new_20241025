@@ -1900,7 +1900,8 @@ class Tbl_penjualan extends CI_Controller
 
 
 		// $GET_Source = "penjualan";
-		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='$Tgl_JUAL' AND `nmrkirim`='$nmrkirim'  ORDER BY `id`";
+		// $sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='$Tgl_JUAL' AND `nmrkirim`='$nmrkirim'  ORDER BY `id`";
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE  `nmrkirim`='$nmrkirim'  ORDER BY `id`";
 
 		// SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='2025-05-12' and `nmrkirim`='qweqwewqewq';
 
