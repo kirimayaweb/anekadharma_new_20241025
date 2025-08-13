@@ -64,6 +64,14 @@
 
                                         <div class="form-group">
                                             <label for="datetime">Tanggal <?php echo form_error('tgl_po') ?></label>
+                                            <?php
+                                            if ($tanggal) {
+                                                $date_po_X = date("d-m-Y", strtotime($tanggal));
+                                            } else {
+                                                $date_po_X = date("d-m-Y");
+                                            }
+                                            ?>
+
                                             <div class="col-5">
                                                 <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
                                                     <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
@@ -77,6 +85,8 @@
                                                 </div>
 
                                             </div>
+
+
                                         </div>
 
                                         <div class="form-group">
@@ -94,11 +104,57 @@
 
                                         <div class="form-group">
                                             <div class="row">
+
+
+
+
                                                 <div class="col-4">
                                                     <label for="int">Kode <?php echo form_error('kode') ?></label>
-                                                    <input type="text" class="form-control" name="kode" id="kode" placeholder="Kode" value="<?php echo $kode; ?>" />
+                                                    <!-- <input type="text" class="form-control" name="kode" id="kode" placeholder="Kode" value="<?php //echo $kode; 
+                                                                                                                                                    ?>" /> -->
+
+                                                    <select name="kode" id="kode" class="form-control select2" style="width: 100%; height: 40px;" required>
+
+                                                        <?php
+
+                                                        if ($kode) {
+                                                            // Get Nama akun dari kode akun
+
+                                                            $sql = "SELECT * FROM `sys_kode_akun` WHERE `kode_akun`='$kode'";
+                                                            $Get_nama_akun = $this->db->query($sql)->row()->nama_akun
+
+                                                        ?>
+                                                            <option value="<?php echo $kode; ?>"><?php echo $kode . " ==> " . $Get_nama_akun; ?></option>
+                                                        <?php
+                                                        } else {
+                                                        ?>
+                                                            <option value="">Pilih Kode Akun</option>
+                                                        <?php
+                                                        }
+                                                        ?>
+
+
+                                                        <?php
+
+                                                        $sql = "select * from sys_kode_akun order by kode_akun ASC";
+
+
+                                                        foreach ($this->db->query($sql)->result() as $m) {
+                                                            // foreach ($data_produk as $m) {
+                                                            echo "<option value='$m->kode_akun' ";
+                                                            echo ">  " . strtoupper($m->kode_akun)  . " ==> " . strtoupper($m->nama_akun)  . "</option>";
+                                                        }
+                                                        ?>
+                                                    </select>
+
+
+
+
 
                                                 </div>
+
+
+
                                                 <div class="col-8">
                                                     <label for="varchar">Keterangan <?php echo form_error('keterangan') ?></label>
                                                     <input type="text" class="form-control" name="keterangan" id="keterangan" placeholder="Keterangan" value="<?php echo $keterangan; ?>" />
@@ -117,13 +173,13 @@
                                                 </div>
                                             </div>
                                         </div>
-                                       
+
 
                                         <input type="hidden" name="id" value="<?php echo $id; ?>" />
                                         <tr>
                                             <td colspan='2' align="center">
                                                 <button type="submit" class="btn btn-primary"><?php echo $button ?></button>
-                                                <a href="<?php echo site_url('menu') ?>" class="btn btn-default">Cancel</a>
+                                                <a href="<?php echo site_url('bukubank') ?>" class="btn btn-default">Cancel</a>
                                             </td>
                                         </tr>
 

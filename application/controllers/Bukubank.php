@@ -14,27 +14,28 @@ class Bukubank extends CI_Controller
         $this->load->library('datatables');
     }
 
-    public function index(){
+    public function index()
+    {
         $data_buku_bank = $this->Bukubank_model->get_all_sort_by_tanggal();
-		$data = array(
-			'data_buku_bank' => $data_buku_bank,
-		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_list', $data);
+        $data = array(
+            'data_buku_bank' => $data_buku_bank,
+        );
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_list', $data);
     }
 
 
-    public function cek_data_csv(){
+    public function cek_data_csv()
+    {
         $data_buku_bank = $this->Bukubank_model->get_all();
         foreach ($data_buku_bank as $list_data) {
             print_r($list_data->tanggal);
             print_r("<br/>");
             // $sub_kalimat = substr($list_data->tanggal,-4);
             // print_r("<br/>");
-            print_r(substr($list_data->tanggal,-4));
+            print_r(substr($list_data->tanggal, -4));
             print_r("<br/>");
-            print_r(date("Y", strtotime(intval( $list_data->tanggal ),-4)));
+            print_r(date("Y", strtotime(intval($list_data->tanggal), -4)));
             print_r("<br/>");
-
         }
     }
 
@@ -87,7 +88,7 @@ class Bukubank extends CI_Controller
             'saldo' => set_value('saldo'),
         );
         // $this->load->view('bukubank/bukubank_form', $data);
-        
+
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_form', $data);
     }
 
@@ -100,13 +101,13 @@ class Bukubank extends CI_Controller
         } else {
 
 
-			if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
-				// print_r("Tahun kurang dari 2020");
-				$date_po = date("Y-m-d H:i:s");
-			} else {
-				// print_r("Tahun lebih dari 2020");
-				$date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
-			}
+            if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
+                // print_r("Tahun kurang dari 2020");
+                $date_po = date("Y-m-d H:i:s");
+            } else {
+                // print_r("Tahun lebih dari 2020");
+                $date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+            }
 
 
             $data = array(
@@ -144,7 +145,8 @@ class Bukubank extends CI_Controller
                 'kredit' => set_value('kredit', $row->kredit),
                 'saldo' => set_value('saldo', $row->saldo),
             );
-            $this->load->view('bukubank/bukubank_form', $data);
+            // $this->load->view('bukubank/bukubank_form', $data);            
+            $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_bank/adminlte310_buku_bank_form', $data);
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');
             redirect(site_url('bukubank'));
@@ -158,8 +160,18 @@ class Bukubank extends CI_Controller
         if ($this->form_validation->run() == FALSE) {
             $this->update($this->input->post('id', TRUE));
         } else {
+
+            
+            if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
+                // print_r("Tahun kurang dari 2020");
+                $date_po = date("Y-m-d H:i:s");
+            } else {
+                // print_r("Tahun lebih dari 2020");
+                $date_po = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
+            }
+
             $data = array(
-                'tanggal' => $this->input->post('tanggal', TRUE),
+                'tanggal' => $date_po,
                 'bank' => $this->input->post('bank', TRUE),
                 'norek' => $this->input->post('norek', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),

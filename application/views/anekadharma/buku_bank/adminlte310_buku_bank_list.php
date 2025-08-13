@@ -44,7 +44,7 @@
                             </div>
 
                             <div class="col-2">
-                                <?php echo anchor(site_url('Bukubank/create'), 'Input Buku Bank', 'class="btn btn-success"'); 
+                                <?php echo anchor(site_url('Bukubank/create'), 'Input Buku Bank', 'class="btn btn-success"');
                                 ?>
                             </div>
 
@@ -70,7 +70,7 @@
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
-                                    <!-- <th style="text-align:center" width="100px">Action</th> -->
+                                    <th rowspan="2"style="text-align:center" width="100px">Action</th>
                                     <th rowspan="2">Tanggal</th>
 
                                     <th colspan="2" style="text-align:center">Rekening</th>
@@ -106,6 +106,21 @@
                                 ?>
                                     <tr>
                                         <td align="left"><?php echo ++$start; ?></td>
+                                        <td style="text-align:left">
+                                            <?php
+                                            // if ($list_data->debet > 0) {
+                                            echo anchor(site_url('Bukubank/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            // } else {
+                                            //     if ($list_data->uuid_spop) {
+                                            //         echo anchor(site_url('Bukubank/update/' . $list_data->id . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            //     } else {
+                                            //         echo anchor(site_url('Bukubank/update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                            //     }
+                                            // }
+                                            echo ' ';
+                                            echo anchor(site_url('Bukubank/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data ini ?\')"');
+                                            ?>
+                                        </td>
                                         <td align="left">
                                             <?php
                                             echo date("d-M-Y", strtotime($list_data->tanggal));
@@ -168,6 +183,7 @@
 
                                 <tr>
                                     <th style="text-align:center"></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
