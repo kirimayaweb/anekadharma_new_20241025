@@ -703,42 +703,14 @@ class Tbl_penjualan extends CI_Controller
 
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
 
-		// print_r($data_penjualan_per_uuid_penjualan);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// print_r($data_penjualan_per_uuid_penjualan->tgl_jual);
-		// print_r("<br/>");
-
 		$tgl_jual_X = date("Y-m-d", strtotime($data_penjualan_per_uuid_penjualan->tgl_jual));
-
-		// print_r($tgl_jual_X);
-		// print_r("<br/>");
-		// print_r($data_penjualan_per_uuid_penjualan->nmrkirim);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// die;
 
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
 		// $data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
 
-		// print_r($data_penjualan_per_uuid_penjualan);
-		// print_r("<br/>");
-		// // print_r("<br/>");
-		// print_r("<br/>");
-
-
 		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
-
-		// print_r($data_penjualan_per_uuid_penjualan_first_row);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// die;
 
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
@@ -756,9 +728,6 @@ class Tbl_penjualan extends CI_Controller
 			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $data_penjualan_per_uuid_penjualan_first_row->nmrkirim . '/' . $uuid_penjualan),
 		);
-
-		// print_r($data);
-		// die;
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_input_barang', $data);
@@ -1312,102 +1281,102 @@ class Tbl_penjualan extends CI_Controller
 	public function delete($id = null, $uuid_penjualan = null)
 	{
 
-		// print_r($id);
-		// print_r("<br/>");
-		// print_r($uuid_penjualan);
-		// print_r("<br/>");
+		print_r($id);
+		print_r("<br/>");
+		print_r($uuid_penjualan);
+		print_r("<br/>");
 		// die;
 
 		$row = $this->Tbl_penjualan_model->get_by_id($id);
 
-		if ($row) {
+		// if ($row) {
 
-			// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
+		// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
 
-			// print_r($row->uuid_persediaan);
+		$Get_id_persediaan_barang = $row->id_persediaan_barang;
+
+		print_r($Get_id_persediaan_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+
+		$Get_Nama_persediaan_barang = $row->nama_barang;
+
+		print_r($Get_Nama_persediaan_barang);
+		print_r("<br/>");
+		print_r("<br/>");
+
+
+		// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
+		$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
+
+		// print_r($row_data_persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
+
+		// print_r($Get_total_penjualan_by_id_persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		$Get_total_persediaan_total_10_di_tbl_persediaan = $row_data_persediaan->total_10;
+
+		// print_r($Get_total_persediaan_total_10_di_tbl_persediaan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		// print_r("Get_total_penjualan_by_id_persediaan=");
+		// print_r("<br/>");
+		// print_r($Get_total_penjualan_by_id_persediaan);
+		// print_r("<br/>");
+		// print_r($row->jumlah);
+		// print_r("<br/>");
+		// print_r($Get_total_penjualan_by_id_persediaan > $row->jumlah);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		// die;
+
+
+		// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+		if ($Get_total_penjualan_by_id_persediaan >= $row->jumlah) {
+
+			$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
+
+			// print_r("Get_total_penjualan_after_hapus");
 			// print_r("<br/>");
-			// print_r($row->jumlah);
+			// print_r($Get_total_penjualan_after_hapus);
 			// print_r("<br/>");
-			// print_r($row->id_persediaan_barang);
-			$Get_id_persediaan_barang = $row->id_persediaan_barang;
-			$Get_Nama_persediaan_barang = $row->nama_barang;
-			// print_r("<br/>");
-			// print_r($Get_id_persediaan_barang);
-			// print_r("<br/>");
-			// print_r($Get_Nama_persediaan_barang);
-
-			// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
-
-			$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
-
-			// print_r("<br/>");
-			// print_r($row_data_persediaan->penjualan);
 			// print_r("<br/>");
 
-			$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
-			$Get_total_persediaan_total_10_di_tbl_persediaan = $row_data_persediaan->total_10;
+			$Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus = $Get_total_persediaan_total_10_di_tbl_persediaan + $row->jumlah;
 
-			// print_r("Data persediaan");
+			// print_r("Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus");
 			// print_r("<br/>");
-			// print_r($Get_total_penjualan_by_id_persediaan);
+			// print_r($Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus);
 			// print_r("<br/>");
-			// die;
+			// print_r("<br/>");
 
-			// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
-			if ($Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+			// UPDATE TABEL PERSEDIAAN ==> MENGEMBALIKAN JUMLAH PENJUALAN , DIKURANGI DENGAN JUMLAH  PENJUALAN YANG DI CANCEL DAN MENAMBAHKAN JUMLAH PERSEDIAAN total-10
+			$data = array(
+				// 'total_10' => $Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus,
+				'penjualan' => $Get_total_penjualan_after_hapus,
+			);
 
-				// print_r("Bisa hapus / kurangi");
-				// print_r("<br/>");
+			$this->Persediaan_model->update($Get_id_persediaan_barang, $data);
 
-				$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
-				$Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus = $Get_total_persediaan_total_10_di_tbl_persediaan + $row->jumlah;
-
-				// print_r($Get_total_penjualan_by_id_persediaan);
-				// print_r("<br/>");
-				// print_r($row->jumlah);
-				// print_r("<br/>");
-				// print_r($Get_total_penjualan_after_hapus);
-				// print_r("<br/>");
-				// print_r($Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus);
-				// print_r("<br/>");
-				// die;
-
-				// Update field penjualan di tabel persediaan berdasarkan id persediaan
-				// $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `penjualan`=$Get_total_penjualan_after_hapus WHERE `id`='$Get_id_persediaan_barang'";
-				// $this->db->query($sql_update_uuid_persediaan);
-
-				// UPDATE TABEL PERSEDIAAN ==> MENGEMBALIKAN JUMLAH PENJUALAN , DIKURANGI DENGAN JUMLAH  PENJUALAN YANG DI CANCEL DAN MENAMBAHKAN JUMLAH PERSEDIAAN total-10
-				$data = array(
-					// 'total_10' => $Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus,
-					'penjualan' => $Get_total_penjualan_after_hapus,
-				);
-
-				// print_r($data);
-				// print_r("update");
-				// die;
-				$this->Persediaan_model->update($Get_id_persediaan_barang, $data);
-
-				// $row_persediaan = $this->Persediaan_model->get_by_id($id);
-
-				// print_r($row_persediaan);
-				// die;
-
-
-
-			} else {
-				// print_r("Buat fieldnya jadi 0");
-				// print_r("<br/>");
-				// print_r("tidak ada yang dikurangi");
-				// die;
-			}
-
-			// die;
-
-
-
+			// } else {
+			// 	// print_r("Buat fieldnya jadi 0");
+			// 	// print_r("<br/>");
+			// 	// print_r("tidak ada yang dikurangi");
+			// 	// die;
+			// }
 
 			// Hapus record di tabel penjualan
 			$this->Tbl_penjualan_model->delete($id);
+
+
 			$this->session->set_flashdata('message', 'Delete Record Success');
 
 
