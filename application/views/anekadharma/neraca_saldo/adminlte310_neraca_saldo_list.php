@@ -159,7 +159,7 @@
                                     <th rowspan="2" style="text-align:center" width="10px">Tanggal</th>
                                     <th rowspan="2" style="text-align:center">Kode Rek.</th>
                                     <th rowspan="2" style="text-align:center">Uraian</th>
-                                    <th colspan="2" style="text-align:center">NERACA SALDO 1 <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Setahun_lalu ?></th>
+                                    <th colspan="2" style="text-align:center">NERACA SALDO 31 Desember <?php echo $Get_year_Setahun_lalu; ?></th>
                                     <th colspan="2" style="text-align:center">PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">NS SETELAH PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">LABA/ RUGI</th>
