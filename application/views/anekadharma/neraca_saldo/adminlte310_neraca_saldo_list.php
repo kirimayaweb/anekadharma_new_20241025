@@ -444,7 +444,7 @@
 
                                             if (is_null($Neraca_Saldo_DATA->row()->kredit_akhir_tahun_lalu)) {
 
-                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">Input Debet</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
+                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">Input Kredit</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
 
                                             } else {
 
