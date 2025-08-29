@@ -18,6 +18,9 @@ class KirimWa_model extends CI_Model
     public function kirimwa($nomorwa = null, $pesantext = null){
 
 
+        // print_r($pesantext);
+        // die;
+
         // $pesantext = $pesantext . " Working Great!!! ";
 
         if (!($nomorwa)) {
@@ -48,7 +51,8 @@ class KirimWa_model extends CI_Model
           CURLOPT_HTTPHEADER => array(
             // 'Authorization: 1BFYxDnYcsZjm9nahfEG' // 0858 0377 3981
             // 'Authorization: GK#6@uPd5GvvA#xa_6z@'  // 0858 7725 7503
-            'Authorization: jTPJooXZi9Sj7sFD7JLS'  // 085124671828 Rifai nomor april 2025
+            // 'Authorization: jTPJooXZi9Sj7sFD7JLS'  // 085124671828 Rifai nomor april 2025
+            'Authorization: APRKLDnjXbTDKwiqdur9'  // WA_BROADCAST_081529693864 2025 agustus 29
           ),
         ));
         
@@ -56,6 +60,7 @@ class KirimWa_model extends CI_Model
         
         curl_close($curl);
         // echo $response;
+        // die;
 
     }
 
