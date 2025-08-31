@@ -42,9 +42,9 @@ class Persediaan_model extends CI_Model
         $this->db->where($this->id, $id);
         return $this->db->get($this->table)->row();
     }
-   
+
     // get data by id
-    function get_by_uuidspop_uuid_barang($uuid_spop,$uuid_barang)
+    function get_by_uuidspop_uuid_barang($uuid_spop, $uuid_barang)
     {
         $this->db->where($this->uuid_spop, $uuid_spop);
         $this->db->where($this->uuid_barang, $uuid_barang);
@@ -159,10 +159,8 @@ class Persediaan_model extends CI_Model
             'PROCESS' => 'INSERT',
             'id' => $this->db->insert_id()
         );
-
-        
     }
-   
+
     // insert data
     function insert_produk_baru($data)
     {
@@ -193,6 +191,14 @@ class Persediaan_model extends CI_Model
     // update data
     function update($id, $data)
     {
+
+        // print_r("update");
+        // print_r("<br/>");
+        // print_r($id);
+        // print_r("<br/>");
+        // print_r($data);
+        // // die;
+
         $this->db->where($this->id, $id);
         $this->db->update($this->table, $data);
     }

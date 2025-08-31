@@ -108,6 +108,8 @@
 
                                     <!-- <th>nama_barang_jual</th> -->
                                     <th>jumlah <br />terjual</th>
+                                    <th>Pecah Satuan</th>
+                                    <th>Bahan Produksi</th>
                                     <!-- <th>harga_satuan_jual</th> -->
                                     <!-- <th>margin</th> -->
                                     <th>Sisa <br />Stock</th>
@@ -264,7 +266,46 @@
                                             <?php
                                             // echo $this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows();
                                             // echo "<br/>";
-                                            echo nominal($Jumlah_penjualan_per_uuid_persediaan);
+                                            echo nominal($list_data->penjualan);
+
+ 
+
+                                            // DATA PENJUALAN PER SPOP
+                                            // if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
+                                            //     echo nominal($list_data->jumlah_terjual);
+                                            //     $x_jumlah_terjual = $list_data->jumlah_terjual;
+                                            // } else {
+                                            //     echo "0";
+                                            //     $x_jumlah_terjual = 0;
+                                            // }
+
+                                            ?>
+                                        </td>
+                                        
+                                        <!-- Jumlah pecah satuan -->
+                                        <td style="text-align:right">
+                                            <?php
+                                            // echo $this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows();
+                                            // echo "<br/>";
+                                            echo nominal($list_data->pecah_satuan);
+ 
+                                            // DATA PENJUALAN PER SPOP
+                                            // if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
+                                            //     echo nominal($list_data->jumlah_terjual);
+                                            //     $x_jumlah_terjual = $list_data->jumlah_terjual;
+                                            // } else {
+                                            //     echo "0";
+                                            //     $x_jumlah_terjual = 0;
+                                            // }
+
+                                            ?>
+                                        </td>
+                                        <!-- Jumlah bahan produksi -->
+                                        <td style="text-align:right">
+                                            <?php
+                                            // echo $this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows();
+                                            // echo "<br/>";
+                                            echo nominal($list_data->bahan_produksi);
                                             // DATA PENJUALAN PER SPOP
                                             // if ($list_data->jumlah_terjual and $list_data->jumlah_terjual > 0) {
                                             //     echo nominal($list_data->jumlah_terjual);

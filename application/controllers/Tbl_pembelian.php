@@ -3919,45 +3919,6 @@ class Tbl_pembelian extends CI_Controller
 
 	public function pecah_satuan_proses($uuid_persediaan = null)
 	{
-		// $Data_Barang = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
-		// $Data_Barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
-
-		// print_r($Data_Barang);
-
-		// get data pembelian awal ==> jika tidak ada di data tbl_pembelian maka termasuk data stock persediaan
-		// get_uuid_barang dengan filter uuid_barang di tbl_pembelian
-
-		// get uuid barang dari uuid_persediaan
-		// $get_data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
-
-		// print_r($get_data_barang);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r($get_data_barang->uuid_barang);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// $x = $get_data_barang->uuid_barang;
-
-
-		// print_r($x);
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		// $sql_stock = "SELECT persediaan.*,
-		// sum(tbl_pembelian.jumlah) as sum_jumlah_beli,
-		// sum(tbl_penjualan.jumlah) as sum_jumlah_jual
-		// 		FROM persediaan  
-		// 		left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-		// 		left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-		// 		-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan persediaan_a GROUP BY persediaan.uuid_barang)  
-		// 		where persediaan.uuid_barang='$x'
-		// 		Group by persediaan.uuid_barang,tbl_pembelian.uuid_barang,tbl_penjualan.uuid_barang
-		// 		ORDER BY persediaan.namabarang ASC";
-
-
 
 		$sql_stock = "SELECT persediaan.id as id_persediaan, 
 						persediaan.uuid_persediaan as uuid_persediaan,
@@ -3968,6 +3929,9 @@ class Tbl_pembelian extends CI_Controller
 						persediaan.tanggal_beli as tanggal_beli_persediaan, 
 						persediaan.satuan as satuan, 
 						persediaan.spop as spop, 
+						persediaan.penjualan as penjualan, 
+						persediaan.pecah_satuan as pecah_satuan, 
+						persediaan.bahan_produksi as bahan_produksi, 
 						-- persediaan.satuan as satuan, 
 
 								-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
@@ -4000,7 +3964,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($Data_Barang->id_persediaan);
 		// print_r("<br/>");
 		// print_r("<br/>");
-		// // die;
+		// die;
 
 		$Get_id_persediaan_barang = $Data_Barang->id_persediaan;
 
@@ -4009,22 +3973,49 @@ class Tbl_pembelian extends CI_Controller
 
 		$Data_Pembelian_barang = $this->db->query($sql_pembelian_barang)->row();
 
-
 		// print_r($Data_Pembelian_barang);
 		// print_r("<br/>");
 		// print_r("<br/>");
 
 		// jumlah jual berdasarkan $Data_Barang->id_persediaan
 
-
-
-
 		$sql_penjualan_barang = "SELECT `uuid_penjualan`,`uuid_persediaan`,`id_persediaan_barang`,`uuid_barang`,`nama_barang`, SUM(`jumlah`) as Sum_jumlah_jual FROM `tbl_penjualan` WHERE `id_persediaan_barang`='$Get_id_persediaan_barang'";
 
 		$Data_Penjualan_barang = $this->db->query($sql_penjualan_barang)->row();
 
-		// print_r($Data_Penjualan_barang);
-		// print_r("<br/>");
+
+
+
+		// MENGURANGI DATA STOCK PER BARANG / BAHAN ====> field pecah_satuan di tabel persediaan di isi jumlah pecah satuan
+
+		// GET JUMLAH NILAI field pecah_satuan , tambahkan dengan jumlah yang di pecah kemudian update field pecah_satuan = field pecah_satuan lama + jumlah pecah satuan = update jumlah pecah satuan yang baru
+
+
+
+
+
+		// END OF MENGURANGI DATA STOCK PER BARANG / BAHAN ====> field pecah_satuan di tabel persediaan di isi jumlah pecah satuan
+
+
+
+		if ($Data_Barang->penjualan) {
+			$GET_BARANG_TERJUAL = $Data_Barang->penjualan;
+		} else {
+			$GET_BARANG_TERJUAL = 0;
+		}
+
+		if ($Data_Barang->pecah_satuan) {
+			$GET_pecah_satuan = $Data_Barang->pecah_satuan;
+		} else {
+			$GET_pecah_satuan = 0;
+		}
+
+		if ($Data_Barang->bahan_produksi) {
+			$GET_bahan_produksi = $Data_Barang->bahan_produksi;
+		} else {
+			$GET_bahan_produksi = 0;
+		}
+
 
 		$data = array(
 			'Data_Barang' => $Data_Barang,
@@ -4037,6 +4028,9 @@ class Tbl_pembelian extends CI_Controller
 			'kode_barang' => $Data_Barang->kode_barang_persediaan,
 			'nama_barang' => $Data_Barang->nama_barang_persediaan,
 			'jumlah_persediaan' => $Data_Barang->jumlah_sediaan,
+			'jumlah_terjual' => $GET_BARANG_TERJUAL,
+			'jumlah_pecah_satuan' => $GET_pecah_satuan,
+			'jumlah_bahan_produksi' => $GET_bahan_produksi,
 			'satuan' => $Data_Barang->satuan,
 			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
 			// 'nama_gudang' => $Data_Barang->nama_gudang,
@@ -4046,8 +4040,6 @@ class Tbl_pembelian extends CI_Controller
 
 			'jumlah_beli' => $Data_Barang->jumlah_sediaan,
 			'jumlah_jual' => $Data_Penjualan_barang->Sum_jumlah_jual,
-
-
 
 		);
 
@@ -4653,11 +4645,40 @@ class Tbl_pembelian extends CI_Controller
 		// $Get_jumlah_setelah_dipecah = $Data_Barang->sa - $get_jumlah_barang_di_pecah;
 		// $Get_nominal_persediaan = $Get_jumlah_setelah_dipecah * $Data_Barang->hpp;
 
+		// Jumlah field pecah_satuan update ==> jumlah pecah_satuan sebelum update + jumlah pecah_satuan baru
+		$Get_data_barang_pecah_satuan = $this->Persediaan_model->get_by_id($Data_Barang->id);
+
+		// print_r($Get_data_barang_pecah_satuan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($Get_data_barang_pecah_satuan->pecah_satuan);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+		if ($Get_data_barang_pecah_satuan->pecah_satuan) {
+			$GET_jumlah_pecah_satuan_awal = $Get_data_barang_pecah_satuan->pecah_satuan;
+		} else {
+			$GET_jumlah_pecah_satuan_awal = 0;
+		}
+
+		// print_r($GET_jumlah_pecah_satuan_awal);
+		// print_r("<br/>");
+		// print_r("<br/>");
+		// print_r($get_jumlah_barang_di_pecah);
+		// print_r("<br/>");
+		// print_r("<br/>");
+
+
+		// UPDATE FIELD pecah_satuan dengan jumlah yang baru:
 		$data_update_persediaan_setelah_di_pecah = array(
 			// 'sa' => $Get_jumlah_setelah_dipecah,
 			// 'total_10' => $Get_jumlah_setelah_dipecah,
-			'pecah_satuan' => $get_jumlah_barang_di_pecah,
+			'pecah_satuan' => $GET_jumlah_pecah_satuan_awal + $get_jumlah_barang_di_pecah,
 		);
+
+		// print_r($data_update_persediaan_setelah_di_pecah);
+		// print_r("<br/>");
+		// die;
 
 		$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
 
