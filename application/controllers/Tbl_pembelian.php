@@ -240,7 +240,7 @@ class Tbl_pembelian extends CI_Controller
 			// print_r("NON  IF GUDANG");
 			$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
-			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,persediaan.tanggal_beli as tanggal_beli_persediaan, persediaan.nilai_persediaan as nilai_persediaan,
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,COALESCE(NULLIF(persediaan.tanggal_beli,''), NULLIF(persediaan.tanggal,'')) as tanggal_beli_persediaan, persediaan.nilai_persediaan as nilai_persediaan,
 							tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
 						tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
 						FROM persediaan  
@@ -259,7 +259,7 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.namabarang as nama_barang_persediaan,
 			persediaan.total_10 as jumlah_sediaan, 
 			persediaan.hpp as harga_satuan_persediaan,
-			persediaan.tanggal_beli as tanggal_beli_persediaan, 
+			COALESCE(NULLIF(persediaan.tanggal_beli,''), NULLIF(persediaan.tanggal,'')) as tanggal_beli_persediaan, 
 			persediaan.satuan as satuan, 
 			persediaan.spop as spop, 
 			persediaan.penjualan as penjualan, 

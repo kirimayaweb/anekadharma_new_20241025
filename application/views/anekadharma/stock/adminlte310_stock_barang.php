@@ -177,7 +177,21 @@
                                         <td style="text-align:center"><?php echo ++$start ?></td>
 
                                         <!-- Tanggal beli persediaan : tgl po -->
-                                        <td style="text-align:left"><?php echo date("d-m-Y", strtotime($list_data->tanggal_beli_persediaan)); ?></td>
+                                        <td style="text-align:left">
+                                            <?php
+                                            $raw_tgl_stock = isset($list_data->tanggal_beli_persediaan) ? trim((string) $list_data->tanggal_beli_persediaan) : '';
+                                            if (
+                                                $raw_tgl_stock === '' ||
+                                                $raw_tgl_stock === '0000-00-00' ||
+                                                $raw_tgl_stock === '0000-00-00 00:00:00'
+                                            ) {
+                                                echo '-';
+                                            } else {
+                                                $ts_tgl_stock = strtotime($raw_tgl_stock);
+                                                echo ($ts_tgl_stock !== false) ? date("d-m-Y", $ts_tgl_stock) : '-';
+                                            }
+                                            ?>
+                                        </td>
 
                                         <!-- nama gudang -->
                                         <td style="text-align:left;text-transform: uppercase;">
