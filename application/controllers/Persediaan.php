@@ -545,6 +545,7 @@ class Persediaan extends CI_Controller
 			'Persediaan_data' => $Persediaan,
 			// 'start' => $start,
 			'action_cari' => site_url('persediaan/search'),
+			'bulan_persediaan_selected' => '',
 		);
 
 		// print_r($data);
@@ -557,22 +558,45 @@ class Persediaan extends CI_Controller
 		// Input <input type="month" name="bulan_persediaan"> mengirim YYYY-MM.
 		// Sebelumnya query memakai LIKE hanya ke tanggal akhir bulan sehingga data (mis. 21/04/2026) tidak tampil.
 		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
-		if ($bulan === '') {
-			$Persediaan = $this->Persediaan_model->get_all();
-		} else {
-			$Persediaan = $this->Persediaan_model->get_by_year_month($bulan);
-		}
+		$Persediaan = $this->get_persediaan_by_bulan($bulan);
 
 		// $start = 0;
 		$data = array(
 			'Persediaan_data' => $Persediaan,
 			// 'start' => $start,
 			'action_cari' => site_url('persediaan/search'),
+			'bulan_persediaan_selected' => $bulan,
 		);
 
 		// print_r($data);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+	}
+
+	public function cetak_pdf()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		$Persediaan = $this->get_persediaan_by_bulan($bulan);
+
+		$data = array(
+			'persediaan_data' => $Persediaan,
+			'start' => 0,
+			'bulan_persediaan_selected' => $bulan,
+		);
+
+		ini_set('memory_limit', '128M');
+		$this->load->library('pdf');
+		$this->pdf->setPaper('Legal', 'landscape');
+		$this->pdf->filename = 'persediaan' . ($bulan !== '' ? ('-' . $bulan) : '') . '.pdf';
+		$this->pdf->load_view('anekadharma/persediaan/persediaan_pdf', $data);
+	}
+
+	private function get_persediaan_by_bulan($bulan)
+	{
+		if ($bulan === '') {
+			return $this->Persediaan_model->get_all();
+		}
+		return $this->Persediaan_model->get_by_year_month($bulan);
 	}
 
 	public function json()

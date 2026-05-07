@@ -43,7 +43,7 @@
 
                                     <!-- <form action="/action_page.php"> -->
                                     <label for="bulan">BULAN :</label>
-                                    <input type="month" id="bulan_persediaan" name="bulan_persediaan">
+                                    <input type="month" id="bulan_persediaan" name="bulan_persediaan" value="<?php echo isset($bulan_persediaan_selected) ? $bulan_persediaan_selected : ''; ?>">
                                     <!-- <input type="submit"> -->
                                     <!-- </form> -->
 
@@ -54,6 +54,7 @@
                                     <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"');
                                     ?>
                                     <button type="submit" class="btn btn-danger"> Cari</button>
+                                    <button type="submit" formaction="<?php echo site_url('persediaan/cetak_pdf'); ?>" formtarget="_blank" class="btn btn-success">Cetak PDF</button>
                                 </div>
 
 
@@ -128,7 +129,10 @@
                             <tbody>
                                 <?php
                                 $start = 0;
+                                $total_nilai_persediaan = 0;
                                 foreach ($Persediaan_data as $persediaan) {
+                                    $nilai_persediaan_row = isset($persediaan->nilai_persediaan) ? (float) str_replace(',', '', $persediaan->nilai_persediaan) : 0;
+                                    $total_nilai_persediaan += $nilai_persediaan_row;
                                 ?>
                                     <tr>
                                         <td width="80px"><?php echo ++$start ?></td>
@@ -168,6 +172,13 @@
                                 }
                                 ?>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="26" style="text-align:right;">Total Nilai Persediaan</th>
+                                    <th style="text-align:right;"><?php echo number_format($total_nilai_persediaan, 0, ',', '.'); ?></th>
+                                    <th colspan="4"></th>
+                                </tr>
+                            </tfoot>
 
                         </table>
 
