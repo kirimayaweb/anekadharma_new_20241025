@@ -58,24 +58,40 @@ class Persediaan_model extends CI_Model
     }
 
     // get data by id
+    /**
+     * Filter persediaan by year-month from HTML5 month input (YYYY-MM).
+     * Kolom tanggal di DB bisa varchar d/m/Y, Y-m-d, atau d-m-Y.
+     */
+    function get_by_year_month($ym)
+    {
+        $ym = trim((string) $ym);
+        if ($ym === '') {
+            return $this->get_all();
+        }
+        $ts = strtotime($ym . '-01');
+        if ($ts === false) {
+            return $this->get_all();
+        }
+        $start = date('Y-m-01', $ts);
+        $end = date('Y-m-t', $ts);
+        $sql = "SELECT * FROM `persediaan`
+            WHERE COALESCE(
+                STR_TO_DATE(`tanggal`, '%d/%m/%Y'),
+                STR_TO_DATE(`tanggal`, '%e/%c/%Y'),
+                STR_TO_DATE(`tanggal`, '%Y-%m-%d'),
+                STR_TO_DATE(`tanggal`, '%d-%m-%Y')
+            ) BETWEEN ? AND ?
+            ORDER BY `id` DESC";
+        return $this->db->query($sql, array($start, $end))->result();
+    }
+
     function get_by_persediaan_month($tgl_jual)
     {
-
-        // print_r("get_by_persediaan_month");
-        // print_r("<br/>");
-        // print_r($tgl_jual);
-        // die;
-
-        // $from_date = date("1/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
-        // $to_date = date("t/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
-        $to_date = '2024-09-30';
-
-        // $sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
-        $sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC";
-
-        // $this->db->where($this->id, $id);
-        // return $this->db->get($this->table)->row();
-        return $this->db->query($sql)->result();
+        $ts = strtotime((string) $tgl_jual);
+        if ($ts === false) {
+            return array();
+        }
+        return $this->get_by_year_month(date('Y-m', $ts));
     }
 
     // get total rows

@@ -554,29 +554,14 @@ class Persediaan extends CI_Controller
 
 	public function search()
 	{
-
-		// print_r($this->input->post('bulan_persediaan', TRUE));
-		// print_r("<br/>");
-
-		$from_date = date("1/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
-		$to_date = date("t/m/Y", strtotime($this->input->post('bulan_persediaan', TRUE)));
-		// $to_date = '30/09/2024';
-
-		// $sql = "SELECT * FROM persediaan WHERE tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
-		$sql = "SELECT * FROM persediaan WHERE `persediaan`.`tanggal` LIKE '" . $to_date . "'  ORDER by id DESC";
-
-
-		// tanggal >= '" . $from_date . "' AND tanggal <= '" . $to_date . "' ORDER by id DESC";
-
-		// print_r($from_date);
-		// print_r("<br/>");
-		// print_r($to_date);
-		// print_r("<br/>");
-		// print_r($this->db->query($sql)->result());
-		// print_r("<br/>");
-
-		// $Persediaan = $this->Persediaan_model->get_all();
-		$Persediaan = $this->db->query($sql)->result();
+		// Input <input type="month" name="bulan_persediaan"> mengirim YYYY-MM.
+		// Sebelumnya query memakai LIKE hanya ke tanggal akhir bulan sehingga data (mis. 21/04/2026) tidak tampil.
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$Persediaan = $this->Persediaan_model->get_all();
+		} else {
+			$Persediaan = $this->Persediaan_model->get_by_year_month($bulan);
+		}
 
 		// $start = 0;
 		$data = array(
