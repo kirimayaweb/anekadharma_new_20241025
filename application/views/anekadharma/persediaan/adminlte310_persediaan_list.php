@@ -39,21 +39,20 @@
                                 <?php //echo anchor(site_url('Persediaan/create'), 'Input Persediaan', 'class="btn btn-danger"');
                                 ?>
 
-                                <div class="col-4" text-align="left">
+                          
 
-                                    <!-- <form action="/action_page.php"> -->
-                                    <label for="bulan">BULAN :</label>
+                                <!-- </div> -->
+                                <div class="col-5 text-align="left">
+                                    
+                                     <!-- <form action="/action_page.php"> -->
+                                     <label for="bulan">BULAN :</label>
                                     <input type="month" id="bulan_persediaan" name="bulan_persediaan" value="<?php echo isset($bulan_persediaan_selected) ? $bulan_persediaan_selected : ''; ?>">
                                     <!-- <input type="submit"> -->
                                     <!-- </form> -->
-
-                                </div>
-
-                                <!-- </div> -->
-                                <div class="col-2">
+                                    
                                     <?php //echo anchor(site_url('Tbl_neraca_data/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"');
                                     ?>
-                                    <button type="submit" class="btn btn-danger"> Cari</button>
+                                    <button type="submit" class="btn btn-danger mr-2">Cari</button>
                                     <button type="submit" formaction="<?php echo site_url('persediaan/cetak_pdf'); ?>" formtarget="_blank" class="btn btn-success">Cetak PDF</button>
                                 </div>
 

@@ -584,9 +584,11 @@ class Persediaan extends CI_Controller
 			'bulan_persediaan_selected' => $bulan,
 		);
 
-		ini_set('memory_limit', '128M');
+		// Tabel persediaan punya kolom sangat banyak; Dompdf butuh memory lebih besar.
+		@ini_set('memory_limit', '1024M');
+		@set_time_limit(300);
 		$this->load->library('pdf');
-		$this->pdf->setPaper('Legal', 'landscape');
+		$this->pdf->setPaper('A3', 'landscape');
 		$this->pdf->filename = 'persediaan' . ($bulan !== '' ? ('-' . $bulan) : '') . '.pdf';
 		$this->pdf->load_view('anekadharma/persediaan/persediaan_pdf', $data);
 	}
