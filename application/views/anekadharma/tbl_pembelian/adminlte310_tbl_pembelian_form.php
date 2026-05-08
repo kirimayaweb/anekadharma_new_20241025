@@ -271,7 +271,9 @@ $get_list_data = $x_list_data;
 
 
                                         <div class="col-2" text-align="center">
-                                            <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-warning"'); ?>
+                                            <button type="button" class="btn btn-block btn-warning" id="btn-open-modal-barang-baru-halaman" onclick="openModalInputBarangBaruPembelianDariHalaman(); return false;">
+                                                Input Barang Baru
+                                            </button>
                                         </div>
 
                                         <div class="col-2" text-align="center"> </div>
@@ -376,7 +378,7 @@ $get_list_data = $x_list_data;
                                                     </div>
                                                     <div class="col-4">
                                                         <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                                        <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
+                                                        <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" inputmode="numeric" autocomplete="off" required>
                                                     </div>
                                                 </div>
 
@@ -632,6 +634,12 @@ $get_list_data = $x_list_data;
             return valueString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
+        function applyFormatHargaSatuanPembelian(input) {
+            var inputElement = $(input);
+            var angka = inputElement.val().replace(/[^0-9]/g, '');
+            inputElement.val(formatHargaSatuanPembelian(angka));
+        }
+
         function loadDetailBarangPembelian(uuidBarang) {
             if (!uuidBarang) {
                 $('#satuan').val('');
@@ -726,6 +734,14 @@ $get_list_data = $x_list_data;
             });
         };
 
+        window.openModalInputBarangBaruPembelianDariHalaman = function() {
+            shouldReopenBarangBeliModal = false;
+
+            loadInputBarangForm(function() {
+                showBootstrapOrManual('#modal-input-barang-baru');
+            });
+        };
+
         window.closeModalInputBarangBaruPembelian = function() {
             hideBootstrapOrManual('#modal-input-barang-baru');
             if (shouldReopenBarangBeliModal && !$('#modal-xl-input-barang').hasClass('show')) {
@@ -783,6 +799,13 @@ $get_list_data = $x_list_data;
 
         $(document).on('change', '#uuid_barang', function() {
             loadDetailBarangPembelian($(this).val());
+        });
+
+        $(document).on('input keyup paste', '#harga_satuan', function() {
+            var input = this;
+            setTimeout(function() {
+                applyFormatHargaSatuanPembelian(input);
+            }, 0);
         });
     })(jQuery);
 </script>

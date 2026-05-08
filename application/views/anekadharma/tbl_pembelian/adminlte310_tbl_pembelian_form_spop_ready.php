@@ -432,7 +432,7 @@
                                                     // if ($GET_Sisa_Stock > 0) {
                                                     ?>
 
-                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
+                                                        <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>" onclick="setTimeout(function(){ if (window.initSelect2BarangSearch) { window.initSelect2BarangSearch('#modal-xl-input-barang_<?php echo $list_data->id ?>'); } }, 300);">
                                                             UBAH <?php //echo $list_data->id 
                                                                     ?>
                                                         </button>
@@ -655,15 +655,17 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                 <div class="col-4">
                                     <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
 
-                                    <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
-                                        <option value="<?php echo $row->uuid_barang; ?>"><?php echo $row->uraian; ?> </option>
+                                    <select name="uuid_barang" id="uuid_barang" class="form-control select2 select2-update-barang" style="width: 100%; height: 80px;" onchange="if (window.loadDetailBarangPembelianSpopReady) { loadDetailBarangPembelianSpopReady(this); }" required>
+                                        <option value="<?php echo htmlspecialchars($row->uuid_barang, ENT_QUOTES, 'UTF-8'); ?>" data-satuan="<?php echo htmlspecialchars($row->satuan, ENT_QUOTES, 'UTF-8'); ?>" data-harga-satuan="<?php echo htmlspecialchars($row->harga_satuan, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $row->uraian; ?> </option>
                                         <!-- <option value="">Pilih Barang</option> -->
                                         <?php
 
-                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+                                        $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
+                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
 
                                         foreach ($this->db->query($sql)->result() as $m) {
-                                            echo "<option value='$m->uuid_barang' ";
+                                            $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
+                                            echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
                                             echo ">  " . strtoupper($m->nama_barang)  . "</option>";
                                         }
                                         ?>
@@ -671,7 +673,9 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
                                     <div class="row">
                                         <div class="col-8">
-                                            <?php echo anchor(site_url('sys_nama_barang/create/pembelian'), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                            <button type="button" class="btn btn-block btn-danger" onclick="openModalInputBarangBaruPembelianDariModal('#modal-xl-input-barang_<?php echo $list_data->id ?>'); return false;">
+                                                Input Barang Baru
+                                            </button>
                                         </div>
                                     </div>
 
@@ -789,16 +793,18 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
 
 
-                                <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" required>
+                                <select name="uuid_barang" id="uuid_barang" class="form-control select2" style="width: 100%; height: 80px;" onchange="if (window.loadDetailBarangPembelianSpopReady) { loadDetailBarangPembelianSpopReady(this); }" required>
                                     <option value="">pilih </option>
                                     <!-- <option value="">Pilih Barang</option> -->
                                     <?php
 
                                     // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+                                    $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
+                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
 
                                     foreach ($this->db->query($sql)->result() as $m) {
-                                        echo "<option value='$m->uuid_barang' ";
+                                        $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
+                                        echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
                                         echo ">  " . strtoupper($m->nama_barang)  . "</option>";
                                     }
                                     ?>
@@ -815,7 +821,9 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                         <?php
                                         // $Get_source_form = "/Tbl_pembelian/create_add_uraian/" . $uuid_spop;
                                         ?>
-                                        <?php echo anchor(site_url('Sys_nama_barang/create/Tbl_pembelian/create_add_uraian/' . $uuid_spop), 'Input Barang Baru', 'class="btn btn-block btn-danger"'); ?>
+                                        <button type="button" class="btn btn-block btn-danger" onclick="openModalInputBarangBaruPembelianDariModal('#modal-xl-input-barang'); return false;">
+                                            Input Barang Baru
+                                        </button>
                                     </div>
                                 </div>
 
@@ -872,6 +880,22 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 </form>
 <!-- END OF MODAL EXTRA LARGE -->
 
+<div class="modal fade" id="modal-input-barang-baru" tabindex="-1" role="dialog" aria-labelledby="modalInputBarangBaruLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger">
+                <h4 class="modal-title" id="modalInputBarangBaruLabel">Input Barang Baru</h4>
+                <button type="button" class="close" onclick="closeModalInputBarangBaruPembelian(); return false;" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-input-barang-baru-body">
+                <div class="text-center text-muted py-4">Memuat form...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 
 
@@ -893,6 +917,10 @@ foreach ($data_ALL_per_SPOP as $list_data) {
         width: 100%;
         margin: 0 auto;
     }
+
+    .select2-search--dropdown {
+        display: block !important;
+    }
 </style>
 
 
@@ -900,6 +928,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/select2/js/select2.full.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -916,4 +945,341 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             "scrollX": true
         });
     });
+</script>
+<script>
+    (function($) {
+        var modalFormLoaded = false;
+        var sourceModalSelector = '';
+        var shouldReopenSourceModal = false;
+        var manualBackdropId = 'modal-input-barang-baru-backdrop';
+
+        function getTopModalZIndex() {
+            var maxZIndex = 1050;
+            $('.modal.show:visible').each(function() {
+                var zIndex = parseInt($(this).css('z-index'), 10);
+                if (!isNaN(zIndex) && zIndex >= maxZIndex) {
+                    maxZIndex = zIndex + 20;
+                }
+            });
+            return maxZIndex;
+        }
+
+        function showModalManual(selector) {
+            var modal = $(selector);
+            if (!modal.length) {
+                return;
+            }
+
+            var zIndex = getTopModalZIndex();
+            $('#' + manualBackdropId).remove();
+            $('<div/>', {
+                id: manualBackdropId,
+                class: 'modal-backdrop fade show'
+            }).css('z-index', zIndex - 10).appendTo(document.body);
+
+            modal.css({
+                display: 'block',
+                'z-index': zIndex
+            }).addClass('show').attr({
+                'aria-modal': 'true'
+            }).removeAttr('aria-hidden');
+
+            $('body').addClass('modal-open');
+        }
+
+        function hideModalManual(selector) {
+            var modal = $(selector);
+            modal.removeClass('show').css('display', 'none').attr('aria-hidden', 'true').removeAttr('aria-modal');
+            $('#' + manualBackdropId).remove();
+
+            if ($('.modal.show:visible').length) {
+                $('body').addClass('modal-open');
+            } else {
+                $('body').removeClass('modal-open');
+            }
+        }
+
+        function showBootstrapOrManual(selector) {
+            if ($.fn.modal) {
+                $(selector).modal('show');
+            } else {
+                showModalManual(selector);
+            }
+        }
+
+        function hideBootstrapOrManual(selector) {
+            if ($.fn.modal) {
+                $(selector).modal('hide');
+            } else {
+                hideModalManual(selector);
+            }
+        }
+
+        function showInputBarangInfo(message, type) {
+            var info = $('#input_barang_baru_info');
+            if (!info.length) {
+                return;
+            }
+            info.removeClass('d-none alert-success alert-danger alert-warning')
+                .addClass('alert-' + type)
+                .text(message);
+        }
+
+        function refreshBarangOptions(selectedUuid) {
+            return $.ajax({
+                url: "<?php echo site_url('sys_nama_barang/list_barang_ajax'); ?>",
+                type: "GET",
+                dataType: "json",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(res) {
+                if (!res || !res.success) {
+                    return;
+                }
+
+                $('select[name="uuid_barang"]').each(function() {
+                    var select = $(this);
+                    var currentValue = selectedUuid || select.val();
+                    select.empty().append($('<option>', {
+                        value: '',
+                        text: 'Pilih Barang'
+                    }));
+
+                    $.each(res.data || [], function(_, row) {
+                        select.append($('<option>', {
+                            value: row.uuid_barang,
+                            text: (row.nama_barang || '').toUpperCase()
+                        }).attr({
+                            'data-satuan': row.satuan || '',
+                            'data-harga-satuan': row.harga_satuan || ''
+                        }));
+                    });
+
+                    if (currentValue) {
+                        select.val(currentValue);
+                    }
+                    select.trigger('change');
+                });
+            });
+        }
+
+        function formatHargaSatuanPembelianSpopReady(value) {
+            if (value === null || typeof value === 'undefined' || value === '') {
+                return '';
+            }
+
+            var valueString = String(value).trim();
+            if (/^(\d{1,3}\.)+\d{3}$/.test(valueString)) {
+                valueString = valueString.replace(/\./g, '');
+            } else if (/^\d+(\.\d+)?$/.test(valueString)) {
+                var numericValue = parseFloat(valueString);
+                if (!isNaN(numericValue)) {
+                    valueString = String(Math.round(numericValue));
+                }
+            } else {
+                valueString = valueString.replace(/[^0-9]/g, '');
+            }
+
+            return valueString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        function getBarangFormFromSelect(selectElement) {
+            return $(selectElement).closest('form');
+        }
+
+        function setDetailBarangToForm(form, satuan, hargaSatuan) {
+            form.find('input[name="satuan"]').val(satuan || '');
+            form.find('input[name="harga_satuan"]').val(formatHargaSatuanPembelianSpopReady(hargaSatuan));
+        }
+
+        function loadDetailBarangPembelianSpopReady(selectElement) {
+            var select = $(selectElement);
+            var uuidBarang = select.val();
+            var form = getBarangFormFromSelect(selectElement);
+
+            if (!uuidBarang) {
+                setDetailBarangToForm(form, '', '');
+                return;
+            }
+
+            var selectedOption = select.find('option:selected');
+            var satuanOption = selectedOption.attr('data-satuan') || '';
+            var hargaSatuanOption = selectedOption.attr('data-harga-satuan') || '';
+            if (satuanOption !== '' || hargaSatuanOption !== '') {
+                setDetailBarangToForm(form, satuanOption, hargaSatuanOption);
+            }
+
+            $.ajax({
+                url: "<?php echo site_url('sys_nama_barang/detail_barang_ajax'); ?>",
+                type: "GET",
+                dataType: "json",
+                data: {
+                    uuid_barang: uuidBarang
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(res) {
+                if (!res || !res.success || !res.data) {
+                    return;
+                }
+                setDetailBarangToForm(form, res.data.satuan, res.data.harga_satuan);
+            });
+        }
+
+        window.loadDetailBarangPembelianSpopReady = loadDetailBarangPembelianSpopReady;
+
+        function initSelect2BarangSearch(scopeSelector) {
+            if (!$.fn.select2) {
+                return;
+            }
+
+            var scope = scopeSelector ? $(scopeSelector) : $('.modal');
+            scope.find('select.select2').each(function() {
+                var select = $(this);
+                var parentModal = select.closest('.modal');
+                var options = {
+                    width: '100%',
+                    minimumResultsForSearch: 0
+                };
+
+                if (parentModal.length) {
+                    options.dropdownParent = parentModal;
+                }
+
+                if (select.data('select2')) {
+                    select.select2('destroy');
+                }
+                select.next('.select2-container').remove();
+                select.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').removeAttr('aria-hidden').removeAttr('tabindex');
+                select.select2(options);
+            });
+        }
+
+        window.initSelect2BarangSearch = initSelect2BarangSearch;
+
+        function initSelect2InModal() {
+            if ($.fn.select2) {
+                $('#modal-input-barang-baru .select2').select2({
+                    dropdownParent: $('#modal-input-barang-baru')
+                });
+            }
+        }
+
+        function loadInputBarangForm(callback) {
+            if (modalFormLoaded) {
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
+
+            $('#modal-input-barang-baru-body').html('<div class="text-center text-muted py-4">Memuat form...</div>');
+            $.ajax({
+                url: "<?php echo site_url('sys_nama_barang/pembelian_modal_form'); ?>",
+                type: "GET",
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(html) {
+                $('#modal-input-barang-baru-body').html(html);
+                modalFormLoaded = true;
+                initSelect2InModal();
+                if (callback) {
+                    callback();
+                }
+            }).fail(function() {
+                $('#modal-input-barang-baru-body').html('<div class="alert alert-danger mb-0">Form input barang baru gagal dimuat.</div>');
+                if (callback) {
+                    callback();
+                }
+            });
+        }
+
+        window.openModalInputBarangBaruPembelianDariModal = function(modalSelector) {
+            sourceModalSelector = modalSelector || '';
+            shouldReopenSourceModal = sourceModalSelector !== '';
+
+            if ($.fn.modal && sourceModalSelector) {
+                $(sourceModalSelector).one('hidden.bs.modal', function() {
+                    loadInputBarangForm(function() {
+                        showBootstrapOrManual('#modal-input-barang-baru');
+                    });
+                }).modal('hide');
+                return;
+            }
+
+            loadInputBarangForm(function() {
+                showModalManual('#modal-input-barang-baru');
+            });
+        };
+
+        window.closeModalInputBarangBaruPembelian = function() {
+            hideBootstrapOrManual('#modal-input-barang-baru');
+            if (shouldReopenSourceModal && sourceModalSelector && !$(sourceModalSelector).hasClass('show')) {
+                showBootstrapOrManual(sourceModalSelector);
+            }
+        };
+
+        $('#modal-input-barang-baru').on('hidden.bs.modal', function(e) {
+            if (e.target.id !== 'modal-input-barang-baru') {
+                return;
+            }
+            if (shouldReopenSourceModal && sourceModalSelector) {
+                showBootstrapOrManual(sourceModalSelector);
+            }
+        });
+
+        $(document).on('submit', '#form-input-barang-baru-modal', function(e) {
+            e.preventDefault();
+
+            var form = $(this);
+            var submitButton = $('#btn-submit-input-barang-baru');
+            var submitButtonText = submitButton.data('original-text') || submitButton.text();
+            submitButton.data('original-text', submitButtonText);
+            submitButton.prop('disabled', true).text('Menyimpan...');
+            showInputBarangInfo('Menyimpan barang baru...', 'warning');
+
+            $.ajax({
+                url: form.attr('action'),
+                type: 'POST',
+                data: form.serialize(),
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(res) {
+                if (res && res.success && res.data) {
+                    refreshBarangOptions(res.data.uuid_barang).always(function() {
+                        showInputBarangInfo(res.message || 'Barang berhasil ditambahkan.', 'success');
+                        form[0].reset();
+                        window.closeModalInputBarangBaruPembelian();
+                    });
+                    return;
+                }
+
+                if (res && res.duplicate && res.data) {
+                    refreshBarangOptions(res.data.uuid_barang);
+                }
+                showInputBarangInfo((res && res.message) ? res.message : 'Barang baru gagal disimpan.', 'danger');
+            }).fail(function() {
+                showInputBarangInfo('Terjadi kesalahan saat menyimpan barang baru.', 'danger');
+            }).always(function() {
+                submitButton.prop('disabled', false).text(submitButtonText);
+            });
+        });
+
+        $(document).on('change', 'select[name="uuid_barang"]', function() {
+            loadDetailBarangPembelianSpopReady(this);
+        });
+
+        $(document).ready(function() {
+            initSelect2BarangSearch('.modal');
+        });
+
+        $(document).on('shown.bs.modal', '.modal', function() {
+            initSelect2BarangSearch(this);
+        });
+    })(jQuery);
 </script>
