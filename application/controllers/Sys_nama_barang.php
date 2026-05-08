@@ -135,6 +135,9 @@ class Sys_nama_barang extends CI_Controller
         }
 
         $select_barang = 'uuid_barang, kode_barang, nama_barang, satuan';
+        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+            $select_barang .= ', kategori';
+        }
         if ($this->db->field_exists('harga_satuan', 'sys_nama_barang')) {
             $select_barang .= ', harga_satuan';
         }
@@ -166,6 +169,9 @@ class Sys_nama_barang extends CI_Controller
         }
 
         $select_barang = 'uuid_barang, kode_barang, nama_barang, satuan';
+        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+            $select_barang .= ', kategori';
+        }
         if ($this->db->field_exists('harga_satuan', 'sys_nama_barang')) {
             $select_barang .= ', harga_satuan';
         }
@@ -181,6 +187,7 @@ class Sys_nama_barang extends CI_Controller
         }
 
         $harga_satuan = isset($barang->harga_satuan) ? $barang->harga_satuan : '';
+        $kategori = isset($barang->kategori) ? $barang->kategori : '';
 
         echo json_encode(array(
             'success' => true,
@@ -188,6 +195,7 @@ class Sys_nama_barang extends CI_Controller
                 'uuid_barang' => $barang->uuid_barang,
                 'kode_barang' => $barang->kode_barang,
                 'nama_barang' => $barang->nama_barang,
+                'kategori' => $kategori,
                 'satuan' => $barang->satuan,
                 'harga_satuan' => $harga_satuan,
             )

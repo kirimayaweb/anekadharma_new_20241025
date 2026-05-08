@@ -374,6 +374,7 @@
                                             <th style="text-align:left">Action</th>
 
                                             <th style="text-align:left">Gudang</th>
+                                            <th style="text-align:left">Kategori</th>
                                             <th style="text-align:left">Uraian</th>
                                             <th style="text-align:center">Jumlah</th>
                                             <th style="text-align:center">Satuan</th>
@@ -452,6 +453,21 @@
 
                                                 </td>
                                                 <td align="left"><?php echo $list_data->nama_gudang; ?></td>
+                                                <td align="left">
+                                                    <?php
+                                                    $kategori_barang_detail = '';
+                                                    if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+                                                        $row_kategori_barang_detail = $this->db->select('kategori')
+                                                            ->where('uuid_barang', $list_data->uuid_barang)
+                                                            ->get('sys_nama_barang')
+                                                            ->row();
+                                                        if ($row_kategori_barang_detail && !empty($row_kategori_barang_detail->kategori)) {
+                                                            $kategori_barang_detail = $row_kategori_barang_detail->kategori;
+                                                        }
+                                                    }
+                                                    echo $kategori_barang_detail;
+                                                    ?>
+                                                </td>
                                                 <td align="left"><?php echo $list_data->uraian; ?></td>
                                                 <td align="center">
                                                     <?php
@@ -498,6 +514,7 @@
                                     <tfoot>
                                         <tr>
                                             <th style="text-align:left" width="30px"></th>
+                                            <th style="text-align:left"></th>
                                             <th style="text-align:left"></th>
                                             <th style="text-align:left"></th>
                                             <th style="text-align:right">TOTAL</th>
@@ -652,21 +669,32 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
 
                             <div class="row">
-                                <div class="col-4">
+                                <div class="col-5">
                                     <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
 
                                     <select name="uuid_barang" id="uuid_barang" class="form-control select2 select2-update-barang" style="width: 100%; height: 80px;" onchange="if (window.loadDetailBarangPembelianSpopReady) { loadDetailBarangPembelianSpopReady(this); }" required>
-                                        <option value="<?php echo htmlspecialchars($row->uuid_barang, ENT_QUOTES, 'UTF-8'); ?>" data-satuan="<?php echo htmlspecialchars($row->satuan, ENT_QUOTES, 'UTF-8'); ?>" data-harga-satuan="<?php echo htmlspecialchars($row->harga_satuan, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $row->uraian; ?> </option>
+                                        <?php
+                                        $kategori_row = "";
+                                        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+                                            $row_barang_kategori = $this->db->select('kategori')->where('uuid_barang', $row->uuid_barang)->get('sys_nama_barang')->row();
+                                            $kategori_row = $row_barang_kategori && isset($row_barang_kategori->kategori) ? $row_barang_kategori->kategori : "";
+                                        }
+                                        $label_row_barang = $kategori_row !== "" ? "[" . strtoupper($kategori_row) . "] " . strtoupper($row->uraian) : strtoupper($row->uraian);
+                                        ?>
+                                        <option value="<?php echo htmlspecialchars($row->uuid_barang, ENT_QUOTES, 'UTF-8'); ?>" data-kategori="<?php echo htmlspecialchars($kategori_row, ENT_QUOTES, 'UTF-8'); ?>" data-satuan="<?php echo htmlspecialchars($row->satuan, ENT_QUOTES, 'UTF-8'); ?>" data-harga-satuan="<?php echo htmlspecialchars($row->harga_satuan, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $label_row_barang; ?> </option>
                                         <!-- <option value="">Pilih Barang</option> -->
                                         <?php
 
+                                        $select_kategori = $this->db->field_exists('kategori', 'sys_nama_barang') ? ", `kategori`" : "";
                                         $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
-                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_kategori $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
 
                                         foreach ($this->db->query($sql)->result() as $m) {
+                                            $kategori_barang = isset($m->kategori) ? $m->kategori : "";
                                             $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
-                                            echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
-                                            echo ">  " . strtoupper($m->nama_barang)  . "</option>";
+                                            $label_barang = $kategori_barang !== "" ? "[" . strtoupper($kategori_barang) . "] " . strtoupper($m->nama_barang) : strtoupper($m->nama_barang);
+                                            echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
+                                            echo ">  " . $label_barang  . "</option>";
                                         }
                                         ?>
                                     </select>
@@ -680,16 +708,20 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                     </div>
 
                                 </div>
-                                <div class="col-4">
+                                <div class="col-2">
+                                    <label for="kategori_barang_info">Kategori</label>
+                                    <input type="text" name="kategori_barang_info" id="kategori_barang_info" placeholder="kategori" class="form-control" value="<?php echo htmlspecialchars($kategori_row, ENT_QUOTES, 'UTF-8'); ?>" readonly>
+                                </div>
+                                <div class="col-2">
                                     <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
                                     <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" value="<?php echo $row->satuan; ?>" required>
                                 </div>
-                                <div class="col-4">
+                                <div class="col-3">
                                     <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
                                     <?php
                                     $get_format_rupiah_harga_satuan = number_format($row->harga_satuan, 2, ',', '.');
                                     ?>
-                                    <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" value="<?php echo $get_format_rupiah_harga_satuan; ?>" required>
+                                    <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" value="<?php echo $get_format_rupiah_harga_satuan; ?>" inputmode="numeric" autocomplete="off" required>
                                 </div>
                             </div>
 
@@ -787,7 +819,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
 
                         <div class="row">
-                            <div class="col-4">
+                            <div class="col-5">
                                 <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
 
 
@@ -799,13 +831,16 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                     <?php
 
                                     // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
+                                    $select_kategori = $this->db->field_exists('kategori', 'sys_nama_barang') ? ", `kategori`" : "";
                                     $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
-                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
+                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_kategori $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
 
                                     foreach ($this->db->query($sql)->result() as $m) {
+                                        $kategori_barang = isset($m->kategori) ? $m->kategori : "";
                                         $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
-                                        echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
-                                        echo ">  " . strtoupper($m->nama_barang)  . "</option>";
+                                        $label_barang = $kategori_barang !== "" ? "[" . strtoupper($kategori_barang) . "] " . strtoupper($m->nama_barang) : strtoupper($m->nama_barang);
+                                        echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
+                                        echo ">  " . $label_barang  . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -828,13 +863,17 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                 </div>
 
                             </div>
-                            <div class="col-4">
+                            <div class="col-2">
+                                <label for="kategori_barang_info">Kategori</label>
+                                <input type="text" name="kategori_barang_info" id="kategori_barang_info" placeholder="kategori" class="form-control" readonly>
+                            </div>
+                            <div class="col-2">
                                 <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
                                 <input type="text" name="satuan" id="satuan" placeholder="satuan" class="form-control" required>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" required>
+                                <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" inputmode="numeric" autocomplete="off" required>
                             </div>
                         </div>
 
@@ -920,6 +959,11 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
     .select2-search--dropdown {
         display: block !important;
+    }
+
+    #modal-xl-input-barang .modal-dialog,
+    .modal[id^="modal-xl-input-barang_"] .modal-dialog {
+        max-width: 95vw;
     }
 </style>
 
@@ -1047,10 +1091,14 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                     }));
 
                     $.each(res.data || [], function(_, row) {
+                        var kategori = row.kategori || '';
+                        var namaBarang = (row.nama_barang || '').toUpperCase();
+                        var optionText = kategori ? '[' + kategori.toUpperCase() + '] ' + namaBarang : namaBarang;
                         select.append($('<option>', {
                             value: row.uuid_barang,
-                            text: (row.nama_barang || '').toUpperCase()
+                            text: optionText
                         }).attr({
+                            'data-kategori': kategori,
                             'data-satuan': row.satuan || '',
                             'data-harga-satuan': row.harga_satuan || ''
                         }));
@@ -1084,11 +1132,18 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             return valueString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
+        function applyFormatHargaSatuanPembelianSpopReady(input) {
+            var inputElement = $(input);
+            var angka = inputElement.val().replace(/[^0-9]/g, '');
+            inputElement.val(formatHargaSatuanPembelianSpopReady(angka));
+        }
+
         function getBarangFormFromSelect(selectElement) {
             return $(selectElement).closest('form');
         }
 
-        function setDetailBarangToForm(form, satuan, hargaSatuan) {
+        function setDetailBarangToForm(form, kategori, satuan, hargaSatuan) {
+            form.find('input[name="kategori_barang_info"]').val(kategori || '');
             form.find('input[name="satuan"]').val(satuan || '');
             form.find('input[name="harga_satuan"]').val(formatHargaSatuanPembelianSpopReady(hargaSatuan));
         }
@@ -1099,15 +1154,16 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             var form = getBarangFormFromSelect(selectElement);
 
             if (!uuidBarang) {
-                setDetailBarangToForm(form, '', '');
+                setDetailBarangToForm(form, '', '', '');
                 return;
             }
 
             var selectedOption = select.find('option:selected');
+            var kategoriOption = selectedOption.attr('data-kategori') || '';
             var satuanOption = selectedOption.attr('data-satuan') || '';
             var hargaSatuanOption = selectedOption.attr('data-harga-satuan') || '';
-            if (satuanOption !== '' || hargaSatuanOption !== '') {
-                setDetailBarangToForm(form, satuanOption, hargaSatuanOption);
+            if (kategoriOption !== '' || satuanOption !== '' || hargaSatuanOption !== '') {
+                setDetailBarangToForm(form, kategoriOption, satuanOption, hargaSatuanOption);
             }
 
             $.ajax({
@@ -1124,7 +1180,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 if (!res || !res.success || !res.data) {
                     return;
                 }
-                setDetailBarangToForm(form, res.data.satuan, res.data.harga_satuan);
+                setDetailBarangToForm(form, res.data.kategori, res.data.satuan, res.data.harga_satuan);
             });
         }
 
@@ -1272,6 +1328,13 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
         $(document).on('change', 'select[name="uuid_barang"]', function() {
             loadDetailBarangPembelianSpopReady(this);
+        });
+
+        $(document).on('input keyup paste', '#modal-xl-input-barang input[name="harga_satuan"], .modal[id^="modal-xl-input-barang_"] input[name="harga_satuan"]', function() {
+            var input = this;
+            setTimeout(function() {
+                applyFormatHargaSatuanPembelianSpopReady(input);
+            }, 0);
         });
 
         $(document).ready(function() {
