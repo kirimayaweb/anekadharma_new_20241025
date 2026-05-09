@@ -494,6 +494,7 @@
                                 <th style="text-align:center">Pilih</th>
                                 <th style="text-align:center">Tgl PO</th>
                                 <th style="text-align:center">SPOP</th>
+                                <th style="text-align:center">Kategori</th>
                                 <th style="text-align:center">Nama barang</th>
                                 <th style="text-align:right">Harga satuan</th>
                                 <th style="text-align:right">satuan</th>
@@ -556,6 +557,21 @@
 
 
                                             <td align="left"><?php echo $list_data->spop; ?></td>
+                                            <td align="left">
+                                                <?php
+                                                $kategori_barang = '';
+                                                if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+                                                    $row_kategori_barang = $this->db->select('kategori')
+                                                        ->where('uuid_barang', $list_data->uuid_barang)
+                                                        ->get('sys_nama_barang')
+                                                        ->row();
+                                                    if ($row_kategori_barang && !empty($row_kategori_barang->kategori)) {
+                                                        $kategori_barang = $row_kategori_barang->kategori;
+                                                    }
+                                                }
+                                                echo $kategori_barang;
+                                                ?>
+                                            </td>
 
                                             <td align="left"><?php echo $list_data->nama_barang_beli; ?></td>
 
