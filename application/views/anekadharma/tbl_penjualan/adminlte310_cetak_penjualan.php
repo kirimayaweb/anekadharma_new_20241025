@@ -189,7 +189,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 		</tr>
 
 		<tr>
-			<th colspan="1100" style="font-size: 0.75em; text-align: center; border: none; padding: 8px 0 10px 0; vertical-align: middle;">
+			<th colspan="1100" style="font-size: 0.95em; text-align: center; border: none; padding: 8px 0 10px 0; vertical-align: middle;">
 				<strong>FAKTUR PENJUALAN</strong>
 			</th>
 		</tr>
@@ -304,7 +304,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 		<tr>
 
-			<th style="font-size: 0.75em;text-align:left; text-transform: capitalize; width: 650px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="650">Terbilang: <strong><i> <?php echo terbilang($TOTAL_PENJUALAN); ?> </i></strong></th>
+			<th style="font-size: 0.5em;text-align:left; text-transform: capitalize; width: 650px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="650">Terbilang: <strong><i> <?php echo terbilang($TOTAL_PENJUALAN); ?> </i></strong></th>
 
 			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="100"><strong>KODE</strong></th>
 
@@ -315,9 +315,9 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			
 			<th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>SAT.</strong></th>-->
 
-			<th style="font-size: 0.75em;text-align:left; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
+			<th style="font-size: 0.5em;text-align:left; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
 
-			<th style="font-size: 0.75em;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($TOTAL_PENJUALAN); ?></strong></th>
+			<th style="font-size: 0.5em;font-style: italic;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($TOTAL_PENJUALAN); ?></strong></th>
 
 
 		</tr>
