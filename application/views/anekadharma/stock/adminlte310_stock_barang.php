@@ -112,6 +112,7 @@
                                     <th>Tgl Po</th>
                                     <th>Gudang</th>
                                     <th>SPOP</th>
+                                    <th>Kategori</th>
                                     <th>Nama Barang </th>
                                     <th>Harga Satuan</th>
                                     <th>Satuan</th>
@@ -208,6 +209,15 @@
                                             echo $list_data->spop;
                                             ?>
 
+                                        </td>
+
+                                        <!-- Kategori (sys_nama_barang via uuid_barang) -->
+                                        <td style="text-align:left">
+                                            <?php
+                                            echo isset($list_data->kategori_barang) && $list_data->kategori_barang !== '' && $list_data->kategori_barang !== null
+                                                ? htmlspecialchars($list_data->kategori_barang, ENT_QUOTES, 'UTF-8')
+                                                : '-';
+                                            ?>
                                         </td>
 
                                         <!-- Nama Barang -->
@@ -427,6 +437,7 @@
 
                             <tfoot>
                                 <tr>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>

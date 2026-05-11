@@ -51,6 +51,9 @@ class Sys_nama_barang_model extends CI_Model
 	$this->db->or_like('nama_barang', $q);
 	$this->db->or_like('satuan', $q);
 	$this->db->or_like('keterangan', $q);
+	if ($this->db->field_exists('kategori', $this->table)) {
+	    $this->db->or_like('kategori', $q);
+	}
 	$this->db->from($this->table);
         return $this->db->count_all_results();
     }
@@ -64,6 +67,9 @@ class Sys_nama_barang_model extends CI_Model
 	$this->db->or_like('nama_barang', $q);
 	$this->db->or_like('satuan', $q);
 	$this->db->or_like('keterangan', $q);
+	if ($this->db->field_exists('kategori', $this->table)) {
+	    $this->db->or_like('kategori', $q);
+	}
 	$this->db->limit($limit, $start);
         return $this->db->get($this->table)->result();
     }

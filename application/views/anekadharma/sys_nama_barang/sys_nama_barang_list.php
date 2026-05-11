@@ -97,6 +97,7 @@
                                     <th>Action</th>
                                     <!-- <th>Uuid Barang</th> -->
                                     <th>Kode Barang</th>
+                                    <th>Kategori</th>
                                     <th>Nama Barang</th>
                                     <th>Satuan</th>
                                     <th>Keterangan</th>
@@ -107,13 +108,14 @@
                                         <td width="80px"><?php echo ++$start ?></td>
                                         <td style="text-align:center" width="200px">
                                             <?php
-                                            echo anchor(site_url('sys_nama_barang/update/' . $sys_nama_barang->id), 'Update', 'class="btn btn-warning btn-sm mr-1"');
+                                            echo anchor(site_url('sys_nama_barang/update/' . $sys_nama_barang->id), 'Ubah', 'class="btn btn-warning btn-sm mr-1"');
                                             echo anchor(site_url('sys_nama_barang/delete/' . $sys_nama_barang->id), 'Delete', 'class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                             ?>
                                         </td>
                                         <!-- <td><?php //echo $sys_nama_barang->uuid_barang 
                                                     ?></td> -->
                                         <td><?php echo $sys_nama_barang->kode_barang ?></td>
+                                        <td><?php echo (isset($sys_nama_barang->kategori) && $sys_nama_barang->kategori !== '' && $sys_nama_barang->kategori !== null) ? htmlspecialchars($sys_nama_barang->kategori, ENT_QUOTES, 'UTF-8') : '-'; ?></td>
                                         <td><?php echo $sys_nama_barang->nama_barang ?></td>
                                         <td><?php echo $sys_nama_barang->satuan ?></td>
                                         <td><?php echo $sys_nama_barang->keterangan ?></td>
