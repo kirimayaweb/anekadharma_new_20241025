@@ -973,7 +973,17 @@ class Tbl_penjualan extends CI_Controller
 		$this->pdf->loadHtml($html);
 		$this->pdf->render();
 
-		$this->pdf->stream("NOTA_PENJUALAN.pdf", array("Attachment" => 0));
+		$nmr_pesan = isset($data_master_penjualan_per_uuidpenjualan->nmrpesan)
+			? trim((string) $data_master_penjualan_per_uuidpenjualan->nmrpesan)
+			: '';
+		$nmr_pesan_safe = preg_replace('/[^A-Za-z0-9._-]+/', '_', $nmr_pesan);
+		$nmr_pesan_safe = trim($nmr_pesan_safe, '._-');
+		if ($nmr_pesan_safe === '') {
+			$nmr_pesan_safe = 'tanpa_nomor';
+		}
+		$pdf_nama_file = 'NOTA_PENJUALAN_' . $nmr_pesan_safe . '.pdf';
+
+		$this->pdf->stream($pdf_nama_file, array("Attachment" => 0));
 	}
 
 
