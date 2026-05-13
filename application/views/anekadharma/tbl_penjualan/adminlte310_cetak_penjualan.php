@@ -12,12 +12,6 @@
 			margin-bottom: 1cm;
 		}
 
-		@media print {
-			body {
-				margin: 0;
-			}
-		}
-
 		#customers {
 			font-family: Arial, Helvetica, sans-serif;
 			border-collapse: collapse;
@@ -30,6 +24,61 @@
 			padding: 3px;
 		}
 
+		/* Baris grid faktur barang: teks data 0,8 × 1,125em = 0,9em (agar lebih muat di tabel + dot matrix) */
+		#customers tr.cetak-barang th {
+			font-size: 0.9em;
+			padding: 7px 10px;
+			vertical-align: middle;
+			line-height: 1.35;
+			background-color: #fff;
+			border-color: #000;
+			border-style: solid;
+			-webkit-print-color-adjust: exact;
+			print-color-adjust: exact;
+		}
+
+		/* Jumlah: sedikit dipersempit (~1 huruf); Satuan (SAT.): sedikit diperlebar */
+		#customers tr.cetak-barang > th:nth-child(4) {
+			width: 11ch;
+			max-width: 15ch;
+			white-space: nowrap;
+			box-sizing: border-box;
+		}
+
+		#customers tr.cetak-barang > th:nth-child(5) {
+			width: 7ch;
+			max-width: 10ch;
+			white-space: nowrap;
+			box-sizing: border-box;
+		}
+
+		#customers tr.cetak-barang > th:nth-child(6),
+		#customers tr.cetak-barang > th:nth-child(7) {
+			width: 9ch;
+			min-width: 9ch;
+			max-width: 14ch;
+			white-space: nowrap;
+			box-sizing: border-box;
+		}
+
+		/* Angka kolom Jumlah / Satuan / Harga / Sub: monospace + lebar digit konsisten (dot matrix) */
+		#customers tr.cetak-barang > th:nth-child(4),
+		#customers tr.cetak-barang > th:nth-child(5),
+		#customers tr.cetak-barang > th:nth-child(6),
+		#customers tr.cetak-barang > th:nth-child(7) {
+			font-family: "Courier New", Courier, Consolas, monospace;
+			font-variant-numeric: tabular-nums;
+		}
+
+		#customers tr.cetak-barang th.cetak-terbilang {
+			font-size: 0.6em;
+			line-height: 1.4;
+		}
+
+		#customers tr.cetak-barang th.cetak-total-footer {
+			font-size: 0.68em;
+		}
+
 		#customers tr:nth-child(even) {
 			background-color: #f2f2f2;
 		}
@@ -38,12 +87,22 @@
 			background-color: #ddd;
 		}
 
+		/* Grid faktur: selalu putih (strip abu mengganggu cetak dot matrix) */
+		#customers tr.cetak-barang {
+			background-color: #fff !important;
+		}
+
 		#customers th {
 			padding-top: 1px;
 			padding-bottom: 1px;
 			/* text-align: left; */
 			background-color: white;
 			color: black;
+		}
+
+		#customers tr.cetak-barang > th {
+			padding-top: 7px;
+			padding-bottom: 7px;
 		}
 
 		#cetak-konsumen-nama {
@@ -57,6 +116,59 @@
 		th#cetak-th-konsumen-nama {
 			overflow: visible;
 		}
+
+		/* Blok tanda tangan Penerima: geser ke kiri; "Penerima" tepat di tengah ruang antara ( dan ) */
+		#customers th.cetak-penerima-tanda-wrap {
+			text-align: left;
+			vertical-align: middle;
+			padding-left: 2px;
+			padding-right: 2px;
+		}
+
+		#customers table.cetak-penerima-tanda-tabel {
+			border-collapse: collapse;
+			margin: 0;
+			margin-right: auto;
+			border: none;
+		}
+
+		#customers table.cetak-penerima-tanda-tabel td {
+			border: none;
+			padding: 0 1px;
+			vertical-align: middle;
+			background: transparent;
+		}
+
+		#customers table.cetak-penerima-tanda-tabel td.cetak-paren-gap {
+			width: 6cm;
+			min-width: 6cm;
+			text-align: center;
+			box-sizing: border-box;
+		}
+
+		#customers span.cetak-paren-invis {
+			color: transparent;
+		}
+
+		@media print {
+			body {
+				margin: 0;
+			}
+
+			#customers tr:nth-child(even) th,
+			#customers tr:nth-child(even) td {
+				background-color: #fff !important;
+			}
+
+			#customers tr:hover th,
+			#customers tr:hover td {
+				background-color: #fff !important;
+			}
+
+			#customers tr.cetak-barang th {
+				border-color: #000 !important;
+			}
+		}
 	</style>
 </head>
 
@@ -68,6 +180,44 @@ $Aktiva_Lain_Lain = 0;
 $TOTAL_Utang_Lancar = 0;
 $TOTAL_Utang_Jangka_Panjang = 0;
 $TOTAL_Modal_dan_Laba_ditahan = 0;
+
+/**
+ * Nama di blok Kepada Yth.: suku kata 1–2 utuh; dari suku kata ke-3 hanya huruf pertama (huruf besar).
+ * Contoh: "RSUD PANEMBAHAN SENOPATI" → "RSUD PANEMBAHAN S"
+ * "RSUD PANEMBAHAN SENOPATI BANTUL PROJO TAMANSARI" → "RSUD PANEMBAHAN S B P T"
+ */
+if (!function_exists('format_kepada_yth_nama_cetak')) {
+	function format_kepada_yth_nama_cetak($nama)
+	{
+		if (!is_string($nama)) {
+			$nama = (string) $nama;
+		}
+		$nama = trim(preg_replace('/\s+/u', ' ', $nama));
+		if ($nama === '') {
+			return '';
+		}
+		$parts = preg_split('/\s+/u', $nama, -1, PREG_SPLIT_NO_EMPTY);
+		if (count($parts) <= 2) {
+			return $nama;
+		}
+		$out = array($parts[0]);
+		$out[] = function_exists('mb_strtoupper') ? mb_strtoupper($parts[1], 'UTF-8') : strtoupper($parts[1]);
+		$n = count($parts);
+		for ($i = 2; $i < $n; $i++) {
+			$w = $parts[$i];
+			if ($w === '') {
+				continue;
+			}
+			$first = function_exists('mb_substr') ? mb_substr($w, 0, 1, 'UTF-8') : substr($w, 0, 1);
+			if ($first !== '') {
+				$out[] = function_exists('mb_strtoupper') ? mb_strtoupper($first, 'UTF-8') : strtoupper($first);
+			}
+		}
+		return implode(' ', $out);
+	}
+}
+
+$konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_selected) ? $konsumen_nama_selected : '');
 
 ?>
 
@@ -171,7 +321,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong></strong></th> -->
 
-			<th id="cetak-th-konsumen-nama" style="font-size: 0.75em;text-align:left; width: 400px;border: 1px solid black; border-bottom:none; border-top:none;  border-left:none;border-right:none;   border-collapse: collapse;" colspan="375"><strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_selected; ?></span></strong></th>
+			<th id="cetak-th-konsumen-nama" style="font-size: 0.75em;text-align:left; width: 400px;border: 1px solid black; border-bottom:none; border-top:none;  border-left:none;border-right:none;   border-collapse: collapse;" colspan="375"><strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_kepada_yth; ?></span></strong></th>
 
 
 		</tr>
@@ -194,22 +344,22 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			</th>
 		</tr>
 
-		<tr>
+		<tr class="cetak-barang">
 
-			<th style="font-size: 0.75em;text-align:center; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong>NO</strong></th>
+			<th style="text-align:center; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong>NO</strong></th>
 
-			<th style="font-size: 0.75em;text-align:center; width: 100px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="100"><strong>KODE</strong></th>
+			<th style="text-align:center; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150"><strong>KODE</strong></th>
 
-			<th style="font-size: 0.75em;text-align:center; width: 310px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="310"><strong>NAMA BARANG</strong></th>
+			<th style="text-align:center; width: 280px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="280"><strong>NAMA BARANG</strong></th>
 
 
-			<th style="font-size: 0.75em;text-align:center; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>JUMLAH</strong></th>
+			<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="108"><strong>JUMLAH</strong></th>
 
-			<th style="font-size: 0.75em;text-align:center; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>SAT.</strong></th>
+			<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="72"><strong>SAT.</strong></th>
 
-			<th style="font-size: 0.75em;text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>HARGA</strong></th>
+			<th style="text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>HARGA</strong></th>
 
-			<th style="font-size: 0.75em;text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>SUB TOTAL</strong></th>
+			<th style="text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>SUB TOTAL</strong></th>
 
 
 		</tr>
@@ -226,11 +376,11 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 
 		?>
-			<tr>
+			<tr class="cetak-barang">
 
-				<th style="font-size: 0.75em;text-align:left; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong><?php echo ++$start ?></strong></th>
+				<th style="text-align:left; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong><?php echo ++$start ?></strong></th>
 
-				<th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="100"><strong>
+				<th style="text-align:left; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150"><strong>
 						<?php
 						if ($list_data->kode_barang) {
 							echo $list_data->kode_barang;
@@ -255,16 +405,16 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 						?>
 					</strong></th>
 
-				<th style="font-size: 0.75em;text-align:left; width: 310px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="310"><strong><?php echo $list_data->nama_barang; ?></strong></th>
+				<th style="text-align:left; width: 280px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="280"><strong><?php echo $list_data->nama_barang; ?></strong></th>
 
 
-				<th style="font-size: 0.75em;text-align:right; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong><?php echo nominal($list_data->jumlah); ?></strong></th>
+				<th style="text-align:right; border: 1px solid black;    border-collapse: collapse;" colspan="108"><strong><?php echo nominal($list_data->jumlah); ?></strong></th>
 
-				<th style="font-size: 0.75em;text-align:center; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong><?php echo $list_data->satuan; ?></strong></th>
+				<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="72"><strong><?php echo $list_data->satuan; ?></strong></th>
 
-				<th style="font-size: 0.75em;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($list_data->harga_satuan); ?></strong></th>
+				<th style="text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($list_data->harga_satuan); ?></strong></th>
 
-				<th style="font-size: 0.75em;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>
+				<th style="text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>
 						<?php
 						$x_total = $list_data->jumlah * $list_data->harga_satuan;
 						echo nominal($x_total);
@@ -283,14 +433,14 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 		$min_data_rows = 10;
 		for ($pad_row = $start; $pad_row < $min_data_rows; $pad_row++) {
 		?>
-			<tr>
-				<th style="font-size: 0.75em;text-align:left; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="100">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:left; width: 310px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="310">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:right; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:center; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225">&nbsp;</th>
-				<th style="font-size: 0.75em;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225">&nbsp;</th>
+			<tr class="cetak-barang">
+				<th style="text-align:left; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40">&nbsp;</th>
+				<th style="text-align:left; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150">&nbsp;</th>
+				<th style="text-align:left; width: 280px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="280">&nbsp;</th>
+				<th style="text-align:right; border: 1px solid black;    border-collapse: collapse;" colspan="108">&nbsp;</th>
+				<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="72">&nbsp;</th>
+				<th style="text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225">&nbsp;</th>
+				<th style="text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225">&nbsp;</th>
 			</tr>
 		<?php
 		}
@@ -302,9 +452,9 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 		<!-- BARIS TOTAL -->
 
-		<tr>
+		<tr class="cetak-barang">
 
-			<th style="font-size: 0.5em;text-align:left; text-transform: capitalize; width: 650px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="650">Terbilang: <strong><i> <?php echo terbilang($TOTAL_PENJUALAN); ?> </i></strong></th>
+			<th class="cetak-terbilang" style="text-align:left; text-transform: capitalize; width: 650px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="650">Terbilang: <strong><i> <?php echo terbilang($TOTAL_PENJUALAN); ?> </i></strong></th>
 
 			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="100"><strong>KODE</strong></th>
 
@@ -315,9 +465,9 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			
 			<th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>SAT.</strong></th>-->
 
-			<th style="font-size: 0.5em;text-align:left; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
+			<th class="cetak-total-footer" style="text-align:left; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
 
-			<th style="font-size: 0.5em;font-style: italic;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($TOTAL_PENJUALAN); ?></strong></th>
+			<th class="cetak-total-footer" style="font-style: italic;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($TOTAL_PENJUALAN); ?></strong></th>
 
 
 		</tr>
@@ -329,12 +479,20 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 			<th colspan="1100" style="height: 0.5cm; padding: 0; margin: 0; border: none; font-weight: normal; background: white; line-height: 0;">&nbsp;</th>
 		</tr>
 		<tr>
-			<!-- Sel selaras header: NO(40)+KODE(100)+NAMA(310)+JML(100)+SAT(100) | HARGA+SUB(450); tanpa border (di bawah tabel utama) -->
-			<th style="font-size: 0.75em;text-align:left; width: 28px;border: none; font-weight: normal;" colspan="40">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:left; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:center; width: 310px;border: none;" colspan="310"><strong>Penerima </strong></th>
-			<th style="font-size: 0.75em;text-align:right; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:center; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
+			<!-- Geser kiri: NO+KODE lebih sempit; sel Penerima diperlebar; total 1100 -->
+			<th style="font-size: 0.75em;text-align:left; width: 28px;border: none; font-weight: normal;" colspan="20">&nbsp;</th>
+			<th style="font-size: 0.75em;text-align:left; width: 150px;border: none; font-weight: normal;" colspan="130">&nbsp;</th>
+			<th class="cetak-penerima-tanda-wrap" style="font-size: 0.75em;border: none;" colspan="320">
+				<table class="cetak-penerima-tanda-tabel" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><span class="cetak-paren-invis">(</span></td>
+						<td class="cetak-paren-gap"><strong>Penerima</strong></td>
+						<td><span class="cetak-paren-invis">)</span></td>
+					</tr>
+				</table>
+			</th>
+			<th style="font-size: 0.75em;text-align:right; border: none; font-weight: normal;" colspan="108">&nbsp;</th>
+			<th style="font-size: 0.75em;text-align:center; border: none; font-weight: normal;" colspan="72">&nbsp;</th>
 			<th style="font-size: 0.75em;text-align:center; width: 450px;border: none;" colspan="450"><strong>Hormat Kami</strong></th>
 		</tr>
 
@@ -344,11 +502,19 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 	
 		<tr>
-			<th style="font-size: 0.75em;text-align:left; width: 28px;border: none; font-weight: normal;" colspan="40">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:left; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:center; width: 310px;border: none;" colspan="310"><strong>(<span style="display:inline-block;width:6cm;min-width:6cm;">&nbsp;</span>)</strong></th>
-			<th style="font-size: 0.75em;text-align:right; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
-			<th style="font-size: 0.75em;text-align:center; width: 100px;border: none; font-weight: normal;" colspan="100">&nbsp;</th>
+			<th style="font-size: 0.75em;text-align:left; width: 28px;border: none; font-weight: normal;" colspan="20">&nbsp;</th>
+			<th style="font-size: 0.75em;text-align:left; width: 150px;border: none; font-weight: normal;" colspan="130">&nbsp;</th>
+			<th class="cetak-penerima-tanda-wrap" style="font-size: 0.75em;border: none;" colspan="320">
+				<table class="cetak-penerima-tanda-tabel" cellpadding="0" cellspacing="0">
+					<tr>
+						<td><strong>(</strong></td>
+						<td class="cetak-paren-gap">&nbsp;</td>
+						<td><strong>)</strong></td>
+					</tr>
+				</table>
+			</th>
+			<th style="font-size: 0.75em;text-align:right; border: none; font-weight: normal;" colspan="108">&nbsp;</th>
+			<th style="font-size: 0.75em;text-align:center; border: none; font-weight: normal;" colspan="72">&nbsp;</th>
 			<th style="font-size: 0.75em;text-align:right; width: 450px;border: none;" colspan="450"><strong style="display:block;width:100%;text-align:right;"><span style="display:inline-flex;align-items:baseline;white-space:nowrap;"><span>(</span><span style="display:inline-block;width:6cm;min-width:6cm;">&nbsp;</span><span>)</span></span></strong></th>
 		</tr>
 
