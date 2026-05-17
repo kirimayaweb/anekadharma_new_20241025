@@ -24,12 +24,14 @@
 			padding: 3px;
 		}
 
-		/* Baris grid faktur barang: teks data 0,8 × 1,125em = 0,9em (agar lebih muat di tabel + dot matrix) */
+		/* Grid faktur: semua sel Courier New 0.9em (header, data, terbilang, total) — dot matrix */
 		#customers tr.cetak-barang th {
+			font-family: "Courier New", Courier, monospace;
 			font-size: 0.9em;
-			padding: 7px 10px;
+			font-variant-numeric: tabular-nums;
+			line-height: 1.12;
+			padding: 3px 4px;
 			vertical-align: middle;
-			line-height: 1.35;
 			background-color: #fff;
 			border-color: #000;
 			border-style: solid;
@@ -45,9 +47,12 @@
 			box-sizing: border-box;
 		}
 
+		/* Kolom SAT.: lebar + jarak kiri/kanan ~1 mm agar tidak rapat di dot matrix */
 		#customers tr.cetak-barang > th:nth-child(5) {
-			width: 7ch;
-			max-width: 10ch;
+			width: 8ch;
+			max-width: 12ch;
+			padding-left: 1mm;
+			padding-right: 1mm;
 			white-space: nowrap;
 			box-sizing: border-box;
 		}
@@ -61,22 +66,10 @@
 			box-sizing: border-box;
 		}
 
-		/* Angka kolom Jumlah / Satuan / Harga / Sub: monospace + lebar digit konsisten (dot matrix) */
-		#customers tr.cetak-barang > th:nth-child(4),
-		#customers tr.cetak-barang > th:nth-child(5),
-		#customers tr.cetak-barang > th:nth-child(6),
-		#customers tr.cetak-barang > th:nth-child(7) {
-			font-family: "Courier New", Courier, Consolas, monospace;
-			font-variant-numeric: tabular-nums;
-		}
-
-		#customers tr.cetak-barang th.cetak-terbilang {
-			font-size: 0.6em;
-			line-height: 1.4;
-		}
-
-		#customers tr.cetak-barang th.cetak-total-footer {
-			font-size: 0.68em;
+		/* Header kolom: bold, rata tengah */
+		#customers tr.cetak-barang-header th {
+			font-weight: bold;
+			text-align: center;
 		}
 
 		#customers tr:nth-child(even) {
@@ -101,8 +94,8 @@
 		}
 
 		#customers tr.cetak-barang > th {
-			padding-top: 7px;
-			padding-bottom: 7px;
+			padding-top: 3px;
+			padding-bottom: 3px;
 		}
 
 		#cetak-konsumen-nama {
@@ -150,6 +143,19 @@
 			color: transparent;
 		}
 
+		/* Kotak gabungan KEPADA YTH + PERUMDAM TIRTA / PROJOTAMANSARI */
+		#customers th.cetak-box-kepada-perumdam {
+			font-size: 0.75em;
+			text-align: left;
+			border: 1px solid black;
+			padding: 6px 8px;
+			vertical-align: top;
+		}
+
+		#customers th.cetak-box-kepada-perumdam .cetak-kepada-yth-baris {
+			margin-bottom: 6px;
+		}
+
 		@media print {
 			body {
 				margin: 0;
@@ -166,7 +172,22 @@
 			}
 
 			#customers tr.cetak-barang th {
+				font-family: "Courier New", Courier, monospace !important;
+				font-size: 0.9em !important;
+				font-variant-numeric: tabular-nums !important;
+				line-height: 1.12 !important;
+				padding: 2px 3px !important;
 				border-color: #000 !important;
+			}
+
+			#customers tr.cetak-barang > th {
+				padding-top: 2px !important;
+				padding-bottom: 2px !important;
+			}
+
+			#customers tr.cetak-barang > th:nth-child(5) {
+				padding-left: 1mm !important;
+				padding-right: 1mm !important;
 			}
 		}
 	</style>
@@ -306,61 +327,39 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 
 		<tr>
 
-			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;  border-bottom:none; border-top:none;  border-left:none;border-right:none;  border-collapse: collapse;" colspan="100"><strong></strong></th> -->
+			<th style="font-size: 0.75em; text-align: left; border: none; border-collapse: collapse;" colspan="575">&nbsp;</th>
 
-			<th style="font-size: 0.75em;text-align:left; border: 1px solid black;  border-bottom:none; border-top:none;  border-left:none;border-right:none; border-collapse: collapse; width: 500;" colspan="575"> <i>
-					<!-- <strong>0274 367123  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 08112657123 </strong> -->
-				</i></th>
-
-			<!-- <th style="font-size: 0.75em;text-align:left; width: 375px;border: 1px solid black; border-bottom:none; border-top:none;  border-left:none;border-right:none;   border-right:none;  border-collapse: collapse;" colspan="375"><i><strong>08112657123</strong></i></th> -->
-
-
-			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>JUMLAH</strong></th> -->
-
-			<th style="font-size: 0.75em;text-align:left; width: 200px;border: 1px solid black; border-bottom:none; border-top:none;  border-left:none;border-right:none;   border-collapse: collapse;" colspan="150"><strong>KEPADA YTH. </strong></th>
-
-			<!-- <th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong></strong></th> -->
-
-			<th id="cetak-th-konsumen-nama" style="font-size: 0.75em;text-align:left; width: 400px;border: 1px solid black; border-bottom:none; border-top:none;  border-left:none;border-right:none;   border-collapse: collapse;" colspan="375"><strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_kepada_yth; ?></span></strong></th>
-
-
-		</tr>
-
-		<tr>
-
-			<th style="font-size: 0.75em;text-align:left; border: 1px solid black;  border-bottom:none; border-top:none;  border-left:none;border-right:none; border-collapse: collapse; width: 775;" colspan="575"> <i>
-					<!-- <strong>0274 367123  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 08112657123 </strong> -->
-				</i></th>
-
-			<th colspan="525" style="font-size: 0.75em; text-align: left; border: 0.1px solid black; padding: 6px 8px; vertical-align: top;">
+			<th id="cetak-th-konsumen-nama" class="cetak-box-kepada-perumdam" colspan="525">
+				<div class="cetak-kepada-yth-baris">
+					<strong>KEPADA YTH. </strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_kepada_yth; ?></span>
+				</div>
 				<strong>PERUMDAM TIRTA<br>
 				PROJOTAMANSARI</strong>
 			</th>
+
 		</tr>
 
 		<tr>
-			<th colspan="1100" style="font-size: 0.95em; text-align: center; border: none; padding: 8px 0 10px 0; vertical-align: middle;">
+			<th colspan="1100" style="font-size: 0.95em; text-align: center; border: none; padding: 4px 0 5px 0; vertical-align: middle;">
 				<strong>FAKTUR PENJUALAN</strong>
 			</th>
 		</tr>
 
-		<tr class="cetak-barang">
+		<tr class="cetak-barang cetak-barang-header">
 
-			<th style="text-align:center; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong>NO</strong></th>
+			<th style="width: 28px; border: 1px solid black; border-right: none; border-collapse: collapse;" colspan="40">NO</th>
 
-			<th style="text-align:center; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150"><strong>KODE</strong></th>
+			<th style="width: 150px; border: 1px solid black; border-right: none; border-collapse: collapse;" colspan="150">KODE</th>
 
-			<th style="text-align:center; width: 280px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="280"><strong>NAMA BARANG</strong></th>
+			<th style="width: 280px; border: 1px solid black; border-right: none; border-collapse: collapse;" colspan="280">NAMA BARANG</th>
 
+			<th style="border: 1px solid black; border-collapse: collapse;" colspan="108">JUMLAH</th>
 
-			<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="108"><strong>JUMLAH</strong></th>
+			<th style="border: 1px solid black; border-collapse: collapse;" colspan="72">SAT.</th>
 
-			<th style="text-align:center; border: 1px solid black;    border-collapse: collapse;" colspan="72"><strong>SAT.</strong></th>
+			<th style="width: 225px; border: 1px solid black; border-collapse: collapse;" colspan="225">HARGA</th>
 
-			<th style="text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>HARGA</strong></th>
-
-			<th style="text-align:center; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>SUB TOTAL</strong></th>
-
+			<th style="width: 225px; border: 1px solid black; border-collapse: collapse;" colspan="225">SUB TOTAL</th>
 
 		</tr>
 
@@ -429,8 +428,8 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 
 		<?php
 		}
-		/* Minimal 10 baris isi tabel: jika record < 10, tambah baris kosong (border tetap) */
-		$min_data_rows = 10;
+		/* Minimal 8 baris isi tabel: jika record < 8, tambah baris kosong (border tetap) */
+		$min_data_rows = 8;
 		for ($pad_row = $start; $pad_row < $min_data_rows; $pad_row++) {
 		?>
 			<tr class="cetak-barang">
@@ -465,7 +464,7 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 			
 			<th style="font-size: 0.75em;text-align:left; width: 100px;border: 1px solid black;    border-collapse: collapse;" colspan="100"><strong>SAT.</strong></th>-->
 
-			<th class="cetak-total-footer" style="text-align:left; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
+			<th class="cetak-total-footer" style="text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong>JUMLAH</strong></th>
 
 			<th class="cetak-total-footer" style="font-style: italic;text-align:right; width: 225px;border: 1px solid black;    border-collapse: collapse;" colspan="225"><strong><?php echo nominal($TOTAL_PENJUALAN); ?></strong></th>
 
@@ -474,9 +473,9 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 
 
 
-		<!-- TANDA TANGAN — jarak vertikal 0.5 cm antara baris total dan blok Penerima -->
+		<!-- TANDA TANGAN — jarak vertikal rapat antara baris total dan blok Penerima -->
 		<tr>
-			<th colspan="1100" style="height: 0.5cm; padding: 0; margin: 0; border: none; font-weight: normal; background: white; line-height: 0;">&nbsp;</th>
+			<th colspan="1100" style="height: 0.3cm; padding: 0; margin: 0; border: none; font-weight: normal; background: white; line-height: 0;">&nbsp;</th>
 		</tr>
 		<tr>
 			<!-- Geser kiri: NO+KODE lebih sempit; sel Penerima diperlebar; total 1100 -->
@@ -497,7 +496,7 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 		</tr>
 
 		<tr>
-			<th colspan="1100" style="height: 2cm; padding: 0; margin: 0; border: none; font-weight: normal; background: white; line-height: 0;">&nbsp;</th>
+			<th colspan="1100" style="height: 1.4cm; padding: 0; margin: 0; border: none; font-weight: normal; background: white; line-height: 0;">&nbsp;</th>
 		</tr>
 
 	
