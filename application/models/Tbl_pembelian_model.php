@@ -133,6 +133,16 @@ class Tbl_pembelian_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    function get_by_tgl_range($date_awal, $date_akhir)
+    {
+        $this->db->where($this->tgl_po . ' >=', $date_awal);
+        $this->db->where($this->tgl_po . ' <=', $date_akhir);
+        $this->db->order_by($this->tgl_po, $this->order);
+        $this->db->order_by($this->spop, $this->order);
+        $this->db->order_by($this->id, 'ASC');
+        return $this->db->get($this->table)->result();
+    }
+
     function get_kas_kecil()
     {
         $kas_bank="kas";
