@@ -3845,9 +3845,43 @@ class Tbl_pembelian extends CI_Controller
 		$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
 	}
 
+	private function _resolve_tgl_range_pembelian($tgl_awal = '', $tgl_akhir = '')
+	{
+		if ($tgl_awal === '' || $tgl_awal === null) {
+			$tgl_awal = $this->input->get_post('tgl_awal', TRUE);
+		}
+		if ($tgl_akhir === '' || $tgl_akhir === null) {
+			$tgl_akhir = $this->input->get_post('tgl_akhir', TRUE);
+		}
+
+		if (empty($tgl_awal) && empty($tgl_akhir)) {
+			return array(date('Y-m-1 00:00:00'), date('Y-m-t 00:00:00'));
+		}
+
+		if (date('Y', strtotime($tgl_awal)) < 2020) {
+			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+		} else {
+			$Get_date_awal = date('Y-m-d 23:59:59', strtotime($tgl_awal));
+		}
+
+		if (date('Y', strtotime($tgl_akhir)) < 2020) {
+			$Get_date_akhir = date('Y-m-d 00:00:00');
+		} else {
+			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir));
+		}
+
+		return array($Get_date_awal, $Get_date_akhir);
+	}
+
 	public function excel()
 	{
 		$this->load->helper('exportexcel');
+
+		list($Get_date_awal, $Get_date_akhir) = $this->_resolve_tgl_range_pembelian(
+			$this->input->get('tgl_awal', TRUE),
+			$this->input->get('tgl_akhir', TRUE)
+		);
+
 		$namaFile = 'Data_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';
 		$tablehead = 0;
 		$tablebody = 1;
@@ -3855,6 +3889,11 @@ class Tbl_pembelian extends CI_Controller
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
+
+		$sql = 'SELECT * FROM `tbl_pembelian` WHERE `tgl_po` BETWEEN '
+			. $this->db->escape($Get_date_awal) . ' AND '
+			. $this->db->escape($Get_date_akhir)
+			. ' ORDER BY `tgl_po`,`spop`,`id`';
 
 		$kolomhead = 0;
 		xlsWriteLabel($tablehead, $kolomhead++, "No");
@@ -3876,7 +3915,7 @@ class Tbl_pembelian extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Bayar");
 		xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-		foreach ($this->Tbl_pembelian_model->get_all() as $data) {
+		foreach ($this->db->query($sql)->result() as $data) {
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
