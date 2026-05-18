@@ -2,12 +2,13 @@
     <div class="alert d-none" id="input_barang_baru_info"></div>
 
     <div class="row">
-        <div class="col-md-6">
-            <div class="form-group">
-                <label for="modal_kategori">Kategori Barang</label>
-                <div class="input-group">
-                    <select class="form-control" name="kategori" id="modal_kategori">
-                        <option value="">-- Pilih Kategori --</option>
+        <div class="col-12">
+            <div class="form-group mb-2">
+                <label for="modal_kategori">Kategori</label>
+                <div class="d-flex align-items-start flex-nowrap">
+                    <div class="modal-kategori-select-wrap">
+                    <select class="form-control select2-kategori-modal" name="kategori" id="modal_kategori" data-placeholder="-- Pilih Kategori --">
+                        <option value=""></option>
                         <?php if (!empty($kategori_barang_options)) { ?>
                             <?php foreach ($kategori_barang_options as $kat) { ?>
                                 <?php $valKat = isset($kat->kategori) ? $kat->kategori : ''; ?>
@@ -17,9 +18,8 @@
                             <?php } ?>
                         <?php } ?>
                     </select>
-                    <div class="input-group-append">
-                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalBarangTambahKategori">Tambah Kategori</button>
                     </div>
+                    <button type="button" class="btn btn-success flex-shrink-0" style="white-space: nowrap;" data-toggle="modal" data-target="#modalBarangTambahKategori">Tambah Kategori</button>
                 </div>
             </div>
         </div>
@@ -28,14 +28,14 @@
     <div class="row">
         <div class="col-md-3">
             <div class="form-group">
-                <label for="modal_kode_barang">Kode Barang</label>
-                <input type="text" class="form-control" name="kode_barang" id="modal_kode_barang" placeholder="Kode Barang" value="<?php echo htmlspecialchars($kode_barang, ENT_QUOTES, 'UTF-8'); ?>" required />
+                <label for="modal_kode_barang">Kode</label>
+                <input type="text" class="form-control" name="kode_barang" id="modal_kode_barang" placeholder="Kode" value="<?php echo htmlspecialchars($kode_barang, ENT_QUOTES, 'UTF-8'); ?>" required />
             </div>
         </div>
         <div class="col-md-6">
             <div class="form-group">
-                <label for="modal_nama_barang">Nama Barang</label>
-                <textarea class="form-control" rows="2" name="nama_barang" id="modal_nama_barang" placeholder="Nama Barang" required><?php echo htmlspecialchars($nama_barang, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <label for="modal_nama_barang">Nama</label>
+                <textarea class="form-control" rows="2" name="nama_barang" id="modal_nama_barang" placeholder="Nama" required><?php echo htmlspecialchars($nama_barang, ENT_QUOTES, 'UTF-8'); ?></textarea>
             </div>
         </div>
         <div class="col-md-3">
@@ -63,14 +63,14 @@
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalBarangTambahKategoriLabel">Tambah Kategori Barang</h5>
+                <h5 class="modal-title" id="modalBarangTambahKategoriLabel">Tambah Kategori</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="form-group mb-0">
-                    <label for="modal_kategori_baru_input">Nama Kategori</label>
+                    <label for="modal_kategori_baru_input">Kategori</label>
                     <input type="text" id="modal_kategori_baru_input" class="form-control" placeholder="Contoh: Kertas">
                     <small id="modal_kategori_baru_info" class="form-text text-muted"></small>
                 </div>
@@ -133,6 +133,9 @@
                 select.appendChild(opt);
             }
             select.value = val;
+            if (window.jQuery) {
+                window.jQuery(select).trigger('change');
+            }
         }
 
         function renderModalDuplicateTable(matches) {
@@ -179,31 +182,50 @@
                 }).then(function(r) {
                     return r.json();
                 }).then(function(res) {
-                    if (res && res.success && res.data && res.data.kategori) {
-                        ensureModalKategoriSelected(res.data.kategori);
-                        input.value = '';
-                        info.textContent = res.message || 'Kategori berhasil ditambahkan.';
-                        info.classList.remove('text-danger');
-                        info.classList.add('text-success');
+                    var kategoriPakai = (res && res.data && res.data.kategori) ? res.data.kategori : namaKategori;
+
+                    if (res && res.exists && kategoriPakai) {
+                        ensureModalKategoriSelected(kategoriPakai);
+                        info.textContent = res.message || 'Kategori sudah ada di sistem, silahkan digunakan.';
+                        info.classList.remove('text-danger', 'text-success');
+                        info.classList.add('text-warning');
                         if (window.jQuery) {
-                            window.jQuery('#modalBarangTambahKategori').modal('hide');
+                            window.setTimeout(function() {
+                                window.jQuery('#modalBarangTambahKategori').modal('hide');
+                            }, 1200);
                         }
                         return;
                     }
 
-                    if (res && res.duplicate) {
-                        info.textContent = res.message || 'Kategori sudah ada.';
-                        info.classList.remove('text-success');
-                        info.classList.add('text-danger');
-                        renderModalDuplicateTable(res.matches || []);
+                    if (res && res.success && kategoriPakai) {
+                        ensureModalKategoriSelected(kategoriPakai);
+                        input.value = '';
+                        info.textContent = res.message || 'Kategori berhasil disimpan dan siap digunakan.';
+                        info.classList.remove('text-danger', 'text-warning');
+                        info.classList.add('text-success');
                         if (window.jQuery) {
-                            window.jQuery('#modalBarangDaftarKategori').modal('show');
+                            window.setTimeout(function() {
+                                window.jQuery('#modalBarangTambahKategori').modal('hide');
+                            }, 800);
+                        }
+                        return;
+                    }
+
+                    if (res && res.duplicate && kategoriPakai) {
+                        ensureModalKategoriSelected(kategoriPakai);
+                        info.textContent = res.message || 'Kategori sudah ada di sistem, silahkan digunakan.';
+                        info.classList.remove('text-success', 'text-danger');
+                        info.classList.add('text-warning');
+                        if (window.jQuery) {
+                            window.setTimeout(function() {
+                                window.jQuery('#modalBarangTambahKategori').modal('hide');
+                            }, 1200);
                         }
                         return;
                     }
 
                     info.textContent = (res && res.message) ? res.message : 'Gagal menambah kategori.';
-                    info.classList.remove('text-success');
+                    info.classList.remove('text-success', 'text-warning');
                     info.classList.add('text-danger');
                 }).catch(function() {
                     info.textContent = 'Terjadi kesalahan saat menyimpan kategori.';
@@ -229,8 +251,12 @@
                 window.jQuery('#modal_kategori_baru_input').trigger('focus');
             }).on('hidden.bs.modal', function() {
                 window.jQuery('#modal_kategori_baru_input').val('');
-                window.jQuery('#modal_kategori_baru_info').text('').removeClass('text-danger text-success');
+                window.jQuery('#modal_kategori_baru_info').text('').removeClass('text-danger text-success text-warning');
             });
+        }
+
+        if (window.initSelect2KategoriModal) {
+            setTimeout(window.initSelect2KategoriModal, 0);
         }
     })();
 </script>

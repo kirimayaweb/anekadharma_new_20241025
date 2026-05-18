@@ -542,19 +542,50 @@ class Sys_nama_barang extends CI_Controller
 
     private function get_kategori_barang_options()
     {
+        if ($this->db->table_exists('sys_kategori_barang')) {
+            return $this->db->select('id, uuid_kategori, kategori')
+                ->from('sys_kategori_barang')
+                ->where('TRIM(kategori) <>', '')
+                ->order_by('kategori', 'ASC')
+                ->get()
+                ->result();
+        }
         if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
             return $this->db->query(
                 "SELECT `kategori` FROM `sys_nama_barang` WHERE `kategori` IS NOT NULL AND TRIM(`kategori`) <> '' GROUP BY `kategori` ORDER BY `kategori` ASC"
             )->result();
         }
-        if ($this->db->table_exists('sys_kategori_barang')) {
-            return $this->db->select('id, uuid_kategori, kategori')
-                ->from('sys_kategori_barang')
-                ->order_by('kategori', 'ASC')
-                ->get()
-                ->result();
-        }
         return array();
+    }
+
+    private function find_kategori_existing($kategori)
+    {
+        $kategoriKey = strtolower(trim($kategori));
+        if ($kategoriKey === '') {
+            return null;
+        }
+
+        if ($this->db->table_exists('sys_kategori_barang')) {
+            $row = $this->db->query(
+                "SELECT `id`, `uuid_kategori`, `kategori` FROM `sys_kategori_barang` WHERE TRIM(`kategori`) <> '' AND LOWER(TRIM(`kategori`)) = ? LIMIT 1",
+                array($kategoriKey)
+            )->row();
+            if ($row) {
+                return $row;
+            }
+        }
+
+        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+            $row = $this->db->query(
+                "SELECT `kategori` FROM `sys_nama_barang` WHERE TRIM(`kategori`) <> '' AND LOWER(TRIM(`kategori`)) = ? LIMIT 1",
+                array($kategoriKey)
+            )->row();
+            if ($row) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     public function add_kategori_ajax()
@@ -572,68 +603,46 @@ class Sys_nama_barang extends CI_Controller
             return;
         }
 
-        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-            $row = $this->db->query(
-                "SELECT `kategori` FROM `sys_nama_barang` WHERE TRIM(`kategori`) <> '' AND LOWER(TRIM(`kategori`)) = ? LIMIT 1",
-                array(strtolower($kategori))
-            )->row();
-            if ($row) {
-                $matches = $this->db->query(
-                    "SELECT `kategori` FROM `sys_nama_barang` WHERE TRIM(`kategori`) <> '' AND LOWER(TRIM(`kategori`)) = ? GROUP BY `kategori`",
-                    array(strtolower($kategori))
-                )->result();
-                if (empty($matches)) {
-                    $matches = array($row);
-                }
-                echo json_encode(array(
-                    'success' => false,
-                    'duplicate' => true,
-                    'message' => 'Kategori sudah ada. Silakan pilih kategori yang tersedia atau gunakan tombol Pilih.',
-                    'data' => $row,
-                    'matches' => $matches
-                ));
-                return;
-            }
+        $existing = $this->find_kategori_existing($kategori);
+        if ($existing) {
+            $kategoriTersimpan = isset($existing->kategori) ? trim($existing->kategori) : $kategori;
+            echo json_encode(array(
+                'success' => false,
+                'exists' => true,
+                'duplicate' => true,
+                'message' => 'Kategori sudah ada di sistem, silahkan digunakan.',
+                'data' => array('kategori' => $kategoriTersimpan)
+            ));
+            return;
+        }
+
+        if ($this->db->table_exists('sys_kategori_barang')) {
+            $this->db->set('uuid_kategori', "replace(uuid(),'-','')", FALSE);
+            $this->db->set('kategori', $kategori);
+            $this->db->insert('sys_kategori_barang');
+            $id = $this->db->insert_id();
+            $newRow = $this->db->select('id, uuid_kategori, kategori')->where('id', $id)->get('sys_kategori_barang')->row();
             echo json_encode(array(
                 'success' => true,
-                'message' => 'Kategori baru dipilih. Simpan form barang agar tersimpan ke database.',
+                'message' => 'Kategori berhasil disimpan dan siap digunakan.',
+                'data' => array(
+                    'kategori' => $newRow ? $newRow->kategori : $kategori,
+                    'uuid_kategori' => $newRow && isset($newRow->uuid_kategori) ? $newRow->uuid_kategori : null
+                )
+            ));
+            return;
+        }
+
+        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+            echo json_encode(array(
+                'success' => true,
+                'message' => 'Kategori siap digunakan. Simpan data jasa untuk menyimpan ke sistem.',
                 'data' => array('kategori' => $kategori)
             ));
             return;
         }
 
-        if (!$this->db->table_exists('sys_kategori_barang')) {
-            echo json_encode(array('success' => false, 'message' => 'Kolom kategori tidak tersedia di sys_nama_barang dan tabel sys_kategori_barang tidak ditemukan.'));
-            return;
-        }
-
-        $row = $this->db->select('id, uuid_kategori, kategori')
-            ->where('LOWER(kategori)=', strtolower($kategori))
-            ->get('sys_kategori_barang')->row();
-        if ($row) {
-            $matches = $this->db->select('id, uuid_kategori, kategori')
-                ->from('sys_kategori_barang')
-                ->like('kategori', $kategori)
-                ->order_by('kategori', 'ASC')
-                ->get()->result();
-            if (empty($matches)) {
-                $matches = array($row);
-            }
-            echo json_encode(array(
-                'success' => false,
-                'duplicate' => true,
-                'message' => 'Kategori sudah ada. Silakan pilih kategori yang tersedia.',
-                'data' => $row,
-                'matches' => $matches
-            ));
-            return;
-        }
-        $this->db->set('uuid_kategori', "replace(uuid(),'-','')", FALSE);
-        $this->db->set('kategori', $kategori);
-        $this->db->insert('sys_kategori_barang');
-        $id = $this->db->insert_id();
-        $newRow = $this->db->select('id, uuid_kategori, kategori')->where('id', $id)->get('sys_kategori_barang')->row();
-        echo json_encode(array('success' => true, 'message' => 'Kategori berhasil ditambahkan.', 'data' => $newRow));
+        echo json_encode(array('success' => false, 'message' => 'Tabel kategori tidak tersedia di sistem.'));
     }
 
     public function excel()
