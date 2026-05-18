@@ -165,6 +165,13 @@ class Tbl_pembelian extends CI_Controller
 	public function stock($uuid_gudang = null)
 	{
 
+		$kategori_join_sql = '';
+		$kategori_select_sql = '';
+		if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
+			$kategori_join_sql = ' LEFT JOIN sys_nama_barang AS snb_stock ON snb_stock.uuid_barang = persediaan.uuid_barang ';
+			$kategori_select_sql = ' snb_stock.kategori AS kategori_barang, ';
+		}
+
 		// $uuid_gudang="cd64c3af883c11ef9d7f0021ccc9061e";
 
 		// $sql_stock = "SELECT persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, 
@@ -187,11 +194,11 @@ class Tbl_pembelian extends CI_Controller
 				//Pilih combobox dengan pilihan semua
 				// $Data_stock = $this->Tbl_pembelian_model->stock();
 
-				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan,
+				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan,  persediaan.hpp as harga_satuan_persediaan," . $kategori_select_sql . "
 								tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli,  tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,  tbl_pembelian.satuan as satuan,
 							tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
                             FROM persediaan  
-                           	left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+                           	" . $kategori_join_sql . "left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
                             left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 							WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
                             ORDER BY persediaan.uuid_barang ASC";
@@ -202,11 +209,11 @@ class Tbl_pembelian extends CI_Controller
 				// print_r("IF GUDANG");
 				$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 				// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
-				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+				$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan," . $kategori_select_sql . "
 								tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
 							tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
 							FROM persediaan  
-			   				left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+			   				" . $kategori_join_sql . "left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 							left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 							WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
 							ORDER BY persediaan.uuid_barang ASC";
@@ -217,11 +224,11 @@ class Tbl_pembelian extends CI_Controller
 		} else {
 			// $Data_stock = $this->Tbl_pembelian_model->stock();
 			// print_r("ELSE SEMUA");
-			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan," . $kategori_select_sql . "
 						tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
 					tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
 					FROM persediaan  
-					left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+					" . $kategori_join_sql . "left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 					WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
 					ORDER BY persediaan.uuid_barang ASC";
@@ -240,11 +247,11 @@ class Tbl_pembelian extends CI_Controller
 			// print_r("NON  IF GUDANG");
 			$uuid_gudang = $this->input->post('uuid_gudang', TRUE);
 			// $Data_stock = $this->Tbl_pembelian_model->stock_by_gudang($uuid_gudang);
-			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,COALESCE(NULLIF(persediaan.tanggal_beli,''), NULLIF(persediaan.tanggal,'')) as tanggal_beli_persediaan, persediaan.nilai_persediaan as nilai_persediaan,
+			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, persediaan.namabarang as nama_barang_beli,persediaan.total_10 as jumlah_sediaan, persediaan.hpp as harga_satuan_persediaan,COALESCE(NULLIF(persediaan.tanggal_beli,''), NULLIF(persediaan.tanggal,'')) as tanggal_beli_persediaan, persediaan.nilai_persediaan as nilai_persediaan," . $kategori_select_sql . "
 							tbl_pembelian.uuid_pembelian as uuid_pembelian,tbl_pembelian.uraian as barang_beli, tbl_pembelian.jumlah as jumlah_belanja, tbl_pembelian.harga_satuan as harga_satuan_beli, tbl_pembelian.tgl_po as tgl_po,tbl_pembelian.uuid_gudang as uuid_gudang, tbl_pembelian.nama_gudang as nama_gudang,tbl_pembelian.satuan as satuan,
 						tbl_penjualan.nama_barang as barang_jual, tbl_penjualan.jumlah as jumlah_terjual
 						FROM persediaan  
-						   left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
+						   " . $kategori_join_sql . "left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 						left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 						WHERE tbl_pembelian.uuid_gudang='$uuid_gudang' AND (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
 						ORDER BY persediaan.uuid_barang ASC";
@@ -265,7 +272,7 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.penjualan as penjualan, 
 			persediaan.pecah_satuan as pecah_satuan, 
 			persediaan.bahan_produksi as bahan_produksi, 
-			
+			" . $kategori_select_sql . "
 					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
 					-- 	tbl_pembelian.uraian as barang_beli, 
 					-- 	tbl_pembelian.jumlah as jumlah_belanja, 
@@ -280,6 +287,7 @@ class Tbl_pembelian extends CI_Controller
 			persediaan.nilai_persediaan as nilai_persediaan
 					
 					FROM persediaan  
+					" . $kategori_join_sql . "
 					-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
 					-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
 					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
@@ -3840,21 +3848,12 @@ class Tbl_pembelian extends CI_Controller
 	public function excel()
 	{
 		$this->load->helper('exportexcel');
-		$namaFile = "tbl_pembelian.xls";
-		$judul = "tbl_pembelian";
+		$namaFile = 'Data_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';
 		$tablehead = 0;
 		$tablebody = 1;
 		$nourut = 1;
-		//penulisan header
-		header("Pragma: public");
-		header("Expires: 0");
-		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-		header("Content-Type: application/force-download");
-		header("Content-Type: application/octet-stream");
-		header("Content-Type: application/download");
-		header("Content-Disposition: attachment;filename=" . $namaFile . "");
-		header("Content-Transfer-Encoding: binary ");
 
+		excel_prepare_download($namaFile);
 		xlsBOF();
 
 		$kolomhead = 0;
