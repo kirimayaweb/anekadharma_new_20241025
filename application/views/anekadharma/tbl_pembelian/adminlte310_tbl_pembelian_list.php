@@ -71,7 +71,7 @@
                             
                             ?>
 
-                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                <form id="form-cari-pembelian" action="<?php echo $action_cari_between_date; ?>" method="post">
                                     <div class="row">
 
                                         <div class="col-md-1" text-align="right" align="right"></div>
@@ -111,7 +111,9 @@
                             </div>
 
                             <div class="col-md-2" text-align="right" align="right">
-                                <?php echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPembelian(); return false;">
+                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
+                                </button>
                             </div>
                         </div>
 
@@ -563,4 +565,53 @@
             "scrollX": true
         });
     });
+
+    function cetakExcelPembelian() {
+        var tglAwal = document.querySelector('input[name="tgl_awal"]').value;
+        var tglAkhir = document.querySelector('input[name="tgl_akhir"]').value;
+        if (!tglAwal || !tglAkhir) {
+            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+            return;
+        }
+        var url = '<?php echo site_url('tbl_pembelian/excel'); ?>?tgl_awal=' + encodeURIComponent(tglAwal) + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
+        window.location.href = url;
+    }
+
+    (function() {
+        var submitTimer = null;
+
+        function submitCariPembelianOtomatis() {
+            clearTimeout(submitTimer);
+            submitTimer = setTimeout(function() {
+                var form = document.getElementById('form-cari-pembelian');
+                if (!form) {
+                    return;
+                }
+                var tglAwal = form.querySelector('input[name="tgl_awal"]');
+                var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
+                if (tglAwal && tglAkhir && tglAwal.value && tglAkhir.value) {
+                    form.submit();
+                }
+            }, 400);
+        }
+
+        function initAutoCariPembelian() {
+            var form = document.getElementById('form-cari-pembelian');
+            if (!form) {
+                return;
+            }
+            form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
+                el.addEventListener('change', submitCariPembelianOtomatis);
+            });
+            if (window.jQuery) {
+                jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', submitCariPembelianOtomatis);
+            }
+        }
+
+        if (document.readyState === 'complete') {
+            initAutoCariPembelian();
+        } else {
+            window.addEventListener('load', initAutoCariPembelian);
+        }
+    })();
 </script>
