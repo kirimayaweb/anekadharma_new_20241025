@@ -47,7 +47,15 @@
     // echo "<br/>";
     // echo "<br/>";
 
-
+    $excel_export_ids = array();
+    if (!empty($Tbl_pembelian_data)) {
+        foreach ($Tbl_pembelian_data as $row_export) {
+            if (!empty($row_export->id)) {
+                $excel_export_ids[] = (int) $row_export->id;
+            }
+        }
+    }
+    $excel_export_ids_str = implode(',', $excel_export_ids);
 
     ?>
 
@@ -111,6 +119,8 @@
                             </div>
 
                             <div class="col-md-2" text-align="right" align="right">
+                                <input type="hidden" id="excel-export-source" value="tbl_pembelian" />
+                                <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
                                 <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPembelian(); return false;">
                                     <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
                                 </button>
@@ -573,7 +583,11 @@
             alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
             return;
         }
-        var url = '<?php echo site_url('tbl_pembelian/excel'); ?>?tgl_awal=' + encodeURIComponent(tglAwal) + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
+        var sourceEl = document.getElementById('excel-export-source');
+        var idsEl = document.getElementById('excel-export-ids');
+        var source = sourceEl ? sourceEl.value : 'tbl_pembelian';
+        var ids = idsEl ? idsEl.value : '';
+        var url = '<?php echo site_url('Tbl_pembelian/excel'); ?>?source=' + encodeURIComponent(source) + '&ids=' + encodeURIComponent(ids) + '&tgl_awal=' + encodeURIComponent(tglAwal) + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
         window.location.href = url;
     }
 

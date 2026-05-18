@@ -101,6 +101,8 @@ class Tbl_pembelian extends CI_Controller
 		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
 		$Tbl_pembelian = $this->db->query($sql)->result();
 
+		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
+
 		// $start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
@@ -153,12 +155,77 @@ class Tbl_pembelian extends CI_Controller
 		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
 		$Tbl_pembelian = $this->db->query($sql)->result();
 
+		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
+
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
+	}
+
+	private function _set_filter_session_pembelian($date_awal, $date_akhir, $rows = null)
+	{
+		$this->session->set_userdata('filter_tbl_pembelian_date_awal', $date_awal);
+		$this->session->set_userdata('filter_tbl_pembelian_date_akhir', $date_akhir);
+		if ($rows !== null) {
+			$this->session->set_userdata('filter_tbl_pembelian_ids', $this->_collect_row_ids($rows));
+		}
+	}
+
+	private function _collect_row_ids($rows)
+	{
+		$ids = array();
+		foreach ($rows as $row) {
+			if (isset($row->id)) {
+				$ids[] = (int) $row->id;
+			}
+		}
+		return $ids;
+	}
+
+	private function _parse_cari_between_dates($tgl_awal_input, $tgl_akhir_input)
+	{
+		if (date('Y', strtotime($tgl_awal_input)) < 2020) {
+			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+		} else {
+			$Get_date_awal = date('Y-m-d 23:59:59', strtotime($tgl_awal_input));
+		}
+
+		if (date('Y', strtotime($tgl_akhir_input)) < 2020) {
+			$Get_date_akhir = date('Y-m-d 00:00:00');
+		} else {
+			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir_input));
+		}
+
+		return array($Get_date_awal, $Get_date_akhir);
+	}
+
+	private function _get_pembelian_rows_for_excel_by_ids(array $ids)
+	{
+		$ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+		if (empty($ids)) {
+			return array();
+		}
+
+		$this->db->from('tbl_pembelian');
+		$this->db->where_in('id', $ids);
+		$this->db->order_by('tgl_po', 'ASC');
+		$this->db->order_by('spop', 'ASC');
+		$this->db->order_by('id', 'ASC');
+
+		return $this->db->get()->result();
+	}
+
+	private function _get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir)
+	{
+		$sql = 'SELECT * FROM `tbl_pembelian` WHERE `tgl_po` BETWEEN '
+			. $this->db->escape($Get_date_awal) . ' AND '
+			. $this->db->escape($Get_date_akhir)
+			. ' ORDER BY `tgl_po`,`spop`,`id`';
+
+		return $this->db->query($sql)->result();
 	}
 
 
@@ -3845,42 +3912,42 @@ class Tbl_pembelian extends CI_Controller
 		$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
 	}
 
-	private function _resolve_tgl_range_pembelian($tgl_awal = '', $tgl_akhir = '')
-	{
-		if ($tgl_awal === '' || $tgl_awal === null) {
-			$tgl_awal = $this->input->get_post('tgl_awal', TRUE);
-		}
-		if ($tgl_akhir === '' || $tgl_akhir === null) {
-			$tgl_akhir = $this->input->get_post('tgl_akhir', TRUE);
-		}
-
-		if (empty($tgl_awal) && empty($tgl_akhir)) {
-			return array(date('Y-m-1 00:00:00'), date('Y-m-t 00:00:00'));
-		}
-
-		if (date('Y', strtotime($tgl_awal)) < 2020) {
-			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-		} else {
-			$Get_date_awal = date('Y-m-d 23:59:59', strtotime($tgl_awal));
-		}
-
-		if (date('Y', strtotime($tgl_akhir)) < 2020) {
-			$Get_date_akhir = date('Y-m-d 00:00:00');
-		} else {
-			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir));
-		}
-
-		return array($Get_date_awal, $Get_date_akhir);
-	}
-
 	public function excel()
 	{
 		$this->load->helper('exportexcel');
 
-		list($Get_date_awal, $Get_date_akhir) = $this->_resolve_tgl_range_pembelian(
-			$this->input->get('tgl_awal', TRUE),
-			$this->input->get('tgl_akhir', TRUE)
-		);
+		$source = $this->input->get('source', TRUE);
+		if ($source !== 'tbl_pembelian') {
+			show_error('Export tidak valid untuk modul pembelian.', 403);
+			return;
+		}
+
+		$Tbl_pembelian_rows = array();
+		$ids_param = $this->input->get('ids', TRUE);
+		if (!empty($ids_param)) {
+			$ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $ids_param)))));
+			if (!empty($ids)) {
+				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($ids);
+			}
+		}
+
+		if (empty($Tbl_pembelian_rows)) {
+			$session_ids = $this->session->userdata('filter_tbl_pembelian_ids');
+			if (is_array($session_ids) && count($session_ids) > 0) {
+				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($session_ids);
+			}
+		}
+
+		$Get_date_awal = $this->session->userdata('filter_tbl_pembelian_date_awal');
+		$Get_date_akhir = $this->session->userdata('filter_tbl_pembelian_date_akhir');
+
+		if (empty($Tbl_pembelian_rows)) {
+			if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+				$Get_date_awal = date('Y-m-1 00:00:00');
+				$Get_date_akhir = date('Y-m-t 00:00:00');
+			}
+			$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir);
+		}
 
 		$namaFile = 'Data_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';
 		$tablehead = 0;
@@ -3889,11 +3956,6 @@ class Tbl_pembelian extends CI_Controller
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
-
-		$sql = 'SELECT * FROM `tbl_pembelian` WHERE `tgl_po` BETWEEN '
-			. $this->db->escape($Get_date_awal) . ' AND '
-			. $this->db->escape($Get_date_akhir)
-			. ' ORDER BY `tgl_po`,`spop`,`id`';
 
 		$kolomhead = 0;
 		xlsWriteLabel($tablehead, $kolomhead++, "No");
@@ -3913,9 +3975,8 @@ class Tbl_pembelian extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "Statuslu");
 		xlsWriteLabel($tablehead, $kolomhead++, "Kas Bank");
 		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Bayar");
-		xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-		foreach ($this->db->query($sql)->result() as $data) {
+		foreach ($Tbl_pembelian_rows as $data) {
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
@@ -3936,7 +3997,6 @@ class Tbl_pembelian extends CI_Controller
 			xlsWriteLabel($tablebody, $kolombody++, $data->statuslu);
 			xlsWriteLabel($tablebody, $kolombody++, $data->kas_bank);
 			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_bayar);
-			xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
 
 			$tablebody++;
 			$nourut++;
