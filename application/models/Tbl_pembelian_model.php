@@ -133,6 +133,57 @@ class Tbl_pembelian_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    /**
+     * Kolom minimal untuk halaman setting kode akun (lebih ringan dari get_all).
+     */
+    function get_all_for_setting_kode_akun()
+    {
+        $this->db->select('id, uuid_spop, spop, tgl_po, kode_akun, nmrfakturkwitansi, supplier_nama, kode_barang, uraian, jumlah, satuan, konsumen, harga_satuan, statuslu, kas_bank, tgl_bayar');
+        $this->db->order_by($this->tgl_po, $this->order);
+        $this->db->order_by($this->spop, $this->order);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+    /**
+     * Setting kode akun — filter rentang tgl_po (default: bulan berjalan).
+     */
+    function get_for_setting_kode_akun_by_tgl_range($date_awal, $date_akhir)
+    {
+        $this->db->select('id, uuid_spop, spop, tgl_po, kode_akun, nmrfakturkwitansi, supplier_nama, kode_barang, uraian, jumlah, satuan, konsumen, harga_satuan, statuslu, kas_bank, tgl_bayar');
+        $this->db->where($this->tgl_po . ' >=', $date_awal);
+        $this->db->where($this->tgl_po . ' <=', $date_akhir);
+        $this->db->order_by($this->tgl_po, $this->order);
+        $this->db->order_by($this->spop, $this->order);
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_for_setting_kode_akun_by_ids(array $ids)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) {
+            return array();
+        }
+        $this->db->select('id, uuid_spop, spop, tgl_po, kode_akun, nmrfakturkwitansi, supplier_nama, kode_barang, uraian, jumlah, satuan, konsumen, harga_satuan, statuslu, kas_bank, tgl_bayar');
+        $this->db->where_in($this->id, $ids);
+        $this->db->order_by($this->tgl_po, $this->order);
+        $this->db->order_by($this->spop, $this->order);
+        $this->db->order_by($this->id, $this->orderASC);
+        $rows = $this->db->get($this->table)->result();
+        $indexed = array();
+        foreach ($rows as $row) {
+            $indexed[(int) $row->id] = $row;
+        }
+        $ordered = array();
+        foreach ($ids as $id) {
+            if (isset($indexed[$id])) {
+                $ordered[] = $indexed[$id];
+            }
+        }
+        return $ordered;
+    }
+
     function get_by_tgl_range($date_awal, $date_akhir)
     {
         $this->db->where($this->tgl_po . ' >=', $date_awal);

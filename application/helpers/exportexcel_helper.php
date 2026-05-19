@@ -73,11 +73,32 @@ function xlsWriteNumber($Row, $Col, $Value)
 	);
 }
 
-function xlsWriteLabel($Row, $Col, $Value)
+function xlsWriteLabel($Row, $Col, $Value, $align = null)
 {
-	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = array(
+	$cell = array(
 		'type' => 'String',
 		'value' => (string) $Value,
+	);
+	if ($align === 'right') {
+		$cell['style'] = 1;
+	}
+	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = $cell;
+}
+
+/**
+ * Nominal Indonesia: 1.234.567.890 (tanpa Rp dan tanpa desimal ,00), rata kanan
+ */
+function xlsWriteRupiah($Row, $Col, $Value)
+{
+	if ($Value === null || $Value === '' || !is_numeric($Value)) {
+		xlsWriteLabel($Row, $Col, $Value === null || $Value === '' ? '' : $Value, 'right');
+		return;
+	}
+
+	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = array(
+		'type' => 'String',
+		'value' => number_format((float) $Value, 0, ',', '.'),
+		'style' => 1,
 	);
 }
 
@@ -95,11 +116,14 @@ function excel_build_sheet_xml($rows)
 			$ref = excel_column_letter($colNum) . $rowNum;
 			$type = isset($cell['type']) ? $cell['type'] : 'String';
 			$value = isset($cell['value']) ? $cell['value'] : '';
+			$styleAttr = isset($cell['style']) ? ' s="' . (int) $cell['style'] . '"' : '';
 
-			if ($type === 'Number' && is_numeric($value)) {
-				$sheetData .= '<c r="' . $ref . '"><v>' . excel_xml_escape($value) . '</v></c>';
+			if ($type === 'Rupiah' && is_numeric($value)) {
+				$sheetData .= '<c r="' . $ref . '"' . $styleAttr . '><v>' . excel_xml_escape($value) . '</v></c>';
+			} elseif ($type === 'Number' && is_numeric($value)) {
+				$sheetData .= '<c r="' . $ref . '"' . $styleAttr . '><v>' . excel_xml_escape($value) . '</v></c>';
 			} else {
-				$sheetData .= '<c r="' . $ref . '" t="inlineStr"><is><t>' . excel_xml_escape($value) . '</t></is></c>';
+				$sheetData .= '<c r="' . $ref . '"' . $styleAttr . ' t="inlineStr"><is><t>' . excel_xml_escape($value) . '</t></is></c>';
 			}
 			++$colNum;
 		}
@@ -154,7 +178,10 @@ function excel_output_xlsx($rows)
 		. '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
 		. '<borders count="1"><border><left/><right/><top/><bottom/></border></borders>'
 		. '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-		. '<cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>'
+		. '<cellXfs count="2">'
+		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right"/></xf>'
+		. '</cellXfs>'
 		. '</styleSheet>';
 
 	$tmpFile = tempnam(sys_get_temp_dir(), 'xlsx');

@@ -4006,6 +4006,236 @@ class Tbl_pembelian extends CI_Controller
 		exit();
 	}
 
+	public function excel_setting_kode_akun()
+	{
+		$this->load->helper('exportexcel');
+
+		$rows = array();
+		$ids_param = $this->input->get('ids', TRUE);
+		if (!empty($ids_param)) {
+			$ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $ids_param)))));
+			if (!empty($ids)) {
+				$rows = $this->Tbl_pembelian_model->get_for_setting_kode_akun_by_ids($ids);
+			}
+		}
+
+		if (empty($rows)) {
+			$session_ids = $this->session->userdata('filter_setting_kode_akun_ids');
+			if (is_array($session_ids) && count($session_ids) > 0) {
+				$rows = $this->Tbl_pembelian_model->get_for_setting_kode_akun_by_ids($session_ids);
+			}
+		}
+
+		if (empty($rows)) {
+			$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_date_awal');
+			$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_date_akhir');
+			if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+				$Get_date_awal = date('Y-m-1 00:00:00');
+				$Get_date_akhir = date('Y-m-t 23:59:59');
+			}
+			$rows = $this->Tbl_pembelian_model->get_for_setting_kode_akun_by_tgl_range($Get_date_awal, $Get_date_akhir);
+		}
+
+		$export_rows = $this->_build_setting_kode_akun_excel_rows($rows);
+
+		$namaFile = 'kode_akun_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';
+		$tablehead = 0;
+		$tablebody = 1;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$kolomhead = 0;
+		xlsWriteLabel($tablehead, $kolomhead++, 'No');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kode Akun');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Spop');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Tgl PO');
+		xlsWriteLabel($tablehead, $kolomhead++, 'No. faktur/ kwitansi');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Supplier');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kode Barang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Nama Barang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Jumlah');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Konsumen');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Harga Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Harga Total');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Statuslu');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kas / Bank');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Tgl Bayar');
+
+		foreach ($export_rows as $row) {
+			$kolombody = 0;
+			if ($row['is_number']) {
+				xlsWriteNumber($tablebody, $kolombody++, $row['no']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, $row['no']);
+			}
+			xlsWriteLabel($tablebody, $kolombody++, $row['kode_akun']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['spop'] !== '' && $row['spop'] !== null ? (string) $row['spop'] : '');
+			xlsWriteLabel($tablebody, $kolombody++, $row['tgl_po']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['nmrfakturkwitansi']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['supplier_nama']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['kode_barang']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['uraian']);
+			if ($row['jumlah'] !== '') {
+				xlsWriteNumber($tablebody, $kolombody++, $row['jumlah']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			xlsWriteLabel($tablebody, $kolombody++, $row['satuan']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['konsumen']);
+			if ($row['harga_satuan'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['harga_satuan']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['harga_total'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['harga_total']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			xlsWriteLabel($tablebody, $kolombody++, $row['statuslu']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['kas_bank']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['tgl_bayar']);
+			$tablebody++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _build_setting_kode_akun_excel_rows($Tbl_pembelian_data)
+	{
+		$export_rows = array();
+		$compare_spop = 0;
+		$compare_uuid_spop = 0;
+		$Total_per_SPOP = 0;
+		$TOTAL_LUNAS = 0;
+		$TOTAL_HUTANG = 0;
+		$start = 0;
+		$last_row = null;
+
+		foreach ($Tbl_pembelian_data as $list_data) {
+			if (($compare_uuid_spop <> $list_data->uuid_spop) && ($start >= 1)) {
+				$export_rows[] = $this->_setting_kode_akun_excel_total_row(++$start, $compare_spop, $Total_per_SPOP);
+				$Total_per_SPOP = 0;
+			}
+
+			$total_per_uraian = $list_data->jumlah * $list_data->harga_satuan;
+			$Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
+			if ($list_data->statuslu == 'U') {
+				$TOTAL_HUTANG = $TOTAL_HUTANG + $total_per_uraian;
+			} else {
+				$TOTAL_LUNAS = $TOTAL_LUNAS + $total_per_uraian;
+			}
+
+			$kas_bank = '';
+			if ($list_data->statuslu == 'Lunas' || $list_data->statuslu == 'L') {
+				$kas_bank = $list_data->kas_bank;
+			}
+
+			$kode_akun_label = $list_data->kode_akun ? $list_data->kode_akun : '';
+
+			$export_rows[] = array(
+				'is_number' => true,
+				'no' => ++$start,
+				'kode_akun' => $kode_akun_label,
+				'spop' => (string) $list_data->spop,
+				'tgl_po' => date('d M Y', strtotime($list_data->tgl_po)),
+				'nmrfakturkwitansi' => $list_data->nmrfakturkwitansi,
+				'supplier_nama' => $list_data->supplier_nama,
+				'kode_barang' => $list_data->kode_barang,
+				'uraian' => $list_data->uraian,
+				'jumlah' => $list_data->jumlah,
+				'satuan' => $list_data->satuan,
+				'konsumen' => $list_data->konsumen,
+				'harga_satuan' => $list_data->harga_satuan,
+				'harga_total' => $total_per_uraian,
+				'statuslu' => $list_data->statuslu,
+				'kas_bank' => $kas_bank,
+				'tgl_bayar' => $list_data->tgl_bayar,
+				'is_total_spop' => false,
+			);
+
+			$compare_spop = $list_data->spop;
+			$compare_uuid_spop = $list_data->uuid_spop;
+			$last_row = $list_data;
+		}
+
+		if ($last_row) {
+			$export_rows[] = $this->_setting_kode_akun_excel_total_row(++$start, $last_row->spop, $Total_per_SPOP);
+		}
+
+		if (!empty($export_rows)) {
+			$export_rows[] = array(
+				'is_number' => false,
+				'no' => '',
+				'kode_akun' => '',
+				'spop' => '',
+				'tgl_po' => '',
+				'nmrfakturkwitansi' => '',
+				'supplier_nama' => '',
+				'kode_barang' => '',
+				'uraian' => '',
+				'jumlah' => '',
+				'satuan' => '',
+				'konsumen' => '',
+				'harga_satuan' => 'TOTAL LUNAS',
+				'harga_total' => $TOTAL_LUNAS,
+				'statuslu' => '',
+				'kas_bank' => '',
+				'tgl_bayar' => '',
+				'is_total_spop' => false,
+			);
+			$export_rows[] = array(
+				'is_number' => false,
+				'no' => '',
+				'kode_akun' => '',
+				'spop' => '',
+				'tgl_po' => '',
+				'nmrfakturkwitansi' => '',
+				'supplier_nama' => '',
+				'kode_barang' => '',
+				'uraian' => '',
+				'jumlah' => '',
+				'satuan' => '',
+				'konsumen' => '',
+				'harga_satuan' => 'TOTAL HUTANG',
+				'harga_total' => $TOTAL_HUTANG,
+				'statuslu' => '',
+				'kas_bank' => '',
+				'tgl_bayar' => '',
+				'is_total_spop' => false,
+			);
+		}
+
+		return $export_rows;
+	}
+
+	private function _setting_kode_akun_excel_total_row($no, $spop, $total_per_spop)
+	{
+		return array(
+			'is_number' => true,
+			'no' => $no,
+			'kode_akun' => '',
+			'spop' => (string) $spop,
+			'tgl_po' => '',
+			'nmrfakturkwitansi' => '',
+			'supplier_nama' => '',
+			'kode_barang' => '',
+			'uraian' => '',
+			'jumlah' => '',
+			'satuan' => '',
+			'konsumen' => '',
+			'harga_satuan' => '',
+			'harga_total' => $total_per_spop,
+			'statuslu' => '',
+			'kas_bank' => '',
+			'tgl_bayar' => '',
+			'is_total_spop' => true,
+		);
+	}
+
 	public function unit()
 	{
 		$Data_stock = $this->Tbl_pembelian_model->stock();
@@ -4879,11 +5109,50 @@ class Tbl_pembelian extends CI_Controller
 
 	public function setting_kode_akun_pembelian2()
 	{
-		$Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-		$start = 0;
+		// Buka dari menu: selalu bulan berjalan (bulan lalu tidak di-load).
+		if ($this->input->get('keep_filter') && $this->session->userdata('filter_setting_kode_akun_date_awal') && $this->session->userdata('filter_setting_kode_akun_date_akhir')) {
+			$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_date_awal');
+			$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_date_akhir');
+		} else {
+			$Get_date_awal = date('Y-m-1 00:00:00');
+			$Get_date_akhir = date('Y-m-t 23:59:59');
+		}
+		$this->_render_setting_kode_akun_pembelian2($Get_date_awal, $Get_date_akhir);
+	}
+
+	public function cari_between_date_setting_kode_akun()
+	{
+		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates(
+			$this->input->post('tgl_awal', TRUE),
+			$this->input->post('tgl_akhir', TRUE)
+		);
+		$this->_render_setting_kode_akun_pembelian2($Get_date_awal, $Get_date_akhir);
+	}
+
+	private function _render_setting_kode_akun_pembelian2($Get_date_awal, $Get_date_akhir)
+	{
+		$this->session->set_userdata('filter_setting_kode_akun_date_awal', $Get_date_awal);
+		$this->session->set_userdata('filter_setting_kode_akun_date_akhir', $Get_date_akhir);
+
+		$Tbl_pembelian = $this->Tbl_pembelian_model->get_for_setting_kode_akun_by_tgl_range($Get_date_awal, $Get_date_akhir);
+
+		$this->session->set_userdata('filter_setting_kode_akun_ids', $this->_collect_row_ids($Tbl_pembelian));
+
+		$uuid_spop_list = array();
+		foreach ($Tbl_pembelian as $row) {
+			if (!empty($row->uuid_spop)) {
+				$uuid_spop_list[$row->uuid_spop] = $row->uuid_spop;
+			}
+		}
+		$uuid_spop_list = array_values($uuid_spop_list);
+
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'start' => $start,
+			'pengajuan_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list),
+			'pengajuan_sum_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list),
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+			'start' => 0,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_setting_kode_akun', $data);
 	}
@@ -5204,7 +5473,7 @@ class Tbl_pembelian extends CI_Controller
 		// Cek di tabel buku besar , jika belum ada data maka insert , jika sudah ada maka update
 
 
-		redirect(site_url('Tbl_pembelian/setting_kode_akun_pembelian2/'));
+		redirect(site_url('Tbl_pembelian/setting_kode_akun_pembelian2/?keep_filter=1'));
 	}
 
 	public function ubah_kode_akun($uuid_spop = null)
