@@ -19,7 +19,34 @@
 
     <section class="content">
 
+        <?php
+        if (!isset($date_awal)) {
+            $date_awal = date('Y-m-1 00:00:00');
+        }
+        if (!isset($date_akhir)) {
+            $date_akhir = date('Y-m-t 23:59:59');
+        }
+        if (date('Y', strtotime($date_awal)) < 2020) {
+            $Get_date_awal = date('d-m-Y');
+        } else {
+            $Get_date_awal = date('d-m-Y', strtotime($date_awal));
+        }
+        if (date('Y', strtotime($date_akhir)) < 2020) {
+            $Get_date_akhir = date('d-m-Y');
+        } else {
+            $Get_date_akhir = date('d-m-Y', strtotime($date_akhir));
+        }
 
+        $excel_export_ids = array();
+        if (!empty($Tbl_pembelian_data)) {
+            foreach ($Tbl_pembelian_data as $row_export) {
+                if (!empty($row_export->id)) {
+                    $excel_export_ids[] = (int) $row_export->id;
+                }
+            }
+        }
+        $excel_export_ids_str = implode(',', $excel_export_ids);
+        ?>
 
         <div class="box box-warning box-solid">
 
@@ -28,14 +55,39 @@
                     <div class="card-header">
 
                         <div class="row">
-                            <div class="col-3" text-align="left"> <strong>SETTING KODE AKUN PEMBELIAN</strong></div>
-                            <div class="col-6" text-align="left" align="left">
-                                <?php //echo anchor(site_url('tbl_pembelian/jurnal_pembelian2_cekBelumAdaKodeAkun'), 'Pembelian Belum Ada Kode Akun', 'class="btn btn-danger"'); 
-                                ?>
+                            <div class="col-md-2" text-align="left"><strong>SETTING KODE AKUN PEMBELIAN</strong></div>
+                            <div class="col-md-8">
+                                <?php $action_cari_setting_kode_akun = site_url('tbl_pembelian/cari_between_date_setting_kode_akun'); ?>
+                                <form id="form-cari-setting-kode-akun" action="<?php echo $action_cari_setting_kode_akun; ?>" method="post">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="input-group date" id="tgl_awal" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required autocomplete="off" />
+                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-1 text-center align-self-center">s/d</div>
+                                        <div class="col-md-4">
+                                            <div class="input-group date" id="tgl_akhir" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required autocomplete="off" />
+                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
+                                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-search" aria-hidden="true"></i> Cari</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
-                            <div class="col-2" text-align="right" align="right">
-                                <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                ?>
+                            <div class="col-md-2" text-align="right" align="right">
+                                <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
+                                <button type="button" class="btn btn-success btn-block" onclick="cetakExcelSettingKodeAkun(); return false;">
+                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
+                                </button>
                             </div>
                         </div>
 
@@ -68,6 +120,34 @@
                             </thead>
                             <tbody>
                                 <?php
+                                if (!isset($pengajuan_by_uuid_spop)) {
+                                    $pengajuan_by_uuid_spop = array();
+                                }
+                                if (!isset($pengajuan_sum_by_uuid_spop)) {
+                                    $pengajuan_sum_by_uuid_spop = array();
+                                }
+                                if (!function_exists('render_pengajuan_pembelian_cell')) {
+                                    function render_pengajuan_pembelian_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop)
+                                    {
+                                        $result_pengajuan_by_uuid_spop = isset($pengajuan_by_uuid_spop[$uuid_spop]) ? $pengajuan_by_uuid_spop[$uuid_spop] : array();
+                                        $TOTAL_Nominal_pengajuan = isset($pengajuan_sum_by_uuid_spop[$uuid_spop]) ? $pengajuan_sum_by_uuid_spop[$uuid_spop] : 0;
+
+                                        if ($result_pengajuan_by_uuid_spop) {
+                                            $startx = 0;
+                                            foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
+                                                echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                            }
+
+                                            if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
+                                                if ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
+                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                }
+                                            }
+                                        } elseif ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
+                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                        }
+                                    }
+                                }
                                 $compare_spop = 0;
                                 $compare_uuid_spop = 0;
                                 $Total_per_SPOP = 0;
@@ -140,35 +220,8 @@
                                             </td>
                                             <td>
                                                 <?php
-
-                                                $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($compare_uuid_spop);
-
-                                                $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($compare_uuid_spop)->total_pengajuan;
-
-                                                if ($result_pengajuan_by_uuid_spop) {
-                                                    $startx = 0;
-                                                    $total_nominal_pengajuan = 0;
-                                                    foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
-                                                        echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
-                                                        $total_nominal_pengajuan = $total_nominal_pengajuan + $list_data_pengajuan->nominal_pengajuan;
-                                                    }
-
-                                                    if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
-
-                                                        if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                            echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                        }
-                                                    }
-                                                } else {
-
-                                                    if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                        echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                    }
-                                                }
-
+                                                render_pengajuan_pembelian_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop);
                                                 $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
-
                                                 ?>
                                             </td>
                                             <td></td>
@@ -427,49 +480,7 @@
                                     </td>
                                     <td>
                                         <?php
-                                        // if ($list_spop_status_lu == "U") {
-                                        //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                        // }
-
-
-                                        $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($list_data->uuid_spop);
-
-                                        $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($list_data->uuid_spop)->total_pengajuan;
-
-                                        if ($result_pengajuan_by_uuid_spop) {
-                                            $startx = 0;
-                                            $total_nominal_pengajuan = 0;
-                                            foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
-                                                // echo $list_data_pengajuan->uuid_pengajuan_bayar;
-                                                echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
-                                                $total_nominal_pengajuan = $total_nominal_pengajuan + $list_data_pengajuan->nominal_pengajuan;
-                                            }
-                                            // echo $TOTAL_Nominal_pengajuan;
-                                            // echo " : ";
-                                            // echo $Total_per_SPOP;
-                                            // echo " : ";
-                                            if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
-                                                if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                                }
-                                            }
-                                        } else {
-                                            // if ($total_nominal_pengajuan < $Total_per_SPOP) {
-
-
-                                            if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-
-                                                echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                            }
-
-                                            // }else{
-                                            //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
-                                            // }
-
-                                        }
-
-
+                                        render_pengajuan_pembelian_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop);
                                         ?>
                                     </td>
                                     <td></td>
@@ -544,29 +555,82 @@
     </section>
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
         margin: 0 auto;
     }
+    .bootstrap-datetimepicker-widget {
+        z-index: 99999 !important;
+    }
 </style>
+<script>
+    function cetakExcelSettingKodeAkun() {
+        var idsEl = document.getElementById('excel-export-ids');
+        var ids = idsEl ? idsEl.value : '';
+        if (!ids) {
+            alert('Tidak ada data untuk diekspor. Silakan cari data terlebih dahulu.');
+            return;
+        }
+        var url = '<?php echo site_url('Tbl_pembelian/excel_setting_kode_akun'); ?>?ids=' + encodeURIComponent(ids);
+        window.location.href = url;
+    }
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
+    (function() {
+        var submitTimer = null;
+
+        function submitCariSettingKodeAkunOtomatis() {
+            clearTimeout(submitTimer);
+            submitTimer = setTimeout(function() {
+                var form = document.getElementById('form-cari-setting-kode-akun');
+                if (!form) {
+                    return;
+                }
+                var tglAwal = form.querySelector('input[name="tgl_awal"]');
+                var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
+                if (tglAwal && tglAkhir && tglAwal.value && tglAkhir.value) {
+                    form.submit();
+                }
+            }, 400);
+        }
+
+        function initDatePickerSettingKodeAkun() {
+            if (!window.jQuery || !jQuery.fn.datetimepicker) {
+                return;
+            }
+            var $ = jQuery;
+            var opts = { format: 'D-M-YYYY' };
+            if ($('#tgl_awal').length) {
+                if ($('#tgl_awal').data('datetimepicker')) {
+                    $('#tgl_awal').datetimepicker('destroy');
+                }
+                $('#tgl_awal').datetimepicker(opts);
+            }
+            if ($('#tgl_akhir').length) {
+                if ($('#tgl_akhir').data('datetimepicker')) {
+                    $('#tgl_akhir').datetimepicker('destroy');
+                }
+                $('#tgl_akhir').datetimepicker(opts);
+            }
+            $('#tgl_awal, #tgl_akhir').off('change.datetimepicker.setting hide.datetimepicker.setting');
+            $('#tgl_awal, #tgl_akhir').on('change.datetimepicker.setting hide.datetimepicker.setting', submitCariSettingKodeAkunOtomatis);
+        }
+
+        function initAutoCariSettingKodeAkun() {
+            var form = document.getElementById('form-cari-setting-kode-akun');
+            if (!form) {
+                return;
+            }
+            initDatePickerSettingKodeAkun();
+            form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
+                el.addEventListener('change', submitCariSettingKodeAkunOtomatis);
+            });
+        }
+
+        if (document.readyState === 'complete') {
+            initAutoCariSettingKodeAkun();
+        } else {
+            window.addEventListener('load', initAutoCariSettingKodeAkun);
+        }
+    })();
 </script>
