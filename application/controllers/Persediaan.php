@@ -9,7 +9,7 @@ class Persediaan extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Persediaan_model', 'Sys_nama_barang_model'));
+		$this->load->model(array('Persediaan_model', 'Sys_nama_barang_model', 'Sys_konsumen_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 	}
@@ -537,40 +537,33 @@ class Persediaan extends CI_Controller
 
 	public function index()
 	{
-		// $this->load->view('persediaan/persediaan_list');
-
-		$Persediaan = $this->Persediaan_model->get_all();
-		// $start = 0;
-		$data = array(
-			'Persediaan_data' => $Persediaan,
-			// 'start' => $start,
-			'action_cari' => site_url('persediaan/search'),
-			'bulan_persediaan_selected' => '',
-		);
-
-		// print_r($data);
-
+		$data = $this->get_persediaan_list_view_data('', $this->Persediaan_model->get_all());
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
 	}
 
 	public function search()
 	{
 		// Input <input type="month" name="bulan_persediaan"> mengirim YYYY-MM.
-		// Sebelumnya query memakai LIKE hanya ke tanggal akhir bulan sehianngga data (mis. 21/04/2026) tidak tampil.
 		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
+		$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+	}
 
-		// $start = 0;
-		$data = array(
+	private function get_persediaan_list_view_data($bulan, $Persediaan)
+	{
+		$this->load->helper('persediaan_display');
+
+		$sys_konsumen_data = $this->db->query(
+			"SELECT * FROM `sys_konsumen` ORDER BY `nama_konsumen` ASC"
+		)->result();
+
+		return array(
 			'Persediaan_data' => $Persediaan,
-			// 'start' => $start,
+			'sys_konsumen_data' => $sys_konsumen_data,
 			'action_cari' => site_url('persediaan/search'),
 			'bulan_persediaan_selected' => $bulan,
 		);
-
-		// print_r($data);
-
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
 	}
 
 	public function cetak_pdf()
@@ -710,6 +703,7 @@ class Persediaan extends CI_Controller
 	 * Contoh: GENERATE_PERSEDIAN_BULAN/2026-01 => copy dari tanggal_beli 2025-12-01 ke 2026-01-01
 	 * sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber).
 	 * beli record baru = 0. total_10 = sa + beli. nilai_persediaan = total_10 * hpp. tuj = sa + beli.
+	 * Kolom setelah tuj sampai sebelum total_10 = 0 (tidak disalin dari bulan sumber).
 	 * Record yang sudah ada (tanggal_beli + namabarang + satuan + hpp) tidak diubah.
 	 * Tampilan: SweetAlert animasi 5 record terakhir, lalu tabel lengkap di halaman.
 	 * AJAX batch: ?ajax=1&offset=0&limit=25
@@ -949,23 +943,24 @@ class Persediaan extends CI_Controller
 			'spop' => $row->spop,
 			'beli' => $beli_tampil,
 			'tuj' => $tuj_tampil,
-			'tgl_keluar' => $row->tgl_keluar,
-			'sekret' => $row->sekret,
-			'cetak' => $row->cetak,
-			'grafikita' => $row->grafikita,
-			'dinas_umum' => $row->dinas_umum,
-			'atk_rsud' => $row->atk_rsud,
-			'ppbmp_kbs' => $row->ppbmp_kbs,
-			'kbs' => $row->kbs,
-			'ppbmp' => $row->ppbmp,
-			'medis' => $row->medis,
-			'siiplah_bosda' => $row->siiplah_bosda,
-			'sembako' => $row->sembako,
-			'fc_gose' => $row->fc_gose,
-			'fc_manding' => $row->fc_manding,
-			'fc_psamya' => $row->fc_psamya,
-			'kop_mp' => $row->kop_mp,
-			'pu_outsor' => $row->pu_outsor,
+			// Setelah tuj sampai sebelum total_10: tidak copy bulan sumber, nilai 0
+			'tgl_keluar' => '0',
+			'sekret' => '0',
+			'cetak' => '0',
+			'grafikita' => '0',
+			'dinas_umum' => '0',
+			'atk_rsud' => '0',
+			'ppbmp_kbs' => '0',
+			'kbs' => '0',
+			'ppbmp' => '0',
+			'medis' => '0',
+			'siiplah_bosda' => '0',
+			'sembako' => '0',
+			'fc_gose' => '0',
+			'fc_manding' => '0',
+			'fc_psamya' => '0',
+			'kop_mp' => '0',
+			'pu_outsor' => '0',
 			'total_10' => $total_10_tampil,
 			'nilai_persediaan' => $nilai_persediaan_tampil,
 			'penjualan' => 0,
@@ -988,7 +983,8 @@ class Persediaan extends CI_Controller
 			. ' | beli=' . $beli_tampil
 			. ' | total_10=' . $total_10_tampil . ' (sa+beli)'
 			. ' | nilai_persediaan=' . $nilai_persediaan_tampil . ' (total_10*hpp)'
-			. ' | tuj=' . $tuj_tampil;
+			. ' | tuj=' . $tuj_tampil
+			. ' | distribusi (tgl_keluar..fc_psamya)=0';
 
 		return array(
 			'aksi' => 'INSERT',
@@ -1300,90 +1296,47 @@ class Persediaan extends CI_Controller
 
 	public function excel()
 	{
-		$this->load->helper('exportexcel');
-		$namaFile = "persediaan.xls";
-		$judul = "persediaan";
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		$Persediaan = $this->get_persediaan_by_bulan($bulan);
+
+		$this->load->helper(array('exportexcel', 'persediaan_display'));
+
+		$namaFile = 'persediaan' . ($bulan !== '' ? ('-' . $bulan) : '') . '.xlsx';
 		$tablehead = 0;
 		$tablebody = 1;
 		$nourut = 1;
-		//penulisan header
-		header("Pragma: public");
-		header("Expires: 0");
-		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-		header("Content-Type: application/force-download");
-		header("Content-Type: application/octet-stream");
-		header("Content-Type: application/download");
-		header("Content-Disposition: attachment;filename=" . $namaFile . "");
-		header("Content-Transfer-Encoding: binary ");
+		$total_nilai_persediaan = 0;
 
+		excel_prepare_download($namaFile);
 		xlsBOF();
 
 		$kolomhead = 0;
-		xlsWriteLabel($tablehead, $kolomhead++, "No");
-		xlsWriteLabel($tablehead, $kolomhead++, "Id");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
-		xlsWriteLabel($tablehead, $kolomhead++, "Kode");
-		xlsWriteLabel($tablehead, $kolomhead++, "Namabarang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Hpp");
-		xlsWriteLabel($tablehead, $kolomhead++, "Sa");
-		xlsWriteLabel($tablehead, $kolomhead++, "Spop");
-		xlsWriteLabel($tablehead, $kolomhead++, "Beli");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tuj");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Keluar");
-		xlsWriteLabel($tablehead, $kolomhead++, "Sekret");
-		xlsWriteLabel($tablehead, $kolomhead++, "Cetak");
-		xlsWriteLabel($tablehead, $kolomhead++, "Grafikita");
-		xlsWriteLabel($tablehead, $kolomhead++, "Dinas Umum");
-		xlsWriteLabel($tablehead, $kolomhead++, "Atk Rsud");
-		xlsWriteLabel($tablehead, $kolomhead++, "Ppbmp Kbs");
-		xlsWriteLabel($tablehead, $kolomhead++, "Kbs");
-		xlsWriteLabel($tablehead, $kolomhead++, "Ppbmp");
-		xlsWriteLabel($tablehead, $kolomhead++, "Medis");
-		xlsWriteLabel($tablehead, $kolomhead++, "Siiplah Bosda");
-		xlsWriteLabel($tablehead, $kolomhead++, "Sembako");
-		xlsWriteLabel($tablehead, $kolomhead++, "Fc Gose");
-		xlsWriteLabel($tablehead, $kolomhead++, "Fc Manding");
-		xlsWriteLabel($tablehead, $kolomhead++, "Fc Psamya");
-		xlsWriteLabel($tablehead, $kolomhead++, "Total 10");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nilai Persediaan");
+		foreach (persediaan_export_headers() as $header) {
+			xlsWriteLabel($tablehead, $kolomhead++, $header);
+		}
 
-		foreach ($this->Persediaan_model->get_all() as $data) {
+		foreach ($Persediaan as $data) {
+			$total_nilai_persediaan += persediaan_parse_angka(isset($data->nilai_persediaan) ? $data->nilai_persediaan : 0);
+			$cells = persediaan_export_row_cells($data, $nourut, $bulan);
 			$kolombody = 0;
-
-			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);
-			xlsWriteNumber($tablebody, $kolombody++, $data->id);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
-			xlsWriteLabel($tablebody, $kolombody++, $data->kode);
-			xlsWriteLabel($tablebody, $kolombody++, $data->namabarang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
-			xlsWriteLabel($tablebody, $kolombody++, $data->hpp);
-			xlsWriteLabel($tablebody, $kolombody++, $data->sa);
-			xlsWriteLabel($tablebody, $kolombody++, $data->spop);
-			xlsWriteLabel($tablebody, $kolombody++, $data->beli);
-			xlsWriteNumber($tablebody, $kolombody++, $data->tuj);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_keluar);
-			xlsWriteLabel($tablebody, $kolombody++, $data->sekret);
-			xlsWriteLabel($tablebody, $kolombody++, $data->cetak);
-			xlsWriteLabel($tablebody, $kolombody++, $data->grafikita);
-			xlsWriteLabel($tablebody, $kolombody++, $data->dinas_umum);
-			xlsWriteLabel($tablebody, $kolombody++, $data->atk_rsud);
-			xlsWriteLabel($tablebody, $kolombody++, $data->ppbmp_kbs);
-			xlsWriteLabel($tablebody, $kolombody++, $data->kbs);
-			xlsWriteLabel($tablebody, $kolombody++, $data->ppbmp);
-			xlsWriteLabel($tablebody, $kolombody++, $data->medis);
-			xlsWriteLabel($tablebody, $kolombody++, $data->siiplah_bosda);
-			xlsWriteLabel($tablebody, $kolombody++, $data->sembako);
-			xlsWriteLabel($tablebody, $kolombody++, $data->fc_gose);
-			xlsWriteLabel($tablebody, $kolombody++, $data->fc_manding);
-			xlsWriteLabel($tablebody, $kolombody++, $data->fc_psamya);
-			xlsWriteNumber($tablebody, $kolombody++, $data->total_10);
-			xlsWriteNumber($tablebody, $kolombody++, $data->nilai_persediaan);
-
+			foreach ($cells as $cell) {
+				xlsWriteLabel($tablebody, $kolombody++, $cell);
+			}
 			$tablebody++;
 			$nourut++;
 		}
+
+		// Baris footer sama seperti datatable: Total Nilai Persediaan
+		$kolomfoot = 0;
+		while ($kolomfoot < 25) {
+			xlsWriteLabel($tablebody, $kolomfoot++, '');
+		}
+		xlsWriteLabel($tablebody, $kolomfoot++, 'Total Nilai Persediaan', 'right');
+		xlsWriteLabel($tablebody, $kolomfoot++, number_format($total_nilai_persediaan, 0, ',', '.'), 'right');
+		xlsWriteLabel($tablebody, $kolomfoot++, '');
+		xlsWriteLabel($tablebody, $kolomfoot++, '');
+		xlsWriteLabel($tablebody, $kolomfoot++, '');
+		xlsWriteLabel($tablebody, $kolomfoot++, '');
 
 		xlsEOF();
 		exit();

@@ -50,6 +50,7 @@
 	<p><em>sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber)</em></p>
 	<p><em>beli record baru = 0 (tidak dari bulan sumber)</em></p>
 	<p><em>total_10 = sa + beli | nilai_persediaan = total_10 × hpp | tuj = sa + beli</em></p>
+	<p><em>Kolom setelah tuj sampai sebelum total_10 = 0 (tidak disalin dari bulan sumber)</em></p>
 	<p><em>Record sudah ada (tanggal_beli + namabarang + satuan + hpp sama) tidak diubah</em></p>
 </div>
 
