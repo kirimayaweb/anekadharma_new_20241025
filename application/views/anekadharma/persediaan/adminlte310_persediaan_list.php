@@ -28,7 +28,11 @@
 
 
                     <div class="card-header">
-                        <form action="<?php echo $action_cari; ?>" method="post">
+                        <?php
+                        $action_cari_form = isset($action_cari) && $action_cari ? $action_cari : site_url('persediaan/search');
+                        $Persediaan_data = isset($Persediaan_data) && is_array($Persediaan_data) ? $Persediaan_data : array();
+                        ?>
+                        <form action="<?php echo $action_cari_form; ?>" method="post">
                             <div class="row">
                             </div>
                             <div class="row">
@@ -54,6 +58,7 @@
                                     ?>
                                     <button type="submit" class="btn btn-danger mr-2">Cari</button>
                                     <button type="submit" formaction="<?php echo site_url('persediaan/cetak_pdf'); ?>" formtarget="_blank" class="btn btn-success">Cetak PDF</button>
+                                    <a href="<?php echo site_url('persediaan/recalculate_data_persediaan'); ?>" class="btn btn-warning ml-2">Recalculate</a>
                                 </div>
 
 
@@ -161,10 +166,15 @@
                                         <td><?php echo $persediaan->fc_psamya ?></td>
                                         <td><?php echo $persediaan->total_10 ?></td>
                                         <td><?php echo $persediaan->nilai_persediaan ?></td>
-                                        <td><?php echo $persediaan->penjualan ?></td>
-                                        <td><?php echo $persediaan->pecah_satuan ?></td>
-                                        <td><?php echo $persediaan->bahan_produksi ?></td>
-                                        <td><?php echo $persediaan->total_10 - ($persediaan->penjualan + $persediaan->pecah_satuan + $persediaan->bahan_produksi) ?></td>
+                                        <td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
+                                        <td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
+                                        <td><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
+                                        <td><?php
+                                            $penjualan = isset($persediaan->penjualan) ? (float) $persediaan->penjualan : 0;
+                                            $pecah_satuan = isset($persediaan->pecah_satuan) ? (float) $persediaan->pecah_satuan : 0;
+                                            $bahan_produksi = isset($persediaan->bahan_produksi) ? (float) $persediaan->bahan_produksi : 0;
+                                            echo (float) $persediaan->total_10 - ($penjualan + $pecah_satuan + $bahan_produksi);
+                                            ?></td>
                                         <!-- <td width="200px">Action</td> -->
                                     </tr>
                                 <?php
