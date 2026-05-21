@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?php $this->load->helper('pembelian_persediaan'); ?>
 
 <div class="content-wrapper">
 
@@ -456,15 +457,6 @@
                                                 <td align="left">
                                                     <?php
                                                     $kategori_barang_detail = '';
-                                                    if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-                                                        $row_kategori_barang_detail = $this->db->select('kategori')
-                                                            ->where('uuid_barang', $list_data->uuid_barang)
-                                                            ->get('sys_nama_barang')
-                                                            ->row();
-                                                        if ($row_kategori_barang_detail && !empty($row_kategori_barang_detail->kategori)) {
-                                                            $kategori_barang_detail = $row_kategori_barang_detail->kategori;
-                                                        }
-                                                    }
                                                     echo $kategori_barang_detail;
                                                     ?>
                                                 </td>
@@ -674,25 +666,17 @@ foreach ($data_ALL_per_SPOP as $list_data) {
 
                                     <select name="uuid_barang" id="uuid_barang" class="form-control select2 select2-update-barang" style="width: 100%; height: 80px;" onchange="if (window.loadDetailBarangPembelianSpopReady) { loadDetailBarangPembelianSpopReady(this); }" required>
                                         <?php
-                                        $kategori_row = "";
-                                        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-                                            $row_barang_kategori = $this->db->select('kategori')->where('uuid_barang', $row->uuid_barang)->get('sys_nama_barang')->row();
-                                            $kategori_row = $row_barang_kategori && isset($row_barang_kategori->kategori) ? $row_barang_kategori->kategori : "";
-                                        }
-                                        $label_row_barang = $kategori_row !== "" ? "[" . strtoupper($kategori_row) . "] " . strtoupper($row->uraian) : strtoupper($row->uraian);
+                                        $kategori_row = '';
+                                        $label_row_barang = strtoupper($row->uraian);
                                         ?>
                                         <option value="<?php echo htmlspecialchars($row->uuid_barang, ENT_QUOTES, 'UTF-8'); ?>" data-kategori="<?php echo htmlspecialchars($kategori_row, ENT_QUOTES, 'UTF-8'); ?>" data-satuan="<?php echo htmlspecialchars($row->satuan, ENT_QUOTES, 'UTF-8'); ?>" data-harga-satuan="<?php echo htmlspecialchars($row->harga_satuan, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $label_row_barang; ?> </option>
                                         <!-- <option value="">Pilih Barang</option> -->
                                         <?php
 
-                                        $select_kategori = $this->db->field_exists('kategori', 'sys_nama_barang') ? ", `kategori`" : "";
-                                        $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
-                                        $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_kategori $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
-
-                                        foreach ($this->db->query($sql)->result() as $m) {
-                                            $kategori_barang = isset($m->kategori) ? $m->kategori : "";
-                                            $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
-                                            $label_barang = $kategori_barang !== "" ? "[" . strtoupper($kategori_barang) . "] " . strtoupper($m->nama_barang) : strtoupper($m->nama_barang);
+                                        foreach (pembelian_get_barang_list_rows($this) as $m) {
+                                            $kategori_barang = '';
+                                            $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : '';
+                                            $label_barang = strtoupper($m->nama_barang);
                                             echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
                                             echo ">  " . $label_barang  . "</option>";
                                         }
@@ -830,15 +814,10 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                     <!-- <option value="">Pilih Barang</option> -->
                                     <?php
 
-                                    // $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang` FROM `sys_nama_barang` ORDER by `nama_barang` ASC";
-                                    $select_kategori = $this->db->field_exists('kategori', 'sys_nama_barang') ? ", `kategori`" : "";
-                                    $select_harga_satuan = $this->db->field_exists('harga_satuan', 'sys_nama_barang') ? ", `harga_satuan`" : "";
-                                    $sql = "SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan` $select_kategori $select_harga_satuan FROM `sys_nama_barang` WHERE `nama_barang`<>'' GROUP by `nama_barang`";
-
-                                    foreach ($this->db->query($sql)->result() as $m) {
-                                        $kategori_barang = isset($m->kategori) ? $m->kategori : "";
-                                        $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : "";
-                                        $label_barang = $kategori_barang !== "" ? "[" . strtoupper($kategori_barang) . "] " . strtoupper($m->nama_barang) : strtoupper($m->nama_barang);
+                                    foreach (pembelian_get_barang_list_rows($this) as $m) {
+                                        $kategori_barang = '';
+                                        $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : '';
+                                        $label_barang = strtoupper($m->nama_barang);
                                         echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
                                         echo ">  " . $label_barang  . "</option>";
                                     }

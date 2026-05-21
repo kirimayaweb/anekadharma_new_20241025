@@ -174,6 +174,22 @@ class Tbl_pembelian extends CI_Controller
 		}
 	}
 
+	/**
+	 * Data barang/jasa dari persediaan (filter bulan sesuai datepicker list pembelian).
+	 */
+	private function _get_barang_dari_persediaan($uuid_barang)
+	{
+		$this->load->helper('pembelian_persediaan');
+		return pembelian_get_barang_by_uuid($this, $uuid_barang);
+	}
+
+	private function _ensure_filter_bulan_pembelian_session()
+	{
+		if (!$this->session->userdata('filter_tbl_pembelian_date_awal')) {
+			$this->_set_filter_session_pembelian(date('Y-m-01 00:00:00'), date('Y-m-t 23:59:59'), null);
+		}
+	}
+
 	private function _collect_row_ids($rows)
 	{
 		$ids = array();
@@ -233,11 +249,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 		$kategori_join_sql = '';
-		$kategori_select_sql = '';
-		if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-			$kategori_join_sql = ' LEFT JOIN sys_nama_barang AS snb_stock ON snb_stock.uuid_barang = persediaan.uuid_barang ';
-			$kategori_select_sql = ' snb_stock.kategori AS kategori_barang, ';
-		}
+		$kategori_select_sql = " '' AS kategori_barang, ";
 
 		// $uuid_gudang="cd64c3af883c11ef9d7f0021ccc9061e";
 
@@ -1735,11 +1747,15 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create()
 	{
+		$this->load->helper('pembelian_persediaan');
+		$default_tgl_po = set_value('tgl_po') !== '' ? set_value('tgl_po') : date('j-n-Y');
+		pembelian_sync_filter_bulan_from_tanggal_po($this, $default_tgl_po);
+
 		$data = array(
 			'button' => 'Simpan',
 			'action' => site_url('tbl_pembelian/create_action_uuid_spop'),
 			'id' => set_value('id'),
-			'tgl_po' => set_value('tgl_po'),
+			'tgl_po' => $default_tgl_po,
 			'nmrsj' => set_value('nmrsj'),
 			'nmrfakturkwitansi' => set_value('nmrfakturkwitansi'),
 			'nmrbpb' => set_value('nmrbpb'),
@@ -1872,6 +1888,7 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_add_uraian_update($uuid_spop = null)
 	{
+		$this->_ensure_filter_bulan_pembelian_session();
 
 		// print_r("create_add_uraian_update");
 		// print_r("<br/>");
@@ -2192,9 +2209,9 @@ class Tbl_pembelian extends CI_Controller
 
 		// GET BARANG DATA
 		$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-		$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-		$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-		$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+		$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+		$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+		$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 		$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -2505,9 +2522,9 @@ class Tbl_pembelian extends CI_Controller
 
 		// GET BARANG DATA
 		$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-		$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-		$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-		$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+		$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+		$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+		$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 		$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -2652,9 +2669,9 @@ class Tbl_pembelian extends CI_Controller
 
 			// GET BARANG DATA
 			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -2772,9 +2789,9 @@ class Tbl_pembelian extends CI_Controller
 
 			// GET BARANG DATA
 			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -2863,6 +2880,7 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_add_uraian($uuid_spop = null)
 	{
+		$this->_ensure_filter_bulan_pembelian_session();
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
@@ -2956,9 +2974,9 @@ class Tbl_pembelian extends CI_Controller
 
 			// GET BARANG DATA
 			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -3092,9 +3110,9 @@ class Tbl_pembelian extends CI_Controller
 
 			// GET BARANG DATA
 			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -3620,9 +3638,9 @@ class Tbl_pembelian extends CI_Controller
 
 			// GET BARANG DATA
 			$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-			$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-			$get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-			$get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
+			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
+			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
+			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
