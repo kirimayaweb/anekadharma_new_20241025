@@ -134,23 +134,176 @@ class Sys_nama_barang extends CI_Controller
             return;
         }
 
-        $select_barang = 'uuid_barang, kode_barang, nama_barang, satuan';
-        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-            $select_barang .= ', kategori';
+        $this->load->helper('pembelian_persediaan');
+
+        $tanggal_po = trim((string) $this->input->get('tanggal_po', TRUE));
+        if ($tanggal_po === '') {
+            $tanggal_po = trim((string) $this->input->post('tanggal_po', TRUE));
         }
-        if ($this->db->field_exists('harga_satuan', 'sys_nama_barang')) {
-            $select_barang .= ', harga_satuan';
+        if ($tanggal_po !== '') {
+            $tgl = pembelian_sync_filter_bulan_from_tanggal_po($this, $tanggal_po);
+        } else {
+            $tgl = pembelian_get_filter_tanggal($this);
         }
 
-        $rows = $this->db->select($select_barang)
-            ->from('sys_nama_barang')
-            ->group_by('nama_barang')
-            ->order_by('nama_barang', 'ASC')
-            ->get()
-            ->result();
+        $rows = pembelian_get_barang_list_rows($this);
+        foreach ($rows as $row) {
+            if (!isset($row->kategori)) {
+                $row->kategori = '';
+            }
+        }
 
         header('Content-Type: application/json');
-        echo json_encode(array('success' => true, 'data' => $rows));
+        echo json_encode(array(
+            'success' => true,
+            'data' => $rows,
+            'bulan_label' => $tgl['bulan_label'],
+            'tanggal_awal' => $tgl['awal'],
+            'tanggal_akhir' => $tgl['akhir'],
+        ));
+    }
+
+    public function cek_nama_barang_persediaan_ajax()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        $nama_barang = trim((string) $this->input->get_post('nama_barang', TRUE));
+        if ($nama_barang === '') {
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Nama barang wajib diisi.'
+            ));
+            return;
+        }
+
+        $this->load->helper('pembelian_persediaan');
+
+        $tanggal_po = trim((string) $this->input->get_post('tanggal_po', TRUE));
+        if ($tanggal_po !== '') {
+            $tgl = pembelian_sync_filter_bulan_from_tanggal_po($this, $tanggal_po);
+        } else {
+            $tgl = pembelian_get_filter_tanggal($this);
+        }
+
+        $nama_norm = pembelian_normalize_nama_barang($nama_barang);
+        $di_bulan = pembelian_find_barang_by_nama($this, $nama_norm, $tanggal_po !== '' ? $tanggal_po : null);
+        $semua_bulan = pembelian_find_barang_referensi_persediaan($this, $nama_norm);
+
+        $rows = array();
+        $bulan_pilih = $tgl['bulan_label'];
+        foreach ($semua_bulan as $row) {
+            $rows[] = array(
+                'id' => isset($row->id) ? (int) $row->id : 0,
+                'uuid_barang' => isset($row->uuid_barang) ? $row->uuid_barang : '',
+                'kode_barang' => isset($row->kode_barang) ? $row->kode_barang : '',
+                'nama_barang' => isset($row->nama_barang) ? $row->nama_barang : '',
+                'satuan' => isset($row->satuan) ? $row->satuan : '',
+                'harga_satuan' => isset($row->harga_satuan) ? $row->harga_satuan : '',
+                'tanggal_beli' => isset($row->tanggal_beli) ? $row->tanggal_beli : '',
+                'bulan_label' => isset($row->bulan_label) ? $row->bulan_label : '',
+            );
+        }
+
+        $rows_lain_bulan = array();
+        foreach ($rows as $r) {
+            if (!isset($r['bulan_label']) || $r['bulan_label'] !== $bulan_pilih) {
+                $rows_lain_bulan[] = $r;
+            }
+        }
+
+        $exists_in_month = ($di_bulan !== null);
+        if (!$exists_in_month && count($rows) > 0 && count($rows_lain_bulan) === 0) {
+            $exists_in_month = true;
+        }
+
+        $rows_tampil = $rows_lain_bulan;
+        $show_referensi_modal = (!$exists_in_month && count($rows_tampil) > 0);
+
+        echo json_encode(array(
+            'success' => true,
+            'exists_in_month' => $exists_in_month,
+            'exists_in_system' => (count($rows) > 0),
+            'show_referensi_modal' => $show_referensi_modal,
+            'bulan_label' => $tgl['bulan_label'],
+            'data_in_month' => $di_bulan ? array(
+                'uuid_barang' => $di_bulan->uuid_barang,
+                'nama_barang' => $di_bulan->nama_barang,
+                'satuan' => $di_bulan->satuan,
+                'harga_satuan' => $di_bulan->harga_satuan,
+            ) : null,
+            'data' => $rows_tampil,
+            'total_referensi' => count($rows_tampil),
+            'message' => ($exists_in_month)
+                ? 'Nama barang sudah ada di persediaan bulan ' . $tgl['bulan_label'] . '.'
+                : (($show_referensi_modal)
+                    ? 'Nama barang sudah ada di sistem (bulan lain). Pilih dan gunakan salah satu referensi di daftar, atau lanjutkan isian manual.'
+                    : 'Nama barang belum ada di sistem (bulan ' . $tgl['bulan_label'] . ').'),
+        ));
+    }
+
+    public function generate_barang_referensi_ajax()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+
+        header('Content-Type: application/json');
+
+        $this->load->helper('pembelian_persediaan');
+
+        $persediaan_id = (int) $this->input->get_post('persediaan_id', TRUE);
+        $uuid_barang = trim((string) $this->input->get_post('uuid_barang', TRUE));
+
+        $row = null;
+        if ($persediaan_id > 0) {
+            $row = pembelian_get_persediaan_record_by_id($this, $persediaan_id);
+        }
+
+        if (!$row && $uuid_barang !== '') {
+            $sql = "SELECT
+					`id`,
+					COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
+					`kode` AS kode_barang,
+					`namabarang` AS nama_barang,
+					`satuan`,
+					`hpp` AS harga_satuan,
+					`tanggal_beli`,
+					DATE_FORMAT(`tanggal_beli`, '%m/%Y') AS bulan_label
+				FROM `persediaan`
+				WHERE (`uuid_barang` = ? OR `uuid_persediaan` = ?)
+				ORDER BY `id` DESC
+				LIMIT 1";
+            $row = $this->db->query($sql, array($uuid_barang, $uuid_barang))->row();
+        }
+
+        if (!$row) {
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Record persediaan tidak ditemukan.'
+            ));
+            return;
+        }
+
+        echo json_encode(array(
+            'success' => true,
+            'message' => 'Data referensi berhasil diambil.',
+            'data' => array(
+                'id' => isset($row->id) ? (int) $row->id : 0,
+                'uuid_barang' => isset($row->uuid_barang) ? $row->uuid_barang : '',
+                'kode_barang' => isset($row->kode_barang) ? $row->kode_barang : '',
+                'nama_barang' => isset($row->nama_barang) ? $row->nama_barang : '',
+                'satuan' => isset($row->satuan) ? $row->satuan : '',
+                'harga_satuan' => isset($row->harga_satuan) ? $row->harga_satuan : '',
+                'bulan_label' => isset($row->bulan_label) ? $row->bulan_label : '',
+                'tanggal_beli' => isset($row->tanggal_beli) ? $row->tanggal_beli : '',
+            ),
+        ));
     }
 
     public function detail_barang_ajax()
@@ -168,26 +321,22 @@ class Sys_nama_barang extends CI_Controller
             return;
         }
 
-        $select_barang = 'uuid_barang, kode_barang, nama_barang, satuan';
-        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-            $select_barang .= ', kategori';
-        }
-        if ($this->db->field_exists('harga_satuan', 'sys_nama_barang')) {
-            $select_barang .= ', harga_satuan';
+        $this->load->helper('pembelian_persediaan');
+
+        $tanggal_po = trim((string) $this->input->get('tanggal_po', TRUE));
+        if ($tanggal_po !== '') {
+            pembelian_sync_filter_bulan_from_tanggal_po($this, $tanggal_po);
         }
 
-        $barang = $this->db->select($select_barang)
-            ->where('uuid_barang', $uuid_barang)
-            ->get('sys_nama_barang')
-            ->row();
+        $barang = pembelian_get_barang_by_uuid($this, $uuid_barang);
 
         if (!$barang) {
-            echo json_encode(array('success' => false, 'message' => 'Data barang tidak ditemukan.'));
+            echo json_encode(array('success' => false, 'message' => 'Data barang tidak ditemukan di persediaan untuk bulan terpilih.'));
             return;
         }
 
         $harga_satuan = isset($barang->harga_satuan) ? $barang->harga_satuan : '';
-        $kategori = isset($barang->kategori) ? $barang->kategori : '';
+        $kategori = '';
 
         echo json_encode(array(
             'success' => true,
@@ -211,62 +360,93 @@ class Sys_nama_barang extends CI_Controller
 
         header('Content-Type: application/json');
 
-        $kode_barang = strtoupper(trim((string) $this->input->post('kode_barang', TRUE)));
-        $nama_barang = trim((string) $this->input->post('nama_barang', TRUE));
-        $kategori = trim((string) $this->input->post('kategori', TRUE));
+        $this->load->helper('pembelian_persediaan');
 
-        if ($kode_barang === '' || $nama_barang === '') {
+        $tanggal_po = trim((string) $this->input->post('tanggal_po', TRUE));
+        if ($tanggal_po === '') {
             echo json_encode(array(
                 'success' => false,
-                'message' => 'Kode barang dan nama barang wajib diisi.'
+                'message' => 'Silakan pilih Tgl PO di halaman pembelian terlebih dahulu (datepicker tanggal PO).'
             ));
             return;
         }
 
-        $existing = $this->db->select('id, uuid_barang, kode_barang, nama_barang')
-            ->where('LOWER(nama_barang)=', strtolower($nama_barang))
-            ->get('sys_nama_barang')
-            ->row();
+        if (pembelian_parse_tanggal_po($tanggal_po) === false) {
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Format Tgl PO tidak valid. Silakan pilih tanggal dari datepicker.'
+            ));
+            return;
+        }
+
+        $tgl = pembelian_sync_filter_bulan_from_tanggal_po($this, $tanggal_po);
+
+        $nama_barang = pembelian_normalize_nama_barang($this->input->post('nama_barang', TRUE));
+        $kategori = trim((string) $this->input->post('kategori', TRUE));
+        $kode_barang = pembelian_kode_barang_opsional($nama_barang, $this->input->post('kode_barang', TRUE));
+
+        if ($nama_barang === '') {
+            echo json_encode(array(
+                'success' => false,
+                'message' => 'Nama barang wajib diisi.'
+            ));
+            return;
+        }
+
+        $existing = pembelian_find_barang_by_nama($this, $nama_barang, $tanggal_po);
 
         if ($existing) {
             echo json_encode(array(
                 'success' => false,
                 'duplicate' => true,
-                'message' => 'Nama barang sudah ada. Silakan pilih barang tersebut dari combobox.',
+                'message' => 'Nama barang sudah ada di persediaan bulan terpilih. Silakan pilih dari combobox.',
                 'data' => $existing
             ));
             return;
         }
 
-        $data = array(
+        $uuid_barang_referensi = trim((string) $this->input->post('uuid_barang_referensi', TRUE));
+        $uuid_barang_baru = ($uuid_barang_referensi !== '')
+            ? $uuid_barang_referensi
+            : str_replace('-', '', $this->db->query("SELECT REPLACE(UUID(),'-','') AS u")->row()->u);
+        $hpp_raw = trim((string) $this->input->post('harga_satuan', TRUE));
+        $hpp_baru = preg_replace('/[^0-9]/', '', str_replace('.', '', $hpp_raw));
+        if ($hpp_baru === '') {
+            $hpp_baru = '0';
+        }
+
+        $data_persediaan = array(
+            'tanggal' => date('Y-m-d H:i:s'),
+            'tanggal_beli' => $tgl['awal_bulan'],
+            'uuid_barang' => $uuid_barang_baru,
+            'kode' => $kode_barang,
+            'namabarang' => $nama_barang,
+            'satuan' => $this->input->post('satuan', TRUE),
+            'hpp' => $hpp_baru !== '' ? $hpp_baru : 0,
+            'sa' => 0,
+            'beli' => 0,
+            'total_10' => 0,
+            'nilai_persediaan' => 0,
+        );
+
+        $id_persediaan = $this->Persediaan_model->insert_produk_baru($data_persediaan);
+        $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan);
+
+        $row = (object) array(
+            'uuid_barang' => $row_persediaan && !empty($row_persediaan->uuid_barang) ? $row_persediaan->uuid_barang : ($row_persediaan ? $row_persediaan->uuid_persediaan : $uuid_barang_baru),
             'kode_barang' => $kode_barang,
             'nama_barang' => $nama_barang,
             'satuan' => $this->input->post('satuan', TRUE),
-            'keterangan' => $this->input->post('keterangan', TRUE),
+            'kategori' => $kategori,
+            'harga_satuan' => $hpp_baru,
         );
-
-        if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-            $data['kategori'] = $kategori;
-        }
-
-        if ($this->db->field_exists('uuid_kategori', 'sys_nama_barang')) {
-            if ($kategori !== '') {
-                $rowKat = $this->db->select('uuid_kategori')
-                    ->where('kategori', $kategori)
-                    ->get('sys_kategori_barang')
-                    ->row();
-                $data['uuid_kategori'] = $rowKat ? $rowKat->uuid_kategori : null;
-            } else {
-                $data['uuid_kategori'] = null;
-            }
-        }
-
-        $id_barang_insert = $this->Sys_nama_barang_model->insert($data);
-        $row = $this->Sys_nama_barang_model->get_by_id($id_barang_insert);
 
         echo json_encode(array(
             'success' => true,
-            'message' => 'Barang berhasil ditambahkan.',
+            'message' => 'Barang berhasil ditambahkan ke persediaan bulan ' . $tgl['bulan_label']
+                . ' (tanggal beli: ' . $tgl['awal_bulan'] . ').',
+            'bulan_label' => $tgl['bulan_label'],
+            'tanggal_beli' => $tgl['awal_bulan'],
             'data' => $row
         ));
     }
