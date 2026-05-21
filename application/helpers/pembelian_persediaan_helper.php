@@ -75,8 +75,12 @@ function pembelian_get_filter_tanggal($CI, $tanggal_po = null)
 function pembelian_sync_filter_bulan_from_tanggal_po($CI, $tanggal_po)
 {
 	$tgl = pembelian_get_filter_tanggal($CI, $tanggal_po);
-	$CI->session->set_userdata('filter_tbl_pembelian_date_awal', $tgl['awal'] . ' 00:00:00');
-	$CI->session->set_userdata('filter_tbl_pembelian_date_akhir', $tgl['akhir'] . ' 23:59:59');
+	$awal = $tgl['awal'] . ' 00:00:00';
+	$akhir = $tgl['akhir'] . ' 23:59:59';
+	$CI->session->set_userdata('filter_tbl_pembelian_date_awal', $awal);
+	$CI->session->set_userdata('filter_tbl_pembelian_date_akhir', $akhir);
+	$CI->session->set_userdata('filter_tbl_pembelian_jasa_date_awal', $awal);
+	$CI->session->set_userdata('filter_tbl_pembelian_jasa_date_akhir', $akhir);
 	$CI->session->set_userdata('filter_pembelian_create_tanggal_po', trim((string) $tanggal_po));
 	return $tgl;
 }
@@ -272,4 +276,48 @@ function pembelian_kode_barang_opsional($nama_barang, $kode_input)
 function pembelian_persediaan_punya_kategori()
 {
 	return false;
+}
+
+/**
+ * Tahun kalender dari Tgl PO (datepicker).
+ */
+function pembelian_get_tahun_from_tanggal_po($tanggal_po)
+{
+	$ts = pembelian_parse_tanggal_po($tanggal_po);
+	if ($ts === false) {
+		return (int) date('Y');
+	}
+	return (int) date('Y', $ts);
+}
+
+/**
+ * Cek apakah nomor SPOP sudah ada di tabel persediaan pada tahun Tgl PO.
+ */
+function pembelian_cek_spop_di_persediaan_tahun($CI, $spop, $tanggal_po)
+{
+	$spop = trim((string) $spop);
+	$tahun = pembelian_get_tahun_from_tanggal_po($tanggal_po);
+
+	if ($spop === '') {
+		return array(
+			'exists' => false,
+			'tahun' => $tahun,
+			'tahun_label' => (string) $tahun,
+		);
+	}
+
+	$sql = "SELECT COUNT(*) AS jml
+		FROM `persediaan`
+		WHERE TRIM(`spop`) <> ''
+		AND TRIM(`spop`) = ?
+		AND YEAR(`tanggal_beli`) = ?
+		LIMIT 1";
+	$row = $CI->db->query($sql, array($spop, $tahun))->row();
+	$jml = ($row && isset($row->jml)) ? (int) $row->jml : 0;
+
+	return array(
+		'exists' => ($jml > 0),
+		'tahun' => $tahun,
+		'tahun_label' => (string) $tahun,
+	);
 }
