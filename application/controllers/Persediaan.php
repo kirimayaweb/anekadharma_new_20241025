@@ -563,8 +563,115 @@ class Persediaan extends CI_Controller
 			'url_rekap_ajax' => site_url('Persediaan/ajax_rekap_bulan'),
 			'url_rekap_sync_step' => site_url('Persediaan/ajax_rekap_sync_step'),
 			'url_rekap_excel' => site_url('Persediaan/excel_rekap'),
+			'url_tambah_persediaan' => site_url('Persediaan/ajax_tambah_persediaan'),
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
 		);
+	}
+
+	/**
+	 * AJAX: tambah record persediaan manual (nama, satuan, hpp) untuk bulan terpilih.
+	 */
+	public function ajax_tambah_persediaan()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json; charset=UTF-8');
+
+		$this->load->helper('pembelian_persediaan');
+
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array(
+				'ok' => false,
+				'success' => false,
+				'message' => 'Format bulan tidak valid. Pilih bulan di filter Data Persediaan.',
+			));
+			return;
+		}
+
+		$namabarang = pembelian_normalize_nama_barang($this->input->post('namabarang', TRUE));
+		$satuan = trim((string) $this->input->post('satuan', TRUE));
+		$hpp_raw = trim((string) $this->input->post('harga_satuan', TRUE));
+		$hpp = preg_replace('/[^0-9]/', '', str_replace('.', '', $hpp_raw));
+		if ($hpp === '') {
+			$hpp = '0';
+		}
+
+		if ($namabarang === '') {
+			echo json_encode(array(
+				'ok' => false,
+				'success' => false,
+				'message' => 'Nama barang / jasa wajib diisi.',
+			));
+			return;
+		}
+
+		if ($satuan === '') {
+			echo json_encode(array(
+				'ok' => false,
+				'success' => false,
+				'message' => 'Satuan wajib diisi.',
+			));
+			return;
+		}
+
+		$tanggal_beli = $this->get_tanggal_rekap_dari_bulan($bulan);
+		$bulan_label = date('m/Y', strtotime($tanggal_beli));
+		$tanggal_po_cek = date('j-n-Y', strtotime($tanggal_beli));
+
+		$existing = pembelian_find_barang_by_nama($this, $namabarang, $tanggal_po_cek);
+		if ($existing) {
+			echo json_encode(array(
+				'ok' => false,
+				'success' => false,
+				'duplicate' => true,
+				'message' => 'Nama barang / jasa sudah ada di persediaan bulan ' . $bulan_label . '.',
+			));
+			return;
+		}
+
+		$uuid_barang_baru = str_replace('-', '', $this->db->query("SELECT REPLACE(UUID(),'-','') AS u")->row()->u);
+
+		$data_persediaan = array(
+			'tanggal' => date('Y-m-d H:i:s'),
+			'tanggal_beli' => $tanggal_beli,
+			'uuid_barang' => $uuid_barang_baru,
+			'kode' => '',
+			'namabarang' => $namabarang,
+			'satuan' => $satuan,
+			'hpp' => $hpp,
+			'sa' => 0,
+			'beli' => 0,
+			'total_10' => 0,
+			'nilai_persediaan' => 0,
+		);
+
+		$id_persediaan = $this->Persediaan_model->insert_produk_baru($data_persediaan);
+
+		if (!$id_persediaan) {
+			echo json_encode(array(
+				'ok' => false,
+				'success' => false,
+				'message' => 'Gagal menyimpan data persediaan.',
+			));
+			return;
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'success' => true,
+			'message' => 'Persediaan berhasil ditambahkan untuk bulan ' . $bulan_label
+				. ' (tanggal beli: ' . $tanggal_beli . ').',
+			'id' => (int) $id_persediaan,
+			'bulan' => $bulan,
+			'tanggal_beli' => $tanggal_beli,
+		));
 	}
 
 	private function get_rekap_total_steps()

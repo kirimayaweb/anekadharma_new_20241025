@@ -40,11 +40,16 @@
                                 : date('Y-m');
                             ?>
                             <form action="<?php echo $action_cari_form; ?>" method="post" id="form-persediaan-bulan">
+                                <div class="row mb-2 align-items-center">
+                                    <div class="col-md-12 d-flex align-items-center flex-wrap">
+                                        <strong class="mb-0">DATA PERSEDIAAN</strong>
+                                        <button type="button" class="btn btn-success btn-sm ml-2" id="btn-tambah-persediaan" title="Tambah barang/jasa ke persediaan bulan terpilih">
+                                            <i class="fas fa-plus"></i> Tambah Persediaan
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="row mb-3 align-items-end">
                                     <div class="col-md-12">
-                                        <strong>DATA PERSEDIAAN</strong>
-                                    </div>
-                                    <div class="col-md-12 mt-2">
                                         <label for="bulan_persediaan">Bulan:</label>
                                         <input type="month" id="bulan_persediaan" name="bulan_persediaan" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil); ?>">
                                         <button type="submit" class="btn btn-danger ml-1 btn-cari-persediaan">Cari</button>
@@ -58,7 +63,7 @@
                                     <tr>
                                         <th width="50px">No</th>
                                         <th>Tanggal</th>
-                                        <th>Kode</th>
+                                        <th>Kategori</th>
                                         <th>Namabarang</th>
                                         <th>Satuan</th>
                                         <th>Hpp</th>
@@ -101,7 +106,7 @@
                                         <tr>
                                             <td><?php echo ++$start ?></td>
                                             <td><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></td>
-                                            <td><?php echo $persediaan->kode ?></td>
+                                            <td><?php echo isset($persediaan->kategori) ? htmlspecialchars($persediaan->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
                                             <td><?php echo $persediaan->namabarang ?></td>
                                             <td><?php echo $persediaan->satuan ?></td>
                                             <td><?php echo $persediaan->hpp ?></td>
@@ -141,6 +146,43 @@
                                     </tr>
                                 </tfoot>
                             </table>
+
+                            <div class="modal fade" id="modal-tambah-persediaan" tabindex="-1" role="dialog" aria-labelledby="modalTambahPersediaanLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-success text-white">
+                                            <h5 class="modal-title" id="modalTambahPersediaanLabel">Tambah Persediaan</h5>
+                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form id="form-tambah-persediaan" autocomplete="off">
+                                            <div class="modal-body">
+                                                <p class="text-muted small mb-3" id="info-bulan-tambah-persediaan">
+                                                    Bulan persediaan: <strong><?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                    — <em>tanggal beli otomatis tanggal 1 bulan tersebut</em>
+                                                </p>
+                                                <div class="form-group">
+                                                    <label for="tambah_namabarang">Nama Barang / Jasa <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="tambah_namabarang" name="namabarang" placeholder="Nama barang atau jasa" required>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label for="tambah_satuan">Satuan <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="tambah_satuan" name="satuan" placeholder="Contoh: PCS, KG, LITER" required>
+                                                </div>
+                                                <div class="form-group mb-0">
+                                                    <label for="tambah_harga_satuan">Harga Satuan (HPP) <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control" id="tambah_harga_satuan" name="harga_satuan" placeholder="0" inputmode="numeric" autocomplete="off" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                                                <button type="submit" class="btn btn-success" id="btn-submit-tambah-persediaan">Simpan</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- TAB 2: REKAP -->
@@ -209,8 +251,150 @@
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
+    var urlTambahPersediaan = <?php echo json_encode(isset($url_tambah_persediaan) ? $url_tambah_persediaan : site_url('Persediaan/ajax_tambah_persediaan')); ?>;
+
+    function getBulanPersediaanAktif() {
+        return $('#bulan_persediaan').val() || '';
+    }
+
+    function updateInfoBulanTambahPersediaan() {
+        var bulan = getBulanPersediaanAktif();
+        if (!bulan) {
+            $('#info-bulan-tambah-persediaan').html('Pilih bulan di filter Data Persediaan terlebih dahulu.');
+            return;
+        }
+        var parts = bulan.split('-');
+        var label = parts.length === 2 ? (parts[1] + '/' + parts[0]) : bulan;
+        $('#info-bulan-tambah-persediaan').html(
+            'Bulan persediaan: <strong>' + label + '</strong> — <em>tanggal beli otomatis tanggal 1 bulan tersebut</em>'
+        );
+    }
+
+    function formatAngkaHppInput(input) {
+        var angka = String(input.value || '').replace(/[^0-9]/g, '');
+        if (!angka) {
+            input.value = '';
+            return;
+        }
+        input.value = angka.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    $('#btn-tambah-persediaan').on('click', function() {
+        if (!getBulanPersediaanAktif()) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Bulan belum dipilih',
+                    text: 'Pilih bulan di filter Data Persediaan terlebih dahulu.'
+                });
+            } else {
+                alert('Pilih bulan di filter Data Persediaan terlebih dahulu.');
+            }
+            return;
+        }
+        updateInfoBulanTambahPersediaan();
+        $('#form-tambah-persediaan')[0].reset();
+        $('#modal-tambah-persediaan').modal('show');
+    });
+
+    $('#bulan_persediaan').on('change', function() {
+        updateInfoBulanTambahPersediaan();
+        if (!$(this).val() || rekapRecalcRunning) {
+            return;
+        }
+        $('#form-persediaan-bulan').submit();
+    });
+
+    $('#tambah_harga_satuan').on('input keyup paste', function() {
+        var el = this;
+        setTimeout(function() { formatAngkaHppInput(el); }, 0);
+    });
+
+    $('#form-tambah-persediaan').on('submit', function(e) {
+        e.preventDefault();
+
+        var bulan = getBulanPersediaanAktif();
+        if (!bulan) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Bulan belum dipilih', text: 'Pilih bulan terlebih dahulu.' });
+            }
+            return false;
+        }
+
+        var namabarang = $.trim($('#tambah_namabarang').val());
+        var satuan = $.trim($('#tambah_satuan').val());
+        var hargaSatuan = $.trim($('#tambah_harga_satuan').val());
+
+        if (!namabarang || !satuan || !hargaSatuan) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Data belum lengkap', text: 'Lengkapi nama barang/jasa, satuan, dan harga satuan.' });
+            }
+            return false;
+        }
+
+        var $btn = $('#btn-submit-tambah-persediaan');
+        var btnText = $btn.text();
+        $btn.prop('disabled', true).text('Menyimpan...');
+
+        var formData = new FormData();
+        formData.append('bulan_persediaan', bulan);
+        formData.append('namabarang', namabarang);
+        formData.append('satuan', satuan);
+        formData.append('harga_satuan', hargaSatuan);
+
+        fetch(urlTambahPersediaan, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res && (res.ok || res.success)) {
+                $('#modal-tambah-persediaan').modal('hide');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: res.message || 'Data persediaan berhasil ditambahkan.',
+                        confirmButtonText: 'OK'
+                    }).then(function() {
+                        $('#form-persediaan-bulan').submit();
+                    });
+                } else {
+                    alert(res.message || 'Berhasil');
+                    $('#form-persediaan-bulan').submit();
+                }
+                return;
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: res && res.duplicate ? 'warning' : 'error',
+                    title: res && res.duplicate ? 'Nama sudah ada' : 'Gagal menyimpan',
+                    text: (res && res.message) ? res.message : 'Gagal menambah persediaan.'
+                });
+            } else {
+                alert((res && res.message) ? res.message : 'Gagal menambah persediaan.');
+            }
+        })
+        .catch(function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Kesalahan', text: 'Terjadi kesalahan saat menyimpan data.' });
+            } else {
+                alert('Terjadi kesalahan saat menyimpan data.');
+            }
+        })
+        .finally(function() {
+            $btn.prop('disabled', false).text(btnText);
+        });
+
+        return false;
+    });
+
     var dtPersediaan = $('#table-persediaan').DataTable({
         scrollY: 500,
         scrollX: true,
@@ -236,18 +420,8 @@ $(document).ready(function() {
             .replace(/"/g, '&quot;');
     }
 
-    function syncBulanRekapDariPersediaan() {
-        var bulan = $('#bulan_persediaan').val();
-        if (bulan) {
-            $('#bulan_rekap').val(bulan);
-        }
-    }
-
-    function syncBulanPersediaanDariRekap() {
-        var bulan = $('#bulan_rekap').val();
-        if (bulan) {
-            $('#bulan_persediaan').val(bulan);
-        }
+    function getBulanRekapAktif() {
+        return $('#bulan_rekap').val() || '';
     }
 
     function renderRekapTable(res) {
@@ -285,7 +459,7 @@ $(document).ready(function() {
         if (rekapLoading) {
             return Promise.reject(new Error('Sedang memuat rekap'));
         }
-        var bulan = $('#bulan_rekap').val() || $('#bulan_persediaan').val() || '';
+        var bulan = getBulanRekapAktif();
         if (!bulan) {
             return Promise.resolve();
         }
@@ -383,9 +557,9 @@ $(document).ready(function() {
             return Promise.reject(new Error('Rekalkulasi sedang berjalan'));
         }
 
-        var bulan = $('#bulan_rekap').val() || $('#bulan_persediaan').val() || '';
+        var bulan = getBulanRekapAktif();
         if (!bulan) {
-            return Promise.reject(new Error('Bulan belum dipilih'));
+            return Promise.reject(new Error('Bulan belum dipilih di tab Rekap'));
         }
 
         if (typeof Swal === 'undefined') {
@@ -393,7 +567,6 @@ $(document).ready(function() {
         }
 
         rekapRecalcRunning = true;
-        syncBulanRekapDariPersediaan();
         tampilkanSwalRekapProgress(bulan);
 
         var chain = Promise.resolve();
@@ -581,7 +754,7 @@ $(document).ready(function() {
     });
 
     $('#btn-cetak-excel-rekap').on('click', function() {
-        var bulan = $('#bulan_rekap').val() || $('#bulan_persediaan').val() || '';
+        var bulan = getBulanRekapAktif();
         var formData = new FormData();
         formData.append('bulan_persediaan', bulan);
 
@@ -638,7 +811,6 @@ $(document).ready(function() {
     try {
         if (sessionStorage.getItem('persediaan_show_tab') === 'rekap') {
             sessionStorage.removeItem('persediaan_show_tab');
-            syncBulanRekapDariPersediaan();
             setTimeout(function() {
                 tampilkanTabRekap();
                 loadRekapDataOnly();
@@ -646,33 +818,16 @@ $(document).ready(function() {
         }
     } catch (e) {}
 
-    // Pilih bulan di tab Persediaan → rekalkulasi + progress → tab Rekap → refresh data persediaan
-    $('#bulan_persediaan').on('change', function() {
-        if (!$(this).val() || rekapRecalcRunning) {
-            return;
-        }
-        syncBulanRekapDariPersediaan();
-        $('#table-persediaan').css('opacity', '0.45');
-
-        runRekapRecalcWithSwal({
-            showTabAfter: true,
-            submitFormAfter: true
-        }).catch(function() {
-            $('#table-persediaan').css('opacity', '1');
-        });
-    });
-
+    // Tab Rekap: ubah bulan hanya memengaruhi rekap (tidak mengubah datepicker tab Persediaan)
     $('#bulan_rekap').on('change', function() {
         if (!$(this).val() || rekapRecalcRunning) {
             return;
         }
-        syncBulanPersediaanDariRekap();
-        runRekapRecalcWithSwal({ showTabAfter: true, submitFormAfter: false });
+        runRekapRecalcWithSwal({ showTabAfter: false, submitFormAfter: false });
     });
 
     $('a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
         if ($(e.target).attr('href') === '#panel-rekap') {
-            syncBulanRekapDariPersediaan();
             if (!rekapRecalcRunning) {
                 loadRekapDataOnly();
             }
