@@ -4,53 +4,60 @@
     <div class="row">
         <div class="col-12">
             <div class="form-group mb-2">
-                <label for="modal_kategori">Kategori</label>
-                <div class="d-flex align-items-start flex-nowrap">
-                    <div class="modal-kategori-select-wrap">
-                    <select class="form-control select2-kategori-modal" name="kategori" id="modal_kategori" data-placeholder="-- Pilih Kategori --">
-                        <option value=""></option>
-                        <?php if (!empty($kategori_barang_options)) { ?>
-                            <?php foreach ($kategori_barang_options as $kat) { ?>
-                                <?php $valKat = isset($kat->kategori) ? $kat->kategori : ''; ?>
-                                <option value="<?php echo htmlspecialchars($valKat, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (($kategori == $valKat) ? 'selected' : ''); ?>>
-                                    <?php echo htmlspecialchars($valKat, ENT_QUOTES, 'UTF-8'); ?>
-                                </option>
-                            <?php } ?>
-                        <?php } ?>
-                    </select>
+                <div class="d-flex align-items-end flex-nowrap" style="gap: 8px;">
+                    <div class="flex-grow-1" style="min-width: 0;">
+                        <label for="modal_kategori" class="d-block">Kategori <small class="text-muted">(opsional)</small></label>
+                        <div class="modal-kategori-select-wrap">
+                            <select class="form-control select2-kategori-modal" name="kategori" id="modal_kategori" data-placeholder="-- Pilih Kategori --">
+                                <option value=""></option>
+                                <?php if (!empty($kategori_barang_options)) { ?>
+                                    <?php foreach ($kategori_barang_options as $kat) { ?>
+                                        <?php $valKat = isset($kat->kategori) ? $kat->kategori : ''; ?>
+                                        <option value="<?php echo htmlspecialchars($valKat, ENT_QUOTES, 'UTF-8'); ?>" <?php echo (($kategori == $valKat) ? 'selected' : ''); ?>>
+                                            <?php echo htmlspecialchars($valKat, ENT_QUOTES, 'UTF-8'); ?>
+                                        </option>
+                                    <?php } ?>
+                                <?php } ?>
+                            </select>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-success flex-shrink-0" style="white-space: nowrap;" data-toggle="modal" data-target="#modalBarangTambahKategori">Tambah Kategori</button>
+                    <div class="flex-shrink-0">
+                        <label class="d-block">&nbsp;</label>
+                        <button type="button" class="btn btn-success" style="white-space: nowrap;" data-toggle="modal" data-target="#modalBarangTambahKategori">Tambah Kategori</button>
+                    </div>
+                    <div class="flex-shrink-0" style="width: 160px;">
+                        <label for="modal_kode_barang" class="d-block">Kode <small class="text-muted">(opsional)</small></label>
+                        <input type="text" class="form-control" name="kode_barang" id="modal_kode_barang" placeholder="Kode" value="<?php echo htmlspecialchars($kode_barang, ENT_QUOTES, 'UTF-8'); ?>" />
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-3">
-            <div class="form-group">
-                <label for="modal_kode_barang">Kode</label>
-                <input type="text" class="form-control" name="kode_barang" id="modal_kode_barang" placeholder="Kode" value="<?php echo htmlspecialchars($kode_barang, ENT_QUOTES, 'UTF-8'); ?>" required />
-            </div>
-        </div>
         <div class="col-md-6">
             <div class="form-group">
                 <label for="modal_nama_barang">Nama</label>
                 <textarea class="form-control" rows="2" name="nama_barang" id="modal_nama_barang" placeholder="Nama" required><?php echo htmlspecialchars($nama_barang, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small class="text-muted">Setelah mengisi nama lalu pindah ke field lain, sistem mengecek persediaan bulan <em>Tgl PO</em>.</small>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="form-group">
                 <label for="modal_satuan_barang">Satuan</label>
                 <input type="text" class="form-control" name="satuan" id="modal_satuan_barang" placeholder="Satuan" value="<?php echo htmlspecialchars($satuan, ENT_QUOTES, 'UTF-8'); ?>" />
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="form-group">
+                <label for="modal_harga_satuan_barang">Harga Satuan (HPP)</label>
+                <input type="text" class="form-control" name="harga_satuan" id="modal_harga_satuan_barang" placeholder="HPP" value="" autocomplete="off" />
+            </div>
+        </div>
     </div>
 
-    <div class="form-group">
-        <label for="modal_keterangan_barang">Keterangan</label>
-        <textarea class="form-control" rows="2" name="keterangan" id="modal_keterangan_barang" placeholder="Keterangan"><?php echo htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8'); ?></textarea>
-    </div>
-
+    <input type="hidden" name="uuid_barang_referensi" id="modal_uuid_barang_referensi" value="" />
+    <input type="hidden" name="persediaan_id_referensi" id="modal_persediaan_id_referensi" value="" />
     <input type="hidden" name="id" value="<?php echo htmlspecialchars($id, ENT_QUOTES, 'UTF-8'); ?>" />
 
     <div class="text-right">
@@ -255,8 +262,28 @@
             });
         }
 
+        function formatHppModal(value) {
+            if (window.formatHargaSatuanPembelian) {
+                return window.formatHargaSatuanPembelian(value);
+            }
+            if (value === null || typeof value === 'undefined' || value === '') {
+                return '';
+            }
+            var angka = String(value).replace(/[^0-9]/g, '');
+            return angka.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.id === 'modal_harga_satuan_barang' && window.applyFormatHargaSatuanPembelianModal) {
+                window.applyFormatHargaSatuanPembelianModal(e.target);
+            }
+        });
+
         if (window.initSelect2KategoriModal) {
             setTimeout(window.initSelect2KategoriModal, 0);
+        }
+        if (window.initCekNamaBarangModalInput) {
+            setTimeout(window.initCekNamaBarangModalInput, 0);
         }
     })();
 </script>
