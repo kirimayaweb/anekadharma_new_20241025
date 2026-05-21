@@ -37,6 +37,81 @@ class Tbl_pembelian_pengajuan_bayar_model extends CI_Model
         $this->db->where($this->uuid_spop, $uuid_spop);
         return $this->db->get($this->table)->result();
     }
+    /**
+     * Semua pengajuan bayar di-index per uuid_spop (1 query, untuk hindari N+1 di view list).
+     */
+    function get_all_grouped_by_uuid_spop()
+    {
+        $this->db->select('uuid_spop, uuid_pengajuan_bayar, nominal_pengajuan');
+        $this->db->order_by($this->id, $this->order);
+        $rows = $this->db->get($this->table)->result();
+        $grouped = array();
+        foreach ($rows as $row) {
+            if (!isset($grouped[$row->uuid_spop])) {
+                $grouped[$row->uuid_spop] = array();
+            }
+            $grouped[$row->uuid_spop][] = $row;
+        }
+        return $grouped;
+    }
+
+    /**
+     * Total nominal pengajuan per uuid_spop (1 query GROUP BY).
+     */
+    function get_sum_nominal_grouped_by_uuid_spop()
+    {
+        $sql = "SELECT uuid_spop, SUM(nominal_pengajuan) AS total_pengajuan
+                FROM " . $this->table . "
+                GROUP BY uuid_spop";
+        $rows = $this->db->query($sql)->result();
+        $sums = array();
+        foreach ($rows as $row) {
+            $sums[$row->uuid_spop] = (float) $row->total_pengajuan;
+        }
+        return $sums;
+    }
+
+    /**
+     * Pengajuan bayar per uuid_spop — hanya untuk daftar uuid pada halaman (lebih ringan).
+     */
+    function get_grouped_by_uuid_spop_in($uuid_spop_list)
+    {
+        if (empty($uuid_spop_list)) {
+            return array();
+        }
+        $this->db->select('uuid_spop, uuid_pengajuan_bayar, nominal_pengajuan');
+        $this->db->where_in($this->uuid_spop, $uuid_spop_list);
+        $this->db->order_by($this->id, $this->order);
+        $rows = $this->db->get($this->table)->result();
+        $grouped = array();
+        foreach ($rows as $row) {
+            if (!isset($grouped[$row->uuid_spop])) {
+                $grouped[$row->uuid_spop] = array();
+            }
+            $grouped[$row->uuid_spop][] = $row;
+        }
+        return $grouped;
+    }
+
+    /**
+     * Total nominal pengajuan — hanya uuid_spop yang tampil di halaman.
+     */
+    function get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list)
+    {
+        if (empty($uuid_spop_list)) {
+            return array();
+        }
+        $this->db->select('uuid_spop, SUM(nominal_pengajuan) AS total_pengajuan', FALSE);
+        $this->db->where_in($this->uuid_spop, $uuid_spop_list);
+        $this->db->group_by($this->uuid_spop);
+        $rows = $this->db->get($this->table)->result();
+        $sums = array();
+        foreach ($rows as $row) {
+            $sums[$row->uuid_spop] = (float) $row->total_pengajuan;
+        }
+        return $sums;
+    }
+
     // get data by id
     function get_sumNominal_by_uuid_spop($uuid_spop)
     {
