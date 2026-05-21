@@ -85,6 +85,16 @@ function xlsWriteLabel($Row, $Col, $Value, $align = null)
 	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = $cell;
 }
 
+/** Label bold font 14pt (style index 2) */
+function xlsWriteLabelBold14($Row, $Col, $Value)
+{
+	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = array(
+		'type' => 'String',
+		'value' => (string) $Value,
+		'style' => 2,
+	);
+}
+
 /**
  * Nominal Indonesia: 1.234.567.890 (tanpa Rp dan tanpa desimal ,00), rata kanan
  */
@@ -174,13 +184,17 @@ function excel_output_xlsx($rows)
 
 	$styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 		. '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-		. '<fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>'
+		. '<fonts count="2">'
+		. '<font><sz val="11"/><name val="Calibri"/></font>'
+		. '<font><b/><sz val="14"/><name val="Calibri"/></font>'
+		. '</fonts>'
 		. '<fills count="1"><fill><patternFill patternType="none"/></fill></fills>'
 		. '<borders count="1"><border><left/><right/><top/><bottom/></border></borders>'
 		. '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-		. '<cellXfs count="2">'
+		. '<cellXfs count="3">'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right"/></xf>'
+		. '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
 		. '</cellXfs>'
 		. '</styleSheet>';
 

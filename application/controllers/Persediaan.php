@@ -537,7 +537,9 @@ class Persediaan extends CI_Controller
 
 	public function index()
 	{
-		$data = $this->get_persediaan_list_view_data('', $this->Persediaan_model->get_all());
+		$bulan = date('Y-m');
+		$Persediaan = $this->get_persediaan_by_bulan($bulan);
+		$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
 	}
 
@@ -554,22 +556,451 @@ class Persediaan extends CI_Controller
 	{
 		$this->load->helper('persediaan_display');
 
-		$sys_konsumen_data = $this->db->query(
-			"SELECT * FROM `sys_konsumen` ORDER BY `nama_konsumen` ASC"
-		)->result();
-
 		return array(
 			'Persediaan_data' => $Persediaan,
-			'sys_konsumen_data' => $sys_konsumen_data,
 			'action_cari' => site_url('persediaan/search'),
 			'bulan_persediaan_selected' => $bulan,
+			'url_rekap_ajax' => site_url('Persediaan/ajax_rekap_bulan'),
+			'url_rekap_sync_step' => site_url('Persediaan/ajax_rekap_sync_step'),
+			'url_rekap_excel' => site_url('Persediaan/excel_rekap'),
+			'rekap_total_steps' => $this->get_rekap_total_steps(),
+		);
+	}
+
+	private function get_rekap_total_steps()
+	{
+		return 7 + count($this->get_rekap_breakdown_config());
+	}
+
+	private function parse_bulan_rekap_input()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
+		}
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			return array('ok' => false, 'message' => 'Format bulan tidak valid.');
+		}
+		return array('ok' => true, 'bulan' => $bulan);
+	}
+
+	/**
+	 * AJAX: muat data rekap (tanpa rekalkulasi).
+	 */
+	public function ajax_rekap_bulan()
+	{
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			header('Content-Type: application/json; charset=UTF-8');
+			echo json_encode($parsed);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
+
+		header('Content-Type: application/json; charset=UTF-8');
+		echo json_encode(array(
+			'ok' => true,
+			'bulan' => $bulan,
+			'tanggal_rekap' => $this->get_tanggal_rekap_dari_bulan($bulan),
+			'items' => $hasil_rekap['items'],
+			'total_detail' => $hasil_rekap['total_detail'],
+			'total_detail_tampil' => $hasil_rekap['total_detail_tampil'],
+		));
+	}
+
+	/**
+	 * AJAX: satu langkah rekalkulasi rekap (step 1–21) untuk progress bar.
+	 */
+	public function ajax_rekap_sync_step()
+	{
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			header('Content-Type: application/json; charset=UTF-8');
+			echo json_encode($parsed);
+			return;
+		}
+
+		$step = (int) $this->input->post('step', TRUE);
+		$total_steps = $this->get_rekap_total_steps();
+		if ($step < 1 || $step > $total_steps) {
+			header('Content-Type: application/json; charset=UTF-8');
+			echo json_encode(array('ok' => false, 'message' => 'Langkah rekalkulasi tidak valid.'));
+			return;
+		}
+
+		$hasil = $this->sync_persediaan_rekap_step($parsed['bulan'], $step);
+		header('Content-Type: application/json; charset=UTF-8');
+		echo json_encode($hasil);
+	}
+
+	private function get_tanggal_rekap_dari_bulan($bulan)
+	{
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false) {
+			return date('Y-m-01');
+		}
+		return date('Y-m-01', $ts);
+	}
+
+	private function get_urutan_nama_rekap()
+	{
+		$utama = array(
+			'Sediaan Awal', 'Pembelian PU', 'Pembelian Cetak', 'Pembelian Grafikita',
+			'TUJ', 'Sediaan Akhir', 'BPP',
+		);
+		foreach ($this->get_rekap_breakdown_config() as $cfg) {
+			$utama[] = $cfg['nama'];
+		}
+		return $utama;
+	}
+
+	/**
+	 * Record 8–21: nama tampilan + kolom persediaan (jumlah kolom bulan terpilih).
+	 */
+	private function get_rekap_breakdown_config()
+	{
+		return array(
+			array('nama' => '(Cetak)', 'kolom' => 'cetak'),
+			array('nama' => '(Cetak Grafikita)', 'kolom' => 'grafikita'),
+			array('nama' => '(Sekret)', 'kolom' => 'sekret'),
+			array('nama' => '(medis)', 'kolom' => 'medis'),
+			array('nama' => '(PPBMP )', 'kolom' => 'ppbmp'),
+			array('nama' => '(Dinas & Umum )', 'kolom' => 'dinas_umum'),
+			array('nama' => '( Rsud )', 'kolom' => 'atk_rsud'),
+			array('nama' => '( Siiplah&Bosda)', 'kolom' => 'siiplah_bosda'),
+			array('nama' => '(Alat dan Bahan KBS)', 'kolom' => 'ppbmp_kbs'),
+			array('nama' => '(KBS PPBMP)', 'kolom' => 'ppbmp_kbs'),
+			array('nama' => '(Sembako)', 'kolom' => 'sembako'),
+			array('nama' => '(P.samya) FC', 'kolom' => 'fc_psamya'),
+			array('nama' => '(Gose) FC', 'kolom' => 'fc_gose'),
+			array('nama' => '(Manding) FC', 'kolom' => 'fc_manding'),
+		);
+	}
+
+	private function get_persediaan_rekap_rows($bulan)
+	{
+		$this->load->helper('persediaan_display');
+		$tanggal_rekap = $this->get_tanggal_rekap_dari_bulan($bulan);
+		$urutan = $this->get_urutan_nama_rekap();
+		$order_sql = implode(',', array_map(function ($n) {
+			return $this->db->escape($n);
+		}, $urutan));
+
+		$list = $this->db->query(
+			"SELECT `nama_rekap`, `nominal` FROM `persediaan_rekap_view`
+			WHERE `tanggal_rekap`=?
+			ORDER BY FIELD(`nama_rekap`, " . $order_sql . "), `id` ASC",
+			array($tanggal_rekap)
+		)->result();
+
+		$nama_breakdown = array();
+		foreach ($this->get_rekap_breakdown_config() as $cfg) {
+			$nama_breakdown[] = $cfg['nama'];
+		}
+
+		$items = array();
+		$no = 1;
+		$total_detail = 0;
+		foreach ($list as $row) {
+			$nominal_angka = persediaan_parse_angka($row->nominal);
+			if (in_array($row->nama_rekap, $nama_breakdown, true)) {
+				$total_detail += $nominal_angka;
+			}
+			$items[] = array(
+				'nomor' => $no++,
+				'deskripsi' => $row->nama_rekap,
+				'nominal' => $nominal_angka,
+				'nominal_tampil' => number_format($nominal_angka, 0, ',', '.'),
+				'is_breakdown' => in_array($row->nama_rekap, $nama_breakdown, true),
+			);
+		}
+
+		return array(
+			'items' => $items,
+			'total_detail' => $total_detail,
+			'total_detail_tampil' => number_format($total_detail, 0, ',', '.'),
+		);
+	}
+
+	/**
+	 * Jumlah Σ(kolom) untuk semua record persediaan pada tanggal_beli tertentu.
+	 */
+	private function sum_persediaan_kolom($tanggal_beli, $nama_kolom)
+	{
+		$this->load->helper('persediaan_display');
+		$allowed = array(
+			'cetak', 'grafikita', 'sekret', 'medis', 'ppbmp', 'dinas_umum', 'atk_rsud',
+			'siiplah_bosda', 'ppbmp_kbs', 'kbs', 'sembako', 'fc_psamya', 'fc_gose', 'fc_manding',
+		);
+		if (!in_array($nama_kolom, $allowed, true)) {
+			return 0;
+		}
+
+		$rows = $this->db->query(
+			"SELECT `" . $nama_kolom . "` FROM `persediaan` WHERE `tanggal_beli`=?",
+			array($tanggal_beli)
+		)->result();
+
+		$total = 0;
+		foreach ($rows as $r) {
+			$total += persediaan_parse_angka($r->{$nama_kolom});
+		}
+		return $total;
+	}
+
+	private function tally_rekap_upsert(&$insert_count, &$update_count, $aksi)
+	{
+		if ($aksi === 'insert') {
+			$insert_count++;
+		} elseif ($aksi === 'update') {
+			$update_count++;
+		}
+	}
+
+	/**
+	 * Jumlah Σ(kolom × hpp) untuk semua record persediaan pada tanggal_beli tertentu.
+	 */
+	private function sum_persediaan_kolom_kali_hpp($tanggal_beli, $nama_kolom)
+	{
+		$this->load->helper('persediaan_display');
+		$allowed = array('dinas_umum', 'cetak', 'grafikita', 'tuj');
+		if (!in_array($nama_kolom, $allowed, true)) {
+			return 0;
+		}
+
+		$rows = $this->db->query(
+			"SELECT `" . $nama_kolom . "`, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
+			array($tanggal_beli)
+		)->result();
+
+		$total = 0;
+		foreach ($rows as $r) {
+			$total += persediaan_parse_angka($r->{$nama_kolom}) * persediaan_parse_angka($r->hpp);
+		}
+		return $total;
+	}
+
+	/**
+	 * Total nilai_persediaan bulan terpilih (Σ nilai_persediaan × hpp per record).
+	 */
+	private function sum_persediaan_nilai_kali_hpp($tanggal_beli)
+	{
+		$this->load->helper('persediaan_display');
+		$rows = $this->db->query(
+			"SELECT `nilai_persediaan`, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
+			array($tanggal_beli)
+		)->result();
+
+		$total = 0;
+		foreach ($rows as $r) {
+			$total += persediaan_parse_angka($r->nilai_persediaan) * persediaan_parse_angka($r->hpp);
+		}
+		return $total;
+	}
+
+	/**
+	 * Total nilai_persediaan bulan terpilih (tanpa dikali hpp lagi).
+	 */
+	private function sum_persediaan_nilai_persediaan($tanggal_beli)
+	{
+		$this->load->helper('persediaan_display');
+		$rows = $this->db->query(
+			"SELECT `nilai_persediaan` FROM `persediaan` WHERE `tanggal_beli`=?",
+			array($tanggal_beli)
+		)->result();
+
+		$total = 0;
+		foreach ($rows as $r) {
+			$total += persediaan_parse_angka($r->nilai_persediaan);
+		}
+		return $total;
+	}
+
+	private function upsert_persediaan_rekap_baris($tanggal_rekap, $nama_rekap, $nominal, $keterangan, &$next_id)
+	{
+		$existing = $this->db->query(
+			"SELECT `id` FROM `persediaan_rekap_view` WHERE `tanggal_rekap`=? AND `nama_rekap`=? LIMIT 1",
+			array($tanggal_rekap, $nama_rekap)
+		)->row();
+
+		$nominal_tampil = $this->format_angka_persediaan($nominal);
+
+		if ($existing) {
+			$this->db->where('id', $existing->id);
+			$this->db->update('persediaan_rekap_view', array(
+				'nominal' => $nominal_tampil,
+				'keterangan' => $keterangan,
+			));
+			return 'update';
+		}
+
+		$data_insert = array(
+			'id' => $next_id++,
+			'tanggal_rekap' => $tanggal_rekap,
+			'nama_rekap' => $nama_rekap,
+			'nominal' => $nominal_tampil,
+			'keterangan' => $keterangan,
+		);
+		$this->db->set('uuid_persediaan_rekap_view', "replace(uuid(),'-','')", FALSE);
+		$this->db->insert('persediaan_rekap_view', $data_insert);
+		return 'insert';
+	}
+
+	private function get_next_id_persediaan_rekap_view()
+	{
+		$row_max = $this->db->query("SELECT MAX(`id`) AS max_id FROM `persediaan_rekap_view`")->row();
+		return $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1;
+	}
+
+	private function get_nominal_rekap_baris($tanggal_rekap, $nama_rekap)
+	{
+		$this->load->helper('persediaan_display');
+		$row = $this->db->query(
+			"SELECT `nominal` FROM `persediaan_rekap_view` WHERE `tanggal_rekap`=? AND `nama_rekap`=? LIMIT 1",
+			array($tanggal_rekap, $nama_rekap)
+		)->row();
+		if (!$row) {
+			return 0;
+		}
+		return persediaan_parse_angka($row->nominal);
+	}
+
+	/**
+	 * Satu langkah rekalkulasi rekap (untuk progress AJAX).
+	 */
+	private function sync_persediaan_rekap_step($bulan, $step)
+	{
+		$this->load->helper('persediaan_display');
+
+		$tanggal_rekap = $this->get_tanggal_rekap_dari_bulan($bulan);
+		$tanggal_beli_bulan_ini = $tanggal_rekap;
+		$tanggal_beli_bulan_lalu = date('Y-m-01', strtotime('-1 month', strtotime($tanggal_rekap)));
+		$next_id = $this->get_next_id_persediaan_rekap_view();
+		$total_steps = $this->get_rekap_total_steps();
+
+		$nominal = 0;
+		$nama_rekap = '';
+		$keterangan = '';
+		$info_proses = '';
+
+		if ($step === 1) {
+			$nama_rekap = 'Sediaan Awal';
+			$nominal = $this->sum_persediaan_nilai_persediaan($tanggal_beli_bulan_lalu);
+			$keterangan = 'Rekalkulasi: total nilai_persediaan bulan ' . $tanggal_beli_bulan_lalu;
+			$info_proses = 'Menghitung total nilai persediaan bulan sebelumnya';
+		} elseif ($step === 2) {
+			$nama_rekap = 'Pembelian PU';
+			$nominal = $this->sum_persediaan_kolom_kali_hpp($tanggal_beli_bulan_ini, 'dinas_umum');
+			$keterangan = 'Rekalkulasi: sum(dinas_umum * hpp) bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung sum(dinas_umum × hpp)';
+		} elseif ($step === 3) {
+			$nama_rekap = 'Pembelian Cetak';
+			$nominal = $this->sum_persediaan_kolom_kali_hpp($tanggal_beli_bulan_ini, 'cetak');
+			$keterangan = 'Rekalkulasi: sum(cetak * hpp) bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung sum(cetak × hpp)';
+		} elseif ($step === 4) {
+			$nama_rekap = 'Pembelian Grafikita';
+			$nominal = $this->sum_persediaan_kolom_kali_hpp($tanggal_beli_bulan_ini, 'grafikita');
+			$keterangan = 'Rekalkulasi: sum(grafikita * hpp) bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung sum(grafikita × hpp)';
+		} elseif ($step === 5) {
+			$nama_rekap = 'TUJ';
+			$sa = $this->get_nominal_rekap_baris($tanggal_rekap, 'Sediaan Awal');
+			$pu = $this->get_nominal_rekap_baris($tanggal_rekap, 'Pembelian PU');
+			$cetak = $this->get_nominal_rekap_baris($tanggal_rekap, 'Pembelian Cetak');
+			$graf = $this->get_nominal_rekap_baris($tanggal_rekap, 'Pembelian Grafikita');
+			$nominal = $sa + $cetak + $pu + $graf;
+			$keterangan = 'Rekalkulasi: Sediaan Awal + Pembelian Cetak + Pembelian PU + Pembelian Grafikita';
+			$info_proses = 'Menjumlahkan Sediaan Awal + Pembelian Cetak + PU + Grafikita';
+		} elseif ($step === 6) {
+			$nama_rekap = 'Sediaan Akhir';
+			$nominal = $this->sum_persediaan_nilai_persediaan($tanggal_beli_bulan_ini);
+			$keterangan = 'Rekalkulasi: total nilai_persediaan bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung total nilai persediaan bulan terpilih';
+		} elseif ($step === 7) {
+			$nama_rekap = 'BPP';
+			$tuj = $this->get_nominal_rekap_baris($tanggal_rekap, 'TUJ');
+			$akhir = $this->get_nominal_rekap_baris($tanggal_rekap, 'Sediaan Akhir');
+			$nominal = $tuj - $akhir;
+			$keterangan = 'Rekalkulasi: TUJ - Sediaan Akhir';
+			$info_proses = 'Menghitung TUJ dikurangi Sediaan Akhir';
+		} else {
+			$idx = $step - 8;
+			$breakdown = $this->get_rekap_breakdown_config();
+			if (!isset($breakdown[$idx])) {
+				return array('ok' => false, 'message' => 'Langkah rekalkulasi tidak ditemukan.');
+			}
+			$cfg = $breakdown[$idx];
+			$nama_rekap = $cfg['nama'];
+			$nominal = $this->sum_persediaan_kolom($tanggal_beli_bulan_ini, $cfg['kolom']);
+			$keterangan = 'Rekalkulasi: sum(' . $cfg['kolom'] . ') bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung sum(' . $cfg['kolom'] . ')';
+		}
+
+		$aksi = $this->upsert_persediaan_rekap_baris($tanggal_rekap, $nama_rekap, $nominal, $keterangan, $next_id);
+
+		return array(
+			'ok' => true,
+			'bulan' => $bulan,
+			'tanggal_rekap' => $tanggal_rekap,
+			'step' => $step,
+			'total_steps' => $total_steps,
+			'nama_rekap' => $nama_rekap,
+			'nominal' => $nominal,
+			'nominal_tampil' => number_format($nominal, 0, ',', '.'),
+			'aksi' => $aksi,
+			'info_proses' => $info_proses,
+			'message' => 'Record ' . $step . '/' . $total_steps . ': ' . $nama_rekap . ' — ' . ($aksi === 'insert' ? 'ditambahkan' : 'diperbarui'),
+			'done' => ($step >= $total_steps),
+		);
+	}
+
+	/**
+	 * Rekalkulasi rekap penuh (semua langkah).
+	 */
+	private function sync_persediaan_rekap_data($bulan)
+	{
+		$insert_count = 0;
+		$update_count = 0;
+		$total_steps = $this->get_rekap_total_steps();
+
+		for ($step = 1; $step <= $total_steps; $step++) {
+			$hasil = $this->sync_persediaan_rekap_step($bulan, $step);
+			if (empty($hasil['ok'])) {
+				continue;
+			}
+			if (isset($hasil['aksi']) && $hasil['aksi'] === 'insert') {
+				$insert_count++;
+			} elseif (isset($hasil['aksi']) && $hasil['aksi'] === 'update') {
+				$update_count++;
+			}
+		}
+
+		$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
+
+		return array(
+			'insert' => $insert_count,
+			'update' => $update_count,
+			'total_detail' => $hasil_rekap['total_detail'],
 		);
 	}
 
 	public function cetak_pdf()
 	{
 		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
+
+		$this->load->helper('persediaan_display');
 
 		$data = array(
 			'persediaan_data' => $Persediaan,
@@ -577,12 +1008,12 @@ class Persediaan extends CI_Controller
 			'bulan_persediaan_selected' => $bulan,
 		);
 
-		// Tabel persediaan punya kolom sangat banyak; Dompdf butuh memory lebih besar.
 		@ini_set('memory_limit', '1024M');
 		@set_time_limit(300);
 		$this->load->library('pdf');
 		$this->pdf->setPaper('A3', 'landscape');
-		$this->pdf->filename = 'persediaan' . ($bulan !== '' ? ('-' . $bulan) : '') . '.pdf';
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$this->pdf->filename = 'Persediaan_' . $bulan . '_' . $waktu_klik . '.pdf';
 		$this->pdf->load_view('anekadharma/persediaan/persediaan_pdf', $data);
 	}
 
@@ -1029,9 +1460,26 @@ class Persediaan extends CI_Controller
 
 	private function get_persediaan_by_bulan($bulan)
 	{
+		$bulan = trim((string) $bulan);
 		if ($bulan === '') {
 			return $this->Persediaan_model->get_all();
 		}
+
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false) {
+			return $this->Persediaan_model->get_by_year_month($bulan);
+		}
+
+		$tanggal_beli = date('Y-m-01', $ts);
+		$rows = $this->db->query(
+			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `id` DESC",
+			array($tanggal_beli)
+		)->result();
+
+		if (count($rows) > 0) {
+			return $rows;
+		}
+
 		return $this->Persediaan_model->get_by_year_month($bulan);
 	}
 
@@ -1294,21 +1742,72 @@ class Persediaan extends CI_Controller
 		$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
 	}
 
+	public function excel_rekap()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper(array('exportexcel', 'persediaan_display'));
+		$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
+
+		$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$waktu_cetak_tampil = date('d/m/Y H:i:s');
+		$namaFile = 'Rekap_Persediaan_' . $bagian_bulan . '_' . $waktu_klik . '.xlsx';
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		xlsWriteLabelBold14(0, 0, 'di cetak pada : ' . $waktu_cetak_tampil);
+		xlsWriteLabelBold14(1, 0, 'REKAP PERSEDIAAN — Bulan: ' . $bagian_bulan);
+
+		$tablehead = 3;
+		$tablebody = 4;
+		xlsWriteLabel($tablehead, 0, 'Nomor');
+		xlsWriteLabel($tablehead, 1, 'Deskripsi');
+		xlsWriteLabel($tablehead, 2, 'Nominal', 'right');
+
+		$row = $tablebody;
+		foreach ($hasil_rekap['items'] as $it) {
+			xlsWriteLabel($row, 0, (string) $it['nomor']);
+			xlsWriteLabel($row, 1, (string) $it['deskripsi']);
+			xlsWriteLabel($row, 2, (string) $it['nominal_tampil'], 'right');
+			$row++;
+		}
+
+		xlsWriteLabel($row, 0, '');
+		xlsWriteLabel($row, 1, 'Total (baris 8–21)', 'right');
+		xlsWriteLabel($row, 2, (string) $hasil_rekap['total_detail_tampil'], 'right');
+
+		xlsEOF();
+		exit();
+	}
+
 	public function excel()
 	{
 		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
 
 		$this->load->helper(array('exportexcel', 'persediaan_display'));
 
-		$namaFile = 'persediaan' . ($bulan !== '' ? ('-' . $bulan) : '') . '.xlsx';
-		$tablehead = 0;
-		$tablebody = 1;
+		$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$waktu_cetak_tampil = date('d/m/Y H:i:s');
+		$namaFile = 'Persediaan_' . $bagian_bulan . '_' . $waktu_klik . '.xlsx';
+		$tablehead = 1;
+		$tablebody = 2;
 		$nourut = 1;
 		$total_nilai_persediaan = 0;
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
+
+		xlsWriteLabelBold14(0, 0, 'di cetak pada : ' . $waktu_cetak_tampil);
 
 		$kolomhead = 0;
 		foreach (persediaan_export_headers() as $header) {

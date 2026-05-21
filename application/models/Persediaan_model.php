@@ -165,43 +165,54 @@ class Persediaan_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    /**
+     * Tabel persediaan: kolom id bukan AUTO_INCREMENT — harus diisi manual (MAX(id)+1).
+     */
+    private function get_next_id_persediaan()
+    {
+        $row_max = $this->db->query("SELECT MAX(`id`) AS max_id FROM `persediaan`")->row();
+        if ($row_max && $row_max->max_id !== null && $row_max->max_id !== '') {
+            return (int) $row_max->max_id + 1;
+        }
+        return 1;
+    }
+
+    private function ensure_persediaan_insert_id(&$data)
+    {
+        if (!isset($data['id']) || $data['id'] === '' || $data['id'] === null || (int) $data['id'] <= 0) {
+            $data['id'] = $this->get_next_id_persediaan();
+        }
+        return (int) $data['id'];
+    }
+
     // insert data
     function insert($data)
     {
+        $new_id = $this->ensure_persediaan_insert_id($data);
         $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
-        $datainsert = array(
-            'PROCESS' => 'INSERT',
-            'id' => $this->db->insert_id()
-        );
+        return $new_id;
     }
 
     // insert data
     function insert_produk_baru($data)
     {
+        $new_id = $this->ensure_persediaan_insert_id($data);
         $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
-        $datainsert = array(
-            'PROCESS' => 'INSERT',
-            'id' => $this->db->insert_id()
-        );
-
-        return $datainsert['id'];
+        return $new_id;
     }
+
     // insert data
     function insert_pecah_satuan($data)
     {
+        $new_id = $this->ensure_persediaan_insert_id($data);
         $this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
         $this->db->insert($this->table, $data);
 
-        $datainsert = array(
-            'PROCESS' => 'INSERT',
-            'id' => $this->db->insert_id()
-        );
-
-        return $datainsert['id'];
+        return $new_id;
     }
 
     // update data
