@@ -1916,8 +1916,8 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan Perubahan Detail SPOP',
-			'action' => site_url('tbl_pembelian/create_action_detail_uuid_spop_update/' . $uuid_spop),
-			'action_ubah_detail_spop' => site_url('tbl_pembelian/create_action_detail_uuid_spop_update/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian_jasa/create_action_detail_uuid_spop_update/' . $uuid_spop),
+			'action_ubah_detail_spop' => site_url('tbl_pembelian_jasa/create_action_detail_uuid_spop_update/' . $uuid_spop),
 			'id' => set_value('id'),
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			// 'nmrsj' => $row_per_uuid_spop->nmrsj,
@@ -1939,8 +1939,8 @@ class Tbl_pembelian_jasa extends CI_Controller
 			'kas_bank' => $get_kas_bank,
 			// 'tgl_bayar' => $row_per_uuid_spop->tgl_bayar,
 			// 'id_usr' => $row_per_uuid_spop->,
-			'action_ubah_per_id' => site_url('tbl_pembelian/create_action_uuid_spop_update_per_id/'),
-			'action_tambah_barang_per_spop' => site_url('tbl_pembelian/create_action_tambah_barang_per_spop/'),
+			'action_ubah_per_id' => site_url('tbl_pembelian_jasa/create_action_uuid_spop_update_per_id/'),
+			'action_tambah_barang_per_spop' => site_url('tbl_pembelian_jasa/create_action_tambah_barang_per_spop/'),
 		);
 
 		// print_r($data);
@@ -2023,7 +2023,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 			// echo "<script type='text/javascript'>alert('$message');</script>";
 			// die;
 
-			$table_pembelian = "tbl_pembelian";
+			$table_pembelian = "tbl_pembelian_jasa";
 			$this->db->where('uuid_spop', $uuid_spop);
 			$this->db->update($table_pembelian, array(
 				'tgl_po' => $date_po,
@@ -2034,7 +2034,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
 			));
 
-			// redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
+			// redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $uuid_spop));
 
 			// die;
 
@@ -2047,7 +2047,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 			$get_spop_proses_new = $this->input->post('spop', TRUE);
 
 			$this->db->where('spop', $get_spop_proses_new);
-			$Get_record_spop = $this->db->get('tbl_pembelian');
+			$Get_record_spop = $this->db->get('tbl_pembelian_jasa');
 
 			// print_r($Get_record_spop->row());
 			// print_r("<br/>");
@@ -2063,7 +2063,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 				// print_r("<br/>");
 				// print_r($Get_record_spop->row()->spop);
 
-				$table_pembelian = "tbl_pembelian";
+				$table_pembelian = "tbl_pembelian_jasa";
 				$this->db->where('uuid_spop', $uuid_spop);
 				$this->db->update($table_pembelian, array(
 					'tgl_po' => $date_po,
@@ -2087,7 +2087,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 				// belum ada spop, maka buat spop baru
 				// echo "Belum ada spop yang sama, maka buat uuid_spop baru, maka ubah spop saja & uuid_spop tidak di ubah";
 
-				$table_pembelian = "tbl_pembelian";
+				$table_pembelian = "tbl_pembelian_jasa";
 				$this->db->where('uuid_spop', $uuid_spop);
 				$this->db->update($table_pembelian, array(
 					'tgl_po' => $date_po,
@@ -2109,7 +2109,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 				$uuid_spop_processing = $uuid_spop;
 			}
 			// die;
-			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop_processing));
+			redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $uuid_spop_processing));
 		} else {
 
 			// echo "SPOP sama";
@@ -2132,7 +2132,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 			$this->Tbl_pembelian_model->update_proses_per_spop($uuid_spop, $data_update_spop);
 
-			redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
+			redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $uuid_spop));
 		}
 
 		// die;
@@ -2447,7 +2447,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		// die;
 
 
-		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $uuid_spop));
+		redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $uuid_spop));
 	}
 
 
@@ -2614,7 +2614,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		// print_r("<br/>");
 		// die;
 
-		redirect(site_url('Tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
+		redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $get_uuid_spop));
 	}
 
 	public function create_action_uuid_spop_update($uuid_spop = null)
@@ -3805,10 +3805,10 @@ class Tbl_pembelian_jasa extends CI_Controller
 			$this->Persediaan_model->delete($get_id_persediaan_di_tbl_pembelian);
 
 			$this->session->set_flashdata('message', 'Delete Record Success');
-			redirect(site_url('tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
+			redirect(site_url('tbl_pembelian_jasa/create_add_uraian_update/' . $get_uuid_spop));
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
-			redirect(site_url('tbl_pembelian'));
+			redirect(site_url('tbl_pembelian_jasa'));
 		}
 	}
 

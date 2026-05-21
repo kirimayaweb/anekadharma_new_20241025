@@ -352,10 +352,10 @@
                             <div class="card-header">
 
                                 <div class="row">
-                                    <div class="col-2" text-align="center"> <strong>Detail Barang</strong></div>
+                                    <div class="col-2" text-align="center"> <strong>Detail Pembelian Jasa</strong></div>
                                     <div class="col-3" text-align="left">
                                         <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
-                                            Tambah Barang
+                                            Tambah beli jasa
                                         </button>
                                     </div>
 
@@ -439,7 +439,7 @@
                                                         </button>
 
                                                         <?php
-                                                        echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Pembelian Barang ini ?\')"');
+                                                        echo anchor(site_url('tbl_pembelian_jasa/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Pembelian Barang ini ?\')"');
                                                         ?>
 
 
@@ -769,7 +769,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Tambah Barang Beli</h4>
+                    <h4 class="modal-title">Tambah pembelian jasa</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -841,7 +841,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                         // $Get_source_form = "/Tbl_pembelian/create_add_uraian/" . $uuid_spop;
                                         ?>
                                         <button type="button" class="btn btn-block btn-danger" onclick="openModalInputBarangBaruPembelianDariModal('#modal-xl-input-barang'); return false;">
-                                            Input Barang Baru
+                                            Tambah jasa
                                         </button>
                                     </div>
                                 </div>
@@ -877,7 +877,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                    <button type="submit" class="btn btn-primary">Simpan Tambah Barang Beli</button>
+                    <button type="submit" class="btn btn-primary">Simpan Pembelian jasa</button>
                 </div>
             </div>
             <!-- /.modal-content -->
