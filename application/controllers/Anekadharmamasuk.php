@@ -59,6 +59,9 @@ class Anekadharmamasuk extends CI_Controller
                 );
                 $this->session->set_userdata($sess);
 
+                print_r($this->session->set_userdata($sess));
+                die;
+
                 $get_client = $this->get_client_ip();
                 $get_client_browser = $this->get_client_browser();
                 $date_login = date('Y-m-d H:i:s');

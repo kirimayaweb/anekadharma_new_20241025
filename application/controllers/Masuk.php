@@ -55,8 +55,6 @@ class Masuk extends CI_Controller
 
             $user = $users->row_array();
 
-
-
             if (password_verify($password, $user['password'])) {
 
   
