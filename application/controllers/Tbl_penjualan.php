@@ -532,7 +532,16 @@ class Tbl_penjualan extends CI_Controller
 		}
 
 		$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual_post);
-		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post);
+		$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $Get_UUID_unit);
+		if (empty($hasil_kolom_unit['ok'])) {
+			$this->session->set_flashdata(
+				'message',
+				isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.'
+			);
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post, $Get_UUID_unit);
 
 		$data = array(
 			'button' => 'Simpan',
@@ -573,7 +582,16 @@ class Tbl_penjualan extends CI_Controller
 
 		penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
 		$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
-		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual);
+		$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
+		$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
+		if (empty($hasil_kolom_unit['ok'])) {
+			echo json_encode(array(
+				'ok' => false,
+				'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
+			));
+			return;
+		}
+		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual, $uuid_unit_ajax);
 
 		$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
 		$view_data = array(
@@ -608,6 +626,8 @@ class Tbl_penjualan extends CI_Controller
 			'modals' => $render['modals'],
 			'jumlah' => count($Data_stock),
 			'jumlah_tampil' => $jumlah_tampil,
+			'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
+			'kolom_unit_created' => !empty($hasil_kolom_unit['created']),
 		));
 	}
 
@@ -655,12 +675,28 @@ class Tbl_penjualan extends CI_Controller
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
-		// AMBIL DATA DARI PERSEDIAAN
-		$sql = "SELECT * FROM `persediaan` WHERE `id`='$id_persediaan_barang'";
-		$data_barang = $this->db->query($sql)->row();
+		// AMBIL DATA DARI PERSEDIAAN (filter id + uuid_barang)
+		$id_persediaan_barang = (int) $id_persediaan_barang;
+		$data_barang = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+		if (empty($data_barang)) {
+			$data_barang = $this->db->where('id', $id_persediaan_barang)->get('persediaan')->row();
+		}
 
 		if (empty($data_barang)) {
 			$this->session->set_flashdata('message', 'Barang persediaan tidak ditemukan.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+
+		if (trim((string) $data_barang->uuid_barang) === '') {
+			$this->session->set_flashdata('message', 'Barang persediaan tidak memiliki uuid_barang.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+
+		$uuid_barang_post = trim((string) $this->input->post('uuid_barang', TRUE));
+		if ($uuid_barang_post !== '' && $uuid_barang_post !== $data_barang->uuid_barang) {
+			$this->session->set_flashdata('message', 'Data barang tidak sesuai (uuid_barang).');
 			redirect(site_url('tbl_penjualan/create'));
 			return;
 		}
@@ -716,6 +752,34 @@ class Tbl_penjualan extends CI_Controller
 			$data_nama_konsumen = $data_konsumen->nama_unit;
 		} else {
 			$data_nama_konsumen = $data_konsumen->nama_konsumen;
+		}
+
+		$jumlah_simpan = preg_replace('/[^0-9]/', '', $this->input->post('jumlah', TRUE));
+		if ((int) $jumlah_simpan <= 0) {
+			$this->session->set_flashdata('message', 'Jumlah barang wajib diisi dan lebih dari 0.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+
+		$uuid_unit_simpan = isset($Get_uuid_unit) ? $Get_uuid_unit : $this->input->post('uuid_unit', TRUE);
+		$hasil_ensure_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_simpan);
+		if (empty($hasil_ensure_unit['ok'])) {
+			$this->session->set_flashdata(
+				'message',
+				isset($hasil_ensure_unit['message']) ? $hasil_ensure_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.'
+			);
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+		$kolom_unit_simpan = penjualan_resolve_kolom_persediaan_unit($this, $uuid_unit_simpan);
+		$sisa_stock_simpan = penjualan_get_sisa_stock_penjualan($data_barang, $kolom_unit_simpan);
+		if ((int) $jumlah_simpan > $sisa_stock_simpan) {
+			$this->session->set_flashdata(
+				'message',
+				'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').'
+			);
+			redirect(site_url('tbl_penjualan/create'));
+			return;
 		}
 
 		// =========SIMPAN DATA==================
@@ -806,22 +870,25 @@ class Tbl_penjualan extends CI_Controller
 		// =========SIMPAN DATA==================
 
 
-		// update field penjualan di tabel persediaan: dapatkan total penjualan, kemudian update penjualan field + penjulan baru
-		// $this->db->where('email', $email);
-		// $users = $this->db->get('persediaan');
-		// print_r("jumlah penjualan di persediaan");
-		// print_r("<br/>");
-		// print_r($data_barang->penjualan);
-
-
-		$Total_penjualan = $data_barang->penjualan + preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
-		// print_r($Total_penjualan);
-
-
-
-		$sql_stock = "UPDATE `persediaan` SET `penjualan`='$Total_penjualan' WHERE `id`='$id_persediaan_barang'";
-
-		$this->db->query($sql_stock);
+		$hasil_persediaan = penjualan_update_persediaan_saat_jual(
+			$this,
+			$id_persediaan_barang,
+			isset($Get_uuid_unit) ? $Get_uuid_unit : $this->input->post('uuid_unit', TRUE),
+			$jumlah_simpan,
+			'tambah'
+		);
+		if (empty($hasil_persediaan['ok'])) {
+			$this->session->set_flashdata(
+				'message',
+				isset($hasil_persediaan['message']) ? $hasil_persediaan['message'] : 'Gagal memperbarui persediaan.'
+			);
+			if ($uuid_penjualan === 'new') {
+				redirect(site_url('tbl_penjualan/create_action_inisiasi/new'));
+			} else {
+				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+			}
+			return;
+		}
 
 
 		// die;
@@ -850,7 +917,12 @@ class Tbl_penjualan extends CI_Controller
 
 		$tgl_jual_kasir = $data_penjualan_per_uuid_penjualan_first_row->tgl_jual;
 		$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual_kasir);
-		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_kasir);
+		penjualan_ensure_persediaan_kolom_unit($this, $data_penjualan_per_uuid_penjualan_first_row->uuid_unit);
+		$Data_stock = penjualan_get_stock_persediaan_rows(
+			$this,
+			$tgl_jual_kasir,
+			$data_penjualan_per_uuid_penjualan_first_row->uuid_unit
+		);
 
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
@@ -949,6 +1021,43 @@ class Tbl_penjualan extends CI_Controller
 			$nama_konsumen = $GET_DATA_sys_konsumen['nama_konsumen'];
 		}
 
+		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		$uuid_unit_lama = '';
+		if (is_array($rows_penjualan) && count($rows_penjualan) > 0 && !empty($rows_penjualan[0]->uuid_unit)) {
+			$uuid_unit_lama = trim((string) $rows_penjualan[0]->uuid_unit);
+		}
+		$uuid_unit_baru = isset($Get_uuid_unit) ? trim((string) $Get_uuid_unit) : '';
+
+		if ($uuid_unit_baru !== '') {
+			$hasil_ensure_unit_baru = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_baru);
+			if (empty($hasil_ensure_unit_baru['ok'])) {
+				$this->session->set_flashdata(
+					'message',
+					isset($hasil_ensure_unit_baru['message']) ? $hasil_ensure_unit_baru['message'] : 'Gagal menyiapkan kolom unit baru di persediaan.'
+				);
+				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+				return;
+			}
+		}
+
+		if ($uuid_unit_lama !== '' && $uuid_unit_baru !== '' && $uuid_unit_lama !== $uuid_unit_baru) {
+			$hasil_pindah_unit = penjualan_pindah_unit_semua_barang(
+				$this,
+				$rows_penjualan,
+				$uuid_unit_lama,
+				$uuid_unit_baru
+			);
+			if (empty($hasil_pindah_unit['ok'])) {
+				$this->session->set_flashdata(
+					'message',
+					isset($hasil_pindah_unit['message'])
+						? $hasil_pindah_unit['message']
+						: 'Gagal memindahkan data penjualan ke unit baru di persediaan.'
+				);
+				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+				return;
+			}
+		}
 
 		// $sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `nmrkirim`=$NomorKirim_baru , `tgl_jual`=$date_jual , `nmrpesan`=$NomorPesan_baru, `uuid_konsumen`=$GET_uuid_konsumen, `konsumen_nama`=$nama_konsumen  WHERE `uuid_penjualan`='$uuid_penjualan'";
 
@@ -956,10 +1065,8 @@ class Tbl_penjualan extends CI_Controller
 
 		$this->db->query($sql_update_penjualan_by_uuid_penjualan);
 
-		// print_r($sql_update_penjualan_by_uuid_penjualan);
-		// die;
-
-		redirect(site_url('Tbl_penjualan/'));
+		$this->session->set_flashdata('message', 'Perubahan detail penjualan berhasil disimpan.');
+		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 	}
 
 
@@ -1074,16 +1181,22 @@ class Tbl_penjualan extends CI_Controller
 
 		// fiel penjualan tabel persediaan: Kalkulasi total penjualan - jumlah jual awal kemudian total penjualan + jumlah jual akhir
 
-		$Total_jual_perubahan = ($get_jmlh_penjualan_dipersediaan - $get_jmlh_penjualan_awal) + $jumlah_Jual_ubah;
-
-		// print_r($Total_jual_perubahan);
-		// print_r("<br/>");
-
-		$Update_data_persediaan = array(
-			'penjualan' => $Total_jual_perubahan,
+		$row_penjualan_unit = $this->db->query($sql_data_penjualan)->row();
+		$hasil_persediaan = penjualan_update_persediaan_selisih_jual(
+			$this,
+			$get_id_persediaan,
+			isset($row_penjualan_unit->uuid_unit) ? $row_penjualan_unit->uuid_unit : '',
+			$get_jmlh_penjualan_awal,
+			$jumlah_Jual_ubah
 		);
-
-		$this->Persediaan_model->update($get_id_persediaan, $Update_data_persediaan);
+		if (empty($hasil_persediaan['ok'])) {
+			$this->session->set_flashdata(
+				'message',
+				isset($hasil_persediaan['message']) ? $hasil_persediaan['message'] : 'Gagal memperbarui persediaan.'
+			);
+			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $Get_uuid_penjualan));
+			return;
+		}
 
 		// print_r("persediaan");
 		// print_r("<br/>");
@@ -1117,9 +1230,10 @@ class Tbl_penjualan extends CI_Controller
 		// $date_po = date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual));
 		// die;
 
-		// 2.b. PERSIAPAN DATA
+		// 2.b. PERSIAPAN DATA (barang & stock dari tabel persediaan)
+		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
 		$data = array(
-			'data_penjualan' => $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan),
+			'data_penjualan' => penjualan_enrich_data_cetak_penjualan($this, $rows_penjualan),
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
@@ -1452,13 +1566,6 @@ class Tbl_penjualan extends CI_Controller
 
 	public function delete($id = null, $uuid_penjualan = null)
 	{
-
-		print_r($id);
-		print_r("<br/>");
-		print_r($uuid_penjualan);
-		print_r("<br/>");
-		// die;
-
 		$row = $this->Tbl_penjualan_model->get_by_id($id);
 
 		// if ($row) {
@@ -1466,17 +1573,6 @@ class Tbl_penjualan extends CI_Controller
 		// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
 
 		$Get_id_persediaan_barang = $row->id_persediaan_barang;
-
-		print_r($Get_id_persediaan_barang);
-		print_r("<br/>");
-		print_r("<br/>");
-
-		$Get_Nama_persediaan_barang = $row->nama_barang;
-
-		print_r($Get_Nama_persediaan_barang);
-		print_r("<br/>");
-		print_r("<br/>");
-
 
 		// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
 		$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
@@ -1514,29 +1610,13 @@ class Tbl_penjualan extends CI_Controller
 		// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
 		if ($Get_total_penjualan_by_id_persediaan >= $row->jumlah) {
 
-			$Get_total_penjualan_after_hapus = $Get_total_penjualan_by_id_persediaan - $row->jumlah;
-
-			// print_r("Get_total_penjualan_after_hapus");
-			// print_r("<br/>");
-			// print_r($Get_total_penjualan_after_hapus);
-			// print_r("<br/>");
-			// print_r("<br/>");
-
-			$Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus = $Get_total_persediaan_total_10_di_tbl_persediaan + $row->jumlah;
-
-			// print_r("Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus");
-			// print_r("<br/>");
-			// print_r($Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus);
-			// print_r("<br/>");
-			// print_r("<br/>");
-
-			// UPDATE TABEL PERSEDIAAN ==> MENGEMBALIKAN JUMLAH PENJUALAN , DIKURANGI DENGAN JUMLAH  PENJUALAN YANG DI CANCEL DAN MENAMBAHKAN JUMLAH PERSEDIAAN total-10
-			$data = array(
-				// 'total_10' => $Get_total_persediaan_total_10_di_tbl_persediaan_after_hapus,
-				'penjualan' => $Get_total_penjualan_after_hapus,
+			penjualan_update_persediaan_saat_jual(
+				$this,
+				$Get_id_persediaan_barang,
+				isset($row->uuid_unit) ? $row->uuid_unit : '',
+				$row->jumlah,
+				'kurangi'
 			);
-
-			$this->Persediaan_model->update($Get_id_persediaan_barang, $data);
 
 			// } else {
 			// 	// print_r("Buat fieldnya jadi 0");

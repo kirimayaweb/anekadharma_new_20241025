@@ -379,30 +379,7 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 
 				<th style="text-align:left; width: 28px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="40"><strong><?php echo ++$start ?></strong></th>
 
-				<th style="text-align:left; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150"><strong>
-						<?php
-						if ($list_data->kode_barang) {
-							echo $list_data->kode_barang;
-						} else {
-							// echo $list_data->uuid_barang;
-							// $gh = $this->Sys_nama_barang_model->get_by_uuid_barang($list_data->uuid_barang);
-							// echo $gh->kode_barang;
-
-
-							$uuidbarang_selected = $list_data->uuid_barang;
-
-							$this->db->where('uuid_barang', $uuidbarang_selected);
-							$data_barang = $this->db->get('sys_nama_barang');
-
-							if ($data_barang->num_rows() > 0) {
-
-								$data_barang = $data_barang->row_array();
-								echo $data_barang['kode_barang'];
-							}
-						}
-
-						?>
-					</strong></th>
+				<th style="text-align:left; width: 150px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="150"><strong><?php echo htmlspecialchars(trim((string) $list_data->kode_barang), ENT_QUOTES, 'UTF-8'); ?></strong></th>
 
 				<th style="text-align:left; width: 280px;border: 1px solid black;  border-right:none;  border-collapse: collapse;" colspan="280"><strong><?php echo $list_data->nama_barang; ?></strong></th>
 

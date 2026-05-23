@@ -949,5 +949,5 @@ window.addEventListener('load', function() {
             scrollX: true
         });
     }
-});
+    });
 </script>
