@@ -4,7 +4,11 @@ if (!isset($filter_bulan_penjualan)) {
 	$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, isset($tgl_jual) ? $tgl_jual : null);
 }
 if (!isset($Data_stock)) {
-	$Data_stock = penjualan_get_stock_persediaan_rows($this, isset($tgl_jual) ? $tgl_jual : null);
+	$Data_stock = penjualan_get_stock_persediaan_rows(
+		$this,
+		isset($tgl_jual) ? $tgl_jual : null,
+		isset($uuid_unit) ? $uuid_unit : null
+	);
 }
 if (!isset($jumlah_barang_penjualan)) {
 	$jumlah_barang_penjualan = 0;
@@ -41,7 +45,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	#modal-xl.modal-pilih-barang-penjualan .modal-body {
 		padding: 0.75rem 0.5rem;
 	}
-	#modal-xl.modal-pilih-barang-penjualan #example {
+	#modal-xl.modal-pilih-barang-penjualan #table-pilih-barang-penjualan {
 		width: 100% !important;
 	}
 	#modal-xl.modal-pilih-barang-penjualan .dataTables_wrapper {
@@ -492,7 +496,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                 <div id="modal-pilih-barang-loading" class="text-center text-muted py-3 d-none">Memuat data persediaan...</div>
                 <div class="card-body p-0">
 
-                    <table id="example" class="display nowrap" style="width:100%">
+                    <table id="table-pilih-barang-penjualan" class="display nowrap" style="width:100%">
                         <!-- <table id="example" class="display nowrap" style="width:100%"> -->
                         <thead>
                             <tr>
@@ -643,14 +647,16 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 </style>
 
 <script>
-/* Inisialisasi setelah jQuery layout (AdminLTE) dimuat — hindari konflik jQuery ganda */
+/* Inisialisasi setelah jQuery layout (AdminLTE) dimuat */
 window.penjualanDtPilihBarang = null;
+window.penjualanTablePilihBarangId = '#table-pilih-barang-penjualan';
+
 window.destroyDataTablePilihBarang = function() {
     var $ = window.jQuery;
     if (!$ || !$.fn.DataTable) {
         return;
     }
-    var $table = $('#example');
+    var $table = $(window.penjualanTablePilihBarangId);
     if ($table.length && $.fn.DataTable.isDataTable($table)) {
         try {
             $table.DataTable().clear().destroy();
@@ -662,25 +668,42 @@ window.destroyDataTablePilihBarang = function() {
     }
     window.penjualanDtPilihBarang = null;
 };
+
 window.initDataTablePilihBarang = function() {
     var $ = window.jQuery;
     if (!$ || !$.fn.DataTable) {
         return;
     }
     window.destroyDataTablePilihBarang();
-    var $table = $('#example');
-    if ($table.length && $('#tbody-pilih-barang-penjualan tr').length) {
+    var $table = $(window.penjualanTablePilihBarangId);
+    if (!$table.length) {
+        return;
+    }
+    try {
         window.penjualanDtPilihBarang = $table.DataTable({
             scrollY: 375,
             scrollX: true,
-            destroy: true
+            destroy: true,
+            paging: true,
+            searching: true
         });
+    } catch (errDt) {
+        console.error('DataTable pilih barang:', errDt);
     }
 };
 
-window.addEventListener('load', function() {
+function penjualanAlertPesan(judul, pesan, icon) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({ icon: icon || 'info', title: judul, text: pesan });
+    } else {
+        alert(judul + (pesan ? '\n' + pesan : ''));
+    }
+}
+
+function penjualanInitInputBarangScript() {
     var $ = window.jQuery;
     if (!$) {
+        setTimeout(penjualanInitInputBarangScript, 80);
         return;
     }
 
@@ -747,16 +770,13 @@ window.addEventListener('load', function() {
     function muatModalPilihBarang(callback, onFinish) {
         var tgl = getTglJualVal();
         if (!tgl) {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'warning', title: 'Tgl Jual belum diisi', text: 'Isi tanggal jual terlebih dahulu.' });
-            } else {
-                alert('Isi tanggal jual terlebih dahulu.');
-            }
+            penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
             if (typeof onFinish === 'function') {
                 onFinish();
             }
             return;
         }
+
         $('#modal-pilih-barang-loading').removeClass('d-none');
         $.ajax({
             url: cfg.urlListPersediaan,
@@ -765,22 +785,20 @@ window.addEventListener('load', function() {
             data: {
                 tgl_jual: tgl,
                 uuid_penjualan: cfg.uuidPenjualan,
-                uuid_unit: $('#uuid_unit').val(),
-                uuid_konsumen: $('#uuid_konsumen').val(),
-                nmrpesan: $('#nmrpesan').val(),
-                nmrkirim: $('#nmrkirim').val()
+                uuid_unit: $('#uuid_unit').val() || '',
+                uuid_konsumen: $('#uuid_konsumen').val() || '',
+                nmrpesan: $('#nmrpesan').val() || '',
+                nmrkirim: $('#nmrkirim').val() || ''
             }
         }).done(function(res) {
             $('#modal-pilih-barang-loading').addClass('d-none');
             if (!res || !res.ok) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'error', title: 'Gagal memuat data', text: (res && res.message) ? res.message : 'Terjadi kesalahan.' });
-                }
+                penjualanAlertPesan('Gagal memuat data', (res && res.message) ? res.message : 'Terjadi kesalahan.', 'error');
                 return;
             }
             window.destroyDataTablePilihBarang();
-            $('#tbody-pilih-barang-penjualan').html(res.tbody);
-            $('#container-modal-pilih-barang-nested').html(res.modals);
+            $('#tbody-pilih-barang-penjualan').html(res.tbody || '');
+            $('#container-modal-pilih-barang-nested').html(res.modals || '');
             if (res.bulan_label) {
                 updateInfoBulan(res.bulan_label);
                 cfg.bulanLabelAwal = res.bulan_label;
@@ -792,19 +810,24 @@ window.addEventListener('load', function() {
             $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' barang — tanpa jasa)');
             window.initDataTablePilihBarang();
             if (typeof callback === 'function') {
-                callback();
+                callback(res);
             }
         }).fail(function(xhr) {
             $('#modal-pilih-barang-loading').addClass('d-none');
             var msg = 'Tidak dapat memuat daftar persediaan.';
-            if (xhr && xhr.responseText && xhr.responseText.indexOf('{') === -1) {
-                msg += ' (cek login / hak akses)';
+            if (xhr && xhr.responseText) {
+                try {
+                    var j = JSON.parse(xhr.responseText);
+                    if (j && j.message) {
+                        msg = j.message;
+                    }
+                } catch (eJson) {
+                    if (xhr.responseText.indexOf('Database Error') !== -1) {
+                        msg = 'Error database saat memuat persediaan. Periksa kolom unit di tabel persediaan.';
+                    }
+                }
             }
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'error', title: 'Gagal memuat data', text: msg });
-            } else {
-                alert(msg);
-            }
+            penjualanAlertPesan('Gagal memuat data', msg, 'error');
         }).always(function() {
             if (typeof onFinish === 'function') {
                 onFinish();
@@ -932,9 +955,19 @@ window.addEventListener('load', function() {
         if ($btn.prop('disabled')) {
             return;
         }
+
+        var tgl = getTglJualVal();
+        if (!tgl) {
+            penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
+            return;
+        }
+
         $btn.prop('disabled', true);
+        $('#modal-pilih-barang-loading').removeClass('d-none');
+        $('#modal-xl').modal('show');
+
         muatModalPilihBarang(function() {
-            $('#modal-xl').modal('show');
+            /* data sudah dimuat di dalam modal */
         }, function() {
             $btn.prop('disabled', false);
         });
@@ -944,10 +977,18 @@ window.addEventListener('load', function() {
 })(jQuery);
 
     if ($('#example1').length && $.fn.DataTable && !$.fn.DataTable.isDataTable('#example1')) {
-        $('#example1').DataTable({
-            scrollY: 500,
-            scrollX: true
-        });
+        try {
+            $('#example1').DataTable({
+                scrollY: 500,
+                scrollX: true
+            });
+        } catch (eEx1) {}
     }
-    });
+}
+
+if (document.readyState === 'complete') {
+    penjualanInitInputBarangScript();
+} else {
+    window.addEventListener('load', penjualanInitInputBarangScript);
+}
 </script>

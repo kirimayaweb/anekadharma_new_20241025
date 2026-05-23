@@ -556,6 +556,11 @@ class Persediaan extends CI_Controller
 	{
 		$this->load->helper('persediaan_display');
 
+		$ts_gen_default = strtotime('+1 month', strtotime(date('Y-m-01')));
+		if ($ts_gen_default === false) {
+			$ts_gen_default = time();
+		}
+
 		return array(
 			'Persediaan_data' => $Persediaan,
 			'action_cari' => site_url('persediaan/search'),
@@ -564,7 +569,264 @@ class Persediaan extends CI_Controller
 			'url_rekap_sync_step' => site_url('Persediaan/ajax_rekap_sync_step'),
 			'url_rekap_excel' => site_url('Persediaan/excel_rekap'),
 			'url_tambah_persediaan' => site_url('Persediaan/ajax_tambah_persediaan'),
+			'url_cek_generate_persediaan' => site_url('Persediaan/ajax_cek_generate_persediaan_bulan'),
+			'url_analisa_generate_persediaan' => site_url('Persediaan/ajax_analisa_generate_persediaan_bulan'),
+			'url_generate_persediaan_base' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN'),
+			'gen_bulan_default' => (int) date('n', $ts_gen_default),
+			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
+			'gen_tahun_min' => 2020,
+			'gen_tahun_max' => (int) date('Y') + 2,
+			'can_generate_persediaan' => $this->persediaan_user_can_generate(),
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
+		);
+	}
+
+	/**
+	 * Generate persediaan: id_user_level 1 (admin), 2, atau 99 (administrator);
+	 * fallback nama_level di tbl_user_level = admin / administrator.
+	 */
+	private function persediaan_user_can_generate()
+	{
+		$level = trim((string) $this->session->userdata('sess_id_user_level'));
+		if (in_array($level, array('1', '2', '99'), true)) {
+			return true;
+		}
+
+		if ($level !== '' && $this->db->table_exists('tbl_user_level')) {
+			$row = $this->db->where('id_user_level', $level)->limit(1)->get('tbl_user_level')->row();
+			if (!empty($row->nama_level)) {
+				$nama = strtolower(trim((string) $row->nama_level));
+				if (in_array($nama, array('admin', 'administrator'), true)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * AJAX: cek apakah bulan target sudah punya data persediaan (untuk tab Generate).
+	 */
+	public function ajax_cek_generate_persediaan_bulan()
+	{
+		$this->output->set_content_type('application/json');
+
+		if (!$this->persediaan_user_can_generate()) {
+			echo json_encode(array(
+				'ok' => true,
+				'can_generate' => false,
+				'user_can_generate' => false,
+				'sudah_ada_data' => false,
+				'message' => 'Tombol generate hanya untuk user <strong>Admin</strong> / <strong>Administrator</strong> (id_user_level <strong>1</strong>, <strong>2</strong>, atau <strong>99</strong>).',
+			));
+			return;
+		}
+
+		$bulan_target = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			echo json_encode(array(
+				'ok' => false,
+				'message' => 'Format bulan tidak valid. Gunakan YYYY-MM.',
+			));
+			return;
+		}
+
+		$ts_target = strtotime($bulan_target . '-01');
+		if ($ts_target === false) {
+			echo json_encode(array('ok' => false, 'message' => 'Bulan target tidak valid.'));
+			return;
+		}
+
+		$tanggal_beli_target = date('Y-m-01', $ts_target);
+		$tanggal_beli_sumber = date('Y-m-01', strtotime('-1 month', $ts_target));
+		$bulan_sumber = date('Y-m', strtotime('-1 month', $ts_target));
+
+		$count_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
+		$count_sumber = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$sudah_ada = ($count_target > 0);
+		$can_generate = ($count_sumber > 0);
+
+		$message = '';
+		if ($count_sumber === 0) {
+			$message = 'Tidak ada data sumber bulan ' . date('m/Y', strtotime($bulan_sumber . '-01'))
+				. ' (tanggal_beli = ' . $tanggal_beli_sumber . '). Isi dulu persediaan bulan sebelumnya.';
+		} elseif ($sudah_ada) {
+			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate akan: '
+				. '(1) update <strong>beli</strong> record yang sudah ada dari <code>tbl_pembelian</code> / '
+				. '<code>tbl_pembelian_jasa</code> (by <code>uuid_persediaan</code>, beli=0 jika tidak ada pembelian), '
+				. '(2) menambah record baru dari bulan sumber untuk barang yang belum ada.';
+		} else {
+			$message = 'Siap generate: salin ' . $count_sumber . ' record dari bulan '
+				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' ke bulan '
+				. date('m/Y', $ts_target) . '.';
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'bulan_target' => $bulan_target,
+			'bulan_sumber' => $bulan_sumber,
+			'tanggal_beli_target' => $tanggal_beli_target,
+			'tanggal_beli_sumber' => $tanggal_beli_sumber,
+			'count_target' => $count_target,
+			'count_sumber' => $count_sumber,
+			'sudah_ada_data' => $sudah_ada,
+			'can_generate' => $can_generate,
+			'user_can_generate' => true,
+			'url_generate' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN/' . $bulan_target),
+			'message' => $message,
+		));
+	}
+
+	/**
+	 * AJAX: analisa sebelum generate (duplikat uuid_barang, estimasi insert/update).
+	 */
+	public function ajax_analisa_generate_persediaan_bulan()
+	{
+		$this->output->set_content_type('application/json');
+
+		if (!$this->persediaan_user_can_generate()) {
+			echo json_encode(array(
+				'ok' => false,
+				'message' => 'Analisa generate hanya untuk Admin / Administrator (id_user_level 1, 2, atau 99).',
+			));
+			return;
+		}
+
+		$bulan_target = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$ctx = $this->get_generate_persediaan_context($bulan_target);
+		if (!$ctx['ok']) {
+			echo json_encode(array('ok' => false, 'message' => $ctx['message']));
+			return;
+		}
+
+		$analisa = $this->analisa_generate_persediaan_bulan($ctx);
+		$analisa['ok'] = true;
+		$analisa['bulan_target'] = $ctx['bulan_target'];
+		$analisa['bulan_sumber'] = date('Y-m', strtotime($ctx['tanggal_beli_sumber']));
+		$analisa['tanggal_beli_target'] = $ctx['tanggal_beli_target'];
+		$analisa['tanggal_beli_sumber'] = $ctx['tanggal_beli_sumber'];
+		$analisa['bulan_target_label'] = date('m/Y', strtotime($ctx['tanggal_beli_target']));
+		$analisa['bulan_sumber_label'] = date('m/Y', strtotime($ctx['tanggal_beli_sumber']));
+		$analisa['url_generate'] = site_url('Persediaan/GENERATE_PERSEDIAN_BULAN/' . $ctx['bulan_target']);
+
+		echo json_encode($analisa);
+	}
+
+	/**
+	 * Simulasi & statistik duplikat uuid_barang sebelum generate.
+	 */
+	private function analisa_generate_persediaan_bulan($ctx)
+	{
+		$tanggal_beli_target = $ctx['tanggal_beli_target'];
+		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
+
+		$total_sumber = (int) $ctx['total_sumber'];
+		$total_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
+
+		$row_dup_uuid = $this->db->query(
+			"SELECT TRIM(COALESCE(`uuid_barang`, '')) AS uuid_barang,
+				COUNT(*) AS jumlah
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) <> ''
+			GROUP BY TRIM(COALESCE(`uuid_barang`, ''))
+			HAVING COUNT(*) > 1
+			ORDER BY jumlah DESC, uuid_barang ASC",
+			array($tanggal_beli_sumber)
+		)->result();
+
+		$grup_duplikat_uuid_barang = count($row_dup_uuid);
+		$baris_duplikat_uuid_barang = 0;
+		$daftar_duplikat = array();
+		foreach ($row_dup_uuid as $d) {
+			$extra = (int) $d->jumlah - 1;
+			$baris_duplikat_uuid_barang += $extra;
+			if (count($daftar_duplikat) < 15) {
+				$daftar_duplikat[] = array(
+					'uuid_barang' => $d->uuid_barang,
+					'jumlah' => (int) $d->jumlah,
+					'baris_tambahan' => $extra,
+				);
+			}
+		}
+
+		$row_dup_uuid_target = $this->db->query(
+			"SELECT TRIM(COALESCE(`uuid_barang`, '')) AS uuid_barang,
+				COUNT(*) AS jumlah
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) <> ''
+			GROUP BY TRIM(COALESCE(`uuid_barang`, ''))
+			HAVING COUNT(*) > 1
+			ORDER BY jumlah DESC",
+			array($tanggal_beli_target)
+		)->result();
+
+		$grup_duplikat_uuid_target = count($row_dup_uuid_target);
+		$baris_duplikat_uuid_target = 0;
+		foreach ($row_dup_uuid_target as $d) {
+			$baris_duplikat_uuid_target += ((int) $d->jumlah - 1);
+		}
+
+		$rows_sumber = $this->db->query(
+			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `id` ASC",
+			array($tanggal_beli_sumber)
+		)->result();
+
+		$estimasi_kosong_uuid = 0;
+		foreach ($rows_sumber as $row) {
+			if (trim((string) $row->uuid_barang) === '') {
+				$estimasi_kosong_uuid++;
+			}
+		}
+
+		$estimasi_insert = $total_sumber;
+		$estimasi_update = 0;
+
+		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber akan di-<strong>INSERT</strong> ke bulan target '
+			. '(data persediaan bulan target yang lama akan dikosongkan terlebih dahulu). '
+			. 'Ada di tbl_pembelian/jasa tidak menghalangi copy — hanya mengisi kolom <strong>beli</strong>. '
+			. 'Total akhir bulan target = ' . $total_sumber . ' (sama dengan bulan sumber).';
+		if ($total_target > 0) {
+			$penjelasan .= ' Saat ini bulan target sudah ada <strong>' . $total_target . ' record</strong> — akan diganti saat generate.';
+		}
+
+		$analisa_uuid_kosong = $this->analisa_uuid_barang_kosong_generate($ctx);
+		if ($analisa_uuid_kosong['total_kosong_sumber'] > 0) {
+			$penjelasan .= ' <strong>' . $analisa_uuid_kosong['total_kosong_sumber']
+				. ' record</strong> tanpa <code>uuid_barang</code> di bulan sumber akan diberi <strong>uuid baru unik</strong> '
+				. '(berbeda tiap baris) otomatis sebelum disalin ke bulan target.';
+		}
+
+		return array(
+			'total_sumber' => $total_sumber,
+			'total_target' => $total_target,
+			'estimasi_insert' => $estimasi_insert,
+			'estimasi_update' => $estimasi_update,
+			'estimasi_duplikat_sumber' => 0,
+			'estimasi_kosong_uuid_barang' => $estimasi_kosong_uuid,
+			'estimasi_tidak_insert_baru' => 0,
+			'selisih_sumber_minus_insert' => 0,
+			'estimasi_total_target_setelah' => $total_sumber,
+			'akan_reset_bulan_target' => true,
+			'grup_duplikat_uuid_barang_sumber' => $grup_duplikat_uuid_barang,
+			'baris_duplikat_uuid_barang_sumber' => $baris_duplikat_uuid_barang,
+			'grup_duplikat_uuid_barang_target' => $grup_duplikat_uuid_target,
+			'baris_duplikat_uuid_barang_target' => $baris_duplikat_uuid_target,
+			'daftar_duplikat_uuid_barang' => $daftar_duplikat,
+			'uuid_barang_kosong' => $analisa_uuid_kosong,
+			'penjelasan' => $penjelasan,
+			'perlu_konfirmasi' => (
+				$grup_duplikat_uuid_barang > 0
+				|| $total_target > 0
+				|| $analisa_uuid_kosong['total_kosong_sumber'] > 0
+			),
 		);
 	}
 
@@ -1242,7 +1504,9 @@ class Persediaan extends CI_Controller
 	 * sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber).
 	 * beli record baru = 0. total_10 = sa + beli. nilai_persediaan = total_10 * hpp. tuj = sa + beli.
 	 * Kolom setelah tuj sampai sebelum total_10 = 0 (tidak disalin dari bulan sumber).
-	 * Record yang sudah ada (tanggal_beli + namabarang + satuan + hpp) tidak diubah.
+	 * Satu record sumber = satu record target (INSERT). Hanya UPDATE jika baris target sudah
+	 * merupakan salinan baris sumber yang sama (uuid_persediaan / nama+satuan+hpp). Ada di
+	 * tbl_pembelian/jasa hanya mengisi beli, tidak menghalangi copy.
 	 * Tampilan: SweetAlert animasi 5 record terakhir, lalu tabel lengkap di halaman.
 	 * AJAX batch: ?ajax=1&offset=0&limit=25
 	 */
@@ -1250,6 +1514,15 @@ class Persediaan extends CI_Controller
 	{
 		@set_time_limit(0);
 		@ini_set('memory_limit', '1024M');
+
+		if (!$this->persediaan_user_can_generate()) {
+			header('Content-Type: text/html; charset=UTF-8');
+			echo '<!doctype html><html><head><meta charset="utf-8"><title>Akses ditolak</title></head><body>';
+			echo '<p style="color:red;">Generate persediaan hanya untuk user Admin / Administrator (id_user_level 1, 2, atau 99).</p>';
+			echo '<p><a href="' . site_url('persediaan') . '">Kembali ke Data Persediaan</a></p>';
+			echo '</body></html>';
+			return;
+		}
 
 		$bulan_target = trim((string) $bulan_target);
 		$ctx = $this->get_generate_persediaan_context($bulan_target);
@@ -1279,6 +1552,12 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
+		// Setiap buka halaman generate = proses baru (reset target + salin ulang dari awal)
+		$this->session->unset_userdata('gen_pers_' . $ctx['bulan_target']);
+		$this->session->unset_userdata('gen_pers_dedup_' . $ctx['bulan_target']);
+		$this->session->unset_userdata('gen_pers_reset_' . $ctx['bulan_target']);
+		$this->session->unset_userdata('gen_pers_fixuuid_' . $ctx['bulan_target']);
+
 		$data_view = array(
 			'bulan_target' => $ctx['bulan_target'],
 			'tanggal_beli_target' => $ctx['tanggal_beli_target'],
@@ -1304,11 +1583,8 @@ class Persediaan extends CI_Controller
 		$tanggal_beli_sumber = date('Y-m-01', strtotime('-1 month', $ts_target));
 		$tanggal_tampilan_target = date('d/m/Y', $ts_target);
 
-		$row_cnt = $this->db->query(
-			"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli`=?",
-			array($tanggal_beli_sumber)
-		)->row();
-		$total_sumber = $row_cnt ? (int) $row_cnt->jml : 0;
+		$total_sumber = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$total_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
 
 		if ($total_sumber === 0) {
 			return array(
@@ -1323,27 +1599,65 @@ class Persediaan extends CI_Controller
 			'tanggal_beli_target' => $tanggal_beli_target,
 			'tanggal_beli_sumber' => $tanggal_beli_sumber,
 			'tanggal_tampilan_target' => $tanggal_tampilan_target,
+			'tgl_po_awal' => $tanggal_beli_target,
+			'tgl_po_akhir' => date('Y-m-t', $ts_target),
 			'total_sumber' => $total_sumber,
+			'total_target' => $total_target,
 		);
 	}
 
 	private function generate_persediaan_bulan_batch($ctx, $offset, $limit)
 	{
+		if (!$this->persediaan_user_can_generate()) {
+			return array('ok' => false, 'message' => 'Akses ditolak. Hanya Admin / Administrator.');
+		}
+
 		$total_sumber = $ctx['total_sumber'];
 		$tanggal_beli_target = $ctx['tanggal_beli_target'];
 		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
 		$tanggal_tampilan_target = $ctx['tanggal_tampilan_target'];
 
 		$session_key = 'gen_pers_' . $ctx['bulan_target'];
+		$fixuuid_session_key = 'gen_pers_fixuuid_' . $ctx['bulan_target'];
+		$dedup_session_key = 'gen_pers_dedup_' . $ctx['bulan_target'];
+		$reset_session_key = 'gen_pers_reset_' . $ctx['bulan_target'];
 		$state = $this->session->userdata($session_key);
+		$fixuuid_info = null;
+		$dedup_info = null;
+		$reset_info = null;
 
 		if ($offset === 0 || !is_array($state)) {
 			$row_max = $this->db->query("SELECT MAX(`id`) AS max_id FROM `persediaan`")->row();
 			$state = array(
 				'next_id' => $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1,
 				'total_insert' => 0,
+				'total_update' => 0,
 				'total_skip' => 0,
+				'fixuuid' => null,
+				'dedup' => null,
+				'reset_target' => null,
 			);
+
+			if (!$this->session->userdata($fixuuid_session_key)) {
+				$fixuuid_info = $this->generate_perbaiki_uuid_barang_kosong_sumber($ctx);
+				$state['fixuuid'] = $fixuuid_info;
+				$this->session->set_userdata($fixuuid_session_key, 1);
+			}
+
+			if (!$this->session->userdata($dedup_session_key)) {
+				$dedup_info = $this->generate_perbaiki_duplikat_uuid_barang_sumber($ctx);
+				$state['dedup'] = $dedup_info;
+				$this->session->set_userdata($dedup_session_key, 1);
+			}
+
+			if (!$this->session->userdata($reset_session_key)) {
+				$reset_info = array(
+					'tanggal_beli' => $tanggal_beli_target,
+					'dihapus' => $this->generate_kosongkan_bulan_target($tanggal_beli_target),
+				);
+				$state['reset_target'] = $reset_info;
+				$this->session->set_userdata($reset_session_key, 1);
+			}
 		}
 
 		$sql_batch = "SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `id` ASC LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
@@ -1352,19 +1666,17 @@ class Persediaan extends CI_Controller
 		$next_id = (int) $state['next_id'];
 		$batch_items = array();
 		$batch_insert = 0;
+		$batch_update = 0;
 		$batch_skip = 0;
 
 		foreach ($list_batch as $row) {
-			$item = $this->proses_satu_record_generate_persediaan(
-				$row,
-				$tanggal_beli_target,
-				$tanggal_tampilan_target,
-				$next_id
-			);
+			$item = $this->proses_satu_record_generate_persediaan($row, $ctx, $next_id);
 			$batch_items[] = $item;
 
 			if ($item['aksi'] === 'INSERT') {
 				$batch_insert++;
+			} elseif ($item['aksi'] === 'UPDATE') {
+				$batch_update++;
 			} else {
 				$batch_skip++;
 			}
@@ -1375,6 +1687,7 @@ class Persediaan extends CI_Controller
 
 		$state['next_id'] = $next_id;
 		$state['total_insert'] += $batch_insert;
+		$state['total_update'] += $batch_update;
 		$state['total_skip'] += $batch_skip;
 
 		$last_five = count($batch_items) > 5
@@ -1389,9 +1702,18 @@ class Persediaan extends CI_Controller
 				'tanggal_beli_sumber' => $ctx['tanggal_beli_sumber'],
 				'total_sumber' => $total_sumber,
 				'total_insert' => (int) $state['total_insert'],
+				'total_update' => (int) $state['total_update'],
 				'total_skip' => (int) $state['total_skip'],
+				'fixuuid' => isset($state['fixuuid']) ? $state['fixuuid'] : null,
+				'dedup' => isset($state['dedup']) ? $state['dedup'] : null,
+				'reset_target' => isset($state['reset_target']) ? $state['reset_target'] : null,
+				'total_target_akhir' => $this->persediaan_count_by_tanggal_beli($tanggal_beli_target),
+				'uuid_kosong_target_akhir' => $this->persediaan_count_uuid_barang_kosong($tanggal_beli_target),
 			);
 			$this->session->unset_userdata($session_key);
+			$this->session->unset_userdata($fixuuid_session_key);
+			$this->session->unset_userdata($dedup_session_key);
+			$this->session->unset_userdata($reset_session_key);
 		} else {
 			$this->session->set_userdata($session_key, $state);
 		}
@@ -1402,41 +1724,768 @@ class Persediaan extends CI_Controller
 			'offset_selesai' => $offset_selesai,
 			'total_sumber' => $total_sumber,
 			'batch_insert' => $batch_insert,
+			'batch_update' => $batch_update,
 			'batch_skip' => $batch_skip,
+			'fixuuid' => ($offset === 0 && $fixuuid_info !== null) ? $fixuuid_info : null,
+			'dedup' => ($offset === 0 && $dedup_info !== null) ? $dedup_info : null,
+			'reset_target' => ($offset === 0 && $reset_info !== null) ? $reset_info : null,
 			'items' => $batch_items,
 			'last_five' => $last_five,
 			'summary' => $summary,
 		);
 	}
 
-	private function proses_satu_record_generate_persediaan($row, $tanggal_beli_target, $tanggal_tampilan_target, &$next_id)
+	/**
+	 * UUID baru yang belum dipakai di seluruh tabel persediaan.
+	 */
+	private function generate_buat_uuid_unik_persediaan($kolom)
+	{
+		$kolom = ($kolom === 'uuid_barang') ? 'uuid_barang' : 'uuid_persediaan';
+		$max_try = 30;
+
+		for ($i = 0; $i < $max_try; $i++) {
+			$row = $this->db->query('SELECT REPLACE(UUID(), \'-\', \'\') AS u')->row();
+			$uuid = $row ? trim((string) $row->u) : '';
+			if ($uuid === '') {
+				continue;
+			}
+
+			$cek = $this->db->query(
+				"SELECT `id` FROM `persediaan` WHERE TRIM(COALESCE(`{$kolom}`, '')) = ? LIMIT 1",
+				array($uuid)
+			)->row();
+
+			if (!$cek) {
+				return $uuid;
+			}
+		}
+
+		return str_replace('.', '', uniqid('', true)) . dechex(mt_rand(0, 0xffffff));
+	}
+
+	/**
+	 * Cocokkan baris persediaan dengan pembelian/jasa (namabarang=uraian, satuan, hpp) di rentang tgl_po.
+	 */
+	private function generate_row_cocok_pembelian_bulan($row, $tgl_awal, $tgl_akhir)
 	{
 		$nama = trim((string) $row->namabarang);
 		$satuan = trim((string) $row->satuan);
 		$hpp = trim((string) $row->hpp);
+		$uuid_barang = trim((string) $row->uuid_barang);
+		$uuid_persediaan = trim((string) $row->uuid_persediaan);
 
-		$sql_cek = "SELECT `id`,`uuid_persediaan` FROM `persediaan`
-			WHERE `tanggal_beli`=?
-			AND TRIM(`namabarang`)=? AND TRIM(`satuan`)=?
-			AND CAST(REPLACE(TRIM(`hpp`),',','') AS DECIMAL(18,2))=CAST(REPLACE(?,',','') AS DECIMAL(18,2))
-			LIMIT 1";
-		$existing = $this->db->query($sql_cek, array($tanggal_beli_target, $nama, $satuan, $hpp))->row();
+		if ($nama === '' || $satuan === '') {
+			return false;
+		}
 
-		if ($existing) {
+		if ($this->generate_hitung_pembelian_barang_bulan(
+			'tbl_pembelian',
+			$tgl_awal,
+			$tgl_akhir,
+			$nama,
+			$satuan,
+			$hpp,
+			$uuid_barang,
+			$uuid_persediaan
+		) > 0) {
+			return true;
+		}
+
+		return $this->generate_hitung_pembelian_barang_bulan(
+			'tbl_pembelian_jasa',
+			$tgl_awal,
+			$tgl_akhir,
+			$nama,
+			$satuan,
+			$hpp,
+			$uuid_barang,
+			$uuid_persediaan
+		) > 0;
+	}
+
+	private function generate_hitung_pembelian_barang_bulan(
+		$tabel,
+		$tgl_awal,
+		$tgl_akhir,
+		$nama,
+		$satuan,
+		$hpp,
+		$uuid_barang,
+		$uuid_persediaan
+	) {
+		if (!$this->db->table_exists($tabel)) {
+			return 0;
+		}
+
+		$params = array($tgl_awal, $tgl_akhir, $nama, $satuan, $hpp);
+		$link = array();
+
+		if ($uuid_barang !== '') {
+			$link[] = 'TRIM(COALESCE(`uuid_barang`, \'\')) = ?';
+			$params[] = $uuid_barang;
+		}
+		if ($uuid_persediaan !== '') {
+			$link[] = 'TRIM(COALESCE(`uuid_persediaan`, \'\')) = ?';
+			$params[] = $uuid_persediaan;
+		}
+
+		$link_sql = !empty($link) ? ' AND (' . implode(' OR ', $link) . ')' : '';
+
+		$sql = "SELECT COUNT(*) AS jml FROM `{$tabel}`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND TRIM(COALESCE(`uraian`, '')) = ?
+			AND TRIM(COALESCE(`satuan`, '')) = ?
+			AND CAST(REPLACE(TRIM(`harga_satuan`), ',', '') AS DECIMAL(18,2)) = CAST(REPLACE(?, ',', '') AS DECIMAL(18,2))"
+			. $link_sql;
+
+		$row = $this->db->query($sql, $params)->row();
+		if ($row && (int) $row->jml > 0) {
+			return (int) $row->jml;
+		}
+
+		// Tanpa syarat uuid — hanya nama, satuan, hpp
+		$sql2 = "SELECT COUNT(*) AS jml FROM `{$tabel}`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND TRIM(COALESCE(`uraian`, '')) = ?
+			AND TRIM(COALESCE(`satuan`, '')) = ?
+			AND CAST(REPLACE(TRIM(`harga_satuan`), ',', '') AS DECIMAL(18,2)) = CAST(REPLACE(?, ',', '') AS DECIMAL(18,2))";
+
+		$row2 = $this->db->query($sql2, array($tgl_awal, $tgl_akhir, $nama, $satuan, $hpp))->row();
+		return $row2 ? (int) $row2->jml : 0;
+	}
+
+	/**
+	 * Perbaiki uuid_barang ganda di bulan sumber: yang cocok pembelian (nama+satuan+hpp) tetap;
+	 * sisanya dapat uuid_barang & uuid_persediaan baru (unik di persediaan).
+	 */
+	private function generate_perbaiki_duplikat_uuid_barang_sumber($ctx)
+	{
+		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
+		$tgl_awal = $ctx['tanggal_beli_sumber'];
+		$tgl_akhir_sumber = date('Y-m-t', strtotime($tanggal_beli_sumber));
+		$tgl_akhir = isset($ctx['tgl_po_akhir']) ? $ctx['tgl_po_akhir'] : $tgl_akhir_sumber;
+
+		$grup_rows = $this->db->query(
+			"SELECT TRIM(COALESCE(`uuid_barang`, '')) AS uuid_barang
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) <> ''
+			GROUP BY TRIM(COALESCE(`uuid_barang`, ''))
+			HAVING COUNT(*) > 1",
+			array($tanggal_beli_sumber)
+		)->result();
+
+		$hasil = array(
+			'grup_duplikat' => count($grup_rows),
+			'record_diperbaiki' => 0,
+			'record_tetap' => 0,
+			'detail' => array(),
+		);
+
+		foreach ($grup_rows as $g) {
+			$uuid_barang_lama = trim((string) $g->uuid_barang);
+			$list = $this->db->query(
+				"SELECT * FROM `persediaan`
+				WHERE `tanggal_beli` = ?
+				AND TRIM(COALESCE(`uuid_barang`, '')) = ?
+				ORDER BY `id` ASC",
+				array($tanggal_beli_sumber, $uuid_barang_lama)
+			)->result();
+
+			if (count($list) < 2) {
+				continue;
+			}
+
+			$keeper_id = null;
+			foreach ($list as $row) {
+				if ($this->generate_row_cocok_pembelian_bulan($row, $tgl_awal, $tgl_akhir)) {
+					$keeper_id = (int) $row->id;
+					break;
+				}
+			}
+			if ($keeper_id === null) {
+				$keeper_id = (int) $list[0]->id;
+			}
+
+			foreach ($list as $row) {
+				if ((int) $row->id === $keeper_id) {
+					$hasil['record_tetap']++;
+					continue;
+				}
+
+				$new_uuid_barang = $this->generate_buat_uuid_unik_persediaan('uuid_barang');
+				$new_uuid_persediaan = $this->generate_buat_uuid_unik_persediaan('uuid_persediaan');
+
+				$this->db->where('id', (int) $row->id);
+				$this->db->update('persediaan', array(
+					'uuid_barang' => $new_uuid_barang,
+					'uuid_persediaan' => $new_uuid_persediaan,
+				));
+
+				$hasil['record_diperbaiki']++;
+				if (count($hasil['detail']) < 20) {
+					$hasil['detail'][] = array(
+						'id' => (int) $row->id,
+						'namabarang' => $row->namabarang,
+						'uuid_barang_lama' => $uuid_barang_lama,
+						'uuid_barang_baru' => $new_uuid_barang,
+						'uuid_persediaan_baru' => $new_uuid_persediaan,
+					);
+				}
+			}
+		}
+
+		$hasil['pesan'] = 'Perbaikan uuid_barang ganda: ' . $hasil['grup_duplikat'] . ' grup, '
+			. $hasil['record_diperbaiki'] . ' record diubah (uuid baru), '
+			. $hasil['record_tetap'] . ' record tetap (cocok pembelian/jasa: nama+satuan+hpp).';
+
+		return $hasil;
+	}
+
+	/**
+	 * Analisa record bulan sumber yang uuid_barang kosong + penyebab (sebelum klik generate).
+	 */
+	private function analisa_uuid_barang_kosong_generate($ctx)
+	{
+		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
+		$rows = $this->db->query(
+			"SELECT `id`,`namabarang`,`satuan`,`hpp`,`kode_barang`,`kode`,`uuid_persediaan`
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) = ''
+			ORDER BY `id` ASC",
+			array($tanggal_beli_sumber)
+		)->result();
+
+		$rekap_map = array();
+		$daftar_sample = array();
+
+		foreach ($rows as $row) {
+			$diag = $this->diagnosa_penyebab_uuid_barang_kosong($row, $ctx);
+			$kode = $diag['kode'];
+			if (!isset($rekap_map[$kode])) {
+				$rekap_map[$kode] = array(
+					'kode' => $kode,
+					'label' => $diag['label'],
+					'jumlah' => 0,
+					'saran' => $diag['saran'],
+				);
+			}
+			$rekap_map[$kode]['jumlah']++;
+
+			if (count($daftar_sample) < 25) {
+				$daftar_sample[] = array(
+					'id' => (int) $row->id,
+					'namabarang' => trim((string) $row->namabarang),
+					'satuan' => trim((string) $row->satuan),
+					'hpp' => trim((string) $row->hpp),
+					'kode_barang' => trim((string) $row->kode_barang),
+					'penyebab_kode' => $kode,
+					'penyebab' => $diag['label'],
+					'detail' => $diag['detail'],
+					'saran' => $diag['saran'],
+				);
+			}
+		}
+
+		$rekap_penyebab = array_values($rekap_map);
+		usort($rekap_penyebab, function ($a, $b) {
+			return $b['jumlah'] - $a['jumlah'];
+		});
+
+		$total = count($rows);
+		$penjelasan = ($total === 0)
+			? 'Semua record bulan sumber sudah memiliki uuid_barang.'
+			: 'Ditemukan ' . $total . ' record tanpa uuid_barang. Saat generate, masing-masing akan mendapat uuid_barang baru yang unik di bulan sumber, lalu disalin ke bulan target.';
+
+		return array(
+			'total_kosong_sumber' => $total,
+			'rekap_penyebab' => $rekap_penyebab,
+			'daftar_sample' => $daftar_sample,
+			'penjelasan' => $penjelasan,
+			'akan_perbaiki_otomatis' => ($total > 0),
+		);
+	}
+
+	/**
+	 * Penyebab uuid_barang kosong pada satu baris persediaan bulan sumber.
+	 */
+	private function diagnosa_penyebab_uuid_barang_kosong($row, $ctx)
+	{
+		$nama = trim((string) $row->namabarang);
+		$satuan = trim((string) $row->satuan);
+		$kode_barang = trim((string) $row->kode_barang);
+		$tgl_awal = isset($ctx['tanggal_beli_sumber']) ? $ctx['tanggal_beli_sumber'] : '';
+		$tgl_akhir = isset($ctx['tgl_po_akhir'])
+			? $ctx['tgl_po_akhir']
+			: date('Y-m-t', strtotime(isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $tgl_awal));
+
+		if ($nama === '') {
 			return array(
-				'aksi' => 'SKIP',
-				'id' => $existing->id,
-				'uuid_persediaan' => $existing->uuid_persediaan,
-				'namabarang' => $nama,
-				'satuan' => $satuan,
-				'hpp' => $hpp,
-				'sa' => '',
-				'beli' => '',
-				'tuj' => '',
-				'keterangan' => 'Record sudah ada (tanggal_beli + namabarang + satuan + hpp sama) — tidak diubah',
+				'kode' => 'nama_kosong',
+				'label' => 'Nama barang kosong',
+				'detail' => 'Field namabarang kosong sehingga tidak bisa dicocokkan ke master barang (sys_nama_barang).',
+				'saran' => 'Lengkapi nama barang di persediaan bulan sumber, lalu generate ulang.',
 			);
 		}
 
+		$master = $this->generate_cari_master_sys_nama_barang($nama, $satuan);
+		if (!$master) {
+			return array(
+				'kode' => 'master_tidak_ditemukan',
+				'label' => 'Tidak ada di master (sys_nama_barang)',
+				'detail' => 'Nama "' . $nama . '"' . ($satuan !== '' ? ' / satuan ' . $satuan : '') . ' tidak ditemukan di tabel sys_nama_barang.',
+				'saran' => 'Tambahkan barang ke master sys_nama_barang atau biarkan generate membuat uuid_barang baru otomatis.',
+			);
+		}
+
+		$uuid_master = trim((string) $master->uuid_barang);
+		if ($uuid_master === '') {
+			return array(
+				'kode' => 'master_tanpa_uuid',
+				'label' => 'Master ada, uuid_barang master kosong',
+				'detail' => 'Record master sys_nama_barang untuk "' . $nama . '" ada tetapi kolom uuid_barang di master masih kosong.',
+				'saran' => 'Isi uuid_barang di sys_nama_barang, atau generate akan membuat uuid baru untuk baris persediaan ini.',
+			);
+		}
+
+		$uuid_pembelian = $this->generate_cari_uuid_barang_dari_pembelian_row($row, $tgl_awal, $tgl_akhir);
+		if ($uuid_pembelian !== '') {
+			return array(
+				'kode' => 'pembelian_punya_uuid',
+				'label' => 'Pembelian sudah punya uuid, persediaan kosong',
+				'detail' => 'Di tbl_pembelian/jasa ditemukan uuid_barang=' . $uuid_pembelian
+					. ' untuk barang ini, tetapi persediaan bulan sumber belum terisi.',
+				'saran' => 'Generate akan membuat uuid_barang baru unik (tidak menyalin dari pembelian agar tiap baris persediaan unik).',
+			);
+		}
+
+		if ($kode_barang === '') {
+			return array(
+				'kode' => 'import_manual',
+				'label' => 'Input manual / import (kode_barang kosong)',
+				'detail' => 'kode_barang kosong; umum pada data import CSV atau input manual tanpa sinkron master.',
+				'saran' => 'Jalankan sinkron dari sys_nama_barang (menu refresh) atau lanjutkan generate (uuid baru otomatis).',
+			);
+		}
+
+		return array(
+			'kode' => 'belum_sinkron',
+			'label' => 'Belum disinkronkan ke persediaan',
+			'detail' => 'Master sys_nama_barang punya uuid_barang, tetapi baris persediaan bulan sumber belum di-update (belum sinkron).',
+			'saran' => 'Generate akan membuat uuid_barang baru unik per baris sebelum disalin.',
+		);
+	}
+
+	private function generate_cari_master_sys_nama_barang($nama, $satuan = '')
+	{
+		if (!$this->db->table_exists('sys_nama_barang')) {
+			return null;
+		}
+
+		$row = $this->db->query(
+			"SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan`
+			FROM `sys_nama_barang`
+			WHERE TRIM(COALESCE(`nama_barang`, '')) = ?
+			LIMIT 1",
+			array($nama)
+		)->row();
+
+		if ($row) {
+			return $row;
+		}
+
+		if ($satuan === '') {
+			return null;
+		}
+
+		return $this->db->query(
+			"SELECT `uuid_barang`,`kode_barang`,`nama_barang`,`satuan`
+			FROM `sys_nama_barang`
+			WHERE TRIM(COALESCE(`nama_barang`, '')) = ?
+			AND TRIM(COALESCE(`satuan`, '')) = ?
+			LIMIT 1",
+			array($nama, $satuan)
+		)->row();
+	}
+
+	private function generate_cari_uuid_barang_dari_pembelian_row($row, $tgl_awal, $tgl_akhir)
+	{
+		$nama = trim((string) $row->namabarang);
+		$satuan = trim((string) $row->satuan);
+		$hpp = trim((string) $row->hpp);
+		if ($nama === '' || $satuan === '') {
+			return '';
+		}
+
+		foreach (array('tbl_pembelian', 'tbl_pembelian_jasa') as $tabel) {
+			if (!$this->db->table_exists($tabel)) {
+				continue;
+			}
+
+			$sql = "SELECT TRIM(COALESCE(`uuid_barang`, '')) AS uuid_barang
+				FROM `{$tabel}`
+				WHERE STR_TO_DATE(`tgl_po`, '%e-%c-%Y') BETWEEN ? AND ?
+				AND TRIM(COALESCE(`uraian`, '')) = ?
+				AND TRIM(COALESCE(`satuan`, '')) = ?
+				AND CAST(REPLACE(TRIM(`harga_satuan`), ',', '') AS DECIMAL(18,2)) = CAST(REPLACE(?, ',', '') AS DECIMAL(18,2))
+				AND TRIM(COALESCE(`uuid_barang`, '')) <> ''
+				ORDER BY `id` DESC
+				LIMIT 1";
+			$found = $this->db->query($sql, array($tgl_awal, $tgl_akhir, $nama, $satuan, $hpp))->row();
+			if ($found && trim((string) $found->uuid_barang) !== '') {
+				return trim((string) $found->uuid_barang);
+			}
+		}
+
+		return '';
+	}
+
+	/**
+	 * Isi uuid_barang kosong di bulan sumber — tiap baris dapat uuid unik sebelum disalin.
+	 */
+	private function generate_perbaiki_uuid_barang_kosong_sumber($ctx)
+	{
+		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
+		$rows = $this->db->query(
+			"SELECT `id`,`namabarang`,`satuan`,`hpp`,`kode_barang`,`kode`,`uuid_persediaan`
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) = ''
+			ORDER BY `id` ASC",
+			array($tanggal_beli_sumber)
+		)->result();
+
+		$hasil = array(
+			'record_kosong' => count($rows),
+			'record_diperbaiki' => 0,
+			'rekap_penyebab' => array(),
+			'detail' => array(),
+			'pesan' => '',
+		);
+
+		$rekap_map = array();
+
+		foreach ($rows as $row) {
+			$diag = $this->diagnosa_penyebab_uuid_barang_kosong($row, $ctx);
+			$kode_penyebab = $diag['kode'];
+			if (!isset($rekap_map[$kode_penyebab])) {
+				$rekap_map[$kode_penyebab] = array(
+					'kode' => $kode_penyebab,
+					'label' => $diag['label'],
+					'jumlah' => 0,
+				);
+			}
+			$rekap_map[$kode_penyebab]['jumlah']++;
+
+			$uuid_baru = $this->generate_buat_uuid_unik_persediaan('uuid_barang');
+			$update = array('uuid_barang' => $uuid_baru);
+
+			$master = $this->generate_cari_master_sys_nama_barang(
+				trim((string) $row->namabarang),
+				trim((string) $row->satuan)
+			);
+			if ($master && trim((string) $row->kode_barang) === '') {
+				$kode_master = trim((string) $master->kode_barang);
+				if ($kode_master !== '') {
+					$update['kode_barang'] = $kode_master;
+				}
+			}
+
+			$this->db->where('id', (int) $row->id);
+			$this->db->update('persediaan', $update);
+			$hasil['record_diperbaiki']++;
+
+			if (count($hasil['detail']) < 25) {
+				$hasil['detail'][] = array(
+					'id' => (int) $row->id,
+					'namabarang' => trim((string) $row->namabarang),
+					'satuan' => trim((string) $row->satuan),
+					'hpp' => trim((string) $row->hpp),
+					'penyebab' => $diag['label'],
+					'penyebab_kode' => $kode_penyebab,
+					'uuid_barang_baru' => $uuid_baru,
+				);
+			}
+		}
+
+		$hasil['rekap_penyebab'] = array_values($rekap_map);
+		usort($hasil['rekap_penyebab'], function ($a, $b) {
+			return $b['jumlah'] - $a['jumlah'];
+		});
+
+		$hasil['pesan'] = 'Perbaikan uuid_barang kosong (bulan sumber): '
+			. $hasil['record_kosong'] . ' record ditemukan, '
+			. $hasil['record_diperbaiki'] . ' record diberi uuid_barang baru (unik per baris).';
+
+		return $hasil;
+	}
+
+	/**
+	 * Kosongkan semua persediaan bulan target sebelum salin ulang (agar jumlah = bulan sumber).
+	 */
+	private function generate_kosongkan_bulan_target($tanggal_beli_target)
+	{
+		$count = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
+		if ($count > 0) {
+			$this->db->where('tanggal_beli', $tanggal_beli_target);
+			$this->db->delete('persediaan');
+		}
+
+		return (int) $count;
+	}
+
+	/**
+	 * @deprecated Tidak dipakai — generate selalu INSERT semua baris sumber.
+	 */
+	private function generate_cari_persediaan_target($tanggal_beli_target, $row)
+	{
+		$uuid_persediaan = trim((string) $row->uuid_persediaan);
+		$nama = trim((string) $row->namabarang);
+		$satuan = trim((string) $row->satuan);
+		$hpp = trim((string) $row->hpp);
+
+		if ($uuid_persediaan !== '') {
+			$found = $this->db->query(
+				"SELECT * FROM `persediaan`
+				WHERE `tanggal_beli` = ?
+				AND (
+					TRIM(COALESCE(`uuid_persediaan`, '')) = ?
+					OR TRIM(COALESCE(`uuid_persediaan_lama`, '')) = ?
+				)
+				LIMIT 1",
+				array($tanggal_beli_target, $uuid_persediaan, $uuid_persediaan)
+			)->row();
+			if ($found) {
+				return $found;
+			}
+		}
+
+		if ($nama !== '' && $satuan !== '') {
+			return $this->db->query(
+				"SELECT * FROM `persediaan`
+				WHERE `tanggal_beli` = ?
+				AND TRIM(`namabarang`) = ?
+				AND TRIM(`satuan`) = ?
+				AND CAST(REPLACE(TRIM(`hpp`), ',', '') AS DECIMAL(18,2)) = CAST(REPLACE(?, ',', '') AS DECIMAL(18,2))
+				LIMIT 1",
+				array($tanggal_beli_target, $nama, $satuan, $hpp)
+			)->row();
+		}
+
+		return null;
+	}
+
+	/**
+	 * Hitung beli dari tbl_pembelian / tbl_pembelian_jasa (uuid di pembelian tidak menghalangi copy).
+	 */
+	private function generate_hitung_beli_dari_pembelian_for_row($row, $tgl_awal, $tgl_akhir)
+	{
+		$uuid_barang = trim((string) $row->uuid_barang);
+		$uuid_persediaan = trim((string) $row->uuid_persediaan);
+		$nama = trim((string) $row->namabarang);
+
+		$jumlah = 0;
+		if ($uuid_persediaan !== '') {
+			$jumlah = $this->generate_sum_jumlah_pembelian_by_uuid_persediaan($tgl_awal, $tgl_akhir, $uuid_persediaan);
+		}
+
+		if ($jumlah <= 0 && $uuid_barang !== '') {
+			$jumlah = $this->generate_sum_jumlah_tbl_pembelian_bulan(
+				$tgl_awal,
+				$tgl_akhir,
+				$uuid_barang,
+				$uuid_persediaan,
+				$nama
+			);
+		}
+
+		if ($jumlah <= 0 && $uuid_barang !== '') {
+			$jumlah = $this->generate_sum_jumlah_tbl_pembelian_jasa_bulan($tgl_awal, $tgl_akhir, $uuid_barang);
+		}
+
+		if ($jumlah <= 0 && $uuid_persediaan !== '' && $this->db->field_exists('uuid_persediaan', 'tbl_pembelian_jasa')) {
+			$jumlah = $this->generate_sum_jumlah_pembelian_jasa_by_uuid_persediaan($tgl_awal, $tgl_akhir, $uuid_persediaan);
+		}
+
+		return max(0, (int) $jumlah);
+	}
+
+	/**
+	 * Total jumlah pembelian barang (tbl_pembelian) di bulan target.
+	 */
+	private function generate_sum_jumlah_tbl_pembelian_bulan($tgl_awal, $tgl_akhir, $uuid_barang, $uuid_persediaan, $nama_barang)
+	{
+		if (!$this->db->table_exists('tbl_pembelian')) {
+			return 0;
+		}
+
+		$uuid_barang = trim((string) $uuid_barang);
+		$uuid_persediaan = trim((string) $uuid_persediaan);
+		$nama_barang = trim((string) $nama_barang);
+		$parts = array();
+		$params = array($tgl_awal, $tgl_akhir);
+
+		if ($uuid_barang !== '') {
+			$parts[] = 'TRIM(COALESCE(`uuid_barang`,\'\')) = ?';
+			$params[] = $uuid_barang;
+		}
+		if ($uuid_persediaan !== '') {
+			$parts[] = 'TRIM(COALESCE(`uuid_persediaan`,\'\')) = ?';
+			$params[] = $uuid_persediaan;
+		}
+		if ($nama_barang !== '') {
+			$parts[] = 'TRIM(COALESCE(`uraian`,\'\')) = ?';
+			$params[] = $nama_barang;
+		}
+
+		if (empty($parts)) {
+			return 0;
+		}
+
+		$sql = 'SELECT COALESCE(SUM(CAST(`jumlah` AS SIGNED)), 0) AS jml FROM `tbl_pembelian`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> \'0000-00-00\'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND (' . implode(' OR ', $parts) . ')';
+
+		$row = $this->db->query($sql, $params)->row();
+		return $row ? (int) $row->jml : 0;
+	}
+
+	/**
+	 * Total jumlah pembelian jasa (tbl_pembelian_jasa) di bulan target — by uuid_barang.
+	 */
+	private function generate_sum_jumlah_tbl_pembelian_jasa_bulan($tgl_awal, $tgl_akhir, $uuid_barang)
+	{
+		$uuid_barang = trim((string) $uuid_barang);
+		if ($uuid_barang === '' || !$this->db->table_exists('tbl_pembelian_jasa')) {
+			return 0;
+		}
+
+		$sql = 'SELECT COALESCE(SUM(CAST(`jumlah` AS SIGNED)), 0) AS jml FROM `tbl_pembelian_jasa`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> \'0000-00-00\'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND TRIM(COALESCE(`uuid_barang`,\'\')) = ?';
+
+		$row = $this->db->query($sql, array($tgl_awal, $tgl_akhir, $uuid_barang))->row();
+		return $row ? (int) $row->jml : 0;
+	}
+
+	/**
+	 * Total jumlah pembelian barang by uuid_persediaan (tbl_pembelian) di bulan target.
+	 */
+	private function generate_sum_jumlah_pembelian_by_uuid_persediaan($tgl_awal, $tgl_akhir, $uuid_persediaan)
+	{
+		$uuid_persediaan = trim((string) $uuid_persediaan);
+		if ($uuid_persediaan === '' || !$this->db->table_exists('tbl_pembelian')) {
+			return 0;
+		}
+
+		$sql = 'SELECT COALESCE(SUM(CAST(`jumlah` AS SIGNED)), 0) AS jml FROM `tbl_pembelian`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> \'0000-00-00\'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND TRIM(COALESCE(`uuid_persediaan`,\'\')) = ?';
+
+		$row = $this->db->query($sql, array($tgl_awal, $tgl_akhir, $uuid_persediaan))->row();
+		return $row ? (int) $row->jml : 0;
+	}
+
+	/**
+	 * Total jumlah pembelian jasa by uuid_persediaan (tbl_pembelian_jasa) di bulan target.
+	 */
+	private function generate_sum_jumlah_pembelian_jasa_by_uuid_persediaan($tgl_awal, $tgl_akhir, $uuid_persediaan)
+	{
+		$uuid_persediaan = trim((string) $uuid_persediaan);
+		if ($uuid_persediaan === '' || !$this->db->table_exists('tbl_pembelian_jasa')) {
+			return 0;
+		}
+
+		if (!$this->db->field_exists('uuid_persediaan', 'tbl_pembelian_jasa')) {
+			return 0;
+		}
+
+		$sql = 'SELECT COALESCE(SUM(CAST(`jumlah` AS SIGNED)), 0) AS jml FROM `tbl_pembelian_jasa`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> \'0000-00-00\'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			AND TRIM(COALESCE(`uuid_persediaan`,\'\')) = ?';
+
+		$row = $this->db->query($sql, array($tgl_awal, $tgl_akhir, $uuid_persediaan))->row();
+		return $row ? (int) $row->jml : 0;
+	}
+
+	/**
+	 * Hitung SA dari sisa stock bulan sumber (total_10 - penjualan - pecah - produksi).
+	 */
+	private function generate_hitung_sa_dari_bulan_sumber($row)
+	{
+		$total_10_sumber = $this->parse_angka_persediaan($row->total_10);
+		$penjualan_sumber = $this->parse_angka_persediaan($row->penjualan);
+		$pecah_satuan_sumber = $this->parse_angka_persediaan($row->pecah_satuan);
+		$bahan_produksi_sumber = $this->parse_angka_persediaan($row->bahan_produksi);
+
+		return $total_10_sumber - $penjualan_sumber - $pecah_satuan_sumber - $bahan_produksi_sumber;
+	}
+
+	/**
+	 * Update beli / total_10 / nilai_persediaan / tuj (SA tetap) pada record persediaan bulan target.
+	 */
+	private function generate_update_persediaan_beli($existing, $beli_angka, $keterangan_extra = '')
+	{
+		$beli_angka = max(0, (int) $beli_angka);
+		$sa_angka = $this->parse_angka_persediaan($existing->sa);
+		$hpp_angka = $this->parse_angka_persediaan($existing->hpp);
+		$total_10_baru = $sa_angka + $beli_angka;
+		$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
+
+		$sa_tampil = $this->format_angka_persediaan($sa_angka);
+		$beli_tampil = $this->format_angka_persediaan($beli_angka);
+		$total_10_tampil = $this->format_angka_persediaan($total_10_baru);
+		$nilai_persediaan_tampil = $this->format_angka_persediaan($nilai_persediaan_baru);
+		$tuj_tampil = $total_10_tampil;
+
+		$this->db->where('id', (int) $existing->id);
+		$this->db->update('persediaan', array(
+			'beli' => $beli_tampil,
+			'total_10' => $total_10_tampil,
+			'nilai_persediaan' => $nilai_persediaan_tampil,
+			'tuj' => $tuj_tampil,
+		));
+
+		$keterangan = 'UPDATE beli dari pembelian/generate'
+			. ($keterangan_extra !== '' ? ' | ' . $keterangan_extra : '')
+			. ' | sa=' . $sa_tampil . ' (tetap)'
+			. ' | beli=' . $beli_tampil
+			. ' | total_10=' . $total_10_tampil . ' (sa+beli)'
+			. ' | nilai_persediaan=' . $nilai_persediaan_tampil;
+
+		return array(
+			'aksi' => 'UPDATE',
+			'id' => (int) $existing->id,
+			'uuid_persediaan' => $existing->uuid_persediaan,
+			'namabarang' => $existing->namabarang,
+			'satuan' => $existing->satuan,
+			'hpp' => $existing->hpp,
+			'sa' => $sa_tampil,
+			'beli' => $beli_tampil,
+			'total_10' => $total_10_tampil,
+			'nilai_persediaan' => $nilai_persediaan_tampil,
+			'tuj' => $tuj_tampil,
+			'keterangan' => $keterangan,
+		);
+	}
+
+	private function proses_satu_record_generate_persediaan($row, $ctx, &$next_id)
+	{
+		$tanggal_beli_target = $ctx['tanggal_beli_target'];
+		$tanggal_tampilan_target = $ctx['tanggal_tampilan_target'];
+		$tgl_po_awal = isset($ctx['tgl_po_awal']) ? $ctx['tgl_po_awal'] : $tanggal_beli_target;
+		$tgl_po_akhir = isset($ctx['tgl_po_akhir']) ? $ctx['tgl_po_akhir'] : $tanggal_beli_target;
+
+		$nama = trim((string) $row->namabarang);
+		$satuan = trim((string) $row->satuan);
+		$hpp = trim((string) $row->hpp);
 		$total_10_sumber = $this->parse_angka_persediaan($row->total_10);
 		$penjualan_sumber = $this->parse_angka_persediaan($row->penjualan);
 		$pecah_satuan_sumber = $this->parse_angka_persediaan($row->pecah_satuan);
@@ -1444,9 +2493,9 @@ class Persediaan extends CI_Controller
 		// sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber)
 		$sa_baru = $total_10_sumber - $penjualan_sumber - $pecah_satuan_sumber - $bahan_produksi_sumber;
 
-		// beli bulan generate tidak dari bulan sumber; record baru beli = 0
-		$beli_tampil = '0';
-		$beli_angka = 0;
+		// beli dari pembelian bulan target (uuid_barang di pembelian tetap di-copy / INSERT)
+		$beli_angka = $this->generate_hitung_beli_dari_pembelian_for_row($row, $tgl_po_awal, $tgl_po_akhir);
+		$beli_tampil = $this->format_angka_persediaan($beli_angka);
 
 		$hpp_angka = $this->parse_angka_persediaan($row->hpp);
 
@@ -1518,7 +2567,7 @@ class Persediaan extends CI_Controller
 			. ' | sa=' . $sa_tampil . ' (sumber: total_10 ' . $total_10_sumber
 			. ' - penj ' . $penjualan_sumber . ' - pecah ' . $pecah_satuan_sumber
 			. ' - prod ' . $bahan_produksi_sumber . ')'
-			. ' | beli=' . $beli_tampil
+			. ' | beli=' . $beli_tampil . ' (pembelian/jasa)'
 			. ' | total_10=' . $total_10_tampil . ' (sa+beli)'
 			. ' | nilai_persediaan=' . $nilai_persediaan_tampil . ' (total_10*hpp)'
 			. ' | tuj=' . $tuj_tampil
@@ -1563,6 +2612,28 @@ class Persediaan extends CI_Controller
 			return (string) (int) $value;
 		}
 		return (string) $value;
+	}
+
+	private function persediaan_count_by_tanggal_beli($tanggal_beli)
+	{
+		$row_cnt = $this->db->query(
+			"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli`=?",
+			array($tanggal_beli)
+		)->row();
+
+		return $row_cnt ? (int) $row_cnt->jml : 0;
+	}
+
+	private function persediaan_count_uuid_barang_kosong($tanggal_beli)
+	{
+		$row_cnt = $this->db->query(
+			"SELECT COUNT(*) AS jml FROM `persediaan`
+			WHERE `tanggal_beli` = ?
+			AND TRIM(COALESCE(`uuid_barang`, '')) = ''",
+			array($tanggal_beli)
+		)->row();
+
+		return $row_cnt ? (int) $row_cnt->jml : 0;
 	}
 
 	private function get_persediaan_by_bulan($bulan)

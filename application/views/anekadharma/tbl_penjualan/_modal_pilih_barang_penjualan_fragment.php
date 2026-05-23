@@ -34,9 +34,6 @@ foreach ($Data_stock as $list_data) {
 	if (empty($list_data->id) || trim((string) $list_data->nama_barang_beli) === '') {
 		continue;
 	}
-	if (empty($list_data->uuid_barang)) {
-		continue;
-	}
 	if (isset($list_data->kategori_barang) && penjualan_is_kategori_jasa($list_data->kategori_barang)) {
 		continue;
 	}

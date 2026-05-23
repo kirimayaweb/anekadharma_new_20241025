@@ -24,6 +24,9 @@
                         <li class="nav-item">
                             <a class="nav-link" id="tab-rekap" data-toggle="pill" href="#panel-rekap" role="tab" aria-controls="panel-rekap" aria-selected="false">Rekap</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-generate-persediaan" data-toggle="pill" href="#panel-generate-persediaan" role="tab" aria-controls="panel-generate-persediaan" aria-selected="false">Generate Persediaan</a>
+                        </li>
                     </ul>
                 </div>
 
@@ -216,6 +219,83 @@
                             </table>
                         </div>
 
+                        <!-- TAB 3: GENERATE PERSEDIAAN BULAN BARU -->
+                        <?php
+                        $gen_bulan_default = isset($gen_bulan_default) ? (int) $gen_bulan_default : (int) date('n');
+                        $gen_tahun_default = isset($gen_tahun_default) ? (int) $gen_tahun_default : (int) date('Y');
+                        $gen_tahun_min = isset($gen_tahun_min) ? (int) $gen_tahun_min : 2020;
+                        $gen_tahun_max = isset($gen_tahun_max) ? (int) $gen_tahun_max : ((int) date('Y') + 2);
+                        $nama_bulan_id = array(
+                            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+                        );
+                        ?>
+                        <div class="tab-pane fade" id="panel-generate-persediaan" role="tabpanel" aria-labelledby="tab-generate-persediaan">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <h5 class="mb-2">Generate data persediaan dari data bulan sebelumnya</h5>
+                                    <p class="text-muted small mb-3">
+                                        Memproses seluruh record dari <strong>bulan sebelumnya</strong>.
+                                        Record yang <strong>sudah ada</strong> di bulan target: field <strong>beli</strong> diisi dari
+                                        <code>tbl_pembelian</code> / <code>tbl_pembelian_jasa</code> (by <code>uuid_persediaan</code>, bulan/tahun sama);
+                                        jika tidak ada pembelian → <strong>beli = 0</strong>.
+                                        Semua baris bulan sumber disalin (1:1); pembelian/jasa hanya mengisi kolom beli.
+                                        <em>Hanya user Admin / Administrator (id_user_level 1, 2, atau 99).</em>
+                                    </p>
+                                    <?php if (empty($can_generate_persediaan)) { ?>
+                                    <div class="alert alert-warning py-2">
+                                        Akun Anda tidak memiliki akses generate. Diperlukan level <strong>Admin</strong> / <strong>Administrator</strong>
+                                        (<code>id_user_level</code> = 1, 2, atau 99).
+                                    </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-end">
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <label for="gen_bulan_persediaan">Bulan target</label>
+                                    <select id="gen_bulan_persediaan" class="form-control">
+                                        <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
+                                            <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $gen_bulan_default) ? ' selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <label for="gen_tahun_persediaan">Tahun target</label>
+                                    <select id="gen_tahun_persediaan" class="form-control">
+                                        <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
+                                            <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $gen_tahun_default) ? ' selected' : ''; ?>>
+                                                <?php echo (int) $th; ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 col-sm-12 mb-2">
+                                    <button type="button" id="btn-generate-persediaan-bulan" class="btn btn-secondary btn-lg" disabled>
+                                        <i class="fas fa-copy"></i> Generate Persediaan Bulan Terpilih
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert alert-secondary" id="gen-persediaan-info-sumber">
+                                <strong>Bulan sumber:</strong> <span id="gen-label-bulan-sumber">—</span>
+                                &nbsp;|&nbsp;
+                                <strong>Record sumber:</strong> <span id="gen-count-sumber">—</span>
+                                &nbsp;|&nbsp;
+                                <strong>Record target (sudah ada):</strong> <span id="gen-count-target">—</span>
+                            </div>
+                            <div class="alert alert-info" id="gen-persediaan-status">
+                                Pilih bulan dan tahun target, lalu sistem akan mengecek ketersediaan data.
+                            </div>
+                            <div class="card card-outline card-warning d-none" id="gen-persediaan-link-wrap">
+                                <div class="card-body py-2">
+                                    <span class="text-muted small">URL proses generate:</span>
+                                    <a href="#" id="gen-persediaan-url-link" target="_blank" rel="noopener"></a>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -247,6 +327,11 @@
     }
     #swal-rekap-log .rekap-log-ok { color: #155724; }
     #swal-rekap-log .rekap-log-run { color: #004085; font-weight: bold; }
+    #btn-generate-persediaan-bulan:disabled { cursor: not-allowed; opacity: 0.72; }
+    #btn-generate-persediaan-bulan.btn-success { color: #fff; }
+    #btn-generate-persediaan-bulan.btn-danger { color: #fff; }
+    #gen-persediaan-status.alert-success { color: #155724; background: #d4edda; border-color: #c3e6cb; }
+    #gen-persediaan-status.alert-danger { color: #721c24; background: #f8d7da; border-color: #f5c6cb; }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
@@ -255,6 +340,259 @@
 <script>
 $(document).ready(function() {
     var urlTambahPersediaan = <?php echo json_encode(isset($url_tambah_persediaan) ? $url_tambah_persediaan : site_url('Persediaan/ajax_tambah_persediaan')); ?>;
+    var urlCekGeneratePersediaan = <?php echo json_encode(isset($url_cek_generate_persediaan) ? $url_cek_generate_persediaan : site_url('Persediaan/ajax_cek_generate_persediaan_bulan')); ?>;
+    var urlAnalisaGeneratePersediaan = <?php echo json_encode(isset($url_analisa_generate_persediaan) ? $url_analisa_generate_persediaan : site_url('Persediaan/ajax_analisa_generate_persediaan_bulan')); ?>;
+    var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
+    var genCekXhr = null;
+
+    function getBulanTargetGenerate() {
+        var bulan = parseInt($('#gen_bulan_persediaan').val(), 10);
+        var tahun = parseInt($('#gen_tahun_persediaan').val(), 10);
+        if (!bulan || bulan < 1 || bulan > 12 || !tahun) {
+            return '';
+        }
+        return tahun + '-' + ('0' + bulan).slice(-2);
+    }
+
+    function setStatusGeneratePersediaan(type, html) {
+        var $box = $('#gen-persediaan-status');
+        $box.removeClass('alert-info alert-success alert-danger alert-warning');
+        if (type) {
+            $box.addClass('alert-' + type);
+        } else {
+            $box.addClass('alert-info');
+        }
+        $box.html(html);
+    }
+
+    function updateTombolGeneratePersediaan(mode, url) {
+        var $btn = $('#btn-generate-persediaan-bulan');
+        $btn.removeClass('btn-success btn-danger btn-warning btn-secondary');
+        if (!userCanGeneratePersediaan) {
+            $btn.prop('disabled', true).addClass('btn-secondary').removeData('url');
+            $('#gen-persediaan-link-wrap').addClass('d-none');
+            return;
+        }
+        if (mode === 'ready' && url) {
+            $btn.prop('disabled', false).addClass('btn-success').data('url', url);
+            $('#gen-persediaan-url-link').attr('href', url).text(url);
+            $('#gen-persediaan-link-wrap').removeClass('d-none');
+        } else if (mode === 'denied') {
+            $btn.prop('disabled', true).addClass('btn-danger').removeData('url');
+            $('#gen-persediaan-link-wrap').addClass('d-none');
+        } else {
+            $btn.prop('disabled', true).addClass('btn-secondary').removeData('url');
+            $('#gen-persediaan-link-wrap').addClass('d-none');
+        }
+    }
+
+    function cekGeneratePersediaanBulan() {
+        var bulanKey = getBulanTargetGenerate();
+        if (!bulanKey) {
+            setStatusGeneratePersediaan('warning', 'Pilih bulan dan tahun target yang valid.');
+            updateTombolGeneratePersediaan('idle');
+            return;
+        }
+
+        if (genCekXhr && genCekXhr.readyState !== 4) {
+            genCekXhr.abort();
+        }
+
+        setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> Mengecek data persediaan bulan <strong>' + bulanKey + '</strong>...');
+        updateTombolGeneratePersediaan('idle');
+
+        genCekXhr = $.ajax({
+            url: urlCekGeneratePersediaan,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan: bulanKey }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                setStatusGeneratePersediaan('danger', (res && res.message) ? res.message : 'Gagal mengecek data persediaan.');
+                $('#gen-label-bulan-sumber').text('—');
+                $('#gen-count-sumber').text('—');
+                return;
+            }
+
+            var labelSumber = res.bulan_sumber || '';
+            if (labelSumber.indexOf('-') === 4) {
+                var ps = labelSumber.split('-');
+                labelSumber = ps[1] + '/' + ps[0];
+            }
+            $('#gen-label-bulan-sumber').text(labelSumber + ' (tanggal_beli ' + (res.tanggal_beli_sumber || '') + ')');
+            $('#gen-count-sumber').text(typeof res.count_sumber !== 'undefined' ? res.count_sumber : '0');
+
+            $('#gen-count-target').text(typeof res.count_target !== 'undefined' ? res.count_target : '0');
+
+            if (res.user_can_generate === false || !userCanGeneratePersediaan) {
+                setStatusGeneratePersediaan('warning', res.message || 'Hanya Admin / Administrator (level 1, 2, atau 99) yang dapat generate.');
+                updateTombolGeneratePersediaan('denied');
+            } else if (!res.can_generate) {
+                setStatusGeneratePersediaan('warning', res.message || 'Belum dapat generate (bulan sumber kosong).');
+                updateTombolGeneratePersediaan('idle');
+            } else {
+                setStatusGeneratePersediaan('success', res.message || 'Siap generate. Tombol <strong>hijau</strong> — meski sudah ada data di bulan target.');
+                updateTombolGeneratePersediaan('ready', res.url_generate || '');
+            }
+        }).fail(function() {
+            setStatusGeneratePersediaan('danger', 'Gagal menghubungi server. Periksa koneksi lalu coba lagi.');
+            updateTombolGeneratePersediaan('idle');
+        });
+    }
+
+    $('#gen_bulan_persediaan, #gen_tahun_persediaan').on('change', function() {
+        cekGeneratePersediaanBulan();
+    });
+
+    function buildHtmlAnalisaGenerate(a) {
+        var html = '<div style="text-align:left;font-size:13px;line-height:1.5;">';
+        html += '<p><strong>Bulan sumber:</strong> ' + (a.bulan_sumber_label || '') + ' (' + (a.tanggal_beli_sumber || '') + ')</p>';
+        html += '<p><strong>Bulan target:</strong> ' + (a.bulan_target_label || '') + ' (' + (a.tanggal_beli_target || '') + ')</p>';
+        html += '<table class="table table-sm table-bordered mb-2" style="font-size:12px;">';
+        html += '<tr><td>Total record bulan sumber</td><td class="text-right"><strong>' + (a.total_sumber || 0) + '</strong></td></tr>';
+        html += '<tr><td>Record sudah ada di bulan target</td><td class="text-right"><strong>' + (a.total_target || 0) + '</strong></td></tr>';
+        html += '<tr><td>Perkiraan INSERT (salin semua baris sumber)</td><td class="text-right text-success"><strong>' + (a.estimasi_insert || 0) + '</strong></td></tr>';
+        if ((a.total_target || 0) > 0) {
+            html += '<tr><td>Record bulan target lama (akan dihapus dulu)</td><td class="text-right text-warning"><strong>' + (a.total_target || 0) + '</strong></td></tr>';
+        }
+        html += '<tr><td>Total target setelah generate</td><td class="text-right"><strong>' + (a.estimasi_total_target_setelah || a.total_sumber || 0) + '</strong></td></tr>';
+        html += '<tr><td>Harus sama dengan total sumber</td><td class="text-right"><strong>' + (a.total_sumber || 0) + '</strong></td></tr>';
+        html += '<tr><td>Grup uuid_barang ganda (bulan sumber)</td><td class="text-right"><strong>' + (a.grup_duplikat_uuid_barang_sumber || 0) + '</strong> grup / ' + (a.baris_duplikat_uuid_barang_sumber || 0) + ' baris tambahan</td></tr>';
+        html += '<tr><td>Grup uuid_barang ganda (bulan target)</td><td class="text-right"><strong>' + (a.grup_duplikat_uuid_barang_target || 0) + '</strong> grup</td></tr>';
+        html += '<tr><td>Record sumber tanpa uuid_barang</td><td class="text-right">'
+            + '<strong class="' + ((a.estimasi_kosong_uuid_barang || 0) > 0 ? 'text-danger' : '') + '">'
+            + (a.estimasi_kosong_uuid_barang || 0) + '</strong></td></tr>';
+        html += '</table>';
+        html += '<p class="text-muted small mb-2">' + (a.penjelasan || '') + '</p>';
+
+        var uk = a.uuid_barang_kosong || {};
+        if ((uk.total_kosong_sumber || 0) > 0) {
+            html += '<div class="alert alert-warning py-2 px-2 mb-2" style="font-size:12px;">';
+            html += '<strong>uuid_barang kosong di bulan sumber:</strong> ' + uk.total_kosong_sumber + ' record.<br/>';
+            html += (uk.penjelasan || '') + '<br/>';
+            html += '<em>Saat generate: tiap baris akan mendapat <strong>uuid_barang baru unik</strong> di bulan sumber, lalu disalin ke bulan target.</em>';
+            html += '</div>';
+
+            if (uk.rekap_penyebab && uk.rekap_penyebab.length) {
+                html += '<p class="mb-1"><strong>Rekap penyebab:</strong></p>';
+                html += '<table class="table table-sm table-bordered mb-2" style="font-size:11px;">';
+                html += '<thead><tr><th>Penyebab</th><th class="text-right">Jumlah</th></tr></thead><tbody>';
+                for (var p = 0; p < uk.rekap_penyebab.length; p++) {
+                    var rp = uk.rekap_penyebab[p];
+                    html += '<tr><td>' + (rp.label || rp.kode || '') + '</td><td class="text-right"><strong>' + (rp.jumlah || 0) + '</strong></td></tr>';
+                }
+                html += '</tbody></table>';
+            }
+
+            if (uk.daftar_sample && uk.daftar_sample.length) {
+                html += '<p class="mb-1"><strong>Contoh record (max 25):</strong></p>';
+                html += '<div style="max-height:160px;overflow:auto;font-size:11px;border:1px solid #dee2e6;padding:6px;">';
+                html += '<table class="table table-sm mb-0"><thead><tr><th>ID</th><th>Nama</th><th>Satuan</th><th>Penyebab</th></tr></thead><tbody>';
+                for (var s = 0; s < uk.daftar_sample.length; s++) {
+                    var sm = uk.daftar_sample[s];
+                    html += '<tr><td>' + sm.id + '</td><td>' + (sm.namabarang || '') + '</td><td>' + (sm.satuan || '') + '</td><td><small>' + (sm.penyebab || '') + '</small></td></tr>';
+                }
+                html += '</tbody></table></div>';
+            }
+        }
+
+        if (a.daftar_duplikat_uuid_barang && a.daftar_duplikat_uuid_barang.length) {
+            html += '<p class="mb-1"><strong>Contoh uuid_barang ganda (bulan sumber):</strong></p>';
+            html += '<div style="max-height:120px;overflow:auto;font-size:11px;border:1px solid #dee2e6;padding:6px;">';
+            html += '<table class="table table-sm mb-0"><thead><tr><th>uuid_barang</th><th>Jumlah</th><th>Baris tambahan</th></tr></thead><tbody>';
+            for (var i = 0; i < a.daftar_duplikat_uuid_barang.length; i++) {
+                var d = a.daftar_duplikat_uuid_barang[i];
+                html += '<tr><td style="word-break:break-all;">' + (d.uuid_barang || '') + '</td><td>' + d.jumlah + '</td><td>' + d.baris_tambahan + '</td></tr>';
+            }
+            html += '</tbody></table></div>';
+        }
+
+        html += '<p class="text-info small mt-2 mb-0"><strong>Catatan:</strong> Ada di <code>tbl_pembelian</code> / <code>tbl_pembelian_jasa</code> '
+            + 'tetap di-<strong>copy</strong> (INSERT). Tabel pembelian hanya mengisi kolom <strong>beli</strong>, tidak melewatkan record.</p>';
+        if ((a.grup_duplikat_uuid_barang_sumber || 0) > 0) {
+            html += '<p class="text-muted small mb-0">uuid_barang ganda di sumber (' + a.grup_duplikat_uuid_barang_sumber
+                + ' grup) diperbaiki otomatis sebelum salin agar tiap baris sumber unik.</p>';
+        }
+        if ((a.estimasi_kosong_uuid_barang || 0) > 0) {
+            html += '<p class="text-muted small mb-0">uuid_barang kosong diperbaiki otomatis (uuid baru unik) di bulan sumber sebelum salin.</p>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    $('#btn-generate-persediaan-bulan').on('click', function(e) {
+        e.preventDefault();
+        if ($(this).prop('disabled')) {
+            return false;
+        }
+        var url = $(this).data('url');
+        var bulanKey = getBulanTargetGenerate();
+        if (!url || !bulanKey) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Belum siap', text: 'Pilih bulan/tahun target terlebih dahulu.' });
+            }
+            return false;
+        }
+
+        if (typeof Swal === 'undefined') {
+            if (confirm('Lanjutkan proses generate persediaan?')) {
+                window.location.href = url;
+            }
+            return false;
+        }
+
+        Swal.fire({
+            title: 'Menganalisa data...',
+            allowOutsideClick: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+
+        $.ajax({
+            url: urlAnalisaGeneratePersediaan,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan: bulanKey }
+        }).done(function(a) {
+            if (!a || !a.ok) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Analisa gagal',
+                    text: (a && a.message) ? a.message : 'Tidak dapat menganalisa data.'
+                });
+                return;
+            }
+
+            var icon = (
+                (a.estimasi_duplikat_sumber > 0)
+                || (a.grup_duplikat_uuid_barang_sumber > 0)
+                || (a.estimasi_kosong_uuid_barang > 0)
+            ) ? 'warning' : 'question';
+            Swal.fire({
+                icon: icon,
+                title: 'Konfirmasi Generate Persediaan',
+                html: buildHtmlAnalisaGenerate(a),
+                width: 720,
+                showCancelButton: true,
+                confirmButtonText: 'OK — Lanjutkan Generate',
+                cancelButtonText: 'Batal',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                reverseButtons: true
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    window.location.href = a.url_generate || url;
+                }
+            });
+        }).fail(function() {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Tidak dapat menghubungi server untuk analisa data.'
+            });
+        });
+
+        return false;
+    });
 
     function getBulanPersediaanAktif() {
         return $('#bulan_persediaan').val() || '';
@@ -831,9 +1169,29 @@ $(document).ready(function() {
             if (!rekapRecalcRunning) {
                 loadRekapDataOnly();
             }
+        } else if ($(e.target).attr('href') === '#panel-generate-persediaan') {
+            cekGeneratePersediaanBulan();
         } else if ($(e.target).attr('href') === '#panel-data-persediaan') {
             dtPersediaan.columns.adjust().draw();
         }
     });
+
+    try {
+        if (sessionStorage.getItem('persediaan_show_tab') === 'generate') {
+            sessionStorage.removeItem('persediaan_show_tab');
+            setTimeout(function() {
+                $('#tab-generate-persediaan').tab('show');
+                cekGeneratePersediaanBulan();
+            }, 300);
+        }
+    } catch (eGenTab) {}
+
+    if (userCanGeneratePersediaan) {
+        setTimeout(function() {
+            if ($('#panel-generate-persediaan').hasClass('active') || $('#panel-generate-persediaan').hasClass('show')) {
+                cekGeneratePersediaanBulan();
+            }
+        }, 400);
+    }
 });
 </script>

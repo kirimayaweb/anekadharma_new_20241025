@@ -15,8 +15,10 @@
 		th, td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
 		th { background: #007bff; color: #fff; position: sticky; top: 0; }
 		tr.insert td { background: #e8f5e9; }
+		tr.update td { background: #e3f2fd; }
 		tr.skip td { background: #fff8e1; }
 		.badge-insert { color: #1b5e20; font-weight: bold; }
+		.badge-update { color: #0d47a1; font-weight: bold; }
 		.badge-skip { color: #e65100; font-weight: bold; }
 		.summary-box { background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
 		pre.ringkasan { background: #263238; color: #aed581; padding: 12px; border-radius: 6px; overflow: auto; font-size: 12px; }
@@ -51,7 +53,9 @@
 	<p><em>beli record baru = 0 (tidak dari bulan sumber)</em></p>
 	<p><em>total_10 = sa + beli | nilai_persediaan = total_10 × hpp | tuj = sa + beli</em></p>
 	<p><em>Kolom setelah tuj sampai sebelum total_10 = 0 (tidak disalin dari bulan sumber)</em></p>
-	<p><em>Record sudah ada (tanggal_beli + namabarang + satuan + hpp sama) tidak diubah</em></p>
+	<p><em>Awal proses: (1) isi <code>uuid_barang</code> kosong di bulan sumber (uuid baru unik tiap baris); (2) perbaiki uuid ganda; (3) kosongkan bulan target; (4) salin semua record (INSERT).</em></p>
+	<p><em>Record di <code>tbl_pembelian</code> / <code>tbl_pembelian_jasa</code> tetap di-copy; kolom <strong>beli</strong> diisi dari pembelian bulan target (0 jika tidak ada).</em></p>
+	<p><em>Total record bulan target setelah selesai = total bulan sumber (<?php echo (int) $total_sumber; ?>).</em></p>
 </div>
 
 <div id="hasil-proses" class="card">
@@ -105,7 +109,7 @@
 			return '<div class="swal-line-item">Menunggu data...</div>';
 		}
 		return items.map(function (it) {
-			var cls = it.aksi === 'INSERT' ? 'insert' : 'skip';
+			var cls = it.aksi === 'INSERT' ? 'insert' : (it.aksi === 'UPDATE' ? 'update' : 'skip');
 			var line = '<strong>' + escapeHtml(it.aksi) + '</strong> | '
 				+ escapeHtml(it.namabarang) + ' | ' + escapeHtml(it.satuan)
 				+ ' | hpp: ' + escapeHtml(it.hpp);
@@ -166,6 +170,49 @@
 					return;
 				}
 
+				if (data.fixuuid && data.fixuuid.record_kosong > 0) {
+					var fmsg = (data.fixuuid.pesan || '')
+						+ '<br/><small>Diperbaiki: ' + data.fixuuid.record_diperbaiki + ' record</small>';
+					if (data.fixuuid.rekap_penyebab && data.fixuuid.rekap_penyebab.length) {
+						fmsg += '<br/><small><strong>Penyebab:</strong> ';
+						fmsg += data.fixuuid.rekap_penyebab.map(function (r) {
+							return (r.label || r.kode) + ' (' + r.jumlah + ')';
+						}).join(', ');
+						fmsg += '</small>';
+					}
+					Swal.fire({
+						icon: 'info',
+						title: 'Perbaikan uuid_barang kosong',
+						html: fmsg,
+						timer: 5000,
+						showConfirmButton: true
+					});
+				}
+
+				if (data.dedup && data.dedup.grup_duplikat > 0) {
+					var dmsg = (data.dedup.pesan || '')
+						+ '<br/><small>Grup duplikat: ' + data.dedup.grup_duplikat
+						+ ', diperbaiki: ' + data.dedup.record_diperbaiki + '</small>';
+					Swal.fire({
+						icon: 'info',
+						title: 'Perbaikan uuid_barang ganda',
+						html: dmsg,
+						timer: 4500,
+						showConfirmButton: true
+					});
+				}
+
+				if (data.reset_target && data.reset_target.dihapus > 0) {
+					Swal.fire({
+						icon: 'info',
+						title: 'Reset bulan target',
+						html: 'Menghapus <strong>' + data.reset_target.dihapus + '</strong> record lama '
+							+ '(tanggal_beli ' + escapeHtml(data.reset_target.tanggal_beli) + ') sebelum salin ulang.',
+						timer: 4000,
+						showConfirmButton: true
+					});
+				}
+
 				if (data.items && data.items.length) {
 					allItems = allItems.concat(data.items);
 				}
@@ -186,6 +233,8 @@
 					icon: 'success',
 					title: 'Selesai',
 					html: 'Total insert: <strong>' + data.summary.total_insert + '</strong><br/>'
+						+ 'Total record bulan target: <strong>' + (data.summary.total_target_akhir || data.summary.total_insert) + '</strong>'
+						+ ' (harus = sumber ' + data.summary.total_sumber + ')<br/>'
 						+ 'Total skip: <strong>' + data.summary.total_skip + '</strong><br/>'
 						+ '<small>Daftar lengkap ditampilkan di bawah.</small>',
 					timer: 3500,
@@ -209,16 +258,44 @@
 			+ 'tanggal_beli target: ' + escapeHtml(summary.tanggal_beli_target) + '<br/>'
 			+ 'tanggal_beli sumber: ' + escapeHtml(summary.tanggal_beli_sumber) + '<br/>'
 			+ 'Total sumber: ' + summary.total_sumber + '<br/>'
-			+ 'Total insert (baru): ' + summary.total_insert + '<br/>'
-			+ 'Total skip (sudah ada): ' + summary.total_skip;
+			+ 'Total insert: ' + summary.total_insert + '<br/>'
+			+ 'Total record bulan target: <strong>' + (summary.total_target_akhir || summary.total_insert) + '</strong>'
+			+ ' (harus sama dengan sumber)<br/>'
+			+ 'Total skip: ' + summary.total_skip;
+		if (summary.reset_target && summary.reset_target.dihapus > 0) {
+			ringkasan.innerHTML += '<br/><strong>Reset bulan target:</strong> '
+				+ summary.reset_target.dihapus + ' record lama dihapus.';
+		}
+		if (summary.fixuuid && summary.fixuuid.record_kosong > 0) {
+			ringkasan.innerHTML += '<br/><strong>Perbaikan uuid_barang kosong (bulan sumber):</strong> '
+				+ summary.fixuuid.record_diperbaiki + ' / ' + summary.fixuuid.record_kosong + ' record.';
+			if (summary.fixuuid.rekap_penyebab && summary.fixuuid.rekap_penyebab.length) {
+				ringkasan.innerHTML += ' Penyebab: ';
+				ringkasan.innerHTML += summary.fixuuid.rekap_penyebab.map(function (r) {
+					return (r.label || r.kode) + ' (' + r.jumlah + ')';
+				}).join(', ');
+				ringkasan.innerHTML += '.';
+			}
+		}
+		if (summary.dedup) {
+			ringkasan.innerHTML += '<br/><strong>Perbaikan uuid ganda (bulan sumber):</strong> '
+				+ summary.dedup.grup_duplikat + ' grup, '
+				+ summary.dedup.record_diperbaiki + ' record uuid baru, '
+				+ summary.dedup.record_tetap + ' record tetap.';
+		}
+		if (summary.uuid_kosong_target_akhir !== undefined) {
+			ringkasan.innerHTML += '<br/><strong>uuid_barang kosong di bulan target setelah generate:</strong> '
+				+ summary.uuid_kosong_target_akhir;
+		}
 
 		var html = '';
 		for (var i = 0; i < allItems.length; i++) {
 			var it = allItems[i];
-			var trClass = it.aksi === 'INSERT' ? 'insert' : 'skip';
+			var trClass = it.aksi === 'INSERT' ? 'insert' : (it.aksi === 'UPDATE' ? 'update' : 'skip');
+			var badgeCls = it.aksi === 'INSERT' ? 'badge-insert' : (it.aksi === 'UPDATE' ? 'badge-update' : 'badge-skip');
 			html += '<tr class="' + trClass + '">'
 				+ '<td>' + (i + 1) + '</td>'
-				+ '<td class="' + (it.aksi === 'INSERT' ? 'badge-insert' : 'badge-skip') + '">' + escapeHtml(it.aksi) + '</td>'
+				+ '<td class="' + badgeCls + '">' + escapeHtml(it.aksi) + '</td>'
 				+ '<td>' + escapeHtml(it.id) + '</td>'
 				+ '<td style="font-size:11px;word-break:break-all;">' + escapeHtml(it.uuid_persediaan) + '</td>'
 				+ '<td>' + escapeHtml(it.namabarang) + '</td>'
