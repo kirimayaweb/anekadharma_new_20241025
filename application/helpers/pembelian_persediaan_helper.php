@@ -321,3 +321,194 @@ function pembelian_cek_spop_di_persediaan_tahun($CI, $spop, $tanggal_po)
 		'tahun_label' => (string) $tahun,
 	);
 }
+
+/**
+ * Filter bulan persediaan untuk modul penjualan (berdasarkan Tgl Jual).
+ */
+function penjualan_get_filter_tgl_jual($CI, $tgl_jual = null)
+{
+	if ($tgl_jual !== null && trim((string) $tgl_jual) !== '') {
+		return pembelian_get_filter_tanggal($CI, $tgl_jual);
+	}
+
+	$awal = $CI->session->userdata('filter_tbl_penjualan_date_awal');
+	$akhir = $CI->session->userdata('filter_tbl_penjualan_date_akhir');
+
+	if (!empty($awal) && !empty($akhir)) {
+		$ts_awal = strtotime($awal);
+		return array(
+			'awal' => date('Y-m-d', $ts_awal),
+			'akhir' => date('Y-m-d', strtotime($akhir)),
+			'awal_bulan' => date('Y-m-01', $ts_awal),
+			'bulan_label' => date('m/Y', $ts_awal),
+		);
+	}
+
+	return pembelian_get_filter_tanggal($CI, null);
+}
+
+function penjualan_sync_filter_bulan_from_tgl_jual($CI, $tgl_jual)
+{
+	$tgl = penjualan_get_filter_tgl_jual($CI, $tgl_jual);
+	$awal = $tgl['awal'] . ' 00:00:00';
+	$akhir = $tgl['akhir'] . ' 23:59:59';
+	$CI->session->set_userdata('filter_tbl_penjualan_date_awal', $awal);
+	$CI->session->set_userdata('filter_tbl_penjualan_date_akhir', $akhir);
+	$CI->session->set_userdata('filter_penjualan_create_tgl_jual', trim((string) $tgl_jual));
+	return $tgl;
+}
+
+/**
+ * Ekspresi SQL tanggal efektif persediaan (tanggal_beli atau kolom tanggal varchar).
+ */
+function penjualan_sql_tanggal_persediaan_expr($alias = 'persediaan')
+{
+	$a = $alias;
+	return "COALESCE(
+		NULLIF(DATE({$a}.tanggal_beli), '0000-00-00'),
+		STR_TO_DATE({$a}.tanggal, '%d/%m/%Y'),
+		STR_TO_DATE({$a}.tanggal, '%e/%c/%Y'),
+		STR_TO_DATE({$a}.tanggal, '%Y-%m-%d'),
+		STR_TO_DATE({$a}.tanggal, '%d-%m-%Y')
+	)";
+}
+
+/**
+ * Format Tgl Jual untuk tampilan / form (d-m-Y).
+ */
+function penjualan_format_tgl_jual_tampil($tgl_jual)
+{
+	$ts = pembelian_parse_tanggal_po($tgl_jual);
+	if ($ts === false) {
+		$ts = strtotime(str_replace('/', '-', trim((string) $tgl_jual)));
+	}
+	return ($ts !== false) ? date('d-m-Y', $ts) : date('d-m-Y');
+}
+
+function penjualan_is_kategori_jasa($kategori)
+{
+	return strtolower(trim((string) $kategori)) === 'jasa';
+}
+
+/**
+ * Kondisi SQL: hanya barang (bukan kategori jasa).
+ */
+function penjualan_sql_bukan_kategori_jasa($CI, $alias = 'persediaan')
+{
+	if (!$CI->db->field_exists('kategori', 'persediaan')) {
+		return '1=1';
+	}
+	$a = $alias;
+	return "LOWER(TRIM(COALESCE({$a}.kategori, ''))) <> 'jasa'";
+}
+
+/**
+ * Daftar stock persediaan untuk modal Pilih Barang penjualan (filter bulan Tgl Jual).
+ */
+function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null)
+{
+	$tgl_jual = trim((string) $tgl_jual);
+	if ($tgl_jual === '') {
+		return array();
+	}
+
+	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$has_kategori = $CI->db->field_exists('kategori', 'persediaan');
+	$kategori_sql = $has_kategori ? 'persediaan.kategori AS kategori_barang' : "'' AS kategori_barang";
+	$tgl_expr = penjualan_sql_tanggal_persediaan_expr('persediaan');
+	$bukan_jasa_sql = penjualan_sql_bukan_kategori_jasa($CI, 'persediaan');
+
+	$sql = "SELECT persediaan.id AS id,
+			persediaan.tanggal_beli AS tanggal_beli,
+			persediaan.tanggal AS tanggal,
+			persediaan.uuid_spop AS uuid_spop,
+			persediaan.spop AS spop,
+			persediaan.uuid_barang AS uuid_barang,
+			persediaan.uuid_persediaan AS uuid_persediaan,
+			persediaan.kode_barang AS kode_barang,
+			persediaan.namabarang AS nama_barang_beli,
+			persediaan.total_10 AS jumlah_sediaan,
+			persediaan.hpp AS harga_satuan_persediaan,
+			persediaan.satuan AS satuan_persediaan,
+			persediaan.pecah_satuan AS pecah_satuan_persediaan,
+			persediaan.bahan_produksi AS bahan_produksi,
+			persediaan.penjualan AS penjualan,
+			{$kategori_sql}
+		FROM persediaan
+		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
+		AND {$tgl_expr} >= ?
+		AND {$tgl_expr} <= ?
+		AND {$bukan_jasa_sql}
+		ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
+
+	return $CI->db->query($sql, array($tgl['awal'], $tgl['akhir']))->result();
+}
+
+/**
+ * Kunci bulan (Y-m) dari Tgl Jual untuk perbandingan perubahan datepicker.
+ */
+function penjualan_get_bulan_key_from_tgl($tgl_jual)
+{
+	$ts = pembelian_parse_tanggal_po($tgl_jual);
+	if ($ts === false) {
+		$ts = strtotime(str_replace('/', '-', trim((string) $tgl_jual)));
+	}
+	return ($ts !== false) ? date('Y-m', $ts) : '';
+}
+
+/**
+ * Hapus semua baris penjualan satu transaksi + kembalikan field penjualan di persediaan.
+ */
+function penjualan_hapus_semua_barang_by_uuid($CI, $uuid_penjualan)
+{
+	$uuid_penjualan = trim((string) $uuid_penjualan);
+	if ($uuid_penjualan === '') {
+		return 0;
+	}
+
+	$CI->load->model('Tbl_penjualan_model');
+	$CI->load->model('Persediaan_model');
+	$rows = $CI->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+	$jumlah_hapus = 0;
+
+	foreach ($rows as $row) {
+		if (empty($row->id)) {
+			continue;
+		}
+		$row_penjualan = $CI->Tbl_penjualan_model->get_by_id($row->id);
+		if (empty($row_penjualan)) {
+			continue;
+		}
+
+		$id_persediaan = $row_penjualan->id_persediaan_barang;
+		if (!empty($id_persediaan)) {
+			$row_persediaan = $CI->Persediaan_model->get_by_id($id_persediaan);
+			if ($row_persediaan && (int) $row_persediaan->penjualan >= (int) $row_penjualan->jumlah) {
+				$CI->Persediaan_model->update($id_persediaan, array(
+					'penjualan' => (int) $row_persediaan->penjualan - (int) $row_penjualan->jumlah,
+				));
+			}
+		}
+
+		$CI->Tbl_penjualan_model->delete($row->id);
+		$jumlah_hapus++;
+	}
+
+	return $jumlah_hapus;
+}
+
+/**
+ * Render HTML tbody + modal nested untuk Pilih Barang penjualan.
+ */
+function penjualan_render_modal_pilih_barang($CI, $data)
+{
+	$data['fragment_part'] = 'tbody';
+	$tbody = $CI->load->view('anekadharma/tbl_penjualan/_modal_pilih_barang_penjualan_fragment', $data, TRUE);
+	$data['fragment_part'] = 'modals';
+	$modals = $CI->load->view('anekadharma/tbl_penjualan/_modal_pilih_barang_penjualan_fragment', $data, TRUE);
+
+	return array(
+		'tbody' => $tbody,
+		'modals' => $modals,
+	);
+}
