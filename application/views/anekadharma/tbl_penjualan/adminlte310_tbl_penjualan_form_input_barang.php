@@ -1,3 +1,56 @@
+<?php
+$this->load->helper('pembelian_persediaan');
+if (!isset($filter_bulan_penjualan)) {
+	$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, isset($tgl_jual) ? $tgl_jual : null);
+}
+if (!isset($Data_stock)) {
+	$Data_stock = penjualan_get_stock_persediaan_rows($this, isset($tgl_jual) ? $tgl_jual : null);
+}
+if (!isset($jumlah_barang_penjualan)) {
+	$jumlah_barang_penjualan = 0;
+}
+if (!isset($penjualan_bulan_key)) {
+	$penjualan_bulan_key = penjualan_get_bulan_key_from_tgl(isset($tgl_jual) ? $tgl_jual : null);
+}
+if (!isset($uuid_penjualan)) {
+	$uuid_penjualan = '';
+}
+$tgl_jual_X_modal = isset($tgl_jual) ? penjualan_format_tgl_jual_tampil($tgl_jual) : date('d-m-Y');
+$render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
+	'Data_stock' => $Data_stock,
+	'tgl_jual' => isset($tgl_jual) ? $tgl_jual : null,
+	'tgl_jual_X' => $tgl_jual_X_modal,
+	'uuid_penjualan' => $uuid_penjualan,
+	'action' => isset($action) ? $action : site_url('tbl_penjualan/create_action_simpan_barang/'),
+	'uuid_unit' => isset($uuid_unit) ? $uuid_unit : '',
+	'uuid_konsumen' => isset($uuid_konsumen) ? $uuid_konsumen : '',
+	'nmrpesan' => isset($nmrpesan) ? $nmrpesan : '',
+	'nmrkirim' => isset($nmrkirim) ? $nmrkirim : '',
+));
+?>
+<style>
+	#modal-xl.modal-pilih-barang-penjualan {
+		padding-left: 5mm !important;
+		padding-right: 5mm !important;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .modal-dialog.modal-pilih-barang-wide {
+		max-width: calc(100vw - 10mm);
+		width: calc(100vw - 10mm);
+		margin: 1.75rem auto;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .modal-body {
+		padding: 0.75rem 0.5rem;
+	}
+	#modal-xl.modal-pilih-barang-penjualan #example {
+		width: 100% !important;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_wrapper {
+		width: 100%;
+	}
+	#container-modal-pilih-barang-nested .modal {
+		z-index: 1065;
+	}
+</style>
 <div class="content-wrapper">
 
 
@@ -71,12 +124,11 @@
                                 <label for="datetime">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
                                 <div class="col-4">
                                     <?php
-                                    $tgl_jual_X = date("d-m-Y", strtotime($tgl_jual));
+                                    $tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
                                     ?>
-                                    <!-- <input type="text" class="form-control" name="tgl_jual" id="tgl_jual" placeholder="Tgl Po" value="<?php echo $tgl_jual; ?>" /> -->
-                                    <div class="input-group date" id="tgl_jual" name="tgl_jual" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_jual" id="tgl_jual" name="tgl_jual" value="<?php echo $tgl_jual_X; ?>" required />
-                                        <div class="input-group-append" data-target="#tgl_jual" data-toggle="datetimepicker">
+                                    <div class="input-group date" id="dt_tgl_jual_penjualan" data-target-input="nearest">
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#dt_tgl_jual_penjualan" id="input_tgl_jual_penjualan" name="tgl_jual" value="<?php echo htmlspecialchars($tgl_jual_X, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
+                                        <div class="input-group-append" data-target="#dt_tgl_jual_penjualan" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
                                             </div>
@@ -85,13 +137,17 @@
 
                                     </div>
                                 </div>
-                                <!-- <div class="col-12">
-                                    Jika tanggal tidak di pilih, maka akan di isi = tanggal saat ini secara otomatis oleh sistem
-
-                                </div> -->
+                                <small class="text-muted d-block mt-1" id="info-bulan-persediaan-penjualan">
+                                    Daftar barang (persediaan) bulan: <strong><?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    — mengikuti <em>Tgl Jual</em>, hanya <strong>barang</strong> (kategori jasa tidak ditampilkan)
+                                </small>
+                                <?php if ((int) $jumlah_barang_penjualan > 0) { ?>
+                                <small class="text-danger d-block mt-1" id="info-tgl-jual-terkunci">
+                                    Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data barang penjualan pada bulan ini. Hapus semua barang terlebih dahulu jika ingin memindahkan transaksi ke bulan persediaan lain.
+                                </small>
+                                <?php } ?>
 
                             </div>
-
 
                             <div class="form-group">
                                 <div class="row">
@@ -208,14 +264,20 @@
 
                         </form>
 
-
+                        <form id="form-reload-penjualan-inisiasi" method="post" action="<?php echo site_url('tbl_penjualan/create_action_inisiasi/new'); ?>" class="d-none" aria-hidden="true">
+                            <input type="hidden" name="tgl_jual" id="reload_penjualan_tgl_jual" value="<?php echo htmlspecialchars($tgl_jual_X_modal, ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="uuid_unit" id="reload_penjualan_uuid_unit" value="<?php echo htmlspecialchars(isset($uuid_unit) ? $uuid_unit : '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="uuid_konsumen" id="reload_penjualan_uuid_konsumen" value="<?php echo htmlspecialchars(isset($uuid_konsumen) ? $uuid_konsumen : '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="nmrpesan" id="reload_penjualan_nmrpesan" value="<?php echo htmlspecialchars(isset($nmrpesan) ? $nmrpesan : '', ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="nmrkirim" id="reload_penjualan_nmrkirim" value="<?php echo htmlspecialchars(isset($nmrkirim) ? $nmrkirim : '', ENT_QUOTES, 'UTF-8'); ?>">
+                        </form>
 
                         <br />
 
                         <div class="card card-success">
                             <div class="card-header">
                                 <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>Detail Barang</strong> <button type="button" class="btn btn-warning btn-lg" data-toggle="modal" data-target="#modal-xl">
+                                    <div class="col-12" text-align="center"> <strong>Detail Barang</strong> <button type="button" class="btn btn-warning btn-lg" id="btn-input-detail-barang-penjualan">
                                             Input Detail Barang
                                         </button></div>
 
@@ -417,74 +479,18 @@
 
 <!-- /.modal -->
 
-<div class="modal fade" id="modal-xl">
-    <div class="modal-dialog modal-xl">
+<div class="modal fade modal-pilih-barang-penjualan" id="modal-xl" tabindex="-1">
+    <div class="modal-dialog modal-pilih-barang-wide">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Pilih Barang</h4>
+                <h4 class="modal-title">Pilih Barang <small class="text-muted" id="modal-pilih-barang-bulan-label">(Bulan: <?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?> — barang saja, tanpa jasa)</small></h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-
-                <!-- ----------- -->
-
-                <?php
-
-                // $Data_stock = $this->Tbl_pembelian_model->stock();
-
-                // DATA PERSEDIAAN BERDASARKAN BULAN LALU
-
-                // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
-
-                // $sql_data = "SELECT id,tanggal_beli,spop,uuid_barang,namabarang,hpp,satuan,sa,total_10 FROM persediaan WHERE spop <>'' AND (namabarang, tanggal_beli) IN (SELECT namabarang, Max(tanggal_beli) FROM persediaan GROUP BY namabarang)";
-
-                // // $sql = "SELECT * FROM tbl_pembelian WHERE id=$id_proses";
-                // $Data_stock = $this->db->query($sql_data)->result();
-
-
-                $sql_stock = "SELECT persediaan.id as id, 
-                                        persediaan.tanggal_beli as tanggal_beli, 
-                                        persediaan.uuid_spop as uuid_spop, 
-                                        persediaan.spop as spop, 
-                                        persediaan.uuid_barang as uuid_barang, 
-                                        persediaan.kode_barang as kode_barang, 
-                                        persediaan.namabarang as nama_barang_beli,
-                                        persediaan.total_10 as jumlah_sediaan,  
-                                        persediaan.hpp as harga_satuan_persediaan, 
-                                        persediaan.satuan as satuan_persediaan,
-                                        persediaan.pecah_satuan as pecah_satuan_persediaan,
-                                        persediaan.bahan_produksi as bahan_produksi,
-                                                -- tbl_pembelian.uuid_pembelian as uuid_pembelian,
-                                                -- tbl_pembelian.uraian as barang_beli, 
-                                                -- tbl_pembelian.jumlah as jumlah_belanja, 
-                                                -- tbl_pembelian.harga_satuan as harga_satuan_beli,  
-                                                -- tbl_pembelian.tgl_po as tgl_po,
-                                                -- tbl_pembelian.uuid_gudang as uuid_gudang, 
-                                                -- tbl_pembelian.nama_gudang as nama_gudang,  
-                                                -- tbl_pembelian.satuan as satuan,
-                                                -- tbl_penjualan.nama_barang as barang_jual, 
-                                                -- tbl_penjualan.jumlah as jumlah_terjual,
-                                                persediaan.penjualan as penjualan
-                                                FROM persediaan  
-                                                -- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-                                                -- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-                                                -- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
-                                                ORDER BY persediaan.uuid_barang ASC";
-
-                // print_r($this->db->query($sql_stock)->result());
-                $Data_stock = $this->db->query($sql_stock)->result();
-
-
-
-                // $Data_stock = $this->Persediaan_model->get_by_persediaan_month($tgl_jual);
-
-
-                // print_r($Data_stock);
-
-                ?>
-                <div class="card-body">
+                <div id="modal-pilih-barang-loading" class="text-center text-muted py-3 d-none">Memuat data persediaan...</div>
+                <div class="card-body p-0">
 
                     <table id="example" class="display nowrap" style="width:100%">
                         <!-- <table id="example" class="display nowrap" style="width:100%"> -->
@@ -503,290 +509,20 @@
 
                             </tr>
                         </thead>
-                        <tbody>
-                            <?php
-
-                            $start = 0;
-                            foreach ($Data_stock as $list_data) {
-
-                                // CEK TOTAL STOCK TERSISA
-
-                                // $sql = "SELECT sum(`total_10`) as sisa_stock FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang' AND `tanggal`=(SELECT MAX(`tanggal`) FROM `persediaan` WHERE `uuid_barang`='$list_data->uuid_barang')";
-
-                                // $data_barang_per_barang = $this->db->query($sql)->row();
-
-                                // $sql = "SELECT sum(`jumlah`) as jumlah_jual FROM `tbl_penjualan` WHERE `uuid_barang`='$list_data->uuid_barang'";
-
-                                // $data_barang_terjual = $this->db->query($sql)->row();
-
-
-                                if ($list_data->uuid_barang) { //ada data barang
-
-                                    $sisa_stock_data = $list_data->jumlah_sediaan - ($list_data->penjualan + $list_data->pecah_satuan_persediaan + $list_data->bahan_produksi);
-
-                                    if ($sisa_stock_data > 0) { // stock lebih dari 0
-                            ?>
-                                        <tr>
-                                            <td align="right"><?php echo ++$start ?></td>
-                                            <td align="right">
-                                                <?php
-                                                if ($sisa_stock_data > 0) {
-                                                ?>
-                                                    <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                        PILIH BARANG <?php //echo $list_data->id
-                                                                        ?>
-                                                    </button>
-                                                <?php
-                                                } else {
-                                                ?>
-                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                        PILIH BARANG <?php //echo $list_data->id
-                                                                        ?>
-                                                    </button>
-                                                <?php
-                                                }
-                                                ?>
-
-
-                                            </td>
-                                            <td>
-                                                <?php
-                                                echo date("d M Y", strtotime($list_data->tanggal_beli));
-                                                ?>
-                                            </td>
-
-
-                                            <td align="left"><?php echo $list_data->spop; ?></td>
-                                            <td align="left">
-                                                <?php
-                                                $kategori_barang = '';
-                                                if ($this->db->field_exists('kategori', 'sys_nama_barang')) {
-                                                    $row_kategori_barang = $this->db->select('kategori')
-                                                        ->where('uuid_barang', $list_data->uuid_barang)
-                                                        ->get('sys_nama_barang')
-                                                        ->row();
-                                                    if ($row_kategori_barang && !empty($row_kategori_barang->kategori)) {
-                                                        $kategori_barang = $row_kategori_barang->kategori;
-                                                    }
-                                                }
-                                                echo $kategori_barang;
-                                                ?>
-                                            </td>
-
-                                            <td align="left"><?php echo $list_data->nama_barang_beli; ?></td>
-
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($list_data->harga_satuan_persediaan); 
-                                                echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                ?>
-                                            </td>
-                                            <td align="left"><?php echo $list_data->satuan_persediaan; ?></td>
-                                            <td align="right">
-                                                <?php
-
-                                                // if ($data_barang_terjual->jumlah_jual) {
-
-                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan - $data_barang_terjual->jumlah_jual;
-                                                // } else {
-
-                                                //     $sisa_stock_data = $data_barang_per_barang->jumlah_sediaan;
-                                                // }
-
-
-                                                // echo $list_data->jumlah_sediaan;
-                                                // echo "<br/>";
-
-                                                // echo $list_data->jumlah_belanja;
-                                                // echo "<br/>";
-
-                                                // echo $list_data->jumlah_terjual;
-                                                // echo "<br/>";
-
-
-                                                // if ($list_data->jumlah_sediaan) {
-                                                //     $get_jumlah_sediaan = $list_data->jumlah_sediaan;
-                                                // } else {
-                                                //     $get_jumlah_sediaan = 0;
-                                                // }
-
-                                                // if ($list_data->jumlah_belanja) {
-                                                //     $get_jumlah_belanja = $list_data->jumlah_belanja;
-                                                // } else {
-                                                //     $get_jumlah_belanja = 0;
-                                                // }
-
-                                                // if ($list_data->jumlah_terjual) {
-                                                //     $get_jumlah_terjual = $list_data->jumlah_terjual;
-                                                // } else {
-                                                //     $get_jumlah_terjual = 0;
-                                                // }
-
-                                                echo nominal($sisa_stock_data);
-
-
-                                                ?>
-                                            </td>
-
-
-                                            <!-- <td><?php //echo nominal($list_data->jumlah_belanja - $list_data->jumlah_terjual); 
-                                                        ?></td> -->
-                                            <td align="left">
-                                                <?php
-                                                // echo anchor(site_url('tbl_pembelian/update_per_spop/'), '<i class="fa fa-pencil-square-o" aria-hidden="true">PILIH</i>', 'class="btn btn-warning btn-xs"');
-
-
-                                                if ($sisa_stock_data > 0) {
-                                                ?>
-                                                    <button type="button" class="btn btn-success btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                        PILIH BARANG <?php //echo $list_data->id
-                                                                        ?>
-                                                    </button>
-                                                <?php
-                                                } else {
-                                                ?>
-                                                    <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-id="<?php echo $list_data->id; ?>" data-target="#modal-xl_1_<?php echo $list_data->id; ?>">
-                                                        PILIH BARANG <?php //echo $list_data->id
-                                                                        ?>
-                                                    </button>
-                                                <?php
-                                                }
-                                                ?>
-
-
-
-
-
-
-
-                                                <?php
-                                                if (!empty($uuid_penjualan)) {
-                                                    // print_r("ADa uuid penjualan");
-                                                ?>
-                                                    <form action="<?php echo $action . $uuid_penjualan . "/" . $list_data->id; ?>" method="post">
-                                                    <?php
-                                                } else {
-                                                    // print_r("TIDAK ADa uuid penjualan");
-                                                    ?>
-                                                        <form action="<?php echo $action . "new/" . $list_data->id; ?>" method="post">
-                                                        <?php
-                                                    }
-                                                        ?>
-
-                                                        <div class="modal fade" id="modal-xl_1_<?php echo $list_data->id; ?>">
-                                                            <div class="modal-dialog modal-xl">
-                                                                <div class="modal-content">
-                                                                    <div class="modal-header">
-                                                                        <h4 class="modal-title">Isi Jumlah Barang & pilih Unit</h4>
-                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                            <span aria-hidden="true">&times;</span>
-                                                                        </button>
-                                                                    </div>
-                                                                    <div class="modal-body">
-
-                                                                        <div class="form-group">
-                                                                            <div class="row">
-                                                                                <div class="col-12">
-                                                                                    <label for="konsumen_nama">Barang </label>
-                                                                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $list_data->nama_barang_beli ?>" disabled>
-                                                                                </div>
-                                                                            </div>
-
-
-
-                                                                            <div class="row">
-                                                                                <div class="col-4">
-                                                                                    <label for="nmrpesan">Harga Satuan </label>
-                                                                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php
-                                                                                                                                                                                                    // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                                                                                                                    echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                                                                                                                                                                    ?>" placeholder="<?php
-                                                                                                                                                                                                                        // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                                                                                                                                        echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                                                                                                                                                                                        ?>"> -->
-                                                                                </div>
-                                                                                <div class="col-4">
-                                                                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $sisa_stock_data ?></label>
-                                                                                </div>
-                                                                            </div>
-                                                                            <div class="row">
-
-
-                                                                                <div class="col-4">
-                                                                                    <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php
-                                                                                                                                                                                            // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                                                                                                            echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                                                                                                                                                            ?>" placeholder="<?php
-                                                                                                                                                                                                                // echo nominal($list_data->harga_satuan_persediaan); 
-                                                                                                                                                                                                                echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                                                                                                                                                                                ?>">
-                                                                                </div>
-                                                                                <div class="col-4">
-                                                                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
-                                                                                    <input type="number" class="form-control" id="jumlah" name="jumlah" min="1" max="<?php echo $sisa_stock_data ?>">
-
-                                                                                </div>
-
-                                                                            </div>
-
-                                                                        </div>
-
-
-                                                                    </div>
-
-                                                                    <div class="modal-footer justify-content-between">
-
-                                                                        <input type="hidden" name="tgl_jual" id="tgl_jual" value="<?php echo $tgl_jual_X; ?>" />
-
-                                                                        <input type="hidden" name="uuid_unit" id="uuid_unit" value="<?php echo $uuid_unit; ?>" />
-                                                                        
-                                                                        <input type="hidden" name="uuid_konsumen" id="uuid_konsumen" value="<?php echo $uuid_konsumen; ?>" />
-
-                                                                        <input type="hidden" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan; ?>" />
-
-                                                                        <input type="hidden" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim; ?>" />
-
-                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                                                                        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-
-                                                                        <button type="submit" class="btn btn-primary">SIMPAN</button>
-
-                                                                    </div>
-
-                                                                </div>
-                                                                <!-- /.modal-content -->
-                                                            </div>
-
-                                                        </div>
-                                                        </form>
-
-                                            </td>
-
-                                        </tr>
-                            <?php
-                                    }
-                                }
-                            }
-                            ?>
-
-
+                        <tbody id="tbody-pilih-barang-penjualan">
+                            <?php echo $render_modal_pilih_barang['tbody']; ?>
                         </tbody>
 
 
 
                     </table>
                 </div>
-                <!-- ----------- -->
-
-
+                <div id="container-modal-pilih-barang-nested"><?php echo $render_modal_pilih_barang['modals']; ?></div>
 
             </div>
 
         </div>
-        <!-- /.modal-content -->
     </div>
-    <!-- /.modal-dialog -->
 </div>
 
 <!-- /.modal -->
@@ -798,6 +534,7 @@
 
 <?php
 
+if (isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uuid_penjualan)) {
 foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 ?>
     <!-- MODAL EXTRA LARGE UPDATE PER ID -->
@@ -891,13 +628,13 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
     <!-- END OF MODAL EXTRA LARGE -->
 <?php
 }
+}
 ?>
 
 
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
@@ -905,68 +642,312 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
     }
 </style>
 
-
-
-
-
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-
-
-
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 375,
-            "scrollX": true
+/* Inisialisasi setelah jQuery layout (AdminLTE) dimuat — hindari konflik jQuery ganda */
+window.penjualanDtPilihBarang = null;
+window.destroyDataTablePilihBarang = function() {
+    var $ = window.jQuery;
+    if (!$ || !$.fn.DataTable) {
+        return;
+    }
+    var $table = $('#example');
+    if ($table.length && $.fn.DataTable.isDataTable($table)) {
+        try {
+            $table.DataTable().clear().destroy();
+        } catch (e1) {
+            try {
+                $table.DataTable().destroy();
+            } catch (e2) {}
+        }
+    }
+    window.penjualanDtPilihBarang = null;
+};
+window.initDataTablePilihBarang = function() {
+    var $ = window.jQuery;
+    if (!$ || !$.fn.DataTable) {
+        return;
+    }
+    window.destroyDataTablePilihBarang();
+    var $table = $('#example');
+    if ($table.length && $('#tbody-pilih-barang-penjualan tr').length) {
+        window.penjualanDtPilihBarang = $table.DataTable({
+            scrollY: 375,
+            scrollX: true,
+            destroy: true
+        });
+    }
+};
+
+window.addEventListener('load', function() {
+    var $ = window.jQuery;
+    if (!$) {
+        return;
+    }
+
+(function($) {
+    var cfg = {
+        urlListPersediaan: <?php echo json_encode(site_url('tbl_penjualan/list_persediaan_penjualan_ajax')); ?>,
+        bulanKeyAwal: <?php echo json_encode($penjualan_bulan_key); ?>,
+        bulanLabelAwal: <?php echo json_encode(isset($filter_bulan_penjualan['bulan_label']) ? $filter_bulan_penjualan['bulan_label'] : ''); ?>,
+        jumlahBarang: <?php echo (int) $jumlah_barang_penjualan; ?>,
+        uuidPenjualan: <?php echo json_encode($uuid_penjualan); ?>
+    };
+
+    var tglJualTimer = null;
+    var tglJualBulanKey = cfg.bulanKeyAwal;
+    var tglJualNilaiAktif = '';
+    var sedangBlokirBulan = false;
+
+    function getInputTglJual() {
+        var $el = $('#input_tgl_jual_penjualan');
+        if ($el.length) {
+            return $el;
+        }
+        return $('#form_update_nmrkirim input[name="tgl_jual"]').first();
+    }
+
+    function getTglJualVal() {
+        return $.trim(getInputTglJual().val() || '');
+    }
+
+    function parseBulanKey(tglStr) {
+        var p = tglStr.split(/[-\/\.]/);
+        if (p.length === 3) {
+            var d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+            if (y < 100) {
+                y += 2000;
+            }
+            if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                return y + '-' + ('0' + m).slice(-2);
+            }
+        }
+        return '';
+    }
+
+    function updateInfoBulan(label) {
+        $('#info-bulan-persediaan-penjualan').html(
+            'Daftar barang (persediaan) bulan: <strong>' + label + '</strong> — mengikuti <em>Tgl Jual</em>, hanya <strong>barang</strong> (kategori jasa tidak ditampilkan)'
+        );
+        $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + label + ' — barang saja, tanpa jasa)');
+    }
+
+    function syncReloadFormFields() {
+        $('#reload_penjualan_tgl_jual').val(getTglJualVal());
+        $('#reload_penjualan_uuid_unit').val($('#uuid_unit').val() || '');
+        $('#reload_penjualan_uuid_konsumen').val($('#uuid_konsumen').val() || '');
+        $('#reload_penjualan_nmrpesan').val($('#nmrpesan').val() || '');
+        $('#reload_penjualan_nmrkirim').val($('#nmrkirim').val() || '');
+    }
+
+    function submitReloadHalaman() {
+        syncReloadFormFields();
+        $('#form-reload-penjualan-inisiasi').submit();
+    }
+
+    function muatModalPilihBarang(callback, onFinish) {
+        var tgl = getTglJualVal();
+        if (!tgl) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Tgl Jual belum diisi', text: 'Isi tanggal jual terlebih dahulu.' });
+            } else {
+                alert('Isi tanggal jual terlebih dahulu.');
+            }
+            if (typeof onFinish === 'function') {
+                onFinish();
+            }
+            return;
+        }
+        $('#modal-pilih-barang-loading').removeClass('d-none');
+        $.ajax({
+            url: cfg.urlListPersediaan,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                tgl_jual: tgl,
+                uuid_penjualan: cfg.uuidPenjualan,
+                uuid_unit: $('#uuid_unit').val(),
+                uuid_konsumen: $('#uuid_konsumen').val(),
+                nmrpesan: $('#nmrpesan').val(),
+                nmrkirim: $('#nmrkirim').val()
+            }
+        }).done(function(res) {
+            $('#modal-pilih-barang-loading').addClass('d-none');
+            if (!res || !res.ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Gagal memuat data', text: (res && res.message) ? res.message : 'Terjadi kesalahan.' });
+                }
+                return;
+            }
+            window.destroyDataTablePilihBarang();
+            $('#tbody-pilih-barang-penjualan').html(res.tbody);
+            $('#container-modal-pilih-barang-nested').html(res.modals);
+            if (res.bulan_label) {
+                updateInfoBulan(res.bulan_label);
+                cfg.bulanLabelAwal = res.bulan_label;
+            }
+            if (res.bulan_key) {
+                tglJualBulanKey = res.bulan_key;
+            }
+            tglJualNilaiAktif = getTglJualVal();
+            $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' barang — tanpa jasa)');
+            window.initDataTablePilihBarang();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        }).fail(function(xhr) {
+            $('#modal-pilih-barang-loading').addClass('d-none');
+            var msg = 'Tidak dapat memuat daftar persediaan.';
+            if (xhr && xhr.responseText && xhr.responseText.indexOf('{') === -1) {
+                msg += ' (cek login / hak akses)';
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Gagal memuat data', text: msg });
+            } else {
+                alert(msg);
+            }
+        }).always(function() {
+            if (typeof onFinish === 'function') {
+                onFinish();
+            }
+        });
+    }
+
+    function getPickerTglJual() {
+        return $('#dt_tgl_jual_penjualan');
+    }
+
+    function initDatepickerTglJualPenjualan() {
+        var $picker = getPickerTglJual();
+        if (!$picker.length) {
+            return;
+        }
+        if ($picker.data('DateTimePicker')) {
+            return;
+        }
+        $picker.datetimepicker({
+            format: 'D-M-YYYY',
+            useCurrent: false
+        });
+    }
+
+    function revertTglJualPicker() {
+        getInputTglJual().val(tglJualNilaiAktif);
+        var $picker = getPickerTglJual();
+        if ($picker.length && $picker.data('DateTimePicker') && typeof moment !== 'undefined') {
+            var m = moment(tglJualNilaiAktif, 'D-M-YYYY', true);
+            if (!m.isValid()) {
+                m = moment(tglJualNilaiAktif, 'DD-MM-YYYY', true);
+            }
+            if (m.isValid()) {
+                $picker.datetimepicker('date', m);
+            }
+        }
+    }
+
+    function tampilkanBlokirUbahBulan() {
+        var labelBulan = cfg.bulanLabelAwal || tglJualBulanKey;
+        var pesan = 'Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data barang penjualan pada bulan <strong>' + labelBulan + '</strong>.<br><br>' +
+            'Data persediaan berbeda per bulan dan transaksi penjualan harus sesuai bulan persediaan yang dipakai.<br><br>' +
+            'Hapus semua barang di Detail Barang terlebih dahulu jika ingin bertransaksi di bulan lain.';
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tgl Jual tidak dapat diubah',
+                html: pesan
+            });
+        } else {
+            alert('Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data barang penjualan pada bulan ini.');
+        }
+    }
+
+    function setKunciTglJual(terkunci) {
+        var $input = getInputTglJual();
+        var $picker = getPickerTglJual();
+        $input.prop('readonly', !!terkunci);
+        if ($picker.length && $picker.data('DateTimePicker')) {
+            if (terkunci) {
+                $picker.datetimepicker('disable');
+            } else {
+                $picker.datetimepicker('enable');
+            }
+        }
+        $picker.find('[data-toggle="datetimepicker"]').css('pointer-events', terkunci ? 'none' : '');
+    }
+
+    function onTglJualBerubah() {
+        if (sedangBlokirBulan) {
+            return;
+        }
+        var tglBaru = getTglJualVal();
+        if (!tglBaru) {
+            return;
+        }
+        var bulanKeyBaru = parseBulanKey(tglBaru);
+        if (!bulanKeyBaru || bulanKeyBaru === tglJualBulanKey) {
+            return;
+        }
+
+        if (cfg.jumlahBarang > 0) {
+            sedangBlokirBulan = true;
+            revertTglJualPicker();
+            tampilkanBlokirUbahBulan();
+            setTimeout(function() {
+                sedangBlokirBulan = false;
+            }, 300);
+            return;
+        }
+
+        tglJualBulanKey = bulanKeyBaru;
+        tglJualNilaiAktif = tglBaru;
+        var parts = bulanKeyBaru.split('-');
+        if (parts.length === 2) {
+            updateInfoBulan(parts[1] + '/' + parts[0]);
+        }
+    }
+
+    function initPenjualanInputBarang() {
+        initDatepickerTglJualPenjualan();
+        tglJualNilaiAktif = getTglJualVal();
+        getInputTglJual().off('change.penjualanTgl hide.penjualanTgl')
+            .on('change.datetimepicker.penjualanTgl hide.datetimepicker.penjualanTgl change.penjualanTgl', function() {
+                clearTimeout(tglJualTimer);
+                tglJualTimer = setTimeout(onTglJualBerubah, 400);
+            });
+        getPickerTglJual().off('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp')
+            .on('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp', function() {
+                clearTimeout(tglJualTimer);
+                tglJualTimer = setTimeout(onTglJualBerubah, 400);
+            });
+
+        if (cfg.jumlahBarang > 0) {
+            setKunciTglJual(true);
+        }
+    }
+
+    $(document).on('click', '#btn-input-detail-barang-penjualan', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var $btn = $(this);
+        if ($btn.prop('disabled')) {
+            return;
+        }
+        $btn.prop('disabled', true);
+        muatModalPilihBarang(function() {
+            $('#modal-xl').modal('show');
+        }, function() {
+            $btn.prop('disabled', false);
         });
     });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example99').DataTable({
-            "scrollY": 600,
-            "scrollX": true
+
+    initPenjualanInputBarang();
+})(jQuery);
+
+    if ($('#example1').length && $.fn.DataTable && !$.fn.DataTable.isDataTable('#example1')) {
+        $('#example1').DataTable({
+            scrollY: 500,
+            scrollX: true
         });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example1000').DataTable({
-            "scrollY": 600,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example1000_wrapper').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example1001_wrapper').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example1002_wrapper').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example1003_wrapper').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
+    }
+});
 </script>

@@ -14,7 +14,7 @@ class Tbl_penjualan extends CI_Controller
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
-		$this->load->helper(array('nominal'));
+		$this->load->helper(array('nominal', 'pembelian_persediaan'));
 		// $this->load->helper('number');
 	}
 
@@ -314,12 +314,14 @@ class Tbl_penjualan extends CI_Controller
 
 	public function create()
 	{
+		$default_tgl_jual = set_value('tgl_jual') !== '' ? set_value('tgl_jual') : date('d-m-Y');
+
 		$data = array(
 			'button' => 'Simpan',
 			'action' => site_url('tbl_penjualan/create_action'),
 			'id' => set_value('id'),
 			'tgl_input' => set_value('tgl_input'),
-			'tgl_jual' => set_value('tgl_jual'),
+			'tgl_jual' => $default_tgl_jual,
 			'nmrpesan' => set_value('nmrpesan'),
 			'nmrkirim' => set_value('nmrkirim'),
 			'konsumen_id' => set_value('konsumen_id'),
@@ -488,6 +490,12 @@ class Tbl_penjualan extends CI_Controller
 
 	public function create_action_inisiasi($id_proses = null)
 	{
+		$tgl_jual_post = trim((string) $this->input->post('tgl_jual', TRUE));
+		if ($tgl_jual_post === '') {
+			$this->session->set_flashdata('message', 'Tgl Jual wajib diisi sebelum Input Barang Penjualan.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
 
 		// unIT
 		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
@@ -523,6 +531,9 @@ class Tbl_penjualan extends CI_Controller
 			$data_nama_konsumen = $data_konsumen->nama_unit;
 		}
 
+		$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual_post);
+		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post);
+
 		$data = array(
 			'button' => 'Simpan',
 			'button_detail_nomor_kirim' => 'Simpan Perubahan Detail Nomor Kirim',
@@ -534,11 +545,110 @@ class Tbl_penjualan extends CI_Controller
 			'nama_konsumen' => $data_nama_konsumen,
 			'uuid_unit' => $Get_UUID_unit,
 			'unit' => $Get_nama_unit,
+			'filter_bulan_penjualan' => $filter_bulan_penjualan,
+			'Data_stock' => $Data_stock,
+			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $this->input->post('nmrkirim', TRUE) . '/new'),
 		);
 		// 		print_r($data);
 		// die;
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
+		$data['jumlah_barang_penjualan'] = 0;
+		$data['penjualan_bulan_key'] = penjualan_get_bulan_key_from_tgl($tgl_jual_post);
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_form_input_barang', $data);
+	}
+
+	/**
+	 * AJAX: daftar persediaan modal Pilih Barang (filter bulan Tgl Jual).
+	 */
+	public function list_persediaan_penjualan_ajax()
+	{
+		$this->output->set_content_type('application/json');
+
+		$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
+		if ($tgl_jual === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
+			return;
+		}
+
+		penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
+		$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
+		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual);
+
+		$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
+		$view_data = array(
+			'Data_stock' => $Data_stock,
+			'tgl_jual' => $tgl_jual,
+			'tgl_jual_X' => $tgl_jual_X,
+			'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
+			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
+			'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
+			'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
+			'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
+			'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
+		);
+
+		$render = penjualan_render_modal_pilih_barang($this, $view_data);
+
+		$jumlah_tampil = 0;
+		if (preg_match_all('/<tr\b/i', $render['tbody'], $m)) {
+			$jumlah_tampil = count($m[0]);
+			if (strpos($render['tbody'], 'Tidak ada barang persediaan') !== false) {
+				$jumlah_tampil = 0;
+			}
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'bulan_label' => $filter['bulan_label'],
+			'bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual),
+			'tgl_awal' => $filter['awal'],
+			'tgl_akhir' => $filter['akhir'],
+			'tbody' => $render['tbody'],
+			'modals' => $render['modals'],
+			'jumlah' => count($Data_stock),
+			'jumlah_tampil' => $jumlah_tampil,
+		));
+	}
+
+	/**
+	 * AJAX: hapus semua barang penjualan saat Tgl Jual pindah ke bulan lain.
+	 */
+	public function ajax_ganti_bulan_tgl_jual()
+	{
+		$this->output->set_content_type('application/json');
+
+		$tgl_jual = trim((string) $this->input->post('tgl_jual', TRUE));
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+
+		if ($tgl_jual === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
+			return;
+		}
+
+		if ($uuid_penjualan !== '') {
+			$rows = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+			if (is_array($rows) && count($rows) > 0) {
+				$bulan_lama = penjualan_get_bulan_key_from_tgl($rows[0]->tgl_jual);
+				$bulan_baru = penjualan_get_bulan_key_from_tgl($tgl_jual);
+				if ($bulan_baru !== '' && $bulan_lama !== '' && $bulan_baru !== $bulan_lama) {
+					echo json_encode(array(
+						'ok' => false,
+						'message' => 'Tgl Jual tidak boleh diubah ke bulan lain selama masih ada data barang penjualan.',
+					));
+					return;
+				}
+			}
+		}
+
+		penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
+
+		echo json_encode(array(
+			'ok' => true,
+			'bulan_label' => penjualan_get_filter_tgl_jual($this, $tgl_jual)['bulan_label'],
+			'bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual),
+			'message' => 'Bulan Tgl Jual diperbarui.',
+		));
 	}
 
 
@@ -548,6 +658,32 @@ class Tbl_penjualan extends CI_Controller
 		// AMBIL DATA DARI PERSEDIAAN
 		$sql = "SELECT * FROM `persediaan` WHERE `id`='$id_persediaan_barang'";
 		$data_barang = $this->db->query($sql)->row();
+
+		if (empty($data_barang)) {
+			$this->session->set_flashdata('message', 'Barang persediaan tidak ditemukan.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+
+		if ($this->db->field_exists('kategori', 'persediaan') && penjualan_is_kategori_jasa(isset($data_barang->kategori) ? $data_barang->kategori : '')) {
+			$this->session->set_flashdata('message', 'Item kategori Jasa tidak dapat dijual melalui Input Barang Penjualan.');
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
+
+		$tgl_jual_simpan = trim((string) $this->input->post('tgl_jual', TRUE));
+		$filter_bulan = penjualan_get_filter_tgl_jual($this, $tgl_jual_simpan);
+		if (!empty($data_barang->tanggal_beli)) {
+			$tgl_beli = date('Y-m-d', strtotime($data_barang->tanggal_beli));
+			if ($tgl_beli < $filter_bulan['awal'] || $tgl_beli > $filter_bulan['akhir']) {
+				$this->session->set_flashdata(
+					'message',
+					'Barang tidak termasuk persediaan bulan ' . $filter_bulan['bulan_label'] . ' (sesuai Tgl Jual).'
+				);
+				redirect(site_url('tbl_penjualan/create'));
+				return;
+			}
+		}
 
 		// unIT
 		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
@@ -712,12 +848,16 @@ class Tbl_penjualan extends CI_Controller
 		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
 
+		$tgl_jual_kasir = $data_penjualan_per_uuid_penjualan_first_row->tgl_jual;
+		$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual_kasir);
+		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_kasir);
+
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
 			'button' => 'Simpan',
 			'button_detail_nomor_kirim' => 'Simpan Perubahan Detail Nomor Kirim',
 			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
-			'tgl_jual' => $data_penjualan_per_uuid_penjualan_first_row->tgl_jual,
+			'tgl_jual' => $tgl_jual_kasir,
 			'nmrpesan' => $data_penjualan_per_uuid_penjualan_first_row->nmrpesan,
 			'nmrkirim' => $data_penjualan_per_uuid_penjualan_first_row->nmrkirim,
 			'uuid_unit' => $data_penjualan_per_uuid_penjualan_first_row->uuid_unit,
@@ -727,6 +867,10 @@ class Tbl_penjualan extends CI_Controller
 			'uuid_penjualan' => $uuid_penjualan,
 			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $data_penjualan_per_uuid_penjualan_first_row->nmrkirim . '/' . $uuid_penjualan),
+			'filter_bulan_penjualan' => $filter_bulan_penjualan,
+			'Data_stock' => $Data_stock,
+			'jumlah_barang_penjualan' => is_array($data_penjualan_per_uuid_penjualan) ? count($data_penjualan_per_uuid_penjualan) : 0,
+			'penjualan_bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual_kasir),
 		);
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_form', $data);
@@ -735,6 +879,24 @@ class Tbl_penjualan extends CI_Controller
 
 	public function action_ubah_detail_nomor_kirim($NomorKirim = null, $uuid_penjualan = null)
 	{
+		$uuid_penjualan = trim((string) $uuid_penjualan);
+		$tgl_jual_post = trim((string) $this->input->post('tgl_jual', TRUE));
+
+		if ($uuid_penjualan !== '' && $tgl_jual_post !== '') {
+			$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+			if (is_array($rows_penjualan) && count($rows_penjualan) > 0) {
+				$bulan_lama = penjualan_get_bulan_key_from_tgl($rows_penjualan[0]->tgl_jual);
+				$bulan_baru = penjualan_get_bulan_key_from_tgl($tgl_jual_post);
+				if ($bulan_baru !== '' && $bulan_lama !== '' && $bulan_baru !== $bulan_lama) {
+					$this->session->set_flashdata(
+						'message',
+						'Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data barang penjualan pada bulan persediaan saat ini.'
+					);
+					redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+					return;
+				}
+			}
+		}
 
 		if (date("Y", strtotime($this->input->post('tgl_jual', TRUE))) < 2020) {
 			// print_r("Tahun kurang dari 2020");

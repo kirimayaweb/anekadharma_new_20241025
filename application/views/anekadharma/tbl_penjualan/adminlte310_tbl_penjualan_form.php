@@ -62,31 +62,29 @@
 
                         <!-- <form action="<?php //echo $action; 
                                             ?>" method="post"> -->
-                        <form action="create_action_inisiasi/new" method="post">
+                        <form action="create_action_inisiasi/new" method="post" id="form-penjualan-create-inisiasi">
 
 
 
 
                             <div class="form-group">
-                                <label for="datetime">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
+                                <label for="input_tgl_jual">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
                                 <div class="col-4">
-                                    <!-- <input type="text" class="form-control" name="tgl_jual" id="tgl_jual" placeholder="Tgl Po" value="<?php echo $tgl_jual; ?>" /> -->
-                                    <div class="input-group date" id="tgl_jual" name="tgl_jual" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_jual" id="tgl_jual" name="tgl_jual" required />
-                                        <div class="input-group-append" data-target="#tgl_jual" data-toggle="datetimepicker">
+                                    <?php
+                                    $tgl_jual_tampil = isset($tgl_jual) && $tgl_jual !== '' ? $tgl_jual : date('d-m-Y');
+                                    ?>
+                                    <div class="input-group date" id="dt_tgl_jual" data-target-input="nearest">
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#dt_tgl_jual" id="input_tgl_jual" name="tgl_jual" value="<?php echo htmlspecialchars($tgl_jual_tampil, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
+                                        <div class="input-group-append" data-target="#dt_tgl_jual" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
                                             </div>
-
                                         </div>
-
                                     </div>
                                 </div>
-                                <!-- <div class="col-12">
-                                    Jika tanggal tidak di pilih, maka akan di isi = tanggal saat ini secara otomatis oleh sistem
-
-                                </div> -->
-
+                                <small class="text-muted d-block mt-1" id="info-tgl-jual-penjualan">
+                                    Tanggal jual default: hari ini. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.
+                                </small>
                             </div>
 
 
@@ -157,7 +155,7 @@
                             <div class="form-group">
                                 <div class="row">
                                     <div class="col-12" align="center">
-                                        <button type="submit" class="btn btn-success" data-toggle="modal" data-target="#modal-xl">
+                                        <button type="submit" class="btn btn-success" id="btn-input-barang-penjualan" title="Isi Tgl Jual terlebih dahulu">
                                             Input Barang Penjualan
                                         </button>
                                     </div>
@@ -223,6 +221,7 @@
         });
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         $('#example9').DataTable({
@@ -230,4 +229,66 @@
             "scrollX": true
         });
     });
+</script>
+<script>
+    (function($) {
+        function getTglJualVal() {
+            return $.trim($('input[name="tgl_jual"]').val() || '');
+        }
+
+        function updateBtnInputBarangPenjualan() {
+            var tglJual = getTglJualVal();
+            var $btn = $('#btn-input-barang-penjualan');
+            var boleh = tglJual !== '';
+            $btn.prop('disabled', !boleh);
+            if (boleh) {
+                $btn.removeAttr('title');
+                $('#info-tgl-jual-penjualan').removeClass('text-danger').addClass('text-muted');
+            } else {
+                $btn.attr('title', 'Isi Tgl Jual terlebih dahulu');
+                $('#info-tgl-jual-penjualan').removeClass('text-muted').addClass('text-danger')
+                    .text('Tgl Jual wajib diisi sebelum klik Input Barang Penjualan.');
+            }
+        }
+
+        function initDatepickerTglJual() {
+            var $picker = $('#dt_tgl_jual');
+            if (!$picker.length || $picker.data('DateTimePicker')) {
+                return;
+            }
+            $picker.datetimepicker({
+                format: 'D-M-YYYY'
+            });
+            $picker.on('change.datetimepicker', function() {
+                updateBtnInputBarangPenjualan();
+            });
+        }
+
+        $(document).ready(function() {
+            initDatepickerTglJual();
+            updateBtnInputBarangPenjualan();
+
+            $('input[name="tgl_jual"]').on('change blur keyup', function() {
+                updateBtnInputBarangPenjualan();
+            });
+        });
+
+        $('#form-penjualan-create-inisiasi').on('submit', function(e) {
+            if (getTglJualVal()) {
+                return true;
+            }
+            e.preventDefault();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Tgl Jual belum diisi',
+                    text: 'Pilih atau isi tanggal jual terlebih dahulu sebelum Input Barang Penjualan.'
+                });
+            } else {
+                alert('Pilih atau isi Tgl Jual terlebih dahulu.');
+            }
+            $('input[name="tgl_jual"]').focus();
+            return false;
+        });
+    })(jQuery);
 </script>
