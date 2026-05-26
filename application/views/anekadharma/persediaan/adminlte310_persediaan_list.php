@@ -145,12 +145,27 @@
                                         <?php
                                         $footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit);
                                         $footer_cells[] = '';
-                                        foreach ($footer_cells as $col_foot => $foot_val) {
-                                            $align = ($foot_val !== '' && $foot_val !== 'Total') ? ' style="text-align:right;"' : '';
-                                            if ($foot_val === 'Total') {
-                                                $align = ' style="text-align:right;"';
+                                        $idx_foot_total_10 = persediaan_list_col_index_total_10();
+                                        $idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
+                                        $idx_foot_nominal = array();
+                                        foreach (persediaan_list_unit_columns() as $uf_foot) {
+                                            if (persediaan_field_has_nominal_column($uf_foot)) {
+                                                $idx_foot_nominal[] = persediaan_list_col_index_unit_nominal($uf_foot);
                                             }
-                                            echo '<th' . $align . '>' . htmlspecialchars((string) $foot_val, ENT_QUOTES, 'UTF-8') . '</th>';
+                                        }
+                                        foreach ($footer_cells as $col_foot => $foot_val) {
+                                            $foot_val = (string) $foot_val;
+                                            $cls = '';
+                                            if ($foot_val === 'Total') {
+                                                $cls = ' persediaan-foot-total-label';
+                                            } elseif ($foot_val !== '' && (
+                                                $col_foot === $idx_foot_total_10
+                                                || $col_foot === $idx_foot_nilai
+                                                || in_array($col_foot, $idx_foot_nominal, true)
+                                            )) {
+                                                $cls = ' persediaan-foot-num';
+                                            }
+                                            echo '<th class="' . trim($cls) . '">' . htmlspecialchars($foot_val, ENT_QUOTES, 'UTF-8') . '</th>';
                                         }
                                         ?>
                                     </tr>
@@ -426,6 +441,21 @@
         background: #17a2b8;
         border-radius: 5px;
         transition: width 0.25s ease;
+    }
+    #table-persediaan tfoot th {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        font-weight: 600;
+        vertical-align: middle;
+        padding: 6px 8px;
+    }
+    #table-persediaan tfoot th.persediaan-foot-total-label {
+        text-align: right;
+        white-space: nowrap;
+    }
+    #table-persediaan tfoot th.persediaan-foot-num {
+        text-align: right;
+        white-space: nowrap;
     }
 </style>
 
@@ -735,12 +765,16 @@ window.addEventListener('load', function() {
         html += '<tr><td>tbl_pembelian</td><td class="text-right">' + (a.total_pembelian || 0) + '</td></tr>';
         html += '<tr><td>tbl_pembelian_jasa</td><td class="text-right">' + (a.total_pembelian_jasa || 0) + '</td></tr>';
         html += '<tr><td>tbl_penjualan</td><td class="text-right">' + (a.total_penjualan || 0) + '</td></tr>';
+        html += '<tr><td>Pembelian sudah di persediaan</td><td class="text-right text-success"><strong>' + (a.pembelian_sudah_ada || 0) + '</strong></td></tr>';
+        html += '<tr><td>Pembelian belum di persediaan</td><td class="text-right ' + ((a.pembelian_belum_ada || 0) > 0 ? 'text-warning' : '') + '"><strong>' + (a.pembelian_belum_ada || 0) + '</strong></td></tr>';
+        html += '<tr><td>Penjualan sudah di persediaan</td><td class="text-right text-success"><strong>' + (a.penjualan_sudah_ada || 0) + '</strong></td></tr>';
+        html += '<tr><td>Penjualan belum di persediaan</td><td class="text-right ' + ((a.penjualan_belum_ada || 0) > 0 ? 'text-warning' : '') + '"><strong>' + (a.penjualan_belum_ada || 0) + '</strong></td></tr>';
         html += '</table>';
         if (a.penjelasan) {
             html += '<p class="text-muted small">' + a.penjelasan + '</p>';
         }
         if (!a.can_proceed) {
-            html += '<p class="text-danger small mb-0">' + (a.message_empty || 'Tidak dapat recalculate — tidak ada data sumber atau persediaan kosong.') + '</p>';
+            html += '<p class="text-danger small mb-0">' + (a.message_empty || 'Tidak dapat recalculate — tidak ada data pembelian/penjualan pada bulan ini.') + '</p>';
         }
         html += '</div>';
         return html;
@@ -1175,7 +1209,11 @@ window.addEventListener('load', function() {
             scrollX: true,
             scrollCollapse: true,
             pageLength: 25,
-            order: [[0, 'asc']]
+            order: [[3, 'asc']],
+            columnDefs: [
+                { targets: 0, orderable: false },
+                { targets: 3, type: 'string' }
+            ]
         });
     } catch (dtErr) {
         console.warn('DataTable persediaan:', dtErr);

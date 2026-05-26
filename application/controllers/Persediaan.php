@@ -2739,27 +2739,34 @@ class Persediaan extends CI_Controller
 
 	private function get_persediaan_by_bulan($bulan)
 	{
+		$this->load->helper('pembelian_persediaan');
 		$bulan = trim((string) $bulan);
 		if ($bulan === '') {
-			return $this->Persediaan_model->get_all();
+			return persediaan_export_sort_rows_by_namabarang($this->Persediaan_model->get_all(), 'namabarang');
 		}
 
 		$ts = strtotime($bulan . '-01');
 		if ($ts === false) {
-			return $this->Persediaan_model->get_by_year_month($bulan);
+			return persediaan_export_sort_rows_by_namabarang(
+				$this->Persediaan_model->get_by_year_month($bulan),
+				'namabarang'
+			);
 		}
 
-        $tanggal_beli = date('Y-m-01', $ts);
+		$tanggal_beli = date('Y-m-01', $ts);
 		$rows = $this->db->query(
 			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
 			array($tanggal_beli)
 		)->result();
 
 		if (count($rows) > 0) {
-			return $rows;
+			return persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
 		}
 
-		return $this->Persediaan_model->get_by_year_month($bulan);
+		return persediaan_export_sort_rows_by_namabarang(
+			$this->Persediaan_model->get_by_year_month($bulan),
+			'namabarang'
+		);
 	}
 
 	public function json()
@@ -3072,7 +3079,6 @@ class Persediaan extends CI_Controller
 		}
 		$this->load->helper(array('exportexcel', 'persediaan_display', 'pembelian_persediaan'));
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
-		$Persediaan = persediaan_export_sort_rows_by_namabarang($Persediaan, 'namabarang');
 
 		$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
 		$waktu_klik = date('Y-m-d_H-i-s');
@@ -3091,6 +3097,8 @@ class Persediaan extends CI_Controller
 		excel_prepare_download($namaFile);
 		xlsBOF();
 
+		$col_types = persediaan_export_column_types($this);
+
 		xlsWriteLabelBold14(0, 0, 'di cetak pada : ' . $waktu_cetak_tampil);
 
 		$kolomhead = 0;
@@ -3107,7 +3115,7 @@ class Persediaan extends CI_Controller
 			$cells = persediaan_export_row_cells($data, $nourut, $bulan, $this);
 			$kolombody = 0;
 			foreach ($cells as $cell) {
-				xlsWriteLabel($tablebody, $kolombody++, $cell);
+				persediaan_export_write_cell($tablebody, $kolombody++, $cell, $col_types);
 			}
 			$tablebody++;
 			$nourut++;
@@ -3116,11 +3124,7 @@ class Persediaan extends CI_Controller
 		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $this);
 		$kolomfoot = 0;
 		foreach ($footer_cells as $cell) {
-			$align = ($cell !== '' && $cell !== 'Total') ? 'right' : '';
-			if ($cell === 'Total') {
-				$align = 'right';
-			}
-			xlsWriteLabel($tablebody, $kolomfoot++, $cell, $align);
+			persediaan_export_write_cell($tablebody, $kolomfoot++, $cell, $col_types);
 		}
 
 		xlsEOF();

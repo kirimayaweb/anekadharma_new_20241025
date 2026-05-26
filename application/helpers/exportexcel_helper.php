@@ -103,7 +103,7 @@ function xls_write_cell($Row, $Col, $cell)
 	$GLOBALS['_excel_sheet_rows'][(int) $Row][(int) $Col] = $cell;
 }
 
-function xlsWriteNumber($Row, $Col, $Value)
+function xlsWriteNumber($Row, $Col, $Value, $align = 'right')
 {
 	$type = 'Number';
 	$out = $Value;
@@ -116,10 +116,14 @@ function xlsWriteNumber($Row, $Col, $Value)
 		$out = (float) $out;
 	}
 
-	xls_write_cell($Row, $Col, array(
+	$cell = array(
 		'type' => $type,
 		'value' => $out,
-	));
+	);
+	if ($align === 'right' && $type === 'Number') {
+		$cell['style'] = 1;
+	}
+	xls_write_cell($Row, $Col, $cell);
 }
 
 function xlsWriteLabel($Row, $Col, $Value, $align = null)

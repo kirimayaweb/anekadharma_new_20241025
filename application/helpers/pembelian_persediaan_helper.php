@@ -1649,12 +1649,12 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 	$stats['total_pembelian'] = count($list);
 	$processed_keys = array();
 
-	if (!empty($map['by_nama_key'])) {
-		foreach ($map['by_nama_key'] as $nk => $rows_p) {
-			if (empty($rows_p[0])) {
+	if (!empty($map['by_sync_key'])) {
+		foreach ($map['by_sync_key'] as $sk => $rows_p) {
+			if (empty($rows_p[0]) || $sk === '') {
 				continue;
 			}
-			$processed_keys[$nk] = persediaan_recalculate_pembelian_persediaan_ref_from_row($rows_p[0]);
+			$processed_keys[$sk] = persediaan_recalculate_pembelian_persediaan_ref_from_row($rows_p[0]);
 		}
 	}
 
@@ -1663,7 +1663,10 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 		$satuan = isset($row->satuan) ? $row->satuan : '';
 		$harga = isset($row->harga_satuan) ? $row->harga_satuan : '';
 		$id_pem = (int) $row->id;
-		$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+		$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+		if ($key === '') {
+			$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+		}
 
 		$existing = persediaan_recalculate_find_persediaan_for_pembelian($row, $map);
 		if ($existing) {
@@ -1783,7 +1786,10 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 		$nama = isset($row->uraian) ? $row->uraian : '';
 		$satuan = isset($row->satuan) ? $row->satuan : '';
 		$harga = isset($row->harga_satuan) ? $row->harga_satuan : '';
-		$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+		$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+		if ($key === '') {
+			$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+		}
 
 		if ($key !== '' && isset($processed_keys[$key])) {
 			$ref = $processed_keys[$key];
@@ -3016,13 +3022,97 @@ function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $m
 		return null;
 	}
 
-	$fake = (object) array(
-		'nama_barang' => isset($row_pembelian->uraian) ? $row_pembelian->uraian : '',
-		'satuan' => isset($row_pembelian->satuan) ? $row_pembelian->satuan : '',
-		'harga_satuan' => isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '',
+	$nama = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
+	$satuan = isset($row_pembelian->satuan) ? $row_pembelian->satuan : '';
+	$harga = isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '';
+
+	$kandidat = array(
+		(object) array(
+			'nama_barang' => persediaan_recalculate_sanitize_nama_persediaan($nama),
+			'satuan' => persediaan_recalculate_sanitize_satuan_persediaan($satuan),
+			'harga_satuan' => $harga,
+		),
+		(object) array(
+			'nama_barang' => $nama,
+			'satuan' => $satuan,
+			'harga_satuan' => $harga,
+		),
 	);
 
-	return persediaan_recalculate_find_persediaan_for_sync($fake, $map);
+	foreach ($kandidat as $fake) {
+		$pers = persediaan_recalculate_find_persediaan_for_sync($fake, $map);
+		if ($pers) {
+			return $pers;
+		}
+	}
+
+	return null;
+}
+
+/**
+ * Hitung baris pembelian/penjualan bulan terpilih yang sudah / belum ada di persediaan (tanggal_beli sama).
+ */
+function persediaan_recalculate_analisa_import_coverage($CI, $ctx)
+{
+	$CI->load->helper('persediaan_display');
+	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $ctx['tanggal_beli']);
+
+	$out = array(
+		'pembelian_total' => 0,
+		'pembelian_sudah_ada' => 0,
+		'pembelian_belum_ada' => 0,
+		'pembelian_jasa_total' => 0,
+		'pembelian_jasa_sudah_ada' => 0,
+		'pembelian_jasa_belum_ada' => 0,
+		'penjualan_total' => 0,
+		'penjualan_sudah_ada' => 0,
+		'penjualan_belum_ada' => 0,
+	);
+
+	foreach (array('tbl_pembelian' => 'pembelian', 'tbl_pembelian_jasa' => 'pembelian_jasa') as $tabel => $prefix) {
+		if (!$CI->db->table_exists($tabel)) {
+			continue;
+		}
+		$list = $CI->db->query(
+			"SELECT * FROM `{$tabel}`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
+			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
+			ORDER BY `id` ASC",
+			array($ctx['tgl_awal'], $ctx['tgl_akhir'])
+		)->result();
+
+		$out[$prefix . '_total'] = count($list);
+		foreach ($list as $row) {
+			if (persediaan_recalculate_find_persediaan_for_pembelian($row, $map)) {
+				$out[$prefix . '_sudah_ada']++;
+			} else {
+				$out[$prefix . '_belum_ada']++;
+			}
+		}
+	}
+
+	if ($CI->db->table_exists('tbl_penjualan')) {
+		$list_penj = $CI->db->query(
+			"SELECT * FROM `tbl_penjualan`
+			WHERE DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+			ORDER BY `id` ASC",
+			array($ctx['tgl_awal'], $ctx['tgl_akhir'])
+		)->result();
+		$out['penjualan_total'] = count($list_penj);
+		foreach ($list_penj as $row) {
+			if (persediaan_recalculate_find_persediaan_for_sync($row, $map)) {
+				$out['penjualan_sudah_ada']++;
+			} else {
+				$out['penjualan_belum_ada']++;
+			}
+		}
+	}
+
+	$out['pembelian_all_total'] = (int) $out['pembelian_total'] + (int) $out['pembelian_jasa_total'];
+	$out['pembelian_all_sudah_ada'] = (int) $out['pembelian_sudah_ada'] + (int) $out['pembelian_jasa_sudah_ada'];
+	$out['pembelian_all_belum_ada'] = (int) $out['pembelian_belum_ada'] + (int) $out['pembelian_jasa_belum_ada'];
+
+	return $out;
 }
 
 /**
@@ -3544,10 +3634,12 @@ function persediaan_recalculate_full_analisa($CI, $bulan)
 			. $ctx['total_penjualan'] . ' record, filter tgl_jual bulan ini) — cocokkan nama_barang+satuan+harga_satuan = namabarang+satuan+hpp, jumlah per kolom unit (field unit). '
 			. 'total_10 = sa + beli - penjualan.';
 	}
+	$coverage = persediaan_recalculate_analisa_import_coverage($CI, $ctx);
+
 	if ((int) $ctx['total_persediaan'] === 0) {
-		$penjelasan[] = 'Belum ada data persediaan bulan ini (tanggal_beli ' . $ctx['tanggal_beli'] . ').';
+		$penjelasan[] = 'Belum ada data persediaan bulan ini (tanggal_beli ' . $ctx['tanggal_beli'] . ') — recalculate akan <strong>menambah</strong> baris dari pembelian/penjualan yang belum ada.';
 	}
-	$penjelasan[] = 'Data pembelian/penjualan <strong>tidak sync</strong> akan di-import ke persediaan dan uuid disinkronkan sebelum proses recalculate (termasuk saat cetak Excel).';
+	$penjelasan[] = 'Sebelum recalculate: cek semua <strong>tbl_pembelian</strong> (uraian+satuan+harga_satuan, bulan tgl_po) dan <strong>tbl_penjualan</strong> (nama_barang+satuan+harga_satuan, bulan tgl_jual) sudah ada di persediaan (namabarang+satuan+hpp, tanggal_beli bulan sama). Yang belum ada akan <strong>ditambah sekali</strong> tanpa duplikasi.';
 
 	return array(
 		'ok' => true,
@@ -3563,7 +3655,11 @@ function persediaan_recalculate_full_analisa($CI, $bulan)
 		'total_penjualan' => (int) $ctx['total_penjualan'],
 		'has_pembelian' => $ctx['has_pembelian'],
 		'has_penjualan' => $ctx['has_penjualan'],
-		'can_proceed' => $ctx['can_proceed'] && ((int) $ctx['total_persediaan'] > 0),
+		'can_proceed' => $ctx['can_proceed'],
+		'pembelian_sudah_ada' => (int) $coverage['pembelian_all_sudah_ada'],
+		'pembelian_belum_ada' => (int) $coverage['pembelian_all_belum_ada'],
+		'penjualan_sudah_ada' => (int) $coverage['penjualan_sudah_ada'],
+		'penjualan_belum_ada' => (int) $coverage['penjualan_belum_ada'],
 		'penjelasan' => implode('<br/>', $penjelasan),
 		'message_empty' => isset($ctx['message_empty']) ? $ctx['message_empty'] : '',
 	);
@@ -3876,10 +3972,6 @@ function persediaan_recalculate_full_batch($CI, $bulan, $offset, $limit, $start 
 
 	if (!$ctx['can_proceed']) {
 		return array('ok' => false, 'message' => $ctx['message_empty']);
-	}
-
-	if ((int) $ctx['total_persediaan'] === 0) {
-		return array('ok' => false, 'message' => 'Tidak ada data persediaan untuk bulan ' . $ctx['bulan_label'] . '.');
 	}
 
 	$state_key = 'recalc_full_state_' . $bulan;

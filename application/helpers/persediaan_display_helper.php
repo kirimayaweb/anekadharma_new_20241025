@@ -279,17 +279,18 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 {
 	$totals_nominal_unit = is_array($totals_nominal_unit) ? $totals_nominal_unit : array();
 	$footer = array();
+	$prefix_count = persediaan_list_prefix_column_count();
 
-	for ($i = 0; $i < persediaan_list_prefix_column_count(); $i++) {
-		$footer[] = '';
+	for ($i = 0; $i < $prefix_count; $i++) {
+		$footer[] = ($i === 0) ? 'Total' : '';
 	}
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
-		if ($field === 'total_10') {
-			$footer[] = 'Total';
-			$footer[] = persediaan_format_angka_tampil($total_total_10);
-		} elseif ($field === 'tgl_keluar') {
+		if ($field === 'tgl_keluar') {
 			$footer[] = '';
+		} elseif ($field === 'total_10') {
+			// Satu kolom saja (selaras header total_10, tanpa kolom nominal terpisah).
+			$footer[] = persediaan_format_angka_tampil($total_total_10);
 		} else {
 			$footer[] = '';
 			if (persediaan_field_has_nominal_column($field)) {
@@ -360,6 +361,93 @@ function persediaan_export_blank_if_zero($value)
 	}
 
 	return $v;
+}
+
+/**
+ * Tipe kolom export Excel per indeks (selaras persediaan_export_headers).
+ * 'number' = nilai numerik asli di Excel (bisa SUM/AVERAGE); 'text' = teks/tanggal.
+ */
+function persediaan_export_column_types($CI = null)
+{
+	$types = array('number', 'text', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number');
+
+	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
+		if ($field === 'tgl_keluar') {
+			$types[] = 'text';
+		} else {
+			$types[] = 'number';
+			if (persediaan_field_has_nominal_column($field)) {
+				$types[] = 'number';
+			}
+		}
+	}
+
+	$types[] = 'number';
+	$types[] = 'number';
+	$types[] = 'number';
+	$types[] = 'number';
+
+	return $types;
+}
+
+/**
+ * Ubah nilai tampilan export ke angka Excel; null = sel kosong (termasuk nol).
+ */
+function persediaan_export_excel_number($value)
+{
+	if ($value === null || $value === '') {
+		return null;
+	}
+
+	if (is_int($value) || is_float($value)) {
+		if ((float) $value == 0.0) {
+			return null;
+		}
+		return (float) $value;
+	}
+
+	$v = trim((string) $value);
+	if ($v === '' || $v === '-' || strcasecmp($v, 'Total') === 0) {
+		return null;
+	}
+
+	if (!preg_match('/^[\d\s.,\-]+$/', $v)) {
+		return null;
+	}
+
+	$angka = persediaan_parse_angka($v);
+	if ($angka == 0.0) {
+		return null;
+	}
+
+	return (float) $angka;
+}
+
+/**
+ * Tulis satu sel export persediaan (angka asli atau teks).
+ */
+function persediaan_export_write_cell($row, $col, $value, $col_types)
+{
+	$col_type = isset($col_types[$col]) ? $col_types[$col] : 'text';
+
+	if ($col_type === 'number') {
+		if (is_string($value) && strcasecmp(trim($value), 'Total') === 0) {
+			xlsWriteLabel($row, $col, 'Total', 'right');
+			return;
+		}
+
+		$num = persediaan_export_excel_number($value);
+		if ($num === null) {
+			xlsWriteLabel($row, $col, '', 'right');
+			return;
+		}
+
+		xlsWriteNumber($row, $col, $num, 'right');
+		return;
+	}
+
+	$align = ($value !== '' && $value !== null && persediaan_export_excel_number($value) !== null) ? 'right' : null;
+	xlsWriteLabel($row, $col, $value === null ? '' : $value, $align);
 }
 
 function persediaan_export_headers($CI = null)
