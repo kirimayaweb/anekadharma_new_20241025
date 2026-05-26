@@ -340,7 +340,8 @@
                                     <h5 class="mb-2">Recalculate data persediaan dari pembelian &amp; penjualan</h5>
                                     <p class="text-muted small mb-0">
                                         Cek <code>tbl_pembelian</code>, <code>tbl_pembelian_jasa</code>, <code>tbl_penjualan</code> bulan terpilih.
-                                        Update <strong>beli</strong> dari pembelian (uuid+satuan+hpp) dan <strong>penjualan</strong> + kolom unit dari penjualan.
+                                        Baris pembelian yang belum ada di persediaan ditambah (cocok: uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop).
+                                        Update <strong>beli</strong> dari pembelian dan <strong>penjualan</strong> + kolom unit dari penjualan.
                                         Proses via modal — halaman tetap di sini.
                                     </p>
                                 </div>

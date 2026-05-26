@@ -33,23 +33,70 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 ));
 ?>
 <style>
+	/* Modal pilih barang: ~1 cm dari pinggir layar (kiri/kanan/atas/bawah) */
 	#modal-xl.modal-pilih-barang-penjualan {
-		padding-left: 5mm !important;
-		padding-right: 5mm !important;
+		padding: 1cm !important;
 	}
 	#modal-xl.modal-pilih-barang-penjualan .modal-dialog.modal-pilih-barang-wide {
-		max-width: calc(100vw - 10mm);
-		width: calc(100vw - 10mm);
-		margin: 1.75rem auto;
+		max-width: calc(100vw - 2cm);
+		width: calc(100vw - 2cm);
+		max-height: calc(100vh - 2cm);
+		height: calc(100vh - 2cm);
+		margin: 0 auto;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .modal-content {
+		height: 100%;
+		max-height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .modal-header {
+		flex: 0 0 auto;
+		padding: 0.5rem 0.75rem;
 	}
 	#modal-xl.modal-pilih-barang-penjualan .modal-body {
-		padding: 0.75rem 0.5rem;
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: hidden;
+		padding: 0.5rem 0.65rem;
+		display: flex;
+		flex-direction: column;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .modal-pilih-barang-table-wrap {
+		flex: 1 1 auto;
+		min-height: 0;
+		overflow: hidden;
 	}
 	#modal-xl.modal-pilih-barang-penjualan #table-pilih-barang-penjualan {
 		width: 100% !important;
 	}
 	#modal-xl.modal-pilih-barang-penjualan .dataTables_wrapper {
 		width: 100%;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_wrapper .row:first-child {
+		flex: 0 0 auto;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_filter {
+		text-align: right;
+		width: 100%;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_filter label {
+		font-weight: 600;
+		margin-bottom: 0;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_filter input {
+		display: inline-block;
+		width: min(320px, 55vw);
+		margin-left: 0.35rem;
+	}
+	#modal-xl.modal-pilih-barang-penjualan .dataTables_length select {
+		min-width: 4.5rem;
+	}
+	#modal-xl.modal-pilih-barang-penjualan div.dataTables_scrollBody {
+		max-height: none !important;
 	}
 	#container-modal-pilih-barang-nested .modal {
 		z-index: 1065;
@@ -494,9 +541,9 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
             </div>
             <div class="modal-body">
                 <div id="modal-pilih-barang-loading" class="text-center text-muted py-3 d-none">Memuat data persediaan...</div>
-                <div class="card-body p-0">
+                <div class="modal-pilih-barang-table-wrap card-body p-0">
 
-                    <table id="table-pilih-barang-penjualan" class="display nowrap" style="width:100%">
+                    <table id="table-pilih-barang-penjualan" class="display nowrap table table-bordered table-sm" style="width:100%">
                         <!-- <table id="example" class="display nowrap" style="width:100%"> -->
                         <thead>
                             <tr>
@@ -669,6 +716,18 @@ window.destroyDataTablePilihBarang = function() {
     window.penjualanDtPilihBarang = null;
 };
 
+window.hitungScrollYPilihBarangPenjualan = function() {
+    var $modal = $('#modal-xl.modal-pilih-barang-penjualan');
+    if (!$modal.length) {
+        return Math.max(220, Math.floor(window.innerHeight * 0.55));
+    }
+    var tinggiModal = $modal.find('.modal-dialog').innerHeight() || (window.innerHeight - Math.round(2 * 37.8));
+    var headerH = $modal.find('.modal-header').outerHeight(true) || 52;
+    var toolH = 56;
+    var footDt = 44;
+    return Math.max(180, Math.floor(tinggiModal - headerH - toolH - footDt - 24));
+};
+
 window.initDataTablePilihBarang = function() {
     var $ = window.jQuery;
     if (!$ || !$.fn.DataTable) {
@@ -681,14 +740,54 @@ window.initDataTablePilihBarang = function() {
     }
     try {
         window.penjualanDtPilihBarang = $table.DataTable({
-            scrollY: 375,
+            scrollY: window.hitungScrollYPilihBarangPenjualan(),
             scrollX: true,
+            scrollCollapse: true,
             destroy: true,
             paging: true,
-            searching: true
+            searching: true,
+            lengthChange: true,
+            info: true,
+            autoWidth: false,
+            order: [[5, 'asc']],
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            dom: '<"row align-items-center mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-5"i><"col-sm-7"p>>',
+            language: {
+                search: 'Cari:',
+                searchPlaceholder: 'Nama barang, SPOP, kategori...',
+                lengthMenu: 'Tampil _MENU_ baris',
+                info: 'Baris _START_–_END_ dari _TOTAL_ barang',
+                infoEmpty: 'Tidak ada data',
+                infoFiltered: '(filter dari _MAX_ barang)',
+                zeroRecords: 'Tidak ada barang yang cocok',
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: '›',
+                    previous: '‹'
+                }
+            }
         });
     } catch (errDt) {
         console.error('DataTable pilih barang:', errDt);
+    }
+};
+
+window.sesuaikanDataTablePilihBarang = function() {
+    if (!window.penjualanDtPilihBarang) {
+        window.initDataTablePilihBarang();
+        return;
+    }
+    try {
+        var y = window.hitungScrollYPilihBarangPenjualan();
+        window.penjualanDtPilihBarang.columns.adjust();
+        if (window.penjualanDtPilihBarang.settings()[0].oScroll) {
+            $(window.penjualanDtPilihBarang.table().container()).find('div.dataTables_scrollBody').css('max-height', y + 'px');
+        }
+        window.penjualanDtPilihBarang.draw(false);
+    } catch (eAdj) {
+        console.warn('Sesuaikan DataTable pilih barang:', eAdj);
     }
 };
 
@@ -809,6 +908,9 @@ function penjualanInitInputBarangScript() {
             tglJualNilaiAktif = getTglJualVal();
             $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' barang — tanpa jasa)');
             window.initDataTablePilihBarang();
+            setTimeout(function() {
+                window.sesuaikanDataTablePilihBarang();
+            }, 80);
             if (typeof callback === 'function') {
                 callback(res);
             }
@@ -947,6 +1049,18 @@ function penjualanInitInputBarangScript() {
             setKunciTglJual(true);
         }
     }
+
+    $('#modal-xl.modal-pilih-barang-penjualan').on('shown.bs.modal', function() {
+        setTimeout(function() {
+            window.sesuaikanDataTablePilihBarang();
+        }, 60);
+    });
+
+    $(window).on('resize.penjualanPilihBarang', function() {
+        if ($('#modal-xl.modal-pilih-barang-penjualan').hasClass('show')) {
+            window.sesuaikanDataTablePilihBarang();
+        }
+    });
 
     $(document).on('click', '#btn-input-detail-barang-penjualan', function(e) {
         e.preventDefault();

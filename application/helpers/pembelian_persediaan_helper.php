@@ -1371,6 +1371,19 @@ function persediaan_recalculate_map_add_row(&$map, $row)
 		$map['by_sync_key'][$sync_key][] = $row;
 	}
 
+	$pembelian_key = persediaan_recalculate_sync_pembelian_persediaan_key(
+		$row->namabarang,
+		$row->satuan,
+		$row->hpp,
+		isset($row->spop) ? $row->spop : ''
+	);
+	if ($pembelian_key !== '') {
+		if (!isset($map['by_pembelian_sync_key'][$pembelian_key])) {
+			$map['by_pembelian_sync_key'][$pembelian_key] = array();
+		}
+		$map['by_pembelian_sync_key'][$pembelian_key][] = $row;
+	}
+
 	$ns_key = persediaan_recalculate_nama_satuan_key($row->namabarang, $row->satuan);
 	if ($ns_key !== '') {
 		if (!isset($map['by_nama_satuan'][$ns_key])) {
@@ -1649,8 +1662,8 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 	$stats['total_pembelian'] = count($list);
 	$processed_keys = array();
 
-	if (!empty($map['by_sync_key'])) {
-		foreach ($map['by_sync_key'] as $sk => $rows_p) {
+	if (!empty($map['by_pembelian_sync_key'])) {
+		foreach ($map['by_pembelian_sync_key'] as $sk => $rows_p) {
 			if (empty($rows_p[0]) || $sk === '') {
 				continue;
 			}
@@ -1662,10 +1675,14 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 		$nama = isset($row->uraian) ? $row->uraian : '';
 		$satuan = isset($row->satuan) ? $row->satuan : '';
 		$harga = isset($row->harga_satuan) ? $row->harga_satuan : '';
+		$spop = isset($row->spop) ? $row->spop : '';
 		$id_pem = (int) $row->id;
-		$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+		$key = persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $harga, $spop);
 		if ($key === '') {
-			$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+			$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+			if ($key === '') {
+				$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+			}
 		}
 
 		$existing = persediaan_recalculate_find_persediaan_for_pembelian($row, $map);
@@ -1689,7 +1706,7 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 			$alasan = 'Sudah ada di persediaan id=' . $ref['id_persediaan']
 				. ', uuid_barang=' . $ref['uuid_barang']
 				. ', uuid_persediaan=' . $ref['uuid_persediaan']
-				. ' (uraian+satuan+harga_satuan = namabarang+satuan+hpp, bulan sama)';
+				. ' (uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop, bulan sama)';
 			if ($beli_ok) {
 				$alasan .= ' | beli=' . (int) floor(persediaan_parse_angka($existing->beli))
 					. ' sudah sesuai total jumlah pembelian — tidak di-copy ulang';
@@ -1723,7 +1740,7 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 				'alasan' => 'Sudah di-copy ke persediaan id=' . (int) $ref['id_persediaan']
 					. ', uuid_barang=' . $ref['uuid_barang']
 					. ', uuid_persediaan=' . $ref['uuid_persediaan']
-					. ' (baris pembelian sama: uraian+satuan+harga — tidak duplikasi)',
+					. ' (baris pembelian sama: uraian+satuan+harga_satuan+spop — tidak duplikasi)',
 				'id_persediaan' => (int) $ref['id_persediaan'],
 				'uuid_barang' => $ref['uuid_barang'],
 				'uuid_persediaan' => $ref['uuid_persediaan'],
@@ -1786,9 +1803,13 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 		$nama = isset($row->uraian) ? $row->uraian : '';
 		$satuan = isset($row->satuan) ? $row->satuan : '';
 		$harga = isset($row->harga_satuan) ? $row->harga_satuan : '';
-		$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+		$spop = isset($row->spop) ? $row->spop : '';
+		$key = persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $harga, $spop);
 		if ($key === '') {
-			$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+			$key = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $harga);
+			if ($key === '') {
+				$key = persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $harga);
+			}
 		}
 
 		if ($key !== '' && isset($processed_keys[$key])) {
@@ -1798,7 +1819,7 @@ function persediaan_recalculate_import_pembelian_tidak_sync($CI, $ctx, $tabel)
 				'alasan' => 'Sudah di-copy ke persediaan id=' . (int) $ref['id_persediaan']
 					. ', uuid_barang=' . $ref['uuid_barang']
 					. ', uuid_persediaan=' . $ref['uuid_persediaan']
-					. ' (baris pembelian sama: uraian+satuan+harga)',
+					. ' (baris pembelian sama: uraian+satuan+harga_satuan+spop)',
 				'id_persediaan' => (int) $ref['id_persediaan'],
 				'uuid_barang' => $ref['uuid_barang'],
 				'uuid_persediaan' => $ref['uuid_persediaan'],
@@ -1817,7 +1838,7 @@ function persediaan_recalculate_get_pembelian_sync_log($CI, $bulan)
 
 /**
  * Update uuid_barang + uuid_persediaan (+ id_persediaan_barang) di tbl_pembelian agar sesuai persediaan bulan yang sama.
- * Match: uraian = namabarang, satuan, harga_satuan = hpp, bulan/tahun tgl_po = tanggal_beli persediaan.
+ * Match: uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop, bulan/tahun tgl_po = tanggal_beli.
  */
 function persediaan_recalculate_sync_uuid_pembelian_bulan($CI, $ctx, $tabel)
 {
@@ -1836,9 +1857,10 @@ function persediaan_recalculate_sync_uuid_pembelian_bulan($CI, $ctx, $tabel)
 	}
 
 	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $ctx['tanggal_beli']);
+	$spop_sql = $CI->db->field_exists('spop', $tabel) ? '`spop`' : "'' AS `spop`";
 	$list = $CI->db->query(
 		"SELECT `id`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`,
-			`uraian`, `satuan`, `harga_satuan`, `tgl_po`
+			`uraian`, `satuan`, `harga_satuan`, {$spop_sql}, `tgl_po`
 		FROM `{$tabel}`
 		WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
 		AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
@@ -1859,19 +1881,14 @@ function persediaan_recalculate_sync_uuid_pembelian_bulan($CI, $ctx, $tabel)
 
 	foreach ($list as $row_pembelian) {
 		$id_pem = (int) $row_pembelian->id;
-		$fake = (object) array(
-			'nama_barang' => isset($row_pembelian->uraian) ? $row_pembelian->uraian : '',
-			'satuan' => isset($row_pembelian->satuan) ? $row_pembelian->satuan : '',
-			'harga_satuan' => isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '',
-		);
 
-		$pers = persediaan_recalculate_find_persediaan_for_sync($fake, $map);
+		$pers = persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $map);
 		if (!$pers) {
 			$stats['tidak_ditemukan']++;
 			$stats['log'][$id_pem] = array(
 				'status' => 'tidak_sync',
 				'alasan' => 'Tidak ada di persediaan bulan ' . $ctx['bulan_label']
-					. ' (' . $label . ': uraian + satuan + harga_satuan harus sama dengan namabarang + satuan + hpp)',
+					. ' (' . $label . ': uraian + satuan + harga_satuan + spop harus sama dengan namabarang + satuan + hpp + spop)',
 			);
 			continue;
 		}
@@ -2433,6 +2450,35 @@ function persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $hpp)
 }
 
 /**
+ * Normalisasi nomor SPOP untuk lookup (trim).
+ */
+function persediaan_recalculate_normalize_spop($spop)
+{
+	return trim((string) $spop);
+}
+
+/**
+ * Bandingkan SPOP pembelian vs persediaan (keduanya kosong = cocok).
+ */
+function persediaan_recalculate_spop_cocok($spop_a, $spop_b)
+{
+	return persediaan_recalculate_normalize_spop($spop_a) === persediaan_recalculate_normalize_spop($spop_b);
+}
+
+/**
+ * Kunci lookup pembelian↔persediaan: namabarang+satuan+hpp+spop (bulan via tanggal_beli).
+ */
+function persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $hpp, $spop)
+{
+	$base = persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $hpp);
+	if ($base === '') {
+		return '';
+	}
+
+	return $base . '|spop:' . persediaan_recalculate_normalize_spop($spop);
+}
+
+/**
  * Bandingkan satuan persediaan vs pembelian (termasuk alias/sanitize).
  */
 function persediaan_recalculate_satuan_cocok_pembelian($satuan_persediaan, $satuan_pembelian)
@@ -2464,8 +2510,11 @@ function persediaan_recalculate_load_pembelian_bulan_rows($CI, $tabel, $tgl_awal
 		return $cache[$key];
 	}
 
+	$spop_sql = $CI->db->field_exists('spop', $tabel)
+		? 'TRIM(COALESCE(`spop`, \'\')) AS `spop`'
+		: "'' AS `spop`";
 	$cache[$key] = $CI->db->query(
-		"SELECT `uraian`, `satuan`, `harga_satuan`, `jumlah`
+		"SELECT `uraian`, `satuan`, `harga_satuan`, `jumlah`, {$spop_sql}
 		FROM `{$tabel}`
 		WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
 		AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?",
@@ -2489,6 +2538,7 @@ function persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli)
 		'by_master_uuid' => array(),
 		'by_nama_key' => array(),
 		'by_sync_key' => array(),
+		'by_pembelian_sync_key' => array(),
 		'by_nama_satuan' => array(),
 		'by_nama' => array(),
 		'by_kode' => array(),
@@ -3014,7 +3064,8 @@ function persediaan_recalculate_alasan_penjualan_tidak_ketemu_map($row_penjualan
 }
 
 /**
- * Cari baris persediaan untuk baris pembelian (uraian+satuan+harga_satuan = namabarang+satuan+hpp).
+ * Cari baris persediaan untuk baris pembelian
+ * (uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop, bulan tanggal_beli sama).
  */
 function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $map)
 {
@@ -3025,24 +3076,43 @@ function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $m
 	$nama = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
 	$satuan = isset($row_pembelian->satuan) ? $row_pembelian->satuan : '';
 	$harga = isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '';
+	$spop = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
 
-	$kandidat = array(
-		(object) array(
-			'nama_barang' => persediaan_recalculate_sanitize_nama_persediaan($nama),
-			'satuan' => persediaan_recalculate_sanitize_satuan_persediaan($satuan),
-			'harga_satuan' => $harga,
-		),
-		(object) array(
-			'nama_barang' => $nama,
-			'satuan' => $satuan,
-			'harga_satuan' => $harga,
-		),
+	$nama_var = array(
+		persediaan_recalculate_sanitize_nama_persediaan($nama),
+		$nama,
 	);
+	$satuan_var = array(
+		persediaan_recalculate_sanitize_satuan_persediaan($satuan),
+		$satuan,
+	);
+	$nama_var = array_values(array_unique($nama_var, SORT_REGULAR));
+	$satuan_var = array_values(array_unique($satuan_var, SORT_REGULAR));
 
-	foreach ($kandidat as $fake) {
-		$pers = persediaan_recalculate_find_persediaan_for_sync($fake, $map);
-		if ($pers) {
-			return $pers;
+	foreach ($nama_var as $n_try) {
+		foreach ($satuan_var as $s_try) {
+			$key = persediaan_recalculate_sync_pembelian_persediaan_key($n_try, $s_try, $harga, $spop);
+			if ($key !== '' && !empty($map['by_pembelian_sync_key'][$key])) {
+				return $map['by_pembelian_sync_key'][$key][0];
+			}
+		}
+	}
+
+	$n_only = persediaan_recalculate_normalize_nama($nama);
+	if ($n_only === '' || empty($map['by_nama'][$n_only])) {
+		return null;
+	}
+
+	foreach ($map['by_nama'][$n_only] as $row) {
+		if (!persediaan_recalculate_spop_cocok(
+			isset($row->spop) ? $row->spop : '',
+			$spop
+		)) {
+			continue;
+		}
+		if (persediaan_recalculate_satuan_cocok_pembelian($row->satuan, $satuan)
+			&& persediaan_recalculate_harga_cocok($row->hpp, $harga)) {
+			return $row;
 		}
 	}
 
@@ -3672,6 +3742,7 @@ function persediaan_recalculate_sum_pembelian_table_for_row($CI, $tabel, $tgl_aw
 	$nama_norm = persediaan_recalculate_normalize_nama(isset($row->namabarang) ? $row->namabarang : '');
 	$satuan_pers = isset($row->satuan) ? $row->satuan : '';
 	$hpp_pers = isset($row->hpp) ? $row->hpp : '';
+	$spop_pers = isset($row->spop) ? $row->spop : '';
 
 	if ($nama_norm === '' || trim((string) $satuan_pers) === '') {
 		return 0;
@@ -3683,6 +3754,9 @@ function persediaan_recalculate_sum_pembelian_table_for_row($CI, $tabel, $tgl_aw
 	foreach ($list as $r) {
 		$uraian_norm = persediaan_recalculate_normalize_nama(isset($r->uraian) ? $r->uraian : '');
 		if ($uraian_norm === '' || $uraian_norm !== $nama_norm) {
+			continue;
+		}
+		if (!persediaan_recalculate_spop_cocok($spop_pers, isset($r->spop) ? $r->spop : '')) {
 			continue;
 		}
 		if (!persediaan_recalculate_satuan_cocok_pembelian($satuan_pers, isset($r->satuan) ? $r->satuan : '')) {
@@ -3792,9 +3866,15 @@ function persediaan_recalculate_build_pembelian_agg_map($CI, $tgl_awal, $tgl_akh
 		$uuid_pers_sql = $has_uuid_pers
 			? 'TRIM(COALESCE(`uuid_persediaan`, \'\')) AS uuid_persediaan'
 			: '\'\' AS uuid_persediaan';
+		$has_spop = $CI->db->field_exists('spop', $tbl);
+		$spop_sql = $has_spop
+			? 'TRIM(COALESCE(`spop`, \'\')) AS spop'
+			: "'' AS spop";
+		$group_spop = $has_spop ? ', spop' : '';
 
 		$sql = "SELECT TRIM(COALESCE(`uuid_barang`, '')) AS uuid_barang,
 			{$uuid_pers_sql},
+			{$spop_sql},
 			TRIM(COALESCE(`uraian`, '')) AS uraian,
 			TRIM(COALESCE(`satuan`, '')) AS satuan,
 			TRIM(COALESCE(`harga_satuan`, '')) AS harga_satuan,
@@ -3802,7 +3882,7 @@ function persediaan_recalculate_build_pembelian_agg_map($CI, $tgl_awal, $tgl_akh
 			FROM `{$tbl}`
 			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
 			AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?
-			GROUP BY uuid_barang, uuid_persediaan, uraian, satuan, harga_satuan";
+			GROUP BY uuid_barang, uuid_persediaan, uraian, satuan, harga_satuan{$group_spop}";
 
 		$rows = $CI->db->query($sql, array($tgl_awal, $tgl_akhir))->result();
 		$total_rows_pembelian += count($rows);
@@ -3816,26 +3896,28 @@ function persediaan_recalculate_build_pembelian_agg_map($CI, $tgl_awal, $tgl_akh
 			$satuan = trim((string) $r->satuan);
 			$satuan_key = persediaan_recalculate_satuan_key($satuan);
 			$hpp_key = (string) persediaan_parse_angka($r->harga_satuan);
+			$spop_key = persediaan_recalculate_normalize_spop(isset($r->spop) ? $r->spop : '');
 			if ($satuan_key === '') {
 				continue;
 			}
 
 			$uuid_b = trim((string) $r->uuid_barang);
 			if ($uuid_b !== '') {
-				$k = 'ub|' . $uuid_b . '|' . $satuan_key . '|' . $hpp_key;
+				$k = 'ub|' . $uuid_b . '|' . $satuan_key . '|' . $hpp_key . '|spop:' . $spop_key;
 				$map[$k] = isset($map[$k]) ? $map[$k] + $jml : $jml;
 			}
 
 			$uuid_p = trim((string) $r->uuid_persediaan);
 			if ($uuid_p !== '') {
-				$k = 'up|' . $uuid_p . '|' . $satuan_key . '|' . $hpp_key;
+				$k = 'up|' . $uuid_p . '|' . $satuan_key . '|' . $hpp_key . '|spop:' . $spop_key;
 				$map[$k] = isset($map[$k]) ? $map[$k] + $jml : $jml;
 			}
 
 			$nama = trim((string) $r->uraian);
 			if ($nama !== '') {
-				$k = 'nm|' . persediaan_recalculate_nama_satuan_hpp_key($nama, $satuan, $r->harga_satuan);
-				if ($k !== 'nm|') {
+				$pk = persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $r->harga_satuan, $spop_key);
+				if ($pk !== '') {
+					$k = 'nm|' . $pk;
 					$map[$k] = isset($map[$k]) ? $map[$k] + $jml : $jml;
 				}
 			}
@@ -3856,13 +3938,19 @@ function persediaan_recalculate_lookup_beli_dari_map($map, $row)
 	$satuan = trim((string) $row->satuan);
 	$satuan_key = persediaan_recalculate_satuan_key($satuan);
 	$hpp_key = (string) persediaan_parse_angka($row->hpp);
+	$spop_key = persediaan_recalculate_normalize_spop(isset($row->spop) ? $row->spop : '');
 	if ($satuan_key === '') {
 		return 0;
 	}
 
-	$nama_key = persediaan_recalculate_nama_satuan_hpp_key($row->namabarang, $satuan, $row->hpp);
-	if ($nama_key !== '') {
-		$k = 'nm|' . $nama_key;
+	$pembelian_key = persediaan_recalculate_sync_pembelian_persediaan_key(
+		$row->namabarang,
+		$satuan,
+		$row->hpp,
+		$spop_key
+	);
+	if ($pembelian_key !== '') {
+		$k = 'nm|' . $pembelian_key;
 		if (!empty($map[$k])) {
 			return (int) $map[$k];
 		}
@@ -3870,7 +3958,7 @@ function persediaan_recalculate_lookup_beli_dari_map($map, $row)
 
 	$uuid_b = trim((string) $row->uuid_barang);
 	if ($uuid_b !== '') {
-		$k = 'ub|' . $uuid_b . '|' . $satuan_key . '|' . $hpp_key;
+		$k = 'ub|' . $uuid_b . '|' . $satuan_key . '|' . $hpp_key . '|spop:' . $spop_key;
 		if (!empty($map[$k])) {
 			return (int) $map[$k];
 		}
@@ -3878,7 +3966,7 @@ function persediaan_recalculate_lookup_beli_dari_map($map, $row)
 
 	$uuid_p = trim((string) $row->uuid_persediaan);
 	if ($uuid_p !== '') {
-		$k = 'up|' . $uuid_p . '|' . $satuan_key . '|' . $hpp_key;
+		$k = 'up|' . $uuid_p . '|' . $satuan_key . '|' . $hpp_key . '|spop:' . $spop_key;
 		if (!empty($map[$k])) {
 			return (int) $map[$k];
 		}
