@@ -199,96 +199,100 @@
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
+    #dt_tgl_jual .form-control {
+        background-color: #fff;
+        cursor: text;
     }
 </style>
-
-
-
-
-
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 500,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    (function($) {
-        function getTglJualVal() {
-            return $.trim($('input[name="tgl_jual"]').val() || '');
+window.addEventListener('load', function() {
+    if (!window.jQuery || typeof jQuery.fn.datetimepicker !== 'function') {
+        console.error('Datepicker Tgl Jual: jQuery / Tempusdominus belum dimuat.');
+        return;
+    }
+    var $ = window.jQuery;
+
+    function getTglJualVal() {
+        return $.trim($('#input_tgl_jual').val() || '');
+    }
+
+    function updateBtnInputBarangPenjualan() {
+        var tglJual = getTglJualVal();
+        var $btn = $('#btn-input-barang-penjualan');
+        var boleh = tglJual !== '';
+        $btn.prop('disabled', !boleh);
+        if (boleh) {
+            $btn.removeAttr('title');
+            $('#info-tgl-jual-penjualan').removeClass('text-danger').addClass('text-muted')
+                .text('Tanggal jual default: hari ini. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.');
+        } else {
+            $btn.attr('title', 'Isi Tgl Jual terlebih dahulu');
+            $('#info-tgl-jual-penjualan').removeClass('text-muted').addClass('text-danger')
+                .text('Tgl Jual wajib diisi sebelum klik Input Barang Penjualan.');
+        }
+    }
+
+    function initDatepickerTglJual() {
+        var $picker = $('#dt_tgl_jual');
+        var $input = $('#input_tgl_jual');
+        if (!$picker.length || !$input.length) {
+            return;
         }
 
-        function updateBtnInputBarangPenjualan() {
-            var tglJual = getTglJualVal();
-            var $btn = $('#btn-input-barang-penjualan');
-            var boleh = tglJual !== '';
-            $btn.prop('disabled', !boleh);
-            if (boleh) {
-                $btn.removeAttr('title');
-                $('#info-tgl-jual-penjualan').removeClass('text-danger').addClass('text-muted');
-            } else {
-                $btn.attr('title', 'Isi Tgl Jual terlebih dahulu');
-                $('#info-tgl-jual-penjualan').removeClass('text-muted').addClass('text-danger')
-                    .text('Tgl Jual wajib diisi sebelum klik Input Barang Penjualan.');
+        $input.prop('readonly', false);
+
+        if ($picker.data('DateTimePicker')) {
+            try {
+                $picker.datetimepicker('destroy');
+            } catch (eDestroy) { /* abaikan */ }
+        }
+
+        $picker.datetimepicker({
+            format: 'DD-MM-YYYY',
+            useCurrent: false,
+            allowInputToggle: true
+        });
+
+        var valAwal = $.trim($input.val());
+        if (valAwal && typeof moment !== 'undefined') {
+            var mAwal = moment(valAwal, ['DD-MM-YYYY', 'D-M-YYYY', 'DD-M-YYYY'], true);
+            if (mAwal.isValid()) {
+                $picker.datetimepicker('date', mAwal);
+                $input.val(mAwal.format('DD-MM-YYYY'));
             }
         }
 
-        function initDatepickerTglJual() {
-            var $picker = $('#dt_tgl_jual');
-            if (!$picker.length || $picker.data('DateTimePicker')) {
-                return;
-            }
-            $picker.datetimepicker({
-                format: 'D-M-YYYY'
-            });
-            $picker.on('change.datetimepicker', function() {
+        $picker.off('change.datetimepicker.tglJualCreate hide.datetimepicker.tglJualCreate')
+            .on('change.datetimepicker.tglJualCreate hide.datetimepicker.tglJualCreate', function() {
                 updateBtnInputBarangPenjualan();
             });
-        }
 
-        $(document).ready(function() {
-            initDatepickerTglJual();
-            updateBtnInputBarangPenjualan();
-
-            $('input[name="tgl_jual"]').on('change blur keyup', function() {
+        $input.off('change.tglJualCreate blur.tglJualCreate keyup.tglJualCreate')
+            .on('change.tglJualCreate blur.tglJualCreate keyup.tglJualCreate', function() {
                 updateBtnInputBarangPenjualan();
             });
-        });
+    }
 
-        $('#form-penjualan-create-inisiasi').on('submit', function(e) {
-            if (getTglJualVal()) {
-                return true;
-            }
-            e.preventDefault();
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Tgl Jual belum diisi',
-                    text: 'Pilih atau isi tanggal jual terlebih dahulu sebelum Input Barang Penjualan.'
-                });
-            } else {
-                alert('Pilih atau isi Tgl Jual terlebih dahulu.');
-            }
-            $('input[name="tgl_jual"]').focus();
-            return false;
-        });
-    })(jQuery);
+    initDatepickerTglJual();
+    updateBtnInputBarangPenjualan();
+
+    $('#form-penjualan-create-inisiasi').on('submit', function(e) {
+        if (getTglJualVal()) {
+            return true;
+        }
+        e.preventDefault();
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Tgl Jual belum diisi',
+                text: 'Pilih atau isi tanggal jual terlebih dahulu sebelum Input Barang Penjualan.'
+            });
+        } else {
+            alert('Pilih atau isi Tgl Jual terlebih dahulu.');
+        }
+        $('#input_tgl_jual').focus();
+        return false;
+    });
+});
 </script>
