@@ -576,6 +576,7 @@ class Persediaan extends CI_Controller
 			'url_analisa_recalculate_persediaan' => site_url('Persediaan/ajax_analisa_recalculate_persediaan'),
 			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
+			'url_excel_persediaan' => site_url('Persediaan/excel'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
@@ -3082,6 +3083,10 @@ class Persediaan extends CI_Controller
 		$nourut = 1;
 		$total_total_10 = 0;
 		$total_nilai_persediaan = 0;
+		$totals_nominal_unit = array();
+		foreach (persediaan_list_unit_columns($this) as $uf_excel) {
+			$totals_nominal_unit[$uf_excel] = 0;
+		}
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
@@ -3096,6 +3101,9 @@ class Persediaan extends CI_Controller
 		foreach ($Persediaan as $data) {
 			$total_total_10 += persediaan_parse_angka(persediaan_row_get($data, 'total_10'));
 			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+			foreach (persediaan_list_unit_columns($this) as $uf_excel) {
+				$totals_nominal_unit[$uf_excel] += persediaan_hitung_kolom_nominal_row($data, $uf_excel);
+			}
 			$cells = persediaan_export_row_cells($data, $nourut, $bulan, $this);
 			$kolombody = 0;
 			foreach ($cells as $cell) {
@@ -3105,7 +3113,7 @@ class Persediaan extends CI_Controller
 			$nourut++;
 		}
 
-		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $this);
+		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $this);
 		$kolomfoot = 0;
 		foreach ($footer_cells as $cell) {
 			$align = ($cell !== '' && $cell !== 'Total') ? 'right' : '';

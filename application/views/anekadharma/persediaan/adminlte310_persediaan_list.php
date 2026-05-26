@@ -59,7 +59,7 @@
                                         <label for="bulan_persediaan">Bulan:</label>
                                         <input type="month" id="bulan_persediaan" name="bulan_persediaan" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil); ?>">
                                         <button type="submit" class="btn btn-danger ml-1 btn-cari-persediaan">Cari</button>
-                                        <button type="button" id="btn-cetak-excel-persediaan" class="btn btn-primary ml-1" data-url="<?php echo site_url('persediaan/excel'); ?>">Cetak ke Excel</button>
+                                        <button type="button" id="btn-cetak-excel-persediaan" class="btn btn-primary ml-1">Cetak ke Excel</button>
                                     </div>
                                 </div>
                             </form>
@@ -68,7 +68,7 @@
                             $persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10();
                             $idx_col_total_10 = persediaan_list_col_index_total_10();
                             $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
-                            $total_kolom_persediaan = count(persediaan_export_headers());
+                            $total_kolom_persediaan = count(persediaan_export_headers()) + 1;
                             ?>
                             <table id="table-persediaan" class="table table-bordered table-striped" style="width:100%">
                                 <thead>
@@ -85,6 +85,9 @@
                                         <th>Tuj</th>
                                         <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
                                             <th><?php echo htmlspecialchars(persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
+                                            <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+                                                <th class="text-right"><?php echo htmlspecialchars(persediaan_field_nominal_header_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
+                                            <?php } ?>
                                         <?php } ?>
                                         <th>Nilai Persediaan</th>
                                         <th>Terjual</th>
@@ -98,11 +101,18 @@
                                     $start = 0;
                                     $total_total_10 = 0;
                                     $total_nilai_persediaan = 0;
+                                    $total_nominal_unit = array();
+                                    foreach (persediaan_list_unit_columns() as $uf_total) {
+                                        $total_nominal_unit[$uf_total] = 0;
+                                    }
                                     foreach ($Persediaan_data as $persediaan) {
                                         $total_10_row = persediaan_parse_angka(persediaan_row_get($persediaan, 'total_10'));
                                         $nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
                                         $total_total_10 += $total_10_row;
                                         $total_nilai_persediaan += $nilai_persediaan_row;
+                                        foreach (persediaan_list_unit_columns() as $uf_total) {
+                                            $total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
+                                        }
                                         $sisa_stock = persediaan_hitung_sisa_stock($persediaan);
                                     ?>
                                         <tr>
@@ -118,6 +128,9 @@
                                             <td><?php echo $persediaan->tuj ?></td>
                                             <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
                                                 <td><?php echo persediaan_row_get($persediaan, $field_tgl_total); ?></td>
+                                                <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+                                                    <td class="text-right"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
+                                                <?php } ?>
                                             <?php } ?>
                                             <td><?php echo persediaan_format_angka_tampil($nilai_persediaan_row); ?></td>
                                             <td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
@@ -129,17 +142,17 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <?php for ($col_foot = 0; $col_foot < $total_kolom_persediaan; $col_foot++) { ?>
-                                            <?php if ($col_foot === ($idx_col_total_10 - 1)) { ?>
-                                                <th style="text-align:right;">Total</th>
-                                            <?php } elseif ($col_foot === $idx_col_total_10) { ?>
-                                                <th style="text-align:right;"><?php echo persediaan_format_angka_tampil($total_total_10); ?></th>
-                                            <?php } elseif ($col_foot === $idx_col_nilai_persediaan) { ?>
-                                                <th style="text-align:right;"><?php echo persediaan_format_angka_tampil($total_nilai_persediaan); ?></th>
-                                            <?php } else { ?>
-                                                <th></th>
-                                            <?php } ?>
-                                        <?php } ?>
+                                        <?php
+                                        $footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit);
+                                        $footer_cells[] = '';
+                                        foreach ($footer_cells as $col_foot => $foot_val) {
+                                            $align = ($foot_val !== '' && $foot_val !== 'Total') ? ' style="text-align:right;"' : '';
+                                            if ($foot_val === 'Total') {
+                                                $align = ' style="text-align:right;"';
+                                            }
+                                            echo '<th' . $align . '>' . htmlspecialchars((string) $foot_val, ENT_QUOTES, 'UTF-8') . '</th>';
+                                        }
+                                        ?>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -416,18 +429,20 @@
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
+window.addEventListener('load', function() {
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.dataTable) {
+        console.error('Persediaan: jQuery/DataTables belum dimuat. Muat ulang halaman.');
+        return;
+    }
+    var $ = window.jQuery;
     var urlTambahPersediaan = <?php echo json_encode(isset($url_tambah_persediaan) ? $url_tambah_persediaan : site_url('Persediaan/ajax_tambah_persediaan')); ?>;
     var urlCekGeneratePersediaan = <?php echo json_encode(isset($url_cek_generate_persediaan) ? $url_cek_generate_persediaan : site_url('Persediaan/ajax_cek_generate_persediaan_bulan')); ?>;
     var urlAnalisaGeneratePersediaan = <?php echo json_encode(isset($url_analisa_generate_persediaan) ? $url_analisa_generate_persediaan : site_url('Persediaan/ajax_analisa_generate_persediaan_bulan')); ?>;
     var urlAnalisaRecalculatePersediaan = <?php echo json_encode(isset($url_analisa_recalculate_persediaan) ? $url_analisa_recalculate_persediaan : site_url('Persediaan/ajax_analisa_recalculate_persediaan')); ?>;
     var urlRecalculatePersediaanBatch = <?php echo json_encode(isset($url_recalculate_persediaan_batch) ? $url_recalculate_persediaan_batch : site_url('Persediaan/ajax_recalculate_persediaan_batch')); ?>;
     var urlRecalculateExcel = <?php echo json_encode(isset($url_recalculate_excel) ? $url_recalculate_excel : site_url('Persediaan/excel_recalculate')); ?>;
-    var urlExcelPersediaan = <?php echo json_encode(site_url('Persediaan/excel')); ?>;
+    var urlExcelPersediaan = <?php echo json_encode(isset($url_excel_persediaan) ? $url_excel_persediaan : site_url('Persediaan/excel')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
 
@@ -1150,13 +1165,21 @@ $(document).ready(function() {
         return false;
     });
 
-    var dtPersediaan = $('#table-persediaan').DataTable({
-        scrollY: 500,
-        scrollX: true,
-        scrollCollapse: true,
-        pageLength: 25,
-        order: [[0, 'asc']]
-    });
+    var dtPersediaan = null;
+    try {
+        if ($.fn.DataTable.isDataTable('#table-persediaan')) {
+            $('#table-persediaan').DataTable().destroy();
+        }
+        dtPersediaan = $('#table-persediaan').DataTable({
+            scrollY: 500,
+            scrollX: true,
+            scrollCollapse: true,
+            pageLength: 25,
+            order: [[0, 'asc']]
+        });
+    } catch (dtErr) {
+        console.warn('DataTable persediaan:', dtErr);
+    }
 
     var urlRekapAjax = <?php echo json_encode(isset($url_rekap_ajax) ? $url_rekap_ajax : site_url('Persediaan/ajax_rekap_bulan')); ?>;
     var urlRekapSyncStep = <?php echo json_encode(isset($url_rekap_sync_step) ? $url_rekap_sync_step : site_url('Persediaan/ajax_rekap_sync_step')); ?>;
@@ -1610,39 +1633,60 @@ $(document).ready(function() {
         });
     });
 
-    $('#btn-cetak-excel-persediaan').on('click', function() {
-        var url = $(this).data('url');
+    function unduhExcelDariResponse(response) {
+        if (!response.ok) {
+            throw new Error('Export Excel gagal (HTTP ' + response.status + ')');
+        }
+        var ct = (response.headers.get('Content-Type') || '').toLowerCase();
+        var disposition = response.headers.get('Content-Disposition');
+        return response.blob().then(function(blob) {
+            if (ct.indexOf('html') !== -1 || (blob.size < 8000 && disposition === null)) {
+                return blob.text().then(function(txt) {
+                    if (txt.indexOf('<!DOCTYPE') !== -1 || txt.indexOf('<html') !== -1) {
+                        throw new Error('Sesi habis atau server mengembalikan halaman HTML. Login ulang lalu coba lagi.');
+                    }
+                    throw new Error('Respon server bukan file Excel.');
+                });
+            }
+            return {
+                blob: blob,
+                filename: parseExcelFilename(disposition)
+            };
+        });
+    }
+
+    function triggerDownloadBlob(result) {
+        var link = document.createElement('a');
+        var objectUrl = window.URL.createObjectURL(result.blob);
+        link.href = objectUrl;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
+    }
+
+    $('#btn-cetak-excel-persediaan').on('click', function(e) {
+        e.preventDefault();
+        if (!urlExcelPersediaan) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export Excel tidak tersedia.' });
+            return;
+        }
         var bulan = $('#bulan_persediaan').val() || '';
         var formData = new FormData();
         formData.append('bulan_persediaan', bulan);
 
         tampilkanSwalExcelProgress();
 
-        fetch(url, {
+        fetch(urlExcelPersediaan, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Export Excel gagal (HTTP ' + response.status + ')');
-            }
-            var disposition = response.headers.get('Content-Disposition');
-            var filename = parseExcelFilename(disposition);
-            return response.blob().then(function(blob) {
-                return { blob: blob, filename: filename };
-            });
-        })
+        .then(unduhExcelDariResponse)
         .then(function(result) {
-            var link = document.createElement('a');
-            var objectUrl = window.URL.createObjectURL(result.blob);
-            link.href = objectUrl;
-            link.download = result.filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(objectUrl);
-
+            triggerDownloadBlob(result);
             selesaiSwalExcelProgress();
             Swal.fire({
                 icon: 'success',
@@ -1657,6 +1701,7 @@ $(document).ready(function() {
                 clearInterval(excelProgressTimer);
                 excelProgressTimer = null;
             }
+            Swal.close();
             Swal.fire({
                 icon: 'error',
                 title: 'Gagal',
@@ -1746,7 +1791,9 @@ $(document).ready(function() {
         } else if ($(e.target).attr('href') === '#panel-generate-persediaan') {
             cekGeneratePersediaanBulan();
         } else if ($(e.target).attr('href') === '#panel-data-persediaan') {
-            dtPersediaan.columns.adjust().draw();
+            if (dtPersediaan && dtPersediaan.columns) {
+                dtPersediaan.columns.adjust().draw();
+            }
         }
     });
 
