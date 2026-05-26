@@ -572,6 +572,10 @@ class Persediaan extends CI_Controller
 			'url_cek_generate_persediaan' => site_url('Persediaan/ajax_cek_generate_persediaan_bulan'),
 			'url_analisa_generate_persediaan' => site_url('Persediaan/ajax_analisa_generate_persediaan_bulan'),
 			'url_generate_persediaan_base' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN'),
+			'url_recalculate_persediaan' => site_url('Persediaan/recalculate_data_persediaan'),
+			'url_analisa_recalculate_persediaan' => site_url('Persediaan/ajax_analisa_recalculate_persediaan'),
+			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
+			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
@@ -791,7 +795,9 @@ class Persediaan extends CI_Controller
 
 		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber akan di-<strong>INSERT</strong> ke bulan target '
 			. '(data persediaan bulan target yang lama akan dikosongkan terlebih dahulu). '
-			. 'Ada di tbl_pembelian/jasa tidak menghalangi copy — hanya mengisi kolom <strong>beli</strong>. '
+			. 'Disalin: <strong>uuid_barang, namabarang, satuan, hpp</strong>; '
+			. '<strong>sa</strong> dan <strong>total_10</strong> = nilai <strong>total_10</strong> bulan sumber (sama). '
+			. '<strong>beli</strong> dan <strong>penjualan</strong> = 0 (diisi lewat Recalculate). '
 			. 'Total akhir bulan target = ' . $total_sumber . ' (sama dengan bulan sumber).';
 		if ($total_target > 0) {
 			$penjelasan .= ' Saat ini bulan target sudah ada <strong>' . $total_target . ' record</strong> — akan diganti saat generate.';
@@ -961,26 +967,29 @@ class Persediaan extends CI_Controller
 	 */
 	public function ajax_rekap_bulan()
 	{
-		$this->load->helper('persediaan_display');
-		$parsed = $this->parse_bulan_rekap_input();
-		if (!$parsed['ok']) {
-			header('Content-Type: application/json; charset=UTF-8');
-			echo json_encode($parsed);
-			return;
-		}
-
-		$bulan = $parsed['bulan'];
-		$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
-
 		header('Content-Type: application/json; charset=UTF-8');
-		echo json_encode(array(
-			'ok' => true,
-			'bulan' => $bulan,
-			'tanggal_rekap' => $this->get_tanggal_rekap_dari_bulan($bulan),
-			'items' => $hasil_rekap['items'],
-			'total_detail' => $hasil_rekap['total_detail'],
-			'total_detail_tampil' => $hasil_rekap['total_detail_tampil'],
-		));
+		try {
+			$this->load->helper('persediaan_display');
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				echo json_encode($parsed);
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
+
+			echo json_encode(array(
+				'ok' => true,
+				'bulan' => $bulan,
+				'tanggal_rekap' => $this->get_tanggal_rekap_dari_bulan($bulan),
+				'items' => $hasil_rekap['items'],
+				'total_detail' => $hasil_rekap['total_detail'],
+				'total_detail_tampil' => $hasil_rekap['total_detail_tampil'],
+			));
+		} catch (Exception $e) {
+			echo json_encode(array('ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
+		}
 	}
 
 	/**
@@ -988,25 +997,31 @@ class Persediaan extends CI_Controller
 	 */
 	public function ajax_rekap_sync_step()
 	{
-		$this->load->helper('persediaan_display');
-		$parsed = $this->parse_bulan_rekap_input();
-		if (!$parsed['ok']) {
-			header('Content-Type: application/json; charset=UTF-8');
-			echo json_encode($parsed);
-			return;
-		}
-
-		$step = (int) $this->input->post('step', TRUE);
-		$total_steps = $this->get_rekap_total_steps();
-		if ($step < 1 || $step > $total_steps) {
-			header('Content-Type: application/json; charset=UTF-8');
-			echo json_encode(array('ok' => false, 'message' => 'Langkah rekalkulasi tidak valid.'));
-			return;
-		}
-
-		$hasil = $this->sync_persediaan_rekap_step($parsed['bulan'], $step);
 		header('Content-Type: application/json; charset=UTF-8');
-		echo json_encode($hasil);
+		try {
+			$this->load->helper('persediaan_display');
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				echo json_encode($parsed);
+				return;
+			}
+
+			$step = (int) $this->input->post('step', TRUE);
+			$total_steps = $this->get_rekap_total_steps();
+			if ($step < 1 || $step > $total_steps) {
+				echo json_encode(array('ok' => false, 'message' => 'Langkah rekalkulasi tidak valid.'));
+				return;
+			}
+
+			$hasil = $this->sync_persediaan_rekap_step($parsed['bulan'], $step);
+			echo json_encode($hasil);
+		} catch (Exception $e) {
+			echo json_encode(array(
+				'ok' => false,
+				'message' => 'Rekalkulasi rekap gagal: ' . $e->getMessage(),
+				'step' => (int) $this->input->post('step', TRUE),
+			));
+		}
 	}
 
 	private function get_tanggal_rekap_dari_bulan($bulan)
@@ -1104,22 +1119,19 @@ class Persediaan extends CI_Controller
 	private function sum_persediaan_kolom($tanggal_beli, $nama_kolom)
 	{
 		$this->load->helper('persediaan_display');
-		$allowed = array(
-			'cetak', 'grafikita', 'sekret', 'medis', 'ppbmp', 'dinas_umum', 'atk_rsud',
-			'siiplah_bosda', 'ppbmp_kbs', 'kbs', 'sembako', 'fc_psamya', 'fc_gose', 'fc_manding',
-		);
-		if (!in_array($nama_kolom, $allowed, true)) {
+		$db_col = persediaan_resolve_db_field_name($this, $nama_kolom);
+		if (!$this->db->field_exists($db_col, 'persediaan')) {
 			return 0;
 		}
 
 		$rows = $this->db->query(
-			"SELECT `" . $nama_kolom . "` FROM `persediaan` WHERE `tanggal_beli`=?",
+			"SELECT `" . $db_col . "` AS val FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
 
 		$total = 0;
 		foreach ($rows as $r) {
-			$total += persediaan_parse_angka($r->{$nama_kolom});
+			$total += persediaan_parse_angka($r->val);
 		}
 		return $total;
 	}
@@ -1139,19 +1151,19 @@ class Persediaan extends CI_Controller
 	private function sum_persediaan_kolom_kali_hpp($tanggal_beli, $nama_kolom)
 	{
 		$this->load->helper('persediaan_display');
-		$allowed = array('dinas_umum', 'cetak', 'grafikita', 'tuj');
-		if (!in_array($nama_kolom, $allowed, true)) {
+		$db_col = persediaan_resolve_db_field_name($this, $nama_kolom);
+		if (!$this->db->field_exists($db_col, 'persediaan')) {
 			return 0;
 		}
 
 		$rows = $this->db->query(
-			"SELECT `" . $nama_kolom . "`, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
+			"SELECT `" . $db_col . "` AS val, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
 
 		$total = 0;
 		foreach ($rows as $r) {
-			$total += persediaan_parse_angka($r->{$nama_kolom}) * persediaan_parse_angka($r->hpp);
+			$total += persediaan_parse_angka($r->val) * persediaan_parse_angka($r->hpp);
 		}
 		return $total;
 	}
@@ -1309,8 +1321,9 @@ class Persediaan extends CI_Controller
 			$cfg = $breakdown[$idx];
 			$nama_rekap = $cfg['nama'];
 			$nominal = $this->sum_persediaan_kolom($tanggal_beli_bulan_ini, $cfg['kolom']);
-			$keterangan = 'Rekalkulasi: sum(' . $cfg['kolom'] . ') bulan ' . $tanggal_beli_bulan_ini;
-			$info_proses = 'Menghitung sum(' . $cfg['kolom'] . ')';
+			$db_kolom = persediaan_resolve_db_field_name($this, $cfg['kolom']);
+			$keterangan = 'Rekalkulasi: sum(' . $db_kolom . ') bulan ' . $tanggal_beli_bulan_ini;
+			$info_proses = 'Menghitung sum(' . $db_kolom . ')';
 		}
 
 		$aksi = $this->upsert_persediaan_rekap_baris($tanggal_rekap, $nama_rekap, $nominal, $keterangan, $next_id);
@@ -1386,127 +1399,180 @@ class Persediaan extends CI_Controller
 		$this->pdf->load_view('anekadharma/persediaan/persediaan_pdf', $data);
 	}
 
-	public function recalculate_data_persediaan()
+	public function ajax_analisa_recalculate_persediaan()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$analisa = persediaan_recalculate_full_analisa($this, $bulan);
+			persediaan_ajax_json_output($this, $analisa);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX batch recalculate pembelian (beli) + penjualan → persediaan (tab Recalculate).
+	 */
+	public function ajax_recalculate_persediaan_batch()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		@ignore_user_abort(true);
+
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$offset = max(0, (int) $this->input->get_post('offset', TRUE));
+			$limit = (int) $this->input->get_post('limit', TRUE);
+			$start = ($this->input->get_post('start', TRUE) === '1');
+			if ($limit < 1 || $limit > 100) {
+				$limit = 40;
+			}
+
+			$db_debug = $this->db->db_debug;
+			$this->db->db_debug = false;
+
+			$result = persediaan_recalculate_full_batch($this, $bulan, $offset, $limit, $start);
+
+			$this->db->db_debug = $db_debug;
+
+			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * Export Excel multi-sheet untuk tab Recalculate (persediaan, pembelian, pembelian jasa, penjualan).
+	 */
+	public function excel_recalculate()
+	{
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$this->load->helper(array('exportexcel', 'persediaan_display', 'pembelian_persediaan'));
+
+		$namaFile = 'Recalculate_Persediaan_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_export_recalculate_excel_output($this, $bulan);
+		exit();
+	}
+
+	public function recalculate_data_persediaan($bulan = '')
 	{
 		@set_time_limit(0);
 		@ini_set('memory_limit', '1024M');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
-		header('Content-Type: text/html; charset=UTF-8');
-		echo '<!doctype html><html><head><meta charset="utf-8"><title>Recalculate UUID Persediaan</title></head><body>';
-		echo '<h3>Proses Recalculate Data Persediaan</h3>';
-		echo '<p>Update field berikut di tabel <strong>persediaan</strong> dari <strong>persediaan_lama</strong> (filter: namabarang + satuan + hpp sama):</p>';
-		echo '<p>uuid_persediaan, uuid_spop, uuid_gudang, nama_gudang, uuid_barang, kode_barang</p>';
-		echo '<ul>';
-		echo '<li><strong>MATCH</strong> = copy data dari persediaan_lama</li>';
-		echo '<li><strong>MATCH + AUTO UUID</strong> = record cocok tapi uuid_persediaan lama kosong, uuid_persediaan dibuat otomatis (field lain tetap dicopy)</li>';
-		echo '<li><strong>TIDAK MATCH</strong> = tidak ada di persediaan_lama, uuid_persediaan dibuat otomatis, field uuid lain dikosongkan</li>';
-		echo '</ul>';
-		echo '<hr>';
-
-		$sql_persediaan = "SELECT `id`,`namabarang`,`satuan`,`hpp` FROM `persediaan` ORDER BY `id` ASC";
-		$list_persediaan = $this->db->query($sql_persediaan)->result();
-
-		$total_data = count($list_persediaan);
-		$total_match = 0;
-		$total_match_auto_uuid = 0;
-		$total_tidak_match = 0;
-		$total_update = 0;
-
-		echo 'Total data persediaan diproses: ' . $total_data . '<br/><br/>';
-
-		foreach ($list_persediaan as $row) {
-			$nama = trim((string) $row->namabarang);
-			$satuan = trim((string) $row->satuan);
-			$hpp = trim((string) $row->hpp);
-
-			$sql_lama = "SELECT `uuid_persediaan`,`uuid_spop`,`uuid_gudang`,`nama_gudang`,`uuid_barang`,`kode_barang`
-				FROM `persediaan_lama`
-				WHERE TRIM(`namabarang`)=? AND TRIM(`satuan`)=?
-				AND CAST(REPLACE(TRIM(`hpp`),',','') AS DECIMAL(18,2))=CAST(REPLACE(?,',','') AS DECIMAL(18,2))
-				ORDER BY `id` ASC LIMIT 1";
-			$data_lama = $this->db->query($sql_lama, array($nama, $satuan, $hpp))->row();
-
-			$this->db->where('id', $row->id);
-
-			if ($data_lama) {
-				$this->db->set('uuid_spop', $data_lama->uuid_spop);
-				$this->db->set('uuid_gudang', $data_lama->uuid_gudang);
-				$this->db->set('nama_gudang', $data_lama->nama_gudang);
-				$this->db->set('uuid_barang', $data_lama->uuid_barang);
-				$this->db->set('kode_barang', $data_lama->kode_barang);
-
-				if (!empty($data_lama->uuid_persediaan)) {
-					$status = 'MATCH';
-					$total_match++;
-					$this->db->set('uuid_persediaan', $data_lama->uuid_persediaan);
-				} else {
-					$status = 'MATCH + AUTO UUID';
-					$total_match_auto_uuid++;
-					$this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
-				}
-			} else {
-				$status = 'TIDAK MATCH';
-				$total_tidak_match++;
-				$this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
-				$this->db->set('uuid_spop', '');
-				$this->db->set('uuid_gudang', '');
-				$this->db->set('nama_gudang', '');
-				$this->db->set('uuid_barang', '');
-				$this->db->set('kode_barang', '');
-			}
-
-			$this->db->update('persediaan');
-			$total_update++;
-
-			$row_updated = $this->db->query(
-				"SELECT `uuid_persediaan`,`uuid_spop`,`uuid_gudang`,`nama_gudang`,`uuid_barang`,`kode_barang`
-				FROM `persediaan` WHERE `id`=? LIMIT 1",
-				array($row->id)
-			)->row();
-
-			echo 'ID: ' . $row->id . ' | ' . $status
-				. ' | NAMABARANG: ' . htmlspecialchars($nama)
-				. ' | SATUAN: ' . htmlspecialchars($satuan)
-				. ' | HPP: ' . $hpp
-				. ' | uuid_persediaan: ' . ($row_updated ? $row_updated->uuid_persediaan : '')
-				. ' | uuid_spop: ' . ($row_updated ? $row_updated->uuid_spop : '')
-				. ' | uuid_gudang: ' . ($row_updated ? $row_updated->uuid_gudang : '')
-				. ' | nama_gudang: ' . ($row_updated ? htmlspecialchars($row_updated->nama_gudang) : '')
-				. ' | uuid_barang: ' . ($row_updated ? $row_updated->uuid_barang : '')
-				. ' | kode_barang: ' . ($row_updated ? $row_updated->kode_barang : '')
-				. '<br/>';
-			@ob_flush();
-			@flush();
+		$bulan = trim((string) $bulan);
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		}
+		if ($bulan === '' && $this->input->post('bulan_persediaan')) {
+			$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
 		}
 
-		echo '<hr>';
-		echo '<strong>SELESAI PROSES</strong><br/>';
-		echo 'Total diproses: ' . $total_data . '<br/>';
-		echo 'Total match (copy semua dari persediaan_lama): ' . $total_match . '<br/>';
-		echo 'Total match + auto uuid (cocok tapi uuid lama kosong): ' . $total_match_auto_uuid . '<br/>';
-		echo 'Total tidak match (uuid baru + field uuid lain dikosongkan): ' . $total_tidak_match . '<br/>';
-		echo 'Total update: ' . $total_update . '<br/><br/>';
-		echo 'Ringkasan (print_r):<br/>';
-		print_r(array(
-			'total_diproses' => $total_data,
-			'total_match' => $total_match,
-			'total_match_auto_uuid' => $total_match_auto_uuid,
-			'total_tidak_match' => $total_tidak_match,
-			'total_update' => $total_update,
-		));
-		echo '<br/><a href="' . site_url('persediaan') . '">Kembali ke Data Persediaan</a>';
-		echo '</body></html>';
+		if ($this->input->get('ajax') === '1') {
+			header('Content-Type: application/json; charset=UTF-8');
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+			$offset = max(0, (int) $this->input->get('offset'));
+			$limit = (int) $this->input->get('limit');
+			if ($limit < 1 || $limit > 100) {
+				$limit = 50;
+			}
+			echo json_encode(persediaan_recalculate_penjualan_batch($this, $bulan, $offset, $limit));
+			return;
+		}
+
+		if (preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			$ctx = persediaan_recalculate_penjualan_context($this, $bulan);
+			if (!$ctx['ok']) {
+				header('Content-Type: text/html; charset=UTF-8');
+				echo '<!doctype html><html><head><meta charset="utf-8"><title>Recalculate Persediaan</title></head><body>';
+				echo '<p style="color:red;">' . htmlspecialchars($ctx['message']) . '</p>';
+				echo '<p><a href="' . site_url('Persediaan/recalculate_data_persediaan') . '">Kembali</a></p>';
+				echo '</body></html>';
+				return;
+			}
+
+			$this->session->unset_userdata('recalc_penj_reset_' . $bulan);
+			$this->session->unset_userdata('recalc_penj_stats_' . $bulan);
+
+			$data_view = array(
+				'bulan' => $ctx['bulan'],
+				'bulan_label' => $ctx['bulan_label'],
+				'tanggal_beli' => $ctx['tanggal_beli'],
+				'tgl_awal' => $ctx['tgl_awal'],
+				'tgl_akhir' => $ctx['tgl_akhir'],
+				'total_persediaan' => $ctx['total_persediaan'],
+				'total_penjualan' => $ctx['total_penjualan'],
+				'ajax_url' => site_url('Persediaan/recalculate_data_persediaan/' . $ctx['bulan']),
+			);
+			$this->load->view('anekadharma/persediaan/recalculate_persediaan_penjualan_process', $data_view);
+			return;
+		}
+
+		$bulan_default = date('Y-m');
+		if ($this->input->post('bulan_persediaan')) {
+			$bulan_default = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		}
+
+		header('Content-Type: text/html; charset=UTF-8');
+		echo '<!doctype html><html><head><meta charset="utf-8"><title>Recalculate Penjualan → Persediaan</title>';
+		echo '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"></head><body class="p-4">';
+		echo '<div class="container" style="max-width:720px;">';
+		echo '<h3>Recalculate Data Persediaan dari Penjualan</h3>';
+		echo '<p>Membaca <strong>tbl_penjualan</strong> bulan terpilih, lalu mengisi ulang kolom <strong>penjualan</strong> '
+			. 'dan kolom <strong>unit</strong> (sekret, cetak, medis, …) di tabel <strong>persediaan</strong>.</p>';
+		echo '<ul class="small text-muted">';
+		echo '<li>Cocokkan barang: <code>id_persediaan_barang</code> → <code>uuid_persediaan</code> → <code>uuid_barang</code> → nama+satuan+hpp</li>';
+		echo '<li>Harus cocok <strong>satuan</strong> dan <strong>harga_satuan</strong> (penjualan) = <strong>hpp</strong> (persediaan)</li>';
+		echo '<li>Unit penjualan (<code>uuid_unit</code>) → kolom unit persediaan via <code>sys_unit</code></li>';
+		echo '<li>Semua kolom penjualan/unit bulan tersebut di-reset ke 0 dulu, lalu dihitung ulang</li>';
+		echo '</ul>';
+		echo '<form method="post" action="' . site_url('Persediaan/recalculate_data_persediaan') . '">';
+		echo '<div class="form-group"><label>Bulan / Tahun</label>';
+		echo '<input type="month" name="bulan_persediaan" class="form-control" style="max-width:220px;" value="' . htmlspecialchars($bulan_default) . '" required></div>';
+		echo '<button type="submit" class="btn btn-primary">Mulai Recalculate</button> ';
+		echo '<a href="' . site_url('persediaan') . '" class="btn btn-secondary">Kembali</a>';
+		echo '</form></div></body></html>';
 	}
 
 	/**
 	 * Generate data persediaan bulan baru dari salinan bulan sebelumnya.
 	 * Contoh: GENERATE_PERSEDIAN_BULAN/2026-01 => copy dari tanggal_beli 2025-12-01 ke 2026-01-01
-	 * sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber).
-	 * beli record baru = 0. total_10 = sa + beli. nilai_persediaan = total_10 * hpp. tuj = sa + beli.
-	 * Kolom setelah tuj sampai sebelum total_10 = 0 (tidak disalin dari bulan sumber).
-	 * Satu record sumber = satu record target (INSERT). Hanya UPDATE jika baris target sudah
-	 * merupakan salinan baris sumber yang sama (uuid_persediaan / nama+satuan+hpp). Ada di
-	 * tbl_pembelian/jasa hanya mengisi beli, tidak menghalangi copy.
+	 * Salin dari bulan sumber: uuid_barang, namabarang, satuan, hpp.
+	 * Baru: uuid_persediaan, id (auto increment), tanggal_beli = tgl 1 bulan target.
+	 * sa = total_10 (nilai field total_10 bulan sumber); total_10 = sa (sama saat generate).
+	 * beli, penjualan, distribusi unit = 0 — diisi/ dihitung ulang di Recalculate (pembelian & penjualan).
+	 * Field lain (gudang, spop, kode, dll.) = 0/kosong, tidak disalin dari bulan sumber.
+	 * Satu record sumber = satu INSERT ke bulan target.
 	 * Tampilan: SweetAlert animasi 5 record terakhir, lalu tabel lengkap di halaman.
 	 * AJAX batch: ?ajax=1&offset=0&limit=25
 	 */
@@ -1538,7 +1604,15 @@ class Persediaan extends CI_Controller
 			if ($limit < 1 || $limit > 100) {
 				$limit = 25;
 			}
-			echo json_encode($this->generate_persediaan_bulan_batch($ctx, $offset, $limit));
+			try {
+				$result = $this->generate_persediaan_bulan_batch($ctx, $offset, $limit);
+				echo json_encode($result);
+			} catch (Exception $e) {
+				echo json_encode(array(
+					'ok' => false,
+					'message' => 'Generate gagal: ' . $e->getMessage(),
+				));
+			}
 			return;
 		}
 
@@ -2416,16 +2490,11 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Hitung SA dari sisa stock bulan sumber (total_10 - penjualan - pecah - produksi).
+	 * Saldo awal generate = field total_10 bulan sumber (bukan dikurangi penjualan).
 	 */
 	private function generate_hitung_sa_dari_bulan_sumber($row)
 	{
-		$total_10_sumber = $this->parse_angka_persediaan($row->total_10);
-		$penjualan_sumber = $this->parse_angka_persediaan($row->penjualan);
-		$pecah_satuan_sumber = $this->parse_angka_persediaan($row->pecah_satuan);
-		$bahan_produksi_sumber = $this->parse_angka_persediaan($row->bahan_produksi);
-
-		return $total_10_sumber - $penjualan_sumber - $pecah_satuan_sumber - $bahan_produksi_sumber;
+		return $this->parse_angka_persediaan($row->total_10);
 	}
 
 	/**
@@ -2478,100 +2547,77 @@ class Persediaan extends CI_Controller
 
 	private function proses_satu_record_generate_persediaan($row, $ctx, &$next_id)
 	{
+		$this->load->helper('persediaan_display');
+
 		$tanggal_beli_target = $ctx['tanggal_beli_target'];
 		$tanggal_tampilan_target = $ctx['tanggal_tampilan_target'];
-		$tgl_po_awal = isset($ctx['tgl_po_awal']) ? $ctx['tgl_po_awal'] : $tanggal_beli_target;
-		$tgl_po_akhir = isset($ctx['tgl_po_akhir']) ? $ctx['tgl_po_akhir'] : $tanggal_beli_target;
 
 		$nama = trim((string) $row->namabarang);
 		$satuan = trim((string) $row->satuan);
 		$hpp = trim((string) $row->hpp);
-		$total_10_sumber = $this->parse_angka_persediaan($row->total_10);
-		$penjualan_sumber = $this->parse_angka_persediaan($row->penjualan);
-		$pecah_satuan_sumber = $this->parse_angka_persediaan($row->pecah_satuan);
-		$bahan_produksi_sumber = $this->parse_angka_persediaan($row->bahan_produksi);
-		// sa = total_10 - penjualan - pecah_satuan - bahan_produksi (bulan sumber)
-		$sa_baru = $total_10_sumber - $penjualan_sumber - $pecah_satuan_sumber - $bahan_produksi_sumber;
+		$uuid_barang = trim((string) $row->uuid_barang);
 
-		// beli dari pembelian bulan target (uuid_barang di pembelian tetap di-copy / INSERT)
-		$beli_angka = $this->generate_hitung_beli_dari_pembelian_for_row($row, $tgl_po_awal, $tgl_po_akhir);
-		$beli_tampil = $this->format_angka_persediaan($beli_angka);
-
-		$hpp_angka = $this->parse_angka_persediaan($row->hpp);
-
-		// total_10 = sa + beli (bulan generate); nilai_persediaan = total_10 * hpp
-		$total_10_baru = $sa_baru + $beli_angka;
+		// Saldo awal bulan baru = total_10 bulan sumber; total_10 target sama dengan sa (di-update saat recalculate).
+		$total_10_sumber = $this->generate_hitung_sa_dari_bulan_sumber($row);
+		$sa_baru = $total_10_sumber;
+		$beli_angka = 0;
+		$total_10_baru = $sa_baru;
+		$hpp_angka = $this->parse_angka_persediaan($hpp);
 		$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
 
 		$sa_tampil = $this->format_angka_persediaan($sa_baru);
+		$beli_tampil = $this->format_angka_persediaan($beli_angka);
 		$total_10_tampil = $this->format_angka_persediaan($total_10_baru);
 		$nilai_persediaan_tampil = $this->format_angka_persediaan($nilai_persediaan_baru);
-
-		$tuj_baru = $total_10_baru;
-		$tuj_tampil = $total_10_tampil;
+		$tuj_tampil = '0';
 
 		$id_baru = $next_id++;
 		$data_insert = array(
 			'id' => $id_baru,
-			'uuid_persediaan_lama' => $row->uuid_persediaan,
-			'uuid_spop' => $row->uuid_spop,
-			'uuid_gudang' => $row->uuid_gudang,
-			'nama_gudang' => $row->nama_gudang,
-			'uuid_barang' => $row->uuid_barang,
-			'kode_barang' => $row->kode_barang,
+			'uuid_persediaan_lama' => '',
+			'uuid_spop' => '',
+			'uuid_gudang' => '',
+			'nama_gudang' => '',
+			'uuid_barang' => $uuid_barang,
+			'kode_barang' => '',
 			'tanggal_beli' => $tanggal_beli_target,
 			'tanggal' => $tanggal_tampilan_target,
-			'kode' => $row->kode,
-			'kategori' => isset($row->kategori) ? $row->kategori : null,
-			'namabarang' => $row->namabarang,
-			'satuan' => $row->satuan,
-			'hpp' => $row->hpp,
+			'kode' => '',
+			'kategori' => '',
+			'namabarang' => $nama,
+			'satuan' => $satuan,
+			'hpp' => $hpp,
 			'sa' => $sa_tampil,
-			'spop' => $row->spop,
+			'spop' => '0',
 			'beli' => $beli_tampil,
 			'tuj' => $tuj_tampil,
-			// Setelah tuj sampai sebelum total_10: tidak copy bulan sumber, nilai 0
-			'tgl_keluar' => '0',
-			'sekret' => '0',
-			'cetak' => '0',
-			'grafikita' => '0',
-			'dinas_umum' => '0',
-			'atk_rsud' => '0',
-			'ppbmp_kbs' => '0',
-			'kbs' => '0',
-			'ppbmp' => '0',
-			'medis' => '0',
-			'siiplah_bosda' => '0',
-			'sembako' => '0',
-			'fc_gose' => '0',
-			'fc_manding' => '0',
-			'fc_psamya' => '0',
-			'kop_mp' => '0',
-			'pu_outsor' => '0',
-			'total_10' => $total_10_tampil,
-			'nilai_persediaan' => $nilai_persediaan_tampil,
-			'penjualan' => 0,
-			'pecah_satuan' => 0,
-			'bahan_produksi' => 0,
 		);
+		$data_insert = array_merge($data_insert, persediaan_generate_distribusi_nol_fields());
+		$data_insert['total_10'] = $total_10_tampil;
+		$data_insert['nilai_persediaan'] = $nilai_persediaan_tampil;
+		$data_insert['penjualan'] = '0';
+		$data_insert['pecah_satuan'] = '0';
+		$data_insert['bahan_produksi'] = '0';
 
 		$this->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
-		$this->db->insert('persediaan', $data_insert);
+		if (!$this->db->insert('persediaan', $data_insert)) {
+			$db_err = $this->db->error();
+			$pesan_db = isset($db_err['message']) ? trim((string) $db_err['message']) : 'Gagal insert persediaan.';
+			throw new Exception($pesan_db);
+		}
 
 		$new_row = $this->db->query(
-			"SELECT `id`,`uuid_persediaan`,`uuid_persediaan_lama` FROM `persediaan` WHERE `id`=? LIMIT 1",
+			"SELECT `id`,`uuid_persediaan` FROM `persediaan` WHERE `id`=? LIMIT 1",
 			array($id_baru)
 		)->row();
 
 		$keterangan = 'uuid baru: ' . ($new_row ? $new_row->uuid_persediaan : '')
-			. ' | sa=' . $sa_tampil . ' (sumber: total_10 ' . $total_10_sumber
-			. ' - penj ' . $penjualan_sumber . ' - pecah ' . $pecah_satuan_sumber
-			. ' - prod ' . $bahan_produksi_sumber . ')'
-			. ' | beli=' . $beli_tampil . ' (pembelian/jasa)'
-			. ' | total_10=' . $total_10_tampil . ' (sa+beli)'
-			. ' | nilai_persediaan=' . $nilai_persediaan_tampil . ' (total_10*hpp)'
-			. ' | tuj=' . $tuj_tampil
-			. ' | distribusi (tgl_keluar..fc_psamya)=0';
+			. ' | salin: uuid_barang, namabarang, satuan, hpp'
+			. ' | sa=' . $sa_tampil . ' & total_10=' . $total_10_tampil
+			. ' (dari total_10 sumber ' . $this->format_angka_persediaan($total_10_sumber) . ')'
+			. ' | beli=0, penjualan=0 (recalculate nanti)'
+			. ' | nilai_persediaan=' . $nilai_persediaan_tampil
+			. ' | field lain=0/kosong';
 
 		return array(
 			'aksi' => 'INSERT',
@@ -2648,9 +2694,9 @@ class Persediaan extends CI_Controller
 			return $this->Persediaan_model->get_by_year_month($bulan);
 		}
 
-		$tanggal_beli = date('Y-m-01', $ts);
+        $tanggal_beli = date('Y-m-01', $ts);
 		$rows = $this->db->query(
-			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `id` DESC",
+			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
 			array($tanggal_beli)
 		)->result();
 
@@ -2969,9 +3015,9 @@ class Persediaan extends CI_Controller
 		if ($bulan === '') {
 			$bulan = date('Y-m');
 		}
+		$this->load->helper(array('exportexcel', 'persediaan_display', 'pembelian_persediaan'));
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
-
-		$this->load->helper(array('exportexcel', 'persediaan_display'));
+		$Persediaan = persediaan_export_sort_rows_by_namabarang($Persediaan, 'namabarang');
 
 		$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
 		$waktu_klik = date('Y-m-d_H-i-s');
@@ -2980,6 +3026,7 @@ class Persediaan extends CI_Controller
 		$tablehead = 1;
 		$tablebody = 2;
 		$nourut = 1;
+		$total_total_10 = 0;
 		$total_nilai_persediaan = 0;
 
 		excel_prepare_download($namaFile);
@@ -2988,13 +3035,14 @@ class Persediaan extends CI_Controller
 		xlsWriteLabelBold14(0, 0, 'di cetak pada : ' . $waktu_cetak_tampil);
 
 		$kolomhead = 0;
-		foreach (persediaan_export_headers() as $header) {
+		foreach (persediaan_export_headers($this) as $header) {
 			xlsWriteLabel($tablehead, $kolomhead++, $header);
 		}
 
 		foreach ($Persediaan as $data) {
-			$total_nilai_persediaan += persediaan_parse_angka(isset($data->nilai_persediaan) ? $data->nilai_persediaan : 0);
-			$cells = persediaan_export_row_cells($data, $nourut, $bulan);
+			$total_total_10 += persediaan_parse_angka(persediaan_row_get($data, 'total_10'));
+			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+			$cells = persediaan_export_row_cells($data, $nourut, $bulan, $this);
 			$kolombody = 0;
 			foreach ($cells as $cell) {
 				xlsWriteLabel($tablebody, $kolombody++, $cell);
@@ -3003,17 +3051,15 @@ class Persediaan extends CI_Controller
 			$nourut++;
 		}
 
-		// Baris footer sama seperti datatable: Total Nilai Persediaan
+		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $this);
 		$kolomfoot = 0;
-		while ($kolomfoot < 25) {
-			xlsWriteLabel($tablebody, $kolomfoot++, '');
+		foreach ($footer_cells as $cell) {
+			$align = ($cell !== '' && $cell !== 'Total') ? 'right' : '';
+			if ($cell === 'Total') {
+				$align = 'right';
+			}
+			xlsWriteLabel($tablebody, $kolomfoot++, $cell, $align);
 		}
-		xlsWriteLabel($tablebody, $kolomfoot++, 'Total Nilai Persediaan', 'right');
-		xlsWriteLabel($tablebody, $kolomfoot++, number_format($total_nilai_persediaan, 0, ',', '.'), 'right');
-		xlsWriteLabel($tablebody, $kolomfoot++, '');
-		xlsWriteLabel($tablebody, $kolomfoot++, '');
-		xlsWriteLabel($tablebody, $kolomfoot++, '');
-		xlsWriteLabel($tablebody, $kolomfoot++, '');
 
 		xlsEOF();
 		exit();

@@ -158,12 +158,29 @@
 		}
 	}
 
+	function parseJsonResponse(r) {
+		return r.text().then(function (text) {
+			var trimmed = (text || '').trim();
+			if (!trimmed) {
+				throw new Error('Respon server kosong.');
+			}
+			if (trimmed.charAt(0) === '<') {
+				throw new Error('Server mengembalikan HTML, bukan JSON. Periksa error PHP atau sesi login.');
+			}
+			try {
+				return JSON.parse(trimmed);
+			} catch (e) {
+				throw new Error('Respon tidak valid JSON: ' + trimmed.substring(0, 180));
+			}
+		});
+	}
+
 	function runBatch() {
 		var url = ajaxUrl + (ajaxUrl.indexOf('?') >= 0 ? '&' : '?')
 			+ 'ajax=1&offset=' + offset + '&limit=' + batchLimit;
 
 		fetch(url, { credentials: 'same-origin' })
-			.then(function (r) { return r.json(); })
+			.then(function (r) { return parseJsonResponse(r); })
 			.then(function (data) {
 				if (!data.ok) {
 					Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Proses gagal' });
