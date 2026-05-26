@@ -23,23 +23,123 @@ class Tbl_penjualan extends CI_Controller
 
 
 
+	private function _parse_cari_between_dates($tgl_awal_input, $tgl_akhir_input)
+	{
+		if (date('Y', strtotime($tgl_awal_input)) < 2020) {
+			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+		} else {
+			$Get_date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal_input));
+		}
+
+		if (date('Y', strtotime($tgl_akhir_input)) < 2020) {
+			$Get_date_akhir = date('Y-m-d 23:59:59');
+		} else {
+			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir_input));
+		}
+
+		return array($Get_date_awal, $Get_date_akhir);
+	}
+
+	private function _set_filter_session_penjualan($date_awal, $date_akhir, $tgl_awal_display = null, $tgl_akhir_display = null)
+	{
+		$this->session->set_userdata('filter_tbl_penjualan_date_awal', $date_awal);
+		$this->session->set_userdata('filter_tbl_penjualan_date_akhir', $date_akhir);
+		if ($tgl_awal_display !== null && $tgl_akhir_display !== null) {
+			$this->session->set_userdata('filter_tbl_penjualan_tgl_awal_display', $tgl_awal_display);
+			$this->session->set_userdata('filter_tbl_penjualan_tgl_akhir_display', $tgl_akhir_display);
+		}
+	}
+
+	/**
+	 * @return array [sql_awal, sql_akhir, tampil_awal, tampil_akhir]
+	 */
+	private function _resolve_penjualan_filter_dates()
+	{
+		$tgl_awal_in = $this->input->get_post('tgl_awal', TRUE);
+		$tgl_akhir_in = $this->input->get_post('tgl_akhir', TRUE);
+		if (!empty($tgl_awal_in) && !empty($tgl_akhir_in)) {
+			list($awal, $akhir) = $this->_parse_cari_between_dates($tgl_awal_in, $tgl_akhir_in);
+			$this->_set_filter_session_penjualan($awal, $akhir, $tgl_awal_in, $tgl_akhir_in);
+			return array($awal, $akhir, $tgl_awal_in, $tgl_akhir_in);
+		}
+
+		$awal = $this->session->userdata('filter_tbl_penjualan_date_awal');
+		$akhir = $this->session->userdata('filter_tbl_penjualan_date_akhir');
+		$disp_awal = $this->session->userdata('filter_tbl_penjualan_tgl_awal_display');
+		$disp_akhir = $this->session->userdata('filter_tbl_penjualan_tgl_akhir_display');
+		if ($awal && $akhir) {
+			if (!$disp_awal) {
+				$disp_awal = date('j-n-Y', strtotime($awal));
+				$disp_akhir = date('j-n-Y', strtotime($akhir));
+			}
+			return array($awal, $akhir, $disp_awal, $disp_akhir);
+		}
+
+		$awal = date('Y-m-01 00:00:00');
+		$akhir = date('Y-m-t 23:59:59');
+		$disp_awal = date('j-n-Y', strtotime($awal));
+		$disp_akhir = date('j-n-Y', strtotime($akhir));
+		$this->_set_filter_session_penjualan($awal, $akhir, $disp_awal, $disp_akhir);
+		return array($awal, $akhir, $disp_awal, $disp_akhir);
+	}
+
+	private function _rekap_order_field($field_rekap)
+	{
+		if ($field_rekap === 'unit') {
+			return 'unit';
+		}
+		if ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen') {
+			return 'konsumen_nama';
+		}
+		if ($field_rekap === 'nama_barang') {
+			return 'nama_barang';
+		}
+		return 'unit';
+	}
+
+	private function _get_penjualan_between($date_awal, $date_akhir, $order_field = null)
+	{
+		$this->db->where('tgl_jual >=', $date_awal);
+		$this->db->where('tgl_jual <=', $date_akhir);
+		if ($order_field) {
+			$this->db->order_by($order_field, 'ASC');
+			$this->db->order_by('tgl_jual', 'ASC');
+			$this->db->order_by('nmrkirim', 'ASC');
+		} else {
+			$this->db->order_by('tgl_jual', 'ASC');
+			$this->db->order_by('nmrkirim', 'ASC');
+			$this->db->order_by('id', 'ASC');
+		}
+		return $this->db->get('tbl_penjualan')->result();
+	}
+
+	private function _penjualan_filter_query_string($tgl_awal_display, $tgl_akhir_display)
+	{
+		return '?tgl_awal=' . rawurlencode($tgl_awal_display) . '&tgl_akhir=' . rawurlencode($tgl_akhir_display);
+	}
+
 	public function index()
 	{
 
 
 
-		$Get_date_awal = date("Y-m-1 00:00:00");
+		$Get_date_awal = date("Y-m-01 00:00:00");
 		// print_r($Get_date_awal);
 		// print_r("<br/>");
 
 
-		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
+		$Get_date_akhir = date("Y-m-t 23:59:59");
 		// print_r($Get_date_akhir);
 		// print_r("<br/>");
 
 		// die;
 
-
+		$this->_set_filter_session_penjualan(
+			$Get_date_awal,
+			$Get_date_akhir,
+			date('j-n-Y', strtotime($Get_date_awal)),
+			date('j-n-Y', strtotime($Get_date_akhir))
+		);
 
 		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
 		// print_r($this->db->query($sql)->result());
@@ -73,22 +173,10 @@ class Tbl_penjualan extends CI_Controller
 
 	public function cari_between_date()
 	{
-
-		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-			// $Get_date_awal = date("Y-m-d 00:00:00");
-			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-		} else {
-			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
-		}
-
-		// $Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
-
-
-		if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-			$Get_date_akhir = date("Y-m-d 00:00:00");
-		} else {
-			$Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-		}
+		$tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
+		$tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
+		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_raw, $tgl_akhir_raw);
+		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw);
 
 		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
 
@@ -213,30 +301,19 @@ class Tbl_penjualan extends CI_Controller
 
 	public function RekapData($field_rekap = null)
 	{
-		// $field_rekap="konsumen_nama";
-		// print_r($field_rekap);
-
-
-
-		if ($field_rekap == "unit") {
-			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		} elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
-			$field_rekap = "konsumen_nama";
-			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		} elseif ($field_rekap == "nama_barang") {
-			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		} else {
-			$field_rekap = "unit";
-			$sql_penjualan = "SELECT * FROM tbl_penjualan ORDER BY tbl_penjualan.$field_rekap ASC, tbl_penjualan.tgl_jual, tbl_penjualan.nmrkirim;";
-		}
-
-
-
-		// $data_penjualan_per_barang = $this->db->query($sql_persediaan)->result();
+		list($Get_date_awal, $Get_date_akhir, $tgl_awal_param, $tgl_akhir_param) = $this->_resolve_penjualan_filter_dates();
+		$order_field = $this->_rekap_order_field($field_rekap);
+		$field_rekap = $order_field;
+		$filter_qs = $this->_penjualan_filter_query_string($tgl_awal_param, $tgl_akhir_param);
 
 		$data = array(
-			'Tbl_penjualan_data' => $this->db->query($sql_penjualan)->result(),
+			'Tbl_penjualan_data' => $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, $order_field),
 			'field_rekap' => $field_rekap,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+			'tgl_awal_param' => $tgl_awal_param,
+			'tgl_akhir_param' => $tgl_akhir_param,
+			'filter_query_string' => $filter_qs,
 		);
 
 		// print_r($data);
@@ -497,18 +574,16 @@ class Tbl_penjualan extends CI_Controller
 			return;
 		}
 
+		$Get_UUID_unit = trim((string) $this->input->post('uuid_unit', TRUE));
+		$Get_kode_unit = '';
+		$Get_nama_unit = '';
+
 		// unIT
-		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
+		$this->db->where('uuid_unit', $Get_UUID_unit);
 		$sys_unit_data = $this->db->get('sys_unit');
 
-		// print_r($sys_unit_data);
-		// print_r("<br/>");
-
 		if ($sys_unit_data->num_rows() > 0) {
-
 			$Get_unit_data = $sys_unit_data->row_array();
-
-			$Get_UUID_unit = $this->input->post('uuid_unit', TRUE);
 			$Get_kode_unit = $Get_unit_data['kode_unit'];
 			$Get_nama_unit = $Get_unit_data['nama_unit'];
 		}
@@ -541,7 +616,14 @@ class Tbl_penjualan extends CI_Controller
 			redirect(site_url('tbl_penjualan/create'));
 			return;
 		}
-		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post, $Get_UUID_unit);
+
+		try {
+			$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post, $Get_UUID_unit);
+		} catch (Exception $e) {
+			$this->session->set_flashdata('message', 'Gagal memuat persediaan: ' . $e->getMessage());
+			redirect(site_url('tbl_penjualan/create'));
+			return;
+		}
 
 		$data = array(
 			'button' => 'Simpan',
@@ -574,61 +656,68 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$this->output->set_content_type('application/json');
 
-		$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
-		if ($tgl_jual === '') {
-			echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
-			return;
-		}
+		try {
+			$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
+			if ($tgl_jual === '') {
+				echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
+				return;
+			}
 
-		penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
-		$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
-		$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
-		$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
-		if (empty($hasil_kolom_unit['ok'])) {
+			penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
+			$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
+			$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
+			$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
+			if (empty($hasil_kolom_unit['ok'])) {
+				echo json_encode(array(
+					'ok' => false,
+					'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
+				));
+				return;
+			}
+
+			$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual, $uuid_unit_ajax);
+			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
+			$view_data = array(
+				'Data_stock' => $Data_stock,
+				'tgl_jual' => $tgl_jual,
+				'tgl_jual_X' => $tgl_jual_X,
+				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
+				'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
+				'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
+				'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
+				'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
+				'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
+			);
+
+			$render = penjualan_render_modal_pilih_barang($this, $view_data);
+
+			$jumlah_tampil = 0;
+			if (preg_match_all('/<tr\b/i', $render['tbody'], $m)) {
+				$jumlah_tampil = count($m[0]);
+				if (strpos($render['tbody'], 'Tidak ada barang persediaan') !== false) {
+					$jumlah_tampil = 0;
+				}
+			}
+
+			echo json_encode(array(
+				'ok' => true,
+				'bulan_label' => $filter['bulan_label'],
+				'bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual),
+				'tgl_awal' => $filter['awal'],
+				'tgl_akhir' => $filter['akhir'],
+				'tbody' => $render['tbody'],
+				'modals' => $render['modals'],
+				'jumlah' => count($Data_stock),
+				'jumlah_tampil' => $jumlah_tampil,
+				'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
+				'kolom_unit_created' => !empty($hasil_kolom_unit['created']),
+			));
+		} catch (Exception $e) {
 			echo json_encode(array(
 				'ok' => false,
-				'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
+				'message' => 'Gagal memuat persediaan: ' . $e->getMessage(),
 			));
-			return;
 		}
-		$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual, $uuid_unit_ajax);
-
-		$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
-		$view_data = array(
-			'Data_stock' => $Data_stock,
-			'tgl_jual' => $tgl_jual,
-			'tgl_jual_X' => $tgl_jual_X,
-			'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
-			'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
-			'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
-			'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
-			'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
-			'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
-		);
-
-		$render = penjualan_render_modal_pilih_barang($this, $view_data);
-
-		$jumlah_tampil = 0;
-		if (preg_match_all('/<tr\b/i', $render['tbody'], $m)) {
-			$jumlah_tampil = count($m[0]);
-			if (strpos($render['tbody'], 'Tidak ada barang persediaan') !== false) {
-				$jumlah_tampil = 0;
-			}
-		}
-
-		echo json_encode(array(
-			'ok' => true,
-			'bulan_label' => $filter['bulan_label'],
-			'bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual),
-			'tgl_awal' => $filter['awal'],
-			'tgl_akhir' => $filter['akhir'],
-			'tbody' => $render['tbody'],
-			'modals' => $render['modals'],
-			'jumlah' => count($Data_stock),
-			'jumlah_tampil' => $jumlah_tampil,
-			'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
-			'kolom_unit_created' => !empty($hasil_kolom_unit['created']),
-		));
 	}
 
 	/**
@@ -1776,7 +1865,8 @@ class Tbl_penjualan extends CI_Controller
 		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-		foreach ($this->Tbl_penjualan_model->get_all_order_by_unit() as $data) {
+		list($Get_date_awal, $Get_date_akhir) = $this->_resolve_penjualan_filter_dates();
+		foreach ($this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, 'unit') as $data) {
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
@@ -1841,7 +1931,8 @@ class Tbl_penjualan extends CI_Controller
 		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-		foreach ($this->Tbl_penjualan_model->get_all_order_by_konsumen_nama() as $data) {
+		list($Get_date_awal, $Get_date_akhir) = $this->_resolve_penjualan_filter_dates();
+		foreach ($this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, 'konsumen_nama') as $data) {
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
@@ -1907,7 +1998,8 @@ class Tbl_penjualan extends CI_Controller
 		// xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
 		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
 
-		foreach ($this->Tbl_penjualan_model->get_all_order_by_barang() as $data) {
+		list($Get_date_awal, $Get_date_akhir) = $this->_resolve_penjualan_filter_dates();
+		foreach ($this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, 'nama_barang') as $data) {
 			$kolombody = 0;
 
 			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric

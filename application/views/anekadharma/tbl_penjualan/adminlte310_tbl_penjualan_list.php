@@ -81,7 +81,7 @@
 
                                 ?>
 
-                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                <form id="form-cari-penjualan" action="<?php echo $action_cari_between_date; ?>" method="post">
                                     <div class="row">
 
                                         <div class="col-md-4" text-align="right">
@@ -724,18 +724,16 @@
                     <div class="form-group">
 
 
+                        <p class="text-muted small mb-2" id="rekap-modal-periode-info">Periode mengikuti tanggal awal dan tanggal akhir di atas.</p>
                         <div class="row">
                             <div class="col-4">
-                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang'), 'Rekap Per Barang', 'class="btn btn-success" target="_blank"'); 
-                                ?>
+                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="nama_barang" target="_blank">Rekap Per Barang</a>
                             </div>
                             <div class="col-4">
-                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama'), 'Rekap Per Konsumen', 'class="btn btn-success" target="_blank"'); 
-                                ?>
+                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="konsumen_nama" target="_blank">Rekap Per Konsumen</a>
                             </div>
                             <div class="col-4">
-                            <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit'), 'Rekap Per Unit', 'class="btn btn-success" target="_blank"'); 
-                                ?>
+                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="unit" target="_blank">Rekap Per Unit</a>
                             </div>
 
                           
@@ -764,29 +762,111 @@
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
-<style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
-    }
-</style>
+<script>
+(function() {
+    var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 1100,
-            "scrollX": true
+    function getTanggalFilterPenjualan() {
+        var tglAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
+        var tglAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
+        return {
+            awal: tglAwal ? tglAwal.value : '',
+            akhir: tglAkhir ? tglAkhir.value : ''
+        };
+    }
+
+    window.buildRekapPenjualanUrl = function(field) {
+        var tgl = getTanggalFilterPenjualan();
+        var url = baseRekapUrl + field;
+        if (tgl.awal && tgl.akhir) {
+            url += '?tgl_awal=' + encodeURIComponent(tgl.awal) + '&tgl_akhir=' + encodeURIComponent(tgl.akhir);
+        }
+        return url;
+    };
+
+    function updateRekapModalLinks() {
+        var tgl = getTanggalFilterPenjualan();
+        var info = document.getElementById('rekap-modal-periode-info');
+        if (info) {
+            if (tgl.awal && tgl.akhir) {
+                info.textContent = 'Periode: ' + tgl.awal + ' s/d ' + tgl.akhir;
+            } else {
+                info.textContent = 'Pilih tanggal awal dan tanggal akhir terlebih dahulu.';
+            }
+        }
+        document.querySelectorAll('.btn-rekap-penjualan').forEach(function(btn) {
+            var field = btn.getAttribute('data-field');
+            if (!field) {
+                return;
+            }
+            if (tgl.awal && tgl.akhir) {
+                btn.href = buildRekapPenjualanUrl(field);
+                btn.classList.remove('disabled');
+                btn.setAttribute('aria-disabled', 'false');
+            } else {
+                btn.href = '#';
+                btn.classList.add('disabled');
+                btn.setAttribute('aria-disabled', 'true');
+            }
+        });
+    }
+
+    document.querySelectorAll('.btn-rekap-penjualan').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var tgl = getTanggalFilterPenjualan();
+            if (!tgl.awal || !tgl.akhir) {
+                e.preventDefault();
+                alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+                return;
+            }
+            var field = btn.getAttribute('data-field');
+            btn.href = buildRekapPenjualanUrl(field);
         });
     });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 1100,
-            "scrollX": true
+
+    if (window.jQuery) {
+        jQuery('#modal-xl-select-unit').on('show.bs.modal', updateRekapModalLinks);
+    }
+
+    var submitTimer = null;
+    function submitCariPenjualanOtomatis() {
+        clearTimeout(submitTimer);
+        submitTimer = setTimeout(function() {
+            var form = document.getElementById('form-cari-penjualan');
+            if (!form) {
+                return;
+            }
+            var tgl = getTanggalFilterPenjualan();
+            if (tgl.awal && tgl.akhir) {
+                form.submit();
+            }
+        }, 400);
+    }
+
+    function initAutoCariPenjualan() {
+        var form = document.getElementById('form-cari-penjualan');
+        if (!form) {
+            return;
+        }
+        form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
+            el.addEventListener('change', function() {
+                updateRekapModalLinks();
+                submitCariPenjualanOtomatis();
+            });
         });
-    });
+        if (window.jQuery) {
+            jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', function() {
+                updateRekapModalLinks();
+                submitCariPenjualanOtomatis();
+            });
+        }
+        updateRekapModalLinks();
+    }
+
+    if (document.readyState === 'complete') {
+        initAutoCariPenjualan();
+    } else {
+        window.addEventListener('load', initAutoCariPenjualan);
+    }
+})();
 </script>

@@ -19,7 +19,14 @@
 
     <section class="content">
 
-
+        <?php
+        $filter_qs = isset($filter_query_string) ? $filter_query_string : '';
+        if ($filter_qs === '' && !empty($tgl_awal_param) && !empty($tgl_akhir_param)) {
+            $filter_qs = '?tgl_awal=' . rawurlencode($tgl_awal_param) . '&tgl_akhir=' . rawurlencode($tgl_akhir_param);
+        }
+        $tgl_awal_tampil = isset($tgl_awal_param) ? $tgl_awal_param : '';
+        $tgl_akhir_tampil = isset($tgl_akhir_param) ? $tgl_akhir_param : '';
+        ?>
 
         <div class="box box-warning box-solid">
 
@@ -50,6 +57,10 @@
                                             }
                                             ?>
                                         </strong>
+                                        <?php if ($tgl_awal_tampil && $tgl_akhir_tampil) { ?>
+                                            <br><small class="text-muted">Periode: <?php echo htmlspecialchars($tgl_awal_tampil, ENT_QUOTES, 'UTF-8'); ?>
+                                                s/d <?php echo htmlspecialchars($tgl_akhir_tampil, ENT_QUOTES, 'UTF-8'); ?></small>
+                                        <?php } ?>
                                     </div>
                                 </div>
 
@@ -58,9 +69,9 @@
 
 
                             <div class="col-6">
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang'), 'Rekap Per Barang', 'class="btn btn-warning"'); ?>
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama'), 'Rekap Per Konsumen', 'class="btn btn-warning"'); ?>
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit'), 'Rekap Per Unit', 'class="btn btn-warning"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang') . $filter_qs, 'Rekap Per Barang', 'class="btn btn-warning"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama') . $filter_qs, 'Rekap Per Konsumen', 'class="btn btn-warning"'); ?>
+                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit') . $filter_qs, 'Rekap Per Unit', 'class="btn btn-warning"'); ?>
                             </div>
 
 
@@ -71,22 +82,22 @@
                                             if ($field_rekap == "unit") {
                                                 // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
                                                 // echo "UNIT";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit'), 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit') . $filter_qs, 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
                                             
                                             } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
                                                 // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
                                                 // echo "KONSUMEN";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_konsumen'), 'Cetak ke Excel [Konsumen]', 'class="btn btn-success"');
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_konsumen') . $filter_qs, 'Cetak ke Excel [Konsumen]', 'class="btn btn-success"');
 
                                             } elseif ($field_rekap == "nama_barang") {
                                                 // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->nama_barang;
                                                 // echo "NAMA BARANG";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_barang'), 'Cetak ke Excel [barang]', 'class="btn btn-success"');
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_barang') . $filter_qs, 'Cetak ke Excel [barang]', 'class="btn btn-success"');
 
                                             } else {
                                                 // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
                                                 // echo "UNIT";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit'), 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
+                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit') . $filter_qs, 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
 
                                             }
                                             ?>
@@ -573,30 +584,3 @@
         </div>
     </section>
 </div>
-
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
-<style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
-    }
-</style>
-
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-<script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
-</script>
