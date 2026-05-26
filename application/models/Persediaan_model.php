@@ -81,7 +81,7 @@ class Persediaan_model extends CI_Model
                 STR_TO_DATE(`tanggal`, '%Y-%m-%d'),
                 STR_TO_DATE(`tanggal`, '%d-%m-%Y')
             ) BETWEEN ? AND ?
-            ORDER BY `id` DESC";
+            ORDER BY `namabarang` ASC, `id` ASC";
         return $this->db->query($sql, array($start, $end))->result();
     }
 
