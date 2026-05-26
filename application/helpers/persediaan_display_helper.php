@@ -232,6 +232,43 @@ function persediaan_format_angka_tampil($value)
 	return number_format($value, 2, ',', '.');
 }
 
+/**
+ * Export Excel/PDF: angka 0 ditampilkan kosong (bukan "0") agar mudah dibaca.
+ */
+function persediaan_export_blank_if_zero($value)
+{
+	if ($value === null || $value === '') {
+		return '';
+	}
+
+	if (is_int($value) || is_float($value)) {
+		if ((float) $value == 0.0) {
+			return '';
+		}
+		return persediaan_format_angka_tampil($value);
+	}
+
+	$v = trim((string) $value);
+	if ($v === '' || $v === '-') {
+		return '';
+	}
+
+	if (!preg_match('/^[\d\s.,\-]+$/', $v)) {
+		return $v;
+	}
+
+	$angka = persediaan_parse_angka($v);
+	if ($angka == 0.0) {
+		return '';
+	}
+
+	if (is_numeric($v)) {
+		return persediaan_format_angka_tampil($angka);
+	}
+
+	return $v;
+}
+
 function persediaan_export_headers($CI = null)
 {
 	$headers = array(
@@ -274,22 +311,26 @@ function persediaan_export_row_cells($row, $no, $bulan_filter = '', $CI = null)
 		isset($row->kategori) ? $row->kategori : '',
 		isset($row->namabarang) ? $row->namabarang : '',
 		isset($row->satuan) ? $row->satuan : '',
-		isset($row->hpp) ? $row->hpp : '',
-		isset($row->sa) ? $row->sa : '',
-		isset($row->spop) ? $row->spop : '',
-		isset($row->beli) ? $row->beli : '',
-		isset($row->tuj) ? $row->tuj : '',
+		persediaan_export_blank_if_zero(isset($row->hpp) ? $row->hpp : ''),
+		persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		persediaan_export_blank_if_zero(isset($row->spop) ? $row->spop : ''),
+		persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		persediaan_export_blank_if_zero(isset($row->tuj) ? $row->tuj : ''),
 	);
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
-		$cells[] = persediaan_row_get($row, $field);
+		if ($field === 'tgl_keluar') {
+			$cells[] = persediaan_row_get($row, $field);
+		} else {
+			$cells[] = persediaan_export_blank_if_zero(persediaan_row_get($row, $field));
+		}
 	}
 
-	$cells[] = persediaan_format_angka_tampil($nilai_persediaan);
-	$cells[] = $penjualan;
-	$cells[] = $pecah_satuan;
-	$cells[] = $bahan_produksi;
-	$cells[] = is_numeric($sisa) && floor($sisa) == $sisa ? (int) $sisa : $sisa;
+	$cells[] = persediaan_export_blank_if_zero($nilai_persediaan);
+	$cells[] = persediaan_export_blank_if_zero($penjualan);
+	$cells[] = persediaan_export_blank_if_zero($pecah_satuan);
+	$cells[] = persediaan_export_blank_if_zero($bahan_produksi);
+	$cells[] = persediaan_export_blank_if_zero($sisa);
 
 	return $cells;
 }
@@ -423,8 +464,100 @@ function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan
 	if ($idx_total_10 > 0) {
 		$footer[$idx_total_10 - 1] = 'Total';
 	}
-	$footer[$idx_total_10] = persediaan_format_angka_tampil($total_total_10);
-	$footer[$idx_nilai] = persediaan_format_angka_tampil($total_nilai_persediaan);
+	$footer[$idx_total_10] = persediaan_export_blank_if_zero($total_total_10);
+	$footer[$idx_nilai] = persediaan_export_blank_if_zero($total_nilai_persediaan);
 
 	return $footer;
+}
+
+/**
+ * Jalankan callback rekap dengan db_debug=false agar error DB tidak jadi halaman HTML 500.
+ */
+function persediaan_rekap_run_silent_db($CI, $callback)
+{
+	$prev = $CI->db->db_debug;
+	$CI->db->db_debug = false;
+	try {
+		return call_user_func($callback);
+	} finally {
+		$CI->db->db_debug = $prev;
+	}
+}
+
+/**
+ * Pesan error database terakhir (CodeIgniter).
+ */
+function persediaan_rekap_db_error_message($CI, $label = '')
+{
+	$err = $CI->db->error();
+	$msg = isset($err['message']) ? trim((string) $err['message']) : '';
+	if ($msg === '') {
+		return $label !== '' ? $label : 'Kesalahan database';
+	}
+	return ($label !== '' ? $label . ': ' : '') . $msg;
+}
+
+/**
+ * Kolom tabel persediaan_rekap_view (cache per request).
+ */
+function persediaan_rekap_view_list_fields($CI)
+{
+	static $cache = null;
+	if ($cache !== null) {
+		return $cache;
+	}
+	if (!$CI->db->table_exists('persediaan_rekap_view')) {
+		$cache = array();
+		return $cache;
+	}
+	$cache = $CI->db->list_fields('persediaan_rekap_view');
+	return $cache;
+}
+
+/**
+ * Nama kolom UUID di persediaan_rekap_view (bervariasi antar server).
+ */
+function persediaan_rekap_view_uuid_column($CI)
+{
+	static $col = null;
+	if ($col !== null) {
+		return $col === false ? null : $col;
+	}
+	$col = false;
+	foreach (array('uuid_persediaan_rekap_view', 'uuid_rekap_view', 'uuid_rekap', 'uuid') as $candidate) {
+		if (in_array($candidate, persediaan_rekap_view_list_fields($CI), true)) {
+			$col = $candidate;
+			break;
+		}
+	}
+	return $col === false ? null : $col;
+}
+
+function persediaan_rekap_view_uses_auto_increment_id($CI)
+{
+	static $auto = null;
+	if ($auto !== null) {
+		return $auto;
+	}
+	$auto = false;
+	if (!in_array('id', persediaan_rekap_view_list_fields($CI), true)) {
+		return $auto;
+	}
+	$row = $CI->db->query("SHOW COLUMNS FROM `persediaan_rekap_view` LIKE 'id'")->row();
+	if ($row && stripos((string) $row->Extra, 'auto_increment') !== false) {
+		$auto = true;
+	}
+	return $auto;
+}
+
+/**
+ * Query DB rekap; lempar Exception jika gagal (untuk respons JSON, bukan HTML error).
+ */
+function persediaan_rekap_db_query($CI, $sql, $bind = null)
+{
+	$q = ($bind === null) ? $CI->db->query($sql) : $CI->db->query($sql, $bind);
+	if ($q === false) {
+		throw new Exception(persediaan_rekap_db_error_message($CI, 'Query rekap gagal'));
+	}
+	return $q;
 }

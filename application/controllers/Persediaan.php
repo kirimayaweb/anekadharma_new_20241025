@@ -967,19 +967,20 @@ class Persediaan extends CI_Controller
 	 */
 	public function ajax_rekap_bulan()
 	{
-		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
 		try {
-			$this->load->helper('persediaan_display');
 			$parsed = $this->parse_bulan_rekap_input();
 			if (!$parsed['ok']) {
-				echo json_encode($parsed);
+				persediaan_ajax_json_output($this, $parsed);
 				return;
 			}
 
 			$bulan = $parsed['bulan'];
-			$hasil_rekap = $this->get_persediaan_rekap_rows($bulan);
+			$hasil_rekap = persediaan_rekap_run_silent_db($this, function () use ($bulan) {
+				return $this->get_persediaan_rekap_rows($bulan);
+			});
 
-			echo json_encode(array(
+			persediaan_ajax_json_output($this, array(
 				'ok' => true,
 				'bulan' => $bulan,
 				'tanggal_rekap' => $this->get_tanggal_rekap_dari_bulan($bulan),
@@ -988,7 +989,9 @@ class Persediaan extends CI_Controller
 				'total_detail_tampil' => $hasil_rekap['total_detail_tampil'],
 			));
 		} catch (Exception $e) {
-			echo json_encode(array('ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
 		}
 	}
 
@@ -997,29 +1000,36 @@ class Persediaan extends CI_Controller
 	 */
 	public function ajax_rekap_sync_step()
 	{
-		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
+		$step_post = (int) $this->input->post('step', TRUE);
 		try {
-			$this->load->helper('persediaan_display');
 			$parsed = $this->parse_bulan_rekap_input();
 			if (!$parsed['ok']) {
-				echo json_encode($parsed);
+				persediaan_ajax_json_output($this, $parsed);
 				return;
 			}
 
-			$step = (int) $this->input->post('step', TRUE);
 			$total_steps = $this->get_rekap_total_steps();
-			if ($step < 1 || $step > $total_steps) {
-				echo json_encode(array('ok' => false, 'message' => 'Langkah rekalkulasi tidak valid.'));
+			if ($step_post < 1 || $step_post > $total_steps) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Langkah rekalkulasi tidak valid.'));
 				return;
 			}
 
-			$hasil = $this->sync_persediaan_rekap_step($parsed['bulan'], $step);
-			echo json_encode($hasil);
+			$hasil = persediaan_rekap_run_silent_db($this, function () use ($parsed, $step_post) {
+				return $this->sync_persediaan_rekap_step($parsed['bulan'], $step_post);
+			});
+			persediaan_ajax_json_output($this, $hasil);
 		} catch (Exception $e) {
-			echo json_encode(array(
+			persediaan_ajax_json_output($this, array(
 				'ok' => false,
 				'message' => 'Rekalkulasi rekap gagal: ' . $e->getMessage(),
-				'step' => (int) $this->input->post('step', TRUE),
+				'step' => $step_post,
+			));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Rekalkulasi rekap gagal: ' . $e->getMessage(),
+				'step' => $step_post,
 			));
 		}
 	}
@@ -1071,13 +1081,18 @@ class Persediaan extends CI_Controller
 	private function get_persediaan_rekap_rows($bulan)
 	{
 		$this->load->helper('persediaan_display');
+		if (!$this->db->table_exists('persediaan_rekap_view')) {
+			throw new Exception('Tabel persediaan_rekap_view tidak ditemukan di database.');
+		}
+
 		$tanggal_rekap = $this->get_tanggal_rekap_dari_bulan($bulan);
 		$urutan = $this->get_urutan_nama_rekap();
 		$order_sql = implode(',', array_map(function ($n) {
 			return $this->db->escape($n);
 		}, $urutan));
 
-		$list = $this->db->query(
+		$list = persediaan_rekap_db_query(
+			$this,
 			"SELECT `nama_rekap`, `nominal` FROM `persediaan_rekap_view`
 			WHERE `tanggal_rekap`=?
 			ORDER BY FIELD(`nama_rekap`, " . $order_sql . "), `id` ASC",
@@ -1124,7 +1139,8 @@ class Persediaan extends CI_Controller
 			return 0;
 		}
 
-		$rows = $this->db->query(
+		$rows = persediaan_rekap_db_query(
+			$this,
 			"SELECT `" . $db_col . "` AS val FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
@@ -1156,7 +1172,8 @@ class Persediaan extends CI_Controller
 			return 0;
 		}
 
-		$rows = $this->db->query(
+		$rows = persediaan_rekap_db_query(
+			$this,
 			"SELECT `" . $db_col . "` AS val, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
@@ -1174,7 +1191,11 @@ class Persediaan extends CI_Controller
 	private function sum_persediaan_nilai_kali_hpp($tanggal_beli)
 	{
 		$this->load->helper('persediaan_display');
-		$rows = $this->db->query(
+		if (!$this->db->field_exists('nilai_persediaan', 'persediaan')) {
+			return 0;
+		}
+		$rows = persediaan_rekap_db_query(
+			$this,
 			"SELECT `nilai_persediaan`, `hpp` FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
@@ -1192,7 +1213,11 @@ class Persediaan extends CI_Controller
 	private function sum_persediaan_nilai_persediaan($tanggal_beli)
 	{
 		$this->load->helper('persediaan_display');
-		$rows = $this->db->query(
+		if (!$this->db->field_exists('nilai_persediaan', 'persediaan')) {
+			return 0;
+		}
+		$rows = persediaan_rekap_db_query(
+			$this,
 			"SELECT `nilai_persediaan` FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
 		)->result();
@@ -1206,7 +1231,16 @@ class Persediaan extends CI_Controller
 
 	private function upsert_persediaan_rekap_baris($tanggal_rekap, $nama_rekap, $nominal, $keterangan, &$next_id)
 	{
-		$existing = $this->db->query(
+		$this->load->helper('persediaan_display');
+
+		if (!$this->db->table_exists('persediaan_rekap_view')) {
+			throw new Exception('Tabel persediaan_rekap_view tidak ditemukan di database server.');
+		}
+
+		$view_fields = persediaan_rekap_view_list_fields($this);
+
+		$existing = persediaan_rekap_db_query(
+			$this,
 			"SELECT `id` FROM `persediaan_rekap_view` WHERE `tanggal_rekap`=? AND `nama_rekap`=? LIMIT 1",
 			array($tanggal_rekap, $nama_rekap)
 		)->row();
@@ -1214,36 +1248,56 @@ class Persediaan extends CI_Controller
 		$nominal_tampil = $this->format_angka_persediaan($nominal);
 
 		if ($existing) {
-			$this->db->where('id', $existing->id);
-			$this->db->update('persediaan_rekap_view', array(
-				'nominal' => $nominal_tampil,
-				'keterangan' => $keterangan,
-			));
+			$upd = array('nominal' => $nominal_tampil);
+			if (in_array('keterangan', $view_fields, true)) {
+				$upd['keterangan'] = $keterangan;
+			}
+			$this->db->where('id', (int) $existing->id);
+			if (!$this->db->update('persediaan_rekap_view', $upd)) {
+				throw new Exception(persediaan_rekap_db_error_message($this, 'Update baris rekap "' . $nama_rekap . '" gagal'));
+			}
 			return 'update';
 		}
 
 		$data_insert = array(
-			'id' => $next_id++,
 			'tanggal_rekap' => $tanggal_rekap,
 			'nama_rekap' => $nama_rekap,
 			'nominal' => $nominal_tampil,
-			'keterangan' => $keterangan,
 		);
-		$this->db->set('uuid_persediaan_rekap_view', "replace(uuid(),'-','')", FALSE);
-		$this->db->insert('persediaan_rekap_view', $data_insert);
+		if (in_array('keterangan', $view_fields, true)) {
+			$data_insert['keterangan'] = $keterangan;
+		}
+
+		if (!persediaan_rekap_view_uses_auto_increment_id($this) && in_array('id', $view_fields, true)) {
+			$data_insert['id'] = $next_id++;
+		}
+
+		$uuid_col = persediaan_rekap_view_uuid_column($this);
+		if ($uuid_col) {
+			$this->db->set($uuid_col, "REPLACE(UUID(),'-','')", false);
+		}
+
+		if (!$this->db->insert('persediaan_rekap_view', $data_insert)) {
+			throw new Exception(persediaan_rekap_db_error_message($this, 'Insert baris rekap "' . $nama_rekap . '" gagal'));
+		}
 		return 'insert';
 	}
 
 	private function get_next_id_persediaan_rekap_view()
 	{
-		$row_max = $this->db->query("SELECT MAX(`id`) AS max_id FROM `persediaan_rekap_view`")->row();
+		$this->load->helper('persediaan_display');
+		if (persediaan_rekap_view_uses_auto_increment_id($this)) {
+			return 0;
+		}
+		$row_max = persediaan_rekap_db_query($this, "SELECT MAX(`id`) AS max_id FROM `persediaan_rekap_view`")->row();
 		return $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1;
 	}
 
 	private function get_nominal_rekap_baris($tanggal_rekap, $nama_rekap)
 	{
 		$this->load->helper('persediaan_display');
-		$row = $this->db->query(
+		$row = persediaan_rekap_db_query(
+			$this,
 			"SELECT `nominal` FROM `persediaan_rekap_view` WHERE `tanggal_rekap`=? AND `nama_rekap`=? LIMIT 1",
 			array($tanggal_rekap, $nama_rekap)
 		)->row();

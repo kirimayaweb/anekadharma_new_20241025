@@ -1247,7 +1247,8 @@ $(document).ready(function() {
         return fetch(urlRekapAjax, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function(r) { return parseJsonFetchResponse(r); })
         .then(function(res) {
@@ -1321,7 +1322,8 @@ $(document).ready(function() {
         return fetch(urlRekapSyncStep, {
             method: 'POST',
             body: formData,
-            credentials: 'same-origin'
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).then(function(r) { return parseJsonFetchResponse(r); });
     }
 
