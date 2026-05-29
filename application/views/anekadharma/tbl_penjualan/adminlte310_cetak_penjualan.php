@@ -333,8 +333,8 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 				<div class="cetak-kepada-yth-baris">
 					<strong>KEPADA YTH. </strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_kepada_yth; ?></span>
 				</div>
-				<strong>PERUMDAM TIRTA<br>
-				PROJOTAMANSARI</strong>
+				<!-- <strong>PERUMDAM TIRTA<br> -->
+				<!-- PROJOTAMANSARI</strong> -->
 			</th>
 
 		</tr>
