@@ -189,6 +189,45 @@ class Sys_konsumen extends CI_Controller
         }
     }
 
+    public function update_action_ajax()
+    {
+        header('Content-Type: application/json');
+
+        $id = $this->input->post('id', TRUE);
+        $nama_konsumen = trim($this->input->post('nama_konsumen', TRUE));
+
+        if (empty($id)) {
+            echo json_encode(array('success' => false, 'message' => 'Data konsumen tidak valid.'));
+            return;
+        }
+
+        if ($nama_konsumen === '') {
+            echo json_encode(array('success' => false, 'message' => 'Nama konsumen wajib diisi.'));
+            return;
+        }
+
+        $row = $this->Sys_konsumen_model->get_by_id($id);
+        if (!$row) {
+            echo json_encode(array('success' => false, 'message' => 'Data konsumen tidak ditemukan.'));
+            return;
+        }
+
+        $data = array(
+            'kode_konsumen' => $this->input->post('kode_konsumen', TRUE),
+            'nama_konsumen' => $nama_konsumen,
+            'nmr_kontak_konsumen' => $this->input->post('nmr_kontak_konsumen', TRUE),
+            'alamat_konsumen' => $this->input->post('alamat_konsumen', TRUE),
+            'keterangan' => $this->input->post('keterangan', TRUE),
+        );
+
+        $this->Sys_konsumen_model->update($id, $data);
+
+        echo json_encode(array(
+            'success' => true,
+            'message' => 'Data konsumen berhasil diperbarui.',
+        ));
+    }
+
     public function delete($id)
     {
         $row = $this->Sys_konsumen_model->get_by_id($id);
