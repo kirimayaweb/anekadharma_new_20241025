@@ -40,7 +40,7 @@ class Tbl_penjualan extends CI_Controller
 		return array($Get_date_awal, $Get_date_akhir);
 	}
 
-	private function _set_filter_session_penjualan($date_awal, $date_akhir, $tgl_awal_display = null, $tgl_akhir_display = null)
+	private function _set_filter_session_penjualan($date_awal, $date_akhir, $tgl_awal_display = null, $tgl_akhir_display = null, $rows = null)
 	{
 		$this->session->set_userdata('filter_tbl_penjualan_date_awal', $date_awal);
 		$this->session->set_userdata('filter_tbl_penjualan_date_akhir', $date_akhir);
@@ -48,6 +48,78 @@ class Tbl_penjualan extends CI_Controller
 			$this->session->set_userdata('filter_tbl_penjualan_tgl_awal_display', $tgl_awal_display);
 			$this->session->set_userdata('filter_tbl_penjualan_tgl_akhir_display', $tgl_akhir_display);
 		}
+		if ($rows !== null) {
+			$this->session->set_userdata('filter_tbl_penjualan_ids', $this->_collect_row_ids($rows));
+		}
+	}
+
+	private function _collect_row_ids($rows)
+	{
+		$ids = array();
+		foreach ($rows as $row) {
+			if (isset($row->id)) {
+				$ids[] = (int) $row->id;
+			}
+		}
+		return $ids;
+	}
+
+	private function _get_penjualan_rows_for_excel_by_ids(array $ids, $preserve_request_order = false)
+	{
+		$ids = array_values(array_filter(array_map('intval', $ids)));
+		if (empty($ids)) {
+			return array();
+		}
+
+		$this->db->from('tbl_penjualan');
+		$this->db->where_in('id', $ids);
+		$rows = $this->db->get()->result();
+
+		if (!$preserve_request_order) {
+			usort($rows, function ($a, $b) {
+				$c = strcmp((string) $a->tgl_jual, (string) $b->tgl_jual);
+				if ($c !== 0) {
+					return $c;
+				}
+				$c = strcmp((string) $a->nmrkirim, (string) $b->nmrkirim);
+				if ($c !== 0) {
+					return $c;
+				}
+				return (int) $a->id - (int) $b->id;
+			});
+			return $rows;
+		}
+
+		$map = array();
+		foreach ($rows as $row) {
+			$map[(int) $row->id] = $row;
+		}
+
+		$ordered = array();
+		foreach ($ids as $id) {
+			if (isset($map[$id])) {
+				$ordered[] = $map[$id];
+			}
+		}
+
+		return $ordered;
+	}
+
+	private function _penjualan_hitung_kolom_tampilan($data)
+	{
+		$jumlah_total = (float) $data->jumlah * (float) $data->harga_satuan;
+		$umpphpsl22 = ($jumlah_total * 1.351351) / 100;
+		$piutang = $jumlah_total - (($jumlah_total * 11.261261) / 100);
+		$penjualandpp = ($jumlah_total * 90.090090) / 100;
+		$utangppn = ($jumlah_total * 9.909910) / 100;
+
+		return array(
+			'jumlah_total' => $jumlah_total,
+			'umpphpsl22' => $umpphpsl22,
+			'piutang' => $piutang,
+			'penjualandpp' => $penjualandpp,
+			'utangppn' => $utangppn,
+		);
 	}
 
 	/**
@@ -134,30 +206,19 @@ class Tbl_penjualan extends CI_Controller
 
 		// die;
 
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
+		$Tbl_penjualan_data = $this->db->query($sql)->result();
+
 		$this->_set_filter_session_penjualan(
 			$Get_date_awal,
 			$Get_date_akhir,
 			date('j-n-Y', strtotime($Get_date_awal)),
-			date('j-n-Y', strtotime($Get_date_akhir))
+			date('j-n-Y', strtotime($Get_date_akhir)),
+			$Tbl_penjualan_data
 		);
 
-		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
-		// print_r($this->db->query($sql)->result());
-		// die;
-
-		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-		// $Tbl_pembelian = $this->db->query($sql)->result();
-
-
-		// $Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
-		// $start = 0;
-		// print_r($Tbl_penjualan);
-		// print_r("<br/>");
-		// print_r("<br/>");
-
 		$data = array(
-			// 'Tbl_penjualan_data' => $Tbl_penjualan,
-			'Tbl_penjualan_data' => $this->db->query($sql)->result(),
+			'Tbl_penjualan_data' => $Tbl_penjualan_data,
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
@@ -176,13 +237,13 @@ class Tbl_penjualan extends CI_Controller
 		$tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
 		$tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
 		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_raw, $tgl_akhir_raw);
-		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw);
 
 		$sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_jual`,`nmrkirim`,`id`";
+		$Tbl_penjualan_data = $this->db->query($sql)->result();
+		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, $Tbl_penjualan_data);
 
 		$data = array(
-			// 'Tbl_penjualan_data' => $Tbl_penjualan,
-			'Tbl_penjualan_data' => $this->db->query($sql)->result(),
+			'Tbl_penjualan_data' => $Tbl_penjualan_data,
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
@@ -305,9 +366,11 @@ class Tbl_penjualan extends CI_Controller
 		$order_field = $this->_rekap_order_field($field_rekap);
 		$field_rekap = $order_field;
 		$filter_qs = $this->_penjualan_filter_query_string($tgl_awal_param, $tgl_akhir_param);
+		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, $order_field);
+		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_param, $tgl_akhir_param, $Tbl_penjualan_data);
 
 		$data = array(
-			'Tbl_penjualan_data' => $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, $order_field),
+			'Tbl_penjualan_data' => $Tbl_penjualan_data,
 			'field_rekap' => $field_rekap,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
@@ -316,10 +379,100 @@ class Tbl_penjualan extends CI_Controller
 			'filter_query_string' => $filter_qs,
 		);
 
-		// print_r($data);
-		// die;
-
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_data', $data);
+	}
+
+	/**
+	 * Export rekap penjualan (.xlsx) sesuai baris yang tampil di DataTable (sort + filter).
+	 */
+	public function excel_rekap_data()
+	{
+		$this->load->helper('exportexcel');
+
+		$field_rekap = $this->input->get_post('field_rekap', TRUE);
+		$from_datatable = ($this->input->get_post('from_datatable', TRUE) === '1');
+		if (!$from_datatable) {
+			show_error('Export rekap harus dari tampilan DataTable.', 400);
+			return;
+		}
+
+		$rows_json = $this->input->post('export_rows', FALSE);
+		if ($rows_json === null || $rows_json === '') {
+			show_error('Tidak ada data rekap untuk diekspor sesuai tampilan DataTable.', 400);
+			return;
+		}
+
+		$rows = json_decode($rows_json, true);
+		if (!is_array($rows)) {
+			show_error('Format data export rekap tidak valid.', 400);
+			return;
+		}
+
+		$headers_json = $this->input->post('export_headers', FALSE);
+		$headers = array();
+		if ($headers_json !== null && $headers_json !== '') {
+			$decoded_headers = json_decode($headers_json, true);
+			if (is_array($decoded_headers)) {
+				$headers = $decoded_headers;
+			}
+		}
+
+		$field_label = preg_replace('/[^a-z0-9_]+/i', '_', (string) $field_rekap);
+		if ($field_label === '') {
+			$field_label = 'rekap';
+		}
+		$namaFile = 'Rekap_penjualan_' . $field_label . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$tablehead = 0;
+		$tablebody = 1;
+
+		if (!empty($headers)) {
+			$kolomhead = 0;
+			foreach ($headers as $header) {
+				xlsWriteLabel($tablehead, $kolomhead++, (string) $header);
+			}
+		}
+
+		foreach ($rows as $rowCells) {
+			if (!is_array($rowCells)) {
+				continue;
+			}
+			$kolombody = 0;
+			foreach ($rowCells as $cell) {
+				$val = trim((string) $cell);
+				if ($val !== '' && $this->_excel_cell_looks_numeric($val)) {
+					xlsWriteNumber($tablebody, $kolombody++, $this->_excel_parse_numeric($val));
+				} else {
+					xlsWriteLabel($tablebody, $kolombody++, $val);
+				}
+			}
+			$tablebody++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _excel_cell_looks_numeric($value)
+	{
+		$normalized = str_replace(array(' ', '.'), '', (string) $value);
+		$normalized = str_replace(',', '.', $normalized);
+		return is_numeric($normalized);
+	}
+
+	private function _excel_parse_numeric($value)
+	{
+		$normalized = str_replace(' ', '', (string) $value);
+		if (strpos($normalized, ',') !== false && strpos($normalized, '.') !== false) {
+			$normalized = str_replace('.', '', $normalized);
+			$normalized = str_replace(',', '.', $normalized);
+		} elseif (strpos($normalized, ',') !== false) {
+			$normalized = str_replace(',', '.', $normalized);
+		}
+		return (float) $normalized;
 	}
 
 	public function bayar()
@@ -1755,67 +1908,90 @@ class Tbl_penjualan extends CI_Controller
 
 	public function excel()
 	{
-		$tgl_jual_Now = date("Y-m-d H:i:sa");
 		$this->load->helper('exportexcel');
-		$namaFile = "tbl_penjualan_" . $tgl_jual_Now . ".xls";
-		$judul = "Data Penjualan";
+
+		$source = $this->input->get('source', TRUE);
+		if ($source !== 'tbl_penjualan') {
+			show_error('Export tidak valid untuk modul penjualan.', 403);
+			return;
+		}
+
+		$from_datatable = ($this->input->get('from_datatable', TRUE) === '1');
+		$Tbl_penjualan_rows = array();
+		$ids_param = $this->input->get('ids', TRUE);
+
+		if ($ids_param !== null && $ids_param !== '') {
+			$ids = array_values(array_filter(array_map('intval', explode(',', $ids_param))));
+			if (!empty($ids)) {
+				$Tbl_penjualan_rows = $this->_get_penjualan_rows_for_excel_by_ids($ids, $from_datatable);
+			}
+		}
+
+		if ($from_datatable) {
+			if (empty($Tbl_penjualan_rows)) {
+				show_error('Tidak ada data penjualan untuk diekspor sesuai tampilan DataTable.', 400);
+				return;
+			}
+		} else {
+			if (empty($Tbl_penjualan_rows)) {
+				$session_ids = $this->session->userdata('filter_tbl_penjualan_ids');
+				if (is_array($session_ids) && count($session_ids) > 0) {
+					$Tbl_penjualan_rows = $this->_get_penjualan_rows_for_excel_by_ids($session_ids);
+				}
+			}
+
+			if (empty($Tbl_penjualan_rows)) {
+				list($Get_date_awal, $Get_date_akhir) = $this->_resolve_penjualan_filter_dates();
+				$Tbl_penjualan_rows = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
+			}
+		}
+
+		$namaFile = 'Data_penjualan_' . date('Y-m-d_H-i-s') . '.xlsx';
 		$tablehead = 0;
 		$tablebody = 1;
 		$nourut = 1;
-		//penulisan header
-		header("Pragma: public");
-		header("Expires: 0");
-		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-		header("Content-Type: application/force-download");
-		header("Content-Type: application/octet-stream");
-		header("Content-Type: application/download");
-		header("Content-Disposition: attachment;filename=" . $namaFile . "");
-		header("Content-Transfer-Encoding: binary ");
 
+		excel_prepare_download($namaFile);
 		xlsBOF();
 
 		$kolomhead = 0;
-		xlsWriteLabel($tablehead, $kolomhead++, "No");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
-		// xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
-		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
-		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Unit");
-		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
-		xlsWriteLabel($tablehead, $kolomhead++, "Umpphpsl22");
-		xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
-		xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
-		// xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
+		xlsWriteLabel($tablehead, $kolomhead++, 'No');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Tgl Jual');
+		xlsWriteLabel($tablehead, $kolomhead++, 'nmrkirim');
+		xlsWriteLabel($tablehead, $kolomhead++, 'nmrpesan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Konsumen');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kode');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Nama Barang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Unit');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Harga Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Jumlah');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Total harga');
+		xlsWriteLabel($tablehead, $kolomhead++, 'UM PPH PSL 22');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Piutang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Penjualan DPP');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Utang PPN');
 
-		foreach ($this->Tbl_penjualan_model->get_all() as $data) {
+		foreach ($Tbl_penjualan_rows as $data) {
+			$calc = $this->_penjualan_hitung_kolom_tampilan($data);
 			$kolombody = 0;
 
-			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
 			xlsWriteNumber($tablebody, $kolombody++, $nourut);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
+			xlsWriteLabel($tablebody, $kolombody++, date('d M Y', strtotime($data->tgl_jual)));
 			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
-			// xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
+			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
 			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
 			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
 			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
-			xlsWriteNumber($tablebody, $kolombody++, $data->unit);
+			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
 			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
-
-			// xlsWriteNumber($tablebody, $kolombody++, $data->umpphpsl22);
-			// xlsWriteNumber($tablebody, $kolombody++, $data->piutang);
-			// xlsWriteNumber($tablebody, $kolombody++, $data->penjualandpp);
-			// xlsWriteNumber($tablebody, $kolombody++, $data->utangppn);
-
-			// xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
+			xlsWriteNumber($tablebody, $kolombody++, $calc['jumlah_total']);
+			xlsWriteNumber($tablebody, $kolombody++, $calc['umpphpsl22']);
+			xlsWriteNumber($tablebody, $kolombody++, $calc['piutang']);
+			xlsWriteNumber($tablebody, $kolombody++, $calc['penjualandpp']);
+			xlsWriteNumber($tablebody, $kolombody++, $calc['utangppn']);
 
 			$tablebody++;
 			$nourut++;

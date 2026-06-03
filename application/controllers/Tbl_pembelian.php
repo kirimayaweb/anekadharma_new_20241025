@@ -218,20 +218,45 @@ class Tbl_pembelian extends CI_Controller
 		return array($Get_date_awal, $Get_date_akhir);
 	}
 
-	private function _get_pembelian_rows_for_excel_by_ids(array $ids)
+	private function _get_pembelian_rows_for_excel_by_ids(array $ids, $preserve_request_order = false)
 	{
-		$ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+		$ids = array_values(array_filter(array_map('intval', $ids)));
 		if (empty($ids)) {
 			return array();
 		}
 
 		$this->db->from('tbl_pembelian');
 		$this->db->where_in('id', $ids);
-		$this->db->order_by('tgl_po', 'ASC');
-		$this->db->order_by('spop', 'ASC');
-		$this->db->order_by('id', 'ASC');
+		$rows = $this->db->get()->result();
 
-		return $this->db->get()->result();
+		if (!$preserve_request_order) {
+			usort($rows, function ($a, $b) {
+				$c = strcmp((string) $a->tgl_po, (string) $b->tgl_po);
+				if ($c !== 0) {
+					return $c;
+				}
+				$c = strcmp((string) $a->spop, (string) $b->spop);
+				if ($c !== 0) {
+					return $c;
+				}
+				return (int) $a->id - (int) $b->id;
+			});
+			return $rows;
+		}
+
+		$map = array();
+		foreach ($rows as $row) {
+			$map[(int) $row->id] = $row;
+		}
+
+		$ordered = array();
+		foreach ($ids as $id) {
+			if (isset($map[$id])) {
+				$ordered[] = $map[$id];
+			}
+		}
+
+		return $ordered;
 	}
 
 	private function _get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir)
@@ -3940,31 +3965,40 @@ class Tbl_pembelian extends CI_Controller
 			return;
 		}
 
+		$from_datatable = ($this->input->get('from_datatable', TRUE) === '1');
 		$Tbl_pembelian_rows = array();
 		$ids_param = $this->input->get('ids', TRUE);
-		if (!empty($ids_param)) {
-			$ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $ids_param)))));
+
+		if ($ids_param !== null && $ids_param !== '') {
+			$ids = array_values(array_filter(array_map('intval', explode(',', $ids_param))));
 			if (!empty($ids)) {
-				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($ids);
+				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($ids, $from_datatable);
 			}
 		}
 
-		if (empty($Tbl_pembelian_rows)) {
-			$session_ids = $this->session->userdata('filter_tbl_pembelian_ids');
-			if (is_array($session_ids) && count($session_ids) > 0) {
-				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($session_ids);
+		if ($from_datatable) {
+			if (empty($Tbl_pembelian_rows)) {
+				show_error('Tidak ada data pembelian untuk diekspor sesuai tampilan DataTable.', 400);
+				return;
 			}
-		}
-
-		$Get_date_awal = $this->session->userdata('filter_tbl_pembelian_date_awal');
-		$Get_date_akhir = $this->session->userdata('filter_tbl_pembelian_date_akhir');
-
-		if (empty($Tbl_pembelian_rows)) {
-			if (empty($Get_date_awal) || empty($Get_date_akhir)) {
-				$Get_date_awal = date('Y-m-1 00:00:00');
-				$Get_date_akhir = date('Y-m-t 23:59:59');
+		} else {
+			if (empty($Tbl_pembelian_rows)) {
+				$session_ids = $this->session->userdata('filter_tbl_pembelian_ids');
+				if (is_array($session_ids) && count($session_ids) > 0) {
+					$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel_by_ids($session_ids);
+				}
 			}
-			$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir);
+
+			$Get_date_awal = $this->session->userdata('filter_tbl_pembelian_date_awal');
+			$Get_date_akhir = $this->session->userdata('filter_tbl_pembelian_date_akhir');
+
+			if (empty($Tbl_pembelian_rows)) {
+				if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+					$Get_date_awal = date('Y-m-1 00:00:00');
+					$Get_date_akhir = date('Y-m-t 23:59:59');
+				}
+				$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir);
+			}
 		}
 
 		$namaFile = 'Data_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';

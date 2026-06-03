@@ -231,10 +231,13 @@ class Sys_nama_barang extends CI_Controller
             'show_referensi_modal' => $show_referensi_modal,
             'bulan_label' => $tgl['bulan_label'],
             'data_in_month' => $di_bulan ? array(
+                'id' => isset($di_bulan->id) ? (int) $di_bulan->id : 0,
                 'uuid_barang' => $di_bulan->uuid_barang,
+                'kode_barang' => isset($di_bulan->kode_barang) ? $di_bulan->kode_barang : '',
                 'nama_barang' => $di_bulan->nama_barang,
                 'satuan' => $di_bulan->satuan,
                 'harga_satuan' => $di_bulan->harga_satuan,
+                'tanggal_beli' => isset($di_bulan->tanggal_beli) ? $di_bulan->tanggal_beli : '',
             ) : null,
             'data' => $rows_tampil,
             'total_referensi' => count($rows_tampil),
@@ -393,22 +396,8 @@ class Sys_nama_barang extends CI_Controller
             return;
         }
 
-        $existing = pembelian_find_barang_by_nama($this, $nama_barang, $tanggal_po);
-
-        if ($existing) {
-            echo json_encode(array(
-                'success' => false,
-                'duplicate' => true,
-                'message' => 'Nama barang sudah ada di persediaan bulan terpilih. Silakan pilih dari combobox.',
-                'data' => $existing
-            ));
-            return;
-        }
-
-        $uuid_barang_referensi = trim((string) $this->input->post('uuid_barang_referensi', TRUE));
-        $uuid_barang_baru = ($uuid_barang_referensi !== '')
-            ? $uuid_barang_referensi
-            : str_replace('-', '', $this->db->query("SELECT REPLACE(UUID(),'-','') AS u")->row()->u);
+        // Nama boleh sama di bulan yang sama (satuan/HPP bisa berbeda) → selalu insert baris persediaan baru + uuid baru
+        $uuid_barang_baru = str_replace('-', '', $this->db->query("SELECT REPLACE(UUID(),'-','') AS u")->row()->u);
         $hpp_raw = trim((string) $this->input->post('harga_satuan', TRUE));
         $hpp_baru = preg_replace('/[^0-9]/', '', str_replace('.', '', $hpp_raw));
         if ($hpp_baru === '') {

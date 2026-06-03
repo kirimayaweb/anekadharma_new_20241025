@@ -169,7 +169,7 @@
                                     if (($compare_uuid_spop <> $list_data->uuid_spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
-                                        <tr>
+                                        <tr class="row-pembelian-subtotal">
                                             <td><?php
                                                 echo ++$start;
                                                 // echo "-compare : ";
@@ -252,7 +252,7 @@
                                     <?php
                                     }
                                     ?>
-                                    <tr>
+                                    <tr class="row-pembelian-data" data-pembelian-id="<?php echo (int) $list_data->id; ?>">
                                         <?php
                                         if ($compare_uuid_spop == $list_data->uuid_spop) {
                                         ?>
@@ -410,7 +410,7 @@
                                 ?>
 
                                 <!-- TOTAL SPOP AKHIR -->
-                                <tr>
+                                <tr class="row-pembelian-subtotal">
                                     <td><?php echo ++$start ?></td>
                                     <td>
                                         <?php
@@ -559,22 +559,32 @@
 </style>
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+    /**
+     * Ambil id tbl_pembelian dari baris yang tampil di DataTable (urutan sort + filter search sama seperti layar).
+     */
+    function kumpulkanIdPembelianDariDataTable() {
+        var ids = [];
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return ids;
+        }
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+        table.rows({ search: 'applied', order: 'applied' }).every(function() {
+            var node = this.node();
+            if (!node) {
+                return;
+            }
+            var rawId = node.getAttribute('data-pembelian-id');
+            if (!rawId) {
+                return;
+            }
+            var id = parseInt(rawId, 10);
+            if (!isNaN(id) && id > 0) {
+                ids.push(id);
+            }
         });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
+        return ids;
+    }
 
     function cetakExcelPembelian() {
         var tglAwal = document.querySelector('input[name="tgl_awal"]').value;
@@ -583,11 +593,32 @@
             alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
             return;
         }
+
+        var ids = kumpulkanIdPembelianDariDataTable();
+        if (!ids.length) {
+            var idsEl = document.getElementById('excel-export-ids');
+            if (idsEl && idsEl.value) {
+                ids = idsEl.value.split(',').map(function(v) {
+                    return parseInt(v, 10);
+                }).filter(function(v) {
+                    return !isNaN(v) && v > 0;
+                });
+            }
+        }
+
+        if (!ids.length) {
+            alert('Tidak ada data pembelian untuk diekspor. Periksa filter/search DataTable atau rentang tanggal.');
+            return;
+        }
+
         var sourceEl = document.getElementById('excel-export-source');
-        var idsEl = document.getElementById('excel-export-ids');
         var source = sourceEl ? sourceEl.value : 'tbl_pembelian';
-        var ids = idsEl ? idsEl.value : '';
-        var url = '<?php echo site_url('Tbl_pembelian/excel'); ?>?source=' + encodeURIComponent(source) + '&ids=' + encodeURIComponent(ids) + '&tgl_awal=' + encodeURIComponent(tglAwal) + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
+        var url = '<?php echo site_url('Tbl_pembelian/excel'); ?>'
+            + '?source=' + encodeURIComponent(source)
+            + '&from_datatable=1'
+            + '&ids=' + encodeURIComponent(ids.join(','))
+            + '&tgl_awal=' + encodeURIComponent(tglAwal)
+            + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
         window.location.href = url;
     }
 

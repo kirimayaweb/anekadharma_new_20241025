@@ -26,6 +26,28 @@
         }
         $tgl_awal_tampil = isset($tgl_awal_param) ? $tgl_awal_param : '';
         $tgl_akhir_tampil = isset($tgl_akhir_param) ? $tgl_akhir_param : '';
+
+        if (!empty($date_awal)) {
+            if (date('Y', strtotime($date_awal)) < 2020) {
+                $Get_date_awal = date('d-m-Y');
+            } else {
+                $Get_date_awal = date('d-m-Y', strtotime($date_awal));
+            }
+        } else {
+            $Get_date_awal = $tgl_awal_tampil;
+        }
+
+        if (!empty($date_akhir)) {
+            if (date('Y', strtotime($date_akhir)) < 2020) {
+                $Get_date_akhir = date('d-m-Y');
+            } else {
+                $Get_date_akhir = date('d-m-Y', strtotime($date_akhir));
+            }
+        } else {
+            $Get_date_akhir = $tgl_akhir_tampil;
+        }
+
+        $action_cari_rekap = site_url('Tbl_penjualan/RekapData/' . $field_rekap);
         ?>
 
         <div class="box box-warning box-solid">
@@ -33,82 +55,100 @@
             <div class="col-md-12">
                 <div class="card card-primary">
                     <div class="card-header">
-                        <div class="row">
-                        </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="row">
-                                    <div class="col-12" text-align="center">
-                                        <strong>
-                                            REKAP DATA
-                                            <?php
-                                            if ($field_rekap == "unit") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
-                                                echo "UNIT";
-                                            } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
-                                                echo "KONSUMEN";
-                                            } elseif ($field_rekap == "nama_barang") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->nama_barang;
-                                                echo "NAMA BARANG";
-                                            } else {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
-                                                echo "UNIT";
-                                            }
-                                            ?>
-                                        </strong>
-                                        <?php if ($tgl_awal_tampil && $tgl_akhir_tampil) { ?>
-                                            <br><small class="text-muted">Periode: <?php echo htmlspecialchars($tgl_awal_tampil, ENT_QUOTES, 'UTF-8'); ?>
-                                                s/d <?php echo htmlspecialchars($tgl_akhir_tampil, ENT_QUOTES, 'UTF-8'); ?></small>
-                                        <?php } ?>
+                        <form id="form-cari-rekap-penjualan" class="rekap-toolbar-satu-baris" action="<?php echo $action_cari_rekap; ?>" method="get">
+                            <input type="hidden" id="rekap-field-export" value="<?php echo htmlspecialchars($field_rekap, ENT_QUOTES, 'UTF-8'); ?>" />
+                            <div class="rekap-toolbar-inner">
+                                <strong class="rekap-data-title">
+                                    REKAP DATA
+                                    <?php
+                                    if ($field_rekap == 'unit') {
+                                        echo 'UNIT';
+                                    } elseif ($field_rekap == 'konsumen_nama' or $field_rekap == 'konsumen') {
+                                        echo 'KONSUMEN';
+                                    } elseif ($field_rekap == 'nama_barang') {
+                                        echo 'NAMA BARANG';
+                                    } else {
+                                        echo 'UNIT';
+                                    }
+                                    ?>
+                                </strong>
+                                <div class="input-group input-group-sm date rekap-tgl-input" id="rekap_tgl_awal" data-target-input="nearest">
+                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_awal" name="tgl_awal" value="<?php echo htmlspecialchars($Get_date_awal, ENT_QUOTES, 'UTF-8'); ?>" required />
+                                    <div class="input-group-append" data-target="#rekap_tgl_awal" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </div>
-
-
+                                <span class="rekap-sd">s/d</span>
+                                <div class="input-group input-group-sm date rekap-tgl-input" id="rekap_tgl_akhir" data-target-input="nearest">
+                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required />
+                                    <div class="input-group-append" data-target="#rekap_tgl_akhir" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="nama_barang">Rekap Barang</a>
+                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="konsumen_nama">Rekap Konsumen</a>
+                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="unit">Rekap Unit</a>
+                                <button type="button" class="btn btn-success btn-sm" onclick="cetakExcelRekapData(); return false;">
+                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
+                                </button>
                             </div>
+                        </form>
 
-
-                            <div class="col-6">
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/nama_barang') . $filter_qs, 'Rekap Per Barang', 'class="btn btn-warning"'); ?>
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/konsumen_nama') . $filter_qs, 'Rekap Per Konsumen', 'class="btn btn-warning"'); ?>
-                                <?php echo anchor(site_url('Tbl_penjualan/RekapData/unit') . $filter_qs, 'Rekap Per Unit', 'class="btn btn-warning"'); ?>
-                            </div>
-
-
-                            <div class="col-2">
-
-
-                            <?php
-                                            if ($field_rekap == "unit") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
-                                                // echo "UNIT";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit') . $filter_qs, 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
-                                            
-                                            } elseif ($field_rekap == "konsumen_nama" or $field_rekap == "konsumen") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->konsumen_nama;
-                                                // echo "KONSUMEN";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_konsumen') . $filter_qs, 'Cetak ke Excel [Konsumen]', 'class="btn btn-success"');
-
-                                            } elseif ($field_rekap == "nama_barang") {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->nama_barang;
-                                                // echo "NAMA BARANG";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_barang') . $filter_qs, 'Cetak ke Excel [barang]', 'class="btn btn-success"');
-
-                                            } else {
-                                                // $field_rekap_loop = $list_data_TRANSAKSI_BARANG->unit;
-                                                // echo "UNIT";
-                                                echo anchor(site_url('tbl_penjualan/excel_rekap_unit') . $filter_qs, 'Cetak ke Excel [Unit]', 'class="btn btn-success"');
-
-                                            }
-                                            ?>
-
-                                <?php //echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                ?>
-                            </div>
-
-
-
-                        </div>
+                        <style>
+                            .card-header {
+                                padding-top: 0.52rem;
+                                padding-bottom: 0.52rem;
+                            }
+                            .rekap-toolbar-satu-baris {
+                                width: 100%;
+                                margin: 0;
+                            }
+                            .rekap-toolbar-inner {
+                                display: flex;
+                                flex-wrap: nowrap;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 6px;
+                                width: 100%;
+                                max-width: 100%;
+                                overflow-x: hidden;
+                            }
+                            .rekap-toolbar-inner .rekap-data-title {
+                                font-size: 0.72rem;
+                                font-weight: 700;
+                                line-height: 1.2;
+                                white-space: nowrap;
+                                flex: 0 0 auto;
+                                margin-right: 5px;
+                            }
+                            .rekap-toolbar-inner .rekap-tgl-input {
+                                width: 130px;
+                                min-width: 130px;
+                                flex: 0 0 auto;
+                            }
+                            .rekap-toolbar-inner .form-control-sm {
+                                font-size: 0.9rem;
+                                padding: 0.18rem 0.36rem;
+                                height: calc(1.5em + 0.42rem);
+                            }
+                            .rekap-toolbar-inner .input-group-text {
+                                font-size: 0.84rem;
+                                padding: 0.18rem 0.36rem;
+                            }
+                            .rekap-toolbar-inner .rekap-sd {
+                                font-size: 0.9rem;
+                                line-height: 1;
+                                flex: 0 0 auto;
+                                white-space: nowrap;
+                            }
+                            .rekap-toolbar-inner .btn-sm {
+                                font-size: 0.84rem;
+                                padding: 0.22rem 0.48rem;
+                                line-height: 1.25;
+                                white-space: nowrap;
+                                flex: 0 0 auto;
+                            }
+                        </style>
 
 
 
@@ -163,6 +203,7 @@
                                 $start = 0;
                                 $field_rekap_loop = "";
                                 $Total_jumlah_Barang = 0;
+                                $Total_Harga = 0;
                                 foreach ($Tbl_penjualan_data as $list_data_TRANSAKSI_BARANG) {
 
                                     // get data penjualan filter uuid_barang dan spop
@@ -584,3 +625,193 @@
         </div>
     </section>
 </div>
+
+<script>
+(function() {
+    var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
+
+    function getTanggalFilterRekap() {
+        var tglAwal = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
+        var tglAkhir = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_akhir"]');
+        return {
+            awal: tglAwal ? tglAwal.value : '',
+            akhir: tglAkhir ? tglAkhir.value : ''
+        };
+    }
+
+    function buildRekapUrl(field) {
+        var tgl = getTanggalFilterRekap();
+        var url = baseRekapUrl + field;
+        if (tgl.awal && tgl.akhir) {
+            url += '?tgl_awal=' + encodeURIComponent(tgl.awal) + '&tgl_akhir=' + encodeURIComponent(tgl.akhir);
+        }
+        return url;
+    }
+
+    document.querySelectorAll('.btn-rekap-jenis').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var field = btn.getAttribute('data-field');
+            if (!field) {
+                return;
+            }
+            var tgl = getTanggalFilterRekap();
+            if (!tgl.awal || !tgl.akhir) {
+                alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+                return;
+            }
+            window.location.href = buildRekapUrl(field);
+        });
+    });
+
+    var submitTimer = null;
+
+    function submitCariRekapOtomatis() {
+        clearTimeout(submitTimer);
+        submitTimer = setTimeout(function() {
+            var form = document.getElementById('form-cari-rekap-penjualan');
+            var tgl = getTanggalFilterRekap();
+            if (form && tgl.awal && tgl.akhir) {
+                form.submit();
+            }
+        }, 400);
+    }
+
+    function updateHrefTombolRekap() {
+        document.querySelectorAll('.btn-rekap-jenis').forEach(function(btn) {
+            var field = btn.getAttribute('data-field');
+            if (field) {
+                btn.href = buildRekapUrl(field);
+            }
+        });
+    }
+
+    if (window.jQuery) {
+        jQuery('#rekap_tgl_awal, #rekap_tgl_akhir').on('change.datetimepicker hide.datetimepicker', function() {
+            updateHrefTombolRekap();
+            submitCariRekapOtomatis();
+        });
+    }
+
+    updateHrefTombolRekap();
+})();
+
+function isDataTableRekapAktif() {
+    return !!(window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze'));
+}
+
+function teksSelDariTd(td) {
+    if (!td) {
+        return '';
+    }
+    return (td.innerText || td.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function kumpulkanHeaderRekapDariTabel() {
+    var headers = [];
+    var headerRow = document.querySelector('#tglSPOPFreeze thead tr');
+    if (!headerRow) {
+        return headers;
+    }
+    headerRow.querySelectorAll('th').forEach(function(th) {
+        headers.push(teksSelDariTd(th));
+    });
+    return headers;
+}
+
+function kumpulkanBarisRekapDariDataTable() {
+    var rows = [];
+    if (!isDataTableRekapAktif()) {
+        return rows;
+    }
+    var table = jQuery('#tglSPOPFreeze').DataTable();
+    var nodes = table.rows({ search: 'applied', order: 'applied', page: 'all' }).nodes();
+    for (var i = 0; i < nodes.length; i++) {
+        var tr = nodes[i];
+        if (!tr) {
+            continue;
+        }
+        var cells = [];
+        tr.querySelectorAll('td').forEach(function(td) {
+            cells.push(teksSelDariTd(td));
+        });
+        if (cells.length) {
+            rows.push(cells);
+        }
+    }
+    return rows;
+}
+
+function kumpulkanBarisRekapDariDom() {
+    var rows = [];
+    var tbody = document.querySelector('#tglSPOPFreeze tbody');
+    if (!tbody) {
+        return rows;
+    }
+    tbody.querySelectorAll('tr').forEach(function(tr) {
+        var style = window.getComputedStyle(tr);
+        if (style.display === 'none') {
+            return;
+        }
+        var cells = [];
+        tr.querySelectorAll('td').forEach(function(td) {
+            cells.push(teksSelDariTd(td));
+        });
+        if (cells.length) {
+            rows.push(cells);
+        }
+    });
+    return rows;
+}
+
+function cetakExcelRekapData() {
+    var rows = kumpulkanBarisRekapDariDataTable();
+    if (!rows.length) {
+        rows = kumpulkanBarisRekapDariDom();
+    }
+    if (!rows.length) {
+        alert('Tidak ada data rekap untuk diekspor. Periksa filter/search DataTable atau rentang tanggal.');
+        return;
+    }
+
+    var headers = kumpulkanHeaderRekapDariTabel();
+    var fieldEl = document.getElementById('rekap-field-export');
+    var fieldRekap = fieldEl ? fieldEl.value : 'rekap';
+    var tgl = {
+        awal: '',
+        akhir: ''
+    };
+    var tglAwalEl = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
+    var tglAkhirEl = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_akhir"]');
+    if (tglAwalEl) {
+        tgl.awal = tglAwalEl.value;
+    }
+    if (tglAkhirEl) {
+        tgl.akhir = tglAkhirEl.value;
+    }
+
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = <?php echo json_encode(site_url('Tbl_penjualan/excel_rekap_data')); ?>;
+    form.style.display = 'none';
+
+    function addHidden(name, value) {
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = name;
+        input.value = value;
+        form.appendChild(input);
+    }
+
+    addHidden('from_datatable', '1');
+    addHidden('field_rekap', fieldRekap);
+    addHidden('export_rows', JSON.stringify(rows));
+    addHidden('export_headers', JSON.stringify(headers));
+    addHidden('tgl_awal', tgl.awal);
+    addHidden('tgl_akhir', tgl.akhir);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+</script>

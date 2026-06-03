@@ -48,7 +48,15 @@
         // echo "<br/>";
         // echo "<br/>";
 
-
+        $excel_export_ids = array();
+        if (!empty($Tbl_penjualan_data)) {
+            foreach ($Tbl_penjualan_data as $row_export) {
+                if (!empty($row_export->id)) {
+                    $excel_export_ids[] = (int) $row_export->id;
+                }
+            }
+        }
+        $excel_export_ids_str = implode(',', $excel_export_ids);
 
         ?>
 
@@ -135,7 +143,11 @@
                             </div>
 
                             <div class="col-md-1">
-                                <?php echo anchor(site_url('tbl_penjualan/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                <input type="hidden" id="excel-export-source" value="tbl_penjualan" />
+                                <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
+                                <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPenjualan(); return false;">
+                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel (.xlsx)
+                                </button>
                             </div>
 
 
@@ -172,19 +184,12 @@
                                     <!-- Colspan -->
                                     <th colspan="2" style="text-align:center" width="50px">Debit</th>
                                     <th colspan="2" style="text-align:center" width="50px">Kredit</th>
-
-
-
+                                </tr>
                                 <tr>
                                     <th width="25px">UM PPH PSL 22</th>
                                     <th>Piutang</th>
                                     <th width="25px">Penjualan DPP</th>
                                     <th>Utang PPN</th>
-                                </tr>
-
-                                <!-- -------------- -->
-
-
                                 </tr>
                             </thead>
                             <tbody>
@@ -217,7 +222,7 @@
 
 
                                         <!-- // Buat 1 baris untuk total dan background = KUNING -->
-                                        <tr>
+                                        <tr class="row-penjualan-subtotal">
                                             <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start; ?></td>
                                             <td style="background-color:yellow;" align="right"><?php
@@ -294,7 +299,7 @@
 
                                         <!-- Tgl Jual & nmrpesan baru -->
 
-                                        <tr>
+                                        <tr class="row-penjualan-data" data-penjualan-id="<?php echo (int) $list_data->id; ?>">
 
                                             <td><?php echo ++$start; ?></td>
                                             <td>
@@ -439,7 +444,7 @@
                                     } else {
                                     ?>
 
-                                        <tr>
+                                        <tr class="row-penjualan-data" data-penjualan-id="<?php echo (int) $list_data->id; ?>">
 
                                             <td><?php echo ++$start; ?></td>
                                             <td>
@@ -598,7 +603,7 @@
 
 
                                 <!-- TOTAL nmrkirim AKHIR -->
-                                <tr>
+                                <tr class="row-penjualan-subtotal">
                                     <td><?php echo ++$start; ?></td>
                                     <td></td>
                                     <td></td>
@@ -763,6 +768,118 @@
 
 
 <script>
+    function isDataTablePenjualanAktif() {
+        return !!(window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze'));
+    }
+
+    function ambilIdDariBarisPenjualan(tr) {
+        if (!tr) {
+            return 0;
+        }
+        var rawId = tr.getAttribute('data-penjualan-id');
+        if (!rawId && tr.id) {
+            var clone = document.getElementById(tr.id);
+            if (clone) {
+                rawId = clone.getAttribute('data-penjualan-id');
+            }
+        }
+        var id = parseInt(rawId, 10);
+        return (!isNaN(id) && id > 0) ? id : 0;
+    }
+
+    function kumpulkanIdPenjualanDariDataTable() {
+        var ids = [];
+        if (!isDataTablePenjualanAktif()) {
+            return ids;
+        }
+
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+        var nodes = table.rows({ search: 'applied', order: 'applied', page: 'all' }).nodes();
+        for (var i = 0; i < nodes.length; i++) {
+            var tr = nodes[i];
+            var id = ambilIdDariBarisPenjualan(tr);
+            if (id > 0) {
+                ids.push(id);
+            }
+        }
+
+        if (!ids.length) {
+            table.rows({ search: 'applied', order: 'applied', page: 'all' }).every(function() {
+                var id = ambilIdDariBarisPenjualan(this.node());
+                if (id > 0) {
+                    ids.push(id);
+                }
+            });
+        }
+
+        return ids;
+    }
+
+    function kumpulkanIdPenjualanDariDomUrutanTabel() {
+        var ids = [];
+        var tbody = document.querySelector('#tglSPOPFreeze tbody');
+        if (!tbody) {
+            return ids;
+        }
+        Array.prototype.forEach.call(tbody.querySelectorAll('tr.row-penjualan-data'), function(tr) {
+            var id = ambilIdDariBarisPenjualan(tr);
+            if (id > 0) {
+                ids.push(id);
+            }
+        });
+        return ids;
+    }
+
+    function cetakExcelPenjualan() {
+        var tglAwalEl = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
+        var tglAkhirEl = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
+        var tglAwal = tglAwalEl ? tglAwalEl.value : '';
+        var tglAkhir = tglAkhirEl ? tglAkhirEl.value : '';
+        if (!tglAwal || !tglAkhir) {
+            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+            return;
+        }
+
+        var ids = kumpulkanIdPenjualanDariDataTable();
+        if (!ids.length && !isDataTablePenjualanAktif()) {
+            var idsEl = document.getElementById('excel-export-ids');
+            if (idsEl && idsEl.value) {
+                ids = idsEl.value.split(',').map(function(v) {
+                    return parseInt(v, 10);
+                }).filter(function(v) {
+                    return !isNaN(v) && v > 0;
+                });
+            }
+            if (!ids.length) {
+                ids = kumpulkanIdPenjualanDariDomUrutanTabel();
+            }
+        }
+
+        if (!ids.length) {
+            alert('Tidak ada data penjualan untuk diekspor. Periksa filter/search DataTable atau rentang tanggal.');
+            return;
+        }
+
+        var seenId = {};
+        ids = ids.filter(function(id) {
+            if (seenId[id]) {
+                return false;
+            }
+            seenId[id] = true;
+            return true;
+        });
+
+        var sourceEl = document.getElementById('excel-export-source');
+        var source = sourceEl ? sourceEl.value : 'tbl_penjualan';
+        var url = <?php echo json_encode(site_url('Tbl_penjualan/excel')); ?>
+            + '?source=' + encodeURIComponent(source)
+            + '&from_datatable=1'
+            + '&ids=' + encodeURIComponent(ids.join(','))
+            + '&tgl_awal=' + encodeURIComponent(tglAwal)
+            + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
+        window.location.href = url;
+    }
+
 (function() {
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
 
