@@ -214,11 +214,13 @@ function pembelian_find_barang_by_nama($CI, $nama_barang, $tanggal_po = null)
 	$nama_expr = pembelian_sql_nama_barang_normalized();
 
 	$sql = "SELECT
+			`id`,
 			COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
 			`kode` AS kode_barang,
 			`namabarang` AS nama_barang,
 			`satuan`,
-			`hpp` AS harga_satuan
+			`hpp` AS harga_satuan,
+			`tanggal_beli`
 		FROM `persediaan`
 		WHERE {$nama_expr} = ?
 		AND TRIM(`namabarang`) <> ''
@@ -227,7 +229,7 @@ function pembelian_find_barang_by_nama($CI, $nama_barang, $tanggal_po = null)
 		AND `tanggal_beli` <> '0000-00-00 00:00:00'
 		AND DATE(`tanggal_beli`) >= ?
 		AND DATE(`tanggal_beli`) <= ?
-		ORDER BY `id` DESC
+		ORDER BY `tanggal_beli` DESC, `id` DESC
 		LIMIT 1";
 
 	return $CI->db->query($sql, array($nama_lower, $tgl['awal'], $tgl['akhir']))->row();

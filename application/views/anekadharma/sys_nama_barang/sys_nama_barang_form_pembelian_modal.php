@@ -8,7 +8,7 @@
                     <div class="flex-grow-1" style="min-width: 0;">
                         <label for="modal_kategori" class="d-block">Kategori <small class="text-muted">(opsional)</small></label>
                         <div class="modal-kategori-select-wrap">
-                            <select class="form-control select2-kategori-modal" name="kategori" id="modal_kategori" data-placeholder="-- Pilih Kategori --">
+                            <select class="form-control select2-kategori-modal" name="kategori" id="modal_kategori" data-placeholder="-- Pilih Kategori --" autocomplete="off">
                                 <option value=""></option>
                                 <?php if (!empty($kategori_barang_options)) { ?>
                                     <?php foreach ($kategori_barang_options as $kat) { ?>
@@ -38,7 +38,7 @@
         <div class="col-md-6">
             <div class="form-group">
                 <label for="modal_nama_barang">Nama</label>
-                <textarea class="form-control" rows="2" name="nama_barang" id="modal_nama_barang" placeholder="Nama" required><?php echo htmlspecialchars($nama_barang, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <textarea class="form-control" rows="2" name="nama_barang" id="modal_nama_barang" placeholder="Nama" required autocomplete="off"><?php echo htmlspecialchars($nama_barang, ENT_QUOTES, 'UTF-8'); ?></textarea>
                 <small class="text-muted">Setelah mengisi nama lalu pindah ke field lain, sistem mengecek persediaan bulan <em>Tgl PO</em>.</small>
             </div>
         </div>
@@ -284,6 +284,20 @@
         }
         if (window.initCekNamaBarangModalInput) {
             setTimeout(window.initCekNamaBarangModalInput, 0);
+        }
+
+        if (window.jQuery && typeof window.aktifkanSemuaInputModalBarangBaru === 'function') {
+            setTimeout(window.aktifkanSemuaInputModalBarangBaru, 0);
+        } else if (window.jQuery) {
+            setTimeout(function() {
+                jQuery('#form-input-barang-baru-modal').find('input, textarea, select, button').each(function() {
+                    var $el = jQuery(this);
+                    if ($el.attr('type') === 'hidden') {
+                        return;
+                    }
+                    $el.prop('disabled', false).prop('readonly', false);
+                });
+            }, 0);
         }
     })();
 </script>

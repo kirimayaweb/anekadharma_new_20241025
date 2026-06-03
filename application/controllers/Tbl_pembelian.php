@@ -86,7 +86,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 
-		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
+		$Get_date_akhir = date("Y-m-t 23:59:59"); // akhir hari terakhir bulan
 		// print_r($Get_date_akhir);
 		// print_r("<br/>");
 
@@ -126,7 +126,7 @@ class Tbl_pembelian extends CI_Controller
 			// $Get_date_awal = date("Y-m-d 00:00:00");
 			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
 		} else {
-			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+			$Get_date_awal = date("Y-m-d 00:00:00", strtotime($this->input->post('tgl_awal', TRUE)));
 		}
 
 		// print_r($Get_date_awal);
@@ -206,7 +206,7 @@ class Tbl_pembelian extends CI_Controller
 		if (date('Y', strtotime($tgl_awal_input)) < 2020) {
 			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
 		} else {
-			$Get_date_awal = date('Y-m-d 23:59:59', strtotime($tgl_awal_input));
+			$Get_date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal_input));
 		}
 
 		if (date('Y', strtotime($tgl_akhir_input)) < 2020) {
@@ -3962,7 +3962,7 @@ class Tbl_pembelian extends CI_Controller
 		if (empty($Tbl_pembelian_rows)) {
 			if (empty($Get_date_awal) || empty($Get_date_akhir)) {
 				$Get_date_awal = date('Y-m-1 00:00:00');
-				$Get_date_akhir = date('Y-m-t 00:00:00');
+				$Get_date_akhir = date('Y-m-t 23:59:59');
 			}
 			$Tbl_pembelian_rows = $this->_get_pembelian_rows_for_excel($Get_date_awal, $Get_date_akhir);
 		}

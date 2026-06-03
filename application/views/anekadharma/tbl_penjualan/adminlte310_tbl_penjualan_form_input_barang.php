@@ -57,7 +57,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	#modal-xl.modal-pilih-barang-penjualan .modal-body {
 		flex: 1 1 auto;
 		min-height: 0;
-		overflow: hidden;
+		overflow: auto;
 		padding: 0.5rem 0.65rem;
 		display: flex;
 		flex-direction: column;
@@ -65,7 +65,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	#modal-xl.modal-pilih-barang-penjualan .modal-pilih-barang-table-wrap {
 		flex: 1 1 auto;
 		min-height: 0;
-		overflow: hidden;
+		overflow: auto;
 	}
 	#modal-xl.modal-pilih-barang-penjualan #table-pilih-barang-penjualan {
 		width: 100% !important;
@@ -97,6 +97,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	}
 	#modal-xl.modal-pilih-barang-penjualan div.dataTables_scrollBody {
 		max-height: none !important;
+		overflow: auto !important;
 	}
 	#container-modal-pilih-barang-nested .modal {
 		z-index: 1065;
@@ -719,13 +720,13 @@ window.destroyDataTablePilihBarang = function() {
 window.hitungScrollYPilihBarangPenjualan = function() {
     var $modal = $('#modal-xl.modal-pilih-barang-penjualan');
     if (!$modal.length) {
-        return Math.max(220, Math.floor(window.innerHeight * 0.55));
+        return Math.max(360, Math.floor(window.innerHeight * 0.62));
     }
     var tinggiModal = $modal.find('.modal-dialog').innerHeight() || (window.innerHeight - Math.round(2 * 37.8));
     var headerH = $modal.find('.modal-header').outerHeight(true) || 52;
-    var toolH = 56;
-    var footDt = 44;
-    return Math.max(180, Math.floor(tinggiModal - headerH - toolH - footDt - 24));
+    var toolH = 72;
+    var footDt = 56;
+    return Math.max(340, Math.floor(tinggiModal - headerH - toolH - footDt - 18));
 };
 
 window.initDataTablePilihBarang = function() {
@@ -783,7 +784,9 @@ window.sesuaikanDataTablePilihBarang = function() {
         var y = window.hitungScrollYPilihBarangPenjualan();
         window.penjualanDtPilihBarang.columns.adjust();
         if (window.penjualanDtPilihBarang.settings()[0].oScroll) {
-            $(window.penjualanDtPilihBarang.table().container()).find('div.dataTables_scrollBody').css('max-height', y + 'px');
+            $(window.penjualanDtPilihBarang.table().container())
+                .find('div.dataTables_scrollBody')
+                .css({ 'max-height': y + 'px', 'height': y + 'px', 'overflow': 'auto' });
         }
         window.penjualanDtPilihBarang.draw(false);
     } catch (eAdj) {
