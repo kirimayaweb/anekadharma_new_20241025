@@ -575,6 +575,9 @@ class Persediaan extends CI_Controller
 			'url_recalculate_persediaan' => site_url('Persediaan/recalculate_data_persediaan'),
 			'url_analisa_recalculate_persediaan' => site_url('Persediaan/ajax_analisa_recalculate_persediaan'),
 			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
+			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
+			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
+			'url_excel_gen_recalc' => site_url('Persediaan/excel_gen_recalc'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
 			'url_excel_persediaan' => site_url('Persediaan/excel'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
@@ -648,23 +651,23 @@ class Persediaan extends CI_Controller
 		$bulan_sumber = date('Y-m', strtotime('-1 month', $ts_target));
 
 		$count_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
-		$count_sumber = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$count_sumber_all = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$count_sumber = $this->persediaan_count_sumber_layak_generate($tanggal_beli_sumber);
 		$sudah_ada = ($count_target > 0);
-		$can_generate = ($count_sumber > 0);
+		$can_generate = ($count_sumber_all > 0);
 
 		$message = '';
-		if ($count_sumber === 0) {
+		if ($count_sumber_all === 0) {
 			$message = 'Tidak ada data sumber bulan ' . date('m/Y', strtotime($bulan_sumber . '-01'))
 				. ' (tanggal_beli = ' . $tanggal_beli_sumber . '). Isi dulu persediaan bulan sebelumnya.';
 		} elseif ($sudah_ada) {
-			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate akan: '
-				. '(1) update <strong>beli</strong> record yang sudah ada dari <code>tbl_pembelian</code> / '
-				. '<code>tbl_pembelian_jasa</code> (by <code>uuid_persediaan</code>, beli=0 jika tidak ada pembelian), '
-				. '(2) menambah record baru dari bulan sumber untuk barang yang belum ada.';
+			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate & Recalculate akan: '
+				. '(1) salin/update <strong>' . $count_sumber . '</strong> record sumber (total_10 &gt; 0), '
+				. '(2) proses pembelian bulan ini → insert baru / update <strong>beli</strong>.';
 		} else {
-			$message = 'Siap generate: salin ' . $count_sumber . ' record dari bulan '
-				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' ke bulan '
-				. date('m/Y', $ts_target) . '.';
+			$message = 'Siap Generate & Recalculate: salin/update <strong>' . $count_sumber . '</strong> record dari bulan '
+				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya total_10 &gt; 0, dari ' . $count_sumber_all . ' record sumber) ke bulan '
+				. date('m/Y', $ts_target) . ', lalu proses pembelian (record baru → insert persediaan).';
 		}
 
 		echo json_encode(array(
@@ -675,6 +678,8 @@ class Persediaan extends CI_Controller
 			'tanggal_beli_sumber' => $tanggal_beli_sumber,
 			'count_target' => $count_target,
 			'count_sumber' => $count_sumber,
+			'count_sumber_all' => $count_sumber_all,
+			'count_sumber_skip_total10' => max(0, $count_sumber_all - $count_sumber),
 			'sudah_ada_data' => $sudah_ada,
 			'can_generate' => $can_generate,
 			'user_can_generate' => true,
@@ -1515,6 +1520,116 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
+	 * AJAX batch: Generate dari bulan sebelumnya + recalculate beli dari pembelian (tab Generate).
+	 */
+	public function ajax_generate_recalculate_batch()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		@ignore_user_abort(true);
+
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => 'Generate & Recalculate hanya untuk Admin / Administrator.',
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$offset = max(0, (int) $this->input->get_post('offset', TRUE));
+			$limit = (int) $this->input->get_post('limit', TRUE);
+			$start = ($this->input->get_post('start', TRUE) === '1');
+			if ($limit < 1 || $limit > 50) {
+				$limit = 30;
+			}
+
+			$db_debug = $this->db->db_debug;
+			$this->db->db_debug = false;
+
+			$result = persediaan_generate_recalculate_batch($this, $bulan, $offset, $limit, $start);
+
+			$this->db->db_debug = $db_debug;
+
+			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: muat history Generate & Recalculate terakhir untuk bulan target (tab Generate).
+	 */
+	public function ajax_load_gen_recalc_history()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => 'History generate hanya untuk Admin / Administrator.',
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$result = persediaan_gen_recalc_history_load($this, $bulan);
+			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * Export Excel hasil Generate & Recalculate (per jenis tabel atau semua sheet).
+	 * POST: bulan (YYYY-MM), jenis (opsional: persediaan_all|generate_update|...| kosong = semua)
+	 */
+	public function excel_gen_recalc()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(persediaan_gen_recalc_jenis_definitions());
+		if ($jenis !== '' && !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export tidak valid.', 400);
+			return;
+		}
+
+		$suffix = ($jenis !== '') ? '_' . $jenis : '_Semua';
+		$namaFile = 'Generate_Recalculate_' . $bulan . $suffix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_gen_recalc_export_excel_output($this, $bulan, $jenis !== '' ? $jenis : null);
+		exit();
+	}
+
+	/**
 	 * Export Excel multi-sheet untuk tab Recalculate (persediaan, pembelian, pembelian jasa, penjualan).
 	 */
 	public function excel_recalculate()
@@ -1712,10 +1827,11 @@ class Persediaan extends CI_Controller
 		$tanggal_beli_sumber = date('Y-m-01', strtotime('-1 month', $ts_target));
 		$tanggal_tampilan_target = date('d/m/Y', $ts_target);
 
-		$total_sumber = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$total_sumber_all = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
+		$total_sumber = $this->persediaan_count_sumber_layak_generate($tanggal_beli_sumber);
 		$total_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
 
-		if ($total_sumber === 0) {
+		if ($total_sumber_all === 0) {
 			return array(
 				'ok' => false,
 				'message' => 'Tidak ada data sumber dengan tanggal_beli = ' . $tanggal_beli_sumber,
@@ -1731,6 +1847,7 @@ class Persediaan extends CI_Controller
 			'tgl_po_awal' => $tanggal_beli_target,
 			'tgl_po_akhir' => date('Y-m-t', $ts_target),
 			'total_sumber' => $total_sumber,
+			'total_sumber_all' => $total_sumber_all,
 			'total_target' => $total_target,
 		);
 	}
@@ -1789,7 +1906,10 @@ class Persediaan extends CI_Controller
 			}
 		}
 
-		$sql_batch = "SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `id` ASC LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
+		$this->load->helper('pembelian_persediaan');
+		$sql_batch = "SELECT * FROM `persediaan` WHERE `tanggal_beli`=?"
+			. persediaan_generate_recalculate_sql_filter_total10_positif()
+			. " ORDER BY `id` ASC LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
 		$list_batch = $this->db->query($sql_batch, array($tanggal_beli_sumber))->result();
 
 		$next_id = (int) $state['next_id'];
@@ -1800,19 +1920,21 @@ class Persediaan extends CI_Controller
 
 		foreach ($list_batch as $row) {
 			$item = $this->proses_satu_record_generate_persediaan($row, $ctx, $next_id);
+			if ($item['aksi'] === 'SKIP') {
+				$batch_skip++;
+				continue;
+			}
 			$batch_items[] = $item;
 
 			if ($item['aksi'] === 'INSERT') {
 				$batch_insert++;
 			} elseif ($item['aksi'] === 'UPDATE') {
 				$batch_update++;
-			} else {
-				$batch_skip++;
 			}
 		}
 
 		$offset_selesai = $offset + count($list_batch);
-		$done = ($offset_selesai >= $total_sumber);
+		$done = ($total_sumber === 0 || $offset_selesai >= $total_sumber);
 
 		$state['next_id'] = $next_id;
 		$state['total_insert'] += $batch_insert;
@@ -2614,6 +2736,18 @@ class Persediaan extends CI_Controller
 
 		// Saldo awal bulan baru = total_10 bulan sumber; total_10 target sama dengan sa (di-update saat recalculate).
 		$total_10_sumber = $this->generate_hitung_sa_dari_bulan_sumber($row);
+		if ($total_10_sumber <= 0) {
+			return array(
+				'aksi' => 'SKIP',
+				'id' => isset($row->id) ? (int) $row->id : 0,
+				'namabarang' => $nama,
+				'satuan' => $satuan,
+				'hpp' => $hpp,
+				'total_10' => isset($row->total_10) ? $row->total_10 : '',
+				'keterangan' => 'Lewati: total_10 bulan sumber kosong atau 0 — tidak di-copy ke bulan target',
+			);
+		}
+
 		$sa_baru = $total_10_sumber;
 		$beli_angka = 0;
 		$total_10_baru = $sa_baru;
@@ -2720,6 +2854,21 @@ class Persediaan extends CI_Controller
 		$row_cnt = $this->db->query(
 			"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli`=?",
 			array($tanggal_beli)
+		)->row();
+
+		return $row_cnt ? (int) $row_cnt->jml : 0;
+	}
+
+	/**
+	 * Jumlah record bulan sumber yang layak di-generate (total_10 > 0, bukan kosong).
+	 */
+	private function persediaan_count_sumber_layak_generate($tanggal_beli_sumber)
+	{
+		$this->load->helper('pembelian_persediaan');
+		$row_cnt = $this->db->query(
+			"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli` = ?"
+			. persediaan_generate_recalculate_sql_filter_total10_positif(),
+			array($tanggal_beli_sumber)
 		)->row();
 
 		return $row_cnt ? (int) $row_cnt->jml : 0;

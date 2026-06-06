@@ -52,7 +52,7 @@ function is_login()
 {
     $ci = get_instance();
     if (!$ci->session->userdata('id_users')) {
-        redirect('Masukgo');
+        redirect('Anekadharmamasuk');
     } else {
         $modul = $ci->uri->segment(1);
 

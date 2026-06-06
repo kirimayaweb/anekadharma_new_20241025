@@ -1,494 +1,359 @@
+<?php
+$this->load->helper('persediaan_display');
+$action_cari_form = isset($action_cari) && $action_cari ? $action_cari : site_url('Tbl_pembelian/stock');
+$Persediaan_data = isset($Persediaan_data) && is_array($Persediaan_data) ? $Persediaan_data : array();
+$bulan_tampil = isset($bulan_persediaan_selected) && $bulan_persediaan_selected !== ''
+    ? $bulan_persediaan_selected
+    : date('Y-m');
+$url_excel_stock = isset($url_excel_stock) ? $url_excel_stock : site_url('Tbl_pembelian/excel_stock');
+$persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10();
+$idx_col_total_10 = persediaan_list_col_index_total_10();
+$idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
+?>
 <div class="content-wrapper">
-
 
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0"> </h1>
-                </div><!-- /.col -->
+                    <h1 class="m-0">Stock Barang</h1>
+                </div>
                 <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <!-- <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item active">Dashboard v1</li> -->
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
+                    <ol class="breadcrumb float-sm-right"></ol>
+                </div>
+            </div>
+        </div>
     </div>
 
     <section class="content">
+        <div class="col-md-12">
+            <div class="card card-primary">
+                <div class="card-header">
+                    <strong>DATA STOCK BARANG (PERSEDIAAN)</strong>
+                </div>
+                <div class="card-body">
 
-
-
-        <div class="box box-warning box-solid">
-
-            <div class="col-md-12">
-                <div class="card card-primary">
-                    <div class="card-header">
-                        <div class="row">
+                    <form action="<?php echo $action_cari_form; ?>" method="post" id="form-stock-bulan">
+                        <div class="row mb-3 align-items-end">
+                            <div class="col-md-12">
+                                <label for="bulan_persediaan">Bulan:</label>
+                                <input type="month" id="bulan_persediaan" name="bulan_persediaan" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil, ENT_QUOTES, 'UTF-8'); ?>">
+                                <button type="button" id="btn-cetak-excel-stock" class="btn btn-primary ml-1">Cetak ke Excel</button>
+                            </div>
                         </div>
-                        <div class="row">
-                            <div class="col-4">
-                                <div class="row">
-                                    <div class="col-12" text-align="center"> <strong>DATA STOCK BARANG</strong></div>
-                                </div>
+                    </form>
 
-
-                            </div>
-
-                            <div class="col-4">
-                                <form action="<?php echo $action_cari_gudang; ?>" method="post">
-                                    <div class="row">
-                                        <div class="col-4" text-align="right"> <strong>GUDANG</strong></div>
-                                        <div class="col-6" text-align="left">
-
-                                            <!-- <label for="konsumen_nama">Unit </label> -->
-                                            <select name="uuid_gudang" id="uuid_gudang" class="form-control select2" style="width: 100%; height: 60px;" required>
-                                                <option value="">Pilih Gudang</option>
-                                                <option value="semua">TAMPIL SEMUA</option>
-                                                <?php
-
-                                                $sql = "select * from sys_gudang order by nama_gudang ASC ";
-                                                foreach ($this->db->query($sql)->result() as $m) {
-                                                    echo "<option value='$m->uuid_gudang' ";
-                                                    echo ">  " . strtoupper($m->kode_gudang)  . " | " . strtoupper($m->nama_gudang)  . "</option>";
-                                                }
-                                                ?>
-                                            </select>
-
-                                        </div>
-                                        <div class="col-2" text-align="right">
-
-                                            <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                            ?>
-
-                                            <button type="submit" class="btn btn-danger"> Cari</button>
-
-                                        </div>
-                                    </div>
-
-                                </form>
-                            </div>
-
-                            <div class="col-4">
-
-                            </div>
-
-
-
-                        </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <?php //echo anchor(site_url('tbl_pembelian/create'), 'Input Pembelian (Belanja Perusahaan)', 'class="btn btn-danger"'); 
-                                ?>
-                            </div>
-                            <div class="col-4">
-
-                            </div>
-                            <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_pembelian/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                ?>
-                            </div>
-
-
-
-                        </div>
-
-
-
-                    </div>
-                    <!-- <br /> -->
-
-
-
-                    <div class="card-body">
-
-                        <table id="example" class="display nowrap" style="width:100%">
-                            <thead>
+                    <table id="table-stock-persediaan" class="table table-bordered table-striped" style="width:100%">
+                        <thead>
+                            <tr>
+                                <th width="50px">No</th>
+                                <th>Tanggal</th>
+                                <th>Kategori</th>
+                                <th>Namabarang</th>
+                                <th>Satuan</th>
+                                <th>Hpp</th>
+                                <th>Sa</th>
+                                <th>Spop</th>
+                                <th>Beli</th>
+                                <th>Tuj</th>
+                                <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
+                                    <th><?php echo htmlspecialchars(persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
+                                    <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+                                        <th class="text-right"><?php echo htmlspecialchars(persediaan_field_nominal_header_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
+                                    <?php } ?>
+                                <?php } ?>
+                                <th>Nilai Persediaan</th>
+                                <th>Terjual</th>
+                                <th>Jumlah Pecah Satuan</th>
+                                <th>Bahan Produksi</th>
+                                <th>Sisa / Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $start = 0;
+                            $total_total_10 = 0;
+                            $total_nilai_persediaan = 0;
+                            $total_nominal_unit = array();
+                            foreach (persediaan_list_unit_columns() as $uf_total) {
+                                $total_nominal_unit[$uf_total] = 0;
+                            }
+                            foreach ($Persediaan_data as $persediaan) {
+                                $total_10_row = persediaan_parse_angka(persediaan_row_get($persediaan, 'total_10'));
+                                $nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
+                                $total_total_10 += $total_10_row;
+                                $total_nilai_persediaan += $nilai_persediaan_row;
+                                foreach (persediaan_list_unit_columns() as $uf_total) {
+                                    $total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
+                                }
+                                $sisa_stock = persediaan_hitung_sisa_stock($persediaan);
+                            ?>
                                 <tr>
-                                    <th style="text-align:center" width="10px">No</th>
-                                    <!-- <th style="text-align:center" width="100px">Action</th> -->
-                                    <th>Tgl Po</th>
-                                    <th>Gudang</th>
-                                    <th>SPOP</th>
-                                    <th>Kategori</th>
-                                    <th>Nama Barang </th>
-                                    <th>Harga Satuan</th>
-                                    <th>Satuan</th>
-                                    <th>Persediaan</th>
-                                    <!-- <th>jumlah <br />beli</th> -->
-
-                                    <!-- <th>nama_barang_jual</th> -->
-                                    <th style="text-align:right">Terjual</th>
-                                    <th style="text-align:right">Pecah Satuan</th>
-                                    <th style="text-align:right">Bahan Produksi</th>
-                                    <!-- <th>harga_satuan_jual</th> -->
-                                    <!-- <th>margin</th> -->
-                                    <th>Sisa <br />Stock</th>
-                                    <!-- <th>Nominal Stock</th> -->
-                                    <th>Nominal <br />Persediaan</th>
-                                    <!-- <th>Total Persediaan</th> -->
-
+                                    <td><?php echo ++$start ?></td>
+                                    <td><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></td>
+                                    <td><?php echo isset($persediaan->kategori) ? htmlspecialchars($persediaan->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
+                                    <td><?php echo $persediaan->namabarang ?></td>
+                                    <td><?php echo $persediaan->satuan ?></td>
+                                    <td><?php echo $persediaan->hpp ?></td>
+                                    <td><?php echo $persediaan->sa ?></td>
+                                    <td><?php echo $persediaan->spop ?></td>
+                                    <td><?php echo $persediaan->beli ?></td>
+                                    <td><?php echo $persediaan->tuj ?></td>
+                                    <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
+                                        <td><?php echo persediaan_row_get($persediaan, $field_tgl_total); ?></td>
+                                        <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+                                            <td class="text-right"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
+                                        <?php } ?>
+                                    <?php } ?>
+                                    <td><?php echo persediaan_format_angka_tampil($nilai_persediaan_row); ?></td>
+                                    <td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
+                                    <td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
+                                    <td><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
+                                    <td><?php echo is_numeric($sisa_stock) && floor($sisa_stock) == $sisa_stock ? (int) $sisa_stock : $sisa_stock; ?></td>
                                 </tr>
-                            </thead>
-                            <tbody>
+                            <?php } ?>
+                        </tbody>
+                        <tfoot>
+                            <tr>
                                 <?php
-                                $compare_spop = 0;
-                                $Total_per_SPOP = 0;
-                                $TOTAL_LUNAS = 0;
-                                $TOTAL_HUTANG = 0;
-                                $start = 0;
-                                $TOTAL_PERSEDIAAN = 0;
-                                $TOTAL_NILAI_PERSEDIAAN = 0;
-                                $TOTAL_PERSEDIAAN_X = 0;
-                                $Sisa_STOCK = 0;
-                                foreach ($Data_stock as $list_data) {
-
-                                    // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) { //HIDE SISA STOCK =0;
-
-                                    // Cek data penjualan berdasarkan uuid_persediaan
-                                    // --> data pembelian sudah masuk ke spop persediaan (jika barang baru, maka menjadi uuid_persediaan baru dengan nama barang yang sama)
-
-                                    // $get_uuid_persediaan = $list_data->uuid_persediaan;
-
-                                    // $sql_penjualan_per_uuid_persediaan = "SELECT `uuid_persediaan`,`uuid_barang`,sum(`jumlah`) as jumlah_per_uuid_persediaan FROM `tbl_penjualan` WHERE `uuid_persediaan`='$get_uuid_persediaan' GROUP by `uuid_persediaan`;";
-
-                                    // print_r($this->db->query($sql_penjualan_per_uuid_persediaan)->row());
-
-                                    // JUMLAH PENJUALAN + JUMLAH PECAH SATUAN + JUMLAH BAHAN PRODUKSI
-
-                                    // if ($this->db->query($sql_penjualan_per_uuid_persediaan)->num_rows() > 0) {
-                                    //     $Get_data_Rows = $this->db->query($sql_penjualan_per_uuid_persediaan)->row();
-                                    //     $Jumlah_penjualan_per_uuid_persediaan = $Get_data_Rows->jumlah_per_uuid_persediaan + $list_data->pecah_satuan + $list_data->bahan_produksi;
-                                    // } else {
-                                    //     $Jumlah_penjualan_per_uuid_persediaan = 0 + $list_data->pecah_satuan + $list_data->bahan_produksi;
-                                    // }
-
-                                    $Jumlah_penjualan_per_uuid_persediaan = $list_data->penjualan + $list_data->pecah_satuan + $list_data->bahan_produksi;
-
-
-
-
-
-
-                                ?>
-                                    <tr>
-                                        <!-- nomor -->
-                                        <td style="text-align:center"><?php echo ++$start ?></td>
-
-                                        <!-- Tanggal beli persediaan : tgl po -->
-                                        <td style="text-align:left">
-                                            <?php
-                                            $raw_tgl_stock = isset($list_data->tanggal_beli_persediaan) ? trim((string) $list_data->tanggal_beli_persediaan) : '';
-                                            if (
-                                                $raw_tgl_stock === '' ||
-                                                $raw_tgl_stock === '0000-00-00' ||
-                                                $raw_tgl_stock === '0000-00-00 00:00:00'
-                                            ) {
-                                                echo '-';
-                                            } else {
-                                                $ts_tgl_stock = strtotime($raw_tgl_stock);
-                                                echo ($ts_tgl_stock !== false) ? date("d-m-Y", $ts_tgl_stock) : '-';
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <!-- nama gudang -->
-                                        <td style="text-align:left;text-transform: uppercase;">
-                                            <?php
-
-                                            // echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_gudang . '</i>', 'class=""');
-
-                                            ?>
-
-                                        </td>
-                                        <td style="text-align:left;text-transform: uppercase;">
-                                            <?php
-
-                                            echo $list_data->spop;
-                                            ?>
-
-                                        </td>
-
-                                        <!-- Kategori (sys_nama_barang via uuid_barang) -->
-                                        <td style="text-align:left">
-                                            <?php
-                                            echo isset($list_data->kategori_barang) && $list_data->kategori_barang !== '' && $list_data->kategori_barang !== null
-                                                ? htmlspecialchars($list_data->kategori_barang, ENT_QUOTES, 'UTF-8')
-                                                : '-';
-                                            ?>
-                                        </td>
-
-                                        <!-- Nama Barang -->
-                                        <td style="text-align:left">
-                                            <?php
-
-
-                                            // echo anchor(site_url('tbl_pembelian/pecah_satuan/' . $list_data->uuid_pembelian), '<i class="fa fa-pencil-square-o" aria-hidden="true">' . $list_data->nama_barang_beli . '</i>', 'class=""');
-
-                                            echo $list_data->nama_barang_persediaan;
-
-                                            ?>
-                                        </td>
-
-
-                                        <!-- Harga Satuan  -->
-
-                                        <td style="text-align:right">
-                                            <?php
-
-                                            // if ($list_data->harga_satuan_persediaan and $list_data->harga_satuan_persediaan > 0) {
-                                            if (!empty($list_data->harga_satuan_persediaan)) {
-                                                // echo nominal($list_data->harga_satuan_persediaan);
-                                                $X_harga_satuan = $list_data->harga_satuan_persediaan;
-                                                // echo "<br>";
-                                                echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                // echo "<br>";
-                                                // echo number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
-                                                // echo "<br>";
-                                                // echo nominal($list_data->harga_satuan_persediaan);
-
-                                                $X_harga_satuan_X = number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
-
-                                                // $X_harga_satuan = number_format($list_data->harga_satuan_persediaan, 2, ',', '.');
-                                                // echo $X_harga_satuan;
-                                            } else {
-                                                echo "0";
-                                                $X_harga_satuan = 0;
-                                                $X_harga_satuan_X =0;
-                                            }
-
-                                            ?>
-                                        </td>
-
-
-                                        <!-- satuan -->
-                                        <td style="text-align:center"><?php echo $list_data->satuan; ?></td>
-
-                                        <!-- nominal Persediaan -->
-                                        <td style="text-align:right">
-                                            <?php
-                                            if ($list_data->jumlah_sediaan and $list_data->jumlah_sediaan > 0) {
-                                                echo nominal($list_data->jumlah_sediaan);
-                                                $stock_persediaan = $list_data->jumlah_sediaan;
-                                            } else {
-                                                echo "0";
-                                                $stock_persediaan = 0;
-                                            }
-                                            ?>
-                                        </td>
-
-                                        <!-- Jumlah belanja/beli -->
-                                        <!-- <td style="text-align:right">
-                                            <?php
-
-                                            // DATA SPOP DENGAN BELANJA BARU
-                                            // if ($list_data->jumlah_belanja and $list_data->jumlah_belanja > 0) {
-                                            //     echo nominal($list_data->jumlah_belanja);
-                                            //     $x_jumlah_belanja = $list_data->jumlah_belanja;
-                                            // } else {
-                                            //     echo "0";
-                                            //     $x_jumlah_belanja = 0;
-                                            // }
-
-
-                                            ?>
-                                        </td> -->
-
-                                        <!-- Jumlah penjualan -->
-                                        <td style="text-align:right">
-                                            <?php
-
-                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
-                                            echo nominal($list_data->penjualan);
-
-
-                                            ?>
-                                        </td>
-
-                                        <!-- Jumlah Pecah Satuan -->
-                                        <td style="text-align:right">
-                                            <?php
-
-                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
-                                            echo nominal($list_data->pecah_satuan);
-                                            
-
-
-                                            ?>
-                                        </td>
-
-                                        <!-- Jumlah penjualan -->
-                                        <td style="text-align:right">
-                                            <?php
-
-                                            // echo nominal($Jumlah_penjualan_per_uuid_persediaan);
-                                            echo nominal($list_data->bahan_produksi);
-
-                                            ?>
-                                        </td>
-
-                                        <!-- Sisa stock -->
-                                        <td style="text-align:right">
-                                            <?php
-                                            // echo nominal($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual); 
-                                            if ($Jumlah_penjualan_per_uuid_persediaan > 0) {
-                                                if ($list_data->jumlah_sediaan > 0) {
-                                                    echo nominal($list_data->jumlah_sediaan - $Jumlah_penjualan_per_uuid_persediaan);
-                                                    $Sisa_STOCK = $list_data->jumlah_sediaan - $Jumlah_penjualan_per_uuid_persediaan;
-                                                } else {
-                                                    echo "0";
-                                                    $Sisa_STOCK = 0;
-                                                }
-                                            } else {
-                                                if ($list_data->jumlah_sediaan > 0) {
-                                                    echo nominal($list_data->jumlah_sediaan);
-                                                    $Sisa_STOCK = $list_data->jumlah_sediaan;
-                                                } else {
-                                                    echo "0";
-                                                    $Sisa_STOCK = 0;
-                                                }
-                                            }
-
-                                            ?>
-                                        </td>
-                                        <!-- 
-                                        <td style="text-align:right">
-                                            <?php
-
-                                            // echo nominal(($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
-
-                                            // $TOTAL_PERSEDIAAN = $TOTAL_PERSEDIAAN + (($stock_persediaan + $x_jumlah_belanja - $x_jumlah_terjual) * $X_harga_satuan);
-                                            ?>
-                                        </td> -->
-
-                                        <!-- NOMINAL PERSEDIAAN -->
-                                        <td style="text-align:right">
-
-                                            <?php
-
-                                            if ($Sisa_STOCK > 0) {
-                                                // echo $X_harga_satuan_X;
-                                                // echo "<br/>";
-                                                // echo $Sisa_STOCK;
-                                                // echo "<br/>";
-                                                // echo $list_data->harga_satuan_persediaan;
-                                                // echo "<br/>";
-                                                // // $GET_NominalBarang = $Sisa_STOCK * $list_data->harga_satuan_persediaan;
-                                                // // $GET_NominalBarang = $Sisa_STOCK * $X_harga_satuan_X;
-
-                                                // $X_harga_satuan_X = number_format($X_harga_satuan_X, 0, ',', '.');
-                                                // echo $X_harga_satuan_X;
-                                                // echo "<br/>";
-
-                                                // $X_LIST_harga_satuan_X = number_format($list_data->harga_satuan_persediaan, 0, ',', '.');
-                                                // $X_LIST_harga_satuan_X = number_format($X_LIST_harga_satuan_X, 0, '.', '');
-                                                // echo $X_LIST_harga_satuan_X;
-                                                // echo "<br/>";
-
-
-                                                $X_Sisa_STOCK_X = number_format($Sisa_STOCK, 0, ',', '.');
-
-
-                                                // $GET_NominalBarang = $X_Sisa_STOCK_X * $X_LIST_harga_satuan_X;
-                                                // echo $X_Sisa_STOCK_X;
-                                                // echo "<br/>";
-                                                // echo number_format($GET_NominalBarang, 0, ',', '.');
-                                                // echo "<br/>";
-
-
-                                                
-                                                $GET_NominalBarang_X = $X_Sisa_STOCK_X * $list_data->harga_satuan_persediaan;
-                                                // echo $GET_NominalBarang_X;
-                                                // echo "<br/>";
-                                                echo number_format($GET_NominalBarang_X, 2, ',', '.');
-                                                echo "<br/>";
-
-                                                
-
-                                                $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $GET_NominalBarang_X;
-                                            } else {
-                                                echo "0";
-                                            }
-                                            ?>
-
-                                        </td>
-
-                                        <!-- TOTAL PERSEDIAAN -->
-                                        <!-- <td style="text-align:right">
-
-                                            <?php
-                                            // $TOTAL_PERSEDIAAN_X = $TOTAL_PERSEDIAAN_X + $list_data->nilai_persediaan;
-                                            // echo nominal($TOTAL_PERSEDIAAN_X);
-                                            ?>
-
-                                        </td> -->
-
-                                    </tr>
-
-                                <?php
-                                    // } //if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0)
+                                $footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit);
+                                $footer_cells[] = '';
+                                $idx_foot_total_10 = persediaan_list_col_index_total_10();
+                                $idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
+                                $idx_foot_nominal = array();
+                                foreach (persediaan_list_unit_columns() as $uf_foot) {
+                                    if (persediaan_field_has_nominal_column($uf_foot)) {
+                                        $idx_foot_nominal[] = persediaan_list_col_index_unit_nominal($uf_foot);
+                                    }
+                                }
+                                foreach ($footer_cells as $col_foot => $foot_val) {
+                                    $foot_val = (string) $foot_val;
+                                    $cls = '';
+                                    if ($foot_val === 'Total') {
+                                        $cls = ' persediaan-foot-total-label';
+                                    } elseif ($foot_val !== '' && (
+                                        $col_foot === $idx_foot_total_10
+                                        || $col_foot === $idx_foot_nilai
+                                        || in_array($col_foot, $idx_foot_nominal, true)
+                                    )) {
+                                        $cls = ' persediaan-foot-num';
+                                    }
+                                    echo '<th class="' . trim($cls) . '">' . htmlspecialchars($foot_val, ENT_QUOTES, 'UTF-8') . '</th>';
                                 }
                                 ?>
+                            </tr>
+                        </tfoot>
+                    </table>
 
-
-                            </tbody>
-
-                            <tfoot>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <!-- <th></th> -->
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th>TOTAL PERSEDIAAN</th>
-                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN); 
-                                                                        ?></th> -->
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
-                                    <!-- <th style="text-align:right"><?php //echo nominal($TOTAL_PERSEDIAAN_X); 
-                                                                        ?></th> -->
-
-                                </tr>
-                            </tfoot>
-
-                        </table>
-                    </div>
-                    <!-- /.card-body -->
                 </div>
             </div>
         </div>
     </section>
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
-<style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
+<style>
+    #table-stock-persediaan tfoot th {
+        font-weight: bold;
+        background: #f8f9fa;
+        padding: 6px 8px;
+    }
+    #table-stock-persediaan tfoot th.persediaan-foot-total-label {
+        text-align: right;
+        white-space: nowrap;
+    }
+    #table-stock-persediaan tfoot th.persediaan-foot-num {
+        text-align: right;
+        white-space: nowrap;
+    }
+    #swal-excel-progress {
+        height: 100%;
+        width: 15%;
+        background: #28a745;
+        border-radius: 5px;
+        transition: width 0.2s ease;
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 600,
-            "scrollX": true
+window.addEventListener('load', function() {
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.dataTable) {
+        console.error('Stock: jQuery/DataTables belum dimuat. Muat ulang halaman.');
+        return;
+    }
+    var $ = window.jQuery;
+    var urlExcelStock = <?php echo json_encode($url_excel_stock); ?>;
+    var excelProgressTimer = null;
+    var bulanStockAktif = <?php echo json_encode($bulan_tampil); ?>;
+
+    $('#bulan_persediaan').on('change', function() {
+        var bulan = $(this).val() || '';
+        if (!bulan || bulan === bulanStockAktif) {
+            return;
+        }
+        bulanStockAktif = bulan;
+        $('#form-stock-bulan').trigger('submit');
+    });
+
+    try {
+        if ($.fn.DataTable.isDataTable('#table-stock-persediaan')) {
+            $('#table-stock-persediaan').DataTable().destroy();
+        }
+        $('#table-stock-persediaan').DataTable({
+            scrollY: 500,
+            scrollX: true,
+            scrollCollapse: true,
+            pageLength: 25,
+            order: [[3, 'asc']],
+            columnDefs: [
+                { targets: 0, orderable: false },
+                { targets: 3, type: 'string' }
+            ],
+            language: {
+                emptyTable: 'Belum ada data',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+                infoFiltered: '(disaring dari _MAX_ total data)',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                search: 'Cari:',
+                zeroRecords: 'Tidak ada data yang cocok',
+                paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+            }
+        });
+    } catch (dtErr) {
+        console.warn('DataTable stock:', dtErr);
+    }
+
+    function parseExcelFilename(disposition) {
+        if (!disposition) {
+            return 'Stock_Persediaan.xlsx';
+        }
+        var match = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+        var name = (match && match[1] ? match[1] : '').replace(/['"]/g, '').trim();
+        try {
+            return decodeURIComponent(name) || 'Stock_Persediaan.xlsx';
+        } catch (e) {
+            return name || 'Stock_Persediaan.xlsx';
+        }
+    }
+
+    function tampilkanSwalExcelProgress() {
+        Swal.fire({
+            title: 'Memproses Excel',
+            html: '<p style="margin:0 0 10px;font-size:14px;">Mohon tunggu, sedang menyiapkan file export...</p>'
+                + '<div style="height:10px;background:#e9ecef;border-radius:5px;overflow:hidden;">'
+                + '<div id="swal-excel-progress"></div></div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function() {
+                var bar = document.getElementById('swal-excel-progress');
+                var pct = 15;
+                if (excelProgressTimer) {
+                    clearInterval(excelProgressTimer);
+                }
+                excelProgressTimer = setInterval(function() {
+                    pct = Math.min(92, pct + 6);
+                    if (bar) {
+                        bar.style.width = pct + '%';
+                    }
+                }, 180);
+            },
+            willClose: function() {
+                if (excelProgressTimer) {
+                    clearInterval(excelProgressTimer);
+                    excelProgressTimer = null;
+                }
+            }
+        });
+    }
+
+    function selesaiSwalExcelProgress() {
+        var bar = document.getElementById('swal-excel-progress');
+        if (bar) {
+            bar.style.width = '100%';
+        }
+        if (excelProgressTimer) {
+            clearInterval(excelProgressTimer);
+            excelProgressTimer = null;
+        }
+        Swal.close();
+    }
+
+    function unduhExcelDariResponse(response) {
+        if (!response.ok) {
+            throw new Error('Export Excel gagal (HTTP ' + response.status + ')');
+        }
+        var ct = (response.headers.get('Content-Type') || '').toLowerCase();
+        var disposition = response.headers.get('Content-Disposition');
+        return response.blob().then(function(blob) {
+            if (ct.indexOf('html') !== -1 || (blob.size < 8000 && disposition === null)) {
+                return blob.text().then(function(txt) {
+                    if (txt.indexOf('<!DOCTYPE') !== -1 || txt.indexOf('<html') !== -1) {
+                        throw new Error('Sesi habis atau server mengembalikan halaman HTML. Login ulang lalu coba lagi.');
+                    }
+                    throw new Error('Respon server bukan file Excel.');
+                });
+            }
+            return {
+                blob: blob,
+                filename: parseExcelFilename(disposition)
+            };
+        });
+    }
+
+    function triggerDownloadBlob(result) {
+        var link = document.createElement('a');
+        var objectUrl = window.URL.createObjectURL(result.blob);
+        link.href = objectUrl;
+        link.download = result.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
+    }
+
+    $('#btn-cetak-excel-stock').on('click', function(e) {
+        e.preventDefault();
+        if (!urlExcelStock) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export Excel tidak tersedia.' });
+            return;
+        }
+        var bulan = $('#bulan_persediaan').val() || '';
+        var formData = new FormData();
+        formData.append('bulan_persediaan', bulan);
+
+        tampilkanSwalExcelProgress();
+
+        fetch(urlExcelStock, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: 'File Excel stock persediaan berhasil diunduh.',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            if (excelProgressTimer) {
+                clearInterval(excelProgressTimer);
+                excelProgressTimer = null;
+            }
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Terjadi kesalahan saat export Excel.'
+            });
         });
     });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
+});
 </script>
