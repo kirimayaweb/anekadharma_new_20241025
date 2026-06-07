@@ -8,6 +8,7 @@ class Buku_besar extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model(array('Tbl_pembelian_model', 'Buku_besar_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');

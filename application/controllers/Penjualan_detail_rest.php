@@ -6,6 +6,7 @@ class Penjualan_detail_rest extends REST_Controller {
 
     function __construct($config = 'rest') {
         parent::__construct($config);
+        is_login();
     }
 
     // show data mahasiswa

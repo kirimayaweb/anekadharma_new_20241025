@@ -28,7 +28,7 @@
                             <a class="nav-link" id="tab-generate-persediaan" data-toggle="pill" href="#panel-generate-persediaan" role="tab" aria-controls="panel-generate-persediaan" aria-selected="false">Generate Persediaan</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="tab-recalculate" data-toggle="pill" href="#panel-recalculate" role="tab" aria-controls="panel-recalculate" aria-selected="false">Recalculate</a>
+                            <a class="nav-link" id="tab-compare-manual" data-toggle="pill" href="#panel-compare-manual" role="tab" aria-controls="panel-compare-manual" aria-selected="false">Compare apps DB - Manual Data</a>
                         </li>
                     </ul>
                 </div>
@@ -260,17 +260,18 @@
                                 <div class="col-md-12">
                                     <h5 class="mb-2">Generate &amp; Recalculate data persediaan</h5>
                                     <p class="text-muted small mb-3">
-                                        <strong>Fase 1 — Generate:</strong> salin dari <strong>bulan sebelumnya</strong> (urut nama barang).
-                                        Cocokkan <strong>nama barang, satuan, hpp, spop</strong> — update jika sudah ada di bulan target, insert jika belum.
-                                        <strong>Fase 2 — Recalculate beli:</strong> proses semua <code>tbl_pembelian</code> + <code>tbl_pembelian_jasa</code> bulan target;
-                                        tambah field <strong>beli</strong> (atau buat record persediaan baru).
-                                        Tab <strong>Recalculate</strong> tetap untuk proses lengkap pembelian + penjualan.
-                                        <em>Hanya user Admin / Administrator (id_user_level 1, 2, atau 99).</em>
+                                        <strong>Fase 1 — Generate:</strong> salin dari <strong>bulan sebelumnya</strong> hanya jika <strong>sa &gt; 0</strong> atau <strong>total_10 &gt; 0</strong>.
+                                        Record sumber <strong>sa=0 &amp; total_10=0</strong> dilewati. Baris target dengan kondisi sama dihapus.
+                                        <strong>Fase 2 — Pembelian:</strong> cocokkan nama+satuan+hpp+spop → tambah <strong>beli</strong> dan <strong>total_10 += jumlah beli</strong>; jika belum ada → insert (sa=0).
+                                        Duplikat <strong>beli=0</strong> dengan spop kosong/0 dihapus jika ada baris sama (namabarang+sa+satuan+hpp, satuan tidak case-sensitive) yang spop-nya terisi.
+                                        <strong>Fase 3 — Penjualan:</strong> cocokkan nama+satuan+hpp → jumlah masuk kolom <strong>unit</strong> + field <strong>penjualan</strong>;
+                                        <strong>total_10 = (sa+beli) − penjualan</strong> (sisa stock = total_10 setelah update).
+                                        <em>Hanya user <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.</em>
                                     </p>
                                     <?php if (empty($can_generate_persediaan)) { ?>
                                     <div class="alert alert-warning py-2">
-                                        Akun Anda tidak memiliki akses generate. Diperlukan level <strong>Admin</strong> / <strong>Administrator</strong>
-                                        (<code>id_user_level</code> = 1, 2, atau 99).
+                                        Akun Anda tidak memiliki akses Generate &amp; Recalculate.
+                                        Hanya login <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.
                                     </div>
                                     <?php } ?>
                                 </div>
@@ -434,65 +435,131 @@
                             </div>
                         </div>
 
-                        <!-- TAB 4: RECALCULATE -->
+                        <!-- TAB 4: COMPARE APPS DB - MANUAL DATA -->
                         <?php
-                        $recalc_bulan_default = isset($bulan_tampil) && preg_match('/^\d{4}-\d{2}$/', $bulan_tampil)
+                        $compare_bulan_default = isset($bulan_tampil) && preg_match('/^\d{4}-\d{2}$/', $bulan_tampil)
                             ? $bulan_tampil
                             : date('Y-m');
-                        $recalc_parts = explode('-', $recalc_bulan_default);
-                        $recalc_bulan_num = isset($recalc_parts[1]) ? (int) $recalc_parts[1] : (int) date('n');
-                        $recalc_tahun_num = isset($recalc_parts[0]) ? (int) $recalc_parts[0] : (int) date('Y');
+                        $compare_parts = explode('-', $compare_bulan_default);
+                        $compare_bulan_num = isset($compare_parts[1]) ? (int) $compare_parts[1] : (int) date('n');
+                        $compare_tahun_num = isset($compare_parts[0]) ? (int) $compare_parts[0] : (int) date('Y');
                         ?>
-                        <div class="tab-pane fade" id="panel-recalculate" role="tabpanel" aria-labelledby="tab-recalculate">
+                        <div class="tab-pane fade" id="panel-compare-manual" role="tabpanel" aria-labelledby="tab-compare-manual">
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <h5 class="mb-2">Recalculate data persediaan dari pembelian &amp; penjualan</h5>
+                                    <h5 class="mb-2">Compare apps DB — Manual Data</h5>
                                     <p class="text-muted small mb-0">
-                                        Cek <code>tbl_pembelian</code>, <code>tbl_pembelian_jasa</code>, <code>tbl_penjualan</code> bulan terpilih.
-                                        Baris pembelian yang belum ada di persediaan ditambah (cocok: uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop).
-                                        Update <strong>beli</strong> dari pembelian dan <strong>penjualan</strong> + kolom unit dari penjualan.
-                                        Proses via modal — halaman tetap di sini.
+                                        Bandingkan data <strong>persediaan</strong> bulan terpilih dengan tabel manual di database.
+                                        Cocokkan berdasarkan <strong>nama barang + satuan + hpp + spop</strong>.
+                                        Kolom kosong = record tidak ada di sisi tersebut.
                                     </p>
+                                    <?php if (empty($can_compare_persediaan)) { ?>
+                                    <div class="alert alert-warning py-2">
+                                        Akun Anda tidak memiliki akses Compare.
+                                        Hanya login <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.
+                                    </div>
+                                    <?php } ?>
                                 </div>
                             </div>
                             <div class="row mb-3 align-items-end">
-                                <div class="col-md-3 col-sm-6 mb-2">
-                                    <label for="recalc_bulan_persediaan">Bulan</label>
-                                    <select id="recalc_bulan_persediaan" class="form-control">
+                                <div class="col-md-2 col-sm-6 mb-2">
+                                    <label for="compare_bulan_persediaan">Bulan</label>
+                                    <select id="compare_bulan_persediaan" class="form-control">
                                         <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
-                                            <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $recalc_bulan_num) ? ' selected' : ''; ?>>
+                                            <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $compare_bulan_num) ? ' selected' : ''; ?>>
                                                 <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
                                             </option>
                                         <?php } ?>
                                     </select>
                                 </div>
-                                <div class="col-md-3 col-sm-6 mb-2">
-                                    <label for="recalc_tahun_persediaan">Tahun</label>
-                                    <select id="recalc_tahun_persediaan" class="form-control">
+                                <div class="col-md-2 col-sm-6 mb-2">
+                                    <label for="compare_tahun_persediaan">Tahun</label>
+                                    <select id="compare_tahun_persediaan" class="form-control">
                                         <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
-                                            <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $recalc_tahun_num) ? ' selected' : ''; ?>>
+                                            <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $compare_tahun_num) ? ' selected' : ''; ?>>
                                                 <?php echo (int) $th; ?>
                                             </option>
                                         <?php } ?>
                                     </select>
                                 </div>
-                                <div class="col-md-6 col-sm-12 mb-2">
-                                    <button type="button" id="btn-recalculate-persediaan-tab" class="btn btn-info btn-lg">
-                                        <i class="fas fa-sync-alt"></i> Recalculate
-                                    </button>
-                                    <button type="button" id="btn-cetak-excel-recalculate" class="btn btn-success btn-lg ml-1">
-                                        <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                <div class="col-md-4 col-sm-12 mb-2">
+                                    <label for="compare_tabel_pilihan">Tabel database</label>
+                                    <select id="compare_tabel_pilihan" class="form-control">
+                                        <option value="">— Muat daftar tabel —</option>
+                                    </select>
+                                    <small class="text-muted">Minimal kolom: nama barang, satuan, hpp/harga_satuan, spop</small>
+                                </div>
+                                <div class="col-md-4 col-sm-12 mb-2">
+                                    <button type="button" id="btn-compare-tabel" class="btn btn-info btn-lg"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                        <i class="fas fa-columns"></i> Compare
                                     </button>
                                 </div>
                             </div>
-                            <div class="alert alert-secondary py-2" id="recalc-info-ringkas">
-                                <strong>Bulan:</strong> <span id="recalc-label-bulan">—</span>
-                                &nbsp;|&nbsp; <strong>Persediaan:</strong> <span id="recalc-count-persediaan">—</span>
-                                &nbsp;|&nbsp; <strong>Pembelian:</strong> <span id="recalc-count-pembelian">—</span>
-                                &nbsp;|&nbsp; <strong>Penjualan:</strong> <span id="recalc-count-penjualan">—</span>
+                            <div class="alert alert-secondary py-2" id="compare-info-ringkas">
+                                <strong>Bulan:</strong> <span id="compare-label-bulan">—</span>
+                                &nbsp;|&nbsp; <strong>Tabel:</strong> <span id="compare-label-tabel">—</span>
+                                &nbsp;|&nbsp; <strong>Total_10 kosong:</strong> <span id="compare-count-total10">—</span>
+                                &nbsp;|&nbsp; <strong>Tidak di tabel manual:</strong> <span id="compare-count-tidak">—</span>
+                                &nbsp;|&nbsp; <strong>Tidak di persediaan:</strong> <span id="compare-count-hanya">—</span>
+                                &nbsp;|&nbsp; <strong>Cocok:</strong> <span id="compare-count-cocok">—</span>
                             </div>
-                            <div class="alert alert-info py-2 mb-0" id="recalc-status">
-                                Pilih bulan dan tahun, lalu klik <strong>Recalculate</strong>.
+                            <div class="alert alert-info py-2 mb-3" id="compare-status">
+                                Pilih bulan, tahun, dan tabel — lalu klik <strong>Compare</strong>.
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap mt-3">
+                                <span>1. Persediaan Total_10 Kosong / 0 <span id="compare-badge-total10" class="badge badge-secondary">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="total10_kosong"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-total10" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Namabarang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Sa</th><th>Beli</th><th>Total_10</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>2. Persediaan Tidak Ada di Tabel Manual <span id="compare-badge-tidak" class="badge badge-warning">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="tidak_di_tabel"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                    <thead><tr>
+                                        <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
+                                        <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>3. Tabel Manual Tidak Ada di Persediaan <span id="compare-badge-hanya" class="badge badge-info">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="hanya_tabel"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-hanya" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                    <thead><tr>
+                                        <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
+                                        <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>4. Data Cocok (Persediaan &amp; Tabel Manual) <span id="compare-badge-cocok" class="badge badge-success">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="cocok"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap">
+                                <table id="table-compare-cocok" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                    <thead><tr>
+                                        <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
+                                        <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -528,6 +595,7 @@
     #swal-rekap-log .rekap-log-ok { color: #155724; }
     #swal-rekap-log .rekap-log-run { color: #004085; font-weight: bold; }
     #btn-generate-persediaan-bulan:disabled { cursor: not-allowed; opacity: 0.72; }
+    #btn-compare-tabel:disabled { cursor: not-allowed; opacity: 0.72; }
     #btn-generate-persediaan-bulan.btn-success { color: #fff; }
     #btn-generate-persediaan-bulan.btn-danger { color: #fff; }
     #gen-persediaan-status.alert-success { color: #155724; background: #d4edda; border-color: #c3e6cb; }
@@ -567,6 +635,25 @@
         text-align: right;
         white-space: nowrap;
     }
+    .compare-dt-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+    .compare-dt-wrap .dataTables_wrapper {
+        width: 100%;
+    }
+    .compare-dt-wrap .dataTables_scrollHead,
+    .compare-dt-wrap .dataTables_scrollBody {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+    }
+    .compare-dt-wrap .dataTables_scrollBody {
+        max-height: 400px;
+    }
+    .compare-dt-wrap table.dataTable thead th,
+    .compare-dt-wrap table.dataTable tbody td {
+        white-space: nowrap;
+    }
 </style>
 
 <script>
@@ -586,7 +673,11 @@ window.addEventListener('load', function() {
     var urlExcelGenRecalc = <?php echo json_encode(isset($url_excel_gen_recalc) ? $url_excel_gen_recalc : site_url('Persediaan/excel_gen_recalc')); ?>;
     var urlRecalculateExcel = <?php echo json_encode(isset($url_recalculate_excel) ? $url_recalculate_excel : site_url('Persediaan/excel_recalculate')); ?>;
     var urlExcelPersediaan = <?php echo json_encode(isset($url_excel_persediaan) ? $url_excel_persediaan : site_url('Persediaan/excel')); ?>;
+    var urlCompareTabelList = <?php echo json_encode(isset($url_compare_tabel_list) ? $url_compare_tabel_list : site_url('Persediaan/ajax_compare_tabel_list')); ?>;
+    var urlCompareTabelRun = <?php echo json_encode(isset($url_compare_tabel_run) ? $url_compare_tabel_run : site_url('Persediaan/ajax_compare_tabel_run')); ?>;
+    var urlCompareTabelExcel = <?php echo json_encode(isset($url_compare_tabel_excel) ? $url_compare_tabel_excel : site_url('Persediaan/excel_compare_tabel')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
+    var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
 
     function getBulanTargetGenerate() {
@@ -668,7 +759,7 @@ window.addEventListener('load', function() {
             $('#gen-count-target').text(typeof res.count_target !== 'undefined' ? res.count_target : '0');
 
             if (res.user_can_generate === false || !userCanGeneratePersediaan) {
-                setStatusGeneratePersediaan('warning', res.message || 'Hanya Admin / Administrator (level 1, 2, atau 99) yang dapat generate.');
+                setStatusGeneratePersediaan('warning', res.message || 'Hanya admin.id@gmail.com dan iwanesia.id@gmail.com yang dapat generate.');
                 updateTombolGeneratePersediaan('denied');
             } else if (!res.can_generate) {
                 setStatusGeneratePersediaan('warning', res.message || 'Belum dapat generate (bulan sumber kosong).');
@@ -752,7 +843,7 @@ window.addEventListener('load', function() {
             html += '</tbody></table></div>';
         }
 
-        html += '<p class="text-info small mt-2 mb-0"><strong>Catatan:</strong> Tombol <strong>Generate &amp; Recalculate</strong> menjalankan fase 1 (salin bulan sumber, total_10&gt;0), fase 2 (update beli dari pembelian), dan fase 3 (update penjualan + kolom unit + total_10). Penjualan tidak insert record baru.</p>';
+        html += '<p class="text-info small mt-2 mb-0"><strong>Catatan:</strong> Fase 1: hanya salin sumber dengan sa atau total_10 &gt; 0; sa=0 &amp; total_10=0 dilewati/dihapus di target. Fase 2–3: beli/penjualan seperti biasa.</p>';
         if ((a.grup_duplikat_uuid_barang_sumber || 0) > 0) {
             html += '<p class="text-muted small mb-0">uuid_barang ganda di sumber (' + a.grup_duplikat_uuid_barang_sumber
                 + ' grup) diperbaiki otomatis sebelum salin agar tiap baris sumber unik.</p>';
@@ -1147,6 +1238,15 @@ window.addEventListener('load', function() {
     }
 
     function runGenerateRecalculateBatch(bulanKey, offset, runner) {
+        if (!userCanGeneratePersediaan) {
+            runner.active = false;
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Generate & Recalculate hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+            });
+            return;
+        }
         var fd = new FormData();
         fd.append('bulan', bulanKey);
         fd.append('offset', offset);
@@ -1221,7 +1321,9 @@ window.addEventListener('load', function() {
                 + '<br/>Penjualan diproses: <strong>' + (s.total_penjualan || 0) + '</strong> — '
                 + 'Update penjualan: <strong>' + (s.penjualan_update || 0) + '</strong>'
                 + (s.penjualan_tidak_cocok ? ', Tidak cocok: <strong>' + s.penjualan_tidak_cocok + '</strong>' : '')
-                + (s.penjualan_gagal ? ', Gagal: <strong>' + s.penjualan_gagal + '</strong>' : '');
+                + (s.penjualan_gagal ? ', Gagal: <strong>' + s.penjualan_gagal + '</strong>' : '')
+                + '<br/>Hapus duplikat spop kosong/0 (beli=0): <strong>' + (s.cleanup_spop_kosong || 0) + '</strong>'
+                + ((s.cleanup_spop_kosong_grup || 0) > 0 ? ' (' + s.cleanup_spop_kosong_grup + ' grup)' : '');
             $('#gen-recalc-summary').html(summaryHtml);
             genRecalcSummaryHtml = summaryHtml;
             renderGenRecalcDataTables();
@@ -1251,6 +1353,14 @@ window.addEventListener('load', function() {
 
     $('#btn-generate-persediaan-bulan').on('click', function(e) {
         e.preventDefault();
+        if (!userCanGeneratePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                html: 'Generate &amp; Recalculate hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.'
+            });
+            return false;
+        }
         if ($(this).prop('disabled')) {
             return false;
         }
@@ -1296,9 +1406,9 @@ window.addEventListener('load', function() {
                 icon: 'question',
                 title: 'Konfirmasi Generate & Recalculate',
                 html: '<p>Bulan target: <strong>' + bulanKey + '</strong></p>'
-                    + '<p class="small text-muted mb-0">Fase 1: salin/update dari bulan sumber (total_10&gt;0).<br/>'
-                    + 'Fase 2: pembelian → update/insert field <strong>beli</strong>.<br/>'
-                    + 'Fase 3: penjualan → update <strong>penjualan</strong>, kolom unit, &amp; <strong>total_10</strong> (sa+beli-penjualan).</p>',
+                    + '<p class="small text-muted mb-0">Fase 1: salin sumber (sa atau total_10 &gt; 0), hapus target sa=0 &amp; total_10=0.<br/>'
+                    + 'Fase 2: pembelian → beli += jumlah, total_10 += jumlah (nama+satuan+hpp+spop).<br/>'
+                    + 'Fase 3: penjualan → unit + penjualan += jumlah, total_10 -= jumlah (nama+satuan+hpp).</p>',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Generate & Recalculate',
                 cancelButtonText: 'Batal',
@@ -1339,114 +1449,6 @@ window.addEventListener('load', function() {
         return false;
     });
 
-    function getBulanKeyRecalculate() {
-        var bulan = parseInt($('#recalc_bulan_persediaan').val(), 10);
-        var tahun = parseInt($('#recalc_tahun_persediaan').val(), 10);
-        if (!bulan || !tahun) return '';
-        return tahun + '-' + String(bulan).padStart(2, '0');
-    }
-
-    function setRecalcStatus(type, html) {
-        var $el = $('#recalc-status');
-        $el.removeClass('alert-info alert-success alert-danger alert-warning');
-        $el.addClass(type === 'success' ? 'alert-success' : (type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info')));
-        $el.html(html);
-    }
-
-    function refreshRecalcInfoRingkas() {
-        var bulanKey = getBulanKeyRecalculate();
-        if (!bulanKey) return;
-        $.ajax({
-            url: urlAnalisaRecalculatePersediaan,
-            type: 'POST',
-            dataType: 'json',
-            data: { bulan: bulanKey }
-        }).done(function(a) {
-            if (!a || !a.ok) return;
-            $('#recalc-label-bulan').text(a.bulan_label || bulanKey);
-            $('#recalc-count-persediaan').text(a.total_persediaan || 0);
-            $('#recalc-count-pembelian').text((a.total_pembelian_all || 0) + ' (barang:' + (a.total_pembelian || 0) + ' jasa:' + (a.total_pembelian_jasa || 0) + ')');
-            $('#recalc-count-penjualan').text(a.total_penjualan || 0);
-        });
-    }
-
-    function buildHtmlAnalisaRecalculate(a) {
-        var html = '<div style="text-align:left;font-size:13px;">';
-        html += '<p><strong>Bulan:</strong> ' + (a.bulan_label || '') + ' (' + (a.tanggal_beli || '') + ')</p>';
-        html += '<table class="table table-sm table-bordered mb-2" style="font-size:12px;">';
-        html += '<tr><td>Record persediaan</td><td class="text-right"><strong>' + (a.total_persediaan || 0) + '</strong></td></tr>';
-        html += '<tr><td>tbl_pembelian</td><td class="text-right">' + (a.total_pembelian || 0) + '</td></tr>';
-        html += '<tr><td>tbl_pembelian_jasa</td><td class="text-right">' + (a.total_pembelian_jasa || 0) + '</td></tr>';
-        html += '<tr><td>tbl_penjualan</td><td class="text-right">' + (a.total_penjualan || 0) + '</td></tr>';
-        html += '<tr><td>Pembelian sudah di persediaan</td><td class="text-right text-success"><strong>' + (a.pembelian_sudah_ada || 0) + '</strong></td></tr>';
-        html += '<tr><td>Pembelian belum di persediaan</td><td class="text-right ' + ((a.pembelian_belum_ada || 0) > 0 ? 'text-warning' : '') + '"><strong>' + (a.pembelian_belum_ada || 0) + '</strong></td></tr>';
-        html += '<tr><td>Penjualan sudah di persediaan</td><td class="text-right text-success"><strong>' + (a.penjualan_sudah_ada || 0) + '</strong></td></tr>';
-        html += '<tr><td>Penjualan belum di persediaan</td><td class="text-right ' + ((a.penjualan_belum_ada || 0) > 0 ? 'text-warning' : '') + '"><strong>' + (a.penjualan_belum_ada || 0) + '</strong></td></tr>';
-        html += '</table>';
-        if (a.penjelasan) {
-            html += '<p class="text-muted small">' + a.penjelasan + '</p>';
-        }
-        if (!a.can_proceed) {
-            html += '<p class="text-danger small mb-0">' + (a.message_empty || 'Tidak dapat recalculate — tidak ada data pembelian/penjualan pada bulan ini.') + '</p>';
-        }
-        html += '</div>';
-        return html;
-    }
-
-    var recalcLogLines = [];
-
-    function escapeHtmlRecalc(s) {
-        if (s == null) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
-    function htmlImportPenjualanBaru(importPenj) {
-        if (!importPenj) return '';
-        var html = '';
-        if (importPenj.created > 0 && importPenj.created_details && importPenj.created_details.length) {
-            html += '<hr/><div class="text-left" style="max-height:220px;overflow:auto;font-size:12px;">'
-                + '<strong>Baris baru dari import penjualan (' + importPenj.created + '):</strong><br/>';
-            importPenj.created_details.forEach(function(d) {
-                html += '<div class="border-left border-warning pl-2 my-1">'
-                    + '<strong>ID Penjualan:</strong> ' + (d.id_penjualan || '-') + '<br/>'
-                    + '<strong>Nama:</strong> ' + escapeHtmlRecalc(d.nama_barang || '') + '<br/>'
-                    + '<strong>Satuan penjualan:</strong> ' + escapeHtmlRecalc(d.satuan_penjualan || '')
-                    + ' → <strong>disimpan:</strong> ' + escapeHtmlRecalc(d.satuan_disimpan || '') + '<br/>'
-                    + '<strong>Harga:</strong> ' + escapeHtmlRecalc(d.harga_satuan || '')
-                    + ' | <strong>ID Persediaan baru:</strong> ' + (d.id_persediaan || '-') + '<br/>'
-                    + '<strong>Kunci sync:</strong> <code>' + escapeHtmlRecalc(d.sync_key || '') + '</code><br/>'
-                    + '<em>' + escapeHtmlRecalc(d.alasan_insert || '') + '</em>'
-                    + '</div>';
-            });
-            html += '</div>';
-        }
-        if (importPenj.skipped_sudah_ada > 0) {
-            html += '<br/><small class="text-success">Skip copy ulang: ' + importPenj.skipped_sudah_ada
-                + ' penjualan sudah ada di persediaan (nama+satuan+harga cocok).</small>';
-        }
-        return html;
-    }
-
-    function appendRecalcLog(line, cls) {
-        recalcLogLines.push('<div class="' + (cls || '') + '">' + line + '</div>');
-        if (recalcLogLines.length > 80) recalcLogLines.shift();
-    }
-
-    function htmlRecalcModalProgress(data, faseLabel) {
-        var total = data.total_phase || data.total_penjualan || data.total_persediaan || 1;
-        var selesai = data.offset_selesai || 0;
-        var pct = total > 0 ? Math.min(100, Math.round((selesai / total) * 100)) : 0;
-        var html = '<p style="margin:0 0 6px;"><strong>' + faseLabel + '</strong> — ' + selesai + ' / ' + total + '</p>';
-        html += '<div style="height:8px;background:#e9ecef;border-radius:4px;overflow:hidden;margin-bottom:8px;">';
-        html += '<div id="swal-recalc-progress" style="height:100%;width:' + pct + '%;background:#17a2b8;border-radius:4px;"></div></div>';
-        html += '<div id="swal-recalc-log">' + recalcLogLines.join('') + '</div>';
-        return html;
-    }
-
     function parseJsonFetchResponse(r) {
         return r.text().then(function(text) {
             var trimmed = (text || '').trim();
@@ -1464,213 +1466,283 @@ window.addEventListener('load', function() {
         });
     }
 
-    function runRecalculateBatch(bulanKey, offset, recalcRunning, isStart) {
-        var fd = new FormData();
-        fd.append('bulan', bulanKey);
-        fd.append('offset', offset);
-        fd.append('limit', 40);
-        if (isStart) {
-            fd.append('start', '1');
-        }
+    var compareDtStore = {};
+    var compareTablesLoaded = false;
+    var compareLastResult = null;
+    var compareDtLang = {
+        emptyTable: 'Belum ada data',
+        info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+        infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+        search: 'Cari:',
+        zeroRecords: 'Tidak ada data yang cocok',
+        paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+    };
 
-        fetch(urlRecalculatePersediaanBatch, {
-            method: 'POST',
-            body: fd,
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(parseJsonFetchResponse)
-        .then(function(data) {
-            if (!data.ok) {
-                Swal.fire({ icon: 'error', title: 'Gagal', text: data.message || 'Recalculate gagal' });
-                recalcRunning.active = false;
-                setRecalcStatus('danger', data.message || 'Recalculate gagal');
+    function getBulanKeyCompare() {
+        var bulan = parseInt($('#compare_bulan_persediaan').val(), 10);
+        var tahun = parseInt($('#compare_tahun_persediaan').val(), 10);
+        if (!bulan || !tahun) return '';
+        return tahun + '-' + String(bulan).padStart(2, '0');
+    }
+
+    function setCompareStatus(type, html) {
+        var $el = $('#compare-status');
+        $el.removeClass('alert-info alert-success alert-danger alert-warning');
+        $el.addClass(type === 'success' ? 'alert-success' : (type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info')));
+        $el.html(html);
+    }
+
+    function escapeHtmlCompare(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function updateCompareInfoRingkas(res) {
+        res = res || compareLastResult || {};
+        var stats = res.stats || {};
+        $('#compare-label-bulan').text(res.bulan_label || getBulanKeyCompare() || '—');
+        $('#compare-label-tabel').text(res.table || $('#compare_tabel_pilihan').val() || '—');
+        $('#compare-count-total10').text(typeof stats.total10_kosong !== 'undefined' ? stats.total10_kosong : '—');
+        $('#compare-count-tidak').text(typeof stats.tidak_di_tabel !== 'undefined' ? stats.tidak_di_tabel : '—');
+        $('#compare-count-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : '—');
+        $('#compare-count-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : '—');
+        $('#compare-badge-total10').text(typeof stats.total10_kosong !== 'undefined' ? stats.total10_kosong : 0);
+        $('#compare-badge-tidak').text(typeof stats.tidak_di_tabel !== 'undefined' ? stats.tidak_di_tabel : 0);
+        $('#compare-badge-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : 0);
+        $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
+    }
+
+    function loadCompareTableList(force) {
+        if (compareTablesLoaded && !force) return;
+        var $sel = $('#compare_tabel_pilihan');
+        $sel.prop('disabled', true);
+        $.ajax({
+            url: urlCompareTabelList,
+            type: 'POST',
+            dataType: 'json'
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                setCompareStatus('danger', (res && res.message) ? res.message : 'Gagal memuat daftar tabel.');
                 return;
             }
-
-            if (data.reset_beli && data.reset_beli.record_direset) {
-                appendRecalcLog('Reset beli: ' + data.reset_beli.record_direset + ' record persediaan', 'text-info');
-            }
-            if (data.pesan) {
-                appendRecalcLog(data.pesan, 'text-primary');
-            }
-            if (data.penjualan_info && data.penjualan_info.pesan) {
-                appendRecalcLog(data.penjualan_info.pesan, 'text-primary');
-            }
-            if (data.message_phase) {
-                appendRecalcLog(data.message_phase, 'text-primary');
-            }
-            if (data.reset && data.reset.record_direset) {
-                appendRecalcLog('Reset penjualan+unit: ' + data.reset.record_direset + ' record', 'text-info');
-            }
-
-            if (data.items && data.items.length) {
-                data.items.slice(-3).forEach(function(it) {
-                    var line = (it.fase || data.phase || '') + ' | ' + (it.status || '') + ' | '
-                        + (it.namabarang || it.nama_barang || '') + ' | ' + (it.keterangan || '');
-                    appendRecalcLog(line, it.status === 'OK' ? 'text-success' : 'text-warning');
-                });
-            }
-
-            if (data.next_phase === 'penjualan') {
-                appendRecalcLog('— Fase pembelian selesai. Lanjut penjualan...', 'text-primary font-weight-bold');
-                recalcRunning.offset = 0;
-                recalcRunning.isStart = false;
-            } else {
-                recalcRunning.offset = data.offset_selesai || 0;
-                recalcRunning.isStart = false;
-            }
-
-            var faseLabel = (data.phase === 'penjualan' || (data.summary && data.summary.penjualan_ok !== undefined))
-                ? 'Fase Penjualan → unit'
-                : 'Fase Pembelian → beli';
-            Swal.update({ html: htmlRecalcModalProgress(data, faseLabel) });
-
-            if (!data.done) {
-                setTimeout(function() {
-                    runRecalculateBatch(bulanKey, recalcRunning.offset, recalcRunning, false);
-                }, 60);
-                return;
-            }
-
-            recalcRunning.active = false;
-            Swal.close();
-            var s = data.summary || {};
-            var beliInfo = s.beli_info || {};
-            var penjInfo = s.penjualan_info || {};
-            var syncUuid = s.sync_uuid_penjualan || penjInfo.sync_uuid_penjualan || null;
-            var importPenj = s.import_penjualan || penjInfo.import_penjualan || null;
-            var syncPembelian = s.sync_pembelian || beliInfo.sync_pembelian || null;
-            var importPembelian = s.import_pembelian || beliInfo.import_pembelian || null;
-            var msg = '<strong>Recalculate selesai</strong><br/>'
-                + 'Beli di-update: ' + (s.beli_updated || 0) + ' record'
-                + (beliInfo.with_beli ? ' (' + beliInfo.with_beli + ' dengan beli &gt; 0)' : '') + '<br/>'
-                + 'Penjualan: ' + (s.total_penjualan || penjInfo.total_penjualan || 0) + ' record diproses → '
-                + (s.penjualan_ok || 0) + ' berhasil, ' + (s.penjualan_skip || 0) + ' dilewati'
-                + (s.penjualan_created ? ', ' + s.penjualan_created + ' baris persediaan baru' : '')
-                + (s.with_penjualan ? '<br/>(' + s.with_penjualan + ' baris persediaan penjualan &gt; 0)' : '') + '<br/>';
-            if (importPembelian && importPembelian.tbl_pembelian) {
-                var ib = importPembelian.tbl_pembelian;
-                var ij = importPembelian.tbl_pembelian_jasa || {};
-                msg += 'Import pembelian→persediaan: barang ' + (ib.created || 0) + ' baru, jasa ' + (ij.created || 0) + ' baru.<br/>';
-            }
-            if (syncPembelian && syncPembelian.tbl_pembelian) {
-                var sb = syncPembelian.tbl_pembelian;
-                var sj = syncPembelian.tbl_pembelian_jasa || {};
-                msg += 'Sinkron uuid pembelian: barang ' + (sb.updated || 0) + ' di-update, '
-                    + (sb.sudah_sesuai || 0) + ' sudah sesuai, ' + (sb.tidak_ditemukan || 0) + ' tidak cocok; jasa '
-                    + (sj.updated || 0) + ' di-update, ' + (sj.sudah_sesuai || 0) + ' sudah sesuai, '
-                    + (sj.tidak_ditemukan || 0) + ' tidak cocok.<br/>';
-            }
-            if (importPenj && (importPenj.created || importPenj.failed || importPenj.skipped_sudah_ada)) {
-                msg += 'Import penjualan→persediaan: ' + (importPenj.created || 0) + ' baris baru'
-                    + (importPenj.skipped_sudah_ada ? ', ' + importPenj.skipped_sudah_ada + ' sudah ada (tidak di-copy ulang)' : '')
-                    + (importPenj.failed ? ', ' + importPenj.failed + ' gagal' : '')
-                    + (importPenj.uuid_regenerated ? ' (uuid baru: ' + importPenj.uuid_regenerated + ')' : '') + '.<br/>';
-                msg += htmlImportPenjualanBaru(importPenj);
-            }
-            if (syncUuid) {
-                msg += 'Sinkron uuid penjualan: ' + (syncUuid.updated || 0) + ' di-update, '
-                    + (syncUuid.sudah_sesuai || 0) + ' sudah sesuai, '
-                    + (syncUuid.tidak_ditemukan || 0) + ' tidak cocok (nama+satuan+harga)'
-                    + (syncUuid.gagal ? ', ' + syncUuid.gagal + ' gagal update' : '') + '.<br/>';
-            }
-            var total10Penj = s.total_10_penjualan || penjInfo.total_10_penjualan || null;
-            if (total10Penj && total10Penj.updated) {
-                msg += 'Update total_10 (sa+beli-penjualan): ' + total10Penj.updated + ' baris persediaan.<br/>';
-            }
-            if (beliInfo.pesan) {
-                msg += '<small>' + beliInfo.pesan + '</small><br/>';
-            }
-            if (penjInfo.pesan) {
-                msg += '<small>' + penjInfo.pesan + '</small>';
-            }
-            setRecalcStatus('success', msg);
-            Swal.fire({
-                icon: 'success',
-                title: 'Recalculate Selesai',
-                html: msg + '<br/><small>Klik OK — halaman di-refresh, tetap di tab Recalculate.</small>',
-                confirmButtonText: 'OK'
-            }).then(function() {
-                if ($('#bulan_persediaan').val() !== bulanKey) {
-                    $('#bulan_persediaan').val(bulanKey);
-                }
-                try {
-                    sessionStorage.setItem('persediaan_show_tab', 'recalculate');
-                } catch (eTab) {}
-                $('#form-persediaan-bulan').submit();
+            var cur = $sel.val();
+            $sel.find('option:not(:first)').remove();
+            (res.tables || []).forEach(function(tbl) {
+                $sel.append($('<option>', { value: tbl, text: tbl }));
             });
-            refreshRecalcInfoRingkas();
-        })
-        .catch(function(err) {
-            recalcRunning.active = false;
-            Swal.fire({ icon: 'error', title: 'Error', text: String(err) });
-            setRecalcStatus('danger', 'Error: ' + String(err));
+            if (cur) $sel.val(cur);
+            compareTablesLoaded = true;
+            setCompareStatus('info', 'Pilih bulan, tahun, dan tabel — lalu klik <strong>Compare</strong>.');
+        }).fail(function() {
+            setCompareStatus('danger', 'Tidak dapat memuat daftar tabel dari server.');
+        }).always(function() {
+            $sel.prop('disabled', false);
         });
     }
 
-    $('#recalc_bulan_persediaan, #recalc_tahun_persediaan').on('change', refreshRecalcInfoRingkas);
+    function buildCompareRows(jenis, items) {
+        items = items || [];
+        if (jenis === 'total10_kosong') {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.p_namabarang || '',
+                    it.p_satuan || '',
+                    it.p_hpp || '',
+                    it.p_spop || '',
+                    it.p_sa || '',
+                    it.p_beli || '',
+                    it.p_total_10 || ''
+                ];
+            });
+        }
+        return items.map(function(it, i) {
+            return [
+                i + 1,
+                it.p_namabarang || '',
+                it.p_satuan || '',
+                it.p_hpp || '',
+                it.p_spop || '',
+                it.p_total_10 || '',
+                it.c_namabarang || '',
+                it.c_satuan || '',
+                it.c_hpp || '',
+                it.c_spop || ''
+            ];
+        });
+    }
 
-    $('#btn-recalculate-persediaan-tab').on('click', function() {
-        var bulanKey = getBulanKeyRecalculate();
+    function upsertCompareDataTable(selector, rows, orderCol) {
+        if ($.fn.DataTable.isDataTable(selector)) {
+            var dt = $(selector).DataTable();
+            dt.clear();
+            if (rows.length) dt.rows.add(rows);
+            dt.draw(false);
+            compareDtStore[selector] = dt;
+            return dt;
+        }
+        compareDtStore[selector] = $(selector).DataTable({
+            data: rows,
+            scrollY: 400,
+            scrollX: true,
+            scrollCollapse: true,
+            paging: true,
+            pageLength: 25,
+            order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
+            columnDefs: [{ targets: 0, orderable: false }],
+            language: compareDtLang,
+            autoWidth: false,
+            deferRender: true
+        });
+        return compareDtStore[selector];
+    }
+
+    function renderCompareAllTables(res) {
+        res = res || {};
+        upsertCompareDataTable('#table-compare-total10', buildCompareRows('total10_kosong', res.items_total10_kosong || []), 1);
+        upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
+        upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 6);
+        upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
+        setTimeout(function() {
+            Object.keys(compareDtStore).forEach(function(sel) {
+                var dt = compareDtStore[sel];
+                if (dt && dt.columns) {
+                    try { dt.columns.adjust().draw(false); } catch (eAdj) {}
+                }
+            });
+        }, 200);
+    }
+
+    function updateTombolComparePersediaan() {
+        var $btn = $('#btn-compare-tabel');
+        if (!userCanComparePersediaan) {
+            $btn.prop('disabled', true).removeClass('btn-info').addClass('btn-secondary');
+            setCompareStatus('warning', 'Compare hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.');
+            return;
+        }
+        $btn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-info');
+    }
+
+    function runCompareTabel() {
+        if (!userCanComparePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                html: 'Compare hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.'
+            });
+            return;
+        }
+        var bulanKey = getBulanKeyCompare();
+        var tabel = $('#compare_tabel_pilihan').val() || '';
         if (!bulanKey) {
-            Swal.fire({ icon: 'warning', title: 'Bulan belum dipilih', text: 'Pilih bulan dan tahun.' });
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan dan tahun.' });
+            return;
+        }
+        if (!tabel) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih tabel database yang akan dibandingkan.' });
             return;
         }
 
-        Swal.fire({ title: 'Menganalisa...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+        setCompareStatus('info', '<i class="fas fa-spinner fa-spin"></i> Membandingkan persediaan dengan tabel <strong>' + escapeHtmlCompare(tabel) + '</strong>...');
 
         $.ajax({
-            url: urlAnalisaRecalculatePersediaan,
+            url: urlCompareTabelRun,
             type: 'POST',
             dataType: 'json',
-            data: { bulan: bulanKey }
-        }).done(function(a) {
-            if (!a || !a.ok) {
-                Swal.fire({ icon: 'error', title: 'Analisa gagal', text: (a && a.message) ? a.message : 'Gagal analisa.' });
+            data: { bulan: bulanKey, tabel: tabel }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                setCompareStatus('danger', (res && res.message) ? res.message : 'Compare gagal.');
+                Swal.fire({ icon: 'error', title: 'Compare gagal', text: (res && res.message) ? res.message : 'Gagal compare.' });
                 return;
             }
-
-            if (!a.can_proceed) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Tidak ada data',
-                    html: buildHtmlAnalisaRecalculate(a)
-                });
-                setRecalcStatus('warning', a.message_empty || 'Tidak ada data pembelian/penjualan untuk bulan ini.');
-                return;
-            }
-
-            Swal.fire({
-                icon: 'question',
-                title: 'Konfirmasi Recalculate',
-                html: buildHtmlAnalisaRecalculate(a),
-                width: 640,
-                showCancelButton: true,
-                confirmButtonText: 'Ya, Recalculate',
-                cancelButtonText: 'Batal',
-                confirmButtonColor: '#17a2b8'
-            }).then(function(result) {
-                if (!result.isConfirmed) return;
-
-                recalcLogLines = [];
-                appendRecalcLog('Memulai recalculate bulan ' + (a.bulan_label || bulanKey), 'text-primary');
-
-                Swal.fire({
-                    title: 'Recalculate Persediaan',
-                    html: htmlRecalcModalProgress({ offset_selesai: 0, total_phase: a.total_persediaan || 1, phase: 'beli' }, 'Menyiapkan...'),
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    didOpen: function() { Swal.showLoading(); }
-                });
-
-                var runner = { offset: 0, active: true, isStart: true };
-                runRecalculateBatch(bulanKey, 0, runner, true);
-                setRecalcStatus('info', 'Recalculate sedang berjalan...');
-            });
+            compareLastResult = res;
+            renderCompareAllTables(res);
+            updateCompareInfoRingkas(res);
+            var s = res.stats || {};
+            setCompareStatus('success', 'Compare selesai — Total_10 kosong: <strong>' + (s.total10_kosong || 0) + '</strong>, '
+                + 'Tidak di tabel manual: <strong>' + (s.tidak_di_tabel || 0) + '</strong>, '
+                + 'Tidak di persediaan: <strong>' + (s.hanya_tabel || 0) + '</strong>, '
+                + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>.');
         }).fail(function() {
+            setCompareStatus('danger', 'Tidak dapat menghubungi server.');
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
         });
+    }
+
+    function exportCompareExcel(jenis) {
+        if (!userCanComparePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Export Excel compare hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+            });
+            return;
+        }
+        var bulanKey = getBulanKeyCompare();
+        var tabel = $('#compare_tabel_pilihan').val() || '';
+        if (!bulanKey || !tabel) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan, tahun, dan tabel terlebih dahulu.' });
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('bulan', bulanKey);
+        formData.append('tabel', tabel);
+        formData.append('jenis', jenis);
+
+        tampilkanSwalExcelProgress();
+        fetch(urlCompareTabelExcel, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: 'File Excel berhasil diunduh.',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            if (excelProgressTimer) {
+                clearInterval(excelProgressTimer);
+                excelProgressTimer = null;
+            }
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Export Excel compare gagal.'
+            });
+        });
+    }
+
+    $('a[href="#panel-compare-manual"]').on('shown.bs.tab', function() {
+        updateTombolComparePersediaan();
+        loadCompareTableList(false);
+        updateCompareInfoRingkas();
+    });
+
+    $('#compare_bulan_persediaan, #compare_tahun_persediaan, #compare_tabel_pilihan').on('change', function() {
+        updateCompareInfoRingkas({ bulan_label: getBulanKeyCompare(), table: $('#compare_tabel_pilihan').val() });
+    });
+
+    $('#btn-compare-tabel').on('click', function() {
+        if (!userCanComparePersediaan || $(this).prop('disabled')) {
+            return false;
+        }
+        runCompareTabel();
+    });
+
+    $(document).on('click', '.btn-compare-excel', function() {
+        exportCompareExcel($(this).data('jenis') || '');
     });
 
     function getBulanPersediaanAktif() {
@@ -2163,68 +2235,6 @@ window.addEventListener('load', function() {
         Swal.close();
     }
 
-    $('#btn-cetak-excel-recalculate').on('click', function() {
-        var bulanKey = getBulanKeyRecalculate();
-        if (!bulanKey) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan dan tahun terlebih dahulu.' });
-            return;
-        }
-
-        var formData = new FormData();
-        formData.append('bulan', bulanKey);
-
-        tampilkanSwalExcelProgress();
-
-        fetch(urlRecalculateExcel, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(function(response) {
-            if (!response.ok) {
-                throw new Error('Export Excel recalculate gagal (HTTP ' + response.status + ')');
-            }
-            var disposition = response.headers.get('Content-Disposition');
-            var filename = parseExcelFilename(disposition);
-            return response.blob().then(function(blob) {
-                return { blob: blob, filename: filename };
-            });
-        })
-        .then(function(result) {
-            var link = document.createElement('a');
-            var objectUrl = window.URL.createObjectURL(result.blob);
-            link.href = objectUrl;
-            link.download = result.filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(objectUrl);
-
-            selesaiSwalExcelProgress();
-            Swal.fire({
-                icon: 'success',
-                title: 'Selesai',
-                text: 'File Excel recalculate (7 sheet, termasuk data tidak sync) berhasil diunduh.',
-                timer: 2200,
-                showConfirmButton: false
-            });
-            setRecalcStatus('success', 'Excel recalculate bulan ' + bulanKey + ' berhasil diunduh.');
-        })
-        .catch(function(err) {
-            if (excelProgressTimer) {
-                clearInterval(excelProgressTimer);
-                excelProgressTimer = null;
-            }
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: err && err.message ? err.message : 'Terjadi kesalahan saat export Excel recalculate.'
-            });
-            setRecalcStatus('danger', err && err.message ? err.message : 'Export Excel gagal.');
-        });
-    });
-
     $('#btn-cetak-excel-generate').on('click', function() {
         exportGenRecalcExcel('');
     });
@@ -2395,6 +2405,18 @@ window.addEventListener('load', function() {
                 loadGenRecalcHistoryFromServer(bulanKey);
                 adjustGenRecalcDataTables();
             }, 150);
+        } else if ($(e.target).attr('href') === '#panel-compare-manual') {
+            updateTombolComparePersediaan();
+            loadCompareTableList(false);
+            updateCompareInfoRingkas();
+            setTimeout(function() {
+                Object.keys(compareDtStore).forEach(function(sel) {
+                    var dt = compareDtStore[sel];
+                    if (dt && dt.columns) {
+                        try { dt.columns.adjust().draw(false); } catch (eAdj) {}
+                    }
+                });
+            }, 150);
         } else if ($(e.target).attr('href') === '#panel-data-persediaan') {
             if (dtPersediaan && dtPersediaan.columns) {
                 dtPersediaan.columns.adjust().draw();
@@ -2409,11 +2431,12 @@ window.addEventListener('load', function() {
                 $('#tab-generate-persediaan').tab('show');
                 cekGeneratePersediaanBulan();
             }, 300);
-        } else if (sessionStorage.getItem('persediaan_show_tab') === 'recalculate') {
+        } else if (sessionStorage.getItem('persediaan_show_tab') === 'compare') {
             sessionStorage.removeItem('persediaan_show_tab');
             setTimeout(function() {
-                $('#tab-recalculate').tab('show');
-                refreshRecalcInfoRingkas();
+                $('#tab-compare-manual').tab('show');
+                loadCompareTableList(false);
+                updateCompareInfoRingkas();
             }, 300);
         }
     } catch (eGenTab) {}
@@ -2427,14 +2450,17 @@ window.addEventListener('load', function() {
                 adjustGenRecalcDataTables();
             }
         }, 400);
+    } else {
+        updateTombolGeneratePersediaan('denied');
+        setStatusGeneratePersediaan('warning', 'Generate &amp; Recalculate hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.');
     }
 
-    $('a[href="#panel-recalculate"]').on('shown.bs.tab', function() {
-        refreshRecalcInfoRingkas();
-    });
+    updateTombolComparePersediaan();
+
     setTimeout(function() {
-        if ($('#panel-recalculate').hasClass('active') || $('#panel-recalculate').hasClass('show')) {
-            refreshRecalcInfoRingkas();
+        if ($('#panel-compare-manual').hasClass('active') || $('#panel-compare-manual').hasClass('show')) {
+            loadCompareTableList(false);
+            updateCompareInfoRingkas();
         }
     }, 500);
 });

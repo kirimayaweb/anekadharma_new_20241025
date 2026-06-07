@@ -8,7 +8,7 @@ class Laporan extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        // is_login();
+        is_login();
         $this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');

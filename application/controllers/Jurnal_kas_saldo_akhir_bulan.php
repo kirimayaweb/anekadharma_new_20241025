@@ -8,6 +8,7 @@ class Jurnal_kas_saldo_akhir_bulan extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Jurnal_kas_saldo_akhir_bulan_model');
         $this->load->library('form_validation');
     }

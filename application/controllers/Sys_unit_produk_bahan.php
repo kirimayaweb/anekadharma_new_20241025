@@ -8,6 +8,7 @@ class Sys_unit_produk_bahan extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model(array('Sys_unit_produk_bahan_model', 'Sys_unit_produk_model','Persediaan_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');

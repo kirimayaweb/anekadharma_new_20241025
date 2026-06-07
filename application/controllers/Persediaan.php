@@ -580,37 +580,65 @@ class Persediaan extends CI_Controller
 			'url_excel_gen_recalc' => site_url('Persediaan/excel_gen_recalc'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
 			'url_excel_persediaan' => site_url('Persediaan/excel'),
+			'url_compare_tabel_list' => site_url('Persediaan/ajax_compare_tabel_list'),
+			'url_compare_tabel_run' => site_url('Persediaan/ajax_compare_tabel_run'),
+			'url_compare_tabel_excel' => site_url('Persediaan/excel_compare_tabel'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
 			'gen_tahun_max' => (int) date('Y') + 2,
 			'can_generate_persediaan' => $this->persediaan_user_can_generate(),
+			'can_compare_persediaan' => $this->persediaan_user_can_compare(),
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
 		);
 	}
 
 	/**
-	 * Generate persediaan: id_user_level 1 (admin), 2, atau 99 (administrator);
-	 * fallback nama_level di tbl_user_level = admin / administrator.
+	 * Email login yang boleh Generate & Recalculate serta Compare (tab Persediaan).
+	 */
+	private function persediaan_allowed_restricted_emails()
+	{
+		return array(
+			'admin.id@gmail.com',
+			'admin.id@gmailc.om',
+			'iwanesia.id@gmail.com',
+		);
+	}
+
+	private function persediaan_current_user_email()
+	{
+		$email = strtolower(trim((string) $this->session->userdata('sess_email_user')));
+		if ($email !== '') {
+			return $email;
+		}
+
+		return strtolower(trim((string) $this->session->userdata('sess_username')));
+	}
+
+	/**
+	 * Tab Generate & Recalculate: hanya email terdaftar di persediaan_allowed_restricted_emails().
 	 */
 	private function persediaan_user_can_generate()
 	{
-		$level = trim((string) $this->session->userdata('sess_id_user_level'));
-		if (in_array($level, array('1', '2', '99'), true)) {
-			return true;
+		$email = $this->persediaan_current_user_email();
+		if ($email === '') {
+			return false;
 		}
 
-		if ($level !== '' && $this->db->table_exists('tbl_user_level')) {
-			$row = $this->db->where('id_user_level', $level)->limit(1)->get('tbl_user_level')->row();
-			if (!empty($row->nama_level)) {
-				$nama = strtolower(trim((string) $row->nama_level));
-				if (in_array($nama, array('admin', 'administrator'), true)) {
-					return true;
-				}
-			}
-		}
+		return in_array($email, $this->persediaan_allowed_restricted_emails(), true);
+	}
 
-		return false;
+	/**
+	 * Tab Compare apps DB — Manual Data: whitelist sama dengan generate.
+	 */
+	private function persediaan_user_can_compare()
+	{
+		return $this->persediaan_user_can_generate();
+	}
+
+	private function persediaan_restricted_access_message($action_label = 'fitur ini')
+	{
+		return $action_label . ' hanya untuk user <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.';
 	}
 
 	/**
@@ -626,7 +654,7 @@ class Persediaan extends CI_Controller
 				'can_generate' => false,
 				'user_can_generate' => false,
 				'sudah_ada_data' => false,
-				'message' => 'Tombol generate hanya untuk user <strong>Admin</strong> / <strong>Administrator</strong> (id_user_level <strong>1</strong>, <strong>2</strong>, atau <strong>99</strong>).',
+				'message' => $this->persediaan_restricted_access_message('Tombol Generate &amp; Recalculate'),
 			));
 			return;
 		}
@@ -662,11 +690,12 @@ class Persediaan extends CI_Controller
 				. ' (tanggal_beli = ' . $tanggal_beli_sumber . '). Isi dulu persediaan bulan sebelumnya.';
 		} elseif ($sudah_ada) {
 			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate & Recalculate akan: '
-				. '(1) salin/update <strong>' . $count_sumber . '</strong> record sumber (total_10 &gt; 0), '
-				. '(2) proses pembelian bulan ini → insert baru / update <strong>beli</strong>.';
+				. '(1) hapus baris target sa=0 &amp; total_10=0, '
+				. '(2) salin/update <strong>' . $count_sumber . '</strong> record sumber (sa atau total_10 &gt; 0), '
+				. '(3) proses pembelian bulan ini → insert baru / update <strong>beli</strong>.';
 		} else {
 			$message = 'Siap Generate & Recalculate: salin/update <strong>' . $count_sumber . '</strong> record dari bulan '
-				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya total_10 &gt; 0, dari ' . $count_sumber_all . ' record sumber) ke bulan '
+				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya sa atau total_10 &gt; 0, dari ' . $count_sumber_all . ' record sumber) ke bulan '
 				. date('m/Y', $ts_target) . ', lalu proses pembelian (record baru → insert persediaan).';
 		}
 
@@ -698,7 +727,7 @@ class Persediaan extends CI_Controller
 		if (!$this->persediaan_user_can_generate()) {
 			echo json_encode(array(
 				'ok' => false,
-				'message' => 'Analisa generate hanya untuk Admin / Administrator (id_user_level 1, 2, atau 99).',
+				'message' => $this->persediaan_restricted_access_message('Analisa generate'),
 			));
 			return;
 		}
@@ -799,12 +828,11 @@ class Persediaan extends CI_Controller
 		$estimasi_insert = $total_sumber;
 		$estimasi_update = 0;
 
-		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber akan di-<strong>INSERT</strong> ke bulan target '
-			. '(data persediaan bulan target yang lama akan dikosongkan terlebih dahulu). '
+		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber (sa atau total_10 &gt; 0) akan di-<strong>INSERT/UPDATE</strong> ke bulan target. '
+			. 'Baris dengan sa=0 dan total_10=0 tidak disalin. Baris target sa=0 &amp; total_10=0 dihapus. '
 			. 'Disalin: <strong>uuid_barang, namabarang, satuan, hpp</strong>; '
-			. '<strong>sa</strong> dan <strong>total_10</strong> = nilai <strong>total_10</strong> bulan sumber (sama). '
-			. '<strong>beli</strong> dan <strong>penjualan</strong> = 0 (diisi lewat Recalculate). '
-			. 'Total akhir bulan target = ' . $total_sumber . ' (sama dengan bulan sumber).';
+			. '<strong>sa</strong> dan <strong>total_10</strong> = saldo akhir bulan sumber (total_10, atau sa jika total_10 0). '
+			. '<strong>beli</strong> dan <strong>penjualan</strong> = 0 (diisi lewat proses pembelian/penjualan).';
 		if ($total_target > 0) {
 			$penjelasan .= ' Saat ini bulan target sudah ada <strong>' . $total_target . ' record</strong> — akan diganti saat generate.';
 		}
@@ -1534,7 +1562,7 @@ class Persediaan extends CI_Controller
 			if (!$this->persediaan_user_can_generate()) {
 				persediaan_ajax_json_output($this, array(
 					'ok' => false,
-					'message' => 'Generate & Recalculate hanya untuk Admin / Administrator.',
+					'message' => $this->persediaan_restricted_access_message('Generate &amp; Recalculate'),
 				));
 				return;
 			}
@@ -1578,7 +1606,7 @@ class Persediaan extends CI_Controller
 			if (!$this->persediaan_user_can_generate()) {
 				persediaan_ajax_json_output($this, array(
 					'ok' => false,
-					'message' => 'History generate hanya untuk Admin / Administrator.',
+					'message' => $this->persediaan_restricted_access_message('History generate'),
 				));
 				return;
 			}
@@ -1605,6 +1633,11 @@ class Persediaan extends CI_Controller
 	public function excel_gen_recalc()
 	{
 		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel generate')), 403);
+			return;
+		}
 
 		$bulan = trim((string) $this->input->post('bulan', TRUE));
 		if ($bulan === '') {
@@ -1649,6 +1682,134 @@ class Persediaan extends CI_Controller
 		excel_prepare_download($namaFile);
 		persediaan_export_recalculate_excel_output($this, $bulan);
 		exit();
+	}
+
+	/**
+	 * AJAX: daftar semua tabel database untuk Compare Tabel.
+	 */
+	public function ajax_compare_tabel_list()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Compare')),
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, array(
+			'ok' => true,
+			'tables' => persediaan_compare_list_db_tables($this),
+		));
+	}
+
+	/**
+	 * AJAX: bandingkan persediaan bulan terpilih vs tabel manual.
+	 */
+	public function ajax_compare_tabel_run()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Compare')),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_tabel_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih bulan dan tahun yang valid.',
+			));
+			return;
+		}
+
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih tabel yang akan dibandingkan.',
+			));
+			return;
+		}
+
+		$tables = persediaan_compare_list_db_tables($this);
+		if (!in_array($table, $tables, true)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Tabel tidak valid atau tidak ditemukan.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, persediaan_compare_run($this, $bulan, $table));
+	}
+
+	/**
+	 * Export Excel hasil compare persediaan vs tabel manual.
+	 */
+	public function excel_compare_tabel()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_compare()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel compare')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_tabel_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+		if ($table === '' || !persediaan_compare_is_valid_table_name($table)) {
+			show_error('Tabel tidak valid.', 400);
+			return;
+		}
+
+		$tables = persediaan_compare_list_db_tables($this);
+		if (!in_array($table, $tables, true)) {
+			show_error('Tabel tidak ditemukan.', 404);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(persediaan_compare_jenis_definitions());
+		if ($jenis === '' || !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export compare tidak valid.', 400);
+			return;
+		}
+
+		$defs = persediaan_compare_jenis_definitions();
+		$suffix = isset($defs[$jenis]['file_suffix']) ? $defs[$jenis]['file_suffix'] : $jenis;
+		$namaFile = 'Compare_' . $suffix . '_' . $bulan . '_vs_' . $table . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_compare_export_excel_output($this, $bulan, $table, $jenis);
+		exit();
+	}
+
+	private function _compare_tabel_bulan_from_post()
+	{
+		$bulan_num = (int) $this->input->post('bulan_num', TRUE);
+		$tahun = (int) $this->input->post('tahun', TRUE);
+		if ($bulan_num >= 1 && $bulan_num <= 12 && $tahun >= 2000) {
+			return $tahun . '-' . str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT);
+		}
+		return '';
 	}
 
 	public function recalculate_data_persediaan($bulan = '')
@@ -1754,7 +1915,7 @@ class Persediaan extends CI_Controller
 		if (!$this->persediaan_user_can_generate()) {
 			header('Content-Type: text/html; charset=UTF-8');
 			echo '<!doctype html><html><head><meta charset="utf-8"><title>Akses ditolak</title></head><body>';
-			echo '<p style="color:red;">Generate persediaan hanya untuk user Admin / Administrator (id_user_level 1, 2, atau 99).</p>';
+			echo '<p style="color:red;">' . htmlspecialchars(strip_tags($this->persediaan_restricted_access_message('Generate persediaan'))) . '</p>';
 			echo '<p><a href="' . site_url('persediaan') . '">Kembali ke Data Persediaan</a></p>';
 			echo '</body></html>';
 			return;
@@ -1855,7 +2016,7 @@ class Persediaan extends CI_Controller
 	private function generate_persediaan_bulan_batch($ctx, $offset, $limit)
 	{
 		if (!$this->persediaan_user_can_generate()) {
-			return array('ok' => false, 'message' => 'Akses ditolak. Hanya Admin / Administrator.');
+			return array('ok' => false, 'message' => strip_tags($this->persediaan_restricted_access_message('Generate persediaan')));
 		}
 
 		$total_sumber = $ctx['total_sumber'];
@@ -2667,11 +2828,12 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Saldo awal generate = field total_10 bulan sumber (bukan dikurangi penjualan).
+	 * Saldo awal generate dari record sumber (total_10, fallback sa, fallback beli).
 	 */
 	private function generate_hitung_sa_dari_bulan_sumber($row)
 	{
-		return $this->parse_angka_persediaan($row->total_10);
+		$this->load->helper('pembelian_persediaan');
+		return persediaan_generate_recalculate_hitung_sa_dari_sumber($row);
 	}
 
 	/**
@@ -2682,11 +2844,14 @@ class Persediaan extends CI_Controller
 		$beli_angka = max(0, (int) $beli_angka);
 		$sa_angka = $this->parse_angka_persediaan($existing->sa);
 		$hpp_angka = $this->parse_angka_persediaan($existing->hpp);
-		$total_10_baru = $sa_angka + $beli_angka;
+		$beli_lama = max(0, (int) floor($this->parse_angka_persediaan($existing->beli)));
+		$beli_baru = $beli_lama + $beli_angka;
+		$total_10_lama = max(0, (int) floor($this->parse_angka_persediaan($existing->total_10)));
+		$total_10_baru = $total_10_lama + $beli_angka;
 		$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
 
 		$sa_tampil = $this->format_angka_persediaan($sa_angka);
-		$beli_tampil = $this->format_angka_persediaan($beli_angka);
+		$beli_tampil = $this->format_angka_persediaan($beli_baru);
 		$total_10_tampil = $this->format_angka_persediaan($total_10_baru);
 		$nilai_persediaan_tampil = $this->format_angka_persediaan($nilai_persediaan_baru);
 		$tuj_tampil = $total_10_tampil;
@@ -2703,7 +2868,7 @@ class Persediaan extends CI_Controller
 			. ($keterangan_extra !== '' ? ' | ' . $keterangan_extra : '')
 			. ' | sa=' . $sa_tampil . ' (tetap)'
 			. ' | beli=' . $beli_tampil
-			. ' | total_10=' . $total_10_tampil . ' (sa+beli)'
+			. ' | total_10=' . $total_10_tampil . ' (total_10+' . $beli_angka . ')'
 			. ' | nilai_persediaan=' . $nilai_persediaan_tampil;
 
 		return array(
@@ -2734,9 +2899,9 @@ class Persediaan extends CI_Controller
 		$hpp = trim((string) $row->hpp);
 		$uuid_barang = trim((string) $row->uuid_barang);
 
-		// Saldo awal bulan baru = total_10 bulan sumber; total_10 target sama dengan sa (di-update saat recalculate).
-		$total_10_sumber = $this->generate_hitung_sa_dari_bulan_sumber($row);
-		if ($total_10_sumber <= 0) {
+		// Saldo awal bulan baru dari record sumber; total_10 target = sa saat generate.
+		$this->load->helper('pembelian_persediaan');
+		if (!persediaan_generate_recalculate_sumber_layak_generate($row)) {
 			return array(
 				'aksi' => 'SKIP',
 				'id' => isset($row->id) ? (int) $row->id : 0,
@@ -2744,10 +2909,11 @@ class Persediaan extends CI_Controller
 				'satuan' => $satuan,
 				'hpp' => $hpp,
 				'total_10' => isset($row->total_10) ? $row->total_10 : '',
-				'keterangan' => 'Lewati: total_10 bulan sumber kosong atau 0 — tidak di-copy ke bulan target',
+				'keterangan' => 'Lewati: sa=0 dan total_10=0 di bulan sumber — tidak di-copy ke bulan target',
 			);
 		}
 
+		$total_10_sumber = $this->generate_hitung_sa_dari_bulan_sumber($row);
 		$sa_baru = $total_10_sumber;
 		$beli_angka = 0;
 		$total_10_baru = $sa_baru;
@@ -2860,7 +3026,7 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Jumlah record bulan sumber yang layak di-generate (total_10 > 0, bukan kosong).
+	 * Jumlah record bulan sumber yang layak di-generate (sa > 0 atau total_10 > 0).
 	 */
 	private function persediaan_count_sumber_layak_generate($tanggal_beli_sumber)
 	{
@@ -2888,34 +3054,32 @@ class Persediaan extends CI_Controller
 
 	private function get_persediaan_by_bulan($bulan)
 	{
-		$this->load->helper('pembelian_persediaan');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 		$bulan = trim((string) $bulan);
+		$rows = array();
+
 		if ($bulan === '') {
-			return persediaan_export_sort_rows_by_namabarang($this->Persediaan_model->get_all(), 'namabarang');
+			$rows = $this->Persediaan_model->get_all();
+		} else {
+			$ts = strtotime($bulan . '-01');
+			if ($ts === false) {
+				$rows = $this->Persediaan_model->get_by_year_month($bulan);
+			} else {
+				$tanggal_beli = date('Y-m-01', $ts);
+				$rows = $this->db->query(
+					"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
+					array($tanggal_beli)
+				)->result();
+
+				if (count($rows) === 0) {
+					$rows = $this->Persediaan_model->get_by_year_month($bulan);
+				}
+			}
 		}
 
-		$ts = strtotime($bulan . '-01');
-		if ($ts === false) {
-			return persediaan_export_sort_rows_by_namabarang(
-				$this->Persediaan_model->get_by_year_month($bulan),
-				'namabarang'
-			);
-		}
+		$rows = persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
 
-		$tanggal_beli = date('Y-m-01', $ts);
-		$rows = $this->db->query(
-			"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
-			array($tanggal_beli)
-		)->result();
-
-		if (count($rows) > 0) {
-			return persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
-		}
-
-		return persediaan_export_sort_rows_by_namabarang(
-			$this->Persediaan_model->get_by_year_month($bulan),
-			'namabarang'
-		);
+		return persediaan_filter_rows_tab_data($rows);
 	}
 
 	public function json()

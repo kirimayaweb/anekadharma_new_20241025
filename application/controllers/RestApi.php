@@ -9,6 +9,7 @@ class RestApi extends REST_Controller {
 
     function __construct($config = 'rest') {
         parent::__construct($config);
+        is_login();
         $this->load->database();
         $this->load->model('Tbl_sales_model');
         $this->load->model(array('Tbl_sales_model', 'KirimWa_GET_DATA_REQ_model','KirimWa_model'));

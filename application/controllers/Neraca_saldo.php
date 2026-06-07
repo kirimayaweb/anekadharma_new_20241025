@@ -8,6 +8,7 @@ class Neraca_saldo extends CI_Controller
 	function __construct()
 	{
 		parent::__construct();
+		is_login();
 		$this->load->model(array('Sys_kode_akun_model', 'Neraca_saldo_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');

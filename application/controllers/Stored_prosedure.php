@@ -1,6 +1,11 @@
 <?php
 class Stored_prosedure extends CI_Controller{
-    
+
+    function __construct()
+    {
+        parent::__construct();
+        is_login();
+    }
     
     function index($GET_UUID_SALES_X = null, $GET_TAHUN_X = null, $GET_SEMESTER_X = NULL, $GET_TINGKAT_X = null){
         // $this->load->view('auth/blokir_akses');

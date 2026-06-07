@@ -3,6 +3,12 @@
 class Main extends CI_Controller
 {
 
+    public function __construct()
+    {
+        parent::__construct();
+        is_login();
+    }
+
 	public function index()
 	{
 		// You can put anything here to generate of barcode

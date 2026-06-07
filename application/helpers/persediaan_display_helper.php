@@ -59,10 +59,61 @@ function persediaan_parse_angka($value)
 function persediaan_hitung_sisa_stock($row)
 {
 	$total_10 = persediaan_parse_angka(isset($row->total_10) ? $row->total_10 : 0);
+	$sa = persediaan_parse_angka(isset($row->sa) ? $row->sa : 0);
+	$beli = persediaan_parse_angka(isset($row->beli) ? $row->beli : 0);
 	$penjualan = persediaan_parse_angka(isset($row->penjualan) ? $row->penjualan : 0);
 	$pecah_satuan = persediaan_parse_angka(isset($row->pecah_satuan) ? $row->pecah_satuan : 0);
 	$bahan_produksi = persediaan_parse_angka(isset($row->bahan_produksi) ? $row->bahan_produksi : 0);
+
+	if ($penjualan > 0 && $pecah_satuan <= 0 && $bahan_produksi <= 0) {
+		return max(0, (int) floor($total_10));
+	}
+
+	$gross = $sa + $beli;
+	$net_dari_penjualan = $gross - $penjualan - $pecah_satuan - $bahan_produksi;
+
+	if ($penjualan > 0 && abs($total_10 - $net_dari_penjualan) < 0.01) {
+		return max(0, (int) floor($total_10));
+	}
+	if ($penjualan <= 0 && $pecah_satuan <= 0 && $bahan_produksi <= 0 && abs($total_10 - $gross) < 0.01) {
+		return max(0, (int) floor($total_10));
+	}
+
 	return $total_10 - ($penjualan + $pecah_satuan + $bahan_produksi);
+}
+
+/**
+ * Tab Data Persediaan: baris ditampilkan/di-export jika namabarang terisi
+ * dan minimal salah satu sa, beli, atau total_10 bernilai lebih dari 0.
+ */
+function persediaan_row_layak_tampil_tab_data($row)
+{
+	$nama = trim((string) persediaan_row_get($row, 'namabarang'));
+	if ($nama === '') {
+		return false;
+	}
+
+	$sa = persediaan_parse_angka(persediaan_row_get($row, 'sa'));
+	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
+	$total_10 = persediaan_parse_angka(persediaan_row_get($row, 'total_10'));
+
+	return ($sa > 0 || $beli > 0 || $total_10 > 0);
+}
+
+function persediaan_filter_rows_tab_data($rows)
+{
+	if (!is_array($rows) || count($rows) === 0) {
+		return array();
+	}
+
+	$filtered = array();
+	foreach ($rows as $row) {
+		if (persediaan_row_layak_tampil_tab_data($row)) {
+			$filtered[] = $row;
+		}
+	}
+
+	return $filtered;
 }
 
 /**

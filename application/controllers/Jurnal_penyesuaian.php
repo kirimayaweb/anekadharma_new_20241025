@@ -8,6 +8,7 @@ class Jurnal_penyesuaian extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Jurnal_penyesuaian_model');
         $this->load->library('form_validation');
     }

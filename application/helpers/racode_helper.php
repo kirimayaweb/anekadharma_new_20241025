@@ -48,25 +48,67 @@ function rename_string_is_aktif($string)
 }
 
 
+function is_logged_in()
+{
+    $ci = get_instance();
+    $user_id = $ci->session->userdata('sess_iduser');
+
+    if ($user_id === null || $user_id === '') {
+        $user_id = $ci->session->userdata('id_users');
+    }
+
+    return !($user_id === null || $user_id === '' || $user_id === false);
+}
+
 function is_login()
 {
     $ci = get_instance();
-    if (!$ci->session->userdata('id_users')) {
-        redirect('Anekadharmamasuk');
-    } else {
-        $modul = $ci->uri->segment(1);
 
+    if (!is_logged_in()) {
+        $ci->session->set_flashdata('status_login', 'Silahkan login untuk masuk ke aplikasi.');
+        redirect('Anekadharmamasuk');
+        exit;
+    }
+
+    if (function_exists('login_mfa_has_pending') === false) {
+        $ci->load->helper('login_security');
+    }
+
+    if (function_exists('login_mfa_has_pending') && login_mfa_has_pending()) {
+        redirect('Anekadharmamasuk/verifymfa');
+        exit;
+    }
+
+    $id_user_level = $ci->session->userdata('sess_id_user_level');
+    if ($id_user_level === null || $id_user_level === '') {
         $id_user_level = $ci->session->userdata('id_user_level');
-        // dapatkan id menu berdasarkan nama controller
-        $menu = $ci->db->get_where('tbl_menu', array('url' => $modul))->row_array();
-        if ($menu) {
-            $id_menu = $menu['id_menu'];
-            // chek apakah user ini boleh mengakses modul ini
-            $hak_akses = $ci->db->get_where('tbl_hak_akses', array('id_menu' => $id_menu, 'id_user_level' => $id_user_level));
-            if ($hak_akses->num_rows() < 1) {
-                redirect('blokir');
-                exit;
-            }
+    }
+
+    if ($id_user_level === null || $id_user_level === '' || $id_user_level === false) {
+        $ci->session->sess_destroy();
+        redirect('Anekadharmamasuk');
+        exit;
+    }
+
+    $modul = strtolower((string) $ci->router->fetch_class());
+    if ($modul === '') {
+        $modul = strtolower((string) $ci->uri->segment(1));
+    }
+
+    $menu = $ci->db->query(
+        'SELECT * FROM tbl_menu WHERE LOWER(url) = ? LIMIT 1',
+        array($modul)
+    )->row_array();
+
+    if ($menu) {
+        $hak_akses = $ci->db->get_where('tbl_hak_akses', array(
+            'id_menu' => $menu['id_menu'],
+            'id_user_level' => $id_user_level,
+        ));
+
+        if ($hak_akses->num_rows() < 1) {
+            redirect('blokir');
+            exit;
         }
     }
 }
