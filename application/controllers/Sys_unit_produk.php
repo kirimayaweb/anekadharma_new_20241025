@@ -420,7 +420,15 @@ class Sys_unit_produk extends CI_Controller
         $Get_id_persediaan_bahan = $this->input->post('id_persediaan', TRUE);
         $jumlah_bahan_input = $this->input->post('jumlah', TRUE);
         $tgl_transaksi_input = $this->input->post('tgl_transaksi', TRUE);
-        $bulan_proses = $this->_resolve_bulan_produksi_selected($this->input->post('bulan_produksi', TRUE));
+
+        if ($id_persediaan_barang) {
+            $this->_simpan_draft_produk_produksi_dari_post($id_persediaan_barang);
+        }
+
+        $bulan_proses = $this->_resolve_bulan_dari_input_produksi(
+            $this->input->post('draft_tgl_transaksi', TRUE),
+            $this->input->post('bulan_produksi', TRUE)
+        );
         $row_persediaan_bahan = $Get_id_persediaan_bahan
             ? $this->Persediaan_model->get_by_id($Get_id_persediaan_bahan)
             : null;
@@ -478,6 +486,8 @@ class Sys_unit_produk extends CI_Controller
                 $tanggal_beli_bulan
             );
             $this->_update_persediaan_bahan_produksi($id_persediaan_bahan_bulan, $jumlah_bahan_input);
+
+            $this->_simpan_draft_produk_produksi_dari_post($id_persediaan_barang);
 
             redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan_proses)));
         } else { // Belum ada id_persediaan_barang dan uuid_persediaan_barang
@@ -588,6 +598,8 @@ class Sys_unit_produk extends CI_Controller
             );
             $this->_update_persediaan_bahan_produksi($id_persediaan_bahan_bulan, $jumlah_bahan_input);
 
+            $this->_simpan_draft_produk_produksi_dari_post($id_persediaan_barang);
+
             redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan_proses)));
 
         }
@@ -685,6 +697,8 @@ class Sys_unit_produk extends CI_Controller
 
         }
         $data = array_merge($data, $this->_produksi_bulan_view_data($this->input->get('bulan', TRUE)));
+        $data = $this->_apply_produksi_draft_ke_form_data($data);
+        $data = $this->_sync_bulan_produksi_dari_tgl_form($data);
         $data = $this->_enrich_produksi_form_data($data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
     }
@@ -780,6 +794,8 @@ class Sys_unit_produk extends CI_Controller
 
         }
         $data = array_merge($data, $this->_produksi_bulan_view_data($this->input->get('bulan', TRUE)));
+        $data = $this->_apply_produksi_draft_ke_form_data($data);
+        $data = $this->_sync_bulan_produksi_dari_tgl_form($data);
         $data = $this->_enrich_produksi_form_data($data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
     }
@@ -878,8 +894,12 @@ class Sys_unit_produk extends CI_Controller
         }
 
         $this->session->set_flashdata('message', 'Produk produksi berhasil disimpan.');
-        $bulan = $this->_resolve_bulan_produksi_selected($this->input->post('bulan_produksi', TRUE));
-        redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan)));
+        $this->_hapus_draft_produk_produksi($id_persediaan_barang);
+        $bulan = $this->_resolve_bulan_dari_input_produksi(
+            $this->input->post('tgl_transaksi', TRUE),
+            $this->input->post('bulan_produksi', TRUE)
+        );
+        redirect(site_url('Sys_unit_produk?bulan=' . urlencode($bulan)));
     }
 
     public function UPDATE_action_simpan_nama_produk_baru($Get_id_persediaan_barang = null)
@@ -956,8 +976,12 @@ class Sys_unit_produk extends CI_Controller
         }
 
         $this->session->set_flashdata('message', 'Produk produksi berhasil diperbarui.');
-        $bulan = $this->_resolve_bulan_produksi_selected($this->input->post('bulan_produksi', TRUE));
-        redirect(site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan)));
+        $this->_hapus_draft_produk_produksi($id_persediaan_barang);
+        $bulan = $this->_resolve_bulan_dari_input_produksi(
+            $this->input->post('tgl_transaksi', TRUE),
+            $this->input->post('bulan_produksi', TRUE)
+        );
+        redirect(site_url('Sys_unit_produk?bulan=' . urlencode($bulan)));
     }
 
     public function create_action_produksi($id_persediaan_barang = null)
@@ -1713,6 +1737,161 @@ class Sys_unit_produk extends CI_Controller
             return false;
         }
         return $this->_persediaan_bulan_ym_dari_tanggal_beli($row_persediaan->tanggal_beli) === $bulan_ym;
+    }
+
+    private function _produksi_draft_session_key($id_persediaan_barang)
+    {
+        return 'produksi_draft_' . (int) $id_persediaan_barang;
+    }
+
+    private function _hapus_draft_produk_produksi($id_persediaan_barang)
+    {
+        $id = (int) $id_persediaan_barang;
+        if ($id <= 0) {
+            return;
+        }
+        $this->session->unset_userdata($this->_produksi_draft_session_key($id));
+    }
+
+    private function _resolve_bulan_dari_input_produksi($tgl_transaksi = null, $bulan_fallback = null)
+    {
+        $tgl_transaksi = trim((string) $tgl_transaksi);
+        if ($tgl_transaksi !== '') {
+            $ts = $this->_parse_tanggal_transaksi_ts($tgl_transaksi);
+            if ($ts) {
+                return $this->_resolve_bulan_produksi_selected(date('Y-m', $ts));
+            }
+        }
+
+        return $this->_resolve_bulan_produksi_selected($bulan_fallback);
+    }
+
+    private function _ambil_post_draft_produk_field($draft_key, $fallback_key = '')
+    {
+        $value = trim((string) $this->input->post($draft_key, TRUE));
+        if ($value === '' && $fallback_key !== '') {
+            $value = trim((string) $this->input->post($fallback_key, TRUE));
+        }
+
+        return $value;
+    }
+
+    private function _simpan_draft_produk_produksi_dari_post($id_persediaan_barang)
+    {
+        $id = (int) $id_persediaan_barang;
+        if ($id <= 0) {
+            return;
+        }
+
+        $draft = array(
+            'nama_barang' => $this->_ambil_post_draft_produk_field('draft_nama_barang', 'nama_barang'),
+            'satuan' => $this->_ambil_post_draft_produk_field('draft_satuan', 'satuan'),
+            'harga_satuan' => $this->_ambil_post_draft_produk_field('draft_harga_satuan', 'harga_satuan'),
+            'tgl_transaksi' => $this->_ambil_post_draft_produk_field('draft_tgl_transaksi', 'tgl_transaksi'),
+            'uuid_unit' => $this->_ambil_post_draft_produk_field('draft_uuid_unit', 'uuid_unit'),
+            'jumlah_produksi' => $this->_ambil_post_draft_produk_field('draft_jumlah_produksi', 'jumlah_produksi'),
+            'keterangan' => $this->_ambil_post_draft_produk_field('draft_keterangan', 'keterangan'),
+        );
+
+        $has_data = false;
+        foreach ($draft as $value) {
+            if ($value !== '') {
+                $has_data = true;
+                break;
+            }
+        }
+        if (!$has_data) {
+            return;
+        }
+
+        $this->session->set_userdata($this->_produksi_draft_session_key($id), $draft);
+
+        $update = array();
+        if ($draft['nama_barang'] !== '') {
+            $update['namabarang'] = $draft['nama_barang'];
+        }
+        if ($draft['satuan'] !== '') {
+            $update['satuan'] = $draft['satuan'];
+        }
+        $harga_satuan = $this->_parse_jumlah_angka($draft['harga_satuan']);
+        if ($harga_satuan > 0) {
+            $update['hpp'] = (string) $harga_satuan;
+        }
+        $jumlah_produksi = $this->_parse_jumlah_angka($draft['jumlah_produksi']);
+        if ($jumlah_produksi > 0) {
+            $update['sa'] = (string) $jumlah_produksi;
+            $update['total_10'] = (string) $jumlah_produksi;
+            $update['nilai_persediaan'] = (string) ($harga_satuan * $jumlah_produksi);
+        }
+        if ($draft['tgl_transaksi'] !== '') {
+            $update['tanggal'] = $this->_tanggal_produksi_dari_input($draft['tgl_transaksi']);
+            $update['tanggal_beli'] = $this->_tanggal_beli_bulan_dari_transaksi($draft['tgl_transaksi']);
+        }
+
+        if (!empty($update)) {
+            $this->Persediaan_model->update($id, $update);
+        }
+    }
+
+    private function _get_produksi_draft_session($id_persediaan_barang)
+    {
+        $id = (int) $id_persediaan_barang;
+        if ($id <= 0) {
+            return array();
+        }
+
+        $draft = $this->session->userdata($this->_produksi_draft_session_key($id));
+        return is_array($draft) ? $draft : array();
+    }
+
+    private function _apply_produksi_draft_ke_form_data($data)
+    {
+        $id = isset($data['id_persediaan_barang']) ? (int) $data['id_persediaan_barang'] : 0;
+        $draft = $this->_get_produksi_draft_session($id);
+        $data['produk_draft'] = $draft;
+        $data['hapus_produk_draft_client'] = false;
+
+        $flash_message = $this->session->flashdata('message');
+        if ($flash_message && stripos((string) $flash_message, 'berhasil') !== false) {
+            $data['hapus_produk_draft_client'] = true;
+        }
+
+        if ($id <= 0 || empty($draft)) {
+            return $data;
+        }
+
+        $fields = array('nama_barang', 'satuan', 'harga_satuan', 'tgl_transaksi', 'uuid_unit', 'jumlah_produksi', 'keterangan');
+        foreach ($fields as $field) {
+            if (isset($draft[$field]) && trim((string) $draft[$field]) !== '') {
+                $data[$field] = $draft[$field];
+            }
+        }
+
+        return $data;
+    }
+
+    private function _sync_bulan_produksi_dari_tgl_form($data)
+    {
+        $tgl = isset($data['tgl_transaksi']) ? trim((string) $data['tgl_transaksi']) : '';
+        if ($tgl === '') {
+            return $data;
+        }
+
+        $ts = $this->_parse_tanggal_transaksi_ts($tgl);
+        if (!$ts) {
+            return $data;
+        }
+
+        $bulan_ym = date('Y-m', $ts);
+        $tanggal_beli_bulan = $this->_tanggal_beli_bulan_dari_transaksi($tgl);
+        $data['bulan_produksi_selected'] = $bulan_ym;
+        $data['bulan_produksi_ym'] = $bulan_ym;
+        $data['bulan_produksi_label'] = $this->_bulan_nama_indonesia($bulan_ym);
+        $data['tanggal_beli_bulan'] = $tanggal_beli_bulan;
+        $data['tgl_transaksi_bahan'] = $tanggal_beli_bulan;
+        $data['Data_stock'] = $this->_get_stock_persediaan_by_bulan($bulan_ym);
+
+        return $data;
     }
 
     private function _enrich_produksi_form_data($data)

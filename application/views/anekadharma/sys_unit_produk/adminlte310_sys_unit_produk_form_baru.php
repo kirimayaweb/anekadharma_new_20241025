@@ -22,7 +22,12 @@ foreach ($data_bahan_list as $_bahan_row) {
     $TOTAL_HARGA += $_bahan_row->jumlah_bahan * $_bahan_row->harga_satuan_bahan;
 }
 if (!empty($tgl_transaksi)) {
-    if (date('Y', strtotime($tgl_transaksi)) < 2020) {
+    if (preg_match('/^\d{2}-\d{2}-\d{4}(\s+\d{2}:\d{2}:\d{2})?$/', trim($tgl_transaksi))) {
+        $tgl_transaksi_produk_X = trim($tgl_transaksi);
+        if (strlen($tgl_transaksi_produk_X) === 10) {
+            $tgl_transaksi_produk_X .= ' 00:00:00';
+        }
+    } elseif (date('Y', strtotime($tgl_transaksi)) < 2020) {
         $tgl_transaksi_produk_X = date('d-m-Y H:i:s');
     } else {
         $tgl_transaksi_produk_X = date('d-m-Y H:i:s', strtotime($tgl_transaksi));
@@ -32,6 +37,11 @@ if (!empty($tgl_transaksi)) {
 }
 $harga_satuan_tampil = isset($harga_satuan) && $harga_satuan !== '' ? number_format((float) preg_replace('/[^0-9.]/', '', $harga_satuan), 0, ',', '.') : '';
 $btn_produk_siap = ($jumlah_bahan_count >= 1 && !empty($id_persediaan_barang) && !empty($action_simpan_produk_form));
+$produk_draft = isset($produk_draft) && is_array($produk_draft) ? $produk_draft : array();
+$hapus_produk_draft_client = isset($hapus_produk_draft_client) ? (bool) $hapus_produk_draft_client : false;
+$data_penjualan_per_uuid_penjualan = isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uuid_penjualan)
+    ? $data_penjualan_per_uuid_penjualan
+    : array();
 ?>
 <div class="content-wrapper">
 
@@ -125,25 +135,11 @@ $btn_produk_siap = ($jumlah_bahan_count >= 1 && !empty($id_persediaan_barang) &&
                                             <small class="text-muted">Total harga bahan: <?php echo number_format($TOTAL_HARGA, 0, ',', '.'); ?></small>
                                             <?php } ?>
                                         </div>
-                                        <div class="col-md-5">
+                                        <div class="col-md-7">
                                             <label for="keterangan_produk">Keterangan</label>
                                             <input type="text" class="form-control field-produk-baru" name="keterangan" id="keterangan_produk" value="<?php echo isset($keterangan) ? htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8') : ''; ?>" required>
                                         </div>
-                                        <div class="col-md-2 d-flex align-items-end">
-                                            <button type="submit" class="btn btn-primary btn-block" id="btn-simpan-produk-baru" <?php echo $btn_produk_siap ? '' : 'disabled'; ?>>
-                                                <?php echo htmlspecialchars($label_btn_produk, ENT_QUOTES, 'UTF-8'); ?>
-                                            </button>
-                                        </div>
                                     </div>
-                                    <small class="text-muted d-block mt-2" id="info-btn-produk-baru">
-                                        <?php if ($jumlah_bahan_count < 1) { ?>
-                                            Tambahkan minimal 1 bahan pada tabel di bawah untuk mengaktifkan tombol simpan.
-                                        <?php } elseif (empty($id_persediaan_barang)) { ?>
-                                            Simpan bahan terlebih dahulu agar data produk dapat disimpan.
-                                        <?php } else { ?>
-                                            Lengkapi semua isian untuk menyimpan data produk.
-                                        <?php } ?>
-                                    </small>
                                 </form>
                             </div>
                         </div>
@@ -330,17 +326,26 @@ $btn_produk_siap = ($jumlah_bahan_count >= 1 && !empty($id_persediaan_barang) &&
                                     </table>
                                 </div>
 
-
-                                <!-- <div class="card-body">
-
-                                <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-input-barang">
-                                    Tambah Barang
-                                </button>
-
-                            </div> -->
-
-
-
+                                <div class="card-body border-top pt-3">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <small class="text-muted d-block" id="info-btn-produk-baru">
+                                                <?php if ($jumlah_bahan_count < 1) { ?>
+                                                    Tambahkan minimal 1 bahan pada tabel di atas untuk mengaktifkan tombol simpan.
+                                                <?php } elseif (empty($id_persediaan_barang)) { ?>
+                                                    Simpan bahan terlebih dahulu agar data produk dapat disimpan.
+                                                <?php } else { ?>
+                                                    Lengkapi semua isian produk di atas untuk menyimpan data produk.
+                                                <?php } ?>
+                                            </small>
+                                        </div>
+                                        <div class="col-md-4 text-md-right mt-2 mt-md-0">
+                                            <button type="submit" form="form-produk-baru" class="btn btn-primary btn-lg" id="btn-simpan-produk-baru" <?php echo $btn_produk_siap ? '' : 'disabled'; ?>>
+                                                <?php echo htmlspecialchars($label_btn_produk, ENT_QUOTES, 'UTF-8'); ?>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div class="form-group">
                                     <div class="row" align="center">
@@ -526,6 +531,13 @@ $btn_produk_siap = ($jumlah_bahan_count >= 1 && !empty($id_persediaan_barang) &&
                     <input type="hidden" name="id_persediaan" id="input-bahan-id-persediaan" value="">
                     <input type="hidden" name="tgl_transaksi" id="input-bahan-tgl-transaksi" value="">
                     <input type="hidden" name="bulan_produksi" id="input-bahan-bulan-produksi" value="">
+                    <input type="hidden" name="draft_nama_barang" id="draft-nama-barang" value="">
+                    <input type="hidden" name="draft_satuan" id="draft-satuan" value="">
+                    <input type="hidden" name="draft_harga_satuan" id="draft-harga-satuan" value="">
+                    <input type="hidden" name="draft_tgl_transaksi" id="draft-tgl-transaksi" value="">
+                    <input type="hidden" name="draft_uuid_unit" id="draft-uuid-unit" value="">
+                    <input type="hidden" name="draft_jumlah_produksi" id="draft-jumlah-produksi" value="">
+                    <input type="hidden" name="draft_keterangan" id="draft-keterangan" value="">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-primary">PROSES SIMPAN BAHAN</button>
                 </div>
@@ -761,12 +773,180 @@ window.addEventListener('load', function() {
     var labelBtnProdukSimpan = <?php echo json_encode('Simpan'); ?>;
     var labelBtnProdukUpdate = <?php echo json_encode('Update Produk'); ?>;
     var produkSudahAda = <?php echo $produk_sudah_ada ? 'true' : 'false'; ?>;
+    var produkDraftServer = <?php echo json_encode($produk_draft); ?>;
+    var hapusProdukDraftClient = <?php echo $hapus_produk_draft_client ? 'true' : 'false'; ?>;
+    var storageKeyProdukDraft = 'produksi_form_draft_' + (idPersediaanProduk > 0 ? idPersediaanProduk : 'baru');
+
+    var namaBulanIndonesia = {
+        '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
+        '05': 'Mei', '06': 'Juni', '07': 'Juli', '08': 'Agustus',
+        '09': 'September', '10': 'Oktober', '11': 'November', '12': 'Desember'
+    };
+
+    function parseBulanYmDariTglProduk(tglStr) {
+        tglStr = String(tglStr || '').trim();
+        if (!tglStr) {
+            return '';
+        }
+        var m = tglStr.match(/^(\d{2})-(\d{2})-(\d{4})/);
+        if (m) {
+            return m[3] + '-' + m[2];
+        }
+        var d = new Date(tglStr);
+        if (!isNaN(d.getTime())) {
+            var bulan = String(d.getMonth() + 1);
+            if (bulan.length < 2) {
+                bulan = '0' + bulan;
+            }
+            return d.getFullYear() + '-' + bulan;
+        }
+        return '';
+    }
+
+    function labelBulanIndonesia(bulanYm) {
+        if (!bulanYm || !/^\d{4}-\d{2}$/.test(bulanYm)) {
+            return '';
+        }
+        var parts = bulanYm.split('-');
+        return (namaBulanIndonesia[parts[1]] || parts[1]) + ' ' + parts[0];
+    }
+
+    function syncBulanDariTglProduk(reloadModalStock) {
+        var tglProduk = $('#tgl_transaksi_produk').val() || '';
+        var bulanYm = parseBulanYmDariTglProduk(tglProduk);
+        if (!bulanYm) {
+            bulanYm = $('#bulan_produksi_bahan').val() || bulanProduksiBahanAktif;
+        }
+        if (!bulanYm) {
+            return '';
+        }
+        bulanProduksiBahanAktif = bulanYm;
+        $('#bulan_produksi_bahan').val(bulanYm);
+        $('#form-produk-baru input[name="bulan_produksi"]').val(bulanYm);
+        updateLabelBulanProduksi(labelBulanIndonesia(bulanYm));
+        if (reloadModalStock && $('#modal-xl-select-unit').hasClass('show')) {
+            loadStockPersediaanByBulan(bulanYm, adjustStockDataTableColumns);
+        }
+        return bulanYm;
+    }
+
+    function getNilaiFieldProduk($el) {
+        if (!$el || !$el.length) {
+            return '';
+        }
+        var val = $el.val();
+        if (val === null || val === undefined) {
+            return '';
+        }
+        val = String(val).trim();
+        if ($el.hasClass('uang')) {
+            return val.replace(/\./g, '');
+        }
+        return val;
+    }
+
+    function kumpulkanDataFormProduk() {
+        return {
+            tgl_transaksi: getNilaiFieldProduk($('#tgl_transaksi_produk')),
+            uuid_unit: getNilaiFieldProduk($('#uuid_unit_produk')),
+            jumlah_produksi: getNilaiFieldProduk($('#jumlah_produksi_produk')),
+            nama_barang: getNilaiFieldProduk($('#nama_barang_produk')),
+            satuan: getNilaiFieldProduk($('#satuan_produk')),
+            harga_satuan: getNilaiFieldProduk($('#harga_satuan_produk')),
+            keterangan: getNilaiFieldProduk($('#keterangan_produk'))
+        };
+    }
+
+    function simpanDraftProdukKeStorage() {
+        try {
+            localStorage.setItem(storageKeyProdukDraft, JSON.stringify(kumpulkanDataFormProduk()));
+        } catch (e) {}
+    }
+
+    function formatUangTampil(angka) {
+        angka = String(angka || '').replace(/[^0-9]/g, '');
+        if (!angka) {
+            return '';
+        }
+        return angka.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function terapkanDataFormProduk(data) {
+        if (!data || typeof data !== 'object') {
+            return;
+        }
+        if (data.tgl_transaksi) {
+            $('#tgl_transaksi_produk').val(data.tgl_transaksi);
+        }
+        if (data.uuid_unit) {
+            $('#uuid_unit_produk').val(data.uuid_unit).trigger('change');
+        }
+        if (data.jumlah_produksi !== undefined && data.jumlah_produksi !== '') {
+            $('#jumlah_produksi_produk').val(formatUangTampil(data.jumlah_produksi)).trigger('input');
+        }
+        if (data.nama_barang) {
+            $('#nama_barang_produk').val(data.nama_barang);
+        }
+        if (data.satuan) {
+            $('#satuan_produk').val(data.satuan);
+        }
+        if (data.harga_satuan !== undefined && data.harga_satuan !== '') {
+            $('#harga_satuan_produk').val(formatUangTampil(data.harga_satuan)).trigger('input');
+        }
+        if (data.keterangan) {
+            $('#keterangan_produk').val(data.keterangan);
+        }
+    }
+
+    function muatDraftProdukKeForm() {
+        if (hapusProdukDraftClient) {
+            try {
+                localStorage.removeItem(storageKeyProdukDraft);
+            } catch (e) {}
+            return;
+        }
+
+        var data = null;
+        try {
+            var raw = localStorage.getItem(storageKeyProdukDraft);
+            if (raw) {
+                data = JSON.parse(raw);
+            }
+        } catch (e) {}
+
+        if ((!data || !Object.keys(data).length) && produkDraftServer && Object.keys(produkDraftServer).length) {
+            data = produkDraftServer;
+        }
+        if (!data || !Object.keys(data).length) {
+            return;
+        }
+
+        terapkanDataFormProduk(data);
+    }
+
+    function salinDraftProdukKeFormBahan() {
+        simpanDraftProdukKeStorage();
+        var data = kumpulkanDataFormProduk();
+        $('#draft-nama-barang').val(data.nama_barang || '');
+        $('#draft-satuan').val(data.satuan || '');
+        $('#draft-harga-satuan').val(data.harga_satuan || '');
+        $('#draft-tgl-transaksi').val(data.tgl_transaksi || '');
+        $('#draft-uuid-unit').val(data.uuid_unit || '');
+        $('#draft-jumlah-produksi').val(data.jumlah_produksi || '');
+        $('#draft-keterangan').val(data.keterangan || '');
+    }
 
     if ($('#tgl_transaksi_produk_wrap').length && $.fn.datetimepicker) {
         $('#tgl_transaksi_produk_wrap').datetimepicker({
             format: 'DD-MM-YYYY HH:mm:ss'
         });
+        $('#tgl_transaksi_produk_wrap').on('change.datetimepicker', function() {
+            syncBulanDariTglProduk(true);
+        });
     }
+    $('#tgl_transaksi_produk').on('change blur', function() {
+        syncBulanDariTglProduk(true);
+    });
     if ($('#uuid_unit_produk').length && $.fn.select2) {
         $('#uuid_unit_produk').select2({ width: '100%' });
     }
@@ -803,17 +983,30 @@ window.addEventListener('load', function() {
         }
     }
 
-    $(document).on('input change', '#form-produk-baru .field-produk-baru', refreshTombolProdukBaru);
-    refreshTombolProdukBaru();
+    $(document).on('input change', '#form-produk-baru .field-produk-baru', function() {
+        simpanDraftProdukKeStorage();
+        refreshTombolProdukBaru();
+    });
+
+    $('#form-produk-baru').on('submit', function() {
+        try {
+            localStorage.removeItem(storageKeyProdukDraft);
+        } catch (e) {}
+    });
 
     $('#modal-input-jumlah-bahan').appendTo('body');
+
+    $('#form-simpan-bahan-produksi').on('submit', function() {
+        salinDraftProdukKeFormBahan();
+    });
 
     $(document).on('click', '.btn-pilih-barang-bahan', function(e) {
         e.preventDefault();
         e.stopPropagation();
         var $btn = $(this);
-        var bulanYm = $('#bulan_produksi_bahan').val() || bulanProduksiBahanAktif;
-        var tglTransaksi = bulanYm ? (bulanYm + '-01') : '';
+        salinDraftProdukKeFormBahan();
+        var bulanYm = syncBulanDariTglProduk(false) || $('#bulan_produksi_bahan').val() || bulanProduksiBahanAktif;
+        var tglTransaksi = $('#tgl_transaksi_produk').val() || (bulanYm ? (bulanYm + '-01') : '');
         $('#form-simpan-bahan-produksi').attr('action', actionSimpanBahan);
         $('#input-bahan-id-persediaan').val($btn.data('id-persediaan'));
         $('#input-bahan-uuid-persediaan').val($btn.data('uuid-persediaan'));
@@ -995,8 +1188,13 @@ window.addEventListener('load', function() {
         }
     });
 
+    $('[data-target="#modal-xl-select-unit"]').on('click', function() {
+        salinDraftProdukKeFormBahan();
+        syncBulanDariTglProduk(false);
+    });
+
     $('#modal-xl-select-unit').on('show.bs.modal', function() {
-        var bulan = $('#bulan_produksi_bahan').val() || bulanProduksiBahanAktif;
+        var bulan = syncBulanDariTglProduk(false) || $('#bulan_produksi_bahan').val() || bulanProduksiBahanAktif;
         if (!bulan) {
             return;
         }
@@ -1015,5 +1213,9 @@ window.addEventListener('load', function() {
             applyStockDataTableScrollHeight();
         }
     });
+
+    muatDraftProdukKeForm();
+    refreshTombolProdukBaru();
+    syncBulanDariTglProduk(false);
 });
 </script>

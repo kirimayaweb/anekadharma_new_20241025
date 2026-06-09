@@ -65,8 +65,14 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
 
                     <div class="card-body">
 
-
-
+                        <?php if ($this->session->flashdata('message')): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <?php echo htmlspecialchars($this->session->flashdata('message'), ENT_QUOTES, 'UTF-8'); ?>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <?php endif; ?>
 
                         <div class="row">
                             <div class="col-12 col-sm-12">
