@@ -89,18 +89,26 @@ function pembelian_get_barang_list_rows($CI)
 {
 	$tgl = pembelian_get_filter_tanggal($CI);
 
+	$has_spop = $CI->db->field_exists('spop', 'persediaan');
+	$spop_sql = $has_spop
+		? "TRIM(COALESCE(`spop`, '')) AS `spop`"
+		: "'' AS `spop`";
+	$group_spop = $has_spop ? ', `spop`' : '';
+
 	$sql = "SELECT
 			COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
+			`uuid_persediaan`,
 			`kode` AS kode_barang,
 			`namabarang` AS nama_barang,
 			`satuan`,
-			`hpp` AS harga_satuan
+			`hpp` AS harga_satuan,
+			{$spop_sql}
 		FROM `persediaan`
 		WHERE TRIM(`namabarang`) <> ''
 		AND DATE(`tanggal_beli`) >= ?
 		AND DATE(`tanggal_beli`) <= ?
-		GROUP BY COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`), `namabarang`, `kode`, `satuan`, `hpp`
-		ORDER BY `namabarang` ASC";
+		GROUP BY COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`), `uuid_persediaan`, `namabarang`, `kode`, `satuan`, `hpp`{$group_spop}
+		ORDER BY `namabarang` ASC, `spop` ASC";
 
 	return $CI->db->query($sql, array($tgl['awal'], $tgl['akhir']))->result();
 }
@@ -1736,7 +1744,8 @@ function persediaan_recalculate_insert_persediaan_from_pembelian($CI, $ctx, $row
 		$nama_cek = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
 		$harga_cek = isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '';
 		$spop_cek = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
-		$existing = persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama_cek, $harga_cek, $spop_cek);
+		$satuan_cek = isset($row_pembelian->satuan) ? $row_pembelian->satuan : '';
+		$existing = persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama_cek, $satuan_cek, $harga_cek, $spop_cek);
 	}
 	if ($existing) {
 		return array(
@@ -2677,17 +2686,31 @@ function persediaan_recalculate_normalize_spop($spop)
 }
 
 /**
+ * Nilai SPOP untuk perbandingan (kosong/0 → "", angka → tanpa leading zero).
+ */
+function persediaan_recalculate_spop_match_value($spop)
+{
+	$s = persediaan_recalculate_normalize_spop($spop);
+	if (persediaan_recalculate_spop_kosong_atau_nol($s)) {
+		return '';
+	}
+	if (preg_match('/^\d+$/', $s)) {
+		return (string) (int) $s;
+	}
+
+	return $s;
+}
+
+/**
  * Bandingkan SPOP pembelian vs persediaan (keduanya kosong/0 = cocok).
+ * Jika salah satu terisi, harus sama persis (termasuk filter numerik 013 = 13).
  */
 function persediaan_recalculate_spop_cocok($spop_a, $spop_b)
 {
-	$a = persediaan_recalculate_normalize_spop($spop_a);
-	$b = persediaan_recalculate_normalize_spop($spop_b);
-	if (persediaan_recalculate_spop_kosong_atau_nol($a)) {
-		$a = '';
-	}
-	if (persediaan_recalculate_spop_kosong_atau_nol($b)) {
-		$b = '';
+	$a = persediaan_recalculate_spop_match_value($spop_a);
+	$b = persediaan_recalculate_spop_match_value($spop_b);
+	if ($a !== '' && $b !== '' && $a !== $b) {
+		return false;
 	}
 
 	return $a === $b;
@@ -2874,11 +2897,7 @@ function persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $h
  */
 function persediaan_recalculate_spop_key_for_sync($spop)
 {
-	if (persediaan_recalculate_spop_kosong_atau_nol($spop)) {
-		return '';
-	}
-
-	return persediaan_recalculate_normalize_spop($spop);
+	return persediaan_recalculate_spop_match_value($spop);
 }
 
 /**
@@ -3610,11 +3629,20 @@ function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $m
 	$nama_var = array_values(array_unique($nama_var, SORT_REGULAR));
 	$satuan_var = array_values(array_unique($satuan_var, SORT_REGULAR));
 
+	$spop_pem_valid = persediaan_recalculate_spop_valid($spop);
+
 	foreach ($nama_var as $n_try) {
 		foreach ($satuan_var as $s_try) {
 			$key = persediaan_recalculate_sync_pembelian_persediaan_key($n_try, $s_try, $harga, $spop);
 			if ($key !== '' && !empty($map['by_pembelian_sync_key'][$key])) {
-				return $map['by_pembelian_sync_key'][$key][0];
+				foreach ($map['by_pembelian_sync_key'][$key] as $candidate) {
+					if (persediaan_recalculate_spop_cocok(
+						isset($candidate->spop) ? $candidate->spop : '',
+						$spop
+					)) {
+						return $candidate;
+					}
+				}
 			}
 		}
 	}
@@ -3625,6 +3653,10 @@ function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $m
 	}
 
 	foreach ($map['by_nama'][$n_only] as $row) {
+		if ($spop_pem_valid && persediaan_recalculate_spop_valid(isset($row->spop) ? $row->spop : '')
+			&& !persediaan_recalculate_spop_cocok(isset($row->spop) ? $row->spop : '', $spop)) {
+			continue;
+		}
 		if (!persediaan_recalculate_spop_cocok(
 			isset($row->spop) ? $row->spop : '',
 			$spop
@@ -4303,7 +4335,7 @@ function persediaan_recalculate_full_analisa($CI, $bulan)
 	if ($ctx['has_pembelian']) {
 		$penjelasan[] = 'Update kolom <strong>beli</strong> dari tbl_pembelian (' . $ctx['total_pembelian']
 			. ' record) + tbl_pembelian_jasa (' . $ctx['total_pembelian_jasa'] . ' record) '
-			. '— cocokkan uraian+satuan+harga_satuan+tgl_po = namabarang+satuan+hpp+tanggal_beli.';
+			. '— cocokkan uraian+satuan+harga_satuan+spop+tgl_po = namabarang+satuan+hpp+spop+tanggal_beli.';
 	}
 	if ($ctx['has_penjualan']) {
 		$penjelasan[] = 'Update kolom <strong>penjualan</strong> + kolom <strong>unit</strong> dari tbl_penjualan ('
@@ -4325,7 +4357,7 @@ function persediaan_recalculate_full_analisa($CI, $bulan)
 	if ((int) $ctx['total_persediaan'] === 0) {
 		$penjelasan[] = 'Belum ada data persediaan bulan ini (tanggal_beli ' . $ctx['tanggal_beli'] . ') — recalculate akan <strong>menambah</strong> baris dari pembelian/penjualan yang belum ada.';
 	}
-	$penjelasan[] = 'Sebelum recalculate: cek semua <strong>tbl_pembelian</strong> (uraian+satuan+harga_satuan, bulan tgl_po) dan <strong>tbl_penjualan</strong> (nama_barang+satuan+harga_satuan, bulan tgl_jual) sudah ada di persediaan (namabarang+satuan+hpp, tanggal_beli bulan sama). Yang belum ada akan <strong>ditambah sekali</strong> tanpa duplikasi.';
+	$penjelasan[] = 'Sebelum recalculate: cek semua <strong>tbl_pembelian</strong> (uraian+satuan+harga_satuan+spop, bulan tgl_po) dan <strong>tbl_penjualan</strong> (nama_barang+satuan+harga_satuan, bulan tgl_jual) sudah ada di persediaan (namabarang+satuan+hpp+spop, tanggal_beli bulan sama). Yang belum ada akan <strong>ditambah sekali</strong> tanpa duplikasi.';
 
 	return array(
 		'ok' => true,
@@ -4512,7 +4544,7 @@ function persediaan_recalculate_build_pembelian_agg_map($CI, $tgl_awal, $tgl_akh
 			$satuan = trim((string) $r->satuan);
 			$satuan_key = persediaan_recalculate_satuan_key($satuan);
 			$hpp_key = (string) persediaan_parse_angka($r->harga_satuan);
-			$spop_key = persediaan_recalculate_normalize_spop(isset($r->spop) ? $r->spop : '');
+			$spop_key = persediaan_recalculate_spop_key_for_sync(isset($r->spop) ? $r->spop : '');
 			if ($satuan_key === '') {
 				continue;
 			}
@@ -4554,7 +4586,7 @@ function persediaan_recalculate_lookup_beli_dari_map($map, $row)
 	$satuan = trim((string) $row->satuan);
 	$satuan_key = persediaan_recalculate_satuan_key($satuan);
 	$hpp_key = (string) persediaan_parse_angka($row->hpp);
-	$spop_key = persediaan_recalculate_normalize_spop(isset($row->spop) ? $row->spop : '');
+	$spop_key = persediaan_recalculate_spop_key_for_sync(isset($row->spop) ? $row->spop : '');
 	if ($satuan_key === '') {
 		return 0;
 	}
@@ -4563,7 +4595,7 @@ function persediaan_recalculate_lookup_beli_dari_map($map, $row)
 		$row->namabarang,
 		$satuan,
 		$row->hpp,
-		$spop_key
+		isset($row->spop) ? $row->spop : ''
 	);
 	if ($pembelian_key !== '') {
 		$k = 'nm|' . $pembelian_key;
@@ -4611,20 +4643,19 @@ function persediaan_recalculate_beli_phase_once($CI, $ctx)
 	$with_beli = 0;
 
 	foreach ($rows as $row) {
-		$beli_map = persediaan_recalculate_lookup_beli_dari_map($map, $row);
-		$beli_strict = persediaan_recalculate_hitung_beli_row_by_kategori(
+		$beli = persediaan_recalculate_hitung_beli_row_by_kategori(
 			$CI,
 			$row,
 			$ctx['tgl_awal'],
 			$ctx['tgl_akhir']
 		);
-		$beli = max((int) $beli_map, (int) $beli_strict);
 		$upd = persediaan_recalculate_update_beli_row($CI, $row, $beli);
 		$updated++;
 		if ($beli > 0) {
 			$with_beli++;
 		}
 		if (count($items) < 15) {
+			$spop_row = isset($row->spop) ? $row->spop : '';
 			$items[] = array(
 				'status' => 'OK',
 				'fase' => 'beli',
@@ -4632,9 +4663,10 @@ function persediaan_recalculate_beli_phase_once($CI, $ctx)
 				'namabarang' => $row->namabarang,
 				'satuan' => $row->satuan,
 				'hpp' => $row->hpp,
+				'spop' => $spop_row,
 				'beli' => $upd['beli'],
 				'total_10' => $upd['total_10'],
-				'keterangan' => 'beli=' . $upd['beli'] . ' dari pembelian (uraian+satuan+harga_satuan = namabarang+satuan+hpp)',
+				'keterangan' => 'beli=' . $upd['beli'] . ' dari pembelian (uraian+satuan+harga_satuan+spop = namabarang+satuan+hpp+spop)',
 			);
 		}
 	}
@@ -6064,14 +6096,14 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 	);
 }
 
-function persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama, $hpp, $spop)
+function persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama, $satuan, $hpp, $spop)
 {
 	if (empty($map) || empty($map['by_id']) || !is_array($map['by_id'])) {
 		return null;
 	}
 
 	foreach ($map['by_id'] as $row) {
-		if (persediaan_generate_recalculate_row_cocok_nama_hpp_spop($row, $nama, $hpp, $spop)) {
+		if (persediaan_generate_recalculate_row_cocok_nama_hpp_spop($row, $nama, $satuan, $hpp, $spop)) {
 			return $row;
 		}
 	}
@@ -6080,9 +6112,9 @@ function persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama, $hpp
 }
 
 /**
- * Cocokkan namabarang + hpp + spop (tanpa syarat sa/satuan).
+ * Cocokkan namabarang + satuan + hpp + spop (tanpa syarat sa).
  */
-function persediaan_generate_recalculate_row_cocok_nama_hpp_spop($row, $nama, $hpp, $spop)
+function persediaan_generate_recalculate_row_cocok_nama_hpp_spop($row, $nama, $satuan, $hpp, $spop)
 {
 	if (empty($row)) {
 		return false;
@@ -6095,6 +6127,13 @@ function persediaan_generate_recalculate_row_cocok_nama_hpp_spop($row, $nama, $h
 		persediaan_recalculate_sanitize_nama_persediaan($nama)
 	);
 	if ($nama_row === '' || $nama_cmp === '' || $nama_row !== $nama_cmp) {
+		return false;
+	}
+
+	if (!persediaan_recalculate_satuan_cocok_pembelian(
+		isset($row->satuan) ? $row->satuan : '',
+		$satuan
+	)) {
 		return false;
 	}
 
@@ -6787,6 +6826,45 @@ function persediaan_generate_recalculate_kandidat_penjualan_persediaan($map, $na
 	}
 
 	return array_values($found);
+}
+
+/**
+ * Reset & hitung ulang kolom beli persediaan bulan target dari pembelian (filter spop ketat).
+ */
+function persediaan_generate_recalculate_reapply_pembelian_bulan($CI, $ctx)
+{
+	$CI->load->helper('persediaan_display');
+
+	$tanggal_beli = isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $ctx['tanggal_beli'];
+	$reset_info = persediaan_recalculate_reset_beli_persediaan_bulan($CI, $tanggal_beli);
+
+	$rows = $CI->db->query(
+		"SELECT * FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
+		array($tanggal_beli)
+	)->result();
+
+	$updated = 0;
+	$with_beli = 0;
+
+	foreach ($rows as $row) {
+		$beli = persediaan_recalculate_hitung_beli_row_by_kategori(
+			$CI,
+			$row,
+			$ctx['tgl_awal'],
+			$ctx['tgl_akhir']
+		);
+		persediaan_recalculate_update_beli_row($CI, $row, $beli);
+		$updated++;
+		if ($beli > 0) {
+			$with_beli++;
+		}
+	}
+
+	return array(
+		'reset_beli' => $reset_info,
+		'updated' => $updated,
+		'with_beli' => $with_beli,
+	);
 }
 
 /**
@@ -8181,11 +8259,15 @@ function persediaan_generate_recalculate_refresh_nilai_persediaan_bulan($CI, $ta
 
 function persediaan_generate_recalculate_finish_all($CI, $bulan, $ctx, $count_sumber, &$state, $state_key, $batch_items)
 {
+	$pembelian_info = null;
 	$penjualan_info = null;
 	$produksi_info = null;
 	$pecah_info = null;
 	$nilai_info = null;
 
+	if ($CI->db->table_exists('tbl_pembelian') || $CI->db->table_exists('tbl_pembelian_jasa')) {
+		$pembelian_info = persediaan_generate_recalculate_reapply_pembelian_bulan($CI, $ctx);
+	}
 	if ($CI->db->table_exists('tbl_penjualan')) {
 		$penjualan_info = persediaan_generate_recalculate_reapply_penjualan_bulan($CI, $ctx);
 	}
@@ -8254,6 +8336,7 @@ function persediaan_generate_recalculate_finish_all($CI, $bulan, $ctx, $count_su
 		'summary' => $summary_done,
 		'history_saved' => !empty($state['log_id']),
 		'hapus_sa_total10_nol' => (int) $state['hapus_nol_target'],
+		'pembelian_reapply' => $pembelian_info,
 		'penjualan_reapply' => $penjualan_info,
 		'produksi_reapply' => $produksi_info,
 		'pecah_reapply' => $pecah_info,
@@ -10206,6 +10289,7 @@ function persediaan_rekonsiliasi_tx_filter_pembelian_for_pers($pers, $pembelian_
 			'nama' => isset($r->uraian) ? $r->uraian : '',
 			'satuan' => isset($r->satuan) ? $r->satuan : '',
 			'hpp' => isset($r->harga_satuan) ? $r->harga_satuan : '',
+			'spop' => isset($r->spop) ? $r->spop : '',
 			'jumlah' => isset($r->jumlah) ? $r->jumlah : '',
 		);
 	}

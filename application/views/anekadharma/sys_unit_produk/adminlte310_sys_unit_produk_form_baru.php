@@ -736,18 +736,44 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
         -webkit-overflow-scrolling: touch;
         border-bottom: 1px solid #dee2e6;
     }
-    #stock-persediaan-modal-body .dataTables_scrollHeadInner table,
-    #stock-persediaan-modal-body .dataTables_scrollBody table {
-        min-width: 1100px !important;
-        width: 1100px !important;
-    }
     #stock-persediaan-modal-body table#example {
         margin-bottom: 0 !important;
+        width: 100% !important;
+        table-layout: fixed;
+    }
+    #stock-persediaan-modal-body .dataTables_scrollHeadInner,
+    #stock-persediaan-modal-body .dataTables_scrollHeadInner table,
+    #stock-persediaan-modal-body .dataTables_scrollBody table {
+        width: 100% !important;
     }
     #stock-persediaan-modal-body table#example th,
     #stock-persediaan-modal-body table#example td {
-        white-space: nowrap;
         vertical-align: middle !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #stock-persediaan-modal-body table#example th.col-no,
+    #stock-persediaan-modal-body table#example td:nth-child(1) { width: 45px; min-width: 45px; }
+    #stock-persediaan-modal-body table#example th.col-tgl-beli,
+    #stock-persediaan-modal-body table#example td:nth-child(2) { width: 105px; min-width: 105px; }
+    #stock-persediaan-modal-body table#example th.col-bulan,
+    #stock-persediaan-modal-body table#example td:nth-child(3) { width: 70px; min-width: 70px; }
+    #stock-persediaan-modal-body table#example th.col-spop,
+    #stock-persediaan-modal-body table#example td:nth-child(4) { width: 120px; min-width: 120px; }
+    #stock-persediaan-modal-body table#example th.col-nama,
+    #stock-persediaan-modal-body table#example td:nth-child(5) { width: auto; min-width: 180px; }
+    #stock-persediaan-modal-body table#example th.col-harga,
+    #stock-persediaan-modal-body table#example td:nth-child(6) { width: 110px; min-width: 110px; }
+    #stock-persediaan-modal-body table#example th.col-satuan,
+    #stock-persediaan-modal-body table#example td:nth-child(7) { width: 70px; min-width: 70px; }
+    #stock-persediaan-modal-body table#example th.col-stock,
+    #stock-persediaan-modal-body table#example td:nth-child(8) { width: 80px; min-width: 80px; }
+    #stock-persediaan-modal-body table#example th.col-aksi,
+    #stock-persediaan-modal-body table#example td:nth-child(9) { width: 115px; min-width: 115px; }
+    #stock-persediaan-modal-body table#example td.col-nama,
+    #stock-persediaan-modal-body table#example td:nth-child(5) {
+        white-space: normal;
+        word-break: break-word;
     }
     #stock-persediaan-modal-body .dataTables_info {
         padding: 0.4rem 0.25rem 0.15rem;
@@ -1264,8 +1290,8 @@ window.addEventListener('load', function() {
         }
         var dt = $('#example').DataTable({
             scrollY: getStockDataTableScrollHeight(),
-            scrollX: true,
-            scrollCollapse: false,
+            scrollX: false,
+            scrollCollapse: true,
             autoWidth: false,
             paging: true,
             pageLength: 25,
@@ -1274,6 +1300,17 @@ window.addEventListener('load', function() {
             info: true,
             ordering: true,
             dom: 'frtip',
+            columnDefs: [
+                { targets: 0, className: 'text-center', width: '45px' },
+                { targets: 1, className: 'text-center', width: '105px' },
+                { targets: 2, className: 'text-center', width: '70px' },
+                { targets: 3, className: 'text-left', width: '120px' },
+                { targets: 4, className: 'text-left' },
+                { targets: 5, className: 'text-right', width: '110px' },
+                { targets: 6, className: 'text-center', width: '70px' },
+                { targets: 7, className: 'text-center', width: '80px' },
+                { targets: 8, className: 'text-center', width: '115px', orderable: false }
+            ],
             language: {
                 emptyTable: 'Belum ada stock persediaan pada bulan terpilih',
                 info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
@@ -1293,6 +1330,9 @@ window.addEventListener('load', function() {
             }
         });
         bindStockDataTableScrollSync();
+        setTimeout(function() {
+            dt.columns.adjust().draw(false);
+        }, 0);
         return dt;
     }
 

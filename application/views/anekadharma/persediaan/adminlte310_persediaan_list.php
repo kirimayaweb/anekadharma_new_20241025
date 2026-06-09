@@ -1007,20 +1007,37 @@ window.addEventListener('load', function() {
         return html;
     }
 
-    var genRecalcData = {
-        persediaan_all: [],
-        generate_update: [],
-        generate_insert: [],
-        pembelian: [],
-        pembelian_update: [],
-        pembelian_baru: [],
-        penjualan: [],
-        penjualan_update: [],
-        produksi: [],
-        produksi_update: [],
-        pecah_satuan: [],
-        pecah_satuan_update: []
-    };
+    function createEmptyGenRecalcData() {
+        return {
+            persediaan_all: [],
+            generate_update: [],
+            generate_insert: [],
+            pembelian: [],
+            pembelian_update: [],
+            pembelian_baru: [],
+            penjualan: [],
+            penjualan_update: [],
+            produksi: [],
+            produksi_update: [],
+            pecah_satuan: [],
+            pecah_satuan_update: []
+        };
+    }
+
+    function ensureGenRecalcDataShape() {
+        if (!genRecalcData || typeof genRecalcData !== 'object') {
+            genRecalcData = createEmptyGenRecalcData();
+            return;
+        }
+        var empty = createEmptyGenRecalcData();
+        Object.keys(empty).forEach(function(k) {
+            if (!Array.isArray(genRecalcData[k])) {
+                genRecalcData[k] = [];
+            }
+        });
+    }
+
+    var genRecalcData = createEmptyGenRecalcData();
     var genRecalcSummaryHtml = '';
     var genRecalcStoragePrefix = 'genRecalcResult_';
     var genRecalcDt = {};
@@ -1086,20 +1103,7 @@ window.addEventListener('load', function() {
     }
 
     function resetGenRecalcTablesEmpty() {
-        genRecalcData = {
-            persediaan_all: [],
-            generate_update: [],
-            generate_insert: [],
-            pembelian: [],
-            pembelian_update: [],
-            pembelian_baru: [],
-            penjualan: [],
-            penjualan_update: [],
-            produksi: [],
-            produksi_update: [],
-            pecah_satuan: [],
-            pecah_satuan_update: []
-        };
+        genRecalcData = createEmptyGenRecalcData();
         genRecalcSummaryHtml = '';
         $('#gen-recalc-summary').html('<em>Belum ada proses untuk bulan ini. Klik <strong>Generate &amp; Recalculate</strong>.</em>');
         destroyAllGenRecalcDataTables();
@@ -1232,6 +1236,7 @@ window.addEventListener('load', function() {
     }
 
     function updateGenRecalcBadges() {
+        ensureGenRecalcDataShape();
         $('#gen-count-persediaan-all').text(genRecalcData.persediaan_all.length);
         $('#gen-count-update').text(genRecalcData.generate_update.length);
         $('#gen-count-insert').text(genRecalcData.generate_insert.length);
@@ -1247,6 +1252,7 @@ window.addEventListener('load', function() {
     }
 
     function buildRowsGenRecalc() {
+        ensureGenRecalcDataShape();
         var rowsAll = genRecalcData.persediaan_all.map(function(it, i) {
             return [
                 i + 1, it.aksi || '', it.id || '', it.namabarang || '', it.satuan || '',
@@ -1509,6 +1515,7 @@ window.addEventListener('load', function() {
             if (data.items_produksi_update && data.items_produksi_update.length) {
                 genRecalcData.produksi_update = genRecalcData.produksi_update.concat(data.items_produksi_update);
             }
+            ensureGenRecalcDataShape();
             if (data.items_pecah_satuan && data.items_pecah_satuan.length) {
                 genRecalcData.pecah_satuan = genRecalcData.pecah_satuan.concat(data.items_pecah_satuan);
             }
@@ -1516,10 +1523,16 @@ window.addEventListener('load', function() {
                 genRecalcData.pecah_satuan_update = genRecalcData.pecah_satuan_update.concat(data.items_pecah_satuan_update);
             }
 
-            renderGenRecalcDataTables();
-            saveGenRecalcResultToStorage(bulanKey);
-            adjustGenRecalcDataTables();
-            Swal.update({ html: htmlGenRecalcProgress(data) });
+            try {
+                renderGenRecalcDataTables();
+                saveGenRecalcResultToStorage(bulanKey);
+                adjustGenRecalcDataTables();
+            } catch (eRender) {
+                console.error('GenRecalc render:', eRender);
+            }
+            if (Swal.isVisible()) {
+                Swal.update({ html: htmlGenRecalcProgress(data) });
+            }
 
             if (!data.done) {
                 runner.offset = data.offset_selesai || 0;
@@ -1653,27 +1666,33 @@ window.addEventListener('load', function() {
             }).then(function(result) {
                 if (!result.isConfirmed) return;
 
-                genRecalcData = {
-                    persediaan_all: [],
-                    generate_update: [],
-                    generate_insert: [],
-                    pembelian: [],
-                    pembelian_update: [],
-                    pembelian_baru: [],
-                    penjualan: [],
-                    penjualan_update: [],
-                    produksi: [],
-                    produksi_update: []
-                };
+                genRecalcData = createEmptyGenRecalcData();
                 genRecalcSummaryHtml = '';
                 clearGenRecalcResultStorage(bulanKey);
                 destroyGenRecalcDataTables();
                 $('#gen-recalc-summary').html('<em>Proses berjalan...</em>');
-                initGenRecalcDataTablesEmpty();
+                try {
+                    initGenRecalcDataTablesEmpty();
+                } catch (eInit) {
+                    console.error('GenRecalc init tables:', eInit);
+                }
+
+                var totalPhase = res.count_sumber || 0;
+                if (res.can_recalc_only && totalPhase <= 0) {
+                    totalPhase = Math.max(
+                        (res.count_target || 0),
+                        1
+                    );
+                }
 
                 Swal.fire({
                     title: 'Generate & Recalculate',
-                    html: htmlGenRecalcProgress({ phase: 'generate', offset_selesai: 0, total_phase: res.count_sumber || 1, pesan: 'Memulai...' }),
+                    html: htmlGenRecalcProgress({
+                        phase: res.can_recalc_only ? 'pembelian' : 'generate',
+                        offset_selesai: 0,
+                        total_phase: totalPhase,
+                        pesan: 'Memulai proses...'
+                    }),
                     allowOutsideClick: false,
                     showConfirmButton: false,
                     didOpen: function() { Swal.showLoading(); }
