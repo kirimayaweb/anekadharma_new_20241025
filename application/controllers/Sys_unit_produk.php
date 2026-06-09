@@ -700,11 +700,17 @@ class Sys_unit_produk extends CI_Controller
         $data = $this->_apply_produksi_draft_ke_form_data($data);
         $data = $this->_sync_bulan_produksi_dari_tgl_form($data);
         $data = $this->_enrich_produksi_form_data($data);
+        $data['mode_update_produksi'] = false;
+        $data['bulan_produksi_terkunci'] = '';
+        $data['bulan_produksi_terkunci_label'] = '';
+        $data['tgl_transaksi_awal'] = '';
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
     }
 
     public function update_produksi($id_persediaan_barang = null)
     {
+        $bulan_produksi_terkunci = '';
+        $tgl_transaksi_awal = '';
         // print_r("create_produksi");
         // print_r("<br/>");
         if ($id_persediaan_barang) {
@@ -718,6 +724,12 @@ class Sys_unit_produk extends CI_Controller
             $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
             $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
 
+            $tgl_asli = $get_data_produk_unit ? $get_data_produk_unit->tgl_transaksi : $data_barang_selected->tanggal;
+            $ts_asli = $this->_parse_tanggal_transaksi_ts($tgl_asli);
+            if ($ts_asli) {
+                $bulan_produksi_terkunci = date('Y-m', $ts_asli);
+                $tgl_transaksi_awal = date('d-m-Y H:i:s', $ts_asli);
+            }
 
             // print_r($data_barang_selected);
 
@@ -797,6 +809,12 @@ class Sys_unit_produk extends CI_Controller
         $data = $this->_apply_produksi_draft_ke_form_data($data);
         $data = $this->_sync_bulan_produksi_dari_tgl_form($data);
         $data = $this->_enrich_produksi_form_data($data);
+        $data['mode_update_produksi'] = !empty($id_persediaan_barang);
+        $data['bulan_produksi_terkunci'] = $bulan_produksi_terkunci;
+        $data['bulan_produksi_terkunci_label'] = $bulan_produksi_terkunci !== ''
+            ? $this->_bulan_nama_indonesia($bulan_produksi_terkunci)
+            : '';
+        $data['tgl_transaksi_awal'] = $tgl_transaksi_awal;
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
     }
 
@@ -918,7 +936,20 @@ class Sys_unit_produk extends CI_Controller
             return;
         }
 
+        $existing_produk = $this->Sys_unit_produk_model->get_by_uuid_persediaan($row_persediaan->uuid_persediaan);
+        $tgl_asli = $existing_produk ? $existing_produk->tgl_transaksi : $row_persediaan->tanggal;
         $tgl_input = $this->input->post('tgl_transaksi', TRUE);
+        if (!$this->_validasi_bulan_tgl_produksi_sama($tgl_asli, $tgl_input)) {
+            $bulan_asli = $this->_bulan_nama_indonesia(date('Y-m', $this->_parse_tanggal_transaksi_ts($tgl_asli)));
+            $this->session->set_flashdata(
+                'message',
+                'Tanggal produksi tidak boleh diubah ke bulan/tahun berbeda (' . $bulan_asli . '). Perubahan ini dapat menyebabkan kesalahan data persediaan.'
+            );
+            $bulan_kembali = $this->_resolve_bulan_dari_input_produksi($tgl_asli, $this->input->post('bulan_produksi', TRUE));
+            redirect(site_url('Sys_unit_produk/update_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan_kembali)));
+            return;
+        }
+
         $date_tgl_produksi = $this->_tanggal_produksi_dari_input($tgl_input);
         $tanggal_beli = $this->_tanggal_beli_bulan_dari_transaksi($tgl_input);
 
@@ -952,7 +983,6 @@ class Sys_unit_produk extends CI_Controller
         $this->Persediaan_model->update($id_persediaan_barang, $data_persediaan);
 
         $data_unit = $this->Sys_unit_model->get_by_uuid_unit($this->input->post('uuid_unit', TRUE));
-        $existing_produk = $this->Sys_unit_produk_model->get_by_uuid_persediaan($row_persediaan->uuid_persediaan);
 
         $data = array(
             'uuid_persediaan' => $row_persediaan->uuid_persediaan,
@@ -1711,6 +1741,7 @@ class Sys_unit_produk extends CI_Controller
                     AND persediaan.tanggal_beli IS NOT NULL
                     AND TRIM(persediaan.tanggal_beli) <> ''
                     AND DATE_FORMAT(persediaan.tanggal_beli, '%Y-%m') = " . $this->db->escape($bulan_ym) . "
+                    AND CAST(COALESCE(NULLIF(TRIM(persediaan.total_10), ''), '0') AS UNSIGNED) > 0
                     ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
         return $this->db->query($sql_stock)->result();
     }
@@ -1751,6 +1782,17 @@ class Sys_unit_produk extends CI_Controller
             return;
         }
         $this->session->unset_userdata($this->_produksi_draft_session_key($id));
+    }
+
+    private function _validasi_bulan_tgl_produksi_sama($tgl_asli, $tgl_baru)
+    {
+        $ts_asli = $this->_parse_tanggal_transaksi_ts($tgl_asli);
+        $ts_baru = $this->_parse_tanggal_transaksi_ts($tgl_baru);
+        if (!$ts_asli || !$ts_baru) {
+            return true;
+        }
+
+        return date('Y-m', $ts_asli) === date('Y-m', $ts_baru);
     }
 
     private function _resolve_bulan_dari_input_produksi($tgl_transaksi = null, $bulan_fallback = null)
