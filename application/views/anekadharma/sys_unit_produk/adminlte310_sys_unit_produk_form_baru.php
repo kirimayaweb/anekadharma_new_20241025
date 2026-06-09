@@ -936,15 +936,101 @@ window.addEventListener('load', function() {
         $('#draft-keterangan').val(data.keterangan || '');
     }
 
+    function parseMomentTglProduk(val) {
+        if (typeof moment === 'undefined') {
+            return null;
+        }
+        val = String(val || '').trim();
+        if (!val) {
+            return null;
+        }
+        var m = moment(val, 'DD-MM-YYYY HH:mm:ss', true);
+        if (!m.isValid()) {
+            m = moment(val, 'DD-MM-YYYY', true);
+        }
+        return m.isValid() ? m : null;
+    }
+
+    function ambilBagianWaktuTglProduk(val) {
+        var match = String(val || '').match(/(\d{2}:\d{2}:\d{2})/);
+        return match ? match[1] : '00:00:00';
+    }
+
+    var syncingTglProdukPicker = false;
+
+    function setTglProdukDariPicker(momentDate) {
+        if (syncingTglProdukPicker) {
+            return;
+        }
+        if (!momentDate || typeof moment === 'undefined' || !moment.isMoment(momentDate) || !momentDate.isValid()) {
+            return;
+        }
+        syncingTglProdukPicker = true;
+        var $wrap = $('#tgl_transaksi_produk_wrap');
+        var $input = $('#tgl_transaksi_produk');
+        var waktu = ambilBagianWaktuTglProduk($input.val());
+        var formatted = momentDate.format('DD-MM-YYYY') + ' ' + waktu;
+        $input.val(formatted);
+        $wrap.datetimepicker('date', momentDate);
+        $wrap.datetimepicker('hide');
+        syncingTglProdukPicker = false;
+        syncBulanDariTglProduk(true);
+        simpanDraftProdukKeStorage();
+        refreshTombolProdukBaru();
+    }
+
     if ($('#tgl_transaksi_produk_wrap').length && $.fn.datetimepicker) {
-        $('#tgl_transaksi_produk_wrap').datetimepicker({
-            format: 'DD-MM-YYYY HH:mm:ss'
+        var $tglProdukWrap = $('#tgl_transaksi_produk_wrap');
+        $tglProdukWrap.datetimepicker({
+            format: 'DD-MM-YYYY',
+            useCurrent: false,
+            allowInputToggle: true,
+            icons: {
+                time: 'far fa-clock',
+                date: 'far fa-calendar',
+                up: 'fas fa-arrow-up',
+                down: 'fas fa-arrow-down',
+                previous: 'fas fa-chevron-left',
+                next: 'fas fa-chevron-right',
+                today: 'far fa-calendar-check',
+                clear: 'far fa-trash-alt',
+                close: 'fas fa-times'
+            }
         });
-        $('#tgl_transaksi_produk_wrap').on('change.datetimepicker', function() {
-            syncBulanDariTglProduk(true);
+
+        var tglProdukAwal = parseMomentTglProduk($('#tgl_transaksi_produk').val());
+        if (tglProdukAwal) {
+            $tglProdukWrap.datetimepicker('date', tglProdukAwal);
+        }
+
+        $tglProdukWrap.on('show.datetimepicker', function() {
+            var m = parseMomentTglProduk($('#tgl_transaksi_produk').val());
+            if (m) {
+                $tglProdukWrap.datetimepicker('date', m);
+            }
+        });
+
+        $tglProdukWrap.on('change.datetimepicker', function(e) {
+            if (syncingTglProdukPicker) {
+                return;
+            }
+            if (e.date) {
+                setTglProdukDariPicker(e.date);
+            }
+        });
+
+        $tglProdukWrap.on('hide.datetimepicker', function() {
+            var m = parseMomentTglProduk($('#tgl_transaksi_produk').val());
+            if (m) {
+                $tglProdukWrap.datetimepicker('date', m);
+            }
         });
     }
     $('#tgl_transaksi_produk').on('change blur', function() {
+        var m = parseMomentTglProduk($(this).val());
+        if (m && $('#tgl_transaksi_produk_wrap').length && $.fn.datetimepicker) {
+            $('#tgl_transaksi_produk_wrap').datetimepicker('date', m);
+        }
         syncBulanDariTglProduk(true);
     });
     if ($('#uuid_unit_produk').length && $.fn.select2) {
