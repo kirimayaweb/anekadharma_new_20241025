@@ -88,9 +88,9 @@
                                                                                                                                                 ?>" >
                                     </div> -->
 
-                                    <div class="input-group date" id="tgl_po" name="tgl_po" data-target-input="nearest">
-                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
-                                        <div class="input-group-append" data-target="#tgl_po" data-toggle="datetimepicker">
+                                    <div class="input-group date" id="tgl_po_picker" data-target-input="nearest">
+                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_po_picker" id="tgl_po" name="tgl_po" value="<?php echo $date_po_X; ?>" required />
+                                        <div class="input-group-append" data-target="#tgl_po_picker" data-toggle="datetimepicker">
                                             <div class="input-group-text">
                                                 <i class="fa fa-calendar"></i>
                                             </div>
@@ -639,7 +639,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                             <div class="row">
                                 <div class="col-4">
                                     <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
-                                    <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                    <select name="uuid_konsumen" id="uuid_konsumen_<?php echo $list_data->id; ?>" class="form-control select2 select2-pembelian-unit" style="width: 100%; height: 40px;" required>
                                         <option value="<?php echo $row->uuid_konsumen; ?>"><?php echo $row->konsumen; ?> </option>
                                         <!-- <option value="">Pilih Konsumen/Unit </option> -->
                                         <?php
@@ -782,7 +782,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                         <div class="row">
                             <div class="col-4">
                                 <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
-                                <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
+                                <select name="uuid_konsumen" id="uuid_konsumen_tambah" class="form-control select2 select2-pembelian-unit" style="width: 100%; height: 40px;" required>
                                     <option value="">Pilih Konsumen/Unit </option>
                                     <?php
 
@@ -944,6 +944,19 @@ foreach ($data_ALL_per_SPOP as $list_data) {
     .modal[id^="modal-xl-input-barang_"] .modal-dialog {
         max-width: 95vw;
     }
+
+    #modal-xl-input-barang .select2-pembelian-unit-wrap .select2-selection--single,
+    .modal[id^="modal-xl-input-barang_"] .select2-pembelian-unit-wrap .select2-selection--single {
+        min-height: 52px;
+        height: auto;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-unit-wrap .select2-selection__rendered,
+    .modal[id^="modal-xl-input-barang_"] .select2-pembelian-unit-wrap .select2-selection__rendered {
+        line-height: 1.35;
+        padding-top: 8px;
+        white-space: normal;
+    }
 </style>
 
 
@@ -1048,11 +1061,29 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 .text(message);
         }
 
-        function refreshBarangOptions(selectedUuid) {
+        function getTanggalPoUntukFilter() {
+            var val = $('#form_update_spop input[name="tgl_po"]').val();
+            if (val && String(val).trim() !== '') {
+                return String(val).trim();
+            }
+            return ($('input[name="tgl_po"]').val() || '').trim();
+        }
+        window.getTanggalPoUntukFilter = getTanggalPoUntukFilter;
+
+        function refreshUnitOptions(modalSelector, selectedUuid) {
+            var $modal = modalSelector ? $(modalSelector) : $('#modal-xl-input-barang');
+            if (!$modal.length) {
+                return $.Deferred().resolve().promise();
+            }
+
+            var $select = $modal.find('select[name="uuid_konsumen"]');
+            var currentValue = selectedUuid || $select.val() || '';
+
             return $.ajax({
-                url: "<?php echo site_url('sys_nama_barang/list_barang_ajax'); ?>",
-                type: "GET",
-                dataType: "json",
+                url: "<?php echo site_url('tbl_pembelian/list_unit_ajax'); ?>",
+                type: 'GET',
+                dataType: 'json',
+                cache: false,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -1061,35 +1092,99 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                     return;
                 }
 
-                $('select[name="uuid_barang"]').each(function() {
-                    var select = $(this);
-                    var currentValue = selectedUuid || select.val();
-                    select.empty().append($('<option>', {
-                        value: '',
-                        text: 'Pilih Barang'
+                $select.empty().append($('<option>', {
+                    value: '',
+                    text: 'Pilih Konsumen/Unit'
+                }));
+
+                $.each(res.data || [], function(_, row) {
+                    $select.append($('<option>', {
+                        value: row.uuid_unit,
+                        text: (row.nama_unit || '').toUpperCase()
                     }));
-
-                    $.each(res.data || [], function(_, row) {
-                        var kategori = row.kategori || '';
-                        var namaBarang = (row.nama_barang || '').toUpperCase();
-                        var optionText = kategori ? '[' + kategori.toUpperCase() + '] ' + namaBarang : namaBarang;
-                        select.append($('<option>', {
-                            value: row.uuid_barang,
-                            text: optionText
-                        }).attr({
-                            'data-kategori': kategori,
-                            'data-satuan': row.satuan || '',
-                            'data-harga-satuan': row.harga_satuan || ''
-                        }));
-                    });
-
-                    if (currentValue) {
-                        select.val(currentValue);
-                    }
-                    select.trigger('change');
                 });
+
+                if (currentValue) {
+                    $select.val(currentValue);
+                }
             });
         }
+        window.refreshUnitOptions = refreshUnitOptions;
+
+        function refreshBarangOptions(modalSelector, selectedUuid) {
+            modalSelector = modalSelector || '#modal-xl-input-barang';
+            var $modal = $(modalSelector);
+            if (!$modal.length) {
+                return $.Deferred().resolve().promise();
+            }
+
+            return $.ajax({
+                url: "<?php echo site_url('sys_nama_barang/list_barang_ajax'); ?>",
+                type: 'GET',
+                dataType: 'json',
+                cache: false,
+                data: {
+                    tanggal_po: getTanggalPoUntukFilter()
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(res) {
+                if (!res || !res.success) {
+                    return;
+                }
+
+                var select = $modal.find('select[name="uuid_barang"]');
+                var currentValue = selectedUuid || select.val() || '';
+                select.empty().append($('<option>', {
+                    value: '',
+                    text: 'Pilih Barang'
+                }));
+
+                $.each(res.data || [], function(_, row) {
+                    var kategori = row.kategori || '';
+                    var namaBarang = (row.nama_barang || '').toUpperCase();
+                    var optionText = kategori ? '[' + kategori.toUpperCase() + '] ' + namaBarang : namaBarang;
+                    select.append($('<option>', {
+                        value: row.uuid_barang,
+                        text: optionText
+                    }).attr({
+                        'data-kategori': kategori,
+                        'data-satuan': row.satuan || '',
+                        'data-harga-satuan': row.harga_satuan || ''
+                    }));
+                });
+
+                if (currentValue) {
+                    select.val(currentValue);
+                }
+                select.trigger('change');
+            });
+        }
+        window.refreshBarangOptions = refreshBarangOptions;
+
+        function refreshModalPembelianData(modalSelector) {
+            var selector = modalSelector || '#modal-xl-input-barang';
+            var $modal = $(selector);
+            if (!$modal.length) {
+                return $.Deferred().resolve().promise();
+            }
+
+            var selectedUnit = $modal.find('select[name="uuid_konsumen"]').val() || '';
+            var selectedBarang = $modal.find('select[name="uuid_barang"]').val() || '';
+
+            return $.when(
+                refreshUnitOptions(selector, selectedUnit),
+                refreshBarangOptions(selector, selectedBarang)
+            ).always(function() {
+                initSelect2BarangSearch(selector);
+                var uuidBarang = $modal.find('select[name="uuid_barang"]').val();
+                if (uuidBarang) {
+                    loadDetailBarangPembelianSpopReady($modal.find('select[name="uuid_barang"]')[0]);
+                }
+            });
+        }
+        window.refreshModalPembelianData = refreshModalPembelianData;
 
         function formatHargaSatuanPembelianSpopReady(value) {
             if (value === null || typeof value === 'undefined' || value === '') {
@@ -1150,7 +1245,8 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 type: "GET",
                 dataType: "json",
                 data: {
-                    uuid_barang: uuidBarang
+                    uuid_barang: uuidBarang,
+                    tanggal_po: getTanggalPoUntukFilter()
                 },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1174,13 +1270,21 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             scope.find('select.select2').each(function() {
                 var select = $(this);
                 var parentModal = select.closest('.modal');
+                var isUnit = select.hasClass('select2-pembelian-unit');
                 var options = {
                     width: '100%',
-                    minimumResultsForSearch: 0
+                    minimumResultsForSearch: 0,
+                    placeholder: select.find('option:first').text() || 'Pilih',
+                    allowClear: false
                 };
 
                 if (parentModal.length) {
                     options.dropdownParent = parentModal;
+                }
+
+                if (isUnit) {
+                    options.containerCssClass = 'select2-pembelian-unit-wrap';
+                    options.dropdownCssClass = 'select2-pembelian-unit-dropdown';
                 }
 
                 if (select.data('select2')) {
@@ -1272,6 +1376,21 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             var form = $(this);
             var submitButton = $('#btn-submit-input-barang-baru');
             var submitButtonText = submitButton.data('original-text') || submitButton.text();
+            var tglPo = getTanggalPoUntukFilter();
+
+            if (!tglPo) {
+                showInputBarangInfo('Silakan pilih <strong>Tgl PO</strong> di form pembelian terlebih dahulu.', 'warning');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Tgl PO belum dipilih',
+                        text: 'Pilih tanggal PO (datepicker) agar bulan persediaan ditentukan sebelum menyimpan barang baru.'
+                    });
+                }
+                $('#form_update_spop input[name="tgl_po"]').focus();
+                return false;
+            }
+
             submitButton.data('original-text', submitButtonText);
             submitButton.prop('disabled', true).text('Menyimpan...');
             showInputBarangInfo('Menyimpan barang baru...', 'warning');
@@ -1279,14 +1398,15 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             $.ajax({
                 url: form.attr('action'),
                 type: 'POST',
-                data: form.serialize(),
+                data: form.serialize() + '&tanggal_po=' + encodeURIComponent(tglPo),
                 dataType: 'json',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             }).done(function(res) {
                 if (res && res.success && res.data) {
-                    refreshBarangOptions(res.data.uuid_barang).always(function() {
+                    var modalAsal = sourceModalSelector || '#modal-xl-input-barang';
+                    refreshBarangOptions(modalAsal, res.data.uuid_barang).always(function() {
                         showInputBarangInfo(res.message || 'Barang berhasil ditambahkan.', 'success');
                         form[0].reset();
                         window.closeModalInputBarangBaruPembelian();
@@ -1295,7 +1415,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 }
 
                 if (res && res.duplicate && res.data) {
-                    refreshBarangOptions(res.data.uuid_barang);
+                    refreshBarangOptions(sourceModalSelector || '#modal-xl-input-barang', res.data.uuid_barang);
                 }
                 showInputBarangInfo((res && res.message) ? res.message : 'Barang baru gagal disimpan.', 'danger');
             }).fail(function() {
@@ -1317,11 +1437,23 @@ foreach ($data_ALL_per_SPOP as $list_data) {
         });
 
         $(document).ready(function() {
-            initSelect2BarangSearch('.modal');
+            initSelect2BarangSearch('#form_update_spop');
         });
 
-        $(document).on('shown.bs.modal', '.modal', function() {
-            initSelect2BarangSearch(this);
+        $('#modal-xl-input-barang').on('show.bs.modal', function() {
+            refreshModalPembelianData('#modal-xl-input-barang');
+        });
+
+        $(document).on('show.bs.modal', '.modal[id^="modal-xl-input-barang_"]', function() {
+            refreshModalPembelianData('#' + this.id);
+        });
+
+        $(document).on('shown.bs.modal', '.modal[id^="modal-xl-input-barang"]', function() {
+            initSelect2BarangSearch('#' + this.id);
+        });
+
+        $('#form_update_spop input[name="tgl_po"]').on('change blur', function() {
+            refreshBarangOptions('#modal-xl-input-barang');
         });
     })(jQuery);
 </script>

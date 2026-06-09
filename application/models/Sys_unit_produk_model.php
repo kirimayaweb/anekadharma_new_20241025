@@ -35,6 +35,20 @@ class Sys_unit_produk_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    // get data by bulan (format YYYY-MM) berdasarkan tgl_transaksi
+    function get_by_bulan_ym($bulan_ym)
+    {
+        if (!$bulan_ym || !preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+            return array();
+        }
+        $awal = $bulan_ym . '-01 00:00:00';
+        $akhir = date('Y-m-t 23:59:59', strtotime($awal));
+        $this->db->where('tgl_transaksi >=', $awal);
+        $this->db->where('tgl_transaksi <=', $akhir);
+        $this->db->order_by($this->id, $this->order);
+        return $this->db->get($this->table)->result();
+    }
+
     // get data by id
     function get_by_id($id)
     {

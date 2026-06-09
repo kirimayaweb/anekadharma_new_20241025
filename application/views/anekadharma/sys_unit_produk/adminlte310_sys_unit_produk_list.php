@@ -1,3 +1,9 @@
+<?php
+$bulan_tampil = isset($bulan_produksi_selected) && $bulan_produksi_selected !== ''
+    ? $bulan_produksi_selected
+    : date('Y-m');
+$url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bulan : site_url('Sys_unit_produk/ajax_list_by_bulan');
+?>
 <div class="content-wrapper">
 
 
@@ -28,23 +34,25 @@
                     <div class="card-header">
                         <div class="row">
                         </div>
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="row">
-                                    <div class="col-3">
-                                        <div class="col-12" text-align="center"> <strong>PRODUKSI</strong></div>
-                                    </div>
-                                    <div class="col-6">
-                                        <?php echo anchor(site_url('Sys_unit_produk/create_produksi'), 'Input Produksi', 'class="btn btn-danger"');
-                                        ?>
-                                        <!-- 
-                                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal-xl-select-unit">
-                                            Input Produksi
-                                        </button> -->
-                                    </div>
-                                </div>
+                        <div class="row align-items-center flex-wrap">
+                            <div class="col-auto">
+                                <strong>PRODUKSI</strong>
                             </div>
-
+                            <div class="col-auto">
+                                <?php
+                                $url_create_produksi_bulan = isset($url_create_produksi)
+                                    ? $url_create_produksi . '?bulan=' . urlencode($bulan_tampil)
+                                    : site_url('Sys_unit_produk/create_produksi?bulan=' . urlencode($bulan_tampil));
+                                echo anchor($url_create_produksi_bulan, 'Input Produksi', 'class="btn btn-danger" id="btn-input-produksi"');
+                                ?>
+                            </div>
+                            <div class="col-auto d-flex align-items-center flex-wrap">
+                                <label for="bulan_produksi" class="mb-0 mr-2">Bulan:</label>
+                                <input type="month" id="bulan_produksi" name="bulan_produksi" class="form-control d-inline-block" style="width:auto;" value="<?php echo htmlspecialchars($bulan_tampil, ENT_QUOTES, 'UTF-8'); ?>">
+                                <span class="ml-2 small" id="info-jumlah-produksi-bulan">
+                                    Menampilkan <?php echo count($Sys_unit_produk_data); ?> data — bulan <?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?>
+                                </span>
+                            </div>
                         </div>
 
 
@@ -67,14 +75,6 @@
                                     <div class="card-body">
                                         <div class="tab-content" id="custom-tabs-one-tabContent">
                                             <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel" aria-labelledby="custom-tabs-one-home-tab">
-
-                                                <div class="row">
-                                                    <!-- <div class="col-1"></div> -->
-                                                    <div class="col-6">
-                                                        <?php //echo anchor(site_url('Sys_unit_produk/create_unit/'.$uuid_unit_selected), 'Input Hasil / Produk Unit: ' . $nama_unit, 'class="btn btn-success"'); 
-                                                        ?>
-                                                    </div>
-                                                </div>
 
                                                 <table id="example" class="display nowrap" style="width:100%">
                                                     <thead>
@@ -360,29 +360,141 @@
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
         margin: 0 auto;
     }
+    #info-jumlah-produksi-bulan {
+        color: #ffeb3b;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 700,
-            "scrollX": true
+window.addEventListener('load', function() {
+    if (!window.jQuery || !jQuery.fn || !jQuery.fn.dataTable) {
+        console.error('Produksi: jQuery/DataTables belum dimuat. Muat ulang halaman.');
+        return;
+    }
+    var $ = window.jQuery;
+    var urlAjaxListByBulan = <?php echo json_encode($url_ajax_list_by_bulan); ?>;
+    var urlCreateProduksiBase = <?php echo json_encode(isset($url_create_produksi) ? $url_create_produksi : site_url('Sys_unit_produk/create_produksi')); ?>;
+    var bulanProduksiAktif = <?php echo json_encode($bulan_tampil); ?>;
+    var dtProduksi = null;
+
+    function updateLinkInputProduksi(bulanYm) {
+        var href = urlCreateProduksiBase + (urlCreateProduksiBase.indexOf('?') >= 0 ? '&' : '?') + 'bulan=' + encodeURIComponent(bulanYm);
+        $('#btn-input-produksi').attr('href', href);
+    }
+
+    function escapeHtml(text) {
+        return String(text === null || text === undefined ? '' : text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function buildProduksiRowHtml(row) {
+        return '<tr>'
+            + '<td style="text-align:center">' + escapeHtml(row.no) + '</td>'
+            + '<td style="text-align:left">'
+            + '<a href="' + escapeHtml(row.edit_url) + '" title="edit" class="btn btn-warning btn-sm"><i class="fa fa-pencil-square-o">Ubah</i></a>'
+            + '</td>'
+            + '<td style="text-align:left">' + escapeHtml(row.tgl_transaksi) + '<br/><strong>' + escapeHtml(row.spop) + '</strong></td>'
+            + '<td style="text-align:left">' + escapeHtml(row.nama_unit) + '</td>'
+            + '<td style="text-align:left">' + escapeHtml(row.nama_barang) + '</td>'
+            + '<td style="text-align:right">' + escapeHtml(row.jumlah_produksi) + '</td>'
+            + '<td style="text-align:left">' + escapeHtml(row.satuan) + '</td>'
+            + '<td style="text-align:right">' + escapeHtml(row.harga_satuan) + '</td>'
+            + '</tr>';
+    }
+
+    function destroyDataTableProduksi() {
+        if ($.fn.DataTable.isDataTable('#example')) {
+            $('#example').DataTable().destroy();
+            dtProduksi = null;
+        }
+    }
+
+    function initDataTableProduksi() {
+        destroyDataTableProduksi();
+        dtProduksi = $('#example').DataTable({
+            scrollY: 700,
+            scrollX: true,
+            scrollCollapse: true,
+            pageLength: 25,
+            language: {
+                emptyTable: 'Belum ada data produksi pada bulan ini',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+                infoFiltered: '(disaring dari _MAX_ total data)',
+                lengthMenu: 'Tampilkan _MENU_ data',
+                search: 'Cari:',
+                zeroRecords: 'Tidak ada data yang cocok',
+                paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+            }
         });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 200,
-            "scrollX": true
+    }
+
+    function updateInfoJumlah(rows, bulanLabel) {
+        var jumlah = Array.isArray(rows) ? rows.length : 0;
+        $('#info-jumlah-produksi-bulan').text('Menampilkan ' + jumlah + ' data — bulan ' + bulanLabel);
+    }
+
+    function renderProduksiRows(rows, bulanLabel) {
+        var html = '';
+        if (Array.isArray(rows)) {
+            for (var i = 0; i < rows.length; i++) {
+                html += buildProduksiRowHtml(rows[i]);
+            }
+        }
+        $('#example tbody').html(html);
+        updateInfoJumlah(rows, bulanLabel);
+        initDataTableProduksi();
+    }
+
+    function loadProduksiByBulan(bulanYm) {
+        if (!bulanYm) {
+            return;
+        }
+        destroyDataTableProduksi();
+        $('#example tbody').html('<tr><td colspan="8" class="text-center text-muted">Memuat data...</td></tr>');
+        $.ajax({
+            url: urlAjaxListByBulan,
+            type: 'GET',
+            data: { bulan: bulanYm },
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                var msg = res && res.message ? res.message : 'Gagal memuat data produksi.';
+                $('#example tbody').html('<tr><td colspan="8" class="text-center text-danger">' + escapeHtml(msg) + '</td></tr>');
+                updateInfoJumlah([], bulanYm.replace(/^(\d{4})-(\d{2})$/, '$2/$1'));
+                initDataTableProduksi();
+                return;
+            }
+            renderProduksiRows(res.rows, res.bulan_label);
+        }).fail(function() {
+            $('#example tbody').html('<tr><td colspan="8" class="text-center text-danger">Gagal memuat data produksi.</td></tr>');
+            updateInfoJumlah([], bulanYm.replace(/^(\d{4})-(\d{2})$/, '$2/$1'));
+            initDataTableProduksi();
         });
+    }
+
+    $('#bulan_produksi').on('change', function() {
+        var bulan = $(this).val() || '';
+        if (!bulan || bulan === bulanProduksiAktif) {
+            return;
+        }
+        bulanProduksiAktif = bulan;
+        updateLinkInputProduksi(bulan);
+        loadProduksiByBulan(bulan);
     });
+
+    updateLinkInputProduksi(bulanProduksiAktif);
+    initDataTableProduksi();
+});
 </script>

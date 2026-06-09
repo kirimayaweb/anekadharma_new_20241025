@@ -537,7 +537,10 @@ class Persediaan extends CI_Controller
 
 	public function index()
 	{
-		$bulan = date('Y-m');
+		$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
 		$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
@@ -578,6 +581,7 @@ class Persediaan extends CI_Controller
 			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
 			'url_excel_gen_recalc' => site_url('Persediaan/excel_gen_recalc'),
+			'url_excel_rekonsiliasi_transaksi' => site_url('Persediaan/excel_rekonsiliasi_transaksi'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
 			'url_excel_persediaan' => site_url('Persediaan/excel'),
 			'url_compare_tabel_list' => site_url('Persediaan/ajax_compare_tabel_list'),
@@ -607,12 +611,42 @@ class Persediaan extends CI_Controller
 
 	private function persediaan_current_user_email()
 	{
-		$email = strtolower(trim((string) $this->session->userdata('sess_email_user')));
-		if ($email !== '') {
-			return $email;
+		$candidates = array(
+			$this->session->userdata('sess_email_user'),
+			$this->session->userdata('email'),
+			$this->session->userdata('sess_username'),
+		);
+
+		foreach ($candidates as $raw) {
+			$email = strtolower(trim((string) $raw));
+			if ($email === '') {
+				continue;
+			}
+			if (strpos($email, '@') !== false) {
+				return $email;
+			}
 		}
 
-		return strtolower(trim((string) $this->session->userdata('sess_username')));
+		return '';
+	}
+
+	/**
+	 * Apakah bulan target boleh di-generate/recalculate tanpa data bulan sumber.
+	 */
+	private function persediaan_target_can_proceed_without_source($bulan_target, $tanggal_beli_target, $tgl_awal, $tgl_akhir)
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if ($this->persediaan_count_by_tanggal_beli($tanggal_beli_target) > 0) {
+			return true;
+		}
+
+		$ctx = persediaan_recalculate_full_context($this, $bulan_target);
+		if (!empty($ctx['ok']) && !empty($ctx['can_proceed'])) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -682,12 +716,25 @@ class Persediaan extends CI_Controller
 		$count_sumber_all = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
 		$count_sumber = $this->persediaan_count_sumber_layak_generate($tanggal_beli_sumber);
 		$sudah_ada = ($count_target > 0);
-		$can_generate = ($count_sumber_all > 0);
+		$tgl_awal = $tanggal_beli_target;
+		$tgl_akhir = date('Y-m-t', $ts_target);
+		$can_recalc_only = $this->persediaan_target_can_proceed_without_source(
+			$bulan_target,
+			$tanggal_beli_target,
+			$tgl_awal,
+			$tgl_akhir
+		);
+		$can_generate = ($count_sumber_all > 0) || $can_recalc_only;
 
 		$message = '';
-		if ($count_sumber_all === 0) {
+		if ($count_sumber_all === 0 && !$can_recalc_only) {
 			$message = 'Tidak ada data sumber bulan ' . date('m/Y', strtotime($bulan_sumber . '-01'))
-				. ' (tanggal_beli = ' . $tanggal_beli_sumber . '). Isi dulu persediaan bulan sebelumnya.';
+				. ' (tanggal_beli = ' . $tanggal_beli_sumber . ') dan belum ada data/transaksi di bulan target. '
+				. 'Isi dulu persediaan bulan sebelumnya atau pastikan ada pembelian/penjualan/produksi di bulan target.';
+		} elseif ($count_sumber_all === 0 && $can_recalc_only) {
+			$message = 'Bulan sumber kosong — siap <strong>Recalculate</strong> bulan target '
+				. date('m/Y', $ts_target) . ' dari data persediaan/transaksi yang ada '
+				. '(pembelian, penjualan, produksi, pecah satuan).';
 		} elseif ($sudah_ada) {
 			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate & Recalculate akan: '
 				. '(1) hapus baris target sa=0 &amp; total_10=0, '
@@ -711,6 +758,7 @@ class Persediaan extends CI_Controller
 			'count_sumber_skip_total10' => max(0, $count_sumber_all - $count_sumber),
 			'sudah_ada_data' => $sudah_ada,
 			'can_generate' => $can_generate,
+			'can_recalc_only' => ($count_sumber_all === 0 && $can_recalc_only),
 			'user_can_generate' => true,
 			'url_generate' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN/' . $bulan_target),
 			'message' => $message,
@@ -1659,6 +1707,33 @@ class Persediaan extends CI_Controller
 		$namaFile = 'Generate_Recalculate_' . $bulan . $suffix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
 		excel_prepare_download($namaFile);
 		persediaan_gen_recalc_export_excel_output($this, $bulan, $jenis !== '' ? $jenis : null);
+		exit();
+	}
+
+	/**
+	 * Export Excel rekonsiliasi transaksi (persediaan + pembelian + penjualan + produksi + pecah satuan).
+	 */
+	public function excel_rekonsiliasi_transaksi()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel rekonsiliasi transaksi')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$namaFile = 'Rekonsiliasi_Transaksi_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_export_rekonsiliasi_transaksi_excel_output($this, $bulan);
 		exit();
 	}
 
@@ -3067,8 +3142,20 @@ class Persediaan extends CI_Controller
 			} else {
 				$tanggal_beli = date('Y-m-01', $ts);
 				$rows = $this->db->query(
-					"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
-					array($tanggal_beli)
+					"SELECT * FROM `persediaan`
+					WHERE (
+						`tanggal_beli` = ?
+						OR DATE_FORMAT(`tanggal_beli`, '%Y-%m') = ?
+						OR (
+							(`tanggal_beli` IS NULL OR `tanggal_beli` = '0000-00-00' OR TRIM(`tanggal_beli`) = '')
+							AND (
+								DATE_FORMAT(STR_TO_DATE(`tanggal`, '%Y-%m-%d %H:%i:%s'), '%Y-%m') = ?
+								OR DATE_FORMAT(STR_TO_DATE(`tanggal`, '%Y-%m-%d'), '%Y-%m') = ?
+							)
+						)
+					)
+					ORDER BY `namabarang` ASC, `id` ASC",
+					array($tanggal_beli, $bulan, $bulan, $bulan)
 				)->result();
 
 				if (count($rows) === 0) {

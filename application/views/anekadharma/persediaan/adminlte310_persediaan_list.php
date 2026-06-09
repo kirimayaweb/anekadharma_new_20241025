@@ -45,6 +45,15 @@
                                 ? $bulan_persediaan_selected
                                 : date('Y-m');
                             ?>
+                            <?php if ($this->session->flashdata('pesan_persediaan')): ?>
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <?php echo htmlspecialchars($this->session->flashdata('pesan_persediaan'), ENT_QUOTES, 'UTF-8'); ?>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+
                             <form action="<?php echo $action_cari_form; ?>" method="post" id="form-persediaan-bulan">
                                 <div class="row mb-2 align-items-center">
                                     <div class="col-md-12 d-flex align-items-center flex-wrap">
@@ -60,6 +69,9 @@
                                         <input type="month" id="bulan_persediaan" name="bulan_persediaan" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil); ?>">
                                         <button type="submit" class="btn btn-danger ml-1 btn-cari-persediaan">Cari</button>
                                         <button type="button" id="btn-cetak-excel-persediaan" class="btn btn-primary ml-1">Cetak ke Excel</button>
+                                        <span class="ml-2 text-muted small" id="info-jumlah-persediaan-bulan">
+                                            Menampilkan <?php echo count($Persediaan_data); ?> baris — bulan <?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?>
+                                        </span>
                                     </div>
                                 </div>
                             </form>
@@ -266,6 +278,9 @@
                                         Duplikat <strong>beli=0</strong> dengan spop kosong/0 dihapus jika ada baris sama (namabarang+sa+satuan+hpp, satuan tidak case-sensitive) yang spop-nya terisi.
                                         <strong>Fase 3 — Penjualan:</strong> cocokkan nama+satuan+hpp → jumlah masuk kolom <strong>unit</strong> + field <strong>penjualan</strong>;
                                         <strong>total_10 = (sa+beli) − penjualan</strong> (sisa stock = total_10 setelah update).
+                                        <strong>Fase 4 — Produksi bahan:</strong> dari <strong>sys_unit_produk_bahan</strong> (filter <strong>tgl_transaksi</strong> bulan target),
+                                        cocokkan <strong>nama_barang_bahan + satuan_bahan + harga_satuan_bahan</strong> ke persediaan →
+                                        <strong>bahan_produksi += jumlah_bahan</strong>, <strong>total_10 −= jumlah_bahan</strong> (sisa stock = total_10 setelah update).
                                         <em>Hanya user <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.</em>
                                     </p>
                                     <?php if (empty($can_generate_persediaan)) { ?>
@@ -276,34 +291,39 @@
                                     <?php } ?>
                                 </div>
                             </div>
-                            <div class="row mb-3 align-items-end">
-                                <div class="col-md-3 col-sm-6 mb-2">
-                                    <label for="gen_bulan_persediaan">Bulan target</label>
-                                    <select id="gen_bulan_persediaan" class="form-control">
-                                        <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
-                                            <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $gen_bulan_default) ? ' selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
-                                            </option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-3 col-sm-6 mb-2">
-                                    <label for="gen_tahun_persediaan">Tahun target</label>
-                                    <select id="gen_tahun_persediaan" class="form-control">
-                                        <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
-                                            <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $gen_tahun_default) ? ' selected' : ''; ?>>
-                                                <?php echo (int) $th; ?>
-                                            </option>
-                                        <?php } ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 col-sm-12 mb-2">
-                                    <button type="button" id="btn-generate-persediaan-bulan" class="btn btn-secondary btn-lg" disabled>
-                                        <i class="fas fa-sync-alt"></i> Generate &amp; Recalculate
-                                    </button>
-                                    <button type="button" id="btn-cetak-excel-generate" class="btn btn-primary btn-lg ml-1" title="Export semua 6 tabel ke Excel (multi-sheet)">
-                                        <i class="fas fa-file-excel"></i> Excel Semua Tabel
-                                    </button>
+                            <div class="gen-recalc-toolbar mb-3">
+                                <div class="gen-recalc-toolbar-row">
+                                    <div class="gen-recalc-field gen-recalc-field-bulan">
+                                        <label for="gen_bulan_persediaan" class="gen-recalc-label">Bulan target</label>
+                                        <select id="gen_bulan_persediaan" class="form-control gen-recalc-select-bulan">
+                                            <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
+                                                <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $gen_bulan_default) ? ' selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
+                                                </option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                    <div class="gen-recalc-field gen-recalc-field-tahun">
+                                        <label for="gen_tahun_persediaan" class="gen-recalc-label">Tahun target</label>
+                                        <select id="gen_tahun_persediaan" class="form-control gen-recalc-select-tahun">
+                                            <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
+                                                <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $gen_tahun_default) ? ' selected' : ''; ?>>
+                                                    <?php echo (int) $th; ?>
+                                                </option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                    <div class="gen-recalc-actions">
+                                        <button type="button" id="btn-generate-persediaan-bulan" class="btn btn-secondary gen-recalc-btn" disabled>
+                                            <i class="fas fa-sync-alt"></i> Generate &amp; Recalculate
+                                        </button>
+                                        <button type="button" id="btn-cetak-excel-generate" class="btn btn-primary gen-recalc-btn" title="Export semua tabel ke Excel (multi-sheet)">
+                                            <i class="fas fa-file-excel"></i> Excel Semua Tabel
+                                        </button>
+                                        <button type="button" id="btn-cetak-excel-rekonsiliasi-transaksi" class="btn btn-success gen-recalc-btn" title="Rekonsiliasi persediaan vs pembelian, penjualan, produksi, pecah satuan">
+                                            <i class="fas fa-file-excel"></i> Excel Rekonsiliasi TRANSAKSI
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="alert alert-secondary" id="gen-persediaan-info-sumber">
@@ -427,6 +447,58 @@
                                         <table id="tbl-gen-recalc-penjualan-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
                                             <thead><tr>
                                                 <th>No</th><th>ID Penjualan</th><th>ID Persediaan</th><th>Nama</th><th>Unit</th><th>Jumlah</th><th>Penjualan Lama</th><th>Penjualan Baru</th><th>Unit Lama</th><th>Unit Baru</th><th>Total_10</th><th>Keterangan</th>
+                                            </tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+
+                                    <hr/>
+                                    <h6 class="mt-2 d-flex align-items-center flex-wrap">
+                                        <span>9. Semua Data Bahan Produksi Diproses <span id="gen-count-produksi" class="badge badge-secondary">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="produksi" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="table-responsive mb-3">
+                                        <table id="tbl-gen-recalc-produksi" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                            <thead><tr>
+                                                <th>No</th><th>Aksi</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Produksi Baru</th><th>Total_10</th><th>Keterangan</th>
+                                            </tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                    <h6 class="mt-2 d-flex align-items-center flex-wrap">
+                                        <span>10. Rekap Update Bahan Produksi → Persediaan <span id="gen-count-produksi-update" class="badge badge-info">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="produksi_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table id="tbl-gen-recalc-produksi-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                            <thead><tr>
+                                                <th>No</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Lama</th><th>Bahan Baru</th><th>Total_10</th><th>Sisa Stock</th><th>Keterangan</th>
+                                            </tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+
+                                    <h6 class="mt-4 d-flex align-items-center flex-wrap">
+                                        <span>11. Pecah Satuan — Semua Record <span id="gen-count-pecah-satuan" class="badge badge-secondary">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pecah_satuan" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="table-responsive mb-3">
+                                        <table id="tbl-gen-recalc-pecah-satuan" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                            <thead><tr>
+                                                <th>No</th><th>Aksi</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Satuan</th><th>HPP</th><th>Jumlah Pecah</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>Nama Baru</th><th>Satuan Baru</th><th>HPP Baru</th><th>Jumlah Baru</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th>
+                                            </tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+
+                                    <h6 class="mt-2 d-flex align-items-center flex-wrap">
+                                        <span>12. Pecah Satuan — Update Record <span id="gen-count-pecah-satuan-update" class="badge badge-info">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pecah_satuan_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="table-responsive">
+                                        <table id="tbl-gen-recalc-pecah-satuan-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                            <thead><tr>
+                                                <th>No</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Nama Baru</th><th>Jumlah Pecah</th><th>Jumlah Baru</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
@@ -594,6 +666,72 @@
     }
     #swal-rekap-log .rekap-log-ok { color: #155724; }
     #swal-rekap-log .rekap-log-run { color: #004085; font-weight: bold; }
+    .gen-recalc-toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 18px 24px;
+    }
+    .gen-recalc-label {
+        display: block;
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #343a40;
+        white-space: nowrap;
+        line-height: 1.25;
+    }
+    .gen-recalc-field {
+        flex: 0 0 auto;
+    }
+    .gen-recalc-select-bulan {
+        width: 222px;
+        min-width: 222px;
+        max-width: 222px;
+        font-size: 21px;
+        padding: 9px 15px;
+        height: calc(3.375rem + 2px);
+    }
+    .gen-recalc-select-tahun {
+        width: 144px;
+        min-width: 144px;
+        max-width: 144px;
+        font-size: 21px;
+        padding: 9px 15px;
+        height: calc(3.375rem + 2px);
+    }
+    .gen-recalc-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    .gen-recalc-actions .gen-recalc-btn {
+        white-space: nowrap;
+        font-size: 21px;
+        font-weight: 600;
+        padding: 12px 21px;
+        line-height: 1.4;
+    }
+    .gen-recalc-actions .gen-recalc-btn .fas {
+        font-size: 0.95em;
+    }
+    @media (min-width: 1400px) {
+        .gen-recalc-toolbar-row {
+            flex-wrap: nowrap;
+        }
+        .gen-recalc-actions {
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+        }
+    }
+    @media (min-width: 992px) and (max-width: 1399.98px) {
+        .gen-recalc-actions {
+            width: 100%;
+        }
+    }
     #btn-generate-persediaan-bulan:disabled { cursor: not-allowed; opacity: 0.72; }
     #btn-compare-tabel:disabled { cursor: not-allowed; opacity: 0.72; }
     #btn-generate-persediaan-bulan.btn-success { color: #fff; }
@@ -671,6 +809,7 @@ window.addEventListener('load', function() {
     var urlGenerateRecalculateBatch = <?php echo json_encode(isset($url_generate_recalculate_batch) ? $url_generate_recalculate_batch : site_url('Persediaan/ajax_generate_recalculate_batch')); ?>;
     var urlLoadGenRecalcHistory = <?php echo json_encode(isset($url_load_gen_recalc_history) ? $url_load_gen_recalc_history : site_url('Persediaan/ajax_load_gen_recalc_history')); ?>;
     var urlExcelGenRecalc = <?php echo json_encode(isset($url_excel_gen_recalc) ? $url_excel_gen_recalc : site_url('Persediaan/excel_gen_recalc')); ?>;
+    var urlExcelRekonsiliasiTransaksi = <?php echo json_encode(isset($url_excel_rekonsiliasi_transaksi) ? $url_excel_rekonsiliasi_transaksi : site_url('Persediaan/excel_rekonsiliasi_transaksi')); ?>;
     var urlRecalculateExcel = <?php echo json_encode(isset($url_recalculate_excel) ? $url_recalculate_excel : site_url('Persediaan/excel_recalculate')); ?>;
     var urlExcelPersediaan = <?php echo json_encode(isset($url_excel_persediaan) ? $url_excel_persediaan : site_url('Persediaan/excel')); ?>;
     var urlCompareTabelList = <?php echo json_encode(isset($url_compare_tabel_list) ? $url_compare_tabel_list : site_url('Persediaan/ajax_compare_tabel_list')); ?>;
@@ -683,10 +822,22 @@ window.addEventListener('load', function() {
     function getBulanTargetGenerate() {
         var bulan = parseInt($('#gen_bulan_persediaan').val(), 10);
         var tahun = parseInt($('#gen_tahun_persediaan').val(), 10);
-        if (!bulan || bulan < 1 || bulan > 12 || !tahun) {
-            return '';
+        if (bulan >= 1 && bulan <= 12 && tahun) {
+            return tahun + '-' + ('0' + bulan).slice(-2);
         }
-        return tahun + '-' + ('0' + bulan).slice(-2);
+        var bulanTab1 = ($('#bulan_persediaan').val() || '').trim();
+        if (bulanTab1 && /^\d{4}-\d{2}$/.test(bulanTab1)) {
+            return bulanTab1;
+        }
+        return '';
+    }
+
+    function getBulanExportRekonsiliasi() {
+        var bulanTab1 = ($('#bulan_persediaan').val() || '').trim();
+        if (bulanTab1 && /^\d{4}-\d{2}$/.test(bulanTab1)) {
+            return bulanTab1;
+        }
+        return getBulanTargetGenerate();
     }
 
     function setStatusGeneratePersediaan(type, html) {
@@ -863,7 +1014,11 @@ window.addEventListener('load', function() {
         pembelian_update: [],
         pembelian_baru: [],
         penjualan: [],
-        penjualan_update: []
+        penjualan_update: [],
+        produksi: [],
+        produksi_update: [],
+        pecah_satuan: [],
+        pecah_satuan_update: []
     };
     var genRecalcSummaryHtml = '';
     var genRecalcStoragePrefix = 'genRecalcResult_';
@@ -914,6 +1069,7 @@ window.addEventListener('load', function() {
             return genRecalcData.persediaan_all.length > 0
                 || genRecalcData.pembelian.length > 0
                 || genRecalcData.penjualan.length > 0
+                || genRecalcData.produksi.length > 0
                 || genRecalcData.generate_update.length > 0
                 || genRecalcData.generate_insert.length > 0;
         } catch (eRestore) {
@@ -937,7 +1093,11 @@ window.addEventListener('load', function() {
             pembelian_update: [],
             pembelian_baru: [],
             penjualan: [],
-            penjualan_update: []
+            penjualan_update: [],
+            produksi: [],
+            produksi_update: [],
+            pecah_satuan: [],
+            pecah_satuan_update: []
         };
         genRecalcSummaryHtml = '';
         $('#gen-recalc-summary').html('<em>Belum ada proses untuk bulan ini. Klik <strong>Generate &amp; Recalculate</strong>.</em>');
@@ -955,7 +1115,11 @@ window.addEventListener('load', function() {
             pembelian_update: res.data.pembelian_update || [],
             pembelian_baru: res.data.pembelian_baru || [],
             penjualan: res.data.penjualan || [],
-            penjualan_update: res.data.penjualan_update || []
+            penjualan_update: res.data.penjualan_update || [],
+            produksi: res.data.produksi || [],
+            produksi_update: res.data.produksi_update || [],
+            pecah_satuan: res.data.pecah_satuan || [],
+            pecah_satuan_update: res.data.pecah_satuan_update || []
         };
         genRecalcSummaryHtml = res.summary_html || '';
         var infoProses = '';
@@ -1032,7 +1196,7 @@ window.addEventListener('load', function() {
         .then(function(result) {
             triggerDownloadBlob(result);
             selesaiSwalExcelProgress();
-            var label = jenis ? ('tabel ' + jenis) : 'semua tabel (6 sheet)';
+            var label = jenis ? ('tabel ' + jenis) : 'semua tabel (10 sheet)';
             Swal.fire({
                 icon: 'success',
                 title: 'Selesai',
@@ -1075,6 +1239,10 @@ window.addEventListener('load', function() {
         $('#gen-count-pembelian-baru').text(genRecalcData.pembelian_baru.length);
         $('#gen-count-penjualan').text(genRecalcData.penjualan.length);
         $('#gen-count-penjualan-update').text(genRecalcData.penjualan_update.length);
+        $('#gen-count-produksi').text(genRecalcData.produksi.length);
+        $('#gen-count-produksi-update').text(genRecalcData.produksi_update.length);
+        $('#gen-count-pecah-satuan').text(genRecalcData.pecah_satuan.length);
+        $('#gen-count-pecah-satuan-update').text(genRecalcData.pecah_satuan_update.length);
     }
 
     function buildRowsGenRecalc() {
@@ -1129,10 +1297,41 @@ window.addEventListener('load', function() {
                 it.unit_lama || '', it.unit_baru || '', it.total_10 || '', it.keterangan || ''
             ];
         });
+        var rowsProd = genRecalcData.produksi.map(function(it, i) {
+            return [
+                i + 1, it.aksi || '', it.id_produksi_bahan || '', it.id_persediaan || '', it.namabarang || '',
+                it.satuan || '', it.hpp || '', it.nama_unit || '', it.jumlah_bahan || '',
+                it.bahan_produksi_baru || '', it.total_10 || '', it.keterangan || ''
+            ];
+        });
+        var rowsProdU = genRecalcData.produksi_update.map(function(it, i) {
+            return [
+                i + 1, it.id_produksi_bahan || '', it.id_persediaan || '', it.namabarang || '', it.nama_unit || '',
+                it.jumlah_bahan || '', it.bahan_produksi_lama || '', it.bahan_produksi_baru || '',
+                it.total_10 || '', it.sisa_stock || '', it.keterangan || ''
+            ];
+        });
+        var rowsPecah = genRecalcData.pecah_satuan.map(function(it, i) {
+            return [
+                i + 1, it.aksi || '', it.id_pecah_satuan || '', it.id_persediaan_sumber || '', it.id_persediaan_target || '',
+                it.namabarang || '', it.satuan || '', it.hpp || '', it.jumlah_pecah || '', it.pecah_satuan_baru || '',
+                it.total_10_sumber || '', it.nama_barang_baru || '', it.satuan_barang_baru || '', it.hpp_barang_baru || '',
+                it.jumlah_barang_baru || '', it.sa_target || '', it.total_10_target || '', it.keterangan || ''
+            ];
+        });
+        var rowsPecahU = genRecalcData.pecah_satuan_update.map(function(it, i) {
+            return [
+                i + 1, it.id_pecah_satuan || '', it.id_persediaan_sumber || '', it.id_persediaan_target || '',
+                it.namabarang || '', it.nama_barang_baru || '', it.jumlah_pecah || '', it.jumlah_barang_baru || '',
+                it.pecah_satuan_baru || '', it.total_10_sumber || '', it.sa_target || '', it.total_10_target || '', it.keterangan || ''
+            ];
+        });
         return {
             all: rowsAll, update: rowsUpd, insert: rowsIns,
             pembelian: rowsB, pembelian_update: rowsPU, pembelian_baru: rowsPB,
-            penjualan: rowsPenj, penjualan_update: rowsPenjU
+            penjualan: rowsPenj, penjualan_update: rowsPenjU,
+            produksi: rowsProd, produksi_update: rowsProdU,
+            pecah_satuan: rowsPecah, pecah_satuan_update: rowsPecahU
         };
     }
 
@@ -1152,7 +1351,11 @@ window.addEventListener('load', function() {
             '#tbl-gen-recalc-pembelian-update',
             '#tbl-gen-recalc-pembelian-baru',
             '#tbl-gen-recalc-penjualan',
-            '#tbl-gen-recalc-penjualan-update'
+            '#tbl-gen-recalc-penjualan-update',
+            '#tbl-gen-recalc-produksi',
+            '#tbl-gen-recalc-produksi-update',
+            '#tbl-gen-recalc-pecah-satuan',
+            '#tbl-gen-recalc-pecah-satuan-update'
         ].forEach(destroyGenRecalcDataTable);
     }
 
@@ -1202,6 +1405,10 @@ window.addEventListener('load', function() {
         upsertGenRecalcDataTable('#tbl-gen-recalc-pembelian-baru', rows.pembelian_baru, 3);
         upsertGenRecalcDataTable('#tbl-gen-recalc-penjualan', rows.penjualan, 4);
         upsertGenRecalcDataTable('#tbl-gen-recalc-penjualan-update', rows.penjualan_update, 3);
+        upsertGenRecalcDataTable('#tbl-gen-recalc-produksi', rows.produksi, 4);
+        upsertGenRecalcDataTable('#tbl-gen-recalc-produksi-update', rows.produksi_update, 3);
+        upsertGenRecalcDataTable('#tbl-gen-recalc-pecah-satuan', rows.pecah_satuan, 5);
+        upsertGenRecalcDataTable('#tbl-gen-recalc-pecah-satuan-update', rows.pecah_satuan_update, 3);
     }
 
     function adjustGenRecalcDataTables() {
@@ -1223,6 +1430,10 @@ window.addEventListener('load', function() {
             phaseLabel = 'Fase 2: Pembelian → beli';
         } else if (data.phase === 'penjualan') {
             phaseLabel = 'Fase 3: Penjualan → penjualan & total_10';
+        } else if (data.phase === 'produksi') {
+            phaseLabel = 'Fase 4: Produksi bahan → bahan_produksi & total_10';
+        } else if (data.phase === 'pecah_satuan') {
+            phaseLabel = 'Fase 5: Pecah satuan → pecah_satuan & total_10 / SA target';
         }
         var total = data.total_phase || data.total_sumber || 1;
         var selesai = data.offset_selesai || 0;
@@ -1291,6 +1502,18 @@ window.addEventListener('load', function() {
             if (data.items_penjualan_update && data.items_penjualan_update.length) {
                 genRecalcData.penjualan_update = genRecalcData.penjualan_update.concat(data.items_penjualan_update);
             }
+            if (data.items_produksi && data.items_produksi.length) {
+                genRecalcData.produksi = genRecalcData.produksi.concat(data.items_produksi);
+            }
+            if (data.items_produksi_update && data.items_produksi_update.length) {
+                genRecalcData.produksi_update = genRecalcData.produksi_update.concat(data.items_produksi_update);
+            }
+            if (data.items_pecah_satuan && data.items_pecah_satuan.length) {
+                genRecalcData.pecah_satuan = genRecalcData.pecah_satuan.concat(data.items_pecah_satuan);
+            }
+            if (data.items_pecah_satuan_update && data.items_pecah_satuan_update.length) {
+                genRecalcData.pecah_satuan_update = genRecalcData.pecah_satuan_update.concat(data.items_pecah_satuan_update);
+            }
 
             renderGenRecalcDataTables();
             saveGenRecalcResultToStorage(bulanKey);
@@ -1322,6 +1545,14 @@ window.addEventListener('load', function() {
                 + 'Update penjualan: <strong>' + (s.penjualan_update || 0) + '</strong>'
                 + (s.penjualan_tidak_cocok ? ', Tidak cocok: <strong>' + s.penjualan_tidak_cocok + '</strong>' : '')
                 + (s.penjualan_gagal ? ', Gagal: <strong>' + s.penjualan_gagal + '</strong>' : '')
+                + '<br/>Produksi bahan diproses: <strong>' + (s.total_produksi || 0) + '</strong> — '
+                + 'Update bahan_produksi: <strong>' + (s.produksi_update || 0) + '</strong>'
+                + (s.produksi_tidak_cocok ? ', Tidak cocok: <strong>' + s.produksi_tidak_cocok + '</strong>' : '')
+                + (s.produksi_gagal ? ', Gagal: <strong>' + s.produksi_gagal + '</strong>' : '')
+                + '<br/>Pecah satuan diproses: <strong>' + (s.total_pecah_satuan || 0) + '</strong> — '
+                + 'Update pecah: <strong>' + (s.pecah_update || 0) + '</strong>'
+                + (s.pecah_tidak_cocok ? ', Tidak cocok: <strong>' + s.pecah_tidak_cocok + '</strong>' : '')
+                + (s.pecah_gagal ? ', Gagal: <strong>' + s.pecah_gagal + '</strong>' : '')
                 + '<br/>Hapus duplikat spop kosong/0 (beli=0): <strong>' + (s.cleanup_spop_kosong || 0) + '</strong>'
                 + ((s.cleanup_spop_kosong_grup || 0) > 0 ? ' (' + s.cleanup_spop_kosong_grup + ' grup)' : '');
             $('#gen-recalc-summary').html(summaryHtml);
@@ -1340,6 +1571,9 @@ window.addEventListener('load', function() {
                     $('#bulan_persediaan').val(bulanKey);
                 }
                 cekGeneratePersediaanBulan();
+                if (data.refresh_persediaan && $('#form-persediaan-bulan').length) {
+                    $('#form-persediaan-bulan').submit();
+                }
                 setTimeout(function() {
                     adjustGenRecalcDataTables();
                 }, 300);
@@ -1408,7 +1642,9 @@ window.addEventListener('load', function() {
                 html: '<p>Bulan target: <strong>' + bulanKey + '</strong></p>'
                     + '<p class="small text-muted mb-0">Fase 1: salin sumber (sa atau total_10 &gt; 0), hapus target sa=0 &amp; total_10=0.<br/>'
                     + 'Fase 2: pembelian → beli += jumlah, total_10 += jumlah (nama+satuan+hpp+spop).<br/>'
-                    + 'Fase 3: penjualan → unit + penjualan += jumlah, total_10 -= jumlah (nama+satuan+hpp).</p>',
+                    + 'Fase 3: penjualan → unit + penjualan += jumlah, total_10 -= jumlah (nama+satuan+hpp).<br/>'
+                    + 'Fase 4: bahan produksi dari sys_unit_produk_bahan → bahan_produksi += jumlah_bahan, total_10 -= jumlah_bahan (nama+satuan+hpp).<br/>'
+                    + 'Fase 5: pecah satuan dari tbl_pembelian_pecah_satuan → sumber pecah_satuan += jumlah, total_10 -= jumlah; target sa/total_10 += jumlah_barang_baru.</p>',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Generate & Recalculate',
                 cancelButtonText: 'Batal',
@@ -1424,7 +1660,9 @@ window.addEventListener('load', function() {
                     pembelian_update: [],
                     pembelian_baru: [],
                     penjualan: [],
-                    penjualan_update: []
+                    penjualan_update: [],
+                    produksi: [],
+                    produksi_update: []
                 };
                 genRecalcSummaryHtml = '';
                 clearGenRecalcResultStorage(bulanKey);
@@ -1894,11 +2132,19 @@ window.addEventListener('load', function() {
             scrollX: true,
             scrollCollapse: true,
             pageLength: 25,
+            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
             order: [[3, 'asc']],
             columnDefs: [
                 { targets: 0, orderable: false },
                 { targets: 3, type: 'string' }
-            ]
+            ],
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ baris',
+                info: 'Menampilkan _START_–_END_ dari _TOTAL_ baris',
+                infoEmpty: 'Tidak ada data',
+                infoFiltered: '(difilter dari _MAX_ total baris)',
+                zeroRecords: 'Tidak ada data persediaan untuk bulan ini'
+            }
         });
     } catch (dtErr) {
         console.warn('DataTable persediaan:', dtErr);
@@ -2237,6 +2483,55 @@ window.addEventListener('load', function() {
 
     $('#btn-cetak-excel-generate').on('click', function() {
         exportGenRecalcExcel('');
+    });
+
+    $('#btn-cetak-excel-rekonsiliasi-transaksi').on('click', function() {
+        if (!userCanGeneratePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Export rekonsiliasi transaksi hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+            });
+            return;
+        }
+        var bulanKey = getBulanExportRekonsiliasi();
+        if (!bulanKey) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan persediaan atau bulan/tahun target terlebih dahulu.' });
+            return;
+        }
+        if (!urlExcelRekonsiliasiTransaksi) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export rekonsiliasi tidak tersedia.' });
+            return;
+        }
+        var fd = new FormData();
+        fd.append('bulan', bulanKey);
+        tampilkanSwalExcelProgress();
+        fetch(urlExcelRekonsiliasiTransaksi, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) { triggerDownloadBlob(result); })
+        .then(function() {
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: 'File Excel rekonsiliasi transaksi bulan ' + bulanKey + ' berhasil diunduh.',
+                timer: 2200,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Export Excel rekonsiliasi transaksi gagal.'
+            });
+        });
     });
 
     $(document).on('click', '.btn-gen-recalc-excel', function() {

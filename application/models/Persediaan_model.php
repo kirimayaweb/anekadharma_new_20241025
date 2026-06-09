@@ -57,6 +57,30 @@ class Persediaan_model extends CI_Model
         return $this->db->get($this->table)->row();
     }
 
+    function get_by_uuid_barang($uuid_barang)
+    {
+        $uuid_barang = trim((string) $uuid_barang);
+        if ($uuid_barang === '') {
+            return null;
+        }
+        $this->db->where($this->uuid_barang, $uuid_barang);
+        $this->db->order_by($this->id, $this->order);
+        $this->db->limit(1);
+        return $this->db->get($this->table)->row();
+    }
+
+    function get_by_namabarang($namabarang)
+    {
+        $namabarang = trim((string) $namabarang);
+        if ($namabarang === '') {
+            return null;
+        }
+        $this->db->where('namabarang', $namabarang);
+        $this->db->order_by($this->id, $this->order);
+        $this->db->limit(1);
+        return $this->db->get($this->table)->row();
+    }
+
     // get data by id
     /**
      * Filter persediaan by year-month from HTML5 month input (YYYY-MM).

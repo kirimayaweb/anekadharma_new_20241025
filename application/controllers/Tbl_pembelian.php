@@ -2008,6 +2008,33 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form_spop_ready', $data);
 	}
 
+	/**
+	 * Daftar unit (sys_unit) untuk combobox modal tambah/ubah barang pembelian — selalu fresh dari DB.
+	 */
+	public function list_unit_ajax()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json');
+
+		$sql = 'SELECT uuid_unit, nama_unit FROM sys_unit ORDER BY nama_unit ASC';
+		$rows = array();
+		foreach ($this->db->query($sql)->result() as $m) {
+			$rows[] = array(
+				'uuid_unit' => $m->uuid_unit,
+				'nama_unit' => $m->nama_unit,
+			);
+		}
+
+		echo json_encode(array(
+			'success' => true,
+			'data' => $rows,
+		));
+	}
+
 	public function create_action_detail_uuid_spop_update($uuid_spop = null)
 	{
 
@@ -4348,6 +4375,23 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($this->db->query($sql_stock)->result());
 		$Data_Barang = $this->db->query($sql_stock)->row();
 
+		if (!$Data_Barang) {
+			$this->session->set_flashdata('pesan_pecah_satuan', 'Data persediaan tidak ditemukan.');
+			redirect(site_url('tbl_pembelian/pecah_satuan'));
+		}
+
+		$jumlah_sediaan_cek = (float) preg_replace('/[^0-9.-]/', '', (string) $Data_Barang->jumlah_sediaan);
+		$keluar_stok = (float) preg_replace('/[^0-9.-]/', '', (string) $Data_Barang->penjualan)
+			+ (float) preg_replace('/[^0-9.-]/', '', (string) $Data_Barang->pecah_satuan)
+			+ (float) preg_replace('/[^0-9.-]/', '', (string) $Data_Barang->bahan_produksi);
+		$sisa_stok_cek = max(0, $jumlah_sediaan_cek - $keluar_stok);
+		$nilai_persediaan_cek = (float) preg_replace('/[^0-9.-]/', '', (string) $Data_Barang->nilai_persediaan);
+
+		if ($jumlah_sediaan_cek <= 0 || $sisa_stok_cek <= 0 || $nilai_persediaan_cek <= 0) {
+			$this->session->set_flashdata('pesan_pecah_satuan', 'Barang tidak dapat dipilih karena tidak ada persediaan (jumlah/nilai persediaan = 0).');
+			redirect(site_url('tbl_pembelian/pecah_satuan'));
+		}
+
 		// print_r($Data_Barang);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -4687,8 +4731,133 @@ class Tbl_pembelian extends CI_Controller
 		redirect(site_url('tbl_pembelian/pecah_satuan'));
 	}
 
+	private function _resolve_bulan_persediaan_input()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
+		}
+		if ($bulan === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			$bulan = date('Y-m');
+		}
+		return $bulan;
+	}
+
+	private function _pecah_satuan_parse_row_angka($nilai)
+	{
+		if ($nilai === null || $nilai === '') {
+			return 0.0;
+		}
+		return (float) preg_replace('/[^0-9.-]/', '', (string) $nilai);
+	}
+
+	/**
+	 * Tampilkan baris jika persediaan > 0 ATAU beli > 0 ATAU terjual > 0.
+	 * Sembunyikan baris tanpa aktivitas (persediaan=0, beli=0, terjual=0).
+	 */
+	private function _pecah_satuan_row_layak_tampil($row)
+	{
+		$persediaan = $this->_pecah_satuan_parse_row_angka(isset($row->jumlah_sediaan) ? $row->jumlah_sediaan : 0);
+		$beli = $this->_pecah_satuan_parse_row_angka(isset($row->beli) ? $row->beli : 0);
+		$terjual = $this->_pecah_satuan_parse_row_angka(isset($row->penjualan) ? $row->penjualan : 0);
+
+		return ($persediaan > 0 || $beli > 0 || $terjual > 0);
+	}
+
+	private function _filter_pecah_satuan_data_barang_rows($rows)
+	{
+		if (!is_array($rows)) {
+			return array();
+		}
+
+		$filtered = array();
+		foreach ($rows as $row) {
+			if ($this->_pecah_satuan_row_layak_tampil($row)) {
+				$filtered[] = $row;
+			}
+		}
+
+		return $filtered;
+	}
+
+	private function _get_pecah_satuan_data_by_bulan($bulan)
+	{
+		$sql_base = "SELECT persediaan.kode_barang as kode_barang,
+			persediaan.uuid_persediaan as uuid_persediaan,
+			persediaan.uuid_barang as uuid_barang,
+			persediaan.namabarang as nama_barang_persediaan,
+			persediaan.total_10 as jumlah_sediaan,
+			persediaan.beli as beli,
+			persediaan.hpp as harga_satuan_persediaan,
+			persediaan.tanggal_beli as tanggal_beli_persediaan,
+			persediaan.satuan as satuan,
+			persediaan.spop as spop,
+			persediaan.penjualan as penjualan,
+			persediaan.pecah_satuan as pecah_satuan,
+			persediaan.bahan_produksi as bahan_produksi,
+			persediaan.nilai_persediaan as nilai_persediaan
+			FROM persediaan";
+
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false) {
+			return $this->_filter_pecah_satuan_data_barang_rows(
+				$this->db->query($sql_base . " ORDER BY persediaan.namabarang ASC, persediaan.id ASC")->result()
+			);
+		}
+
+		$tanggal_beli = date('Y-m-01', $ts);
+		$rows = $this->db->query(
+			$sql_base . " WHERE persediaan.tanggal_beli = ? ORDER BY persediaan.namabarang ASC, persediaan.id ASC",
+			array($tanggal_beli)
+		)->result();
+
+		if (count($rows) > 0) {
+			return $this->_filter_pecah_satuan_data_barang_rows($rows);
+		}
+
+		return $this->_filter_pecah_satuan_data_barang_rows(
+			$this->db->query(
+				$sql_base . " WHERE DATE_FORMAT(persediaan.tanggal_beli, '%Y-%m') = ? ORDER BY persediaan.namabarang ASC, persediaan.id ASC",
+				array($bulan)
+			)->result()
+		);
+	}
+
+	private function _resolve_tab_pecah_satuan_input()
+	{
+		$tab = trim((string) $this->input->post('tab_aktif', TRUE));
+		if ($tab === '') {
+			$tab = trim((string) $this->input->get('tab_aktif', TRUE));
+		}
+		if (!in_array($tab, array('data-barang', 'history-pecah-satuan'), true)) {
+			$tab = 'data-barang';
+		}
+		return $tab;
+	}
+
+	private function _get_pecah_satuan_history_by_bulan($bulan)
+	{
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false) {
+			return array();
+		}
+
+		$awal = date('Y-m-01', $ts);
+		$akhir = date('Y-m-t', $ts);
+
+		$sql = "SELECT *
+			FROM `tbl_pembelian_pecah_satuan`
+			WHERE DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) >= ?
+			AND DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) <= ?
+			ORDER BY `proses_input` DESC, `id` DESC";
+
+		return $this->db->query($sql, array($awal, $akhir))->result();
+	}
+
 	public function pecah_satuan($uuid_gudang = null)
 	{
+		$bulan = $this->_resolve_bulan_persediaan_input();
+		$tab_aktif = $this->_resolve_tab_pecah_satuan_input();
 
 
 
@@ -4792,39 +4961,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-			$sql_stock = "SELECT persediaan.kode_barang as kode_barang, 
-			persediaan.uuid_persediaan as uuid_persediaan,
-			persediaan.namabarang as nama_barang_persediaan,
-			persediaan.total_10 as jumlah_sediaan, 
-			persediaan.hpp as harga_satuan_persediaan,
-			persediaan.tanggal_beli as tanggal_beli_persediaan, 
-			persediaan.satuan as satuan, 
-			persediaan.spop as spop, 
-			persediaan.penjualan as penjualan, 
-			persediaan.pecah_satuan as pecah_satuan, 
-			persediaan.bahan_produksi as bahan_produksi, 
-			
-					-- 	tbl_pembelian.uuid_pembelian as uuid_pembelian,
-					-- 	tbl_pembelian.uraian as barang_beli, 
-					-- 	tbl_pembelian.jumlah as jumlah_belanja, 
-					-- 	tbl_pembelian.harga_satuan as harga_satuan_beli, 
-					-- 	tbl_pembelian.tgl_po as tgl_po, 
-					-- 	tbl_pembelian.uuid_gudang as uuid_gudang, 
-					-- 	tbl_pembelian.nama_gudang as nama_gudang,
-					-- 	tbl_pembelian.satuan as satuan,
-					-- tbl_penjualan.nama_barang as barang_jual, 
-					-- tbl_penjualan.jumlah as jumlah_terjual
-
-			persediaan.nilai_persediaan as nilai_persediaan
-					
-					FROM persediaan  
-					-- left join tbl_pembelian ON persediaan.uuid_barang = tbl_pembelian.uuid_barang 
-					-- left join tbl_penjualan ON persediaan.uuid_barang = tbl_penjualan.uuid_barang  
-					-- WHERE (persediaan.uuid_barang, persediaan.tanggal) IN (SELECT persediaan.uuid_barang, Max(persediaan.tanggal) FROM persediaan GROUP BY persediaan.uuid_barang)  
-					ORDER BY persediaan.uuid_barang ASC";
-
-			// print_r($this->db->query($sql_stock)->result());
-			$Data_stock = $this->db->query($sql_stock)->result();
+			$Data_stock = $this->_get_pecah_satuan_data_by_bulan($bulan);
 		}
 
 		// print_r($Data_stock);
@@ -4832,6 +4969,9 @@ class Tbl_pembelian extends CI_Controller
 		$data = array(
 			'action_cari_gudang' => site_url('Tbl_pembelian/pecah_satuan'),
 			'Data_stock' => $Data_stock,
+			'Data_history_pecah_satuan' => $this->_get_pecah_satuan_history_by_bulan($bulan),
+			'bulan_persediaan_selected' => $bulan,
+			'tab_aktif' => $tab_aktif,
 		);
 
 
@@ -4897,17 +5037,7 @@ class Tbl_pembelian extends CI_Controller
 			// print_r($get_kode_barang);
 			// print_r("<br/>");
 
-			// CEK KODE APAKAH SUDAH ADA, JIKA SUDAH ADA MAKA DITAMBAHKAN NOMOR
-			// query chek sys_nama_barang
-			$this->db->where('kode_barang', $get_kode_barang);
-			$sys_nama_barang = $this->db->get('sys_nama_barang');
-
-			if ($sys_nama_barang->num_rows() > 0) {
-				// print_r ("Sudah ada ");
-				$get_kode_barang = $get_kode_barang . "_" . $sys_nama_barang->num_rows();
-			}
-			// print_r($get_kode_barang);
-			// print_r("<br/>");
+			$get_kode_barang = $this->_pecah_satuan_cek_kode_barang_unik($get_kode_barang);
 
 		}
 		// print_r("get_kode_barang: ");
@@ -4932,24 +5062,11 @@ class Tbl_pembelian extends CI_Controller
 
 
 
-		// Insert nama barang baru ke sys_nama_barang dan mendapatkan uuid_barang
-		$data_Sys_nama_barang = array(
-			// 'uuid_barang' => $this->input->post('uuid_barang',TRUE),
-			'kode_barang' => $get_kode_barang,
-			'nama_barang' => $this->input->post('nama_barang_baru', TRUE),
-			'satuan' => $this->input->post('satuan_barang_baru', TRUE),
-			// 'keterangan' => $this->input->post('keterangan',TRUE),
+		$uuid_barang_baru = $this->_pecah_satuan_resolve_uuid_barang(
+			$this->input->post('nama_barang_baru', TRUE),
+			$this->input->post('satuan_barang_baru', TRUE),
+			$get_kode_barang
 		);
-
-
-		// print_r("data_Sys_nama_barang: ");
-		// print_r("<br/>");
-		// print_r($data_Sys_nama_barang);
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-		$uuid_barang_baru = $this->Sys_nama_barang_model->insert_dari_pecah_satuan($data_Sys_nama_barang);
 
 		// Simpan ke tabel persediaan
 
@@ -5002,11 +5119,12 @@ class Tbl_pembelian extends CI_Controller
 
 		// Proses simpan ke tbl_pembelian menjadi barang baru
 
-		// Input ke data persediaan
+		$tanggal_beli_bulan = $this->_tanggal_beli_bulan_dari_persediaan($Data_Barang);
+
+		// Input ke data persediaan (bulan stok mengikuti barang sumber)
 		$data_Persediaan = array(
-			// 'id' => $this->input->post('id', TRUE),
 			'tanggal' => date("Y-m-d H:i:s"),
-			// 'tanggal_new' => date("Y-m-d H:i:s"),
+			'tanggal_beli' => $tanggal_beli_bulan,
 			'uuid_barang' => $uuid_barang_baru,
 			'kode_barang' => $get_kode_barang,
 			'kode' => $get_kode_barang,
@@ -5072,8 +5190,44 @@ class Tbl_pembelian extends CI_Controller
 
 		$this->Persediaan_model->update($Data_Barang->id, $data_update_persediaan_setelah_di_pecah);
 
+		$row_persediaan_bulan = $this->_pecah_satuan_cari_persediaan_bulan(
+			$uuid_barang_baru,
+			$this->input->post('nama_barang_baru', TRUE),
+			$this->input->post('satuan_barang_baru', TRUE),
+			$tanggal_beli_bulan
+		);
 
-		$get_id_persediaan_new_pecah_satuan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
+		if ($row_persediaan_bulan) {
+			$sa_lama = (float) preg_replace('/[^0-9.\-]/', '', (string) $row_persediaan_bulan->sa);
+			$beli_lama = (float) preg_replace('/[^0-9.\-]/', '', (string) $row_persediaan_bulan->beli);
+			$total_lama = (float) preg_replace('/[^0-9.\-]/', '', (string) $row_persediaan_bulan->total_10);
+			$hpp_lama = (float) preg_replace('/[^0-9.\-]/', '', (string) $row_persediaan_bulan->hpp);
+			$nilai_lama = (float) preg_replace('/[^0-9.\-]/', '', (string) $row_persediaan_bulan->nilai_persediaan);
+			if ($nilai_lama <= 0 && $total_lama > 0) {
+				$nilai_lama = $hpp_lama * $total_lama;
+			}
+
+			$sa_baru = $sa_lama + (float) $get_jumlah_barang_baru;
+			$beli_baru = $beli_lama + (float) $get_jumlah_barang_baru;
+			$total_baru = $total_lama + (float) $get_jumlah_barang_baru;
+			$nilai_baru = $nilai_lama + ((float) $get_harga_satuan_barang_baru * (float) $get_jumlah_barang_baru);
+			$hpp_baru = $total_baru > 0 ? ($nilai_baru / $total_baru) : (float) $get_harga_satuan_barang_baru;
+
+			$data_update_persediaan_baru = array(
+				'tanggal' => date("Y-m-d H:i:s"),
+				'tanggal_beli' => $tanggal_beli_bulan,
+				'hpp' => $hpp_baru,
+				'sa' => (string) $sa_baru,
+				'beli' => (string) $beli_baru,
+				'tuj' => (string) $beli_baru,
+				'total_10' => (string) $total_baru,
+				'nilai_persediaan' => (string) $nilai_baru,
+			);
+			$this->Persediaan_model->update($row_persediaan_bulan->id, $data_update_persediaan_baru);
+			$get_id_persediaan_new_pecah_satuan = $row_persediaan_bulan->id;
+		} else {
+			$get_id_persediaan_new_pecah_satuan = $this->Persediaan_model->insert_pecah_satuan($data_Persediaan);
+		}
 
 		// print_r($get_id_persediaan_new_pecah_satuan);
 		// print_r("<br/>");
@@ -5152,7 +5306,12 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-		redirect(site_url('tbl_pembelian/pecah_satuan'));
+		$bulan_redirect = date('Y-m', strtotime($tanggal_beli_bulan));
+		$this->session->set_flashdata(
+			'pesan_persediaan',
+			'Pecah satuan berhasil. Stok barang baru tersedia di persediaan bulan ' . date('m/Y', strtotime($tanggal_beli_bulan)) . '.'
+		);
+		redirect(site_url('persediaan/index?bulan_persediaan=' . $bulan_redirect));
 	}
 
 
@@ -5712,6 +5871,159 @@ class Tbl_pembelian extends CI_Controller
 			'action_by_bulan' => site_url('tbl_pembelian/buku_kas_per_bulan'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/bukukas/adminlte310_buku_kas_list', $data);
+	}
+
+	private function _tanggal_beli_bulan_dari_persediaan($row)
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$row) {
+			return date('Y-m-01');
+		}
+
+		$raw = '';
+		if (isset($row->tanggal_beli) && trim((string) $row->tanggal_beli) !== '' && $row->tanggal_beli !== '0000-00-00') {
+			$raw = trim((string) $row->tanggal_beli);
+		} elseif (isset($row->tanggal) && trim((string) $row->tanggal) !== '') {
+			$raw = trim((string) $row->tanggal);
+		}
+
+		$ts = false;
+		if ($raw !== '') {
+			$ts = strtotime(str_replace('/', '-', $raw));
+			if ($ts === false) {
+				$ts = pembelian_parse_tanggal_po($raw);
+			}
+		}
+
+		if ($ts === false || date('Y', $ts) < 2020) {
+			return date('Y-m-01');
+		}
+
+		return date('Y-m-01', $ts);
+	}
+
+	private function _pecah_satuan_cari_persediaan_bulan($uuid_barang, $nama_barang, $satuan, $tanggal_beli_bulan)
+	{
+		$uuid_barang = trim((string) $uuid_barang);
+		$nama_barang = trim((string) $nama_barang);
+		$satuan = trim((string) $satuan);
+		$tanggal_beli_bulan = trim((string) $tanggal_beli_bulan);
+
+		if ($tanggal_beli_bulan === '') {
+			return null;
+		}
+
+		if ($uuid_barang !== '') {
+			$row = $this->db->query(
+				"SELECT * FROM `persediaan`
+				WHERE `uuid_barang` = ?
+				AND (
+					`tanggal_beli` = ?
+					OR DATE_FORMAT(`tanggal_beli`, '%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+				)
+				ORDER BY `id` DESC
+				LIMIT 1",
+				array($uuid_barang, $tanggal_beli_bulan, $tanggal_beli_bulan)
+			)->row();
+			if ($row) {
+				return $row;
+			}
+		}
+
+		if ($nama_barang !== '') {
+			$params = array($nama_barang, $tanggal_beli_bulan, $tanggal_beli_bulan);
+			$sql = "SELECT * FROM `persediaan`
+				WHERE `namabarang` = ?
+				AND (
+					`tanggal_beli` = ?
+					OR DATE_FORMAT(`tanggal_beli`, '%Y-%m') = DATE_FORMAT(?, '%Y-%m')
+				)";
+			if ($satuan !== '') {
+				$sql .= " AND `satuan` = ?";
+				$params[] = $satuan;
+			}
+			$sql .= " ORDER BY `id` DESC LIMIT 1";
+			$row = $this->db->query($sql, $params)->row();
+			if ($row) {
+				return $row;
+			}
+		}
+
+		return null;
+	}
+
+	private function _pecah_satuan_cek_kode_barang_unik($kode_barang)
+	{
+		$kode_barang = trim((string) $kode_barang);
+		if ($kode_barang === '') {
+			return '';
+		}
+
+		$this->db->group_start();
+		$this->db->where('kode_barang', $kode_barang);
+		$this->db->or_where('kode', $kode_barang);
+		$this->db->group_end();
+		$jumlah = (int) $this->db->count_all_results('persediaan');
+		if ($jumlah > 0) {
+			return $kode_barang . '_' . ($jumlah + 1);
+		}
+
+		return $kode_barang;
+	}
+
+	private function _pecah_satuan_uuid_barang_dari_row($row)
+	{
+		if (!$row) {
+			return '';
+		}
+		if (isset($row->uuid_barang) && trim((string) $row->uuid_barang) !== '') {
+			return trim((string) $row->uuid_barang);
+		}
+		if (isset($row->uuid_persediaan) && trim((string) $row->uuid_persediaan) !== '') {
+			return trim((string) $row->uuid_persediaan);
+		}
+
+		return '';
+	}
+
+	private function _pecah_satuan_resolve_uuid_barang($nama_barang, $satuan, $kode_barang = '')
+	{
+		$nama_barang = trim((string) $nama_barang);
+		$satuan = trim((string) $satuan);
+		$kode_barang = trim((string) $kode_barang);
+
+		if ($nama_barang !== '') {
+			$this->db->where('namabarang', $nama_barang);
+			if ($satuan !== '') {
+				$this->db->where('satuan', $satuan);
+			}
+			$this->db->order_by('id', 'DESC');
+			$this->db->limit(1);
+			$row = $this->db->get('persediaan')->row();
+			$uuid = $this->_pecah_satuan_uuid_barang_dari_row($row);
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		if ($kode_barang !== '') {
+			$this->db->group_start();
+			$this->db->where('kode_barang', $kode_barang);
+			$this->db->or_where('kode', $kode_barang);
+			$this->db->group_end();
+			$this->db->order_by('id', 'DESC');
+			$this->db->limit(1);
+			$row = $this->db->get('persediaan')->row();
+			$uuid = $this->_pecah_satuan_uuid_barang_dari_row($row);
+			if ($uuid !== '') {
+				return $uuid;
+			}
+		}
+
+		$row = $this->db->query("SELECT REPLACE(UUID(),'-','') AS u")->row();
+
+		return ($row && trim((string) $row->u) !== '') ? trim((string) $row->u) : '';
 	}
 }
 

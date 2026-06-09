@@ -96,8 +96,11 @@ function persediaan_row_layak_tampil_tab_data($row)
 	$sa = persediaan_parse_angka(persediaan_row_get($row, 'sa'));
 	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
 	$total_10 = persediaan_parse_angka(persediaan_row_get($row, 'total_10'));
+	$bahan_produksi = persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'));
+	$penjualan = persediaan_parse_angka(persediaan_row_get($row, 'penjualan'));
+	$pecah_satuan = persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'));
 
-	return ($sa > 0 || $beli > 0 || $total_10 > 0);
+	return ($sa > 0 || $beli > 0 || $total_10 > 0 || $bahan_produksi > 0 || $penjualan > 0 || $pecah_satuan > 0);
 }
 
 function persediaan_filter_rows_tab_data($rows)
