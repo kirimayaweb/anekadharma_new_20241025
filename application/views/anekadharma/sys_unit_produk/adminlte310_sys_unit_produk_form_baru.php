@@ -42,6 +42,10 @@ $hapus_produk_draft_client = isset($hapus_produk_draft_client) ? (bool) $hapus_p
 $data_penjualan_per_uuid_penjualan = isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uuid_penjualan)
     ? $data_penjualan_per_uuid_penjualan
     : array();
+$mode_update_produksi = isset($mode_update_produksi) ? (bool) $mode_update_produksi : false;
+$bulan_produksi_terkunci = isset($bulan_produksi_terkunci) ? $bulan_produksi_terkunci : '';
+$bulan_produksi_terkunci_label = isset($bulan_produksi_terkunci_label) ? $bulan_produksi_terkunci_label : '';
+$tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
 ?>
 <div class="content-wrapper">
 
@@ -91,6 +95,9 @@ $data_penjualan_per_uuid_penjualan = isset($data_penjualan_per_uuid_penjualan) &
                                     <input type="hidden" name="id_persediaan_barang" value="<?php echo isset($id_persediaan_barang) ? (int) $id_persediaan_barang : ''; ?>">
                                     <input type="hidden" name="uuid_barang" value="<?php echo isset($uuid_barang) ? htmlspecialchars($uuid_barang, ENT_QUOTES, 'UTF-8') : ''; ?>">
                                     <input type="hidden" name="bulan_produksi" value="<?php echo htmlspecialchars($bulan_produksi_selected, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php if ($mode_update_produksi && $bulan_produksi_terkunci !== '') { ?>
+                                    <input type="hidden" name="bulan_produksi_terkunci" id="bulan_produksi_terkunci" value="<?php echo htmlspecialchars($bulan_produksi_terkunci, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <?php } ?>
                                     <div class="row">
                                         <div class="col-md-3">
                                             <label for="tgl_transaksi_produk">Tanggal Produksi</label>
@@ -100,6 +107,9 @@ $data_penjualan_per_uuid_penjualan = isset($data_penjualan_per_uuid_penjualan) &
                                                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                                                 </div>
                                             </div>
+                                            <?php if ($mode_update_produksi && $bulan_produksi_terkunci_label !== '') { ?>
+                                            <small class="text-muted d-block mt-1">Hanya boleh diubah dalam bulan <strong><?php echo htmlspecialchars($bulan_produksi_terkunci_label, ENT_QUOTES, 'UTF-8'); ?></strong></small>
+                                            <?php } ?>
                                         </div>
                                         <div class="col-md-3">
                                             <label for="uuid_unit_produk">Unit</label>
@@ -136,8 +146,8 @@ $data_penjualan_per_uuid_penjualan = isset($data_penjualan_per_uuid_penjualan) &
                                             <?php } ?>
                                         </div>
                                         <div class="col-md-7">
-                                            <label for="keterangan_produk">Keterangan</label>
-                                            <input type="text" class="form-control field-produk-baru" name="keterangan" id="keterangan_produk" value="<?php echo isset($keterangan) ? htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8') : ''; ?>" required>
+                                            <label for="keterangan_produk">Keterangan <small class="text-muted">(opsional)</small></label>
+                                            <input type="text" class="form-control field-produk-baru" name="keterangan" id="keterangan_produk" value="<?php echo isset($keterangan) ? htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8') : ''; ?>">
                                         </div>
                                     </div>
                                 </form>
@@ -776,6 +786,11 @@ window.addEventListener('load', function() {
     var produkDraftServer = <?php echo json_encode($produk_draft); ?>;
     var hapusProdukDraftClient = <?php echo $hapus_produk_draft_client ? 'true' : 'false'; ?>;
     var storageKeyProdukDraft = 'produksi_form_draft_' + (idPersediaanProduk > 0 ? idPersediaanProduk : 'baru');
+    var modeUpdateProduksi = <?php echo $mode_update_produksi ? 'true' : 'false'; ?>;
+    var bulanProduksiTerkunci = <?php echo json_encode($bulan_produksi_terkunci); ?>;
+    var bulanProduksiTerkunciLabel = <?php echo json_encode($bulan_produksi_terkunci_label); ?>;
+    var tglTransaksiAwal = <?php echo json_encode($tgl_transaksi_awal); ?>;
+    var tglTransaksiTerakhirValid = tglTransaksiAwal || ($('#tgl_transaksi_produk').val() || '');
 
     var namaBulanIndonesia = {
         '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
@@ -958,11 +973,69 @@ window.addEventListener('load', function() {
 
     var syncingTglProdukPicker = false;
 
+    function tampilkanAlertBulanTglProdukTerkunci() {
+        var label = bulanProduksiTerkunciLabel || bulanProduksiTerkunci;
+        var pesan = 'Tanggal produksi tidak boleh diubah ke bulan/tahun berbeda';
+        if (label) {
+            pesan += ' (' + label + ')';
+        }
+        pesan += ' karena akan berdampak pada kesalahan data persediaan.';
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Tidak Diizinkan',
+                text: pesan,
+                confirmButtonText: 'OK'
+            });
+        } else {
+            alert(pesan);
+        }
+    }
+
+    function validasiBulanTglProdukUpdate(momentDate) {
+        if (!modeUpdateProduksi || !bulanProduksiTerkunci) {
+            return true;
+        }
+        if (!momentDate || typeof moment === 'undefined' || !moment.isMoment(momentDate) || !momentDate.isValid()) {
+            return false;
+        }
+        return momentDate.format('YYYY-MM') === bulanProduksiTerkunci;
+    }
+
+    function kembalikanTglProdukAwal() {
+        var mAwal = parseMomentTglProduk(tglTransaksiTerakhirValid || tglTransaksiAwal || $('#tgl_transaksi_produk').val());
+        if (!mAwal) {
+            return;
+        }
+        syncingTglProdukPicker = true;
+        var $wrap = $('#tgl_transaksi_produk_wrap');
+        var $input = $('#tgl_transaksi_produk');
+        var waktu = ambilBagianWaktuTglProduk(tglTransaksiTerakhirValid || tglTransaksiAwal || $input.val());
+        var formatted = mAwal.format('DD-MM-YYYY') + ' ' + waktu;
+        $input.val(formatted);
+        if ($wrap.length && $.fn.datetimepicker) {
+            $wrap.datetimepicker('date', mAwal);
+            $wrap.datetimepicker('hide');
+        }
+        syncingTglProdukPicker = false;
+        if (bulanProduksiTerkunci) {
+            bulanProduksiBahanAktif = bulanProduksiTerkunci;
+            $('#bulan_produksi_bahan').val(bulanProduksiTerkunci);
+            $('#form-produk-baru input[name="bulan_produksi"]').val(bulanProduksiTerkunci);
+            updateLabelBulanProduksi(labelBulanIndonesia(bulanProduksiTerkunci));
+        }
+    }
+
     function setTglProdukDariPicker(momentDate) {
         if (syncingTglProdukPicker) {
             return;
         }
         if (!momentDate || typeof moment === 'undefined' || !moment.isMoment(momentDate) || !momentDate.isValid()) {
+            return;
+        }
+        if (!validasiBulanTglProdukUpdate(momentDate)) {
+            tampilkanAlertBulanTglProdukTerkunci();
+            kembalikanTglProdukAwal();
             return;
         }
         syncingTglProdukPicker = true;
@@ -971,6 +1044,7 @@ window.addEventListener('load', function() {
         var waktu = ambilBagianWaktuTglProduk($input.val());
         var formatted = momentDate.format('DD-MM-YYYY') + ' ' + waktu;
         $input.val(formatted);
+        tglTransaksiTerakhirValid = formatted;
         $wrap.datetimepicker('date', momentDate);
         $wrap.datetimepicker('hide');
         syncingTglProdukPicker = false;
@@ -981,7 +1055,7 @@ window.addEventListener('load', function() {
 
     if ($('#tgl_transaksi_produk_wrap').length && $.fn.datetimepicker) {
         var $tglProdukWrap = $('#tgl_transaksi_produk_wrap');
-        $tglProdukWrap.datetimepicker({
+        var pickerOpts = {
             format: 'DD-MM-YYYY',
             useCurrent: false,
             allowInputToggle: true,
@@ -996,7 +1070,13 @@ window.addEventListener('load', function() {
                 clear: 'far fa-trash-alt',
                 close: 'fas fa-times'
             }
-        });
+        };
+        if (modeUpdateProduksi && bulanProduksiTerkunci && /^\d{4}-\d{2}$/.test(bulanProduksiTerkunci) && typeof moment !== 'undefined') {
+            var minTgl = moment(bulanProduksiTerkunci + '-01', 'YYYY-MM-DD');
+            pickerOpts.minDate = minTgl;
+            pickerOpts.maxDate = moment(minTgl).endOf('month');
+        }
+        $tglProdukWrap.datetimepicker(pickerOpts);
 
         var tglProdukAwal = parseMomentTglProduk($('#tgl_transaksi_produk').val());
         if (tglProdukAwal) {
@@ -1028,9 +1108,15 @@ window.addEventListener('load', function() {
     }
     $('#tgl_transaksi_produk').on('change blur', function() {
         var m = parseMomentTglProduk($(this).val());
+        if (m && !validasiBulanTglProdukUpdate(m)) {
+            tampilkanAlertBulanTglProdukTerkunci();
+            kembalikanTglProdukAwal();
+            return;
+        }
         if (m && $('#tgl_transaksi_produk_wrap').length && $.fn.datetimepicker) {
             $('#tgl_transaksi_produk_wrap').datetimepicker('date', m);
         }
+        tglTransaksiTerakhirValid = $(this).val();
         syncBulanDariTglProduk(true);
     });
     if ($('#uuid_unit_produk').length && $.fn.select2) {
@@ -1074,7 +1160,16 @@ window.addEventListener('load', function() {
         refreshTombolProdukBaru();
     });
 
-    $('#form-produk-baru').on('submit', function() {
+    $('#form-produk-baru').on('submit', function(e) {
+        if (modeUpdateProduksi && bulanProduksiTerkunci) {
+            var mSubmit = parseMomentTglProduk($('#tgl_transaksi_produk').val());
+            if (mSubmit && !validasiBulanTglProdukUpdate(mSubmit)) {
+                e.preventDefault();
+                tampilkanAlertBulanTglProdukTerkunci();
+                kembalikanTglProdukAwal();
+                return false;
+            }
+        }
         try {
             localStorage.removeItem(storageKeyProdukDraft);
         } catch (e) {}
