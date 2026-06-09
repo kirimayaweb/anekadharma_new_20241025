@@ -169,6 +169,37 @@ class Tbl_penjualan extends CI_Controller
 		return 'unit';
 	}
 
+	/**
+	 * Opsi combobox filter rekap (unit / konsumen / barang) dalam rentang tanggal.
+	 */
+	private function _get_rekap_filter_options($date_awal, $date_akhir, $field_rekap)
+	{
+		$col = 'unit';
+		if ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen') {
+			$col = 'konsumen_nama';
+		} elseif ($field_rekap === 'nama_barang') {
+			$col = 'nama_barang';
+		}
+
+		$this->db->distinct();
+		$this->db->select($col . ' AS val', false);
+		$this->db->from('tbl_penjualan');
+		$this->db->where('tgl_jual >=', $date_awal);
+		$this->db->where('tgl_jual <=', $date_akhir);
+		$this->db->order_by($col, 'ASC');
+		$rows = $this->db->get()->result();
+
+		$options = array();
+		foreach ($rows as $row) {
+			$val = isset($row->val) ? trim((string) $row->val) : '';
+			if ($val !== '') {
+				$options[] = $val;
+			}
+		}
+
+		return $options;
+	}
+
 	private function _get_penjualan_between($date_awal, $date_akhir, $order_field = null)
 	{
 		$this->db->where('tgl_jual >=', $date_awal);
@@ -358,6 +389,7 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_awal_param' => $tgl_awal_param,
 			'tgl_akhir_param' => $tgl_akhir_param,
 			'filter_query_string' => $filter_qs,
+			'rekap_filter_options' => $this->_get_rekap_filter_options($Get_date_awal, $Get_date_akhir, $field_rekap),
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_data', $data);

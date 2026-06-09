@@ -832,12 +832,13 @@ window.addEventListener('load', function() {
         return '';
     }
 
-    function getBulanExportRekonsiliasi() {
-        var bulanTab1 = ($('#bulan_persediaan').val() || '').trim();
-        if (bulanTab1 && /^\d{4}-\d{2}$/.test(bulanTab1)) {
-            return bulanTab1;
+    function getBulanRekonsiliasiFromGenTab() {
+        var bulan = parseInt($('#gen_bulan_persediaan').val(), 10);
+        var tahun = parseInt($('#gen_tahun_persediaan').val(), 10);
+        if (bulan >= 1 && bulan <= 12 && tahun) {
+            return tahun + '-' + ('0' + bulan).slice(-2);
         }
-        return getBulanTargetGenerate();
+        return '';
     }
 
     function setStatusGeneratePersediaan(type, html) {
@@ -2494,9 +2495,9 @@ window.addEventListener('load', function() {
             });
             return;
         }
-        var bulanKey = getBulanExportRekonsiliasi();
+        var bulanKey = getBulanRekonsiliasiFromGenTab();
         if (!bulanKey) {
-            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan persediaan atau bulan/tahun target terlebih dahulu.' });
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan dan tahun target di tab Generate & Recalculate terlebih dahulu.' });
             return;
         }
         if (!urlExcelRekonsiliasiTransaksi) {

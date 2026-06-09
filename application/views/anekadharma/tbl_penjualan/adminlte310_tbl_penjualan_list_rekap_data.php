@@ -48,13 +48,18 @@
         }
 
         $action_cari_rekap = site_url('Tbl_penjualan/RekapData/' . $field_rekap);
+
+        $is_rekap_unit = ($field_rekap === 'unit');
+        $is_rekap_konsumen = ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen');
+        $is_rekap_barang = ($field_rekap === 'nama_barang');
+        $rekap_filter_options = isset($rekap_filter_options) && is_array($rekap_filter_options) ? $rekap_filter_options : array();
         ?>
 
         <div class="box box-warning box-solid">
 
             <div class="col-md-12">
                 <div class="card card-primary">
-                    <div class="card-header">
+                    <div class="card-header rekap-card-header-toolbar">
                         <form id="form-cari-rekap-penjualan" class="rekap-toolbar-satu-baris" action="<?php echo $action_cari_rekap; ?>" method="get">
                             <input type="hidden" id="rekap-field-export" value="<?php echo htmlspecialchars($field_rekap, ENT_QUOTES, 'UTF-8'); ?>" />
                             <div class="rekap-toolbar-inner">
@@ -73,21 +78,51 @@
                                     ?>
                                 </strong>
                                 <div class="input-group input-group-sm date rekap-tgl-input" id="rekap_tgl_awal" data-target-input="nearest">
-                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_awal" name="tgl_awal" value="<?php echo htmlspecialchars($Get_date_awal, ENT_QUOTES, 'UTF-8'); ?>" required />
+                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_awal" id="rekap_input_tgl_awal" name="tgl_awal" value="<?php echo htmlspecialchars($Get_date_awal, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
                                     <div class="input-group-append" data-target="#rekap_tgl_awal" data-toggle="datetimepicker">
                                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </div>
                                 <span class="rekap-sd">s/d</span>
                                 <div class="input-group input-group-sm date rekap-tgl-input" id="rekap_tgl_akhir" data-target-input="nearest">
-                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required />
+                                    <input type="text" class="form-control form-control-sm datetimepicker-input" data-target="#rekap_tgl_akhir" id="rekap_input_tgl_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
                                     <div class="input-group-append" data-target="#rekap_tgl_akhir" data-toggle="datetimepicker">
                                         <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                                     </div>
                                 </div>
-                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="nama_barang">Rekap Barang</a>
-                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="konsumen_nama">Rekap Konsumen</a>
-                                <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="unit">Rekap Unit</a>
+                                <span class="rekap-btn-filter-wrap">
+                                    <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="nama_barang">Rekap Barang</a>
+                                    <?php if ($is_rekap_barang) { ?>
+                                    <select id="rekap-filter-barang" class="form-control form-control-sm rekap-filter-select" title="Filter nama barang">
+                                        <option value="">— Semua Barang —</option>
+                                        <?php foreach ($rekap_filter_options as $opt_barang) { ?>
+                                        <option value="<?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php } ?>
+                                    </select>
+                                    <?php } ?>
+                                </span>
+                                <span class="rekap-btn-filter-wrap">
+                                    <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="konsumen_nama">Rekap Konsumen</a>
+                                    <?php if ($is_rekap_konsumen) { ?>
+                                    <select id="rekap-filter-konsumen" class="form-control form-control-sm rekap-filter-select" title="Filter konsumen">
+                                        <option value="">— Semua Konsumen —</option>
+                                        <?php foreach ($rekap_filter_options as $opt_konsumen) { ?>
+                                        <option value="<?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php } ?>
+                                    </select>
+                                    <?php } ?>
+                                </span>
+                                <span class="rekap-btn-filter-wrap">
+                                    <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="unit">Rekap Unit</a>
+                                    <?php if ($is_rekap_unit) { ?>
+                                    <select id="rekap-filter-unit" class="form-control form-control-sm rekap-filter-select" title="Filter unit">
+                                        <option value="">— Semua Unit —</option>
+                                        <?php foreach ($rekap_filter_options as $opt_unit) { ?>
+                                        <option value="<?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <?php } ?>
+                                    </select>
+                                    <?php } ?>
+                                </span>
                                 <button type="button" class="btn btn-success btn-sm" onclick="cetakExcelRekapData(); return false;">
                                     <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
                                 </button>
@@ -95,13 +130,17 @@
                         </form>
 
                         <style>
-                            .card-header {
+                            .rekap-card-header-toolbar {
                                 padding-top: 0.52rem;
                                 padding-bottom: 0.52rem;
+                                overflow: visible !important;
+                                position: relative;
+                                z-index: 40;
                             }
                             .rekap-toolbar-satu-baris {
                                 width: 100%;
                                 margin: 0;
+                                overflow: visible;
                             }
                             .rekap-toolbar-inner {
                                 display: flex;
@@ -111,7 +150,25 @@
                                 gap: 6px;
                                 width: 100%;
                                 max-width: 100%;
-                                overflow-x: hidden;
+                                overflow: visible;
+                            }
+                            .rekap-toolbar-inner .rekap-tgl-input {
+                                position: relative;
+                                z-index: 50;
+                                width: 130px;
+                                min-width: 130px;
+                                flex: 0 0 auto;
+                            }
+                            .rekap-toolbar-inner .rekap-tgl-input .form-control {
+                                background-color: #fff;
+                                cursor: text;
+                            }
+                            .rekap-toolbar-inner .input-group-append [data-toggle="datetimepicker"] {
+                                cursor: pointer;
+                            }
+                            .bootstrap-datetimepicker-widget,
+                            .bootstrap-datetimepicker-widget.dropdown-menu {
+                                z-index: 10060 !important;
                             }
                             .rekap-toolbar-inner .rekap-data-title {
                                 font-size: 0.72rem;
@@ -120,11 +177,6 @@
                                 white-space: nowrap;
                                 flex: 0 0 auto;
                                 margin-right: 5px;
-                            }
-                            .rekap-toolbar-inner .rekap-tgl-input {
-                                width: 130px;
-                                min-width: 130px;
-                                flex: 0 0 auto;
                             }
                             .rekap-toolbar-inner .form-control-sm {
                                 font-size: 0.9rem;
@@ -147,6 +199,21 @@
                                 line-height: 1.25;
                                 white-space: nowrap;
                                 flex: 0 0 auto;
+                            }
+                            .rekap-toolbar-inner .rekap-btn-filter-wrap {
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 5px;
+                                flex: 0 0 auto;
+                            }
+                            .rekap-toolbar-inner .rekap-filter-select {
+                                width: min(200px, 22vw);
+                                min-width: 140px;
+                                max-width: 220px;
+                                flex: 0 0 auto;
+                                font-size: 0.84rem;
+                                height: calc(1.5em + 0.42rem);
+                                padding: 0.18rem 0.36rem;
                             }
                         </style>
 
@@ -629,6 +696,8 @@
 <script>
 (function() {
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
+    var rekapFieldAktif = <?php echo json_encode($field_rekap); ?>;
+    var rekapFilterSearchTerdaftar = false;
 
     function getTanggalFilterRekap() {
         var tglAwal = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
@@ -686,14 +755,246 @@
         });
     }
 
-    if (window.jQuery) {
-        jQuery('#rekap_tgl_awal, #rekap_tgl_akhir').on('change.datetimepicker hide.datetimepicker', function() {
-            updateHrefTombolRekap();
-            submitCariRekapOtomatis();
+    function getSelectorFilterRekapAktif() {
+        if (rekapFieldAktif === 'unit') {
+            return '#rekap-filter-unit';
+        }
+        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
+            return '#rekap-filter-konsumen';
+        }
+        if (rekapFieldAktif === 'nama_barang') {
+            return '#rekap-filter-barang';
+        }
+        return null;
+    }
+
+    function simpanFilterRekapKeSession() {
+        var selector = getSelectorFilterRekapAktif();
+        if (!selector || !window.jQuery) {
+            return;
+        }
+        var val = jQuery(selector).val() || '';
+        try {
+            sessionStorage.setItem('rekap_filter_' + rekapFieldAktif, val);
+        } catch (eSession) { /* abaikan */ }
+    }
+
+    function muatFilterRekapDariSession() {
+        var selector = getSelectorFilterRekapAktif();
+        if (!selector || !window.jQuery) {
+            return;
+        }
+        try {
+            var saved = sessionStorage.getItem('rekap_filter_' + rekapFieldAktif);
+            if (saved !== null && jQuery(selector).length) {
+                jQuery(selector).val(saved);
+            }
+        } catch (eSession) { /* abaikan */ }
+    }
+
+    function initDatepickerRekapPenjualan() {
+        if (!window.jQuery || typeof jQuery.fn.datetimepicker !== 'function') {
+            return;
+        }
+        var $ = jQuery;
+        var opsiPicker = {
+            format: 'D-M-YYYY',
+            useCurrent: false,
+            allowInputToggle: true,
+            widgetPositioning: {
+                horizontal: 'left',
+                vertical: 'bottom'
+            }
+        };
+
+        ['#rekap_tgl_awal', '#rekap_tgl_akhir'].forEach(function(sel) {
+            var $picker = $(sel);
+            if (!$picker.length) {
+                return;
+            }
+            if ($picker.data('DateTimePicker')) {
+                try {
+                    $picker.datetimepicker('destroy');
+                } catch (eDestroy) { /* abaikan */ }
+            }
+            $picker.datetimepicker(opsiPicker);
+
+            var valAwal = $.trim($picker.find('input').val() || '');
+            if (valAwal && typeof moment !== 'undefined') {
+                var mAwal = moment(valAwal, ['D-M-YYYY', 'DD-MM-YYYY', 'D-M-YY'], true);
+                if (mAwal.isValid()) {
+                    $picker.datetimepicker('date', mAwal);
+                    $picker.find('input').val(mAwal.format('D-M-YYYY'));
+                }
+            }
         });
+
+        $('#rekap_tgl_awal, #rekap_tgl_akhir')
+            .off('change.datetimepicker.rekap hide.datetimepicker.rekap')
+            .on('change.datetimepicker.rekap hide.datetimepicker.rekap', function() {
+                updateHrefTombolRekap();
+                simpanFilterRekapKeSession();
+                submitCariRekapOtomatis();
+            });
+
+        $('#rekap_input_tgl_awal, #rekap_input_tgl_akhir')
+            .off('change.rekapTgl blur.rekapTgl')
+            .on('change.rekapTgl blur.rekapTgl', function() {
+                updateHrefTombolRekap();
+            });
     }
 
     updateHrefTombolRekap();
+
+    function normalisasiTeksRekap(teks) {
+        return String(teks || '').replace(/\s+/g, ' ').trim();
+    }
+
+    function annotateRekapRowsUntukFilter() {
+        var field = rekapFieldAktif;
+        var currentGroup = '';
+        var tbody = document.querySelector('#tglSPOPFreeze tbody');
+        if (!tbody) {
+            return;
+        }
+
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+            var tds = tr.querySelectorAll('td');
+            var col1 = tds.length > 1 ? normalisasiTeksRekap(tds[1].innerText || tds[1].textContent) : '';
+            var col5 = tds.length > 5 ? normalisasiTeksRekap(tds[5].innerText || tds[5].textContent) : '';
+            var col6 = tds.length > 6 ? normalisasiTeksRekap(tds[6].innerText || tds[6].textContent) : '';
+            var col7 = tds.length > 7 ? normalisasiTeksRekap(tds[7].innerText || tds[7].textContent) : '';
+
+            if (col1 !== '') {
+                currentGroup = col1;
+            }
+
+            var unitVal = col5;
+            var konsumenVal = col6;
+            var barangVal = col7;
+
+            if (field === 'unit') {
+                if (unitVal === '' && currentGroup !== '') {
+                    unitVal = currentGroup;
+                }
+            } else if (field === 'konsumen_nama' || field === 'konsumen') {
+                if (konsumenVal === '' && currentGroup !== '') {
+                    konsumenVal = currentGroup;
+                }
+            } else if (field === 'nama_barang') {
+                if (barangVal === '' && currentGroup !== '') {
+                    barangVal = currentGroup;
+                }
+            }
+
+            tr.setAttribute('data-rekap-group', currentGroup);
+            tr.setAttribute('data-rekap-unit', unitVal);
+            tr.setAttribute('data-rekap-konsumen', konsumenVal);
+            tr.setAttribute('data-rekap-barang', barangVal);
+        });
+    }
+
+    function getNilaiFilterRekapAktif() {
+        if (rekapFieldAktif === 'unit') {
+            var elUnit = document.getElementById('rekap-filter-unit');
+            return elUnit ? normalisasiTeksRekap(elUnit.value) : '';
+        }
+        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
+            var elKonsumen = document.getElementById('rekap-filter-konsumen');
+            return elKonsumen ? normalisasiTeksRekap(elKonsumen.value) : '';
+        }
+        if (rekapFieldAktif === 'nama_barang') {
+            var elBarang = document.getElementById('rekap-filter-barang');
+            return elBarang ? normalisasiTeksRekap(elBarang.value) : '';
+        }
+        return '';
+    }
+
+    function barisRekapCocokFilter(node, filterVal) {
+        if (!filterVal) {
+            return true;
+        }
+        if (!node) {
+            return true;
+        }
+
+        if (rekapFieldAktif === 'unit') {
+            var unitGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
+            var unitRow = normalisasiTeksRekap(node.getAttribute('data-rekap-unit'));
+            return unitGroup === filterVal || unitRow === filterVal;
+        }
+        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
+            var konsumenGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
+            var konsumenRow = normalisasiTeksRekap(node.getAttribute('data-rekap-konsumen'));
+            return konsumenGroup === filterVal || konsumenRow === filterVal;
+        }
+        if (rekapFieldAktif === 'nama_barang') {
+            var barangGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
+            var barangRow = normalisasiTeksRekap(node.getAttribute('data-rekap-barang'));
+            return barangGroup === filterVal || barangRow === filterVal;
+        }
+        return true;
+    }
+
+    function daftarRekapFilterSearch() {
+        if (rekapFilterSearchTerdaftar || !window.jQuery || !jQuery.fn.dataTable) {
+            return;
+        }
+        rekapFilterSearchTerdaftar = true;
+        jQuery.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            var tableId = settings.nTable ? settings.nTable.getAttribute('id') : '';
+            if (tableId !== 'tglSPOPFreeze') {
+                return true;
+            }
+            var filterVal = getNilaiFilterRekapAktif();
+            if (!filterVal) {
+                return true;
+            }
+            var api = new jQuery.fn.dataTable.Api(settings);
+            var node = api.row(dataIndex).node();
+            return barisRekapCocokFilter(node, filterVal);
+        });
+    }
+
+    function refreshDataTableRekapFilter() {
+        annotateRekapRowsUntukFilter();
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return;
+        }
+        jQuery('#tglSPOPFreeze').DataTable().draw();
+    }
+
+    function initRekapFilterCombobox() {
+        daftarRekapFilterSearch();
+        muatFilterRekapDariSession();
+        annotateRekapRowsUntukFilter();
+
+        var selector = getSelectorFilterRekapAktif();
+        if (selector && window.jQuery) {
+            jQuery(document)
+                .off('change.rekapFilter', selector)
+                .on('change.rekapFilter', selector, function() {
+                    simpanFilterRekapKeSession();
+                    refreshDataTableRekapFilter();
+                });
+        }
+    }
+
+    function initRekapHalaman() {
+        initDatepickerRekapPenjualan();
+        initRekapFilterCombobox();
+        refreshDataTableRekapFilter();
+    }
+
+    if (window.jQuery) {
+        jQuery(window).on('load', function() {
+            window.setTimeout(initRekapHalaman, 200);
+        });
+    } else {
+        window.addEventListener('load', function() {
+            window.setTimeout(initRekapHalaman, 200);
+        });
+    }
 })();
 
 function isDataTableRekapAktif() {
