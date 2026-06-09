@@ -75,7 +75,7 @@
                             <div class="col-md-2">
                                 <div class="row">
                                     <!-- <div class="col-5" text-align="center"> <strong>DATA PENJUALAN</strong></div> -->
-                                    <div class="col-12" text-align="center"> <strong><?php echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); ?></strong></div>
+                                    <div class="col-12" text-align="center"> <strong><a href="<?php echo site_url('tbl_penjualan/create'); ?>" id="btn-input-penjualan-baru" class="btn btn-danger">Input PENJUALAN BARU</a></strong></div>
 
                                 </div>
 
@@ -892,6 +892,33 @@
         };
     }
 
+    function buildUrlInputPenjualanBaru() {
+        var baseCreate = <?php echo json_encode(site_url('tbl_penjualan/create')); ?>;
+        var tgl = getTanggalFilterPenjualan();
+        if (tgl.awal && tgl.akhir) {
+            return baseCreate
+                + '?tgl_awal=' + encodeURIComponent(tgl.awal)
+                + '&tgl_akhir=' + encodeURIComponent(tgl.akhir);
+        }
+        return baseCreate;
+    }
+
+    function initLinkInputPenjualanBaru() {
+        var btn = document.getElementById('btn-input-penjualan-baru');
+        if (!btn) {
+            return;
+        }
+        btn.href = buildUrlInputPenjualanBaru();
+        btn.addEventListener('click', function(e) {
+            btn.href = buildUrlInputPenjualanBaru();
+            var tgl = getTanggalFilterPenjualan();
+            if (!tgl.awal || !tgl.akhir) {
+                e.preventDefault();
+                alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+            }
+        });
+    }
+
     window.buildRekapPenjualanUrl = function(field) {
         var tgl = getTanggalFilterPenjualan();
         var url = baseRekapUrl + field;
@@ -902,6 +929,11 @@
     };
 
     function updateRekapModalLinks() {
+        var btnCreate = document.getElementById('btn-input-penjualan-baru');
+        if (btnCreate && typeof buildUrlInputPenjualanBaru === 'function') {
+            btnCreate.href = buildUrlInputPenjualanBaru();
+        }
+
         var tgl = getTanggalFilterPenjualan();
         var info = document.getElementById('rekap-modal-periode-info');
         if (info) {
@@ -982,8 +1014,12 @@
 
     if (document.readyState === 'complete') {
         initAutoCariPenjualan();
+        initLinkInputPenjualanBaru();
     } else {
-        window.addEventListener('load', initAutoCariPenjualan);
+        window.addEventListener('load', function() {
+            initAutoCariPenjualan();
+            initLinkInputPenjualanBaru();
+        });
     }
 })();
 </script>

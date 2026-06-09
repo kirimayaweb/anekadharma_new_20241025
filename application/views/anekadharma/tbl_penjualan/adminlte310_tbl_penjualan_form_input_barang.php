@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php
 $this->load->helper('pembelian_persediaan');
 if (!isset($filter_bulan_penjualan)) {
@@ -18,6 +19,17 @@ if (!isset($penjualan_bulan_key)) {
 }
 if (!isset($uuid_penjualan)) {
 	$uuid_penjualan = '';
+}
+if (!isset($penjualan_list_bulan_key)) {
+	$list_ctx_penjualan = penjualan_get_list_bulan_context($this);
+	$penjualan_list_bulan_key = $list_ctx_penjualan['bulan_key'];
+	$penjualan_list_bulan_label = $list_ctx_penjualan['bulan_label'];
+}
+if (!isset($penjualan_list_bulan_label)) {
+	$penjualan_list_bulan_label = penjualan_get_bulan_label_from_key(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : '');
+}
+if (!isset($penjualan_redirect_list_url)) {
+	$penjualan_redirect_list_url = penjualan_build_redirect_list_url($this, isset($tgl_jual) ? $tgl_jual : null);
 }
 $tgl_jual_X_modal = isset($tgl_jual) ? penjualan_format_tgl_jual_tampil($tgl_jual) : date('d-m-Y');
 $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
@@ -101,6 +113,23 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	}
 	#container-modal-pilih-barang-nested .modal {
 		z-index: 1065;
+	}
+	#container-modal-pilih-barang-nested .modal-dialog.modal-isi-jumlah-barang {
+		max-width: min(720px, 96vw);
+	}
+	#container-modal-pilih-barang-nested .penjualan-label-info-jumlah {
+		display: block;
+		width: 100%;
+		min-width: 0;
+		margin-bottom: 0.4rem;
+		padding: 0;
+		color: #dc3545 !important;
+		font-size: 0.95rem;
+		font-weight: 600;
+		line-height: 1.35;
+		white-space: nowrap;
+		overflow-x: auto;
+		overflow-y: hidden;
 	}
 </style>
 <div class="content-wrapper">
@@ -499,7 +528,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 
                         <!-- <button type="submit" class="btn btn-primary"><?php //echo $button 
                                                                             ?></button> -->
-                        <a href="<?php echo site_url('tbl_penjualan') ?>" class="btn btn-default">Kembali ke Halaman Data Penjualan</a>
+                        <button type="button" class="btn btn-default" id="btn-kembali-halaman-penjualan">Kembali ke Halaman Data Penjualan</button>
                         <?php
                         if (isset($uuid_penjualan)) {
                         ?>
@@ -814,6 +843,9 @@ function penjualanInitInputBarangScript() {
         urlListPersediaan: <?php echo json_encode(site_url('tbl_penjualan/list_persediaan_penjualan_ajax')); ?>,
         bulanKeyAwal: <?php echo json_encode($penjualan_bulan_key); ?>,
         bulanLabelAwal: <?php echo json_encode(isset($filter_bulan_penjualan['bulan_label']) ? $filter_bulan_penjualan['bulan_label'] : ''); ?>,
+        listBulanKey: <?php echo json_encode(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : ''); ?>,
+        listBulanLabel: <?php echo json_encode(isset($penjualan_list_bulan_label) ? $penjualan_list_bulan_label : ''); ?>,
+        redirectListBase: <?php echo json_encode(site_url('tbl_penjualan')); ?>,
         jumlahBarang: <?php echo (int) $jumlah_barang_penjualan; ?>,
         uuidPenjualan: <?php echo json_encode($uuid_penjualan); ?>
     };
@@ -847,6 +879,65 @@ function penjualanInitInputBarangScript() {
             }
         }
         return '';
+    }
+
+    function bulanLabelFromKey(bulanKey) {
+        var parts = String(bulanKey || '').split('-');
+        if (parts.length === 2) {
+            return parts[1] + '/' + parts[0];
+        }
+        return bulanKey || '';
+    }
+
+    function buildRedirectListUrlDariTglJual(tglStr) {
+        var bulanKey = parseBulanKey(tglStr);
+        if (!bulanKey) {
+            return cfg.redirectListBase;
+        }
+        var parts = bulanKey.split('-');
+        var y = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var lastDay = new Date(y, m, 0).getDate();
+        var awal = '1-' + m + '-' + y;
+        var akhir = lastDay + '-' + m + '-' + y;
+        return cfg.redirectListBase
+            + '?tgl_awal=' + encodeURIComponent(awal)
+            + '&tgl_akhir=' + encodeURIComponent(akhir);
+    }
+
+    function navigasiKembaliKeHalamanPenjualan() {
+        var tgl = getTglJualVal();
+        var url = buildRedirectListUrlDariTglJual(tgl);
+        var bulanInput = parseBulanKey(tgl);
+        var bulanList = cfg.listBulanKey || '';
+
+        if (bulanList && bulanInput && bulanInput !== bulanList) {
+            var labelList = cfg.listBulanLabel || bulanLabelFromKey(bulanList);
+            var labelInput = bulanLabelFromKey(bulanInput);
+            var pesan = 'Bekerja di halaman penjualan bulan <strong>' + labelList + '</strong>, '
+                + 'tetapi input data penjualan pada bulan <strong>' + labelInput + '</strong>.<br><br>'
+                + 'Data penjualan akan ditampilkan sesuai bulan Tgl Jual (<strong>' + labelInput + '</strong>). Lanjutkan?';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perbedaan bulan penjualan',
+                    html: pesan,
+                    showCancelButton: true,
+                    confirmButtonText: 'OK, tampilkan data',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+                });
+                return;
+            }
+            if (!confirm('Bulan halaman penjualan (' + labelList + ') berbeda dengan Tgl Jual (' + labelInput + '). Lanjutkan?')) {
+                return;
+            }
+        }
+
+        window.location.href = url;
     }
 
     function updateInfoBulan(label) {
@@ -1091,6 +1182,11 @@ function penjualanInitInputBarangScript() {
     });
 
     initPenjualanInputBarang();
+
+    $(document).on('click', '#btn-kembali-halaman-penjualan', function(e) {
+        e.preventDefault();
+        navigasiKembaliKeHalamanPenjualan();
+    });
 })(jQuery);
 
     if ($('#example1').length && $.fn.DataTable && !$.fn.DataTable.isDataTable('#example1')) {

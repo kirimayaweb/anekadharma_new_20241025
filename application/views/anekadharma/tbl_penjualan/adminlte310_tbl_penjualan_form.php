@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <div class="content-wrapper">
 
 
@@ -83,7 +84,7 @@
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1" id="info-tgl-jual-penjualan">
-                                    Tanggal jual default: hari ini. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.
+                                    Tanggal jual default mengikuti <strong>tanggal akhir</strong> filter halaman Data Penjualan. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.
                                 </small>
                             </div>
 
@@ -212,9 +213,35 @@ window.addEventListener('load', function() {
         return;
     }
     var $ = window.jQuery;
+    var cfgCreate = {
+        listBulanKey: <?php echo json_encode(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : ''); ?>,
+        listBulanLabel: <?php echo json_encode(isset($penjualan_list_bulan_label) ? $penjualan_list_bulan_label : ''); ?>
+    };
 
     function getTglJualVal() {
         return $.trim($('#input_tgl_jual').val() || '');
+    }
+
+    function parseBulanKey(tglStr) {
+        var p = String(tglStr || '').split(/[-\/\.]/);
+        if (p.length === 3) {
+            var d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+            if (y < 100) {
+                y += 2000;
+            }
+            if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                return y + '-' + ('0' + m).slice(-2);
+            }
+        }
+        return '';
+    }
+
+    function bulanLabelFromKey(bulanKey) {
+        var parts = String(bulanKey || '').split('-');
+        if (parts.length === 2) {
+            return parts[1] + '/' + parts[0];
+        }
+        return bulanKey || '';
     }
 
     function updateBtnInputBarangPenjualan() {
@@ -225,7 +252,7 @@ window.addEventListener('load', function() {
         if (boleh) {
             $btn.removeAttr('title');
             $('#info-tgl-jual-penjualan').removeClass('text-danger').addClass('text-muted')
-                .text('Tanggal jual default: hari ini. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.');
+                .html('Tanggal jual default mengikuti <strong>tanggal akhir</strong> filter halaman Data Penjualan. Ubah sesuai kebutuhan sebelum klik Input Barang Penjualan.');
         } else {
             $btn.attr('title', 'Isi Tgl Jual terlebih dahulu');
             $('#info-tgl-jual-penjualan').removeClass('text-muted').addClass('text-danger')
@@ -277,22 +304,56 @@ window.addEventListener('load', function() {
     initDatepickerTglJual();
     updateBtnInputBarangPenjualan();
 
+    function submitFormInisiasiPenjualan() {
+        $('#form-penjualan-create-inisiasi')[0].submit();
+    }
+
     $('#form-penjualan-create-inisiasi').on('submit', function(e) {
-        if (getTglJualVal()) {
-            return true;
+        var tglJual = getTglJualVal();
+        if (!tglJual) {
+            e.preventDefault();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Tgl Jual belum diisi',
+                    text: 'Pilih atau isi tanggal jual terlebih dahulu sebelum Input Barang Penjualan.'
+                });
+            } else {
+                alert('Pilih atau isi Tgl Jual terlebih dahulu.');
+            }
+            $('#input_tgl_jual').focus();
+            return false;
         }
-        e.preventDefault();
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Tgl Jual belum diisi',
-                text: 'Pilih atau isi tanggal jual terlebih dahulu sebelum Input Barang Penjualan.'
-            });
-        } else {
-            alert('Pilih atau isi Tgl Jual terlebih dahulu.');
+
+        var bulanInput = parseBulanKey(tglJual);
+        var bulanList = cfgCreate.listBulanKey || '';
+        if (bulanList && bulanInput && bulanInput !== bulanList) {
+            e.preventDefault();
+            var labelList = cfgCreate.listBulanLabel || bulanLabelFromKey(bulanList);
+            var labelInput = bulanLabelFromKey(bulanInput);
+            var pesan = 'Bekerja di halaman penjualan bulan <strong>' + labelList + '</strong>, '
+                + 'tetapi Tgl Jual diinput pada bulan <strong>' + labelInput + '</strong>.<br><br>'
+                + 'Lanjutkan Input Barang Penjualan sesuai Tgl Jual yang dipilih?';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perbedaan bulan penjualan',
+                    html: pesan,
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, lanjutkan',
+                    cancelButtonText: 'Batal'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        submitFormInisiasiPenjualan();
+                    }
+                });
+            } else if (confirm('Bulan halaman penjualan (' + labelList + ') berbeda dengan Tgl Jual (' + labelInput + '). Lanjutkan?')) {
+                submitFormInisiasiPenjualan();
+            }
+            return false;
         }
-        $('#input_tgl_jual').focus();
-        return false;
+
+        return true;
     });
 });
 </script>

@@ -61,9 +61,9 @@ foreach ($Data_stock as $list_data) {
 		: $action . 'new/' . $list_data->id;
 	$btn_class = $bisa_pilih ? 'btn-success' : 'btn-secondary';
 	$btn_disabled = $bisa_pilih ? '' : ' disabled';
-	$label_maks = 'Jumlah Maks= ' . (int) $sisa_stock_data;
+	$label_info_jumlah = 'Jumlah Maks= ' . (int) $sisa_stock_data;
 	if ($penjualan_label_unit !== '') {
-		$label_maks .= ' | Unit ' . $penjualan_label_unit . ': ' . $nilai_unit;
+		$label_info_jumlah .= ' | Unit ' . $penjualan_label_unit . ': ' . (int) $nilai_unit;
 	}
 
 	if ($fragment_part === 'tbody') {
@@ -89,7 +89,7 @@ foreach ($Data_stock as $list_data) {
 		?>
 		<form action="<?php echo htmlspecialchars($form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
 			<div class="modal fade" id="modal-xl_1_<?php echo (int) $list_data->id; ?>" tabindex="-1">
-				<div class="modal-dialog modal-lg">
+				<div class="modal-dialog modal-lg modal-isi-jumlah-barang">
 					<div class="modal-content">
 						<div class="modal-header">
 							<h4 class="modal-title">Isi Jumlah Barang</h4>
@@ -100,20 +100,20 @@ foreach ($Data_stock as $list_data) {
 								<label>Barang</label>
 								<input type="text" class="form-control" value="<?php echo htmlspecialchars($list_data->nama_barang_beli, ENT_QUOTES, 'UTF-8'); ?>" disabled>
 							</div>
-							<?php if ($penjualan_label_unit !== '') { ?>
-							<div class="form-group">
-								<label>Penjualan unit (<?php echo htmlspecialchars($penjualan_label_unit, ENT_QUOTES, 'UTF-8'); ?>)</label>
-								<input type="text" class="form-control" value="<?php echo (int) $nilai_unit; ?>" disabled>
-							</div>
-							<?php } ?>
 							<div class="row">
-								<div class="col-4">
-									<label>Harga Satuan</label>
-									<input type="text" class="form-control" name="harga_satuan_beli" value="<?php echo $harga_fmt; ?>">
+								<div class="col-md-5 col-12">
+									<div class="form-group mb-md-0">
+										<label>Harga Satuan</label>
+										<input type="text" class="form-control" name="harga_satuan_beli" value="<?php echo $harga_fmt; ?>">
+									</div>
 								</div>
-								<div class="col-4">
-									<label style="color:red"><?php echo htmlspecialchars($label_maks, ENT_QUOTES, 'UTF-8'); ?></label>
-									<input type="number" class="form-control" name="jumlah" min="1" max="<?php echo (int) $sisa_stock_data; ?>" required>
+								<div class="col-md-7 col-12">
+									<div class="form-group mb-0">
+										<label class="penjualan-label-info-jumlah d-block" for="jumlah_barang_<?php echo (int) $list_data->id; ?>" title="<?php echo htmlspecialchars($label_info_jumlah, ENT_QUOTES, 'UTF-8'); ?>">
+											<?php echo htmlspecialchars($label_info_jumlah, ENT_QUOTES, 'UTF-8'); ?>
+										</label>
+										<input type="number" class="form-control" id="jumlah_barang_<?php echo (int) $list_data->id; ?>" name="jumlah" min="1" max="<?php echo (int) $sisa_stock_data; ?>" placeholder="Isi jumlah barang" required>
+									</div>
 								</div>
 							</div>
 						</div>

@@ -354,10 +354,92 @@ function penjualan_sync_filter_bulan_from_tgl_jual($CI, $tgl_jual)
 	$tgl = penjualan_get_filter_tgl_jual($CI, $tgl_jual);
 	$awal = $tgl['awal'] . ' 00:00:00';
 	$akhir = $tgl['akhir'] . ' 23:59:59';
+	$disp_awal = date('j-n-Y', strtotime($awal));
+	$disp_akhir = date('j-n-Y', strtotime($akhir));
 	$CI->session->set_userdata('filter_tbl_penjualan_date_awal', $awal);
 	$CI->session->set_userdata('filter_tbl_penjualan_date_akhir', $akhir);
+	$CI->session->set_userdata('filter_tbl_penjualan_tgl_awal_display', $disp_awal);
+	$CI->session->set_userdata('filter_tbl_penjualan_tgl_akhir_display', $disp_akhir);
 	$CI->session->set_userdata('filter_penjualan_create_tgl_jual', trim((string) $tgl_jual));
 	return $tgl;
+}
+
+/**
+ * Simpan konteks bulan halaman list penjualan (sebelum input penjualan baru).
+ */
+function penjualan_set_list_bulan_context($CI, $tgl_awal = null, $tgl_akhir = null)
+{
+	$ref = ($tgl_akhir !== null && trim((string) $tgl_akhir) !== '') ? $tgl_akhir : $tgl_awal;
+	$bulan_key = penjualan_get_bulan_key_from_tgl($ref);
+	if ($bulan_key !== '') {
+		$parts = explode('-', $bulan_key);
+		$CI->session->set_userdata('filter_penjualan_list_bulan_key', $bulan_key);
+		$CI->session->set_userdata('filter_penjualan_list_bulan_label', $parts[1] . '/' . $parts[0]);
+	}
+	if ($tgl_awal !== null && trim((string) $tgl_awal) !== '') {
+		$CI->session->set_userdata('filter_penjualan_list_tgl_awal', trim((string) $tgl_awal));
+	}
+	if ($tgl_akhir !== null && trim((string) $tgl_akhir) !== '') {
+		$CI->session->set_userdata('filter_penjualan_list_tgl_akhir', trim((string) $tgl_akhir));
+	}
+}
+
+/**
+ * Konteks bulan halaman list penjualan saat user membuka input penjualan.
+ */
+function penjualan_get_list_bulan_context($CI)
+{
+	return array(
+		'bulan_key' => (string) $CI->session->userdata('filter_penjualan_list_bulan_key'),
+		'bulan_label' => (string) $CI->session->userdata('filter_penjualan_list_bulan_label'),
+		'tgl_awal' => (string) $CI->session->userdata('filter_penjualan_list_tgl_awal'),
+		'tgl_akhir' => (string) $CI->session->userdata('filter_penjualan_list_tgl_akhir'),
+	);
+}
+
+/**
+ * Default Tgl Jual di form create: tanggal akhir filter halaman list.
+ */
+function penjualan_get_default_tgl_jual_dari_filter_list($CI, $tgl_awal_get = null, $tgl_akhir_get = null)
+{
+	if ($tgl_akhir_get !== null && trim((string) $tgl_akhir_get) !== '') {
+		return penjualan_format_tgl_jual_tampil($tgl_akhir_get);
+	}
+
+	$disp_akhir = $CI->session->userdata('filter_tbl_penjualan_tgl_akhir_display');
+	if (!empty($disp_akhir)) {
+		return penjualan_format_tgl_jual_tampil($disp_akhir);
+	}
+
+	$akhir = $CI->session->userdata('filter_tbl_penjualan_date_akhir');
+	if (!empty($akhir)) {
+		return penjualan_format_tgl_jual_tampil($akhir);
+	}
+
+	return date('d-m-Y');
+}
+
+/**
+ * URL kembali ke list penjualan: rentang awal–akhir bulan sesuai Tgl Jual input.
+ */
+function penjualan_build_redirect_list_url($CI, $tgl_jual)
+{
+	$filter = penjualan_get_filter_tgl_jual($CI, $tgl_jual);
+	penjualan_sync_filter_bulan_from_tgl_jual($CI, $tgl_jual);
+	$tgl_awal_disp = date('j-n-Y', strtotime($filter['awal']));
+	$tgl_akhir_disp = date('j-n-Y', strtotime($filter['akhir']));
+	return site_url('tbl_penjualan')
+		. '?tgl_awal=' . rawurlencode($tgl_awal_disp)
+		. '&tgl_akhir=' . rawurlencode($tgl_akhir_disp);
+}
+
+function penjualan_get_bulan_label_from_key($bulan_key)
+{
+	$parts = explode('-', trim((string) $bulan_key));
+	if (count($parts) === 2) {
+		return $parts[1] . '/' . $parts[0];
+	}
+	return '';
 }
 
 /**
