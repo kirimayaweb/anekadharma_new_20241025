@@ -698,6 +698,7 @@
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
     var rekapFieldAktif = <?php echo json_encode($field_rekap); ?>;
     var rekapFilterSearchTerdaftar = false;
+    window.rekapRowFilterIndex = {};
 
     function getTanggalFilterRekap() {
         var tglAwal = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
@@ -741,6 +742,9 @@
             var form = document.getElementById('form-cari-rekap-penjualan');
             var tgl = getTanggalFilterRekap();
             if (form && tgl.awal && tgl.akhir) {
+                try {
+                    sessionStorage.removeItem('rekap_filter_' + rekapFieldAktif);
+                } catch (eClear) { /* abaikan */ }
                 form.submit();
             }
         }, 400);
@@ -784,10 +788,27 @@
         if (!selector || !window.jQuery) {
             return;
         }
+        var $sel = jQuery(selector);
+        if (!$sel.length) {
+            return;
+        }
         try {
             var saved = sessionStorage.getItem('rekap_filter_' + rekapFieldAktif);
-            if (saved !== null && jQuery(selector).length) {
-                jQuery(selector).val(saved);
+            if (saved === null || saved === '') {
+                $sel.val('');
+                return;
+            }
+            var found = false;
+            $sel.find('option').each(function() {
+                if (normRekapKey(jQuery(this).val()) === normRekapKey(saved)) {
+                    $sel.val(jQuery(this).val());
+                    found = true;
+                    return false;
+                }
+            });
+            if (!found) {
+                $sel.val('');
+                sessionStorage.removeItem('rekap_filter_' + rekapFieldAktif);
             }
         } catch (eSession) { /* abaikan */ }
     }
@@ -850,20 +871,43 @@
         return String(teks || '').replace(/\s+/g, ' ').trim();
     }
 
-    function annotateRekapRowsUntukFilter() {
-        var field = rekapFieldAktif;
-        var currentGroup = '';
-        var tbody = document.querySelector('#tglSPOPFreeze tbody');
-        if (!tbody) {
+    function teksDariDataTableCell(val) {
+        if (val === null || val === undefined) {
+            return '';
+        }
+        var s = String(val);
+        if (s.indexOf('<') !== -1) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = s;
+            s = tmp.textContent || tmp.innerText || s;
+        }
+        return normalisasiTeksRekap(s);
+    }
+
+    function normRekapKey(teks) {
+        return normalisasiTeksRekap(teks).toUpperCase();
+    }
+
+    function rebuildRekapFilterIndex() {
+        window.rekapRowFilterIndex = {};
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
             return;
         }
 
-        tbody.querySelectorAll('tr').forEach(function(tr) {
-            var tds = tr.querySelectorAll('td');
-            var col1 = tds.length > 1 ? normalisasiTeksRekap(tds[1].innerText || tds[1].textContent) : '';
-            var col5 = tds.length > 5 ? normalisasiTeksRekap(tds[5].innerText || tds[5].textContent) : '';
-            var col6 = tds.length > 6 ? normalisasiTeksRekap(tds[6].innerText || tds[6].textContent) : '';
-            var col7 = tds.length > 7 ? normalisasiTeksRekap(tds[7].innerText || tds[7].textContent) : '';
+        var currentGroup = '';
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+
+        table.rows().every(function() {
+            var idx = this.index();
+            var d = this.data();
+            if (!d || !d.length) {
+                return;
+            }
+
+            var col1 = teksDariDataTableCell(d[1]);
+            var col5 = teksDariDataTableCell(d[5]);
+            var col6 = teksDariDataTableCell(d[6]);
+            var col7 = teksDariDataTableCell(d[7]);
 
             if (col1 !== '') {
                 currentGroup = col1;
@@ -873,24 +917,26 @@
             var konsumenVal = col6;
             var barangVal = col7;
 
-            if (field === 'unit') {
+            if (rekapFieldAktif === 'unit') {
                 if (unitVal === '' && currentGroup !== '') {
                     unitVal = currentGroup;
                 }
-            } else if (field === 'konsumen_nama' || field === 'konsumen') {
+            } else if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
                 if (konsumenVal === '' && currentGroup !== '') {
                     konsumenVal = currentGroup;
                 }
-            } else if (field === 'nama_barang') {
+            } else if (rekapFieldAktif === 'nama_barang') {
                 if (barangVal === '' && currentGroup !== '') {
                     barangVal = currentGroup;
                 }
             }
 
-            tr.setAttribute('data-rekap-group', currentGroup);
-            tr.setAttribute('data-rekap-unit', unitVal);
-            tr.setAttribute('data-rekap-konsumen', konsumenVal);
-            tr.setAttribute('data-rekap-barang', barangVal);
+            window.rekapRowFilterIndex[idx] = {
+                group: currentGroup,
+                unit: unitVal,
+                konsumen: konsumenVal,
+                barang: barangVal
+            };
         });
     }
 
@@ -910,28 +956,26 @@
         return '';
     }
 
-    function barisRekapCocokFilter(node, filterVal) {
+    function barisRekapCocokFilterIndex(dataIndex, filterVal) {
         if (!filterVal) {
             return true;
         }
-        if (!node) {
+
+        var row = window.rekapRowFilterIndex[dataIndex];
+        if (!row) {
             return true;
         }
 
+        var fv = normRekapKey(filterVal);
+
         if (rekapFieldAktif === 'unit') {
-            var unitGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
-            var unitRow = normalisasiTeksRekap(node.getAttribute('data-rekap-unit'));
-            return unitGroup === filterVal || unitRow === filterVal;
+            return normRekapKey(row.unit) === fv || normRekapKey(row.group) === fv;
         }
         if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-            var konsumenGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
-            var konsumenRow = normalisasiTeksRekap(node.getAttribute('data-rekap-konsumen'));
-            return konsumenGroup === filterVal || konsumenRow === filterVal;
+            return normRekapKey(row.konsumen) === fv || normRekapKey(row.group) === fv;
         }
         if (rekapFieldAktif === 'nama_barang') {
-            var barangGroup = normalisasiTeksRekap(node.getAttribute('data-rekap-group'));
-            var barangRow = normalisasiTeksRekap(node.getAttribute('data-rekap-barang'));
-            return barangGroup === filterVal || barangRow === filterVal;
+            return normRekapKey(row.barang) === fv || normRekapKey(row.group) === fv;
         }
         return true;
     }
@@ -950,14 +994,12 @@
             if (!filterVal) {
                 return true;
             }
-            var api = new jQuery.fn.dataTable.Api(settings);
-            var node = api.row(dataIndex).node();
-            return barisRekapCocokFilter(node, filterVal);
+            return barisRekapCocokFilterIndex(dataIndex, filterVal);
         });
     }
 
     function refreshDataTableRekapFilter() {
-        annotateRekapRowsUntukFilter();
+        rebuildRekapFilterIndex();
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
             return;
         }
@@ -967,7 +1009,7 @@
     function initRekapFilterCombobox() {
         daftarRekapFilterSearch();
         muatFilterRekapDariSession();
-        annotateRekapRowsUntukFilter();
+        rebuildRekapFilterIndex();
 
         var selector = getSelectorFilterRekapAktif();
         if (selector && window.jQuery) {

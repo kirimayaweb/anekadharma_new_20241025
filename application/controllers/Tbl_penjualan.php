@@ -25,16 +25,26 @@ class Tbl_penjualan extends CI_Controller
 
 	private function _parse_cari_between_dates($tgl_awal_input, $tgl_akhir_input)
 	{
-		if (date('Y', strtotime($tgl_awal_input)) < 2020) {
-			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-		} else {
-			$Get_date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal_input));
+		$ts_awal = pembelian_parse_tanggal_po($tgl_awal_input);
+		if ($ts_awal === false) {
+			$ts_awal = strtotime(str_replace('/', '-', trim((string) $tgl_awal_input)));
 		}
 
-		if (date('Y', strtotime($tgl_akhir_input)) < 2020) {
+		$ts_akhir = pembelian_parse_tanggal_po($tgl_akhir_input);
+		if ($ts_akhir === false) {
+			$ts_akhir = strtotime(str_replace('/', '-', trim((string) $tgl_akhir_input)));
+		}
+
+		if ($ts_awal === false || date('Y', $ts_awal) < 2020) {
+			$Get_date_awal = date('Y-m-d 00:00:00', strtotime('-1 day'));
+		} else {
+			$Get_date_awal = date('Y-m-d 00:00:00', $ts_awal);
+		}
+
+		if ($ts_akhir === false || date('Y', $ts_akhir) < 2020) {
 			$Get_date_akhir = date('Y-m-d 23:59:59');
 		} else {
-			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir_input));
+			$Get_date_akhir = date('Y-m-d 23:59:59', $ts_akhir);
 		}
 
 		return array($Get_date_awal, $Get_date_akhir);
@@ -169,35 +179,48 @@ class Tbl_penjualan extends CI_Controller
 		return 'unit';
 	}
 
-	/**
-	 * Opsi combobox filter rekap (unit / konsumen / barang) dalam rentang tanggal.
-	 */
-	private function _get_rekap_filter_options($date_awal, $date_akhir, $field_rekap)
+	private function _get_rekap_filter_col_name($field_rekap)
 	{
-		$col = 'unit';
 		if ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen') {
-			$col = 'konsumen_nama';
-		} elseif ($field_rekap === 'nama_barang') {
-			$col = 'nama_barang';
+			return 'konsumen_nama';
+		}
+		if ($field_rekap === 'nama_barang') {
+			return 'nama_barang';
+		}
+		return 'unit';
+	}
+
+	/**
+	 * Opsi combobox filter rekap — hanya nilai yang benar-benar ada di data penjualan
+	 * pada rentang tanggal (inklusif awal & akhir).
+	 */
+	private function _get_rekap_filter_options_from_rows($rows, $field_rekap)
+	{
+		$col = $this->_get_rekap_filter_col_name($field_rekap);
+		$seen = array();
+		$options = array();
+
+		if (!is_array($rows)) {
+			return $options;
 		}
 
-		$this->db->distinct();
-		$this->db->select($col . ' AS val', false);
-		$this->db->from('tbl_penjualan');
-		$this->db->where('tgl_jual >=', $date_awal);
-		$this->db->where('tgl_jual <=', $date_akhir);
-		$this->db->order_by($col, 'ASC');
-		$rows = $this->db->get()->result();
-
-		$options = array();
 		foreach ($rows as $row) {
-			$val = isset($row->val) ? trim((string) $row->val) : '';
-			if ($val !== '') {
+			if (!is_object($row) || !isset($row->$col)) {
+				continue;
+			}
+			$val = trim((string) $row->$col);
+			if ($val === '') {
+				continue;
+			}
+			$key = strtoupper($val);
+			if (!isset($seen[$key])) {
+				$seen[$key] = $val;
 				$options[] = $val;
 			}
 		}
 
-		return $options;
+		natcasesort($options);
+		return array_values($options);
 	}
 
 	private function _get_penjualan_between($date_awal, $date_akhir, $order_field = null)
@@ -389,7 +412,7 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_awal_param' => $tgl_awal_param,
 			'tgl_akhir_param' => $tgl_akhir_param,
 			'filter_query_string' => $filter_qs,
-			'rekap_filter_options' => $this->_get_rekap_filter_options($Get_date_awal, $Get_date_akhir, $field_rekap),
+			'rekap_filter_options' => $this->_get_rekap_filter_options_from_rows($Tbl_penjualan_data, $field_rekap),
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_data', $data);
