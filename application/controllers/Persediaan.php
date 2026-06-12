@@ -587,6 +587,7 @@ class Persediaan extends CI_Controller
 			'url_compare_tabel_list' => site_url('Persediaan/ajax_compare_tabel_list'),
 			'url_compare_tabel_run' => site_url('Persediaan/ajax_compare_tabel_run'),
 			'url_compare_tabel_excel' => site_url('Persediaan/excel_compare_tabel'),
+			'url_compare_tabel_excel_all' => site_url('Persediaan/excel_compare_tabel_all'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
@@ -1874,6 +1875,45 @@ class Persediaan extends CI_Controller
 		$namaFile = 'Compare_' . $suffix . '_' . $bulan . '_vs_' . $table . '_' . date('Y-m-d_H-i-s') . '.xlsx';
 		excel_prepare_download($namaFile);
 		persediaan_compare_export_excel_output($this, $bulan, $table, $jenis);
+		exit();
+	}
+
+	/**
+	 * Export Excel ALL — manual + persediaan + pembelian + penjualan + produksi + pecah satuan (tab Compare).
+	 */
+	public function excel_compare_tabel_all()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_compare()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel ALL compare')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_tabel_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+		if ($table === '' || !persediaan_compare_is_valid_table_name($table)) {
+			show_error('Tabel tidak valid.', 400);
+			return;
+		}
+
+		$tables = persediaan_compare_list_db_tables($this);
+		if (!in_array($table, $tables, true)) {
+			show_error('Tabel tidak ditemukan.', 404);
+			return;
+		}
+
+		$namaFile = 'Compare_Excel_ALL_' . $bulan . '_vs_' . $table . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_compare_export_excel_all_output($this, $bulan, $table);
 		exit();
 	}
 

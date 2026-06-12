@@ -9841,20 +9841,33 @@ function persediaan_compare_get_persediaan_bulan_rows($CI, $bulan)
 		);
 	}
 
-	$tanggal_beli = date('Y-m-01', $ts);
-	$rows = $CI->db->query(
-		"SELECT * FROM `persediaan` WHERE `tanggal_beli`=? ORDER BY `namabarang` ASC, `id` ASC",
-		array($tanggal_beli)
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	$by_tanggal_beli = $CI->db->query(
+		"SELECT * FROM `persediaan`
+		WHERE `tanggal_beli` IS NOT NULL AND `tanggal_beli` <> '0000-00-00'
+		AND DATE(`tanggal_beli`) >= ? AND DATE(`tanggal_beli`) <= ?
+		ORDER BY `namabarang` ASC, `id` ASC",
+		array($tgl_awal, $tgl_akhir)
 	)->result();
 
-	if (count($rows) > 0) {
-		return persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
+	$by_model = $CI->Persediaan_model->get_by_year_month($bulan);
+
+	$merged = array();
+	$seen_ids = array();
+	foreach (array_merge($by_tanggal_beli, is_array($by_model) ? $by_model : array()) as $row) {
+		$id = (is_object($row) && isset($row->id)) ? (int) $row->id : 0;
+		if ($id > 0) {
+			if (isset($seen_ids[$id])) {
+				continue;
+			}
+			$seen_ids[$id] = true;
+		}
+		$merged[] = $row;
 	}
 
-	return persediaan_export_sort_rows_by_namabarang(
-		$CI->Persediaan_model->get_by_year_month($bulan),
-		'namabarang'
-	);
+	return persediaan_export_sort_rows_by_namabarang($merged, 'namabarang');
 }
 
 function persediaan_compare_row_get($row, $col)
@@ -10172,6 +10185,757 @@ function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'c
 	}
 
 	xlsEOF();
+}
+
+/**
+ * Compare tab — export Excel ALL (manual + persediaan + pembelian + penjualan + produksi + pecah satuan).
+ */
+function persediaan_compare_excel_all_col_starts()
+{
+	return array(
+		'manual' => 0,
+		'persediaan' => 10,
+		'pembelian' => 20,
+		'penjualan' => 26,
+		'produksi' => 31,
+		'pecah' => 37,
+	);
+}
+
+function persediaan_compare_excel_all_group_definitions()
+{
+	return array(
+		array('title' => 'DATA MANUAL', 'col_start' => 0, 'col_end' => 8),
+		array('title' => 'DATA PERSEDIAAN', 'col_start' => 10, 'col_end' => 18),
+		array('title' => 'DATA PEMBELIAN', 'col_start' => 20, 'col_end' => 24),
+		array('title' => 'DATA PENJUALAN', 'col_start' => 26, 'col_end' => 29),
+		array('title' => 'DATA PRODUKSI', 'col_start' => 31, 'col_end' => 35),
+		array('title' => 'DATA PECAH SATUAN', 'col_start' => 37, 'col_end' => 41),
+	);
+}
+
+function persediaan_compare_excel_all_headers()
+{
+	return array(
+		'Nama Barang', 'Satuan', 'HPP', 'SPOP', 'SA', 'Beli', 'TUJ', '10', 'Nilai Persediaan', '',
+		'Namabarang', 'Satuan', 'HPP', 'SPOP', 'SA', 'Beli', 'TUJ', 'Total_10', 'Nilai Persediaan', '',
+		'Uraian', 'Satuan', 'Harga Satuan', 'SPOP', 'Jumlah', '',
+		'Nama Barang', 'Satuan', 'Harga Satuan', 'Jumlah', '',
+		'Nama Barang', 'Satuan', 'Harga Satuan', 'SPOP', 'Jumlah', '',
+		'Nama Barang', 'Satuan', 'Harga Satuan', 'SPOP', 'Jumlah',
+	);
+}
+
+function persediaan_compare_excel_all_empty_row()
+{
+	return array_fill(0, 42, '');
+}
+
+function persediaan_compare_excel_all_pick_col_10($fields)
+{
+	$col = persediaan_compare_pick_column($fields, array('total_10', 'col_10'));
+	if ($col !== null) {
+		return $col;
+	}
+
+	if (!is_array($fields)) {
+		return null;
+	}
+
+	foreach ($fields as $f) {
+		if (trim((string) $f) === '10') {
+			return $f;
+		}
+	}
+
+	return null;
+}
+
+function persediaan_compare_excel_all_detect_manual_extra_cols($fields)
+{
+	return array(
+		'sa' => persediaan_compare_pick_column($fields, array('sa')),
+		'beli' => persediaan_compare_pick_column($fields, array('beli')),
+		'tuj' => persediaan_compare_pick_column($fields, array('tuj')),
+		'col_10' => persediaan_compare_excel_all_pick_col_10($fields),
+		'nilai_persediaan' => persediaan_compare_pick_column($fields, array(
+			'nilai_persediaan', 'nilai persediaan', 'nilai_persediaan_manual',
+		)),
+	);
+}
+
+function persediaan_compare_excel_all_nama_key($nama)
+{
+	return persediaan_recalculate_normalize_nama($nama);
+}
+
+function persediaan_compare_excel_all_full_key($nama, $satuan, $hpp, $spop)
+{
+	return persediaan_compare_build_key($nama, $satuan, $hpp, $spop);
+}
+
+function persediaan_compare_excel_all_manual_full_key($manual_row, $map)
+{
+	return persediaan_compare_excel_all_full_key(
+		persediaan_compare_row_get($manual_row, $map['nama']),
+		persediaan_compare_row_get($manual_row, $map['satuan']),
+		persediaan_compare_row_get($manual_row, $map['hpp']),
+		persediaan_compare_row_get($manual_row, $map['spop'])
+	);
+}
+
+function persediaan_compare_excel_all_pers_full_key($prow)
+{
+	return persediaan_compare_excel_all_full_key(
+		isset($prow->namabarang) ? $prow->namabarang : '',
+		isset($prow->satuan) ? $prow->satuan : '',
+		isset($prow->hpp) ? $prow->hpp : '',
+		isset($prow->spop) ? $prow->spop : ''
+	);
+}
+
+function persediaan_compare_excel_all_pembelian_full_key($r)
+{
+	return persediaan_compare_excel_all_full_key(
+		isset($r->uraian) ? $r->uraian : '',
+		isset($r->satuan) ? $r->satuan : '',
+		isset($r->harga_satuan) ? $r->harga_satuan : '',
+		isset($r->spop) ? $r->spop : ''
+	);
+}
+
+function persediaan_compare_excel_all_nsh_key($nama, $satuan, $hpp)
+{
+	return persediaan_recalculate_sync_nama_satuan_hpp_key($nama, $satuan, $hpp);
+}
+
+function persediaan_compare_excel_all_manual_nsh_key($manual_row, $map)
+{
+	return persediaan_compare_excel_all_nsh_key(
+		persediaan_compare_row_get($manual_row, $map['nama']),
+		persediaan_compare_row_get($manual_row, $map['satuan']),
+		persediaan_compare_row_get($manual_row, $map['hpp'])
+	);
+}
+
+function persediaan_compare_excel_all_penjualan_nsh_key($r)
+{
+	return persediaan_compare_excel_all_nsh_key(
+		isset($r->nama_barang) ? $r->nama_barang : '',
+		isset($r->satuan) ? $r->satuan : '',
+		isset($r->harga_satuan) ? $r->harga_satuan : ''
+	);
+}
+
+function persediaan_compare_excel_all_produksi_full_key($r, $spop = '')
+{
+	return persediaan_compare_excel_all_full_key(
+		isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '',
+		isset($r->satuan_bahan) ? $r->satuan_bahan : '',
+		isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : '',
+		$spop
+	);
+}
+
+function persediaan_compare_excel_all_index_row(&$index, $key, $ri)
+{
+	if ($key === '') {
+		return;
+	}
+	if (!isset($index[$key])) {
+		$index[$key] = array();
+	}
+	if (!in_array($ri, $index[$key], true)) {
+		$index[$key][] = $ri;
+	}
+}
+
+function persediaan_compare_excel_all_row_sort_key($row)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$sections = array('manual', 'persediaan', 'pembelian', 'penjualan', 'produksi', 'pecah');
+	foreach ($sections as $section) {
+		if (!isset($starts[$section])) {
+			continue;
+		}
+		$nama = isset($row[$starts[$section]]) ? trim((string) $row[$starts[$section]]) : '';
+		if ($nama !== '') {
+			return persediaan_recalculate_normalize_nama($nama);
+		}
+	}
+	return '';
+}
+
+function persediaan_compare_excel_all_sort_rows(&$rows)
+{
+	if (!is_array($rows) || count($rows) < 2) {
+		return;
+	}
+
+	usort($rows, function ($a, $b) {
+		$key_a = persediaan_compare_excel_all_row_sort_key($a);
+		$key_b = persediaan_compare_excel_all_row_sort_key($b);
+		$cmp = strcasecmp($key_a, $key_b);
+		if ($cmp !== 0) {
+			return $cmp;
+		}
+
+		$starts = persediaan_compare_excel_all_col_starts();
+		$label_a = isset($a[$starts['manual']]) && trim((string) $a[$starts['manual']]) !== ''
+			? trim((string) $a[$starts['manual']])
+			: (isset($a[$starts['persediaan']]) ? trim((string) $a[$starts['persediaan']]) : '');
+		$label_b = isset($b[$starts['manual']]) && trim((string) $b[$starts['manual']]) !== ''
+			? trim((string) $b[$starts['manual']])
+			: (isset($b[$starts['persediaan']]) ? trim((string) $b[$starts['persediaan']]) : '');
+		return strcasecmp($label_a, $label_b);
+	});
+}
+
+/**
+ * Alokasi baris manual: cocokkan nama+satuan+hpp+spop ke baris yang sama (jika slot manual kosong).
+ */
+function persediaan_compare_excel_all_alloc_manual_row(&$rows, &$index_by_full_key, &$index_by_nama, &$index_by_manual_nsh, $mr, $map, $extra_cols)
+{
+	$full_key = persediaan_compare_excel_all_manual_full_key($mr, $map);
+	if ($full_key === '') {
+		$full_key = '__manual_' . count($rows);
+	}
+
+	if (isset($index_by_full_key[$full_key])) {
+		foreach ($index_by_full_key[$full_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'manual')) {
+				persediaan_compare_excel_all_fill_manual($rows[$ri], $mr, $map, $extra_cols);
+				return $ri;
+			}
+		}
+	}
+
+	$row = persediaan_compare_excel_all_empty_row();
+	persediaan_compare_excel_all_fill_manual($row, $mr, $map, $extra_cols);
+	$rows[] = $row;
+	$ri = count($rows) - 1;
+
+	persediaan_compare_excel_all_index_row($index_by_full_key, $full_key, $ri);
+
+	$nama_key = persediaan_compare_excel_all_nama_key(persediaan_compare_row_get($mr, $map['nama']));
+	if ($nama_key === '') {
+		$nama_key = '__manual_' . $ri;
+	}
+	persediaan_compare_excel_all_index_row($index_by_nama, $nama_key, $ri);
+
+	$nsh_key = persediaan_compare_excel_all_manual_nsh_key($mr, $map);
+	if ($nsh_key === '') {
+		$nsh_key = '__manual_nsh_' . $ri;
+	}
+	persediaan_compare_excel_all_index_row($index_by_manual_nsh, $nsh_key, $ri);
+
+	return $ri;
+}
+
+/**
+ * Alokasi baris persediaan: cocokkan nama+satuan+hpp+spop penuh.
+ * Nama sama tetapi satuan/hpp/spop beda → baris baru.
+ */
+function persediaan_compare_excel_all_alloc_persediaan_row(&$rows, &$index_by_nama, &$index_by_full_key, $prow)
+{
+	$full_key = persediaan_compare_excel_all_pers_full_key($prow);
+	$nama_key = persediaan_compare_excel_all_nama_key(isset($prow->namabarang) ? $prow->namabarang : '');
+
+	if ($full_key === '') {
+		$full_key = '__kosong_pers_' . count($rows);
+	}
+
+	if (isset($index_by_full_key[$full_key])) {
+		foreach ($index_by_full_key[$full_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'persediaan')) {
+				return $ri;
+			}
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+
+	persediaan_compare_excel_all_index_row($index_by_full_key, $full_key, $ri);
+	persediaan_compare_excel_all_index_row($index_by_nama, $nama_key, $ri);
+
+	return $ri;
+}
+
+/**
+ * Alokasi baris pembelian: cocokkan uraian+satuan+harga_satuan+spop ke baris persediaan (full key).
+ */
+function persediaan_compare_excel_all_alloc_pembelian_row(&$rows, &$index_by_full_key, $r)
+{
+	$full_key = persediaan_compare_excel_all_pembelian_full_key($r);
+
+	if ($full_key === '') {
+		$full_key = '__kosong_pemb_' . count($rows);
+	}
+
+	if (isset($index_by_full_key[$full_key])) {
+		foreach ($index_by_full_key[$full_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'pembelian')) {
+				return $ri;
+			}
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+	persediaan_compare_excel_all_index_row($index_by_full_key, $full_key, $ri);
+
+	return $ri;
+}
+
+/**
+ * Alokasi baris produksi: cocokkan nama+satuan+harga_satuan+spop (full key).
+ */
+function persediaan_compare_excel_all_alloc_produksi_row(&$rows, &$index_by_full_key, $r, $spop = '')
+{
+	$full_key = persediaan_compare_excel_all_produksi_full_key($r, $spop);
+	if ($full_key === '') {
+		$full_key = '__kosong_prod_' . count($rows);
+	}
+
+	if (isset($index_by_full_key[$full_key])) {
+		foreach ($index_by_full_key[$full_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'produksi')) {
+				return $ri;
+			}
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+	persediaan_compare_excel_all_index_row($index_by_full_key, $full_key, $ri);
+
+	return $ri;
+}
+
+/**
+ * Alokasi baris pecah satuan: cocokkan nama+satuan+harga_satuan+spop (full key).
+ */
+function persediaan_compare_excel_all_alloc_pecah_row(&$rows, &$index_by_full_key, $nama, $satuan, $harga, $spop)
+{
+	$full_key = persediaan_compare_excel_all_full_key($nama, $satuan, $harga, $spop);
+	if ($full_key === '') {
+		$full_key = '__kosong_pecah_' . count($rows);
+	}
+
+	if (isset($index_by_full_key[$full_key])) {
+		foreach ($index_by_full_key[$full_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'pecah')) {
+				return $ri;
+			}
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+	persediaan_compare_excel_all_index_row($index_by_full_key, $full_key, $ri);
+
+	return $ri;
+}
+
+/**
+ * Alokasi baris penjualan: cocokkan nama_barang+satuan+harga_satuan ke baris manual (tanpa spop).
+ */
+function persediaan_compare_excel_all_alloc_penjualan_row(&$rows, &$index_by_manual_nsh, $r)
+{
+	$nsh_key = persediaan_compare_excel_all_penjualan_nsh_key($r);
+
+	if ($nsh_key === '') {
+		$nsh_key = '__kosong_penj_' . count($rows);
+	}
+
+	if (isset($index_by_manual_nsh[$nsh_key])) {
+		foreach ($index_by_manual_nsh[$nsh_key] as $ri) {
+			if (!persediaan_compare_excel_all_section_filled($rows[$ri], 'penjualan')) {
+				return $ri;
+			}
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+	persediaan_compare_excel_all_index_row($index_by_manual_nsh, $nsh_key, $ri);
+
+	return $ri;
+}
+
+function persediaan_compare_excel_all_section_filled($row, $section)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	if (!isset($starts[$section])) {
+		return false;
+	}
+	$col = $starts[$section];
+	return isset($row[$col]) && trim((string) $row[$col]) !== '';
+}
+
+function persediaan_compare_excel_all_fill_manual(&$row, $manual_row, $map, $extra_cols = array())
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['manual'];
+	$extra_cols = is_array($extra_cols) ? $extra_cols : array();
+
+	$row[$s] = persediaan_compare_row_get($manual_row, $map['nama']);
+	$row[$s + 1] = persediaan_compare_row_get($manual_row, $map['satuan']);
+	$row[$s + 2] = persediaan_compare_row_get($manual_row, $map['hpp']);
+	$row[$s + 3] = persediaan_compare_row_get($manual_row, $map['spop']);
+
+	$sa_col = isset($extra_cols['sa']) ? $extra_cols['sa'] : null;
+	$beli_col = isset($extra_cols['beli']) ? $extra_cols['beli'] : null;
+	$tuj_col = isset($extra_cols['tuj']) ? $extra_cols['tuj'] : null;
+	$col_10 = isset($extra_cols['col_10']) ? $extra_cols['col_10'] : null;
+	$nilai_col = isset($extra_cols['nilai_persediaan']) ? $extra_cols['nilai_persediaan'] : null;
+
+	$row[$s + 4] = ($sa_col !== null && $sa_col !== '')
+		? persediaan_compare_row_get($manual_row, $sa_col) : '';
+	$row[$s + 5] = ($beli_col !== null && $beli_col !== '')
+		? persediaan_compare_row_get($manual_row, $beli_col) : '';
+	$row[$s + 6] = ($tuj_col !== null && $tuj_col !== '')
+		? persediaan_compare_row_get($manual_row, $tuj_col) : '';
+	$row[$s + 7] = ($col_10 !== null && $col_10 !== '')
+		? persediaan_compare_row_get($manual_row, $col_10) : '';
+	$row[$s + 8] = ($nilai_col !== null && $nilai_col !== '')
+		? persediaan_compare_row_get($manual_row, $nilai_col) : '';
+}
+
+function persediaan_compare_excel_all_fill_persediaan(&$row, $prow)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['persediaan'];
+
+	$nilai_persediaan = '';
+	if (isset($prow->nilai_persediaan) && trim((string) $prow->nilai_persediaan) !== '') {
+		$nilai_persediaan = $prow->nilai_persediaan;
+	} else {
+		$nilai_persediaan = persediaan_hitung_nilai_persediaan_row($prow);
+	}
+
+	$row[$s] = isset($prow->namabarang) ? $prow->namabarang : '';
+	$row[$s + 1] = isset($prow->satuan) ? $prow->satuan : '';
+	$row[$s + 2] = isset($prow->hpp) ? $prow->hpp : '';
+	$row[$s + 3] = isset($prow->spop) ? $prow->spop : '';
+	$row[$s + 4] = isset($prow->sa) ? $prow->sa : '';
+	$row[$s + 5] = isset($prow->beli) ? $prow->beli : '';
+	$row[$s + 6] = isset($prow->tuj) ? $prow->tuj : '';
+	$row[$s + 7] = isset($prow->total_10) ? $prow->total_10 : '';
+	$row[$s + 8] = $nilai_persediaan;
+}
+
+function persediaan_compare_excel_all_fill_pembelian(&$row, $r)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['pembelian'];
+	$row[$s] = isset($r->uraian) ? $r->uraian : '';
+	$row[$s + 1] = isset($r->satuan) ? $r->satuan : '';
+	$row[$s + 2] = isset($r->harga_satuan) ? $r->harga_satuan : '';
+	$row[$s + 3] = isset($r->spop) ? $r->spop : '';
+	$row[$s + 4] = isset($r->jumlah) ? $r->jumlah : '';
+}
+
+function persediaan_compare_excel_all_fill_penjualan(&$row, $r)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['penjualan'];
+	$row[$s] = isset($r->nama_barang) ? $r->nama_barang : '';
+	$row[$s + 1] = isset($r->satuan) ? $r->satuan : '';
+	$row[$s + 2] = isset($r->harga_satuan) ? $r->harga_satuan : '';
+	$row[$s + 3] = isset($r->jumlah) ? $r->jumlah : '';
+}
+
+function persediaan_compare_excel_all_fill_produksi(&$row, $r, $spop = '')
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['produksi'];
+	$row[$s] = isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '';
+	$row[$s + 1] = isset($r->satuan_bahan) ? $r->satuan_bahan : '';
+	$row[$s + 2] = isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : '';
+	$row[$s + 3] = $spop;
+	$row[$s + 4] = isset($r->jumlah_bahan) ? $r->jumlah_bahan : '';
+}
+
+function persediaan_compare_excel_all_fill_pecah(&$row, $nama, $satuan, $harga, $spop, $jumlah)
+{
+	$starts = persediaan_compare_excel_all_col_starts();
+	$s = $starts['pecah'];
+	$row[$s] = $nama;
+	$row[$s + 1] = $satuan;
+	$row[$s + 2] = $harga;
+	$row[$s + 3] = $spop;
+	$row[$s + 4] = $jumlah;
+}
+
+function persediaan_compare_excel_all_alloc_row(&$rows, &$index_by_nama, $nama_key, $section)
+{
+	if ($nama_key === '') {
+		$nama_key = '__kosong_' . count($rows);
+	}
+
+	if (!isset($index_by_nama[$nama_key])) {
+		$index_by_nama[$nama_key] = array();
+	}
+
+	foreach ($index_by_nama[$nama_key] as $ri) {
+		if (!persediaan_compare_excel_all_section_filled($rows[$ri], $section)) {
+			return $ri;
+		}
+	}
+
+	$rows[] = persediaan_compare_excel_all_empty_row();
+	$ri = count($rows) - 1;
+	$index_by_nama[$nama_key][] = $ri;
+
+	return $ri;
+}
+
+function persediaan_compare_excel_all_build_spop_maps($CI, $pers_rows)
+{
+	$by_uuid = array();
+	$by_id = array();
+	foreach ($pers_rows as $p) {
+		$spop = isset($p->spop) ? $p->spop : '';
+		$id = isset($p->id) ? (int) $p->id : 0;
+		if ($id > 0) {
+			$by_id[$id] = $spop;
+		}
+		$uuid = isset($p->uuid_persediaan) ? trim((string) $p->uuid_persediaan) : '';
+		if ($uuid !== '') {
+			$by_uuid[$uuid] = $spop;
+		}
+	}
+
+	return array('by_uuid' => $by_uuid, 'by_id' => $by_id);
+}
+
+function persediaan_compare_excel_all_spop_from_maps($maps, $uuid = '', $id = 0)
+{
+	$uuid = trim((string) $uuid);
+	if ($uuid !== '' && isset($maps['by_uuid'][$uuid])) {
+		return $maps['by_uuid'][$uuid];
+	}
+	$id = (int) $id;
+	if ($id > 0 && isset($maps['by_id'][$id])) {
+		return $maps['by_id'][$id];
+	}
+	return '';
+}
+
+function persediaan_compare_excel_all_penjualan_spop($CI, $row, $maps)
+{
+	$spop = '';
+	$pers = penjualan_get_persediaan_by_penjualan_row($CI, $row);
+	if (!empty($pers)) {
+		$spop = isset($pers->spop) ? $pers->spop : '';
+	}
+	if ($spop === '') {
+		$uuid = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
+		$id = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+		$spop = persediaan_compare_excel_all_spop_from_maps($maps, $uuid, $id);
+	}
+	return $spop;
+}
+
+function persediaan_compare_excel_all_produksi_spop($maps, $row)
+{
+	$uuid = isset($row->uuid_persediaan_bahan) ? trim((string) $row->uuid_persediaan_bahan) : '';
+	if ($uuid !== '') {
+		return persediaan_compare_excel_all_spop_from_maps($maps, $uuid, 0);
+	}
+	$uuid2 = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
+	return persediaan_compare_excel_all_spop_from_maps($maps, $uuid2, 0);
+}
+
+function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
+{
+	$CI->load->helper('persediaan_display');
+
+	if (!preg_match('/^\d{4}-\d{2}$/', trim((string) $bulan))) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$loaded = persediaan_compare_load_table_rows($CI, $table);
+	if (empty($loaded['ok'])) {
+		return array('ok' => false, 'message' => $loaded['message']);
+	}
+
+	$map = $loaded['map'];
+	$manual_rows = $loaded['rows'];
+	$fields = $CI->db->list_fields($table);
+	$manual_extra_cols = persediaan_compare_excel_all_detect_manual_extra_cols($fields);
+
+	$ts = strtotime($bulan . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan tidak valid.');
+	}
+
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$bulan_label = date('m/Y', $ts);
+
+	$pers_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
+	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
+	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $pers_rows);
+
+	$rows = array();
+	$index_by_nama = array();
+	$index_by_full_key = array();
+	$index_by_manual_nsh = array();
+
+	// Persediaan dulu agar semua baris tabel persediaan bulan target pasti tercetak.
+	foreach ($pers_rows as $pr) {
+		$ri = persediaan_compare_excel_all_alloc_persediaan_row($rows, $index_by_nama, $index_by_full_key, $pr);
+		persediaan_compare_excel_all_fill_persediaan($rows[$ri], $pr);
+	}
+
+	foreach ($manual_rows as $mr) {
+		persediaan_compare_excel_all_alloc_manual_row(
+			$rows,
+			$index_by_full_key,
+			$index_by_nama,
+			$index_by_manual_nsh,
+			$mr,
+			$map,
+			$manual_extra_cols
+		);
+	}
+
+	foreach ($lists['pembelian'] as $r) {
+		$ri = persediaan_compare_excel_all_alloc_pembelian_row($rows, $index_by_full_key, $r);
+		persediaan_compare_excel_all_fill_pembelian($rows[$ri], $r);
+	}
+
+	foreach ($lists['penjualan'] as $r) {
+		$ri = persediaan_compare_excel_all_alloc_penjualan_row($rows, $index_by_manual_nsh, $r);
+		persediaan_compare_excel_all_fill_penjualan($rows[$ri], $r);
+	}
+
+	foreach ($lists['produksi'] as $r) {
+		$spop = persediaan_compare_excel_all_produksi_spop($spop_maps, $r);
+		$ri = persediaan_compare_excel_all_alloc_produksi_row($rows, $index_by_full_key, $r, $spop);
+		persediaan_compare_excel_all_fill_produksi($rows[$ri], $r, $spop);
+	}
+
+	foreach ($lists['pecah_satuan'] as $r) {
+		$uraian = isset($r->uraian) ? $r->uraian : '';
+		$satuan = isset($r->satuan) ? $r->satuan : '';
+		$harga = isset($r->harga_satuan) ? $r->harga_satuan : '';
+		$spop = isset($r->spop) ? $r->spop : '';
+		$ri = persediaan_compare_excel_all_alloc_pecah_row($rows, $index_by_full_key, $uraian, $satuan, $harga, $spop);
+		persediaan_compare_excel_all_fill_pecah(
+			$rows[$ri],
+			$uraian,
+			$satuan,
+			$harga,
+			$spop,
+			isset($r->jumlah) ? $r->jumlah : ''
+		);
+
+		$nama_baru = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
+		if ($nama_baru !== '') {
+			$ri2 = persediaan_compare_excel_all_alloc_pecah_row(
+				$rows,
+				$index_by_full_key,
+				$nama_baru,
+				isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+				isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
+				$spop
+			);
+			persediaan_compare_excel_all_fill_pecah(
+				$rows[$ri2],
+				$nama_baru,
+				isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+				isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
+				$spop,
+				isset($r->jumlah_barang_baru) ? $r->jumlah_barang_baru : ''
+			);
+		}
+	}
+
+	persediaan_compare_excel_all_sort_rows($rows);
+
+	return array(
+		'ok' => true,
+		'bulan' => $bulan,
+		'bulan_label' => $bulan_label,
+		'table' => $table,
+		'rows' => $rows,
+	);
+}
+
+function persediaan_compare_excel_all_bulan_nama_id()
+{
+	return array(
+		1 => 'Januari',
+		2 => 'Februari',
+		3 => 'Maret',
+		4 => 'April',
+		5 => 'Mei',
+		6 => 'Juni',
+		7 => 'Juli',
+		8 => 'Agustus',
+		9 => 'September',
+		10 => 'Oktober',
+		11 => 'November',
+		12 => 'Desember',
+	);
+}
+
+function persediaan_compare_excel_all_sheet_name_from_bulan($bulan)
+{
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^(\d{4})-(\d{2})$/', $bulan, $m)) {
+		return 'Sheet';
+	}
+
+	$tahun = (int) $m[1];
+	$bulan_num = (int) $m[2];
+	$nama_bulan = persediaan_compare_excel_all_bulan_nama_id();
+	$label_bulan = isset($nama_bulan[$bulan_num]) ? $nama_bulan[$bulan_num] : ('Bulan ' . $bulan_num);
+
+	return excel_sheet_safe_name($label_bulan . ' ' . $tahun);
+}
+
+function persediaan_compare_export_excel_all_output($CI, $bulan, $table)
+{
+	$CI->load->helper(array('exportexcel', 'persediaan_display'));
+
+	$sheet_name = persediaan_compare_excel_all_sheet_name_from_bulan($bulan);
+
+	$result = persediaan_compare_excel_all_build_rows($CI, $bulan, $table);
+	if (empty($result['ok'])) {
+		xlsAddSheet($sheet_name);
+		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Export Excel ALL gagal.');
+		xlsMultiEOF();
+		return;
+	}
+
+	$groups = persediaan_compare_excel_all_group_definitions();
+	$headers = persediaan_compare_excel_all_headers();
+	$groupTitleRow = 2;
+	$headerRow = 3;
+	$dataStartRow = 4;
+
+	xlsAddSheet($sheet_name);
+	xlsWriteLabelBold14(0, 0, 'Compare Excel ALL — ' . $result['table'] . ' — Bulan ' . $result['bulan_label']);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s')
+		. ' | Manual + Persediaan + Pembelian + Penjualan + Produksi + Pecah Satuan');
+	persediaan_rekonsiliasi_tx_write_group_titles($groupTitleRow, $groups);
+	persediaan_rekonsiliasi_tx_write_headers_grouped($headerRow, $headers, $groups);
+
+	$row = $dataStartRow;
+	foreach ($result['rows'] as $cells) {
+		persediaan_rekonsiliasi_tx_write_row_grouped($row, $cells, $groups);
+		$row++;
+	}
+
+	$lastRow = ($row > $dataStartRow) ? ($row - 1) : $headerRow;
+	persediaan_rekonsiliasi_tx_finalize_group_borders($groupTitleRow, $lastRow, $groups);
+
+	xlsMultiEOF();
 }
 
 /**
@@ -10651,4 +11415,191 @@ function persediaan_export_rekonsiliasi_transaksi_excel_output($CI, $bulan)
 	persediaan_rekonsiliasi_tx_finalize_group_borders($groupTitleRow, $lastRow, $groups);
 
 	xlsEOF();
+}
+
+/**
+ * Sanitasi string agar aman di json_encode (UTF-8).
+ */
+function penjualan_sanitize_utf8_string($str)
+{
+	if (!is_string($str)) {
+		return $str;
+	}
+	if (function_exists('mb_convert_encoding')) {
+		return mb_convert_encoding($str, 'UTF-8', 'UTF-8');
+	}
+	return $str;
+}
+
+/**
+ * Output JSON aman untuk endpoint AJAX penjualan.
+ */
+function penjualan_json_response($CI, array $payload)
+{
+	if (isset($payload['tbody'])) {
+		$payload['tbody'] = penjualan_sanitize_utf8_string($payload['tbody']);
+	}
+	if (isset($payload['modals'])) {
+		$payload['modals'] = penjualan_sanitize_utf8_string($payload['modals']);
+	}
+
+	$flags = JSON_UNESCAPED_UNICODE;
+	if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+		$flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+	}
+
+	$json = json_encode($payload, $flags);
+	if ($json === false) {
+		$json = json_encode(array(
+			'ok' => false,
+			'message' => 'Gagal mengenkode data JSON: ' . json_last_error_msg(),
+		), $flags);
+	}
+
+	$CI->output
+		->set_content_type('application/json', 'utf-8')
+		->set_output($json === false ? '{"ok":false,"message":"Gagal mengenkode JSON"}' : $json);
+}
+
+/**
+ * Kondisi SQL: hanya kategori jasa (untuk modul penjualan jasa).
+ */
+function penjualan_sql_kategori_jasa_saja($CI, $alias = 'persediaan')
+{
+	if (!$CI->db->field_exists('kategori', 'persediaan')) {
+		return '1=1';
+	}
+	$a = trim((string) $alias);
+	return "LOWER(TRIM(COALESCE({$a}.kategori, ''))) = 'jasa'";
+}
+
+/**
+ * Daftar persediaan kategori jasa untuk modal Pilih Jasa penjualan.
+ */
+function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_unit = null)
+{
+	$tgl_jual = trim((string) $tgl_jual);
+	if ($tgl_jual === '') {
+		return array();
+	}
+
+	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$has_kategori = $CI->db->field_exists('kategori', 'persediaan');
+	$kategori_sql = $has_kategori ? 'persediaan.kategori AS kategori_barang' : "'' AS kategori_barang";
+	$jasa_sql = penjualan_sql_kategori_jasa_saja($CI, 'persediaan');
+	$uuid_barang_sql = penjualan_sql_uuid_barang_expr('persediaan');
+	$bulan_where_sql = penjualan_sql_filter_bulan_persediaan_where('persediaan');
+
+	$unit_cols_sql = '';
+	foreach (penjualan_persediaan_kolom_unit_existing($CI) as $kolom) {
+		$unit_cols_sql .= ",\n\t\t\tpersediaan.`{$kolom}` AS `{$kolom}`";
+	}
+
+	$sql = "SELECT persediaan.id AS id,
+			persediaan.tanggal_beli AS tanggal_beli,
+			persediaan.tanggal AS tanggal,
+			persediaan.uuid_spop AS uuid_spop,
+			persediaan.spop AS spop,
+			{$uuid_barang_sql} AS uuid_barang,
+			persediaan.uuid_persediaan AS uuid_persediaan,
+			persediaan.kode_barang AS kode_barang,
+			persediaan.namabarang AS nama_barang_beli,
+			persediaan.total_10 AS total_10,
+			persediaan.total_10 AS jumlah_sediaan,
+			persediaan.hpp AS harga_satuan_persediaan,
+			persediaan.satuan AS satuan_persediaan,
+			persediaan.pecah_satuan AS pecah_satuan,
+			persediaan.pecah_satuan AS pecah_satuan_persediaan,
+			persediaan.bahan_produksi AS bahan_produksi,
+			persediaan.penjualan AS penjualan{$unit_cols_sql},
+			{$kategori_sql}
+		FROM persediaan
+		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
+		AND {$bulan_where_sql}
+		AND {$jasa_sql}
+		ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
+
+	$bulan_ym = date('Y-m', strtotime($tgl['awal']));
+	$query = $CI->db->query($sql, array(
+		$tgl['awal'],
+		$tgl['akhir'],
+		$tgl['awal'],
+		$tgl['akhir'],
+		$bulan_ym,
+	));
+	if ($query === false) {
+		$err = $CI->db->error();
+		$pesan = isset($err['message']) ? $err['message'] : 'Query persediaan jasa gagal.';
+		throw new Exception($pesan);
+	}
+
+	return $query->result();
+}
+
+/**
+ * Render HTML tbody + modal nested untuk Pilih Jasa penjualan.
+ */
+function penjualan_render_modal_pilih_jasa($CI, $data)
+{
+	$uuid_unit = isset($data['uuid_unit']) ? $data['uuid_unit'] : '';
+	if (!isset($data['penjualan_kolom_unit'])) {
+		$data['penjualan_kolom_unit'] = penjualan_resolve_kolom_persediaan_unit($CI, $uuid_unit);
+	}
+	if (!isset($data['penjualan_label_unit'])) {
+		$data['penjualan_label_unit'] = $data['penjualan_kolom_unit']
+			? penjualan_get_label_kolom_unit($data['penjualan_kolom_unit'])
+			: '';
+	}
+
+	$data['fragment_part'] = 'tbody';
+	$tbody = $CI->load->view('anekadharma/tbl_penjualan_jasa/_modal_pilih_jasa_penjualan_fragment', $data, TRUE);
+	$data['fragment_part'] = 'modals';
+	$modals = $CI->load->view('anekadharma/tbl_penjualan_jasa/_modal_pilih_jasa_penjualan_fragment', $data, TRUE);
+
+	return array(
+		'tbody' => $tbody,
+		'modals' => $modals,
+	);
+}
+
+/**
+ * Hapus semua baris penjualan jasa satu transaksi + kembalikan field penjualan di persediaan.
+ */
+function penjualan_jasa_hapus_semua_by_uuid($CI, $uuid_penjualan)
+{
+	$uuid_penjualan = trim((string) $uuid_penjualan);
+	if ($uuid_penjualan === '') {
+		return 0;
+	}
+
+	$CI->load->model('Tbl_penjualan_jasa_model');
+	$CI->load->model('Persediaan_model');
+	$rows = $CI->Tbl_penjualan_jasa_model->get_all_by_uuid_penjualan($uuid_penjualan);
+	$jumlah_hapus = 0;
+
+	foreach ($rows as $row) {
+		if (empty($row->id)) {
+			continue;
+		}
+		$row_penjualan = $CI->Tbl_penjualan_jasa_model->get_by_id($row->id);
+		if (empty($row_penjualan)) {
+			continue;
+		}
+
+		$id_persediaan = $row_penjualan->id_persediaan_barang;
+		if (!empty($id_persediaan)) {
+			penjualan_update_persediaan_saat_jual(
+				$CI,
+				$id_persediaan,
+				isset($row_penjualan->uuid_unit) ? $row_penjualan->uuid_unit : '',
+				$row_penjualan->jumlah,
+				'kurangi'
+			);
+		}
+
+		$CI->Tbl_penjualan_jasa_model->delete($row->id);
+		$jumlah_hapus++;
+	}
+
+	return $jumlah_hapus;
 }

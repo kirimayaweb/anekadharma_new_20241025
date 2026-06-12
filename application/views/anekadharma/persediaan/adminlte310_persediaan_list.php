@@ -565,6 +565,9 @@
                                     <button type="button" id="btn-compare-tabel" class="btn btn-info btn-lg"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
                                         <i class="fas fa-columns"></i> Compare
                                     </button>
+                                    <button type="button" id="btn-compare-excel-all" class="btn btn-success btn-lg ml-2"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                        <i class="fas fa-file-excel"></i> Cetak Excel ALL
+                                    </button>
                                 </div>
                             </div>
                             <div class="alert alert-secondary py-2" id="compare-info-ringkas">
@@ -815,6 +818,7 @@ window.addEventListener('load', function() {
     var urlCompareTabelList = <?php echo json_encode(isset($url_compare_tabel_list) ? $url_compare_tabel_list : site_url('Persediaan/ajax_compare_tabel_list')); ?>;
     var urlCompareTabelRun = <?php echo json_encode(isset($url_compare_tabel_run) ? $url_compare_tabel_run : site_url('Persediaan/ajax_compare_tabel_run')); ?>;
     var urlCompareTabelExcel = <?php echo json_encode(isset($url_compare_tabel_excel) ? $url_compare_tabel_excel : site_url('Persediaan/excel_compare_tabel')); ?>;
+    var urlCompareTabelExcelAll = <?php echo json_encode(isset($url_compare_tabel_excel_all) ? $url_compare_tabel_excel_all : site_url('Persediaan/excel_compare_tabel_all')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
@@ -1873,12 +1877,15 @@ window.addEventListener('load', function() {
 
     function updateTombolComparePersediaan() {
         var $btn = $('#btn-compare-tabel');
+        var $btnExcelAll = $('#btn-compare-excel-all');
         if (!userCanComparePersediaan) {
             $btn.prop('disabled', true).removeClass('btn-info').addClass('btn-secondary');
+            $btnExcelAll.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
             setCompareStatus('warning', 'Compare hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.');
             return;
         }
         $btn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-info');
+        $btnExcelAll.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
     }
 
     function runCompareTabel() {
@@ -2001,6 +2008,66 @@ window.addEventListener('load', function() {
 
     $(document).on('click', '.btn-compare-excel', function() {
         exportCompareExcel($(this).data('jenis') || '');
+    });
+
+    function exportCompareExcelAll() {
+        if (!userCanComparePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Export Excel ALL hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+            });
+            return;
+        }
+        var bulanKey = getBulanKeyCompare();
+        var tabel = $('#compare_tabel_pilihan').val() || '';
+        if (!bulanKey || !tabel) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan, tahun, dan tabel terlebih dahulu.' });
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('bulan', bulanKey);
+        formData.append('tabel', tabel);
+
+        tampilkanSwalExcelProgress();
+        fetch(urlCompareTabelExcelAll, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: 'File Excel ALL berhasil diunduh.',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            if (excelProgressTimer) {
+                clearInterval(excelProgressTimer);
+                excelProgressTimer = null;
+            }
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Export Excel ALL gagal.'
+            });
+        });
+    }
+
+    $('#btn-compare-excel-all').on('click', function() {
+        if (!userCanComparePersediaan || $(this).prop('disabled')) {
+            return false;
+        }
+        exportCompareExcelAll();
     });
 
     function getBulanPersediaanAktif() {
