@@ -3547,7 +3547,7 @@ class Persediaan extends CI_Controller
 		}
 
 		foreach ($Persediaan as $data) {
-			$total_total_10 += persediaan_parse_angka(persediaan_row_get($data, 'total_10'));
+			$total_total_10 += persediaan_hitung_total_10_net($data);
 			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
 			foreach (persediaan_list_unit_columns($this) as $uf_excel) {
 				$totals_nominal_unit[$uf_excel] += persediaan_hitung_kolom_nominal_row($data, $uf_excel);

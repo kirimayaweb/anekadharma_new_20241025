@@ -58,28 +58,49 @@ function persediaan_parse_angka($value)
 
 function persediaan_hitung_sisa_stock($row)
 {
-	$total_10 = persediaan_parse_angka(isset($row->total_10) ? $row->total_10 : 0);
-	$sa = persediaan_parse_angka(isset($row->sa) ? $row->sa : 0);
-	$beli = persediaan_parse_angka(isset($row->beli) ? $row->beli : 0);
-	$penjualan = persediaan_parse_angka(isset($row->penjualan) ? $row->penjualan : 0);
-	$pecah_satuan = persediaan_parse_angka(isset($row->pecah_satuan) ? $row->pecah_satuan : 0);
-	$bahan_produksi = persediaan_parse_angka(isset($row->bahan_produksi) ? $row->bahan_produksi : 0);
+	return persediaan_hitung_total_10_net($row);
+}
 
-	if ($penjualan > 0 && $pecah_satuan <= 0 && $bahan_produksi <= 0) {
+/**
+ * Stok akhir tampilan tab Persediaan:
+ * total_10 (nilai di DB) dikurangi terjual + pecah_satuan + bahan_produksi jika masih stok kotor;
+ * jika total_10 sudah net (setelah recalculate), pakai nilai DB.
+ */
+function persediaan_hitung_total_10_net($row)
+{
+	$total_10 = persediaan_parse_angka(persediaan_row_get($row, 'total_10'));
+	$penjualan = persediaan_parse_angka(persediaan_row_get($row, 'penjualan'));
+	$pecah_satuan = persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'));
+	$bahan_produksi = persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'));
+	$deductions = $penjualan + $pecah_satuan + $bahan_produksi;
+
+	if ($deductions <= 0) {
 		return max(0, (int) floor($total_10));
 	}
 
+	$sa = persediaan_parse_angka(persediaan_row_get($row, 'sa'));
+	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
 	$gross = $sa + $beli;
-	$net_dari_penjualan = $gross - $penjualan - $pecah_satuan - $bahan_produksi;
+	$net_expected = max(0, (int) floor($gross - $deductions));
 
-	if ($penjualan > 0 && abs($total_10 - $net_dari_penjualan) < 0.01) {
-		return max(0, (int) floor($total_10));
-	}
-	if ($penjualan <= 0 && $pecah_satuan <= 0 && $bahan_produksi <= 0 && abs($total_10 - $gross) < 0.01) {
-		return max(0, (int) floor($total_10));
+	if ($gross > 0 && abs($total_10 - $gross) < 0.01) {
+		return max(0, (int) floor($total_10 - $deductions));
 	}
 
-	return $total_10 - ($penjualan + $pecah_satuan + $bahan_produksi);
+	if (abs($total_10 - $net_expected) < 0.01) {
+		return max(0, (int) floor($total_10));
+	}
+
+	return max(0, (int) floor($total_10 - $deductions));
+}
+
+function persediaan_tampil_total_10_net_row($row)
+{
+	$net = persediaan_hitung_total_10_net($row);
+	if ($net == 0) {
+		return persediaan_row_get($row, 'total_10') === '0' || persediaan_row_get($row, 'total_10') === 0 ? '0' : '';
+	}
+	return persediaan_format_angka_tampil($net);
 }
 
 /**
@@ -364,7 +385,7 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 
 function persediaan_hitung_nilai_persediaan_row($row)
 {
-	$total_10 = persediaan_parse_angka(persediaan_row_get($row, 'total_10'));
+	$total_10 = persediaan_hitung_total_10_net($row);
 	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
 	return $total_10 * $hpp;
 }
@@ -557,6 +578,8 @@ function persediaan_export_row_cells($row, $no, $bulan_filter = '', $CI = null)
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
 		if ($field === 'tgl_keluar') {
 			$cells[] = persediaan_row_get($row, $field);
+		} elseif ($field === 'total_10') {
+			$cells[] = persediaan_export_blank_if_zero(persediaan_hitung_total_10_net($row));
 		} else {
 			$cells[] = persediaan_export_blank_if_zero(persediaan_row_get($row, $field));
 			if (persediaan_field_has_nominal_column($field)) {
