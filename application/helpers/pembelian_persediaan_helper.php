@@ -10165,9 +10165,9 @@ function persediaan_compare_detect_column_map($CI, $table)
 	$fields = $CI->db->list_fields($table);
 	$map = array(
 		'nama' => persediaan_compare_pick_column($fields, array(
-			'namabarang', 'nama_barang', 'nama_barang_persediaan', 'uraian', 'nama', 'barang',
+			'namabarang', 'nama_barang', 'nama_barang_persediaan', 'uraian', 'nama', 'barang', 'nama barang',
 		)),
-		'satuan' => persediaan_compare_pick_column($fields, array('satuan')),
+		'satuan' => persediaan_compare_pick_column($fields, array('satuan', 'sat')),
 		'hpp' => persediaan_compare_pick_column($fields, array(
 			'hpp', 'harga_satuan', 'harga_satuan_persediaan', 'harga',
 		)),
@@ -10205,6 +10205,507 @@ function persediaan_compare_validate_table($CI, $table)
 		'ok' => true,
 		'map' => $map,
 		'fields' => $CI->db->list_fields($table),
+	);
+}
+
+function persediaan_compare_clear_db_schema_cache($CI)
+{
+	if (!isset($CI->db) || !isset($CI->db->data_cache) || !is_array($CI->db->data_cache)) {
+		return;
+	}
+
+	unset($CI->db->data_cache['table_names']);
+	if (isset($CI->db->data_cache['field_names'])) {
+		$CI->db->data_cache['field_names'] = array();
+	}
+}
+
+function persediaan_compare_db_last_error_message($CI, $fallback = 'Error database tidak diketahui.')
+{
+	$err = $CI->db->error();
+	if (!empty($err['message'])) {
+		return trim((string) $err['message']);
+	}
+
+	return $fallback;
+}
+
+function persediaan_compare_build_column_map_from_fields($fields)
+{
+	if (!is_array($fields) || count($fields) === 0) {
+		return null;
+	}
+
+	$normalized = array();
+	foreach ($fields as $field) {
+		$normalized[] = trim((string) $field);
+	}
+
+	$map = array(
+		'nama' => persediaan_compare_pick_column($normalized, array(
+			'namabarang', 'nama_barang', 'nama_barang_persediaan', 'nama barang', 'uraian', 'nama', 'barang',
+		)),
+		'satuan' => persediaan_compare_pick_column($normalized, array('satuan', 'sat')),
+		'hpp' => persediaan_compare_pick_column($normalized, array(
+			'hpp', 'harga_satuan', 'harga_satuan_persediaan', 'harga',
+		)),
+		'spop' => persediaan_compare_pick_column($normalized, array('spop')),
+	);
+
+	foreach (array('nama', 'satuan', 'hpp', 'spop') as $req) {
+		if (empty($map[$req])) {
+			return null;
+		}
+	}
+
+	return $map;
+}
+
+function persediaan_compare_csv_headers_preview($headers, $limit = 15)
+{
+	$clean = array();
+	foreach ((array) $headers as $header) {
+		$label = trim((string) $header);
+		if ($label !== '') {
+			$clean[] = $label;
+		}
+	}
+
+	if (count($clean) === 0) {
+		return '(tidak ada header terbaca)';
+	}
+
+	if (count($clean) > $limit) {
+		return implode(', ', array_slice($clean, 0, $limit))
+			. ', ... (total ' . count($clean) . ' kolom)';
+	}
+
+	return implode(', ', $clean);
+}
+
+function persediaan_compare_csv_column_error_detail($raw_headers)
+{
+	$normalized = array();
+	foreach ((array) $raw_headers as $header) {
+		$normalized[] = trim((string) $header);
+	}
+
+	$labels = array(
+		'nama' => 'nama barang (namabarang / nama_barang / NAMA BARANG / uraian)',
+		'satuan' => 'satuan (satuan / SAT)',
+		'hpp' => 'hpp / harga_satuan / HPP',
+		'spop' => 'spop / SPOP',
+	);
+
+	$found = array(
+		'nama' => persediaan_compare_pick_column($normalized, array(
+			'namabarang', 'nama_barang', 'nama_barang_persediaan', 'nama barang', 'uraian', 'nama', 'barang',
+		)),
+		'satuan' => persediaan_compare_pick_column($normalized, array('satuan', 'sat')),
+		'hpp' => persediaan_compare_pick_column($normalized, array(
+			'hpp', 'harga_satuan', 'harga_satuan_persediaan', 'harga',
+		)),
+		'spop' => persediaan_compare_pick_column($normalized, array('spop')),
+	);
+
+	$lines = array(
+		'File CSV ditolak sebelum dibuat tabel baru.',
+		'Kolom wajib belum lengkap:',
+	);
+	foreach ($labels as $req => $req_label) {
+		if (empty($found[$req])) {
+			$lines[] = '- ' . $req_label;
+		}
+	}
+	$lines[] = 'Header terbaca: ' . persediaan_compare_csv_headers_preview($raw_headers);
+
+	return implode("\n", $lines);
+}
+
+function persediaan_compare_sanitize_column_name($name)
+{
+	$name = trim((string) $name);
+	$name = preg_replace('/\s+/', '_', $name);
+	$name = preg_replace('/[^a-zA-Z0-9_]/', '', $name);
+	$name = trim($name, '_');
+
+	if ($name === '') {
+		$name = 'col';
+	}
+	if (preg_match('/^[0-9]/', $name)) {
+		$name = 'col_' . $name;
+	}
+
+	return strtolower($name);
+}
+
+function persediaan_compare_sanitize_csv_headers($headers)
+{
+	$used = array();
+	$out = array();
+
+	foreach ($headers as $header) {
+		$base = persediaan_compare_sanitize_column_name($header);
+		$name = $base;
+		$n = 2;
+		while (isset($used[strtolower($name)])) {
+			$name = $base . '_' . $n;
+			$n++;
+		}
+		$used[strtolower($name)] = true;
+		$out[] = $name;
+	}
+
+	return $out;
+}
+
+function persediaan_compare_sanitize_table_name_from_csv($filename, $bulan_key = '')
+{
+	$base = pathinfo((string) $filename, PATHINFO_FILENAME);
+	$base = strtolower(trim($base));
+	$base = preg_replace('/[^a-z0-9_]+/', '_', $base);
+	$base = trim($base, '_');
+
+	if ($base === '') {
+		$base = 'compare_manual';
+	}
+	if (preg_match('/^[0-9]/', $base)) {
+		$base = 'tbl_' . $base;
+	}
+
+	if ($bulan_key !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan_key)) {
+		$parts = explode('-', $bulan_key);
+		$suffix = $parts[0] . '_' . $parts[1];
+		if (stripos($base, $suffix) === false) {
+			$base .= '_' . $suffix;
+		}
+	}
+
+	if (strlen($base) > 60) {
+		$base = substr($base, 0, 60);
+		$base = rtrim($base, '_');
+	}
+
+	return $base;
+}
+
+function persediaan_compare_resolve_unique_table_name($CI, $base_table)
+{
+	$base_table = trim((string) $base_table);
+	if (!persediaan_compare_is_valid_table_name($base_table)) {
+		return array(
+			'ok' => false,
+			'message' => 'Nama tabel dasar tidak valid: `' . $base_table . '`.',
+		);
+	}
+
+	persediaan_compare_clear_db_schema_cache($CI);
+
+	$max_len = 64;
+	$suffix_num = 0;
+	$candidate = $base_table;
+
+	while ($CI->db->table_exists($candidate)) {
+		$suffix_num++;
+		$suffix = '_' . $suffix_num;
+		$root = $base_table;
+		if (strlen($root) + strlen($suffix) > $max_len) {
+			$root = substr($root, 0, $max_len - strlen($suffix));
+			$root = rtrim($root, '_');
+		}
+		$candidate = $root . $suffix;
+
+		if (!persediaan_compare_is_valid_table_name($candidate)) {
+			return array(
+				'ok' => false,
+				'message' => 'Nama tabel unik hasil penomoran tidak valid: `' . $candidate . '`.',
+			);
+		}
+
+		if ($suffix_num > 999) {
+			return array(
+				'ok' => false,
+				'message' => 'Terlalu banyak tabel dengan nama serupa (`' . $base_table . '`). Hapus tabel lama atau ubah nama file CSV.',
+			);
+		}
+	}
+
+	return array(
+		'ok' => true,
+		'table' => $candidate,
+		'base' => $base_table,
+		'suffix' => $suffix_num,
+	);
+}
+
+function persediaan_compare_detect_csv_column_map($headers)
+{
+	return persediaan_compare_build_column_map_from_fields($headers);
+}
+
+function persediaan_compare_csv_open_handle($filepath)
+{
+	$handle = @fopen($filepath, 'rb');
+	if (!$handle) {
+		return false;
+	}
+
+	$bom = fread($handle, 3);
+	if ($bom !== chr(0xEF) . chr(0xBB) . chr(0xBF)) {
+		rewind($handle);
+	}
+
+	return $handle;
+}
+
+function persediaan_compare_csv_read_header($handle)
+{
+	$row = fgetcsv($handle, 0, ',', '"');
+	if (!is_array($row) || count($row) === 0) {
+		return null;
+	}
+
+	$headers = array();
+	foreach ($row as $cell) {
+		$headers[] = trim((string) $cell);
+	}
+
+	return $headers;
+}
+
+function persediaan_compare_import_csv_to_db($CI, $filepath, $original_filename, $bulan_key = '')
+{
+	$file_label = trim((string) $original_filename);
+	if ($file_label === '') {
+		$file_label = basename((string) $filepath);
+	}
+
+	if (!is_readable($filepath)) {
+		return array(
+			'ok' => false,
+			'stage' => 'read_file',
+			'message' => "File `{$file_label}` tidak dapat dibaca dari server.",
+		);
+	}
+
+	$handle = persediaan_compare_csv_open_handle($filepath);
+	if (!$handle) {
+		return array(
+			'ok' => false,
+			'stage' => 'open_file',
+			'message' => "Gagal membuka file CSV `{$file_label}`.",
+		);
+	}
+
+	$raw_headers = persediaan_compare_csv_read_header($handle);
+	if ($raw_headers === null) {
+		fclose($handle);
+		return array(
+			'ok' => false,
+			'stage' => 'read_header',
+			'message' => "File `{$file_label}` kosong atau baris header CSV tidak valid.",
+		);
+	}
+
+	$map_check = persediaan_compare_detect_csv_column_map($raw_headers);
+	if ($map_check === null) {
+		fclose($handle);
+		return array(
+			'ok' => false,
+			'stage' => 'validasi_kolom',
+			'message' => persediaan_compare_csv_column_error_detail($raw_headers),
+			'file' => $file_label,
+		);
+	}
+
+	$db_columns = persediaan_compare_sanitize_csv_headers($raw_headers);
+	$base_table = persediaan_compare_sanitize_table_name_from_csv($original_filename, $bulan_key);
+	$resolved = persediaan_compare_resolve_unique_table_name($CI, $base_table);
+	if (empty($resolved['ok'])) {
+		fclose($handle);
+		return array(
+			'ok' => false,
+			'stage' => 'nama_tabel',
+			'message' => isset($resolved['message'])
+				? $resolved['message']
+				: "Nama tabel hasil import dari file `{$file_label}` tidak valid.",
+			'file' => $file_label,
+		);
+	}
+
+	$table = $resolved['table'];
+	$table_suffix = isset($resolved['suffix']) ? (int) $resolved['suffix'] : 0;
+	$table_base = isset($resolved['base']) ? $resolved['base'] : $base_table;
+
+	$field_defs = array();
+	foreach ($db_columns as $col) {
+		$field_defs[] = '`' . $col . '` TEXT NULL';
+	}
+
+	$create_sql = 'CREATE TABLE `' . $table . '` (' . implode(', ', $field_defs)
+		. ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+
+	if ($CI->db->query($create_sql) === false) {
+		fclose($handle);
+		return array(
+			'ok' => false,
+			'stage' => 'create_table',
+			'message' => "Gagal membuat tabel baru `{$table}` dari file `{$file_label}`.\n"
+				. 'Detail database: ' . persediaan_compare_db_last_error_message($CI),
+			'table' => $table,
+			'file' => $file_label,
+		);
+	}
+
+	persediaan_compare_clear_db_schema_cache($CI);
+
+	$inserted = 0;
+	$batch = array();
+	$batch_size = 100;
+	$line_no = 1;
+
+	while (($row = fgetcsv($handle, 0, ',', '"')) !== false) {
+		$line_no++;
+		if (!is_array($row)) {
+			continue;
+		}
+
+		$is_empty = true;
+		foreach ($row as $cell) {
+			if (trim((string) $cell) !== '') {
+				$is_empty = false;
+				break;
+			}
+		}
+		if ($is_empty) {
+			continue;
+		}
+
+		$data = array();
+		foreach ($db_columns as $idx => $col) {
+			$data[$col] = isset($row[$idx]) ? trim((string) $row[$idx]) : '';
+		}
+
+		$batch[] = $data;
+		if (count($batch) >= $batch_size) {
+			if ($CI->db->insert_batch($table, $batch) === false) {
+				fclose($handle);
+				$CI->db->query('DROP TABLE IF EXISTS `' . $table . '`');
+				persediaan_compare_clear_db_schema_cache($CI);
+				return array(
+					'ok' => false,
+					'stage' => 'insert_data',
+					'message' => "Gagal meng-upload data CSV ke tabel baru `{$table}` (sekitar baris {$line_no}).\n"
+						. 'Detail database: ' . persediaan_compare_db_last_error_message($CI),
+					'table' => $table,
+					'file' => $file_label,
+				);
+			}
+			$inserted += count($batch);
+			$batch = array();
+		}
+	}
+	fclose($handle);
+
+	if (count($batch) > 0) {
+		if ($CI->db->insert_batch($table, $batch) === false) {
+			$CI->db->query('DROP TABLE IF EXISTS `' . $table . '`');
+			persediaan_compare_clear_db_schema_cache($CI);
+			return array(
+				'ok' => false,
+				'stage' => 'insert_data',
+				'message' => "Gagal meng-upload sisa data CSV ke tabel baru `{$table}`.\n"
+					. 'Detail database: ' . persediaan_compare_db_last_error_message($CI),
+				'table' => $table,
+				'file' => $file_label,
+			);
+		}
+		$inserted += count($batch);
+	}
+
+	if ($inserted === 0) {
+		$CI->db->query('DROP TABLE IF EXISTS `' . $table . '`');
+		persediaan_compare_clear_db_schema_cache($CI);
+		return array(
+			'ok' => false,
+			'stage' => 'insert_data',
+			'message' => "File `{$file_label}` tidak memiliki baris data setelah header.\nTabel `{$table}` dibatalkan dan tidak disimpan.",
+			'table' => $table,
+			'file' => $file_label,
+		);
+	}
+
+	$col_map = persediaan_compare_build_column_map_from_fields($db_columns);
+	if ($col_map === null) {
+		$CI->db->query('DROP TABLE IF EXISTS `' . $table . '`');
+		persediaan_compare_clear_db_schema_cache($CI);
+		return array(
+			'ok' => false,
+			'stage' => 'validasi_kolom_db',
+			'message' => "Tabel `{$table}` gagal divalidasi setelah dibuat.\n"
+				. 'Kolom hasil import: ' . implode(', ', $db_columns),
+			'table' => $table,
+			'file' => $file_label,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'stage' => 'success',
+		'table' => $table,
+		'table_base' => $table_base,
+		'table_suffix' => $table_suffix,
+		'rows' => $inserted,
+		'columns' => count($db_columns),
+		'file' => $file_label,
+		'message' => "Import CSV berhasil.\n"
+			. ($table_suffix > 0
+				? "Tabel `{$table_base}` sudah ada — dibuat tabel baru: `{$table}` (_{$table_suffix}).\n"
+				: "1. Tabel baru dibuat: `{$table}`\n")
+			. '2. Kolom disesuaikan dari header CSV (' . count($db_columns) . " kolom)\n"
+			. "3. Data ter-upload: {$inserted} baris\n"
+			. 'Silahkan lanjut compare menggunakan tabel ini.',
+	);
+}
+
+function persediaan_compare_preview_table_data($CI, $table, $limit = 1000)
+{
+	$table = trim((string) $table);
+	if (!persediaan_compare_is_valid_table_name($table)) {
+		return array('ok' => false, 'message' => 'Nama tabel tidak valid.');
+	}
+
+	persediaan_compare_clear_db_schema_cache($CI);
+	if (!$CI->db->table_exists($table)) {
+		return array('ok' => false, 'message' => 'Tabel `' . $table . '` tidak ditemukan di database.');
+	}
+
+	$fields = $CI->db->list_fields($table);
+	if (!is_array($fields) || count($fields) === 0) {
+		return array('ok' => false, 'message' => 'Tabel `' . $table . '` tidak memiliki kolom.');
+	}
+
+	$total = (int) $CI->db->count_all($table);
+	$limit = max(1, min(2000, (int) $limit));
+
+	$rows_raw = $CI->db->query('SELECT * FROM `' . $table . '` LIMIT ' . (int) $limit)->result_array();
+	$rows = array();
+	foreach ($rows_raw as $row) {
+		$item = array();
+		foreach ($fields as $field) {
+			$item[$field] = isset($row[$field]) ? (string) $row[$field] : '';
+		}
+		$rows[] = $item;
+	}
+
+	return array(
+		'ok' => true,
+		'table' => $table,
+		'columns' => $fields,
+		'rows' => $rows,
+		'total' => $total,
+		'shown' => count($rows),
+		'truncated' => ($total > count($rows)),
 	);
 }
 
@@ -11111,17 +11612,140 @@ function persediaan_compare_excel_all_spop_from_maps($maps, $uuid = '', $id = 0)
 
 function persediaan_compare_excel_all_penjualan_spop($CI, $row, $maps)
 {
-	$spop = '';
+	$uuid = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
+	$id = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+	$spop = persediaan_compare_excel_all_spop_from_maps($maps, $uuid, $id);
+	if ($spop !== '') {
+		return $spop;
+	}
+
 	$pers = penjualan_get_persediaan_by_penjualan_row($CI, $row);
-	if (!empty($pers)) {
-		$spop = isset($pers->spop) ? $pers->spop : '';
+	if (!empty($pers) && isset($pers->spop)) {
+		return (string) $pers->spop;
 	}
-	if ($spop === '') {
-		$uuid = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
-		$id = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
-		$spop = persediaan_compare_excel_all_spop_from_maps($maps, $uuid, $id);
+
+	return '';
+}
+
+function persediaan_compare_excel_all_collect_unused($index_list, &$used)
+{
+	$out = array();
+	if (!is_array($index_list)) {
+		return $out;
 	}
-	return $spop;
+	foreach ($index_list as $i) {
+		if (empty($used[$i])) {
+			$out[] = $i;
+		}
+	}
+	return $out;
+}
+
+function persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, $spop_maps)
+{
+	$index_pers = array();
+	foreach ($pers_rows as $i => $pr) {
+		$key = persediaan_compare_excel_all_pers_full_key($pr);
+		if ($key === '') {
+			continue;
+		}
+		if (!isset($index_pers[$key])) {
+			$index_pers[$key] = array();
+		}
+		$index_pers[$key][] = $i;
+	}
+
+	$index_pembelian = array();
+	foreach ($lists['pembelian'] as $i => $r) {
+		$key = persediaan_compare_excel_all_pembelian_full_key($r);
+		if ($key === '') {
+			continue;
+		}
+		if (!isset($index_pembelian[$key])) {
+			$index_pembelian[$key] = array();
+		}
+		$index_pembelian[$key][] = $i;
+	}
+
+	$index_penjualan = array();
+	$penjualan_spop = array();
+	foreach ($lists['penjualan'] as $i => $r) {
+		$spop = persediaan_compare_excel_all_penjualan_spop($CI, $r, $spop_maps);
+		$penjualan_spop[$i] = $spop;
+		$key = persediaan_compare_excel_all_full_key(
+			isset($r->nama_barang) ? $r->nama_barang : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : '',
+			$spop
+		);
+		if ($key === '') {
+			continue;
+		}
+		if (!isset($index_penjualan[$key])) {
+			$index_penjualan[$key] = array();
+		}
+		$index_penjualan[$key][] = $i;
+	}
+
+	$index_produksi = array();
+	$produksi_spop = array();
+	foreach ($lists['produksi'] as $i => $r) {
+		$spop = persediaan_compare_excel_all_produksi_spop($spop_maps, $r);
+		$produksi_spop[$i] = $spop;
+		$key = persediaan_compare_excel_all_produksi_full_key($r, $spop);
+		if ($key === '') {
+			continue;
+		}
+		if (!isset($index_produksi[$key])) {
+			$index_produksi[$key] = array();
+		}
+		$index_produksi[$key][] = $i;
+	}
+
+	$index_pecah_uraian = array();
+	$index_pecah_baru = array();
+	foreach ($lists['pecah_satuan'] as $i => $r) {
+		$spop = isset($r->spop) ? $r->spop : '';
+		$key_u = persediaan_compare_excel_all_full_key(
+			isset($r->uraian) ? $r->uraian : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : '',
+			$spop
+		);
+		if ($key_u !== '') {
+			if (!isset($index_pecah_uraian[$key_u])) {
+				$index_pecah_uraian[$key_u] = array();
+			}
+			$index_pecah_uraian[$key_u][] = $i;
+		}
+
+		$nama_baru = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
+		if ($nama_baru === '') {
+			continue;
+		}
+		$key_b = persediaan_compare_excel_all_full_key(
+			$nama_baru,
+			isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+			isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
+			$spop
+		);
+		if ($key_b !== '') {
+			if (!isset($index_pecah_baru[$key_b])) {
+				$index_pecah_baru[$key_b] = array();
+			}
+			$index_pecah_baru[$key_b][] = $i;
+		}
+	}
+
+	return array(
+		'pers' => $index_pers,
+		'pembelian' => $index_pembelian,
+		'penjualan' => $index_penjualan,
+		'produksi' => $index_produksi,
+		'pecah_uraian' => $index_pecah_uraian,
+		'pecah_baru' => $index_pecah_baru,
+		'produksi_spop' => $produksi_spop,
+	);
 }
 
 function persediaan_compare_excel_all_produksi_spop($maps, $row)
@@ -11134,6 +11758,16 @@ function persediaan_compare_excel_all_produksi_spop($maps, $row)
 	return persediaan_compare_excel_all_spop_from_maps($maps, $uuid2, 0);
 }
 
+function persediaan_compare_excel_all_row_matches_manual($nama, $satuan, $hpp, $spop, $m_nama, $m_satuan, $m_hpp, $m_spop)
+{
+	$key_manual = persediaan_compare_excel_all_full_key($m_nama, $m_satuan, $m_hpp, $m_spop);
+	if ($key_manual === '') {
+		return false;
+	}
+
+	return persediaan_compare_excel_all_full_key($nama, $satuan, $hpp, $spop) === $key_manual;
+}
+
 function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 {
 	$CI->load->helper('persediaan_display');
@@ -11142,15 +11776,20 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
 	}
 
-	$loaded = persediaan_compare_load_table_rows($CI, $table);
-	if (empty($loaded['ok'])) {
-		return array('ok' => false, 'message' => $loaded['message']);
+	$valid = persediaan_compare_validate_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array('ok' => false, 'message' => $valid['message']);
 	}
 
-	$map = $loaded['map'];
-	$manual_rows = $loaded['rows'];
-	$fields = $CI->db->list_fields($table);
+	$map = $valid['map'];
+	$fields = $valid['fields'];
 	$manual_extra_cols = persediaan_compare_excel_all_detect_manual_extra_cols($fields);
+
+	$order_sql = '';
+	if (is_array($fields) && in_array('id', $fields, true)) {
+		$order_sql = ' ORDER BY `id` ASC';
+	}
+	$manual_rows = $CI->db->query('SELECT * FROM `' . $table . '`' . $order_sql)->result();
 
 	$ts = strtotime($bulan . '-01');
 	if ($ts === false) {
@@ -11164,83 +11803,198 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 	$pers_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
 	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $pers_rows);
+	$tx_index = persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, $spop_maps);
+	$produksi_spop_cache = $tx_index['produksi_spop'];
 
 	$rows = array();
-	$index_by_nama = array();
-	$index_by_full_key = array();
-	$index_by_manual_nsh = array();
+	$used_pers = array();
+	$used_pembelian = array();
+	$used_penjualan = array();
+	$used_produksi = array();
+	$used_pecah_uraian = array();
+	$used_pecah_baru = array();
 
-	// Persediaan dulu agar semua baris tabel persediaan bulan target pasti tercetak.
-	foreach ($pers_rows as $pr) {
-		$ri = persediaan_compare_excel_all_alloc_persediaan_row($rows, $index_by_nama, $index_by_full_key, $pr);
-		persediaan_compare_excel_all_fill_persediaan($rows[$ri], $pr);
-	}
-
+	// Urutkan berdasarkan baris tabel manual: selesaikan semua transaksi terkait dulu.
 	foreach ($manual_rows as $mr) {
-		persediaan_compare_excel_all_alloc_manual_row(
-			$rows,
-			$index_by_full_key,
-			$index_by_nama,
-			$index_by_manual_nsh,
-			$mr,
-			$map,
-			$manual_extra_cols
+		$m_nama = persediaan_compare_row_get($mr, $map['nama']);
+		$m_satuan = persediaan_compare_row_get($mr, $map['satuan']);
+		$m_hpp = persediaan_compare_row_get($mr, $map['hpp']);
+		$m_spop = persediaan_compare_row_get($mr, $map['spop']);
+		$key_manual = persediaan_compare_excel_all_full_key($m_nama, $m_satuan, $m_hpp, $m_spop);
+
+		if ($key_manual === '') {
+			$row = persediaan_compare_excel_all_empty_row();
+			persediaan_compare_excel_all_fill_manual($row, $mr, $map, $manual_extra_cols);
+			$rows[] = $row;
+			continue;
+		}
+
+		$idx_pers = persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['pers'][$key_manual]) ? $tx_index['pers'][$key_manual] : array(),
+			$used_pers
 		);
+		$idx_pembelian = persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['pembelian'][$key_manual]) ? $tx_index['pembelian'][$key_manual] : array(),
+			$used_pembelian
+		);
+		$idx_penjualan = persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['penjualan'][$key_manual]) ? $tx_index['penjualan'][$key_manual] : array(),
+			$used_penjualan
+		);
+		$idx_produksi = persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['produksi'][$key_manual]) ? $tx_index['produksi'][$key_manual] : array(),
+			$used_produksi
+		);
+
+		$idx_pecah = array();
+		foreach (persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['pecah_uraian'][$key_manual]) ? $tx_index['pecah_uraian'][$key_manual] : array(),
+			$used_pecah_uraian
+		) as $i) {
+			$idx_pecah[] = array('i' => $i, 'side' => 'uraian');
+		}
+		foreach (persediaan_compare_excel_all_collect_unused(
+			isset($tx_index['pecah_baru'][$key_manual]) ? $tx_index['pecah_baru'][$key_manual] : array(),
+			$used_pecah_baru
+		) as $i) {
+			$idx_pecah[] = array('i' => $i, 'side' => 'baru');
+		}
+
+		$max_lines = max(
+			1,
+			count($idx_pers),
+			count($idx_pembelian),
+			count($idx_penjualan),
+			count($idx_produksi),
+			count($idx_pecah)
+		);
+
+		for ($line = 0; $line < $max_lines; $line++) {
+			$row = persediaan_compare_excel_all_empty_row();
+			persediaan_compare_excel_all_fill_manual($row, $mr, $map, $manual_extra_cols);
+
+			if (isset($idx_pers[$line])) {
+				$pi = $idx_pers[$line];
+				persediaan_compare_excel_all_fill_persediaan($row, $pers_rows[$pi]);
+				$used_pers[$pi] = true;
+			}
+			if (isset($idx_pembelian[$line])) {
+				$bi = $idx_pembelian[$line];
+				persediaan_compare_excel_all_fill_pembelian($row, $lists['pembelian'][$bi]);
+				$used_pembelian[$bi] = true;
+			}
+			if (isset($idx_penjualan[$line])) {
+				$ni = $idx_penjualan[$line];
+				persediaan_compare_excel_all_fill_penjualan($row, $lists['penjualan'][$ni]);
+				$used_penjualan[$ni] = true;
+			}
+			if (isset($idx_produksi[$line])) {
+				$pri = $idx_produksi[$line];
+				$spop_prod = isset($produksi_spop_cache[$pri])
+					? $produksi_spop_cache[$pri]
+					: persediaan_compare_excel_all_produksi_spop($spop_maps, $lists['produksi'][$pri]);
+				persediaan_compare_excel_all_fill_produksi($row, $lists['produksi'][$pri], $spop_prod);
+				$used_produksi[$pri] = true;
+			}
+			if (isset($idx_pecah[$line])) {
+				$pec_entry = $idx_pecah[$line];
+				$pci = $pec_entry['i'];
+				$pec = $lists['pecah_satuan'][$pci];
+				if ($pec_entry['side'] === 'baru') {
+					persediaan_compare_excel_all_fill_pecah(
+						$row,
+						isset($pec->nama_barang_baru) ? $pec->nama_barang_baru : '',
+						isset($pec->satuan_barang_baru) ? $pec->satuan_barang_baru : '',
+						isset($pec->harga_satuan_barang_baru) ? $pec->harga_satuan_barang_baru : '',
+						isset($pec->spop) ? $pec->spop : '',
+						isset($pec->jumlah_barang_baru) ? $pec->jumlah_barang_baru : ''
+					);
+					$used_pecah_baru[$pci] = true;
+				} else {
+					persediaan_compare_excel_all_fill_pecah(
+						$row,
+						isset($pec->uraian) ? $pec->uraian : '',
+						isset($pec->satuan) ? $pec->satuan : '',
+						isset($pec->harga_satuan) ? $pec->harga_satuan : '',
+						isset($pec->spop) ? $pec->spop : '',
+						isset($pec->jumlah) ? $pec->jumlah : ''
+					);
+					$used_pecah_uraian[$pci] = true;
+				}
+			}
+
+			$rows[] = $row;
+		}
 	}
 
-	foreach ($lists['pembelian'] as $r) {
-		$ri = persediaan_compare_excel_all_alloc_pembelian_row($rows, $index_by_full_key, $r);
-		persediaan_compare_excel_all_fill_pembelian($rows[$ri], $r);
+	// Sisa transaksi tanpa pasangan di tabel manual — tampilkan di bawah.
+	foreach ($pers_rows as $i => $pr) {
+		if (!empty($used_pers[$i])) {
+			continue;
+		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_persediaan($row, $pr);
+		$rows[] = $row;
 	}
 
-	foreach ($lists['penjualan'] as $r) {
-		$ri = persediaan_compare_excel_all_alloc_penjualan_row($rows, $index_by_manual_nsh, $r);
-		persediaan_compare_excel_all_fill_penjualan($rows[$ri], $r);
+	foreach ($lists['pembelian'] as $i => $r) {
+		if (!empty($used_pembelian[$i])) {
+			continue;
+		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_pembelian($row, $r);
+		$rows[] = $row;
 	}
 
-	foreach ($lists['produksi'] as $r) {
+	foreach ($lists['penjualan'] as $i => $r) {
+		if (!empty($used_penjualan[$i])) {
+			continue;
+		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_penjualan($row, $r);
+		$rows[] = $row;
+	}
+
+	foreach ($lists['produksi'] as $i => $r) {
+		if (!empty($used_produksi[$i])) {
+			continue;
+		}
 		$spop = persediaan_compare_excel_all_produksi_spop($spop_maps, $r);
-		$ri = persediaan_compare_excel_all_alloc_produksi_row($rows, $index_by_full_key, $r, $spop);
-		persediaan_compare_excel_all_fill_produksi($rows[$ri], $r, $spop);
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_produksi($row, $r, $spop);
+		$rows[] = $row;
 	}
 
-	foreach ($lists['pecah_satuan'] as $r) {
-		$uraian = isset($r->uraian) ? $r->uraian : '';
-		$satuan = isset($r->satuan) ? $r->satuan : '';
-		$harga = isset($r->harga_satuan) ? $r->harga_satuan : '';
+	foreach ($lists['pecah_satuan'] as $i => $r) {
 		$spop = isset($r->spop) ? $r->spop : '';
-		$ri = persediaan_compare_excel_all_alloc_pecah_row($rows, $index_by_full_key, $uraian, $satuan, $harga, $spop);
-		persediaan_compare_excel_all_fill_pecah(
-			$rows[$ri],
-			$uraian,
-			$satuan,
-			$harga,
-			$spop,
-			isset($r->jumlah) ? $r->jumlah : ''
-		);
+
+		if (empty($used_pecah_uraian[$i])) {
+			$row = persediaan_compare_excel_all_empty_row();
+			persediaan_compare_excel_all_fill_pecah(
+				$row,
+				isset($r->uraian) ? $r->uraian : '',
+				isset($r->satuan) ? $r->satuan : '',
+				isset($r->harga_satuan) ? $r->harga_satuan : '',
+				$spop,
+				isset($r->jumlah) ? $r->jumlah : ''
+			);
+			$rows[] = $row;
+		}
 
 		$nama_baru = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
-		if ($nama_baru !== '') {
-			$ri2 = persediaan_compare_excel_all_alloc_pecah_row(
-				$rows,
-				$index_by_full_key,
-				$nama_baru,
-				isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
-				isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
-				$spop
-			);
+		if ($nama_baru !== '' && empty($used_pecah_baru[$i])) {
+			$row2 = persediaan_compare_excel_all_empty_row();
 			persediaan_compare_excel_all_fill_pecah(
-				$rows[$ri2],
+				$row2,
 				$nama_baru,
 				isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
 				isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
 				$spop,
 				isset($r->jumlah_barang_baru) ? $r->jumlah_barang_baru : ''
 			);
+			$rows[] = $row2;
 		}
 	}
-
-	persediaan_compare_excel_all_sort_rows($rows);
 
 	return array(
 		'ok' => true,
@@ -11286,6 +12040,9 @@ function persediaan_compare_excel_all_sheet_name_from_bulan($bulan)
 
 function persediaan_compare_export_excel_all_output($CI, $bulan, $table)
 {
+	@set_time_limit(600);
+	@ini_set('memory_limit', '512M');
+
 	$CI->load->helper(array('exportexcel', 'persediaan_display'));
 
 	$sheet_name = persediaan_compare_excel_all_sheet_name_from_bulan($bulan);

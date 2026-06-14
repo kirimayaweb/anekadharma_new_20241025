@@ -588,6 +588,8 @@ class Persediaan extends CI_Controller
 			'url_compare_tabel_run' => site_url('Persediaan/ajax_compare_tabel_run'),
 			'url_compare_tabel_excel' => site_url('Persediaan/excel_compare_tabel'),
 			'url_compare_tabel_excel_all' => site_url('Persediaan/excel_compare_tabel_all'),
+			'url_compare_import_csv' => site_url('Persediaan/ajax_compare_import_csv'),
+			'url_compare_tabel_preview' => site_url('Persediaan/ajax_compare_tabel_preview'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
@@ -664,7 +666,7 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Tab Compare apps DB — Manual Data: whitelist sama dengan generate.
+	 * Tab Compare Data Manual — Online: whitelist sama dengan generate.
 	 */
 	private function persediaan_user_can_compare()
 	{
@@ -1761,6 +1763,82 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
+	 * AJAX: import file CSV manual → tabel database baru (tab Compare Data Manual — Online).
+	 */
+	public function ajax_compare_import_csv()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Import CSV compare')),
+			));
+			return;
+		}
+
+		if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih file CSV terlebih dahulu.',
+			));
+			return;
+		}
+
+		$original_name = trim((string) $_FILES['csv_file']['name']);
+		$ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+		if ($ext !== 'csv') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'File harus berformat .csv',
+			));
+			return;
+		}
+
+		$bulan = $this->_compare_tabel_bulan_from_post();
+		$result = persediaan_compare_import_csv_to_db(
+			$this,
+			$_FILES['csv_file']['tmp_name'],
+			$original_name,
+			$bulan
+		);
+
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: preview data tabel hasil import CSV (tab Compare Data Manual — Online).
+	 */
+	public function ajax_compare_tabel_preview()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Preview tabel compare')),
+			));
+			return;
+		}
+
+		$table = trim((string) $this->input->post('tabel', TRUE));
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama tabel belum dipilih.',
+			));
+			return;
+		}
+
+		$limit = (int) $this->input->post('limit', TRUE);
+		persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
+	}
+
+	/**
 	 * AJAX: daftar semua tabel database untuk Compare Tabel.
 	 */
 	public function ajax_compare_tabel_list()
@@ -1883,6 +1961,9 @@ class Persediaan extends CI_Controller
 	 */
 	public function excel_compare_tabel_all()
 	{
+		@set_time_limit(600);
+		@ini_set('memory_limit', '512M');
+
 		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
 
 		if (!$this->persediaan_user_can_compare()) {

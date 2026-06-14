@@ -28,7 +28,7 @@
                             <a class="nav-link" id="tab-generate-persediaan" data-toggle="pill" href="#panel-generate-persediaan" role="tab" aria-controls="panel-generate-persediaan" aria-selected="false">Generate Persediaan</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="tab-compare-manual" data-toggle="pill" href="#panel-compare-manual" role="tab" aria-controls="panel-compare-manual" aria-selected="false">Compare apps DB - Manual Data</a>
+                            <a class="nav-link" id="tab-compare-manual" data-toggle="pill" href="#panel-compare-manual" role="tab" aria-controls="panel-compare-manual" aria-selected="false">Compare Data Manual - Online</a>
                         </li>
                     </ul>
                 </div>
@@ -509,7 +509,7 @@
                             </div>
                         </div>
 
-                        <!-- TAB 4: COMPARE APPS DB - MANUAL DATA -->
+                        <!-- TAB 4: COMPARE DATA MANUAL - ONLINE -->
                         <?php
                         $compare_bulan_default = isset($bulan_tampil) && preg_match('/^\d{4}-\d{2}$/', $bulan_tampil)
                             ? $bulan_tampil
@@ -521,7 +521,7 @@
                         <div class="tab-pane fade" id="panel-compare-manual" role="tabpanel" aria-labelledby="tab-compare-manual">
                             <div class="row mb-3">
                                 <div class="col-md-12">
-                                    <h5 class="mb-2">Compare apps DB — Manual Data</h5>
+                                    <h5 class="mb-2">Compare Data Manual — Online</h5>
                                     <p class="text-muted small mb-0">
                                         Bandingkan data <strong>persediaan</strong> bulan terpilih dengan tabel manual di database.
                                         Cocokkan berdasarkan <strong>nama barang + satuan + hpp + spop</strong>.
@@ -535,10 +535,41 @@
                                     <?php } ?>
                                 </div>
                             </div>
-                            <div class="row mb-3 align-items-end">
-                                <div class="col-md-2 col-sm-6 mb-2">
-                                    <label for="compare_bulan_persediaan">Bulan</label>
-                                    <select id="compare_bulan_persediaan" class="form-control">
+                            <div class="row mb-2">
+                                <div class="col-md-12">
+                                    <small class="text-muted d-block mb-1">Minimal kolom: nama barang, satuan, hpp/harga_satuan, spop</small>
+                                    <small class="text-muted d-block mb-2">
+                                        Rekomendasi nama file CSV sertakan <strong>bulan dan tahun</strong> agar mudah dikenali,
+                                        contoh: <code>persediaan_manual_2026_01.csv</code>.
+                                        Tabel database akan dibuat dari nama file + periode bulan/tahun terpilih.
+                                    </small>
+                                    <label for="compare_csv_file" class="mb-1">Pilih file CSV</label>
+                                    <div class="d-flex flex-wrap align-items-end compare-csv-upload-row">
+                                        <div class="custom-file custom-file-sm mb-0 compare-csv-file-wrap">
+                                            <input type="file" class="custom-file-input" id="compare_csv_file" accept=".csv,text/csv"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                            <label class="custom-file-label" for="compare_csv_file" data-browse="Pilih">Cari / pilih file CSV...</label>
+                                        </div>
+                                        <div id="compare-csv-upload-info" class="compare-csv-upload-info d-none ml-3 mb-1">
+                                            <div class="small mb-1">
+                                                <span class="text-muted">File:</span>
+                                                <strong id="compare-csv-filename" class="text-dark">—</strong>
+                                            </div>
+                                            <div class="small mb-1">
+                                                <span class="text-muted">Tabel DB:</span>
+                                                <strong id="compare-csv-tablename" class="text-primary">—</strong>
+                                                <span class="text-muted" id="compare-csv-rowcount"></span>
+                                            </div>
+                                            <button type="button" id="btn-compare-csv-lihat" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-table"></i> Lihat Data
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3 align-items-end compare-toolbar-row flex-nowrap">
+                                <div class="col-auto mb-2">
+                                    <label for="compare_bulan_persediaan" class="small mb-1">Bulan</label>
+                                    <select id="compare_bulan_persediaan" class="form-control form-control-sm compare-toolbar-control">
                                         <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
                                             <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $compare_bulan_num) ? ' selected' : ''; ?>>
                                                 <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
@@ -546,9 +577,9 @@
                                         <?php } ?>
                                     </select>
                                 </div>
-                                <div class="col-md-2 col-sm-6 mb-2">
-                                    <label for="compare_tahun_persediaan">Tahun</label>
-                                    <select id="compare_tahun_persediaan" class="form-control">
+                                <div class="col-auto mb-2">
+                                    <label for="compare_tahun_persediaan" class="small mb-1">Tahun</label>
+                                    <select id="compare_tahun_persediaan" class="form-control form-control-sm compare-toolbar-control">
                                         <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
                                             <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $compare_tahun_num) ? ' selected' : ''; ?>>
                                                 <?php echo (int) $th; ?>
@@ -556,18 +587,18 @@
                                         <?php } ?>
                                     </select>
                                 </div>
-                                <div class="col-md-4 col-sm-12 mb-2">
-                                    <label for="compare_tabel_pilihan">Tabel database</label>
-                                    <select id="compare_tabel_pilihan" class="form-control">
+                                <div class="col-auto mb-2">
+                                    <label for="compare_tabel_pilihan" class="small mb-1">pilih tabel untuk di bandingkan / comparing</label>
+                                    <select id="compare_tabel_pilihan" class="form-control form-control-sm compare-toolbar-control compare-toolbar-tabel">
                                         <option value="">— Muat daftar tabel —</option>
                                     </select>
-                                    <small class="text-muted">Minimal kolom: nama barang, satuan, hpp/harga_satuan, spop</small>
                                 </div>
-                                <div class="col-md-4 col-sm-12 mb-2">
-                                    <button type="button" id="btn-compare-tabel" class="btn btn-info btn-lg"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                <div class="col-auto mb-2">
+                                    <label class="small mb-1 d-block">&nbsp;</label>
+                                    <button type="button" id="btn-compare-tabel" class="btn btn-info btn-sm"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
                                         <i class="fas fa-columns"></i> Compare
                                     </button>
-                                    <button type="button" id="btn-compare-excel-all" class="btn btn-success btn-lg ml-2"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                    <button type="button" id="btn-compare-excel-all" class="btn btn-success btn-sm ml-1"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
                                         <i class="fas fa-file-excel"></i> Cetak Excel ALL
                                     </button>
                                 </div>
@@ -637,6 +668,36 @@
                                     </tr></thead>
                                     <tbody></tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="modal-compare-csv-preview" tabindex="-1" role="dialog" aria-labelledby="modalCompareCsvPreviewLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-xl" role="document" style="max-width:95%;">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-primary text-white py-2">
+                                        <h5 class="modal-title" id="modalCompareCsvPreviewLabel">Review Data Tabel CSV</h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body pb-2">
+                                        <p class="text-muted small mb-2" id="compare-csv-preview-meta">
+                                            Memuat informasi tabel...
+                                        </p>
+                                        <div id="compare-csv-preview-loading" class="text-center py-4 text-muted d-none">
+                                            <i class="fas fa-spinner fa-spin"></i> Memuat data tabel...
+                                        </div>
+                                        <div class="compare-csv-preview-dt-wrap">
+                                            <table id="table-compare-csv-preview" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                <thead><tr></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer py-2">
+                                        <button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -797,6 +858,49 @@
     .compare-dt-wrap table.dataTable tbody td {
         white-space: nowrap;
     }
+    .compare-toolbar-row .compare-toolbar-control {
+        width: 110px;
+        min-width: 110px;
+    }
+    #compare_tahun_persediaan.compare-toolbar-control {
+        width: 88px;
+        min-width: 88px;
+    }
+    #compare_tabel_pilihan.compare-toolbar-tabel {
+        width: 240px;
+        min-width: 180px;
+        max-width: 320px;
+    }
+    .custom-file-sm .custom-file-label,
+    .custom-file-sm .custom-file-label::after {
+        height: calc(1.8125rem + 2px);
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    .compare-csv-file-wrap {
+        max-width: 520px;
+        min-width: 280px;
+        flex: 0 1 520px;
+    }
+    .compare-csv-upload-info {
+        flex: 1 1 240px;
+        min-width: 220px;
+        padding: 6px 10px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .compare-csv-preview-dt-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+    .compare-csv-preview-dt-wrap .dataTables_wrapper {
+        width: 100%;
+    }
+    .compare-csv-preview-dt-wrap .dataTables_scrollBody {
+        max-height: 420px;
+    }
 </style>
 
 <script>
@@ -821,6 +925,8 @@ window.addEventListener('load', function() {
     var urlCompareTabelRun = <?php echo json_encode(isset($url_compare_tabel_run) ? $url_compare_tabel_run : site_url('Persediaan/ajax_compare_tabel_run')); ?>;
     var urlCompareTabelExcel = <?php echo json_encode(isset($url_compare_tabel_excel) ? $url_compare_tabel_excel : site_url('Persediaan/excel_compare_tabel')); ?>;
     var urlCompareTabelExcelAll = <?php echo json_encode(isset($url_compare_tabel_excel_all) ? $url_compare_tabel_excel_all : site_url('Persediaan/excel_compare_tabel_all')); ?>;
+    var urlCompareImportCsv = <?php echo json_encode(isset($url_compare_import_csv) ? $url_compare_import_csv : site_url('Persediaan/ajax_compare_import_csv')); ?>;
+    var urlCompareTabelPreview = <?php echo json_encode(isset($url_compare_tabel_preview) ? $url_compare_tabel_preview : site_url('Persediaan/ajax_compare_tabel_preview')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
@@ -1733,6 +1839,8 @@ window.addEventListener('load', function() {
     var compareDtStore = {};
     var compareTablesLoaded = false;
     var compareLastResult = null;
+    var compareCsvLastUpload = null;
+    var compareCsvPreviewDt = null;
     var compareDtLang = {
         emptyTable: 'Belum ada data',
         info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
@@ -1776,7 +1884,7 @@ window.addEventListener('load', function() {
         $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
     }
 
-    function loadCompareTableList(force) {
+    function loadCompareTableList(force, selectTable) {
         if (compareTablesLoaded && !force) return;
         var $sel = $('#compare_tabel_pilihan');
         $sel.prop('disabled', true);
@@ -1789,7 +1897,7 @@ window.addEventListener('load', function() {
                 setCompareStatus('danger', (res && res.message) ? res.message : 'Gagal memuat daftar tabel.');
                 return;
             }
-            var cur = $sel.val();
+            var cur = selectTable || $sel.val();
             $sel.find('option:not(:first)').remove();
             (res.tables || []).forEach(function(tbl) {
                 $sel.append($('<option>', { value: tbl, text: tbl }));
@@ -1801,6 +1909,198 @@ window.addEventListener('load', function() {
             setCompareStatus('danger', 'Tidak dapat memuat daftar tabel dari server.');
         }).always(function() {
             $sel.prop('disabled', false);
+        });
+    }
+
+    function showCompareCsvAlertMessage(res, icon, title) {
+        var msg = (res && res.message) ? String(res.message) : '';
+        var html = '<div style="text-align:left;font-size:14px;white-space:pre-wrap;">'
+            + escapeHtmlCompare(msg) + '</div>';
+        Swal.fire({
+            icon: icon,
+            title: title,
+            html: html
+        });
+    }
+
+    function updateCompareCsvUploadInfo(data) {
+        data = data || null;
+        var $box = $('#compare-csv-upload-info');
+        if (!data || !data.table) {
+            compareCsvLastUpload = null;
+            $box.addClass('d-none');
+            $('#compare-csv-filename').text('—');
+            $('#compare-csv-tablename').text('—');
+            $('#compare-csv-rowcount').text('');
+            return;
+        }
+        compareCsvLastUpload = {
+            file: data.file || '',
+            table: data.table || '',
+            rows: data.rows || 0
+        };
+        $('#compare-csv-filename').text(compareCsvLastUpload.file || '—');
+        $('#compare-csv-tablename').text(compareCsvLastUpload.table || '—');
+        $('#compare-csv-rowcount').text(
+            compareCsvLastUpload.rows ? (' (' + compareCsvLastUpload.rows + ' baris)') : ''
+        );
+        $box.removeClass('d-none');
+    }
+
+    function renderCompareCsvPreviewTable(res) {
+        res = res || {};
+        var cols = res.columns || [];
+        var rows = res.rows || [];
+        var $table = $('#table-compare-csv-preview');
+
+        if ($.fn.DataTable.isDataTable($table)) {
+            $table.DataTable().destroy();
+        }
+        $table.find('thead tr').empty();
+        $table.find('tbody').empty();
+
+        cols.forEach(function(col) {
+            $table.find('thead tr').append($('<th>').text(col));
+        });
+
+        var dtRows = rows.map(function(row) {
+            return cols.map(function(col) {
+                return (row && row[col] != null) ? String(row[col]) : '';
+            });
+        });
+
+        compareCsvPreviewDt = $table.DataTable({
+            data: dtRows,
+            scrollX: true,
+            scrollY: 400,
+            scrollCollapse: true,
+            paging: true,
+            pageLength: 25,
+            order: [],
+            language: compareDtLang,
+            autoWidth: false,
+            deferRender: true
+        });
+
+        setTimeout(function() {
+            if (compareCsvPreviewDt && compareCsvPreviewDt.columns) {
+                try { compareCsvPreviewDt.columns.adjust().draw(false); } catch (eAdj) {}
+            }
+        }, 200);
+    }
+
+    function openCompareCsvPreviewModal(table, fileLabel) {
+        table = (table || '').trim();
+        if (!table) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Belum ada tabel untuk ditampilkan.' });
+            return;
+        }
+
+        $('#compare-csv-preview-meta').text('Memuat data tabel `' + table + '`...');
+        $('#compare-csv-preview-loading').removeClass('d-none');
+        $('.compare-csv-preview-dt-wrap').addClass('d-none');
+        $('#modal-compare-csv-preview').modal('show');
+
+        var formData = new FormData();
+        formData.append('tabel', table);
+        formData.append('limit', '1000');
+
+        fetch(urlCompareTabelPreview, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(parseJsonFetchResponse)
+        .then(function(res) {
+            $('#compare-csv-preview-loading').addClass('d-none');
+            $('.compare-csv-preview-dt-wrap').removeClass('d-none');
+            if (!res || !res.ok) {
+                $('#compare-csv-preview-meta').text((res && res.message) ? res.message : 'Gagal memuat data tabel.');
+                renderCompareCsvPreviewTable({ columns: [], rows: [] });
+                return;
+            }
+            var meta = 'File: ' + (fileLabel || '—')
+                + ' | Tabel: `' + (res.table || table) + '`'
+                + ' | Total: ' + (res.total || 0) + ' baris';
+            if (res.truncated) {
+                meta += ' (ditampilkan ' + (res.shown || 0) + ' baris pertama)';
+            }
+            $('#compare-csv-preview-meta').text(meta);
+            $('#modalCompareCsvPreviewLabel').text('Review Data — ' + (res.table || table));
+            renderCompareCsvPreviewTable(res);
+        })
+        .catch(function(err) {
+            $('#compare-csv-preview-loading').addClass('d-none');
+            $('.compare-csv-preview-dt-wrap').removeClass('d-none');
+            $('#compare-csv-preview-meta').text(err && err.message ? err.message : 'Gagal memuat preview tabel.');
+            renderCompareCsvPreviewTable({ columns: [], rows: [] });
+        });
+    }
+
+    function importCompareCsvFile(file) {
+        if (!file) return;
+        if (!userCanComparePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Import CSV hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+            });
+            return;
+        }
+
+        var ext = (file.name || '').split('.').pop().toLowerCase();
+        if (ext !== 'csv') {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'File harus berformat .csv' });
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('csv_file', file);
+        formData.append('bulan_num', $('#compare_bulan_persediaan').val() || '');
+        formData.append('tahun', $('#compare_tahun_persediaan').val() || '');
+
+        Swal.fire({
+            title: 'Memproses CSV...',
+            html: 'Membuat tabel baru, menyesuaikan kolom, dan meng-upload data.',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: function() { Swal.showLoading(); }
+        });
+
+        fetch(urlCompareImportCsv, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(parseJsonFetchResponse)
+        .then(function(res) {
+            Swal.close();
+            if (!res || !res.ok) {
+                showCompareCsvAlertMessage(res, 'error', 'Import CSV gagal');
+                return;
+            }
+
+            compareTablesLoaded = false;
+            loadCompareTableList(true, res.table || '');
+            updateCompareInfoRingkas({ table: res.table || '' });
+            updateCompareCsvUploadInfo({
+                file: res.file || (file && file.name ? file.name : ''),
+                table: res.table || '',
+                rows: res.rows || 0
+            });
+            setCompareStatus('success', escapeHtmlCompare(res.message || 'CSV berhasil disimpan.'));
+
+            showCompareCsvAlertMessage(res, 'success', 'Import CSV berhasil');
+
+            $('#compare_csv_file').val('').next('.custom-file-label').text('Cari / pilih file CSV...');
+        })
+        .catch(function(err) {
+            Swal.close();
+            showCompareCsvAlertMessage({
+                message: err && err.message ? err.message : 'Import CSV gagal. Periksa koneksi atau refresh halaman.'
+            }, 'error', 'Import CSV gagal');
         });
     }
 
@@ -1995,6 +2295,33 @@ window.addEventListener('load', function() {
         updateTombolComparePersediaan();
         loadCompareTableList(false);
         updateCompareInfoRingkas();
+    });
+
+    $('#compare_csv_file').on('change', function() {
+        var file = (this.files && this.files[0]) ? this.files[0] : null;
+        var label = file ? file.name : 'Cari / pilih file CSV...';
+        $(this).next('.custom-file-label').text(label);
+        if (file) {
+            importCompareCsvFile(file);
+        }
+    });
+
+    $('#btn-compare-csv-lihat').on('click', function() {
+        if (!compareCsvLastUpload || !compareCsvLastUpload.table) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Upload CSV terlebih dahulu.' });
+            return;
+        }
+        openCompareCsvPreviewModal(compareCsvLastUpload.table, compareCsvLastUpload.file);
+    });
+
+    $('#modal-compare-csv-preview').on('hidden.bs.modal', function() {
+        var $table = $('#table-compare-csv-preview');
+        if ($.fn.DataTable.isDataTable($table)) {
+            $table.DataTable().destroy();
+            $table.find('thead tr').empty();
+            $table.find('tbody').empty();
+        }
+        compareCsvPreviewDt = null;
     });
 
     $('#compare_bulan_persediaan, #compare_tahun_persediaan, #compare_tabel_pilihan').on('change', function() {
