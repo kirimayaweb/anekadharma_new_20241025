@@ -395,22 +395,22 @@ class Tbl_pembelian extends CI_Controller
 		excel_prepare_download($namaFile);
 		xlsBOF();
 
-		$col_types = persediaan_export_column_types($this);
+		$col_types = persediaan_stock_export_column_types($this);
 
 		xlsWriteLabelBold14(0, 0, 'Stock Persediaan — dicetak pada : ' . $waktu_cetak_tampil);
 
 		$kolomhead = 0;
-		foreach (persediaan_export_headers($this) as $header) {
+		foreach (persediaan_stock_export_headers($this) as $header) {
 			xlsWriteLabel($tablehead, $kolomhead++, $header);
 		}
 
 		foreach ($Persediaan as $data) {
-			$total_total_10 += persediaan_parse_angka(persediaan_row_get($data, 'total_10'));
-			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+			$total_total_10 += persediaan_hitung_total_10_kalkulasi($data);
+			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_stock_row($data);
 			foreach (persediaan_list_unit_columns($this) as $uf_excel) {
 				$totals_nominal_unit[$uf_excel] += persediaan_hitung_kolom_nominal_row($data, $uf_excel);
 			}
-			$cells = persediaan_export_row_cells($data, $nourut, $bulan, $this);
+			$cells = persediaan_stock_export_row_cells($data, $nourut, $bulan, $this);
 			$kolombody = 0;
 			foreach ($cells as $cell) {
 				persediaan_export_write_cell($tablebody, $kolombody++, $cell, $col_types);
@@ -419,7 +419,7 @@ class Tbl_pembelian extends CI_Controller
 			$nourut++;
 		}
 
-		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $this);
+		$footer_cells = persediaan_stock_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $this);
 		$kolomfoot = 0;
 		foreach ($footer_cells as $cell) {
 			persediaan_export_write_cell($tablebody, $kolomfoot++, $cell, $col_types);

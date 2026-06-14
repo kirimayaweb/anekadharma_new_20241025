@@ -66,7 +66,6 @@ $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
                                 <th>Terjual</th>
                                 <th>Jumlah Pecah Satuan</th>
                                 <th>Bahan Produksi</th>
-                                <th>Sisa / Stock</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,14 +78,13 @@ $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
                                 $total_nominal_unit[$uf_total] = 0;
                             }
                             foreach ($Persediaan_data as $persediaan) {
-                                $total_10_row = persediaan_parse_angka(persediaan_row_get($persediaan, 'total_10'));
-                                $nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
+                                $total_10_row = persediaan_hitung_total_10_kalkulasi($persediaan);
+                                $nilai_persediaan_row = persediaan_hitung_nilai_persediaan_stock_row($persediaan);
                                 $total_total_10 += $total_10_row;
                                 $total_nilai_persediaan += $nilai_persediaan_row;
                                 foreach (persediaan_list_unit_columns() as $uf_total) {
                                     $total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
                                 }
-                                $sisa_stock = persediaan_hitung_sisa_stock($persediaan);
                             ?>
                                 <tr>
                                     <td><?php echo ++$start ?></td>
@@ -100,16 +98,19 @@ $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
                                     <td><?php echo $persediaan->beli ?></td>
                                     <td><?php echo $persediaan->tuj ?></td>
                                     <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
-                                        <td><?php echo persediaan_row_get($persediaan, $field_tgl_total); ?></td>
-                                        <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
-                                            <td class="text-right"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
+                                        <?php if ($field_tgl_total === 'total_10') { ?>
+                                            <td><?php echo persediaan_tampil_total_10_stock_row($persediaan); ?></td>
+                                        <?php } else { ?>
+                                            <td><?php echo persediaan_row_get($persediaan, $field_tgl_total); ?></td>
+                                            <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+                                                <td class="text-right"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
+                                            <?php } ?>
                                         <?php } ?>
                                     <?php } ?>
                                     <td><?php echo persediaan_format_angka_tampil($nilai_persediaan_row); ?></td>
                                     <td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
                                     <td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
                                     <td><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
-                                    <td><?php echo is_numeric($sisa_stock) && floor($sisa_stock) == $sisa_stock ? (int) $sisa_stock : $sisa_stock; ?></td>
                                 </tr>
                             <?php } ?>
                         </tbody>
@@ -117,7 +118,6 @@ $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
                             <tr>
                                 <?php
                                 $footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit);
-                                $footer_cells[] = '';
                                 $idx_foot_total_10 = persediaan_list_col_index_total_10();
                                 $idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
                                 $idx_foot_nominal = array();

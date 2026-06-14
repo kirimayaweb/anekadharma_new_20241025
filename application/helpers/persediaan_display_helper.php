@@ -104,6 +104,37 @@ function persediaan_tampil_total_10_net_row($row)
 }
 
 /**
+ * Halaman Stock: total_10 = (sa + beli) - (penjualan + pecah_satuan + bahan_produksi).
+ */
+function persediaan_hitung_total_10_kalkulasi($row)
+{
+	$sa = persediaan_parse_angka(persediaan_row_get($row, 'sa'));
+	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
+	$penjualan = persediaan_parse_angka(persediaan_row_get($row, 'penjualan'));
+	$pecah_satuan = persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'));
+	$bahan_produksi = persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'));
+
+	return max(0, (int) floor($sa + $beli - $penjualan - $pecah_satuan - $bahan_produksi));
+}
+
+function persediaan_hitung_nilai_persediaan_stock_row($row)
+{
+	$total_10 = persediaan_hitung_total_10_kalkulasi($row);
+	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+	return $total_10 * $hpp;
+}
+
+function persediaan_tampil_total_10_stock_row($row)
+{
+	$val = persediaan_hitung_total_10_kalkulasi($row);
+	if ($val == 0) {
+		$raw = persediaan_row_get($row, 'total_10');
+		return ($raw === '0' || $raw === 0) ? '0' : '';
+	}
+	return persediaan_format_angka_tampil($val);
+}
+
+/**
  * Tab Data Persediaan: baris ditampilkan/di-export jika namabarang terisi
  * dan minimal salah satu sa, beli, atau total_10 bernilai lebih dari 0.
  */
@@ -759,6 +790,91 @@ function persediaan_list_col_index_unit_nominal($field, $CI = null)
 		}
 	}
 	return -1;
+}
+
+/**
+ * Footer datatable halaman Stock (tanpa kolom Sisa/Stock).
+ */
+function persediaan_stock_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null)
+{
+	return persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI);
+}
+
+function persediaan_stock_export_headers($CI = null)
+{
+	return persediaan_export_headers($CI);
+}
+
+function persediaan_stock_export_column_types($CI = null)
+{
+	return persediaan_export_column_types($CI);
+}
+
+function persediaan_stock_export_row_cells($row, $no, $bulan_filter = '', $CI = null)
+{
+	$penjualan = isset($row->penjualan) ? $row->penjualan : 0;
+	$pecah_satuan = isset($row->pecah_satuan) ? $row->pecah_satuan : 0;
+	$bahan_produksi = isset($row->bahan_produksi) ? $row->bahan_produksi : 0;
+	$nilai_persediaan = persediaan_hitung_nilai_persediaan_stock_row($row);
+
+	$cells = array(
+		$no,
+		persediaan_format_bulan_tahun($row, $bulan_filter),
+		isset($row->kategori) ? $row->kategori : '',
+		isset($row->namabarang) ? $row->namabarang : '',
+		isset($row->satuan) ? $row->satuan : '',
+		persediaan_export_blank_if_zero(isset($row->hpp) ? $row->hpp : ''),
+		persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		persediaan_export_blank_if_zero(isset($row->spop) ? $row->spop : ''),
+		persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		persediaan_export_blank_if_zero(isset($row->tuj) ? $row->tuj : ''),
+	);
+
+	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
+		if ($field === 'tgl_keluar') {
+			$cells[] = persediaan_row_get($row, $field);
+		} elseif ($field === 'total_10') {
+			$cells[] = persediaan_export_blank_if_zero(persediaan_hitung_total_10_kalkulasi($row));
+		} else {
+			$cells[] = persediaan_export_blank_if_zero(persediaan_row_get($row, $field));
+			if (persediaan_field_has_nominal_column($field)) {
+				$cells[] = persediaan_export_blank_if_zero(persediaan_hitung_kolom_nominal_row($row, $field));
+			}
+		}
+	}
+
+	$cells[] = persediaan_export_blank_if_zero($nilai_persediaan);
+	$cells[] = persediaan_export_blank_if_zero($penjualan);
+	$cells[] = persediaan_export_blank_if_zero($pecah_satuan);
+	$cells[] = persediaan_export_blank_if_zero($bahan_produksi);
+
+	return $cells;
+}
+
+function persediaan_stock_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null)
+{
+	$footer = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI);
+	$idx_total_10 = persediaan_list_col_index_total_10($CI);
+	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
+	if (isset($footer[$idx_total_10])) {
+		$footer[$idx_total_10] = persediaan_export_blank_if_zero($total_total_10);
+	}
+	if (isset($footer[$idx_nilai])) {
+		$footer[$idx_nilai] = persediaan_export_blank_if_zero($total_nilai_persediaan);
+	}
+	foreach (persediaan_list_unit_columns($CI) as $field) {
+		if (!persediaan_field_has_nominal_column($field)) {
+			continue;
+		}
+		$idx_nom = persediaan_list_col_index_unit_nominal($field, $CI);
+		if ($idx_nom >= 0 && isset($footer[$idx_nom])) {
+			$sum_nom = is_array($totals_nominal_unit) && isset($totals_nominal_unit[$field])
+				? (float) $totals_nominal_unit[$field]
+				: 0;
+			$footer[$idx_nom] = persediaan_export_blank_if_zero($sum_nom);
+		}
+	}
+	return $footer;
 }
 
 /**
