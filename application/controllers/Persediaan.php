@@ -741,11 +741,11 @@ class Persediaan extends CI_Controller
 		} elseif ($sudah_ada) {
 			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate & Recalculate akan: '
 				. '(1) hapus baris target sa=0 &amp; total_10=0, '
-				. '(2) salin/update <strong>' . $count_sumber . '</strong> record sumber (sa atau total_10 &gt; 0), '
+				. '(2) salin/update <strong>' . $count_sumber . '</strong> record sumber (total_10 &gt;= 1), '
 				. '(3) proses pembelian bulan ini → insert baru / update <strong>beli</strong>.';
 		} else {
 			$message = 'Siap Generate & Recalculate: salin/update <strong>' . $count_sumber . '</strong> record dari bulan '
-				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya sa atau total_10 &gt; 0, dari ' . $count_sumber_all . ' record sumber) ke bulan '
+				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya total_10 &gt;= 1, dari ' . $count_sumber_all . ' record sumber) ke bulan '
 				. date('m/Y', $ts_target) . ', lalu proses pembelian (record baru → insert persediaan).';
 		}
 
@@ -879,10 +879,10 @@ class Persediaan extends CI_Controller
 		$estimasi_insert = $total_sumber;
 		$estimasi_update = 0;
 
-		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber (sa atau total_10 &gt; 0) akan di-<strong>INSERT/UPDATE</strong> ke bulan target. '
-			. 'Baris dengan sa=0 dan total_10=0 tidak disalin. Baris target sa=0 &amp; total_10=0 dihapus. '
+		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber (total_10 &gt;= 1) akan di-<strong>INSERT/UPDATE</strong> ke bulan target. '
+			. 'Baris dengan total_10 &lt; 1 atau kosong tidak disalin. Baris target sa=0 &amp; beli=0 &amp; total_10=0 dihapus. '
 			. 'Disalin: <strong>uuid_barang, namabarang, satuan, hpp</strong>; '
-			. '<strong>sa</strong> dan <strong>total_10</strong> = saldo akhir bulan sumber (total_10, atau sa jika total_10 0). '
+			. '<strong>sa</strong> dan <strong>total_10</strong> = saldo akhir bulan sumber (nilai field total_10). '
 			. '<strong>beli</strong> dan <strong>penjualan</strong> = 0 (diisi lewat proses pembelian/penjualan).';
 		if ($total_target > 0) {
 			$penjelasan .= ' Saat ini bulan target sudah ada <strong>' . $total_target . ' record</strong> — akan diganti saat generate.';
@@ -3105,7 +3105,7 @@ class Persediaan extends CI_Controller
 				'satuan' => $satuan,
 				'hpp' => $hpp,
 				'total_10' => isset($row->total_10) ? $row->total_10 : '',
-				'keterangan' => 'Lewati: sa=0 dan total_10=0 di bulan sumber — tidak di-copy ke bulan target',
+				'keterangan' => 'Lewati: total_10 < 1 atau kosong di bulan sumber — tidak di-copy ke bulan target',
 			);
 		}
 
@@ -3222,7 +3222,7 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Jumlah record bulan sumber yang layak di-generate (sa > 0 atau total_10 > 0).
+	 * Jumlah record bulan sumber yang layak di-generate (total_10 >= 1).
 	 */
 	private function persediaan_count_sumber_layak_generate($tanggal_beli_sumber)
 	{

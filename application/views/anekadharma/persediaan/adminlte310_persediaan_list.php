@@ -1307,7 +1307,7 @@ window.addEventListener('load', function() {
             html += '</tbody></table></div>';
         }
 
-        html += '<p class="text-info small mt-2 mb-0"><strong>Catatan:</strong> Fase 1: hanya salin sumber dengan sa atau total_10 &gt; 0; sa=0 &amp; total_10=0 dilewati/dihapus di target. Fase 2–3: beli/penjualan seperti biasa.</p>';
+        html += '<p class="text-info small mt-2 mb-0"><strong>Catatan:</strong> Fase 1: hanya salin sumber dengan total_10 &gt;= 1; total_10 &lt; 1 atau kosong dilewati/dihapus di target. Fase 2–3: beli/penjualan seperti biasa.</p>';
         if ((a.grup_duplikat_uuid_barang_sumber || 0) > 0) {
             html += '<p class="text-muted small mb-0">uuid_barang ganda di sumber (' + a.grup_duplikat_uuid_barang_sumber
                 + ' grup) diperbaiki otomatis sebelum salin agar tiap baris sumber unik.</p>';
@@ -1993,7 +1993,7 @@ window.addEventListener('load', function() {
                 icon: 'question',
                 title: 'Konfirmasi Generate & Recalculate',
                 html: '<p>Bulan target: <strong>' + bulanKey + '</strong></p>'
-                    + '<p class="small text-muted mb-0">Fase 1: salin sumber (sa atau total_10 &gt; 0), hapus target sa=0 &amp; total_10=0.<br/>'
+                    + '<p class="small text-muted mb-0">Fase 1: salin sumber (total_10 &gt;= 1), hapus target sa=0 &amp; beli=0 &amp; total_10=0.<br/>'
                     + 'Fase 2: pembelian → beli += jumlah, total_10 += jumlah (nama+satuan+hpp+spop).<br/>'
                     + 'Fase 3: penjualan → unit + penjualan += jumlah, total_10 -= jumlah (nama+satuan+hpp).<br/>'
                     + 'Fase 4: bahan produksi dari sys_unit_produk_bahan → bahan_produksi += jumlah_bahan, total_10 -= jumlah_bahan (nama+satuan+hpp).<br/>'

@@ -6196,7 +6196,7 @@ function persediaan_generate_recalculate_hapus_duplikat_bulan_target($CI, $tangg
 }
 
 /**
- * Record bulan sumber layak di-copy: sa atau beli atau total_10 ada nilai; skip jika sa=0 dan beli=0.
+ * Record bulan sumber layak di-copy jika total_10 >= 1 (saldo akhir bulan sebelumnya).
  */
 function persediaan_generate_recalculate_sumber_layak_generate($row)
 {
@@ -6205,15 +6205,9 @@ function persediaan_generate_recalculate_sumber_layak_generate($row)
 		$CI->load->helper('persediaan_display');
 	}
 
-	$sa = persediaan_parse_angka(is_array($row) ? (isset($row['sa']) ? $row['sa'] : 0) : (isset($row->sa) ? $row->sa : 0));
-	$beli = persediaan_parse_angka(is_array($row) ? (isset($row['beli']) ? $row['beli'] : 0) : (isset($row->beli) ? $row->beli : 0));
 	$total_10 = persediaan_parse_angka(is_array($row) ? (isset($row['total_10']) ? $row['total_10'] : 0) : (isset($row->total_10) ? $row->total_10 : 0));
 
-	if ($sa <= 0 && $beli <= 0) {
-		return false;
-	}
-
-	return ($sa > 0 || $beli > 0 || $total_10 > 0);
+	return ($total_10 >= 1);
 }
 
 function persediaan_generate_recalculate_sql_cast_decimal($field)
@@ -6223,14 +6217,13 @@ function persediaan_generate_recalculate_sql_cast_decimal($field)
 }
 
 /**
- * SQL tambahan: baris sumber layak generate (bukan sa=0 dan beli=0).
+ * SQL tambahan: baris sumber layak generate (total_10 >= 1).
  */
 function persediaan_generate_recalculate_sql_filter_total10_positif()
 {
-	$sa = persediaan_generate_recalculate_sql_cast_decimal('sa');
-	$beli = persediaan_generate_recalculate_sql_cast_decimal('beli');
+	$total = persediaan_generate_recalculate_sql_cast_decimal('total_10');
 
-	return " AND ({$sa} > 0 OR {$beli} > 0)";
+	return " AND {$total} >= 1";
 }
 
 /**
@@ -6303,7 +6296,7 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 			'sa' => '',
 			'beli' => '',
 			'total_10' => isset($row_sumber->total_10) ? $row_sumber->total_10 : '',
-			'keterangan' => 'Lewati: sa=0 dan beli=0 di bulan sumber — tidak di-copy ke bulan target',
+			'keterangan' => 'Lewati: total_10 < 1 atau kosong di bulan sumber — tidak di-copy ke bulan target',
 		);
 	}
 
@@ -8846,7 +8839,7 @@ function persediaan_generate_recalculate_finish_all($CI, $bulan, $ctx, $count_su
 		'pecah_reapply' => $pecah_info,
 		'nilai_persediaan_refresh' => $nilai_info,
 		'refresh_persediaan' => true,
-		'pesan' => 'Selesai: generate dari bulan sumber (sa/beli ada nilai), pembelian (match spop), penjualan dari tbl_penjualan, bahan produksi dari sys_unit_produk_bahan, pecah satuan dari tbl_pembelian_pecah_satuan.'
+		'pesan' => 'Selesai: generate dari bulan sumber (total_10 >= 1), pembelian (match spop), penjualan dari tbl_penjualan, bahan produksi dari sys_unit_produk_bahan, pecah satuan dari tbl_pembelian_pecah_satuan.'
 			. $pesan_penj
 			. $pesan_prod
 			. $pesan_pecah
@@ -9178,9 +9171,9 @@ function persediaan_generate_recalculate_batch($CI, $bulan, $offset, $limit, $st
 			'bulan_sumber_label' => $ctx['bulan_sumber_label'],
 			'items_persediaan' => $items_persediaan,
 			'stats' => $state['stats'],
-			'pesan' => 'Generate fase 1: ' . $offset_selesai . ' / ' . $count_sumber . ' record sumber (sa atau total_10 > 0)'
+			'pesan' => 'Generate fase 1: ' . $offset_selesai . ' / ' . $count_sumber . ' record sumber (total_10 >= 1)'
 				. (isset($ctx['count_sumber_skip_total10']) && (int) $ctx['count_sumber_skip_total10'] > 0
-					? ', lewati ' . (int) $ctx['count_sumber_skip_total10'] . ' record sa=0 & total_10=0' : ''),
+					? ', lewati ' . (int) $ctx['count_sumber_skip_total10'] . ' record total_10 < 1 atau kosong' : ''),
 		);
 	}
 
@@ -10917,6 +10910,38 @@ function persediaan_compare_row_get($row, $col)
 	return isset($row->{$col}) ? $row->{$col} : '';
 }
 
+/**
+ * Nilai numerik kosong/null → 0 (selaras persediaan: beli=0, bukan blank).
+ */
+function persediaan_compare_excel_all_normalize_numeric_display($value)
+{
+	$CI = get_instance();
+	$CI->load->helper('persediaan_display');
+	$n = persediaan_parse_angka($value);
+	if (abs($n - floor($n)) < 0.0001) {
+		return (string) (int) floor($n);
+	}
+
+	return (string) $n;
+}
+
+/**
+ * SPOP kosong/null → 0 (selaras hasil generate persediaan).
+ */
+function persediaan_compare_excel_all_normalize_spop_display($spop)
+{
+	if (persediaan_recalculate_spop_kosong_atau_nol($spop)) {
+		return '0';
+	}
+
+	$s = persediaan_recalculate_normalize_spop($spop);
+	if (preg_match('/^\d+$/', $s)) {
+		return (string) (int) $s;
+	}
+
+	return $s;
+}
+
 function persediaan_compare_build_key($nama, $satuan, $hpp, $spop)
 {
 	return persediaan_recalculate_sync_pembelian_persediaan_key($nama, $satuan, $hpp, $spop);
@@ -11835,8 +11860,12 @@ function persediaan_compare_excel_all_fill_manual(&$row, $manual_row, $map, $ext
 
 	$row[$s] = persediaan_compare_row_get($manual_row, $map['nama']);
 	$row[$s + 1] = persediaan_compare_row_get($manual_row, $map['satuan']);
-	$row[$s + 2] = persediaan_compare_row_get($manual_row, $map['hpp']);
-	$row[$s + 3] = persediaan_compare_row_get($manual_row, $map['spop']);
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display(
+		persediaan_compare_row_get($manual_row, $map['hpp'])
+	);
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_spop_display(
+		persediaan_compare_row_get($manual_row, $map['spop'])
+	);
 
 	$sa_col = isset($extra_cols['sa']) ? $extra_cols['sa'] : null;
 	$beli_col = isset($extra_cols['beli']) ? $extra_cols['beli'] : null;
@@ -11845,15 +11874,20 @@ function persediaan_compare_excel_all_fill_manual(&$row, $manual_row, $map, $ext
 	$nilai_col = isset($extra_cols['nilai_persediaan']) ? $extra_cols['nilai_persediaan'] : null;
 
 	$row[$s + 4] = ($sa_col !== null && $sa_col !== '')
-		? persediaan_compare_row_get($manual_row, $sa_col) : '';
+		? persediaan_compare_excel_all_normalize_numeric_display(persediaan_compare_row_get($manual_row, $sa_col))
+		: '0';
 	$row[$s + 5] = ($beli_col !== null && $beli_col !== '')
-		? persediaan_compare_row_get($manual_row, $beli_col) : '';
+		? persediaan_compare_excel_all_normalize_numeric_display(persediaan_compare_row_get($manual_row, $beli_col))
+		: '0';
 	$row[$s + 6] = ($tuj_col !== null && $tuj_col !== '')
-		? persediaan_compare_row_get($manual_row, $tuj_col) : '';
+		? persediaan_compare_excel_all_normalize_numeric_display(persediaan_compare_row_get($manual_row, $tuj_col))
+		: '0';
 	$row[$s + 7] = ($col_10 !== null && $col_10 !== '')
-		? persediaan_compare_row_get($manual_row, $col_10) : '';
+		? persediaan_compare_excel_all_normalize_numeric_display(persediaan_compare_row_get($manual_row, $col_10))
+		: '0';
 	$row[$s + 8] = ($nilai_col !== null && $nilai_col !== '')
-		? persediaan_compare_row_get($manual_row, $nilai_col) : '';
+		? persediaan_compare_excel_all_normalize_numeric_display(persediaan_compare_row_get($manual_row, $nilai_col))
+		: '0';
 }
 
 function persediaan_compare_excel_all_fill_persediaan(&$row, $prow)
@@ -11870,13 +11904,13 @@ function persediaan_compare_excel_all_fill_persediaan(&$row, $prow)
 
 	$row[$s] = isset($prow->namabarang) ? $prow->namabarang : '';
 	$row[$s + 1] = isset($prow->satuan) ? $prow->satuan : '';
-	$row[$s + 2] = isset($prow->hpp) ? $prow->hpp : '';
-	$row[$s + 3] = isset($prow->spop) ? $prow->spop : '';
-	$row[$s + 4] = isset($prow->sa) ? $prow->sa : '';
-	$row[$s + 5] = isset($prow->beli) ? $prow->beli : '';
-	$row[$s + 6] = isset($prow->tuj) ? $prow->tuj : '';
-	$row[$s + 7] = isset($prow->total_10) ? $prow->total_10 : '';
-	$row[$s + 8] = $nilai_persediaan;
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display(isset($prow->hpp) ? $prow->hpp : '');
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_spop_display(isset($prow->spop) ? $prow->spop : '');
+	$row[$s + 4] = persediaan_compare_excel_all_normalize_numeric_display(isset($prow->sa) ? $prow->sa : '');
+	$row[$s + 5] = persediaan_compare_excel_all_normalize_numeric_display(isset($prow->beli) ? $prow->beli : '');
+	$row[$s + 6] = persediaan_compare_excel_all_normalize_numeric_display(isset($prow->tuj) ? $prow->tuj : '');
+	$row[$s + 7] = persediaan_compare_excel_all_normalize_numeric_display(isset($prow->total_10) ? $prow->total_10 : '');
+	$row[$s + 8] = persediaan_compare_excel_all_normalize_numeric_display($nilai_persediaan);
 }
 
 function persediaan_compare_excel_all_fill_pembelian(&$row, $r)
@@ -11885,9 +11919,9 @@ function persediaan_compare_excel_all_fill_pembelian(&$row, $r)
 	$s = $starts['pembelian'];
 	$row[$s] = isset($r->uraian) ? $r->uraian : '';
 	$row[$s + 1] = isset($r->satuan) ? $r->satuan : '';
-	$row[$s + 2] = isset($r->harga_satuan) ? $r->harga_satuan : '';
-	$row[$s + 3] = isset($r->spop) ? $r->spop : '';
-	$row[$s + 4] = isset($r->jumlah) ? $r->jumlah : '';
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->harga_satuan) ? $r->harga_satuan : '');
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_spop_display(isset($r->spop) ? $r->spop : '');
+	$row[$s + 4] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->jumlah) ? $r->jumlah : '');
 }
 
 function persediaan_compare_excel_all_fill_penjualan(&$row, $r)
@@ -11896,8 +11930,8 @@ function persediaan_compare_excel_all_fill_penjualan(&$row, $r)
 	$s = $starts['penjualan'];
 	$row[$s] = isset($r->nama_barang) ? $r->nama_barang : '';
 	$row[$s + 1] = isset($r->satuan) ? $r->satuan : '';
-	$row[$s + 2] = isset($r->harga_satuan) ? $r->harga_satuan : '';
-	$row[$s + 3] = isset($r->jumlah) ? $r->jumlah : '';
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->harga_satuan) ? $r->harga_satuan : '');
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->jumlah) ? $r->jumlah : '');
 }
 
 function persediaan_compare_excel_all_fill_produksi(&$row, $r, $spop = '')
@@ -11906,9 +11940,9 @@ function persediaan_compare_excel_all_fill_produksi(&$row, $r, $spop = '')
 	$s = $starts['produksi'];
 	$row[$s] = isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '';
 	$row[$s + 1] = isset($r->satuan_bahan) ? $r->satuan_bahan : '';
-	$row[$s + 2] = isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : '';
-	$row[$s + 3] = $spop;
-	$row[$s + 4] = isset($r->jumlah_bahan) ? $r->jumlah_bahan : '';
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : '');
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_spop_display($spop);
+	$row[$s + 4] = persediaan_compare_excel_all_normalize_numeric_display(isset($r->jumlah_bahan) ? $r->jumlah_bahan : '');
 }
 
 function persediaan_compare_excel_all_fill_pecah(&$row, $nama, $satuan, $harga, $spop, $jumlah)
@@ -11917,9 +11951,9 @@ function persediaan_compare_excel_all_fill_pecah(&$row, $nama, $satuan, $harga, 
 	$s = $starts['pecah'];
 	$row[$s] = $nama;
 	$row[$s + 1] = $satuan;
-	$row[$s + 2] = $harga;
-	$row[$s + 3] = $spop;
-	$row[$s + 4] = $jumlah;
+	$row[$s + 2] = persediaan_compare_excel_all_normalize_numeric_display($harga);
+	$row[$s + 3] = persediaan_compare_excel_all_normalize_spop_display($spop);
+	$row[$s + 4] = persediaan_compare_excel_all_normalize_numeric_display($jumlah);
 }
 
 function persediaan_compare_excel_all_alloc_row(&$rows, &$index_by_nama, $nama_key, $section)
@@ -12008,6 +12042,212 @@ function persediaan_compare_excel_all_collect_unused($index_list, &$used)
 	return $out;
 }
 
+function persediaan_compare_excel_all_sum_jumlah(&$target, $add)
+{
+	if ($add === '' || $add === null) {
+		return;
+	}
+	if (!is_numeric($add)) {
+		$clean = preg_replace('/[^\d.,\-]/', '', (string) $add);
+		$clean = str_replace(',', '.', $clean);
+		$add = $clean;
+	}
+	if (!is_numeric($add)) {
+		return;
+	}
+	$t = is_numeric($target) ? (float) $target : 0;
+	$target = $t + (float) $add;
+}
+
+function persediaan_compare_excel_all_merge_spop_label(&$existing, $spop)
+{
+	$spop = trim((string) $spop);
+	if ($spop === '') {
+		return;
+	}
+	$existing = trim((string) $existing);
+	if ($existing === '') {
+		$existing = $spop;
+		return;
+	}
+	$parts = array_map('trim', explode(',', $existing));
+	if (!in_array($spop, $parts, true)) {
+		$parts[] = $spop;
+		$existing = implode(', ', $parts);
+	}
+}
+
+function persediaan_compare_excel_all_aggregate_pembelian_list($rows)
+{
+	$bucket = array();
+	foreach ($rows as $r) {
+		$nama = isset($r->uraian) ? $r->uraian : '';
+		$satuan = isset($r->satuan) ? $r->satuan : '';
+		$hpp = isset($r->harga_satuan) ? $r->harga_satuan : '';
+		$nsh = persediaan_compare_excel_all_nsh_key($nama, $satuan, $hpp);
+		if ($nsh === '') {
+			continue;
+		}
+		if (!isset($bucket[$nsh])) {
+			$bucket[$nsh] = (object) array(
+				'uraian' => $nama,
+				'satuan' => $satuan,
+				'harga_satuan' => $hpp,
+				'spop' => '',
+				'jumlah' => 0,
+			);
+		}
+		persediaan_compare_excel_all_sum_jumlah(
+			$bucket[$nsh]->jumlah,
+			isset($r->jumlah) ? $r->jumlah : 0
+		);
+		persediaan_compare_excel_all_merge_spop_label(
+			$bucket[$nsh]->spop,
+			isset($r->spop) ? $r->spop : ''
+		);
+	}
+
+	return array_values($bucket);
+}
+
+function persediaan_compare_excel_all_aggregate_penjualan_list($rows)
+{
+	$bucket = array();
+	foreach ($rows as $r) {
+		$nama = isset($r->nama_barang) ? $r->nama_barang : '';
+		$satuan = isset($r->satuan) ? $r->satuan : '';
+		$hpp = isset($r->harga_satuan) ? $r->harga_satuan : '';
+		$nsh = persediaan_compare_excel_all_nsh_key($nama, $satuan, $hpp);
+		if ($nsh === '') {
+			continue;
+		}
+		if (!isset($bucket[$nsh])) {
+			$bucket[$nsh] = (object) array(
+				'nama_barang' => $nama,
+				'satuan' => $satuan,
+				'harga_satuan' => $hpp,
+				'jumlah' => 0,
+			);
+		}
+		persediaan_compare_excel_all_sum_jumlah(
+			$bucket[$nsh]->jumlah,
+			isset($r->jumlah) ? $r->jumlah : 0
+		);
+	}
+
+	return array_values($bucket);
+}
+
+function persediaan_compare_excel_all_aggregate_produksi_list($rows, $spop_maps)
+{
+	$bucket = array();
+	foreach ($rows as $r) {
+		$nama = isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '';
+		$satuan = isset($r->satuan_bahan) ? $r->satuan_bahan : '';
+		$hpp = isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : '';
+		$nsh = persediaan_compare_excel_all_nsh_key($nama, $satuan, $hpp);
+		if ($nsh === '') {
+			continue;
+		}
+		if (!isset($bucket[$nsh])) {
+			$bucket[$nsh] = (object) array(
+				'nama_barang_bahan' => $nama,
+				'satuan_bahan' => $satuan,
+				'harga_satuan_bahan' => $hpp,
+				'spop' => '',
+				'jumlah_bahan' => 0,
+			);
+		}
+		persediaan_compare_excel_all_sum_jumlah(
+			$bucket[$nsh]->jumlah_bahan,
+			isset($r->jumlah_bahan) ? $r->jumlah_bahan : 0
+		);
+		persediaan_compare_excel_all_merge_spop_label(
+			$bucket[$nsh]->spop,
+			persediaan_compare_excel_all_produksi_spop($spop_maps, $r)
+		);
+	}
+
+	return array_values($bucket);
+}
+
+function persediaan_compare_excel_all_aggregate_pecah_lists($rows)
+{
+	$uraian = array();
+	$baru = array();
+
+	foreach ($rows as $r) {
+		$spop = isset($r->spop) ? $r->spop : '';
+
+		$nama_u = isset($r->uraian) ? $r->uraian : '';
+		$satuan_u = isset($r->satuan) ? $r->satuan : '';
+		$hpp_u = isset($r->harga_satuan) ? $r->harga_satuan : '';
+		$nsh_u = persediaan_compare_excel_all_nsh_key($nama_u, $satuan_u, $hpp_u);
+		if ($nsh_u !== '') {
+			if (!isset($uraian[$nsh_u])) {
+				$uraian[$nsh_u] = (object) array(
+					'uraian' => $nama_u,
+					'satuan' => $satuan_u,
+					'harga_satuan' => $hpp_u,
+					'spop' => '',
+					'jumlah' => 0,
+				);
+			}
+			persediaan_compare_excel_all_sum_jumlah(
+				$uraian[$nsh_u]->jumlah,
+				isset($r->jumlah) ? $r->jumlah : 0
+			);
+			persediaan_compare_excel_all_merge_spop_label($uraian[$nsh_u]->spop, $spop);
+		}
+
+		$nama_b = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
+		if ($nama_b !== '') {
+			$satuan_b = isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '';
+			$hpp_b = isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '';
+			$nsh_b = persediaan_compare_excel_all_nsh_key($nama_b, $satuan_b, $hpp_b);
+			if ($nsh_b !== '') {
+				if (!isset($baru[$nsh_b])) {
+					$baru[$nsh_b] = (object) array(
+						'nama_barang_baru' => $nama_b,
+						'satuan_barang_baru' => $satuan_b,
+						'harga_satuan_barang_baru' => $hpp_b,
+						'spop' => '',
+						'jumlah_barang_baru' => 0,
+					);
+				}
+				persediaan_compare_excel_all_sum_jumlah(
+					$baru[$nsh_b]->jumlah_barang_baru,
+					isset($r->jumlah_barang_baru) ? $r->jumlah_barang_baru : 0
+				);
+				persediaan_compare_excel_all_merge_spop_label($baru[$nsh_b]->spop, $spop);
+			}
+		}
+	}
+
+	return array(
+		'uraian' => array_values($uraian),
+		'baru' => array_values($baru),
+	);
+}
+
+function persediaan_compare_excel_all_index_nsh_list($rows, $nama_field, $satuan_field, $hpp_field)
+{
+	$index = array();
+	foreach ($rows as $i => $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->{$nama_field}) ? $r->{$nama_field} : '',
+			isset($r->{$satuan_field}) ? $r->{$satuan_field} : '',
+			isset($r->{$hpp_field}) ? $r->{$hpp_field} : ''
+		);
+		if ($nsh === '') {
+			continue;
+		}
+		$index[$nsh] = array($i);
+	}
+
+	return $index;
+}
+
 function persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, $spop_maps)
 {
 	$index_pers = array();
@@ -12022,85 +12262,51 @@ function persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, 
 		$index_pers[$key][] = $i;
 	}
 
-	$index_pembelian = array();
-	foreach ($lists['pembelian'] as $i => $r) {
-		$key = persediaan_compare_excel_all_pembelian_full_key($r);
-		if ($key === '') {
-			continue;
-		}
-		if (!isset($index_pembelian[$key])) {
-			$index_pembelian[$key] = array();
-		}
-		$index_pembelian[$key][] = $i;
-	}
+	$agg_pembelian = persediaan_compare_excel_all_aggregate_pembelian_list($lists['pembelian']);
+	$agg_penjualan = persediaan_compare_excel_all_aggregate_penjualan_list($lists['penjualan']);
+	$agg_produksi = persediaan_compare_excel_all_aggregate_produksi_list($lists['produksi'], $spop_maps);
+	$agg_pecah = persediaan_compare_excel_all_aggregate_pecah_lists($lists['pecah_satuan']);
 
-	$index_penjualan = array();
-	$penjualan_spop = array();
-	foreach ($lists['penjualan'] as $i => $r) {
-		$spop = persediaan_compare_excel_all_penjualan_spop($CI, $r, $spop_maps);
-		$penjualan_spop[$i] = $spop;
-		$key = persediaan_compare_excel_all_full_key(
-			isset($r->nama_barang) ? $r->nama_barang : '',
-			isset($r->satuan) ? $r->satuan : '',
-			isset($r->harga_satuan) ? $r->harga_satuan : '',
-			$spop
-		);
-		if ($key === '') {
-			continue;
-		}
-		if (!isset($index_penjualan[$key])) {
-			$index_penjualan[$key] = array();
-		}
-		$index_penjualan[$key][] = $i;
-	}
-
-	$index_produksi = array();
-	$produksi_spop = array();
-	foreach ($lists['produksi'] as $i => $r) {
-		$spop = persediaan_compare_excel_all_produksi_spop($spop_maps, $r);
-		$produksi_spop[$i] = $spop;
-		$key = persediaan_compare_excel_all_produksi_full_key($r, $spop);
-		if ($key === '') {
-			continue;
-		}
-		if (!isset($index_produksi[$key])) {
-			$index_produksi[$key] = array();
-		}
-		$index_produksi[$key][] = $i;
-	}
+	$index_pembelian = persediaan_compare_excel_all_index_nsh_list(
+		$agg_pembelian,
+		'uraian',
+		'satuan',
+		'harga_satuan'
+	);
+	$index_penjualan = persediaan_compare_excel_all_index_nsh_list(
+		$agg_penjualan,
+		'nama_barang',
+		'satuan',
+		'harga_satuan'
+	);
+	$index_produksi = persediaan_compare_excel_all_index_nsh_list(
+		$agg_produksi,
+		'nama_barang_bahan',
+		'satuan_bahan',
+		'harga_satuan_bahan'
+	);
 
 	$index_pecah_uraian = array();
-	$index_pecah_baru = array();
-	foreach ($lists['pecah_satuan'] as $i => $r) {
-		$spop = isset($r->spop) ? $r->spop : '';
-		$key_u = persediaan_compare_excel_all_full_key(
+	foreach ($agg_pecah['uraian'] as $i => $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
 			isset($r->uraian) ? $r->uraian : '',
 			isset($r->satuan) ? $r->satuan : '',
-			isset($r->harga_satuan) ? $r->harga_satuan : '',
-			$spop
+			isset($r->harga_satuan) ? $r->harga_satuan : ''
 		);
-		if ($key_u !== '') {
-			if (!isset($index_pecah_uraian[$key_u])) {
-				$index_pecah_uraian[$key_u] = array();
-			}
-			$index_pecah_uraian[$key_u][] = $i;
+		if ($nsh !== '') {
+			$index_pecah_uraian[$nsh] = array($i);
 		}
+	}
 
-		$nama_baru = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
-		if ($nama_baru === '') {
-			continue;
-		}
-		$key_b = persediaan_compare_excel_all_full_key(
-			$nama_baru,
+	$index_pecah_baru = array();
+	foreach ($agg_pecah['baru'] as $i => $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->nama_barang_baru) ? $r->nama_barang_baru : '',
 			isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
-			isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
-			$spop
+			isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : ''
 		);
-		if ($key_b !== '') {
-			if (!isset($index_pecah_baru[$key_b])) {
-				$index_pecah_baru[$key_b] = array();
-			}
-			$index_pecah_baru[$key_b][] = $i;
+		if ($nsh !== '') {
+			$index_pecah_baru[$nsh] = array($i);
 		}
 	}
 
@@ -12111,7 +12317,13 @@ function persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, 
 		'produksi' => $index_produksi,
 		'pecah_uraian' => $index_pecah_uraian,
 		'pecah_baru' => $index_pecah_baru,
-		'produksi_spop' => $produksi_spop,
+		'agg' => array(
+			'pembelian' => $agg_pembelian,
+			'penjualan' => $agg_penjualan,
+			'produksi' => $agg_produksi,
+			'pecah_uraian' => $agg_pecah['uraian'],
+			'pecah_baru' => $agg_pecah['baru'],
+		),
 	);
 }
 
@@ -12133,6 +12345,343 @@ function persediaan_compare_excel_all_row_matches_manual($nama, $satuan, $hpp, $
 	}
 
 	return persediaan_compare_excel_all_full_key($nama, $satuan, $hpp, $spop) === $key_manual;
+}
+
+function persediaan_compare_excel_all_build_manual_by_key($manual_rows, $map)
+{
+	$by_key = array();
+	foreach ($manual_rows as $mi => $mr) {
+		$key = persediaan_compare_excel_all_manual_full_key($mr, $map);
+		if ($key === '') {
+			continue;
+		}
+		if (!isset($by_key[$key])) {
+			$by_key[$key] = array();
+		}
+		$by_key[$key][] = array('i' => $mi, 'row' => $mr);
+	}
+
+	return $by_key;
+}
+
+function persediaan_compare_excel_all_register_nama_nsh(&$nama_order, &$nsh_by_nama, $nama, $nsh_key)
+{
+	$nama_key = persediaan_compare_excel_all_nama_key($nama);
+	if ($nama_key === '') {
+		return;
+	}
+	if (!isset($nama_order[$nama_key])) {
+		$nama_order[$nama_key] = count($nama_order);
+	}
+	if ($nsh_key === '') {
+		return;
+	}
+	if (!isset($nsh_by_nama[$nama_key])) {
+		$nsh_by_nama[$nama_key] = array();
+	}
+	if (!in_array($nsh_key, $nsh_by_nama[$nama_key], true)) {
+		$nsh_by_nama[$nama_key][] = $nsh_key;
+	}
+}
+
+function persediaan_compare_excel_all_build_nama_groups($manual_rows, $map, $pers_rows, $tx_index)
+{
+	$nama_order = array();
+	$nsh_by_nama = array();
+
+	foreach ($manual_rows as $mr) {
+		persediaan_compare_excel_all_register_nama_nsh(
+			$nama_order,
+			$nsh_by_nama,
+			persediaan_compare_row_get($mr, $map['nama']),
+			persediaan_compare_excel_all_manual_nsh_key($mr, $map)
+		);
+	}
+
+	foreach ($pers_rows as $pr) {
+		persediaan_compare_excel_all_register_nama_nsh(
+			$nama_order,
+			$nsh_by_nama,
+			isset($pr->namabarang) ? $pr->namabarang : '',
+			persediaan_compare_excel_all_nsh_key(
+				isset($pr->namabarang) ? $pr->namabarang : '',
+				isset($pr->satuan) ? $pr->satuan : '',
+				isset($pr->hpp) ? $pr->hpp : ''
+			)
+		);
+	}
+
+	$agg = isset($tx_index['agg']) ? $tx_index['agg'] : array();
+	foreach (array('pembelian', 'penjualan', 'produksi') as $jenis) {
+		if (empty($tx_index[$jenis]) || empty($agg[$jenis])) {
+			continue;
+		}
+		foreach ($tx_index[$jenis] as $nsh => $idxs) {
+			if ($nsh === '' || empty($idxs)) {
+				continue;
+			}
+			$r = $agg[$jenis][$idxs[0]];
+			$nama = '';
+			if ($jenis === 'pembelian') {
+				$nama = isset($r->uraian) ? $r->uraian : '';
+			} elseif ($jenis === 'penjualan') {
+				$nama = isset($r->nama_barang) ? $r->nama_barang : '';
+			} else {
+				$nama = isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '';
+			}
+			persediaan_compare_excel_all_register_nama_nsh($nama_order, $nsh_by_nama, $nama, $nsh);
+		}
+	}
+
+	foreach (array('pecah_uraian', 'pecah_baru') as $jenis) {
+		if (empty($tx_index[$jenis])) {
+			continue;
+		}
+		$agg_key = $jenis;
+		if (empty($agg[$agg_key])) {
+			continue;
+		}
+		foreach ($tx_index[$jenis] as $nsh => $idxs) {
+			if ($nsh === '' || empty($idxs)) {
+				continue;
+			}
+			$r = $agg[$agg_key][$idxs[0]];
+			$nama = ($jenis === 'pecah_baru')
+				? (isset($r->nama_barang_baru) ? $r->nama_barang_baru : '')
+				: (isset($r->uraian) ? $r->uraian : '');
+			persediaan_compare_excel_all_register_nama_nsh($nama_order, $nsh_by_nama, $nama, $nsh);
+		}
+	}
+
+	asort($nama_order);
+
+	return array(
+		'nama_list' => array_keys($nama_order),
+		'nsh_by_nama' => $nsh_by_nama,
+	);
+}
+
+function persediaan_compare_excel_all_append_nsh_block(
+	&$rows,
+	$nsh_key,
+	$manual_rows,
+	$map,
+	$manual_extra_cols,
+	$pers_rows,
+	$tx_index,
+	&$used_manual,
+	&$used_pers,
+	&$used_nsh_pembelian,
+	&$used_nsh_penjualan,
+	&$used_nsh_produksi,
+	&$used_nsh_pecah_uraian,
+	&$used_nsh_pecah_baru
+) {
+	if ($nsh_key === '') {
+		return;
+	}
+
+	$agg = isset($tx_index['agg']) ? $tx_index['agg'] : array();
+
+	$manual_entries = array();
+	foreach ($manual_rows as $mi => $mr) {
+		if (!empty($used_manual[$mi])) {
+			continue;
+		}
+		if (persediaan_compare_excel_all_manual_nsh_key($mr, $map) !== $nsh_key) {
+			continue;
+		}
+		$manual_entries[] = array('i' => $mi, 'row' => $mr);
+	}
+
+	$idx_pers = array();
+	foreach ($pers_rows as $i => $pr) {
+		if (!empty($used_pers[$i])) {
+			continue;
+		}
+		if (persediaan_compare_excel_all_nsh_key(
+			isset($pr->namabarang) ? $pr->namabarang : '',
+			isset($pr->satuan) ? $pr->satuan : '',
+			isset($pr->hpp) ? $pr->hpp : ''
+		) !== $nsh_key) {
+			continue;
+		}
+		$idx_pers[] = $i;
+	}
+
+	$pembelian_row = null;
+	if (empty($used_nsh_pembelian[$nsh_key]) && isset($tx_index['pembelian'][$nsh_key][0])) {
+		$bi = $tx_index['pembelian'][$nsh_key][0];
+		if (isset($agg['pembelian'][$bi])) {
+			$pembelian_row = $agg['pembelian'][$bi];
+		}
+	}
+
+	$penjualan_row = null;
+	if (empty($used_nsh_penjualan[$nsh_key]) && isset($tx_index['penjualan'][$nsh_key][0])) {
+		$ni = $tx_index['penjualan'][$nsh_key][0];
+		if (isset($agg['penjualan'][$ni])) {
+			$penjualan_row = $agg['penjualan'][$ni];
+		}
+	}
+
+	$produksi_row = null;
+	if (empty($used_nsh_produksi[$nsh_key]) && isset($tx_index['produksi'][$nsh_key][0])) {
+		$pri = $tx_index['produksi'][$nsh_key][0];
+		if (isset($agg['produksi'][$pri])) {
+			$produksi_row = $agg['produksi'][$pri];
+		}
+	}
+
+	$pecah_uraian_row = null;
+	if (empty($used_nsh_pecah_uraian[$nsh_key]) && isset($tx_index['pecah_uraian'][$nsh_key][0])) {
+		$pui = $tx_index['pecah_uraian'][$nsh_key][0];
+		if (isset($agg['pecah_uraian'][$pui])) {
+			$pecah_uraian_row = $agg['pecah_uraian'][$pui];
+		}
+	}
+
+	$pecah_baru_row = null;
+	if (empty($used_nsh_pecah_baru[$nsh_key]) && isset($tx_index['pecah_baru'][$nsh_key][0])) {
+		$pbi = $tx_index['pecah_baru'][$nsh_key][0];
+		if (isset($agg['pecah_baru'][$pbi])) {
+			$pecah_baru_row = $agg['pecah_baru'][$pbi];
+		}
+	}
+
+	$has_agg = (
+		$pembelian_row !== null
+		|| $penjualan_row !== null
+		|| $produksi_row !== null
+		|| $pecah_uraian_row !== null
+		|| $pecah_baru_row !== null
+	);
+	if (count($manual_entries) === 0 && count($idx_pers) === 0 && !$has_agg) {
+		return;
+	}
+
+	$manual_by_fk = array();
+	foreach ($manual_entries as $entry) {
+		$fk = persediaan_compare_excel_all_manual_full_key($entry['row'], $map);
+		if ($fk === '') {
+			$fk = '__manual_nsh_' . $nsh_key . '_' . $entry['i'];
+		}
+		if (!isset($manual_by_fk[$fk])) {
+			$manual_by_fk[$fk] = array();
+		}
+		$manual_by_fk[$fk][] = $entry;
+	}
+
+	$pers_by_fk = array();
+	foreach ($idx_pers as $pi) {
+		$fk = persediaan_compare_excel_all_pers_full_key($pers_rows[$pi]);
+		if ($fk === '') {
+			$fk = '__pers_nsh_' . $nsh_key . '_' . $pi;
+		}
+		if (!isset($pers_by_fk[$fk])) {
+			$pers_by_fk[$fk] = array();
+		}
+		$pers_by_fk[$fk][] = $pi;
+	}
+
+	$full_keys = array_keys($manual_by_fk);
+	foreach (array_keys($pers_by_fk) as $fk) {
+		if (!in_array($fk, $full_keys, true)) {
+			$full_keys[] = $fk;
+		}
+	}
+	if (count($full_keys) === 0 && $has_agg) {
+		$full_keys[] = '__agg_only_' . $nsh_key;
+	}
+
+	$nsh_line = 0;
+	foreach ($full_keys as $fk) {
+		$m_list = isset($manual_by_fk[$fk]) ? $manual_by_fk[$fk] : array();
+		$p_list = isset($pers_by_fk[$fk]) ? $pers_by_fk[$fk] : array();
+		$fk_lines = max(count($m_list), count($p_list), ($fk === '__agg_only_' . $nsh_key && $has_agg) ? 1 : 0);
+		if ($fk_lines < 1) {
+			$fk_lines = 1;
+		}
+
+		for ($line = 0; $line < $fk_lines; $line++) {
+			$row = persediaan_compare_excel_all_empty_row();
+
+			if (isset($m_list[$line])) {
+				persediaan_compare_excel_all_fill_manual(
+					$row,
+					$m_list[$line]['row'],
+					$map,
+					$manual_extra_cols
+				);
+				$used_manual[$m_list[$line]['i']] = true;
+			}
+
+			if (isset($p_list[$line])) {
+				$pi = $p_list[$line];
+				persediaan_compare_excel_all_fill_persediaan($row, $pers_rows[$pi]);
+				$used_pers[$pi] = true;
+			}
+
+			if ($nsh_line === 0) {
+				if ($pembelian_row !== null) {
+					persediaan_compare_excel_all_fill_pembelian($row, $pembelian_row);
+					$used_nsh_pembelian[$nsh_key] = true;
+				}
+				if ($penjualan_row !== null) {
+					persediaan_compare_excel_all_fill_penjualan($row, $penjualan_row);
+					$used_nsh_penjualan[$nsh_key] = true;
+				}
+				if ($produksi_row !== null) {
+					persediaan_compare_excel_all_fill_produksi(
+						$row,
+						$produksi_row,
+						isset($produksi_row->spop) ? $produksi_row->spop : ''
+					);
+					$used_nsh_produksi[$nsh_key] = true;
+				}
+				if ($pecah_uraian_row !== null) {
+					persediaan_compare_excel_all_fill_pecah(
+						$row,
+						isset($pecah_uraian_row->uraian) ? $pecah_uraian_row->uraian : '',
+						isset($pecah_uraian_row->satuan) ? $pecah_uraian_row->satuan : '',
+						isset($pecah_uraian_row->harga_satuan) ? $pecah_uraian_row->harga_satuan : '',
+						isset($pecah_uraian_row->spop) ? $pecah_uraian_row->spop : '',
+						isset($pecah_uraian_row->jumlah) ? $pecah_uraian_row->jumlah : ''
+					);
+					$used_nsh_pecah_uraian[$nsh_key] = true;
+				}
+				if ($pecah_baru_row !== null) {
+					if ($pecah_uraian_row !== null) {
+						$rows[] = $row;
+						$row = persediaan_compare_excel_all_empty_row();
+						if (isset($m_list[$line])) {
+							persediaan_compare_excel_all_fill_manual(
+								$row,
+								$m_list[$line]['row'],
+								$map,
+								$manual_extra_cols
+							);
+						}
+						if (isset($p_list[$line])) {
+							persediaan_compare_excel_all_fill_persediaan($row, $pers_rows[$p_list[$line]]);
+						}
+					}
+					persediaan_compare_excel_all_fill_pecah(
+						$row,
+						isset($pecah_baru_row->nama_barang_baru) ? $pecah_baru_row->nama_barang_baru : '',
+						isset($pecah_baru_row->satuan_barang_baru) ? $pecah_baru_row->satuan_barang_baru : '',
+						isset($pecah_baru_row->harga_satuan_barang_baru) ? $pecah_baru_row->harga_satuan_barang_baru : '',
+						isset($pecah_baru_row->spop) ? $pecah_baru_row->spop : '',
+						isset($pecah_baru_row->jumlah_barang_baru) ? $pecah_baru_row->jumlah_barang_baru : ''
+					);
+					$used_nsh_pecah_baru[$nsh_key] = true;
+				}
+			}
+
+			$rows[] = $row;
+			$nsh_line++;
+		}
+	}
 }
 
 function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
@@ -12171,130 +12720,58 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
 	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $pers_rows);
 	$tx_index = persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, $spop_maps);
-	$produksi_spop_cache = $tx_index['produksi_spop'];
+	$nama_groups = persediaan_compare_excel_all_build_nama_groups($manual_rows, $map, $pers_rows, $tx_index);
+	$agg = isset($tx_index['agg']) ? $tx_index['agg'] : array();
 
 	$rows = array();
+	$used_manual = array();
 	$used_pers = array();
-	$used_pembelian = array();
-	$used_penjualan = array();
-	$used_produksi = array();
-	$used_pecah_uraian = array();
-	$used_pecah_baru = array();
+	$used_nsh_pembelian = array();
+	$used_nsh_penjualan = array();
+	$used_nsh_produksi = array();
+	$used_nsh_pecah_uraian = array();
+	$used_nsh_pecah_baru = array();
 
-	// Urutkan berdasarkan baris tabel manual: selesaikan semua transaksi terkait dulu.
-	foreach ($manual_rows as $mr) {
-		$m_nama = persediaan_compare_row_get($mr, $map['nama']);
-		$m_satuan = persediaan_compare_row_get($mr, $map['satuan']);
-		$m_hpp = persediaan_compare_row_get($mr, $map['hpp']);
-		$m_spop = persediaan_compare_row_get($mr, $map['spop']);
-		$key_manual = persediaan_compare_excel_all_full_key($m_nama, $m_satuan, $m_hpp, $m_spop);
-
-		if ($key_manual === '') {
-			$row = persediaan_compare_excel_all_empty_row();
-			persediaan_compare_excel_all_fill_manual($row, $mr, $map, $manual_extra_cols);
-			$rows[] = $row;
+	// Baris manual tanpa identitas lengkap (nama/satuan/hpp/spop kosong).
+	foreach ($manual_rows as $mi => $mr) {
+		$key_manual = persediaan_compare_excel_all_manual_full_key($mr, $map);
+		if ($key_manual !== '') {
 			continue;
 		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_manual($row, $mr, $map, $manual_extra_cols);
+		$rows[] = $row;
+		$used_manual[$mi] = true;
+	}
 
-		$idx_pers = persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['pers'][$key_manual]) ? $tx_index['pers'][$key_manual] : array(),
-			$used_pers
-		);
-		$idx_pembelian = persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['pembelian'][$key_manual]) ? $tx_index['pembelian'][$key_manual] : array(),
-			$used_pembelian
-		);
-		$idx_penjualan = persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['penjualan'][$key_manual]) ? $tx_index['penjualan'][$key_manual] : array(),
-			$used_penjualan
-		);
-		$idx_produksi = persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['produksi'][$key_manual]) ? $tx_index['produksi'][$key_manual] : array(),
-			$used_produksi
-		);
-
-		$idx_pecah = array();
-		foreach (persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['pecah_uraian'][$key_manual]) ? $tx_index['pecah_uraian'][$key_manual] : array(),
-			$used_pecah_uraian
-		) as $i) {
-			$idx_pecah[] = array('i' => $i, 'side' => 'uraian');
+	// Kelompok per nama barang, lalu per nama+satuan+hpp:
+	// manual & persediaan per baris (beda spop = baris baru),
+	// pembelian/penjualan/produksi/pecah dijumlahkan per NSH.
+	foreach ($nama_groups['nama_list'] as $nama_key) {
+		if (!isset($nama_groups['nsh_by_nama'][$nama_key])) {
+			continue;
 		}
-		foreach (persediaan_compare_excel_all_collect_unused(
-			isset($tx_index['pecah_baru'][$key_manual]) ? $tx_index['pecah_baru'][$key_manual] : array(),
-			$used_pecah_baru
-		) as $i) {
-			$idx_pecah[] = array('i' => $i, 'side' => 'baru');
-		}
-
-		$max_lines = max(
-			1,
-			count($idx_pers),
-			count($idx_pembelian),
-			count($idx_penjualan),
-			count($idx_produksi),
-			count($idx_pecah)
-		);
-
-		for ($line = 0; $line < $max_lines; $line++) {
-			$row = persediaan_compare_excel_all_empty_row();
-			persediaan_compare_excel_all_fill_manual($row, $mr, $map, $manual_extra_cols);
-
-			if (isset($idx_pers[$line])) {
-				$pi = $idx_pers[$line];
-				persediaan_compare_excel_all_fill_persediaan($row, $pers_rows[$pi]);
-				$used_pers[$pi] = true;
-			}
-			if (isset($idx_pembelian[$line])) {
-				$bi = $idx_pembelian[$line];
-				persediaan_compare_excel_all_fill_pembelian($row, $lists['pembelian'][$bi]);
-				$used_pembelian[$bi] = true;
-			}
-			if (isset($idx_penjualan[$line])) {
-				$ni = $idx_penjualan[$line];
-				persediaan_compare_excel_all_fill_penjualan($row, $lists['penjualan'][$ni]);
-				$used_penjualan[$ni] = true;
-			}
-			if (isset($idx_produksi[$line])) {
-				$pri = $idx_produksi[$line];
-				$spop_prod = isset($produksi_spop_cache[$pri])
-					? $produksi_spop_cache[$pri]
-					: persediaan_compare_excel_all_produksi_spop($spop_maps, $lists['produksi'][$pri]);
-				persediaan_compare_excel_all_fill_produksi($row, $lists['produksi'][$pri], $spop_prod);
-				$used_produksi[$pri] = true;
-			}
-			if (isset($idx_pecah[$line])) {
-				$pec_entry = $idx_pecah[$line];
-				$pci = $pec_entry['i'];
-				$pec = $lists['pecah_satuan'][$pci];
-				if ($pec_entry['side'] === 'baru') {
-					persediaan_compare_excel_all_fill_pecah(
-						$row,
-						isset($pec->nama_barang_baru) ? $pec->nama_barang_baru : '',
-						isset($pec->satuan_barang_baru) ? $pec->satuan_barang_baru : '',
-						isset($pec->harga_satuan_barang_baru) ? $pec->harga_satuan_barang_baru : '',
-						isset($pec->spop) ? $pec->spop : '',
-						isset($pec->jumlah_barang_baru) ? $pec->jumlah_barang_baru : ''
-					);
-					$used_pecah_baru[$pci] = true;
-				} else {
-					persediaan_compare_excel_all_fill_pecah(
-						$row,
-						isset($pec->uraian) ? $pec->uraian : '',
-						isset($pec->satuan) ? $pec->satuan : '',
-						isset($pec->harga_satuan) ? $pec->harga_satuan : '',
-						isset($pec->spop) ? $pec->spop : '',
-						isset($pec->jumlah) ? $pec->jumlah : ''
-					);
-					$used_pecah_uraian[$pci] = true;
-				}
-			}
-
-			$rows[] = $row;
+		foreach ($nama_groups['nsh_by_nama'][$nama_key] as $nsh_key) {
+			persediaan_compare_excel_all_append_nsh_block(
+				$rows,
+				$nsh_key,
+				$manual_rows,
+				$map,
+				$manual_extra_cols,
+				$pers_rows,
+				$tx_index,
+				$used_manual,
+				$used_pers,
+				$used_nsh_pembelian,
+				$used_nsh_penjualan,
+				$used_nsh_produksi,
+				$used_nsh_pecah_uraian,
+				$used_nsh_pecah_baru
+			);
 		}
 	}
 
-	// Sisa transaksi tanpa pasangan di tabel manual — tampilkan di bawah.
+	// Sisa data tanpa kelompok nama / NSH yang teridentifikasi.
 	foreach ($pers_rows as $i => $pr) {
 		if (!empty($used_pers[$i])) {
 			continue;
@@ -12304,8 +12781,13 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 		$rows[] = $row;
 	}
 
-	foreach ($lists['pembelian'] as $i => $r) {
-		if (!empty($used_pembelian[$i])) {
+	foreach (isset($agg['pembelian']) ? $agg['pembelian'] : array() as $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->uraian) ? $r->uraian : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : ''
+		);
+		if ($nsh !== '' && !empty($used_nsh_pembelian[$nsh])) {
 			continue;
 		}
 		$row = persediaan_compare_excel_all_empty_row();
@@ -12313,8 +12795,13 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 		$rows[] = $row;
 	}
 
-	foreach ($lists['penjualan'] as $i => $r) {
-		if (!empty($used_penjualan[$i])) {
+	foreach (isset($agg['penjualan']) ? $agg['penjualan'] : array() as $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->nama_barang) ? $r->nama_barang : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : ''
+		);
+		if ($nsh !== '' && !empty($used_nsh_penjualan[$nsh])) {
 			continue;
 		}
 		$row = persediaan_compare_excel_all_empty_row();
@@ -12322,45 +12809,60 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 		$rows[] = $row;
 	}
 
-	foreach ($lists['produksi'] as $i => $r) {
-		if (!empty($used_produksi[$i])) {
+	foreach (isset($agg['produksi']) ? $agg['produksi'] : array() as $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->nama_barang_bahan) ? $r->nama_barang_bahan : '',
+			isset($r->satuan_bahan) ? $r->satuan_bahan : '',
+			isset($r->harga_satuan_bahan) ? $r->harga_satuan_bahan : ''
+		);
+		if ($nsh !== '' && !empty($used_nsh_produksi[$nsh])) {
 			continue;
 		}
-		$spop = persediaan_compare_excel_all_produksi_spop($spop_maps, $r);
 		$row = persediaan_compare_excel_all_empty_row();
-		persediaan_compare_excel_all_fill_produksi($row, $r, $spop);
+		persediaan_compare_excel_all_fill_produksi($row, $r, isset($r->spop) ? $r->spop : '');
 		$rows[] = $row;
 	}
 
-	foreach ($lists['pecah_satuan'] as $i => $r) {
-		$spop = isset($r->spop) ? $r->spop : '';
-
-		if (empty($used_pecah_uraian[$i])) {
-			$row = persediaan_compare_excel_all_empty_row();
-			persediaan_compare_excel_all_fill_pecah(
-				$row,
-				isset($r->uraian) ? $r->uraian : '',
-				isset($r->satuan) ? $r->satuan : '',
-				isset($r->harga_satuan) ? $r->harga_satuan : '',
-				$spop,
-				isset($r->jumlah) ? $r->jumlah : ''
-			);
-			$rows[] = $row;
+	foreach (isset($agg['pecah_uraian']) ? $agg['pecah_uraian'] : array() as $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->uraian) ? $r->uraian : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : ''
+		);
+		if ($nsh !== '' && !empty($used_nsh_pecah_uraian[$nsh])) {
+			continue;
 		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_pecah(
+			$row,
+			isset($r->uraian) ? $r->uraian : '',
+			isset($r->satuan) ? $r->satuan : '',
+			isset($r->harga_satuan) ? $r->harga_satuan : '',
+			isset($r->spop) ? $r->spop : '',
+			isset($r->jumlah) ? $r->jumlah : ''
+		);
+		$rows[] = $row;
+	}
 
-		$nama_baru = isset($r->nama_barang_baru) ? trim((string) $r->nama_barang_baru) : '';
-		if ($nama_baru !== '' && empty($used_pecah_baru[$i])) {
-			$row2 = persediaan_compare_excel_all_empty_row();
-			persediaan_compare_excel_all_fill_pecah(
-				$row2,
-				$nama_baru,
-				isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
-				isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
-				$spop,
-				isset($r->jumlah_barang_baru) ? $r->jumlah_barang_baru : ''
-			);
-			$rows[] = $row2;
+	foreach (isset($agg['pecah_baru']) ? $agg['pecah_baru'] : array() as $r) {
+		$nsh = persediaan_compare_excel_all_nsh_key(
+			isset($r->nama_barang_baru) ? $r->nama_barang_baru : '',
+			isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+			isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : ''
+		);
+		if ($nsh !== '' && !empty($used_nsh_pecah_baru[$nsh])) {
+			continue;
 		}
+		$row = persediaan_compare_excel_all_empty_row();
+		persediaan_compare_excel_all_fill_pecah(
+			$row,
+			isset($r->nama_barang_baru) ? $r->nama_barang_baru : '',
+			isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+			isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : '',
+			isset($r->spop) ? $r->spop : '',
+			isset($r->jumlah_barang_baru) ? $r->jumlah_barang_baru : ''
+		);
+		$rows[] = $row;
 	}
 
 	return array(
