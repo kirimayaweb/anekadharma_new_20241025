@@ -355,39 +355,45 @@
                                         <span>1. Data Persediaan — Semua Record Generate <span id="gen-count-persediaan-all" class="badge badge-secondary">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="persediaan_all" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-persediaan-all" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-persediaan-all" class="table table-bordered table-striped gen-recalc-dt">
                                             <thead><tr>
                                                 <th>No</th><th>Aksi</th><th>ID</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>SA</th><th>Beli</th><th>Total_10</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>2. Generate — Update Record <span id="gen-count-update" class="badge badge-info">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="generate_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-generate-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-generate-update" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
                                                 <th>No</th><th>ID</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>SA</th><th>Beli</th><th>Total_10</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>3. Generate — Record Baru (Insert) <span id="gen-count-insert" class="badge badge-success">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="generate_insert" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-4">
-                                        <table id="tbl-gen-recalc-generate-insert" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-4">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-generate-insert" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
                                                 <th>No</th><th>ID</th><th>UUID</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>SA</th><th>Total_10</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <hr/>
@@ -395,37 +401,43 @@
                                         <span>4. Semua Data Pembelian Diproses <span id="gen-count-pembelian" class="badge badge-secondary">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pembelian" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-pembelian" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-pembelian" class="table table-bordered table-striped gen-recalc-dt">
                                             <thead><tr>
                                                 <th>No</th><th>Aksi</th><th>Tabel</th><th>ID Pembelian</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Jumlah</th><th>Beli Baru</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>5. Rekap Update Beli (Pembelian → Persediaan) <span id="gen-count-pembelian-update" class="badge badge-info">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pembelian_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-pembelian-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-pembelian-update" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>ID Pembelian</th><th>ID Persediaan</th><th>Nama</th><th>Jumlah</th><th>Beli Lama</th><th>Beli Baru</th><th>Total_10</th><th>Keterangan</th>
+                                                <th>No</th><th>ID Pembelian</th><th>ID Persediaan</th><th>Nama</th><th>Jumlah</th><th>Beli Lama</th><th>Beli Baru</th><th>Total_10</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>6. Record Persediaan Baru dari Pembelian <span id="gen-count-pembelian-baru" class="badge badge-success">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pembelian_baru" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-4">
-                                        <table id="tbl-gen-recalc-pembelian-baru" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-4">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-pembelian-baru" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
                                                 <th>No</th><th>ID Pembelian</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>Beli</th><th>Keterangan</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <hr/>
@@ -433,25 +445,29 @@
                                         <span>7. Semua Data Penjualan Diproses <span id="gen-count-penjualan" class="badge badge-secondary">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="penjualan" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-penjualan" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-penjualan" class="table table-bordered table-striped gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>Aksi</th><th>ID Penjualan</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Unit</th><th>Jumlah</th><th>Penjualan Baru</th><th>Total_10</th><th>Keterangan</th>
+                                                <th>No</th><th>Aksi</th><th>ID Penjualan</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Unit</th><th>Jumlah</th><th>Penjualan Baru</th><th>Total_10</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>8. Rekap Update Penjualan → Persediaan <span id="gen-count-penjualan-update" class="badge badge-info">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="penjualan_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive">
-                                        <table id="tbl-gen-recalc-penjualan-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-penjualan-update" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>ID Penjualan</th><th>ID Persediaan</th><th>Nama</th><th>Unit</th><th>Jumlah</th><th>Penjualan Lama</th><th>Penjualan Baru</th><th>Unit Lama</th><th>Unit Baru</th><th>Total_10</th><th>Keterangan</th>
+                                                <th>No</th><th>ID Penjualan</th><th>ID Persediaan</th><th>Nama</th><th>Unit</th><th>Jumlah</th><th>Penjualan Lama</th><th>Penjualan Baru</th><th>Unit Lama</th><th>Unit Baru</th><th>Total_10</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <hr/>
@@ -459,51 +475,59 @@
                                         <span>9. Semua Data Bahan Produksi Diproses <span id="gen-count-produksi" class="badge badge-secondary">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="produksi" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-produksi" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-produksi" class="table table-bordered table-striped gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>Aksi</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Produksi Baru</th><th>Total_10</th><th>Keterangan</th>
+                                                <th>No</th><th>Aksi</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Satuan</th><th>HPP</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Produksi Baru</th><th>Total_10</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>10. Rekap Update Bahan Produksi → Persediaan <span id="gen-count-produksi-update" class="badge badge-info">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="produksi_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive">
-                                        <table id="tbl-gen-recalc-produksi-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-produksi-update" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Lama</th><th>Bahan Baru</th><th>Total_10</th><th>Sisa Stock</th><th>Keterangan</th>
+                                                <th>No</th><th>ID Bahan</th><th>ID Persediaan</th><th>Nama</th><th>Unit Produksi</th><th>Jumlah Bahan</th><th>Bahan Lama</th><th>Bahan Baru</th><th>Total_10</th><th>Sisa Stock</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <h6 class="mt-4 d-flex align-items-center flex-wrap">
                                         <span>11. Pecah Satuan — Semua Record <span id="gen-count-pecah-satuan" class="badge badge-secondary">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pecah_satuan" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive mb-3">
-                                        <table id="tbl-gen-recalc-pecah-satuan" class="table table-sm table-bordered table-striped gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-pecah-satuan" class="table table-bordered table-striped gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>Aksi</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Satuan</th><th>HPP</th><th>Jumlah Pecah</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>Nama Baru</th><th>Satuan Baru</th><th>HPP Baru</th><th>Jumlah Baru</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th>
+                                                <th>No</th><th>Aksi</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Satuan</th><th>HPP</th><th>Jumlah Pecah</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>Nama Baru</th><th>Satuan Baru</th><th>HPP Baru</th><th>Jumlah Baru</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
 
                                     <h6 class="mt-2 d-flex align-items-center flex-wrap">
                                         <span>12. Pecah Satuan — Update Record <span id="gen-count-pecah-satuan-update" class="badge badge-info">0</span></span>
                                         <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pecah_satuan_update" title="Cetak tabel ini ke Excel"><i class="fas fa-file-excel"></i> Excel</button>
                                     </h6>
-                                    <div class="table-responsive">
-                                        <table id="tbl-gen-recalc-pecah-satuan-update" class="table table-sm table-bordered gen-recalc-dt" style="width:100%;font-size:12px;">
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll">
+                                        <table id="tbl-gen-recalc-pecah-satuan-update" class="table table-bordered gen-recalc-dt">
                                             <thead><tr>
-                                                <th>No</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Nama Baru</th><th>Jumlah Pecah</th><th>Jumlah Baru</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th>
+                                                <th>No</th><th>ID Pecah</th><th>ID Sumber</th><th>ID Target</th><th>Nama Sumber</th><th>Nama Baru</th><th>Jumlah Pecah</th><th>Jumlah Baru</th><th>Pecah Baru</th><th>Total_10 Sumber</th><th>SA Target</th><th>Total_10 Target</th><th>Keterangan</th><th>Check Total_10</th>
                                             </tr></thead>
                                             <tbody></tbody>
                                         </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -535,6 +559,23 @@
                                     <?php } ?>
                                 </div>
                             </div>
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <label for="compare_db_tabel_cek" class="mb-1">Pilih tabel database (semua tabel di sistem)</label>
+                                    <select id="compare_db_tabel_cek" class="form-control form-control-sm compare-db-tabel-select mb-2"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                        <option value="">— Muat daftar tabel —</option>
+                                    </select>
+                                    <div id="compare-db-tabel-info" class="compare-db-tabel-info d-none mb-3">
+                                        <div class="small mb-2">
+                                            <span class="text-muted">Nama tabel:</span>
+                                            <strong id="compare-db-tabel-nama" class="text-primary">—</strong>
+                                        </div>
+                                        <button type="button" id="btn-compare-db-cek-data" class="btn btn-outline-info btn-sm"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
+                                            <i class="fas fa-search"></i> Cek Data
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row mb-2">
                                 <div class="col-md-12">
                                     <small class="text-muted d-block mb-1">Minimal kolom: nama barang, satuan, hpp/harga_satuan, spop</small>
@@ -543,7 +584,7 @@
                                         contoh: <code>persediaan_manual_2026_01.csv</code>.
                                         Tabel database akan dibuat dari nama file + periode bulan/tahun terpilih.
                                     </small>
-                                    <label for="compare_csv_file" class="mb-1">Pilih file CSV</label>
+                                    <label for="compare_csv_file" class="mb-1">Pilih file CSV ( untuk di upload ke database sistem / aplikasi menjadi tabel data )</label>
                                     <div class="d-flex flex-wrap align-items-end compare-csv-upload-row">
                                         <div class="custom-file custom-file-sm mb-0 compare-csv-file-wrap">
                                             <input type="file" class="custom-file-input" id="compare_csv_file" accept=".csv,text/csv"<?php echo empty($can_compare_persediaan) ? ' disabled' : ''; ?>>
@@ -620,7 +661,7 @@
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="total10_kosong"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
                             <div class="compare-dt-wrap mb-4">
-                                <table id="table-compare-total10" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                <table id="table-compare-total10" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
                                         <th>No</th><th>Namabarang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Sa</th><th>Beli</th><th>Total_10</th>
                                     </tr></thead>
@@ -633,7 +674,7 @@
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="tidak_di_tabel"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
                             <div class="compare-dt-wrap mb-4">
-                                <table id="table-compare-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                <table id="table-compare-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
                                         <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
                                         <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
@@ -647,7 +688,7 @@
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="hanya_tabel"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
                             <div class="compare-dt-wrap mb-4">
-                                <table id="table-compare-hanya" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                                <table id="table-compare-hanya" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
                                         <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
                                         <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
@@ -660,11 +701,63 @@
                                 <span>4. Data Cocok (Persediaan &amp; Tabel Manual) <span id="compare-badge-cocok" class="badge badge-success">0</span></span>
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="cocok"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
-                            <div class="compare-dt-wrap">
-                                <table id="table-compare-cocok" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:12px;">
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-cocok" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
                                         <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_Total_10</th>
                                         <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap mt-3">
+                                <span>5. Pembelian Tidak Ada di Tabel Manual <span id="compare-badge-pembelian-tidak" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="pembelian_tidak_manual"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-pembelian-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>SPOP</th><th>Jumlah</th><th>Tgl PO</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>6. Penjualan Tidak Ada di Tabel Manual <span id="compare-badge-penjualan-tidak" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="penjualan_tidak_manual"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-penjualan-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Nama Barang</th><th>Satuan</th><th>Harga Satuan</th><th>SPOP</th><th>Jumlah</th><th>Tgl Jual</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>7. Produksi Tidak Ada di Tabel Manual <span id="compare-badge-produksi-tidak" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="produksi_tidak_manual"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-produksi-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Nama Barang Bahan</th><th>Satuan Bahan</th><th>Harga Satuan Bahan</th><th>SPOP</th><th>Jumlah Bahan</th><th>Tgl Transaksi</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>8. Pecah Satuan Tidak Ada di Tabel Manual <span id="compare-badge-pecah-tidak" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="pecah_tidak_manual"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-pecah-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>SPOP</th><th>Jumlah</th>
                                     </tr></thead>
                                     <tbody></tbody>
                                 </table>
@@ -675,7 +768,7 @@
                             <div class="modal-dialog modal-xl" role="document" style="max-width:95%;">
                                 <div class="modal-content">
                                     <div class="modal-header bg-primary text-white py-2">
-                                        <h5 class="modal-title" id="modalCompareCsvPreviewLabel">Review Data Tabel CSV</h5>
+                                        <h5 class="modal-title" id="modalCompareCsvPreviewLabel">Data Tabel Database</h5>
                                         <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
@@ -798,6 +891,99 @@
             width: 100%;
         }
     }
+    /* Tab Generate Persediaan — scroll horizontal + vertikal per datatable */
+    #panel-generate-persediaan .gen-recalc-table-scroll {
+        display: block;
+        width: 100%;
+        max-height: 420px;
+        overflow: auto;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background: #fff;
+        margin-bottom: 0;
+    }
+    #panel-generate-persediaan .gen-recalc-dt-block {
+        margin-bottom: 1rem;
+    }
+    #panel-generate-persediaan .gen-recalc-dt-block.mb-4 {
+        margin-bottom: 1.5rem;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_wrapper {
+        width: max-content;
+        min-width: 100%;
+        margin-bottom: 0;
+        font-size: 13px;
+    }
+    #panel-generate-persediaan table.gen-recalc-dt {
+        width: max-content !important;
+        min-width: 100%;
+        margin-bottom: 0;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+    #panel-generate-persediaan table.gen-recalc-dt thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: #e9ecef;
+        color: #212529;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        padding: 8px 12px;
+        vertical-align: middle;
+        border-bottom: 2px solid #dee2e6;
+        box-shadow: inset 0 -1px 0 #dee2e6;
+    }
+    #panel-generate-persediaan table.gen-recalc-dt tbody td {
+        font-size: 13px;
+        padding: 7px 12px;
+        vertical-align: top;
+        white-space: nowrap;
+    }
+    #panel-generate-persediaan table.gen-recalc-dt tbody td.gen-recalc-cell-wrap,
+    #panel-generate-persediaan table.gen-recalc-dt thead th.gen-recalc-cell-wrap {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 140px;
+        max-width: 300px;
+    }
+    #panel-generate-persediaan table.gen-recalc-dt thead th:nth-last-child(-n+2),
+    #panel-generate-persediaan table.gen-recalc-dt tbody td:nth-last-child(-n+2) {
+        white-space: normal;
+        word-break: break-word;
+        min-width: 140px;
+        max-width: 320px;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_length,
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_filter,
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_info,
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_paginate {
+        position: sticky;
+        left: 0;
+        width: 100%;
+        min-width: max-content;
+        background: #fff;
+        padding: 6px 8px;
+        font-size: 13px;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll .dataTables_paginate {
+        padding-bottom: 8px;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll::-webkit-scrollbar-thumb {
+        background: #adb5bd;
+        border-radius: 5px;
+    }
+    #panel-generate-persediaan .gen-recalc-table-scroll::-webkit-scrollbar-track {
+        background: #f1f3f5;
+    }
     #btn-generate-persediaan-bulan:disabled { cursor: not-allowed; opacity: 0.72; }
     #btn-compare-tabel:disabled { cursor: not-allowed; opacity: 0.72; }
     #btn-generate-persediaan-bulan.btn-success { color: #fff; }
@@ -841,10 +1027,12 @@
     }
     .compare-dt-wrap {
         width: 100%;
-        overflow: hidden;
+        overflow: auto;
+        max-height: 420px;
     }
     .compare-dt-wrap .dataTables_wrapper {
         width: 100%;
+        font-size: 13px;
     }
     .compare-dt-wrap .dataTables_scrollHead,
     .compare-dt-wrap .dataTables_scrollBody {
@@ -857,6 +1045,8 @@
     .compare-dt-wrap table.dataTable thead th,
     .compare-dt-wrap table.dataTable tbody td {
         white-space: nowrap;
+        font-size: 13px;
+        padding: 6px 8px;
     }
     .compare-toolbar-row .compare-toolbar-control {
         width: 110px;
@@ -889,6 +1079,16 @@
         padding: 6px 10px;
         background: #f8f9fa;
         border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .compare-db-tabel-select {
+        max-width: 640px;
+    }
+    .compare-db-tabel-info {
+        max-width: 640px;
+        padding: 10px 12px;
+        background: #e8f4fd;
+        border: 1px solid #b8daff;
         border-radius: 4px;
     }
     .compare-csv-preview-dt-wrap {
@@ -1393,7 +1593,8 @@ window.addEventListener('load', function() {
         var rowsPU = genRecalcData.pembelian_update.map(function(it, i) {
             return [
                 i + 1, it.id_pembelian || '', it.id_persediaan || '', it.namabarang || '',
-                it.jumlah_pembelian || '', it.beli_lama || '', it.beli_baru || '', it.total_10 || '', it.keterangan || ''
+                it.jumlah_pembelian || '', it.beli_lama || '', it.beli_baru || '', it.total_10 || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsPB = genRecalcData.pembelian_baru.map(function(it, i) {
@@ -1406,28 +1607,32 @@ window.addEventListener('load', function() {
             return [
                 i + 1, it.aksi || '', it.id_penjualan || '', it.id_persediaan || '', it.namabarang || '',
                 it.satuan || '', it.hpp || '', it.spop || '', it.nama_unit || '',
-                it.jumlah_penjualan || '', it.penjualan_baru || '', it.total_10 || '', it.keterangan || ''
+                it.jumlah_penjualan || '', it.penjualan_baru || '', it.total_10 || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsPenjU = genRecalcData.penjualan_update.map(function(it, i) {
             return [
                 i + 1, it.id_penjualan || '', it.id_persediaan || '', it.namabarang || '', it.nama_unit || '',
                 it.jumlah_penjualan || '', it.penjualan_lama || '', it.penjualan_baru || '',
-                it.unit_lama || '', it.unit_baru || '', it.total_10 || '', it.keterangan || ''
+                it.unit_lama || '', it.unit_baru || '', it.total_10 || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsProd = genRecalcData.produksi.map(function(it, i) {
             return [
                 i + 1, it.aksi || '', it.id_produksi_bahan || '', it.id_persediaan || '', it.namabarang || '',
                 it.satuan || '', it.hpp || '', it.nama_unit || '', it.jumlah_bahan || '',
-                it.bahan_produksi_baru || '', it.total_10 || '', it.keterangan || ''
+                it.bahan_produksi_baru || '', it.total_10 || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsProdU = genRecalcData.produksi_update.map(function(it, i) {
             return [
                 i + 1, it.id_produksi_bahan || '', it.id_persediaan || '', it.namabarang || '', it.nama_unit || '',
                 it.jumlah_bahan || '', it.bahan_produksi_lama || '', it.bahan_produksi_baru || '',
-                it.total_10 || '', it.sisa_stock || '', it.keterangan || ''
+                it.total_10 || '', it.sisa_stock || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsPecah = genRecalcData.pecah_satuan.map(function(it, i) {
@@ -1435,14 +1640,16 @@ window.addEventListener('load', function() {
                 i + 1, it.aksi || '', it.id_pecah_satuan || '', it.id_persediaan_sumber || '', it.id_persediaan_target || '',
                 it.namabarang || '', it.satuan || '', it.hpp || '', it.jumlah_pecah || '', it.pecah_satuan_baru || '',
                 it.total_10_sumber || '', it.nama_barang_baru || '', it.satuan_barang_baru || '', it.hpp_barang_baru || '',
-                it.jumlah_barang_baru || '', it.sa_target || '', it.total_10_target || '', it.keterangan || ''
+                it.jumlah_barang_baru || '', it.sa_target || '', it.total_10_target || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         var rowsPecahU = genRecalcData.pecah_satuan_update.map(function(it, i) {
             return [
                 i + 1, it.id_pecah_satuan || '', it.id_persediaan_sumber || '', it.id_persediaan_target || '',
                 it.namabarang || '', it.nama_barang_baru || '', it.jumlah_pecah || '', it.jumlah_barang_baru || '',
-                it.pecah_satuan_baru || '', it.total_10_sumber || '', it.sa_target || '', it.total_10_target || '', it.keterangan || ''
+                it.pecah_satuan_baru || '', it.total_10_sumber || '', it.sa_target || '', it.total_10_target || '',
+                it.keterangan || '', it.keterangan_check || ''
             ];
         });
         return {
@@ -1481,12 +1688,27 @@ window.addEventListener('load', function() {
     function fillGenRecalcTableSimple(sel, rows) {
         var html = '';
         rows.forEach(function(r) {
-            html += '<tr>' + r.map(function(c) { return '<td>' + escapeHtmlGen(c) + '</td>'; }).join('') + '</tr>';
+            html += '<tr>' + r.map(function(c, ci) {
+                var wrapCls = (ci >= r.length - 2) ? ' class="gen-recalc-cell-wrap"' : '';
+                return '<td' + wrapCls + '>' + escapeHtmlGen(c) + '</td>';
+            }).join('') + '</tr>';
         });
         if (!html) {
             html = '<tr><td colspan="20" class="text-center text-muted">Belum ada data</td></tr>';
         }
         $(sel + ' tbody').html(html);
+    }
+
+    function genRecalcDtCreatedRow(row, data) {
+        if (!data || !data.length) {
+            return;
+        }
+        var wrapStart = Math.max(0, data.length - 2);
+        $('td', row).each(function(i) {
+            if (i >= wrapStart) {
+                $(this).addClass('gen-recalc-cell-wrap');
+            }
+        });
     }
 
     function upsertGenRecalcDataTable(sel, rows, orderCol) {
@@ -1509,7 +1731,9 @@ window.addEventListener('load', function() {
             pageLength: 25,
             order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
             language: genRecalcDtLang,
-            autoWidth: false
+            autoWidth: true,
+            deferRender: true,
+            createdRow: genRecalcDtCreatedRow
         });
     }
 
@@ -1536,6 +1760,9 @@ window.addEventListener('load', function() {
             if (dt && dt.columns) {
                 try { dt.columns.adjust().draw(false); } catch (eAdj) {}
             }
+        });
+        $('#panel-generate-persediaan .gen-recalc-table-scroll').each(function() {
+            this.scrollLeft = 0;
         });
     }
 
@@ -1882,12 +2109,49 @@ window.addEventListener('load', function() {
         $('#compare-badge-tidak').text(typeof stats.tidak_di_tabel !== 'undefined' ? stats.tidak_di_tabel : 0);
         $('#compare-badge-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : 0);
         $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
+        $('#compare-badge-pembelian-tidak').text(typeof stats.pembelian_tidak_manual !== 'undefined' ? stats.pembelian_tidak_manual : 0);
+        $('#compare-badge-penjualan-tidak').text(typeof stats.penjualan_tidak_manual !== 'undefined' ? stats.penjualan_tidak_manual : 0);
+        $('#compare-badge-produksi-tidak').text(typeof stats.produksi_tidak_manual !== 'undefined' ? stats.produksi_tidak_manual : 0);
+        $('#compare-badge-pecah-tidak').text(typeof stats.pecah_tidak_manual !== 'undefined' ? stats.pecah_tidak_manual : 0);
+    }
+
+    function fillCompareTableSelect($sel, tables, selectTable) {
+        if (!$sel || !$sel.length) return;
+        var cur = selectTable || $sel.val();
+        $sel.find('option:not(:first)').remove();
+        (tables || []).forEach(function(tbl) {
+            $sel.append($('<option>', { value: tbl, text: tbl }));
+        });
+        if (cur) {
+            $sel.val(cur);
+        }
+    }
+
+    function updateCompareDbTabelInfoBox() {
+        var tbl = ($('#compare_db_tabel_cek').val() || '').trim();
+        var $box = $('#compare-db-tabel-info');
+        if (!tbl) {
+            $box.addClass('d-none');
+            $('#compare-db-tabel-nama').text('—');
+            return;
+        }
+        $('#compare-db-tabel-nama').text(tbl);
+        $box.removeClass('d-none');
     }
 
     function loadCompareTableList(force, selectTable) {
-        if (compareTablesLoaded && !force) return;
+        if (compareTablesLoaded && !force) {
+            if (selectTable) {
+                $('#compare_tabel_pilihan').val(selectTable);
+                $('#compare_db_tabel_cek').val(selectTable);
+                updateCompareDbTabelInfoBox();
+            }
+            return;
+        }
         var $sel = $('#compare_tabel_pilihan');
+        var $selDb = $('#compare_db_tabel_cek');
         $sel.prop('disabled', true);
+        $selDb.prop('disabled', true);
         $.ajax({
             url: urlCompareTabelList,
             type: 'POST',
@@ -1897,18 +2161,21 @@ window.addEventListener('load', function() {
                 setCompareStatus('danger', (res && res.message) ? res.message : 'Gagal memuat daftar tabel.');
                 return;
             }
-            var cur = selectTable || $sel.val();
-            $sel.find('option:not(:first)').remove();
-            (res.tables || []).forEach(function(tbl) {
-                $sel.append($('<option>', { value: tbl, text: tbl }));
-            });
-            if (cur) $sel.val(cur);
+            var tables = res.tables || [];
+            fillCompareTableSelect($sel, tables, selectTable);
+            fillCompareTableSelect($selDb, tables, selectTable);
+            updateCompareDbTabelInfoBox();
             compareTablesLoaded = true;
             setCompareStatus('info', 'Pilih bulan, tahun, dan tabel — lalu klik <strong>Compare</strong>.');
         }).fail(function() {
             setCompareStatus('danger', 'Tidak dapat memuat daftar tabel dari server.');
         }).always(function() {
             $sel.prop('disabled', false);
+            if (!userCanComparePersediaan) {
+                $selDb.prop('disabled', true);
+            } else {
+                $selDb.prop('disabled', false);
+            }
         });
     }
 
@@ -2027,7 +2294,7 @@ window.addEventListener('load', function() {
                 meta += ' (ditampilkan ' + (res.shown || 0) + ' baris pertama)';
             }
             $('#compare-csv-preview-meta').text(meta);
-            $('#modalCompareCsvPreviewLabel').text('Review Data — ' + (res.table || table));
+            $('#modalCompareCsvPreviewLabel').text('Data Tabel — ' + (res.table || table));
             renderCompareCsvPreviewTable(res);
         })
         .catch(function(err) {
@@ -2120,6 +2387,57 @@ window.addEventListener('load', function() {
                 ];
             });
         }
+        if (jenis === 'pembelian_tidak_manual') {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.uraian || '',
+                    it.satuan || '',
+                    it.harga_satuan || '',
+                    it.spop || '',
+                    it.jumlah || '',
+                    it.tgl_po || ''
+                ];
+            });
+        }
+        if (jenis === 'penjualan_tidak_manual') {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.nama_barang || '',
+                    it.satuan || '',
+                    it.harga_satuan || '',
+                    it.spop || '',
+                    it.jumlah || '',
+                    it.tgl_jual || ''
+                ];
+            });
+        }
+        if (jenis === 'produksi_tidak_manual') {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.nama_barang_bahan || '',
+                    it.satuan_bahan || '',
+                    it.harga_satuan_bahan || '',
+                    it.spop || '',
+                    it.jumlah_bahan || '',
+                    it.tgl_transaksi || ''
+                ];
+            });
+        }
+        if (jenis === 'pecah_tidak_manual') {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.uraian || '',
+                    it.satuan || '',
+                    it.harga_satuan || '',
+                    it.spop || '',
+                    it.jumlah || ''
+                ];
+            });
+        }
         return items.map(function(it, i) {
             return [
                 i + 1,
@@ -2167,6 +2485,10 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
         upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 6);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
+        upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 1);
+        upsertCompareDataTable('#table-compare-penjualan-tidak', buildCompareRows('penjualan_tidak_manual', res.items_penjualan_tidak_manual || []), 1);
+        upsertCompareDataTable('#table-compare-produksi-tidak', buildCompareRows('produksi_tidak_manual', res.items_produksi_tidak_manual || []), 1);
+        upsertCompareDataTable('#table-compare-pecah-tidak', buildCompareRows('pecah_tidak_manual', res.items_pecah_tidak_manual || []), 1);
         setTimeout(function() {
             Object.keys(compareDtStore).forEach(function(sel) {
                 var dt = compareDtStore[sel];
@@ -2230,7 +2552,11 @@ window.addEventListener('load', function() {
             setCompareStatus('success', 'Compare selesai — Total_10 kosong: <strong>' + (s.total10_kosong || 0) + '</strong>, '
                 + 'Tidak di tabel manual: <strong>' + (s.tidak_di_tabel || 0) + '</strong>, '
                 + 'Tidak di persediaan: <strong>' + (s.hanya_tabel || 0) + '</strong>, '
-                + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>.');
+                + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>, '
+                + 'Pembelian tidak di manual: <strong>' + (s.pembelian_tidak_manual || 0) + '</strong>, '
+                + 'Penjualan tidak di manual: <strong>' + (s.penjualan_tidak_manual || 0) + '</strong>, '
+                + 'Produksi tidak di manual: <strong>' + (s.produksi_tidak_manual || 0) + '</strong>, '
+                + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.');
         }).fail(function() {
             setCompareStatus('danger', 'Tidak dapat menghubungi server.');
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
@@ -2295,6 +2621,22 @@ window.addEventListener('load', function() {
         updateTombolComparePersediaan();
         loadCompareTableList(false);
         updateCompareInfoRingkas();
+    });
+
+    $('#compare_db_tabel_cek').on('change', function() {
+        updateCompareDbTabelInfoBox();
+    });
+
+    $('#btn-compare-db-cek-data').on('click', function() {
+        if (!userCanComparePersediaan || $(this).prop('disabled')) {
+            return false;
+        }
+        var tbl = ($('#compare_db_tabel_cek').val() || '').trim();
+        if (!tbl) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih tabel database terlebih dahulu.' });
+            return;
+        }
+        openCompareCsvPreviewModal(tbl, 'Tabel database: ' + tbl);
     });
 
     $('#compare_csv_file').on('change', function() {

@@ -108,13 +108,70 @@ function persediaan_tampil_total_10_net_row($row)
  */
 function persediaan_hitung_total_10_kalkulasi($row)
 {
-	$sa = persediaan_parse_angka(persediaan_row_get($row, 'sa'));
-	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
-	$penjualan = persediaan_parse_angka(persediaan_row_get($row, 'penjualan'));
-	$pecah_satuan = persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'));
-	$bahan_produksi = persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'));
+	$parts = persediaan_gen_recalc_total_10_formula_parts($row);
+	return (int) $parts['total_10_kalkulasi'];
+}
 
-	return max(0, (int) floor($sa + $beli - $penjualan - $pecah_satuan - $bahan_produksi));
+/**
+ * Komponen rumus total_10: (sa + beli) - (penjualan + pecah_satuan + bahan_produksi).
+ */
+function persediaan_gen_recalc_total_10_formula_parts($row)
+{
+	$sa = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'sa'))));
+	$beli = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'beli'))));
+	$penjualan = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'penjualan'))));
+	$pecah_satuan = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'))));
+	$bahan_produksi = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'))));
+	$gross = $sa + $beli;
+
+	$penjualan = min($penjualan, $gross);
+	$sisa_setelah_penj = max(0, $gross - $penjualan);
+	$pecah_satuan = min($pecah_satuan, $sisa_setelah_penj);
+	$sisa_setelah_pecah = max(0, $sisa_setelah_penj - $pecah_satuan);
+	$bahan_produksi = min($bahan_produksi, $sisa_setelah_pecah);
+
+	return array(
+		'sa' => $sa,
+		'beli' => $beli,
+		'penjualan' => $penjualan,
+		'pecah_satuan' => $pecah_satuan,
+		'bahan_produksi' => $bahan_produksi,
+		'gross' => $gross,
+		'total_10_kalkulasi' => max(0, $gross - $penjualan - $pecah_satuan - $bahan_produksi),
+	);
+}
+
+/**
+ * Keterangan review jika total_10 aktual ≠ kalkulasi rumus stok.
+ */
+function persediaan_gen_recalc_check_total_10_keterangan($row, $total_10_aktual = null)
+{
+	$parts = persediaan_gen_recalc_total_10_formula_parts($row);
+	$kalk = (int) $parts['total_10_kalkulasi'];
+	$aktual = $total_10_aktual !== null
+		? max(0, (int) floor(persediaan_parse_angka($total_10_aktual)))
+		: max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'total_10'))));
+
+	if ($aktual === $kalk) {
+		return '';
+	}
+
+	return 'SELISIH total_10: nilai=' . $aktual . ', kalkulasi=' . $kalk
+		. ' | (sa ' . $parts['sa'] . ' + beli ' . $parts['beli'] . ')'
+		. ' - (penj ' . $parts['penjualan'] . ' + pecah ' . $parts['pecah_satuan'] . ' + prod ' . $parts['bahan_produksi'] . ')';
+}
+
+function persediaan_gen_recalc_check_total_10_from_values($sa, $beli, $penjualan, $pecah_satuan, $bahan_produksi, $total_10_aktual)
+{
+	$row = (object) array(
+		'sa' => $sa,
+		'beli' => $beli,
+		'penjualan' => $penjualan,
+		'pecah_satuan' => $pecah_satuan,
+		'bahan_produksi' => $bahan_produksi,
+		'total_10' => $total_10_aktual,
+	);
+	return persediaan_gen_recalc_check_total_10_keterangan($row, $total_10_aktual);
 }
 
 function persediaan_hitung_nilai_persediaan_stock_row($row)
