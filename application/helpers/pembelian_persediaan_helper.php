@@ -10854,7 +10854,6 @@ function persediaan_compare_preview_table_data($CI, $table, $limit = 1000)
 
 function persediaan_compare_get_persediaan_bulan_rows($CI, $bulan)
 {
-	$CI->load->model('Persediaan_model');
 	$CI->load->helper('persediaan_display');
 
 	$bulan = trim((string) $bulan);
@@ -10864,16 +10863,13 @@ function persediaan_compare_get_persediaan_bulan_rows($CI, $bulan)
 
 	$ts = strtotime($bulan . '-01');
 	if ($ts === false) {
-		return persediaan_export_sort_rows_by_namabarang(
-			$CI->Persediaan_model->get_by_year_month($bulan),
-			'namabarang'
-		);
+		return array();
 	}
 
 	$tgl_awal = date('Y-m-01', $ts);
 	$tgl_akhir = date('Y-m-t', $ts);
 
-	$by_tanggal_beli = $CI->db->query(
+	$rows = $CI->db->query(
 		"SELECT * FROM `persediaan`
 		WHERE `tanggal_beli` IS NOT NULL AND `tanggal_beli` <> '0000-00-00'
 		AND DATE(`tanggal_beli`) >= ? AND DATE(`tanggal_beli`) <= ?
@@ -10881,22 +10877,137 @@ function persediaan_compare_get_persediaan_bulan_rows($CI, $bulan)
 		array($tgl_awal, $tgl_akhir)
 	)->result();
 
-	$by_model = $CI->Persediaan_model->get_by_year_month($bulan);
+	return persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
+}
 
-	$merged = array();
-	$seen_ids = array();
-	foreach (array_merge($by_tanggal_beli, is_array($by_model) ? $by_model : array()) as $row) {
-		$id = (is_object($row) && isset($row->id)) ? (int) $row->id : 0;
-		if ($id > 0) {
-			if (isset($seen_ids[$id])) {
-				continue;
-			}
-			$seen_ids[$id] = true;
-		}
-		$merged[] = $row;
+/**
+ * Rentang tanggal dari kunci bulan YYYY-MM.
+ */
+function persediaan_compare_bulan_to_date_range($bulan)
+{
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return null;
+	}
+	$ts = strtotime($bulan . '-01');
+	if ($ts === false) {
+		return null;
 	}
 
-	return persediaan_export_sort_rows_by_namabarang($merged, 'namabarang');
+	return array(
+		'tgl_awal' => date('Y-m-01', $ts),
+		'tgl_akhir' => date('Y-m-t', $ts),
+		'tanggal_beli' => date('Y-m-01', $ts),
+		'bulan_label' => date('m/Y', $ts),
+	);
+}
+
+/**
+ * Cek apakah nama tabel manual mengandung periode YYYYMM yang sesuai bulan terpilih.
+ */
+function persediaan_compare_table_name_matches_bulan($table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', trim((string) $bulan), $m)) {
+		return false;
+	}
+
+	$tahun = $m[1];
+	$bln = $m[2];
+	$needle_a = $tahun . $bln;
+	$needle_b = $tahun . '_' . $bln;
+	$table_l = strtolower((string) $table);
+
+	if (strpos($table_l, $needle_a) !== false || strpos($table_l, $needle_b) !== false) {
+		return true;
+	}
+
+	// Tabel tanpa pola tanggal di nama — dianggap snapshot manual (tidak diblokir).
+	return !preg_match('/\d{6,}/', $table_l);
+}
+
+function persediaan_compare_detect_manual_date_column($fields)
+{
+	return persediaan_compare_pick_column($fields, array(
+		'tanggal_beli',
+		'tanggal',
+		'tgl',
+		'tgl_po',
+		'tgl_transaksi',
+		'proses_input',
+		'bulan',
+		'tahun',
+	));
+}
+
+/**
+ * Muat baris tabel manual — hanya record yang sesuai bulan/tahun terpilih.
+ */
+function persediaan_compare_load_manual_rows_for_bulan($CI, $table, $bulan, $order_sql = '')
+{
+	$valid = persediaan_compare_validate_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array('ok' => false, 'message' => $valid['message']);
+	}
+
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	if ($range === null) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$map = $valid['map'];
+	$fields = $valid['fields'];
+	$date_col = persediaan_compare_detect_manual_date_column($fields);
+	$params = array();
+	$where = '';
+
+	if ($date_col !== null) {
+		$col_l = strtolower((string) $date_col);
+		if ($col_l === 'tanggal_beli' || $col_l === 'tgl_po' || $col_l === 'tgl_transaksi' || $col_l === 'proses_input' || $col_l === 'tgl') {
+			$where = ' WHERE `' . $date_col . '` IS NOT NULL AND `' . $date_col . "` <> '0000-00-00'"
+				. ' AND DATE(`' . $date_col . '`) >= ? AND DATE(`' . $date_col . '`) <= ?';
+			$params = array($range['tgl_awal'], $range['tgl_akhir']);
+		} elseif ($col_l === 'tanggal') {
+			$where = " WHERE COALESCE(
+				STR_TO_DATE(`{$date_col}`, '%d/%m/%Y'),
+				STR_TO_DATE(`{$date_col}`, '%e/%c/%Y'),
+				STR_TO_DATE(`{$date_col}`, '%Y-%m-%d'),
+				STR_TO_DATE(`{$date_col}`, '%d-%m-%Y')
+			) BETWEEN ? AND ?";
+			$params = array($range['tgl_awal'], $range['tgl_akhir']);
+		} elseif ($col_l === 'bulan') {
+			$bulan_num = (int) substr($bulan, 5, 2);
+			$tahun_num = (int) substr($bulan, 0, 4);
+			$where = ' WHERE (CAST(`' . $date_col . '` AS UNSIGNED) = ? OR TRIM(`' . $date_col . '`) = ?)';
+			$params = array($bulan_num, str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT));
+			$tahun_col = persediaan_compare_pick_column($fields, array('tahun'));
+			if ($tahun_col !== null) {
+				$where .= ' AND CAST(`' . $tahun_col . '` AS UNSIGNED) = ?';
+				$params[] = $tahun_num;
+			}
+		} elseif ($col_l === 'tahun') {
+			$tahun_num = (int) substr($bulan, 0, 4);
+			$where = ' WHERE CAST(`' . $date_col . '` AS UNSIGNED) = ?';
+			$params = array($tahun_num);
+		}
+	} elseif (!persediaan_compare_table_name_matches_bulan($table, $bulan)) {
+		return array(
+			'ok' => false,
+			'message' => 'Tabel manual `' . $table . '` tidak sesuai bulan/tahun terpilih (' . $range['bulan_label'] . ').',
+		);
+	}
+
+	$sql = 'SELECT * FROM `' . $table . '`' . $where . $order_sql;
+	$manual_rows = count($params) > 0
+		? $CI->db->query($sql, $params)->result()
+		: $CI->db->query($sql)->result();
+
+	return array(
+		'ok' => true,
+		'map' => $map,
+		'fields' => $fields,
+		'rows' => $manual_rows,
+		'range' => $range,
+	);
 }
 
 function persediaan_compare_row_get($row, $col)
@@ -11306,7 +11417,7 @@ function persediaan_compare_run($CI, $bulan, $table)
 		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
 	}
 
-	$loaded = persediaan_compare_load_table_rows($CI, $table);
+	$loaded = persediaan_compare_load_manual_rows_for_bulan($CI, $table, $bulan);
 	if (empty($loaded['ok'])) {
 		return array('ok' => false, 'message' => $loaded['message']);
 	}
@@ -12692,29 +12803,26 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
 	}
 
-	$valid = persediaan_compare_validate_table($CI, $table);
-	if (empty($valid['ok'])) {
-		return array('ok' => false, 'message' => $valid['message']);
-	}
-
-	$map = $valid['map'];
-	$fields = $valid['fields'];
-	$manual_extra_cols = persediaan_compare_excel_all_detect_manual_extra_cols($fields);
-
 	$order_sql = '';
-	if (is_array($fields) && in_array('id', $fields, true)) {
+	$valid_pre = persediaan_compare_validate_table($CI, $table);
+	if (!empty($valid_pre['ok']) && is_array($valid_pre['fields']) && in_array('id', $valid_pre['fields'], true)) {
 		$order_sql = ' ORDER BY `id` ASC';
 	}
-	$manual_rows = $CI->db->query('SELECT * FROM `' . $table . '`' . $order_sql)->result();
 
-	$ts = strtotime($bulan . '-01');
-	if ($ts === false) {
-		return array('ok' => false, 'message' => 'Bulan tidak valid.');
+	$loaded = persediaan_compare_load_manual_rows_for_bulan($CI, $table, $bulan, $order_sql);
+	if (empty($loaded['ok'])) {
+		return array('ok' => false, 'message' => $loaded['message']);
 	}
 
-	$tgl_awal = date('Y-m-01', $ts);
-	$tgl_akhir = date('Y-m-t', $ts);
-	$bulan_label = date('m/Y', $ts);
+	$map = $loaded['map'];
+	$fields = $loaded['fields'];
+	$manual_extra_cols = persediaan_compare_excel_all_detect_manual_extra_cols($fields);
+	$manual_rows = $loaded['rows'];
+
+	$range = $loaded['range'];
+	$tgl_awal = $range['tgl_awal'];
+	$tgl_akhir = $range['tgl_akhir'];
+	$bulan_label = $range['bulan_label'];
 
 	$pers_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
