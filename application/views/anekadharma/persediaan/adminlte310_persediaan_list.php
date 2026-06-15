@@ -1057,9 +1057,9 @@
         min-width: 88px;
     }
     #compare_tabel_pilihan.compare-toolbar-tabel {
-        width: 240px;
-        min-width: 180px;
-        max-width: 320px;
+        width: 360px;
+        min-width: 270px;
+        max-width: 480px;
     }
     .custom-file-sm .custom-file-label,
     .custom-file-sm .custom-file-label::after {
