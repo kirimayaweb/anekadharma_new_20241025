@@ -26,6 +26,7 @@
         if (!isset($date_akhir)) {
             $date_akhir = date('Y-m-t 23:59:59');
         }
+        $search_filter = isset($search_filter) ? trim((string) $search_filter) : '';
         if (date('Y', strtotime($date_awal)) < 2020) {
             $Get_date_awal = date('d-m-Y');
         } else {
@@ -231,7 +232,7 @@
                                     <?php
                                     }
                                     ?>
-                                    <tr>
+                                    <tr data-row-id="<?php echo (int) $list_data->id; ?>">
                                         <?php
                                         if ($compare_uuid_spop == $list_data->uuid_spop) {
                                         ?>
@@ -563,16 +564,201 @@
     .bootstrap-datetimepicker-widget {
         z-index: 99999 !important;
     }
+    .DTFC_Cloned tfoot {
+        display: none !important;
+    }
 </style>
 <script>
+    var initialSearchFilterSettingKodeAkun = <?php echo json_encode($search_filter); ?>;
+
+    function formatRupiahIDR(value) {
+        return new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value || 0);
+    }
+
+    function parseRupiahToFloat(text) {
+        var normalized = String(text || '')
+            .replace(/\./g, '')
+            .replace(',', '.')
+            .replace(/[^0-9.-]/g, '');
+        var num = parseFloat(normalized);
+        return isNaN(num) ? 0 : num;
+    }
+
+    function isStatusDataPembelian(text) {
+        var status = String(text || '').trim().toUpperCase();
+        return status === 'U' || status === 'L' || status === 'LUNAS' || status === 'HUTANG';
+    }
+
+    function tulisFooterTotalPembelian(totalLunas, totalHutang) {
+        var totalLunasText = formatRupiahIDR(totalLunas);
+        var totalHutangHtml = "<font color='red'>" + formatRupiahIDR(totalHutang) + "</font>";
+        var $allRows = jQuery('.dataTables_scrollFoot tfoot tr, #tglSPOPFreeze tfoot tr');
+        $allRows.each(function() {
+            var $cells = jQuery(this).find('th,td');
+            var rowText = jQuery(this).text().toUpperCase();
+            if (rowText.indexOf('TOTAL LUNAS') !== -1 && $cells.length > 11) {
+                $cells.eq(11).text(totalLunasText);
+            }
+            if (rowText.indexOf('TOTAL HUTANG') !== -1 && $cells.length > 11) {
+                $cells.eq(11).html(totalHutangHtml);
+            }
+        });
+    }
+
+    function ambilTextCellDariDataTableCell(cellHtmlOrText) {
+        return jQuery('<div>').html(cellHtmlOrText).text().trim();
+    }
+
+    function updateTotalFooterDariDataTable() {
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return;
+        }
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+        var totalLunas = 0;
+        var totalHutang = 0;
+
+        table.rows({
+            search: 'applied'
+        }).every(function() {
+            var rowData = this.data();
+            if (!rowData || rowData.length < 13) {
+                return;
+            }
+            var statusText = ambilTextCellDariDataTableCell(rowData[12]);
+            if (!isStatusDataPembelian(statusText)) {
+                return;
+            }
+            var hargaTotal = parseRupiahToFloat(ambilTextCellDariDataTableCell(rowData[11]));
+            if (statusText.toUpperCase() === 'U' || statusText.toUpperCase() === 'HUTANG') {
+                totalHutang += hargaTotal;
+            } else {
+                totalLunas += hargaTotal;
+            }
+        });
+        tulisFooterTotalPembelian(totalLunas, totalHutang);
+    }
+
+    function kumpulkanVisibleIdsSettingKodeAkun() {
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            var fallback = document.getElementById('excel-export-ids');
+            return fallback ? fallback.value : '';
+        }
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+        var ids = [];
+        table.rows({
+            search: 'applied'
+        }).nodes().to$().each(function() {
+            var rowId = jQuery(this).attr('data-row-id');
+            if (rowId) {
+                ids.push(parseInt(rowId, 10));
+            }
+        });
+        return ids.join(',');
+    }
+
+    function simpanSearchFilterAktifSettingKodeAkun() {
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return '';
+        }
+        var val = jQuery('#tglSPOPFreeze').DataTable().search() || '';
+        try {
+            window.localStorage.setItem('setting_kode_akun_search_filter', val);
+        } catch (e) {}
+        return val;
+    }
+
+    function ambilSearchFilterAwalSettingKodeAkun() {
+        var val = (initialSearchFilterSettingKodeAkun || '').trim();
+        if (val) {
+            return val;
+        }
+        try {
+            val = (window.localStorage.getItem('setting_kode_akun_search_filter') || '').trim();
+        } catch (e) {
+            val = '';
+        }
+        return val;
+    }
+
+    function sisipkanSearchFilterKeUrl(url, searchFilter) {
+        if (!searchFilter) {
+            return url;
+        }
+        var hash = '';
+        var hashPos = url.indexOf('#');
+        if (hashPos >= 0) {
+            hash = url.substring(hashPos);
+            url = url.substring(0, hashPos);
+        }
+        var separator = url.indexOf('?') >= 0 ? '&' : '?';
+        return url + separator + 'search_filter=' + encodeURIComponent(searchFilter) + hash;
+    }
+
+    function updateLinkKodeAkunDenganSearchFilter() {
+        var searchFilter = simpanSearchFilterAktifSettingKodeAkun();
+        jQuery('a[href*="/tbl_pembelian/input_kode_akun/"], a[href*="/Tbl_pembelian/input_kode_akun/"], a[href*="/tbl_pembelian/ubah_kode_akun/"], a[href*="/Tbl_pembelian/ubah_kode_akun/"]').each(function() {
+            var hrefAwal = jQuery(this).attr('data-href-awal-kode-akun');
+            if (!hrefAwal) {
+                hrefAwal = jQuery(this).attr('href') || '';
+                jQuery(this).attr('data-href-awal-kode-akun', hrefAwal);
+            }
+            if (!hrefAwal) {
+                return;
+            }
+            var hrefFinal = hrefAwal.replace(/([?&])search_filter=[^&#]*/g, '').replace(/[?&]$/, '');
+            hrefFinal = sisipkanSearchFilterKeUrl(hrefFinal, searchFilter);
+            jQuery(this).attr('href', hrefFinal);
+        });
+    }
+
+    function ambilSearchAktifDariDataTableAtauInput() {
+        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return jQuery('#tglSPOPFreeze').DataTable().search() || '';
+        }
+        var filterInput = document.querySelector('div.dataTables_filter input');
+        return filterInput ? (filterInput.value || '') : '';
+    }
+
+    function applySearchFilterKeDataTable(searchValue) {
+        var val = (searchValue || '').trim();
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            return;
+        }
+        var table = jQuery('#tglSPOPFreeze').DataTable();
+        if (table.search() !== val) {
+            table.search(val).draw();
+        } else {
+            var filterInput = document.querySelector('div.dataTables_filter input');
+            if (filterInput) {
+                filterInput.value = val;
+            }
+        }
+        try {
+            window.localStorage.setItem('setting_kode_akun_search_filter', val);
+        } catch (e) {}
+    }
+
     function cetakExcelSettingKodeAkun() {
-        var idsEl = document.getElementById('excel-export-ids');
-        var ids = idsEl ? idsEl.value : '';
+        var ids = kumpulkanVisibleIdsSettingKodeAkun();
         if (!ids) {
             alert('Tidak ada data untuk diekspor. Silakan cari data terlebih dahulu.');
             return;
         }
-        var url = '<?php echo site_url('Tbl_pembelian/excel_setting_kode_akun'); ?>?ids=' + encodeURIComponent(ids);
+        var tglAwalEl = document.querySelector('#form-cari-setting-kode-akun input[name="tgl_awal"]');
+        var tglAkhirEl = document.querySelector('#form-cari-setting-kode-akun input[name="tgl_akhir"]');
+        var searchText = '';
+        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            searchText = jQuery('#tglSPOPFreeze').DataTable().search() || '';
+        }
+        var params = new URLSearchParams();
+        params.set('ids', ids);
+        params.set('date_awal_display', tglAwalEl ? tglAwalEl.value : '');
+        params.set('date_akhir_display', tglAkhirEl ? tglAkhirEl.value : '');
+        params.set('filter_text', searchText ? searchText : '-');
+        var url = '<?php echo site_url('Tbl_pembelian/excel_setting_kode_akun'); ?>?' + params.toString();
         window.location.href = url;
     }
 
@@ -625,6 +811,46 @@
             form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
                 el.addEventListener('change', submitCariSettingKodeAkunOtomatis);
             });
+            if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+                var table = jQuery('#tglSPOPFreeze').DataTable();
+                var initialSearch = ambilSearchFilterAwalSettingKodeAkun();
+                applySearchFilterKeDataTable(initialSearch);
+                updateTotalFooterDariDataTable();
+                updateLinkKodeAkunDenganSearchFilter();
+                table.off('draw.settingKodeAkun').on('draw.settingKodeAkun', function() {
+                    updateTotalFooterDariDataTable();
+                    updateLinkKodeAkunDenganSearchFilter();
+                });
+                table.off('search.settingKodeAkun order.settingKodeAkun page.settingKodeAkun')
+                    .on('search.settingKodeAkun order.settingKodeAkun page.settingKodeAkun', function() {
+                        updateTotalFooterDariDataTable();
+                        updateLinkKodeAkunDenganSearchFilter();
+                    });
+                jQuery(document).off('click.settingKodeAkunLink', 'a[href*="/tbl_pembelian/input_kode_akun/"], a[href*="/Tbl_pembelian/input_kode_akun/"], a[href*="/tbl_pembelian/ubah_kode_akun/"], a[href*="/Tbl_pembelian/ubah_kode_akun/"]');
+                jQuery(document).on('click.settingKodeAkunLink', 'a[href*="/tbl_pembelian/input_kode_akun/"], a[href*="/Tbl_pembelian/input_kode_akun/"], a[href*="/tbl_pembelian/ubah_kode_akun/"], a[href*="/Tbl_pembelian/ubah_kode_akun/"]', function(e) {
+                    var href = jQuery(this).attr('href') || '';
+                    if (!href) {
+                        return;
+                    }
+                    e.preventDefault();
+                    var searchFilter = ambilSearchAktifDariDataTableAtauInput();
+                    try {
+                        window.localStorage.setItem('setting_kode_akun_search_filter', searchFilter);
+                    } catch (err) {}
+                    var hrefFinal = href.replace(/([?&])search_filter=[^&#]*/g, '').replace(/[?&]$/, '');
+                    hrefFinal = sisipkanSearchFilterKeUrl(hrefFinal, searchFilter);
+                    window.location.href = hrefFinal;
+                });
+                jQuery(document).off('keyup.settingKodeAkunSearch input.settingKodeAkunSearch', 'div.dataTables_filter input');
+                jQuery(document).on('keyup.settingKodeAkunSearch input.settingKodeAkunSearch', 'div.dataTables_filter input', function() {
+                    setTimeout(function() {
+                        updateTotalFooterDariDataTable();
+                        updateLinkKodeAkunDenganSearchFilter();
+                    }, 0);
+                });
+                setTimeout(updateTotalFooterDariDataTable, 200);
+                setTimeout(updateLinkKodeAkunDenganSearchFilter, 200);
+            }
         }
 
         if (document.readyState === 'complete') {

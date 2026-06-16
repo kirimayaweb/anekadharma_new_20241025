@@ -4129,13 +4129,32 @@ class Tbl_pembelian extends CI_Controller
 		}
 
 		$export_rows = $this->_build_setting_kode_akun_excel_rows($rows);
+		$date_awal_display = trim((string) $this->input->get('date_awal_display', TRUE));
+		$date_akhir_display = trim((string) $this->input->get('date_akhir_display', TRUE));
+		$filter_text = trim((string) $this->input->get('filter_text', TRUE));
+		if ($date_awal_display === '') {
+			$date_awal_display = trim((string) $this->session->userdata('filter_setting_kode_akun_date_awal'));
+		}
+		if ($date_akhir_display === '') {
+			$date_akhir_display = trim((string) $this->session->userdata('filter_setting_kode_akun_date_akhir'));
+		}
+		if ($filter_text === '') {
+			$filter_text = '-';
+		}
 
 		$namaFile = 'kode_akun_pembelian_' . date('Y-m-d_H-i-s') . '.xlsx';
-		$tablehead = 0;
-		$tablebody = 1;
+		$tablehead = 3;
+		$tablebody = 4;
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
+		xlsWriteLabel(0, 0, 'Laporan Setting Kode Akun Pembelian');
+		xlsWriteLabel(1, 0, 'Periode Tanggal Awal');
+		xlsWriteLabel(1, 1, $date_awal_display);
+		xlsWriteLabel(1, 2, 'sampai Tanggal Akhir');
+		xlsWriteLabel(1, 3, $date_akhir_display);
+		xlsWriteLabel(2, 0, 'Filter Data');
+		xlsWriteLabel(2, 1, $filter_text);
 
 		$kolomhead = 0;
 		xlsWriteLabel($tablehead, $kolomhead++, 'No');
@@ -5343,10 +5362,21 @@ class Tbl_pembelian extends CI_Controller
 
 	public function cari_between_date_setting_kode_akun()
 	{
-		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates(
-			$this->input->post('tgl_awal', TRUE),
-			$this->input->post('tgl_akhir', TRUE)
-		);
+		$tgl_awal_post = $this->input->post('tgl_awal', TRUE);
+		$tgl_akhir_post = $this->input->post('tgl_akhir', TRUE);
+		if ($tgl_awal_post || $tgl_akhir_post) {
+			list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_post, $tgl_akhir_post);
+			$this->session->set_userdata('filter_setting_kode_akun_date_awal', $Get_date_awal);
+			$this->session->set_userdata('filter_setting_kode_akun_date_akhir', $Get_date_akhir);
+			redirect(site_url('tbl_pembelian/setting_kode_akun_pembelian2?keep_filter=1'));
+			return;
+		}
+		$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_date_awal');
+		$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_date_akhir');
+		if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+			$Get_date_awal = date('Y-m-1 00:00:00');
+			$Get_date_akhir = date('Y-m-t 23:59:59');
+		}
 		$this->_render_setting_kode_akun_pembelian2($Get_date_awal, $Get_date_akhir);
 	}
 
@@ -5373,26 +5403,28 @@ class Tbl_pembelian extends CI_Controller
 			'pengajuan_sum_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
+			'search_filter' => trim((string) $this->input->get('search_filter', TRUE)),
 			'start' => 0,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_setting_kode_akun', $data);
 	}
 	public function jurnal_pembelian2()
 	{
-		if ($this->input->post('bulan_ns', TRUE)) {
-			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+		$Get_bulan_ns = $this->input->post('bulan_ns', TRUE);
+		if ($Get_bulan_ns) {
+			$this->session->set_userdata('jurnal_pembelian2_bulan_ns', $Get_bulan_ns);
 		} else {
-			// $Get_date_awal = date("Y-m-1 00:00:00");
-			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+			$Get_bulan_ns = $this->session->userdata('jurnal_pembelian2_bulan_ns');
 		}
 
-		$GET_Source = "pembelian";
-		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
+		if (!$Get_bulan_ns) {
+			$Get_bulan_ns = date("Y-m");
+		}
 
-		$Buku_besar_DATA = $this->db->query($sql)->result();
+		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
+		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
+
+		$Buku_besar_DATA = $this->_get_jurnal_pembelian2_rows($Get_month_selected, $Get_YEAR_selected);
 
 		// $Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
 		// $start = 0;
@@ -5401,8 +5433,252 @@ class Tbl_pembelian extends CI_Controller
 			// 'start' => $start,
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
+			'bulan_ns_selected' => $Get_bulan_ns,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
+	}
+
+	private function _get_jurnal_pembelian2_rows($month_selected, $year_selected)
+	{
+		$GET_Source = "pembelian";
+		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$month_selected AND YEAR(`tanggal`)=$year_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
+		return $this->db->query($sql)->result();
+	}
+
+	private function _bulan_indonesia($angka_bulan)
+	{
+		$daftar = array(
+			1 => 'Januari',
+			2 => 'Februari',
+			3 => 'Maret',
+			4 => 'April',
+			5 => 'Mei',
+			6 => 'Juni',
+			7 => 'Juli',
+			8 => 'Agustus',
+			9 => 'September',
+			10 => 'Oktober',
+			11 => 'November',
+			12 => 'Desember',
+		);
+		return isset($daftar[(int) $angka_bulan]) ? $daftar[(int) $angka_bulan] : '';
+	}
+
+	public function excel_jurnal_pembelian2()
+	{
+		$this->load->helper('exportexcel');
+
+		$Get_bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = trim((string) $this->session->userdata('jurnal_pembelian2_bulan_ns'));
+		}
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = date('Y-m');
+		}
+
+		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
+		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
+		$Buku_besar_DATA = $this->_get_jurnal_pembelian2_rows($Get_month_selected, $Get_YEAR_selected);
+
+		$namaFile = "jurnal_pembelian_" . $Get_bulan_ns . ".xlsx";
+		$tablehead_row1 = 2;
+		$tablehead_row2 = 3;
+		$tablebody = 4;
+
+		$style_header = 6;
+		$style_border = 3;
+		$style_total_label = 7;
+		$style_total_amount = 8;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
+		$this->_excel_jurnal_pembelian2_write_merged_title_row(0, 'JURNAL PEMBELIAN', 2);
+		$this->_excel_jurnal_pembelian2_write_merged_title_row(1, 'Jurnal Pembelian Bulan ' . $bulan_tahun_label, 0);
+
+		$this->_excel_jurnal_pembelian2_write_table_header($tablehead_row1, $tablehead_row2, $style_header);
+
+		$pl_names = $this->_excel_jurnal_pembelian2_pl_name_map();
+		$nomor = 0;
+		$GET_KODE_PL = '';
+		$TOTAL_debet_jumlah = 0;
+		$TOTAL_kredit_21101 = 0;
+		$TOTAL_debet_ALL = 0;
+		$TOTAL_kredit_ALL = 0;
+		$map_kredit_21101_by_uuid_spop = array();
+
+		foreach ($Buku_besar_DATA as $list_data) {
+			if ((string) $list_data->kode_akun === '21101') {
+				continue;
+			}
+
+			if (!isset($map_kredit_21101_by_uuid_spop[$list_data->uuid_spop])) {
+				$this->db->select('kredit');
+				$this->db->where('kode_akun', 21101);
+				$this->db->where('uuid_spop', $list_data->uuid_spop);
+				$row_kredit = $this->db->get('buku_besar')->row();
+				$map_kredit_21101_by_uuid_spop[$list_data->uuid_spop] = $row_kredit ? (float) $row_kredit->kredit : 0;
+			}
+			$nilai_kredit_21101 = $map_kredit_21101_by_uuid_spop[$list_data->uuid_spop];
+
+			if ($GET_KODE_PL !== '' && $list_data->pl != $GET_KODE_PL) {
+				$this->_excel_jurnal_pembelian2_write_pl_total_row(
+					$tablebody,
+					$pl_names,
+					$GET_KODE_PL,
+					$TOTAL_debet_jumlah,
+					$TOTAL_kredit_21101,
+					$style_total_label,
+					$style_total_amount
+				);
+				$tablebody++;
+
+				$TOTAL_debet_ALL += $TOTAL_debet_jumlah;
+				$TOTAL_kredit_ALL += $TOTAL_kredit_21101;
+				$TOTAL_debet_jumlah = 0;
+				$TOTAL_kredit_21101 = 0;
+			}
+
+			$this->_excel_jurnal_pembelian2_write_data_row(
+				$tablebody,
+				++$nomor,
+				$list_data,
+				$nilai_kredit_21101,
+				$style_border,
+				$style_total_amount
+			);
+			$tablebody++;
+
+			$TOTAL_debet_jumlah += (float) $list_data->debet;
+			$TOTAL_kredit_21101 += (float) $nilai_kredit_21101;
+			$GET_KODE_PL = $list_data->pl;
+		}
+
+		if ($GET_KODE_PL !== '') {
+			$this->_excel_jurnal_pembelian2_write_pl_total_row(
+				$tablebody,
+				$pl_names,
+				$GET_KODE_PL,
+				$TOTAL_debet_jumlah,
+				$TOTAL_kredit_21101,
+				$style_total_label,
+				$style_total_amount
+			);
+			$tablebody++;
+
+			$TOTAL_debet_ALL += $TOTAL_debet_jumlah;
+			$TOTAL_kredit_ALL += $TOTAL_kredit_21101;
+		}
+
+		$this->_excel_jurnal_pembelian2_write_grand_total_row(
+			$tablebody,
+			$TOTAL_debet_ALL,
+			$TOTAL_kredit_ALL,
+			$style_total_label,
+			$style_total_amount
+		);
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _jurnal_pembelian2_normalize_pl_nama($nama_pl)
+	{
+		$nama = trim((string) $nama_pl);
+		if ($nama !== '' && preg_match('/^perdagangan\s+umum\s*\(/iu', $nama)) {
+			return 'perdagangan umum';
+		}
+		return $nama;
+	}
+
+	private function _excel_jurnal_pembelian2_write_merged_title_row($row, $text, $styleIndex, $colStart = 0, $colEnd = 8)
+	{
+		xlsWriteCellStyle($row, $colStart, $text, $styleIndex);
+		xlsAddMerge($row, $colStart, $row, $colEnd);
+		for ($col = $colStart + 1; $col <= $colEnd; $col++) {
+			xlsWriteCellStyle($row, $col, '', $styleIndex);
+		}
+	}
+
+	private function _excel_jurnal_pembelian2_pl_name_map()
+	{
+		$pl_names = array();
+		foreach ($this->db->get('sys_kode_pl')->result() as $pl_row) {
+			$nama = '';
+			if (!empty($pl_row->nama_akun)) {
+				$nama = $pl_row->nama_akun;
+			} elseif (!empty($pl_row->keterangan)) {
+				$nama = $pl_row->keterangan;
+			}
+			$pl_names[$pl_row->kode_pl] = $this->_jurnal_pembelian2_normalize_pl_nama($nama);
+		}
+		return $pl_names;
+	}
+
+	private function _excel_jurnal_pembelian2_format_amount($value)
+	{
+		return number_format((float) $value, 2, ',', '.');
+	}
+
+	private function _excel_jurnal_pembelian2_write_table_header($rowStart, $rowEnd, $style)
+	{
+		$single_headers = array('No', 'TANGGAL', 'No. SPOP', 'PL', 'SUPPLIER');
+		foreach ($single_headers as $col => $label) {
+			xlsWriteCellStyle($rowStart, $col, $label, $style);
+			xlsAddMerge($rowStart, $col, $rowEnd, $col);
+			xlsWriteCellStyle($rowEnd, $col, '', $style);
+		}
+
+		xlsWriteCellStyle($rowStart, 5, 'Debit', $style);
+		xlsAddMerge($rowStart, 5, $rowStart, 7);
+		xlsWriteCellStyle($rowStart, 6, '', $style);
+		xlsWriteCellStyle($rowStart, 7, '', $style);
+
+		xlsWriteCellStyle($rowEnd, 5, 'No. Rek', $style);
+		xlsWriteCellStyle($rowEnd, 6, 'Rekening', $style);
+		xlsWriteCellStyle($rowEnd, 7, 'Jumlah', $style);
+
+		xlsWriteCellStyle($rowStart, 8, 'Kredit', $style);
+		xlsWriteCellStyle($rowEnd, 8, '21101- UU', $style);
+	}
+
+	private function _excel_jurnal_pembelian2_write_data_row($row, $nomor, $list_data, $nilai_kredit_21101, $style_border, $style_amount)
+	{
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
+		xlsWriteCellStyle($row, 1, date("d-m-Y", strtotime($list_data->tanggal)), $style_border);
+		xlsWriteCellStyle($row, 2, (string) $list_data->spop, $style_border);
+		xlsWriteCellStyle($row, 3, (string) $list_data->pl, $style_border);
+		xlsWriteCellStyle($row, 4, (string) $list_data->supplier, $style_border);
+		xlsWriteCellStyle($row, 5, (string) $list_data->kode_akun, $style_border);
+		xlsWriteCellStyle($row, 6, (string) $list_data->nama_akun, $style_border);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_pembelian2_format_amount($list_data->debet), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_pembelian2_format_amount($nilai_kredit_21101), $style_amount);
+	}
+
+	private function _excel_jurnal_pembelian2_write_pl_total_row($row, $pl_names, $kode_pl, $total_debet, $total_kredit, $style_label, $style_amount)
+	{
+		$nama_pl = isset($pl_names[$kode_pl]) ? $pl_names[$kode_pl] : $kode_pl;
+		$label = 'Total Pembelian Unit ' . $nama_pl;
+
+		xlsWriteCellStyle($row, 0, $label, $style_label);
+		xlsAddMerge($row, 0, $row, 6);
+		for ($col = 1; $col <= 6; $col++) {
+			xlsWriteCellStyle($row, $col, '', $style_label);
+		}
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_pembelian2_format_amount($total_debet), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_pembelian2_format_amount($total_kredit), $style_amount);
+	}
+
+	private function _excel_jurnal_pembelian2_write_grand_total_row($row, $total_debet, $total_kredit, $style_label, $style_amount)
+	{
+		xlsWriteCellStyle($row, 0, 'TOTAL', $style_label);
+		xlsAddMerge($row, 0, $row, 6);
+		for ($col = 1; $col <= 6; $col++) {
+			xlsWriteCellStyle($row, $col, '', $style_label);
+		}
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_pembelian2_format_amount($total_debet), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_pembelian2_format_amount($total_kredit), $style_amount);
 	}
 
 	public function jurnal_pembelian2_cekBelumAdaKodeAkun()
@@ -5434,11 +5710,17 @@ class Tbl_pembelian extends CI_Controller
 
 
 
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
+		$action_url = site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop);
+		if ($search_filter !== '') {
+			$action_url .= '?search_filter=' . rawurlencode($search_filter);
+		}
+
 		// $start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'spop' => $data_per_uuidspop->spop,
-			'action' => site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop),
+			'action' => $action_url,
 			'button' => 'Simpan Kode AKun',
 			// 'start' => $start,
 		);
@@ -5694,11 +5976,17 @@ class Tbl_pembelian extends CI_Controller
 		// Cek di tabel buku besar , jika belum ada data maka insert , jika sudah ada maka update
 
 
-		redirect(site_url('Tbl_pembelian/setting_kode_akun_pembelian2/?keep_filter=1'));
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
+		$redirect_url = 'Tbl_pembelian/setting_kode_akun_pembelian2/?keep_filter=1';
+		if ($search_filter !== '') {
+			$redirect_url .= '&search_filter=' . rawurlencode($search_filter);
+		}
+		redirect(site_url($redirect_url));
 	}
 
 	public function ubah_kode_akun($uuid_spop = null)
 	{
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
 
 		$data_per_uuidspop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 
@@ -5727,10 +6015,14 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 		$start = 0;
+		$action_url = site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop);
+		if ($search_filter !== '') {
+			$action_url .= '?search_filter=' . rawurlencode($search_filter);
+		}
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'spop' => $data_per_uuidspop->spop,
-			'action' => site_url('tbl_pembelian/update_kode_akun/' . $uuid_spop),
+			'action' => $action_url,
 			'button' => 'Update Kode AKun',
 			'start' => $start,
 			'get_kode_akun' => $get_kode_akun,

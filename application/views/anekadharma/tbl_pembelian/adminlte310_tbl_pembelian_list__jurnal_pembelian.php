@@ -95,6 +95,15 @@
             return $bulan_teks;
         }
 
+        function jurnal_pembelian2_normalize_pl_nama($nama_pl)
+        {
+            $nama = trim((string) $nama_pl);
+            if ($nama !== '' && preg_match('/^perdagangan\s+umum\s*\(/iu', $nama)) {
+                return 'perdagangan umum';
+            }
+            return $nama;
+        }
+
         ?>
 
 
@@ -120,13 +129,13 @@
                                         $action_cari_between_date = site_url('Tbl_pembelian/jurnal_pembelian2');
                                         ?>
 
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                        <form id="formFilterBulanJurnalPembelian" action="<?php echo $action_cari_between_date; ?>" method="post">
                                             <div class="row">
                                                 <div class="col-md-4" text-align="right" align="right">
-                                                    <input type="month" id="bulan_ns" name="bulan_ns">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns" value="<?php echo isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m'); ?>">
                                                 </div>
                                                 <div class="col-md-2" text-align="left" align="left">
-                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                    <button type="submit" id="btnCariBulanJurnalPembelian" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                                 </div>
 
                                             </div>
@@ -134,8 +143,9 @@
 
                                     </div>
                                     <div class="col-2" align="right">
-
-                                        <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
+                                        <?php
+                                        $url_excel_jurnal_pembelian = site_url('Tbl_pembelian/excel_jurnal_pembelian2?bulan_ns=' . rawurlencode(isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m')));
+                                        echo anchor($url_excel_jurnal_pembelian, '<i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel', 'class="btn btn-success btn-flat"');
                                         ?>
                                     </div>
                                 </div>
@@ -450,7 +460,7 @@
                                                             $this->db->where('kode_pl', $GET_KODE_PL);
                                                             $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->nama_akun;
 
-                                                            echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
+                                                            echo "Total Pembelian Unit " . jurnal_pembelian2_normalize_pl_nama($GET_DATA_nama_PL);
                                                         } else {
                                                             echo "";
                                                         }
@@ -632,7 +642,7 @@
                                         $this->db->where('kode_pl', $GET_KODE_PL);
                                         $GET_DATA_nama_PL = $this->db->get('sys_kode_pl')->row()->keterangan;
 
-                                        echo "Total Pembelian Unit " . $GET_DATA_nama_PL;
+                                        echo "Total Pembelian Unit " . jurnal_pembelian2_normalize_pl_nama($GET_DATA_nama_PL);
                                         ?>
                                     </td>
 
@@ -747,17 +757,73 @@
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 450,
-            "scrollX": true
+        function parseNominal(value) {
+            if (typeof value === 'number') {
+                return value;
+            }
+
+            var text = $('<div>').html(value).text();
+            text = text.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+            var number = parseFloat(text);
+            return isNaN(number) ? 0 : number;
+        }
+
+        function formatNominal(value) {
+            return value.toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function updateFooterTotals(api) {
+            var totalDebet = 0;
+            var totalKredit = 0;
+
+            api.rows({
+                search: 'applied'
+            }).every(function() {
+                var rowNode = this.node();
+                if (!rowNode) {
+                    return;
+                }
+
+                var supplierText = $.trim($(rowNode).find('td:eq(4)').text());
+                if (supplierText.indexOf('Total Pembelian Unit') === 0) {
+                    return;
+                }
+
+                var rowData = this.data();
+                totalDebet += parseNominal(rowData[7]);
+                totalKredit += parseNominal(rowData[8]);
+            });
+
+            $(api.column(7).footer()).html("<font color='blue'><strong>" + formatNominal(totalDebet) + "</strong></font>");
+            $(api.column(8).footer()).html("<font color='blue'><strong>" + formatNominal(totalKredit) + "</strong></font>");
+        }
+
+        var tableJurnalPembelian;
+        if ($.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            tableJurnalPembelian = $('#tglSPOPFreeze').DataTable();
+        } else {
+            tableJurnalPembelian = $('#tglSPOPFreeze').DataTable({
+                "scrollY": 900,
+                "scrollX": true,
+                "paging": false,
+                "info": false,
+                "order": [],
+                "footerCallback": function() {
+                    var api = this.api();
+                    updateFooterTotals(api);
+                }
+            });
+        }
+
+        updateFooterTotals(tableJurnalPembelian);
+
+        $('#bulan_ns').on('change', function() {
+            if ($(this).val()) {
+                $('#formFilterBulanJurnalPembelian').trigger('submit');
+            }
         });
     });
 </script>
