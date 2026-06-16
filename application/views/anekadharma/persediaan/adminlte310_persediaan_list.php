@@ -718,7 +718,7 @@
                             <div class="compare-dt-wrap mb-4">
                                 <table id="table-compare-pembelian-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
-                                        <th>No</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>SPOP</th><th>Jumlah</th><th>Tgl PO</th>
+                                        <th>No</th><th>Tgl PO</th><th>Nama Barang</th><th>SPOP</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>Keterangan</th>
                                     </tr></thead>
                                     <tbody></tbody>
                                 </table>
@@ -731,7 +731,7 @@
                             <div class="compare-dt-wrap mb-4">
                                 <table id="table-compare-penjualan-tidak" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
-                                        <th>No</th><th>Nama Barang</th><th>Satuan</th><th>Harga Satuan</th><th>SPOP</th><th>Jumlah</th><th>Tgl Jual</th>
+                                        <th>No</th><th>Tgl Jual</th><th>Nama Barang</th><th>SPOP</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>Keterangan</th>
                                     </tr></thead>
                                     <tbody></tbody>
                                 </table>
@@ -2391,12 +2391,13 @@ window.addEventListener('load', function() {
             return items.map(function(it, i) {
                 return [
                     i + 1,
+                    it.tgl_po || '',
                     it.uraian || '',
+                    it.spop || '',
                     it.satuan || '',
                     it.harga_satuan || '',
-                    it.spop || '',
                     it.jumlah || '',
-                    it.tgl_po || ''
+                    it.keterangan || ''
                 ];
             });
         }
@@ -2404,12 +2405,13 @@ window.addEventListener('load', function() {
             return items.map(function(it, i) {
                 return [
                     i + 1,
+                    it.tgl_jual || '',
                     it.nama_barang || '',
+                    it.spop || '',
                     it.satuan || '',
                     it.harga_satuan || '',
-                    it.spop || '',
                     it.jumlah || '',
-                    it.tgl_jual || ''
+                    it.keterangan || ''
                 ];
             });
         }
@@ -2485,8 +2487,8 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
         upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 6);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
-        upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 1);
-        upsertCompareDataTable('#table-compare-penjualan-tidak', buildCompareRows('penjualan_tidak_manual', res.items_penjualan_tidak_manual || []), 1);
+        upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
+        upsertCompareDataTable('#table-compare-penjualan-tidak', buildCompareRows('penjualan_tidak_manual', res.items_penjualan_tidak_manual || []), 2);
         upsertCompareDataTable('#table-compare-produksi-tidak', buildCompareRows('produksi_tidak_manual', res.items_produksi_tidak_manual || []), 1);
         upsertCompareDataTable('#table-compare-pecah-tidak', buildCompareRows('pecah_tidak_manual', res.items_pecah_tidak_manual || []), 1);
         setTimeout(function() {

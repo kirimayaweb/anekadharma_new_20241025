@@ -880,7 +880,7 @@ class Persediaan extends CI_Controller
 		$estimasi_update = 0;
 
 		$penjelasan = 'Semua ' . $total_sumber . ' record bulan sumber (total_10 &gt;= 1) akan di-<strong>INSERT/UPDATE</strong> ke bulan target. '
-			. 'Baris dengan total_10 &lt; 1 atau kosong tidak disalin. Baris target sa=0 &amp; beli=0 &amp; total_10=0 dihapus. '
+			. 'Baris dengan total_10 &lt; 1, kosong, atau "-" tidak disalin. Baris target sa=0 &amp; beli=0 &amp; total_10=0 dihapus. '
 			. 'Disalin: <strong>uuid_barang, namabarang, satuan, hpp</strong>; '
 			. '<strong>sa</strong> dan <strong>total_10</strong> = saldo akhir bulan sumber (nilai field total_10). '
 			. '<strong>beli</strong> dan <strong>penjualan</strong> = 0 (diisi lewat proses pembelian/penjualan).';
@@ -2216,6 +2216,7 @@ class Persediaan extends CI_Controller
 		}
 
 		$total_sumber = $ctx['total_sumber'];
+		$total_sumber_all = isset($ctx['total_sumber_all']) ? (int) $ctx['total_sumber_all'] : $total_sumber;
 		$tanggal_beli_target = $ctx['tanggal_beli_target'];
 		$tanggal_beli_sumber = $ctx['tanggal_beli_sumber'];
 		$tanggal_tampilan_target = $ctx['tanggal_tampilan_target'];
@@ -2265,7 +2266,6 @@ class Persediaan extends CI_Controller
 
 		$this->load->helper('pembelian_persediaan');
 		$sql_batch = "SELECT * FROM `persediaan` WHERE `tanggal_beli`=?"
-			. persediaan_generate_recalculate_sql_filter_total10_positif()
 			. " ORDER BY `id` ASC LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
 		$list_batch = $this->db->query($sql_batch, array($tanggal_beli_sumber))->result();
 
@@ -2291,7 +2291,7 @@ class Persediaan extends CI_Controller
 		}
 
 		$offset_selesai = $offset + count($list_batch);
-		$done = ($total_sumber === 0 || $offset_selesai >= $total_sumber);
+		$done = ($total_sumber_all === 0 || $offset_selesai >= $total_sumber_all);
 
 		$state['next_id'] = $next_id;
 		$state['total_insert'] += $batch_insert;
@@ -3105,7 +3105,7 @@ class Persediaan extends CI_Controller
 				'satuan' => $satuan,
 				'hpp' => $hpp,
 				'total_10' => isset($row->total_10) ? $row->total_10 : '',
-				'keterangan' => 'Lewati: total_10 < 1 atau kosong di bulan sumber — tidak di-copy ke bulan target',
+				'keterangan' => 'Lewati: total_10 < 1 / kosong / "-" di bulan sumber — tidak di-copy ke bulan target',
 			);
 		}
 
