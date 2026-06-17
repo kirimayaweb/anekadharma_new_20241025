@@ -256,6 +256,26 @@ class Tbl_pembelian_model extends CI_Model
         return $this->db->get($this->table)->result();
     }
 
+    function get_by_spop_and_tgl_po($spop, $tgl_po)
+    {
+        $tgl_po_date = date('Y-m-d', strtotime($tgl_po));
+        $this->db->where($this->spop, $spop);
+        $this->db->where($this->tgl_po . ' >=', $tgl_po_date . ' 00:00:00');
+        $this->db->where($this->tgl_po . ' <=', $tgl_po_date . ' 23:59:59');
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_by_uuid_spop_and_tgl_po_ALL_result($uuid_spop, $tgl_po)
+    {
+        $tgl_po_date = date('Y-m-d', strtotime($tgl_po));
+        $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->where($this->tgl_po . ' >=', $tgl_po_date . ' 00:00:00');
+        $this->db->where($this->tgl_po . ' <=', $tgl_po_date . ' 23:59:59');
+        $this->db->order_by($this->id, $this->orderASC);
+        return $this->db->get($this->table)->result();
+    }
+
 
     function get_by_uuid_konsumen($uuid_konsumen)
     {
@@ -384,6 +404,15 @@ class Tbl_pembelian_model extends CI_Model
     {
 
         $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->update($this->table, $data);
+    }
+
+    function update_statuslu_per_spop_tgl_po($uuid_spop, $tgl_po, $data)
+    {
+        $tgl_po_date = date('Y-m-d', strtotime($tgl_po));
+        $this->db->where($this->uuid_spop, $uuid_spop);
+        $this->db->where($this->tgl_po . ' >=', $tgl_po_date . ' 00:00:00');
+        $this->db->where($this->tgl_po . ' <=', $tgl_po_date . ' 23:59:59');
         $this->db->update($this->table, $data);
     }
 

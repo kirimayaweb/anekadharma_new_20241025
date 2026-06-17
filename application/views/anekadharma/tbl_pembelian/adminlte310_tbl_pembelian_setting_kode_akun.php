@@ -149,6 +149,22 @@
                                         }
                                     }
                                 }
+                                <?php
+                                if (!function_exists('url_input_kode_akun_pembelian')) {
+                                    function url_input_kode_akun_pembelian($uuid_spop, $tgl_po)
+                                    {
+                                        $get_date = date('Y-m-d', strtotime($tgl_po));
+                                        return site_url('tbl_pembelian/input_kode_akun/' . rawurlencode($uuid_spop) . '/' . $get_date);
+                                    }
+                                }
+                                if (!function_exists('url_ubah_kode_akun_pembelian')) {
+                                    function url_ubah_kode_akun_pembelian($uuid_spop, $tgl_po)
+                                    {
+                                        $get_date = date('Y-m-d', strtotime($tgl_po));
+                                        return site_url('tbl_pembelian/ubah_kode_akun/' . rawurlencode($uuid_spop) . '/' . $get_date);
+                                    }
+                                }
+
                                 $compare_spop = 0;
                                 $compare_uuid_spop = 0;
                                 $Total_per_SPOP = 0;
@@ -246,9 +262,9 @@
                                                 if ($list_data->kode_akun) {
                                                     echo "Kode Akun: " . $list_data->kode_akun;
                                                     echo "<br/>";
-                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(url_ubah_kode_akun_pembelian($list_data->uuid_spop, $list_data->tgl_po), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
                                                 } else {
-                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(url_input_kode_akun_pembelian($list_data->uuid_spop, $list_data->tgl_po), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
                                                 }
 
 
@@ -311,9 +327,9 @@
                                                 if ($list_data->kode_akun) {
                                                     echo "Kode Akun: " . $list_data->kode_akun;
                                                     echo "<br/>";
-                                                    echo anchor(site_url('tbl_pembelian/ubah_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(url_ubah_kode_akun_pembelian($list_data->uuid_spop, $list_data->tgl_po), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
                                                 } else {
-                                                    echo anchor(site_url('tbl_pembelian/input_kode_akun/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
+                                                    echo anchor(url_input_kode_akun_pembelian($list_data->uuid_spop, $list_data->tgl_po), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
                                                 }
 
                                                 // echo "<br/>";

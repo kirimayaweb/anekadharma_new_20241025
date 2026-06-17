@@ -74,7 +74,7 @@
                             <div class="row">
 
                                 <div class="col-3">
-                                    <label for="supplier_nama">Atur Kode Akun : <strong><?php echo "SPOP:" . $spop; ?> </strong></label>
+                                    <label for="supplier_nama">Atur Kode Akun : <strong><?php echo "SPOP:" . $spop; ?><?php echo isset($tgl_po) && $tgl_po ? ' — ' . date('d M Y', strtotime($tgl_po)) : ''; ?> </strong></label>
                                     <!-- <textarea class="form-control" rows="3" name="supplier_nama" id="supplier_nama" placeholder="Supplier Nama"><?php //echo $supplier_nama; 
                                                                                                                                                         ?></textarea> -->
 
@@ -183,7 +183,7 @@
 
                         </form>
                         <hr>
-                        Detail Data Pembelian Per SPOP: <strong><?php echo $spop; ?>
+                        Detail Data Pembelian Per SPOP: <strong><?php echo $spop; ?><?php echo isset($tgl_po) && $tgl_po ? ' — ' . date('d M Y', strtotime($tgl_po)) : ''; ?></strong>
 
                             <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                                 <thead>
