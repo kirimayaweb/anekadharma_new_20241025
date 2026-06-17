@@ -149,7 +149,6 @@
                                         }
                                     }
                                 }
-                                <?php
                                 if (!function_exists('url_input_kode_akun_pembelian')) {
                                     function url_input_kode_akun_pembelian($uuid_spop, $tgl_po)
                                     {
