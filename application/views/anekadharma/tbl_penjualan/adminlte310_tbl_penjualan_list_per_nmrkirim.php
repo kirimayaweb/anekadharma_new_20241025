@@ -30,7 +30,7 @@
                         <div class="row">
                             <div class="col-8">
                                 <div class="row">
-                                    <div class="col-5" text-align="center"> <strong>DETAIL PENJUALAN </strong><?php echo "Nomor kirim:" . $nmrkirim; ?></div>
+                                    <div class="col-5" text-align="center"> <strong>DETAIL PENJUALAN </strong><?php echo "Nomor kirim: " . $nmrkirim; ?><?php if (!empty($nmrpesan)) { echo " | Nomor pesan: " . htmlspecialchars($nmrpesan, ENT_QUOTES, 'UTF-8'); } ?></div>
                                     <div class="col-7" text-align="center"> <strong><?php //echo anchor(site_url('tbl_penjualan/create'), 'Input PENJUALAN BARU', 'class="btn btn-danger"'); 
                                                                                     ?></strong></div>
 
@@ -69,7 +69,7 @@
 
                                         <div class="col-3">
 
-                                            <label for="kode_akun">Atur Kode Akun, Nomor kirim: <strong><?php echo  $nmrkirim; ?> </strong></label>
+                                            <label for="kode_akun">Atur Kode Akun, Nomor kirim: <strong><?php echo  $nmrkirim; ?> </strong><?php if (!empty($nmrpesan)) { ?> | Nomor pesan: <strong><?php echo htmlspecialchars($nmrpesan, ENT_QUOTES, 'UTF-8'); ?></strong><?php } ?></label>
 
                                             <select name="kode_akun" id="kode_akun" class="form-control select2" style="width: 100%; height: 80px;" required>
 

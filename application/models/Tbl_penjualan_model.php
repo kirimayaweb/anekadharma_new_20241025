@@ -72,7 +72,17 @@ class Tbl_penjualan_model extends CI_Model
     {
 
         $this->db->where($this->nmrkirim, $nmrkirim);
+        $this->db->order_by($this->nmrpesan, $this->orderASC);
+        $this->db->order_by($this->id, $this->orderASC);
 
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_all_by_nmr_kirim_nmrpesan($nmrkirim, $nmrpesan)
+    {
+        $this->db->where($this->nmrkirim, $nmrkirim);
+        $this->db->where($this->nmrpesan, $nmrpesan);
+        $this->db->order_by($this->id, $this->orderASC);
         return $this->db->get($this->table)->result();
     }
 
@@ -100,6 +110,57 @@ class Tbl_penjualan_model extends CI_Model
 
 
         return $this->db->get($this->table)->result();
+    }
+
+    private function _setting_kode_akun_penjualan_base_select()
+    {
+        $this->db->select('tbl_penjualan.*, persediaan.spop as spop', false);
+        $this->db->from($this->table);
+        $this->db->join('persediaan', 'persediaan.id = tbl_penjualan.id_persediaan_barang', 'left');
+    }
+
+    function get_for_setting_kode_akun_by_tgl_range($date_awal, $date_akhir, $spop_filter = '')
+    {
+        $this->_setting_kode_akun_penjualan_base_select();
+        $this->db->where('tbl_penjualan.tgl_jual >=', $date_awal);
+        $this->db->where('tbl_penjualan.tgl_jual <=', $date_akhir);
+        $spop_filter = trim((string) $spop_filter);
+        if ($spop_filter !== '') {
+            $this->db->like('persediaan.spop', $spop_filter);
+        }
+        $this->db->order_by('tbl_penjualan.nmrkirim', $this->orderASC);
+        $this->db->order_by('tbl_penjualan.nmrpesan', $this->orderASC);
+        $this->db->order_by('tbl_penjualan.id', $this->orderASC);
+        return $this->db->get()->result();
+    }
+
+    function get_for_setting_kode_akun_by_ids(array $ids)
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+        if (empty($ids)) {
+            return array();
+        }
+
+        $this->_setting_kode_akun_penjualan_base_select();
+        $this->db->where_in('tbl_penjualan.id', $ids);
+        $this->db->order_by('tbl_penjualan.nmrkirim', $this->orderASC);
+        $this->db->order_by('tbl_penjualan.nmrpesan', $this->orderASC);
+        $this->db->order_by('tbl_penjualan.id', $this->orderASC);
+        $rows = $this->db->get()->result();
+
+        $indexed = array();
+        foreach ($rows as $row) {
+            $indexed[(int) $row->id] = $row;
+        }
+
+        $ordered = array();
+        foreach ($ids as $id) {
+            if (isset($indexed[$id])) {
+                $ordered[] = $indexed[$id];
+            }
+        }
+
+        return $ordered;
     }
 
     function get_all_by_uuid_penjualan_tgl_jual_nmrkirim($uuid_penjualan = null, $tgl_jual = null, $nmrkirim = null)
@@ -402,6 +463,13 @@ class Tbl_penjualan_model extends CI_Model
         // die;
 
         $this->db->where($this->nmrkirim, $nmrkirim);
+        $this->db->update($this->table, $data);
+    }
+
+    function update_by_nmrkirim_nmrpesan($nmrkirim, $nmrpesan, $data)
+    {
+        $this->db->where($this->nmrkirim, $nmrkirim);
+        $this->db->where($this->nmrpesan, $nmrpesan);
         $this->db->update($this->table, $data);
     }
 

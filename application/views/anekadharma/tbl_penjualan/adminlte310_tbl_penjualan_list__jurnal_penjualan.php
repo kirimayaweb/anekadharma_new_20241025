@@ -4,6 +4,40 @@
         width: 100%;
         margin: 0 auto;
     }
+
+    .nav-tabs.jurnal-penjualan-tabs {
+        border-bottom: 2px solid #ffc107;
+        margin-bottom: 15px;
+    }
+
+    .nav-tabs.jurnal-penjualan-tabs .nav-item {
+        margin-bottom: -2px;
+    }
+
+    .nav-tabs.jurnal-penjualan-tabs .nav-link {
+        background-color: #ffffff;
+        border: 2px solid #ffc107;
+        border-bottom: none;
+        color: #888888;
+        font-weight: normal;
+        margin-right: 4px;
+        border-radius: 4px 4px 0 0;
+        opacity: 0.75;
+    }
+
+    .nav-tabs.jurnal-penjualan-tabs .nav-link:hover {
+        background-color: #f8f9fa;
+        color: #666666;
+        opacity: 0.9;
+    }
+
+    .nav-tabs.jurnal-penjualan-tabs .nav-link.active {
+        background-color: #007bff;
+        border-color: #ffc107;
+        color: #000000;
+        font-weight: bold;
+        opacity: 1;
+    }
 </style>
 
 <div class="content-wrapper">
@@ -120,23 +154,18 @@
                                         $action_cari_between_date = site_url('Tbl_penjualan/jurnal_penjualan2');
                                         ?>
 
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                        <form id="formFilterBulanJurnalPenjualan" action="<?php echo $action_cari_between_date; ?>" method="post">
                                             <div class="row">
                                                 <div class="col-md-4" text-align="right" align="right">
-                                                    <input type="month" id="bulan_ns" name="bulan_ns">
+                                                    <input type="month" id="bulan_ns" name="bulan_ns" value="<?php echo isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m'); ?>">
                                                 </div>
                                                 <div class="col-md-2" text-align="left" align="left">
-                                                    <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                                    <button type="submit" id="btnCariBulanJurnalPenjualan" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                                 </div>
 
                                             </div>
                                         </form>
 
-                                    </div>
-                                    <div class="col-2" align="right">
-
-                                        <?php //echo anchor(site_url('jurnal_kas/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); 
-                                        ?>
                                     </div>
                                 </div>
                             </div>
@@ -149,8 +178,111 @@
 
                     <div class="card-body">
 
-                        <!-- <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
+                        <ul class="nav nav-tabs jurnal-penjualan-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="tabJurnalPenjualanBarisTab" data-toggle="tab" href="#tabJurnalPenjualanBaris" role="tab" aria-controls="tabJurnalPenjualanBaris" aria-selected="true">
+                                    Jurnal penjualan (baris)
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tabJurnalPenjualanKolomTab" data-toggle="tab" href="#tabJurnalPenjualanKolom" role="tab" aria-controls="tabJurnalPenjualanKolom" aria-selected="false">
+                                    Jurnal penjualan
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="tabJurnalPenjualanBaris" role="tabpanel" aria-labelledby="tabJurnalPenjualanBarisTab">
+                                <div class="row mb-2">
+                                    <div class="col-12 text-right">
+                                        <?php
+                                        $url_excel_jurnal_penjualan_baris = site_url('Tbl_penjualan/excel_jurnal_penjualan2_baris?bulan_ns=' . rawurlencode(isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m')));
+                                        echo anchor($url_excel_jurnal_penjualan_baris, '<i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel', 'class="btn btn-success btn-flat"');
+                                        ?>
+                                    </div>
+                                </div>
+
+                                <table id="tblJurnalPenjualanBaris" class="display nowrap" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2" style="text-align:center">No</th>
+                                            <th rowspan="2" style="text-align:center">TANGGAL</th>
+                                            <th rowspan="2" style="text-align:center">Bukti</th>
+                                            <th colspan="3" style="text-align:center">KODE</th>
+                                            <th rowspan="2" style="text-align:center">Keterangan</th>
+                                            <th rowspan="2" style="text-align:center">debet</th>
+                                            <th rowspan="2" style="text-align:center">Kredit</th>
+                                        </tr>
+                                        <tr>
+                                            <th style="text-align:center">PL</th>
+                                            <th style="text-align:center">Ref</th>
+                                            <th style="text-align:center">Rek</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $startBaris = 0;
+                                        $TOTAL_debet_baris = 0;
+                                        $TOTAL_kredit_baris = 0;
+                                        $baris_data = isset($Buku_besar_DATA_baris) ? $Buku_besar_DATA_baris : array();
+                                        foreach ($baris_data as $list_data) {
+                                            $debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
+                                            $kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
+                                            if ($debet_val == 0 && $kredit_val == 0) {
+                                                continue;
+                                            }
+
+                                            $Get_date = isset($list_data->tanggal) ? date("Y-m-d", strtotime($list_data->tanggal)) : '';
+                                            $bukti = isset($list_data->nokirim) ? (string) $list_data->nokirim : '';
+                                            $pl = isset($list_data->pl) ? (string) $list_data->pl : '';
+                                            $ref = isset($list_data->ref) ? (string) $list_data->ref : (isset($list_data->kode) ? (string) $list_data->kode : '');
+                                            $rek = isset($list_data->kode_akun) ? (string) $list_data->kode_akun : '';
+                                            $keterangan = isset($list_data->keterangan) ? (string) $list_data->keterangan : '';
+
+                                            $TOTAL_debet_baris += $debet_val;
+                                            $TOTAL_kredit_baris += $kredit_val;
+                                        ?>
+                                            <tr>
+                                                <td align="left"><?php echo ++$startBaris; ?></td>
+                                                <td align="left"><?php echo $Get_date; ?></td>
+                                                <td align="left"><?php echo htmlspecialchars($bukti, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="left"><?php echo htmlspecialchars($pl, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="left"><?php echo htmlspecialchars($ref, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="left"><?php echo htmlspecialchars($rek, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="left"><?php echo htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="right"><?php echo $debet_val != 0 ? number_format($debet_val, 2, ',', '.') : ''; ?></td>
+                                                <td align="right"><?php echo $kredit_val != 0 ? number_format($kredit_val, 2, ',', '.') : ''; ?></td>
+                                            </tr>
+                                        <?php
+                                        }
+                                        ?>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="7" style="text-align:right"></th>
+                                            <th style="text-align:right">
+                                                <strong><?php echo number_format($TOTAL_debet_baris, 2, ',', '.'); ?></strong>
+                                            </th>
+                                            <th style="text-align:right">
+                                                <strong><?php echo number_format($TOTAL_kredit_baris, 2, ',', '.'); ?></strong>
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <div class="tab-pane fade" id="tabJurnalPenjualanKolom" role="tabpanel" aria-labelledby="tabJurnalPenjualanKolomTab">
+                                <div class="row mb-2">
+                                    <div class="col-12 text-right">
+                                        <?php
+                                        $url_excel_jurnal_penjualan = site_url('Tbl_penjualan/excel_jurnal_penjualan2?bulan_ns=' . rawurlencode(isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m')));
+                                        echo anchor($url_excel_jurnal_penjualan, '<i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel', 'class="btn btn-success btn-flat"');
+                                        ?>
+                                    </div>
+                                </div>
+
+                                <!-- <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
+                                <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
                                 <!-- <tr>
 
@@ -419,6 +551,8 @@
 
 
                         </table>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
@@ -433,17 +567,112 @@
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+        function parseNominal(value) {
+            if (typeof value === 'number') {
+                return value;
+            }
+
+            var text = $('<div>').html(value).text();
+            text = text.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+            var number = parseFloat(text);
+            return isNaN(number) ? 0 : number;
+        }
+
+        function formatNominal(value) {
+            return value.toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function updateFooterTotalsBaris(api) {
+            var totalDebet = 0;
+            var totalKredit = 0;
+
+            api.rows({
+                search: 'applied'
+            }).every(function() {
+                var rowData = this.data();
+                totalDebet += parseNominal(rowData[7]);
+                totalKredit += parseNominal(rowData[8]);
+            });
+
+            $(api.column(7).footer()).html("<strong>" + formatNominal(totalDebet) + "</strong>");
+            $(api.column(8).footer()).html("<strong>" + formatNominal(totalKredit) + "</strong>");
+        }
+
+        function updateFooterTotals(api) {
+            var totalDebet = 0;
+            var totalKredit41101 = 0;
+            var totalKredit21201 = 0;
+
+            api.rows({
+                search: 'applied'
+            }).every(function() {
+                var rowData = this.data();
+                totalDebet += parseNominal(rowData[6]);
+                totalKredit41101 += parseNominal(rowData[7]);
+                totalKredit21201 += parseNominal(rowData[8]);
+            });
+
+            $(api.column(6).footer()).html("<font color='blue'><strong>" + formatNominal(totalDebet) + "</strong></font>");
+            $(api.column(7).footer()).html("<font color='blue'><strong>" + formatNominal(totalKredit41101) + "</strong></font>");
+            $(api.column(8).footer()).html("<font color='blue'><strong>" + formatNominal(totalKredit21201) + "</strong></font>");
+        }
+
+        var tableJurnalPenjualanBaris;
+        if ($.fn.DataTable.isDataTable('#tblJurnalPenjualanBaris')) {
+            tableJurnalPenjualanBaris = $('#tblJurnalPenjualanBaris').DataTable();
+        } else {
+            tableJurnalPenjualanBaris = $('#tblJurnalPenjualanBaris').DataTable({
+                "scrollY": 900,
+                "scrollX": true,
+                "paging": false,
+                "info": false,
+                "order": [],
+                "footerCallback": function() {
+                    var api = this.api();
+                    updateFooterTotalsBaris(api);
+                }
+            });
+        }
+
+        updateFooterTotalsBaris(tableJurnalPenjualanBaris);
+
+        var tableJurnalPenjualan;
+        if ($.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            tableJurnalPenjualan = $('#tglSPOPFreeze').DataTable();
+        } else {
+            tableJurnalPenjualan = $('#tglSPOPFreeze').DataTable({
+                "scrollY": 900,
+                "scrollX": true,
+                "paging": false,
+                "info": false,
+                "order": [],
+                "footerCallback": function() {
+                    var api = this.api();
+                    updateFooterTotals(api);
+                }
+            });
+        }
+
+        updateFooterTotals(tableJurnalPenjualan);
+
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+            if (tableJurnalPenjualanBaris) {
+                tableJurnalPenjualanBaris.columns.adjust();
+                updateFooterTotalsBaris(tableJurnalPenjualanBaris);
+            }
+            if (tableJurnalPenjualan) {
+                tableJurnalPenjualan.columns.adjust();
+                updateFooterTotals(tableJurnalPenjualan);
+            }
         });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 450,
-            "scrollX": true
+
+        $('#bulan_ns').on('change', function() {
+            if ($(this).val()) {
+                $('#formFilterBulanJurnalPenjualan').trigger('submit');
+            }
         });
     });
 </script>

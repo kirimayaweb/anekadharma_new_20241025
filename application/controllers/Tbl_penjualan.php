@@ -2323,59 +2323,752 @@ class Tbl_penjualan extends CI_Controller
 
 	public function setting_kode_akun_penjualan2()
 	{
+		$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_penjualan_date_awal');
+		$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_penjualan_date_akhir');
+		if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+			$Get_date_awal = date('Y-m-1 00:00:00');
+			$Get_date_akhir = date('Y-m-t 23:59:59');
+		}
 
-		$Tbl_penjualan = $this->Tbl_penjualan_model->get_all_group_by_tgl_jual_nmrpesan_nmr_kirim();
+		$spop_filter = trim((string) $this->input->get('spop_filter', TRUE));
+		if ($spop_filter === '') {
+			$spop_filter = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_spop'));
+		}
 
+		$this->_render_setting_kode_akun_penjualan2($Get_date_awal, $Get_date_akhir, $spop_filter);
+	}
 
+	public function cari_between_date_setting_kode_akun_penjualan()
+	{
+		$tgl_awal_post = $this->input->post('tgl_awal', TRUE);
+		$tgl_akhir_post = $this->input->post('tgl_akhir', TRUE);
+		$spop_filter = trim((string) $this->input->post('spop', TRUE));
+
+		if ($tgl_awal_post || $tgl_akhir_post || $this->input->post('spop', TRUE) !== null) {
+			list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_post, $tgl_akhir_post);
+			$this->session->set_userdata('filter_setting_kode_akun_penjualan_date_awal', $Get_date_awal);
+			$this->session->set_userdata('filter_setting_kode_akun_penjualan_date_akhir', $Get_date_akhir);
+			$this->session->set_userdata('filter_setting_kode_akun_penjualan_spop', $spop_filter);
+			$redirect_url = 'Tbl_penjualan/setting_kode_akun_penjualan2?keep_filter=1';
+			if ($spop_filter !== '') {
+				$redirect_url .= '&spop_filter=' . rawurlencode($spop_filter);
+			}
+			redirect(site_url($redirect_url));
+			return;
+		}
+
+		$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_penjualan_date_awal');
+		$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_penjualan_date_akhir');
+		if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+			$Get_date_awal = date('Y-m-1 00:00:00');
+			$Get_date_akhir = date('Y-m-t 23:59:59');
+		}
+		$spop_filter = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_spop'));
+		$this->_render_setting_kode_akun_penjualan2($Get_date_awal, $Get_date_akhir, $spop_filter);
+	}
+
+	private function _render_setting_kode_akun_penjualan2($Get_date_awal, $Get_date_akhir, $spop_filter = '')
+	{
+		$spop_filter = trim((string) $spop_filter);
+
+		$this->session->set_userdata('filter_setting_kode_akun_penjualan_date_awal', $Get_date_awal);
+		$this->session->set_userdata('filter_setting_kode_akun_penjualan_date_akhir', $Get_date_akhir);
+		$this->session->set_userdata('filter_setting_kode_akun_penjualan_spop', $spop_filter);
+
+		$Tbl_penjualan = $this->Tbl_penjualan_model->get_for_setting_kode_akun_by_tgl_range($Get_date_awal, $Get_date_akhir, $spop_filter);
+		$this->session->set_userdata('filter_setting_kode_akun_penjualan_ids', $this->_collect_row_ids($Tbl_penjualan));
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan,
-			// 'q' => $q,
-			// 'pagination' => $this->pagination->create_links(),
-			// 'total_rows' => $config['total_rows'],
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+			'spop_filter' => $spop_filter,
+			'search_filter' => trim((string) $this->input->get('search_filter', TRUE)),
+			'start' => 0,
 		);
 
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_setting_kode_akun', $data);
+	}
 
-		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_jurnal', $data);
+	public function excel_setting_kode_akun_penjualan()
+	{
+		$this->load->helper('exportexcel');
+
+		$rows = array();
+		$ids_param = $this->input->get('ids', TRUE);
+		if (!empty($ids_param)) {
+			$ids = array_values(array_unique(array_filter(array_map('intval', explode(',', $ids_param)))));
+			if (!empty($ids)) {
+				$rows = $this->Tbl_penjualan_model->get_for_setting_kode_akun_by_ids($ids);
+			}
+		}
+
+		if (empty($rows)) {
+			$session_ids = $this->session->userdata('filter_setting_kode_akun_penjualan_ids');
+			if (is_array($session_ids) && count($session_ids) > 0) {
+				$rows = $this->Tbl_penjualan_model->get_for_setting_kode_akun_by_ids($session_ids);
+			}
+		}
+
+		if (empty($rows)) {
+			$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_penjualan_date_awal');
+			$Get_date_akhir = $this->session->userdata('filter_setting_kode_akun_penjualan_date_akhir');
+			$spop_filter = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_spop'));
+			if (empty($Get_date_awal) || empty($Get_date_akhir)) {
+				$Get_date_awal = date('Y-m-1 00:00:00');
+				$Get_date_akhir = date('Y-m-t 23:59:59');
+			}
+			$rows = $this->Tbl_penjualan_model->get_for_setting_kode_akun_by_tgl_range($Get_date_awal, $Get_date_akhir, $spop_filter);
+		}
+
+		$export_rows = $this->_build_setting_kode_akun_penjualan_excel_rows($rows);
+		$date_awal_display = trim((string) $this->input->get('date_awal_display', TRUE));
+		$date_akhir_display = trim((string) $this->input->get('date_akhir_display', TRUE));
+		$filter_text = trim((string) $this->input->get('filter_text', TRUE));
+		$spop_filter_display = trim((string) $this->input->get('spop_filter', TRUE));
+		if ($date_awal_display === '') {
+			$date_awal_display = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_date_awal'));
+		}
+		if ($date_akhir_display === '') {
+			$date_akhir_display = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_date_akhir'));
+		}
+		if ($spop_filter_display === '') {
+			$spop_filter_display = trim((string) $this->session->userdata('filter_setting_kode_akun_penjualan_spop'));
+		}
+		if ($filter_text === '') {
+			$filter_text = '-';
+		}
+
+		$namaFile = 'kode_akun_penjualan_' . date('Y-m-d_H-i-s') . '.xlsx';
+		$tablehead = 4;
+		$tablebody = 5;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+		xlsWriteLabel(0, 0, 'Laporan Setting Kode Akun Penjualan');
+		xlsWriteLabel(1, 0, 'Periode Tanggal Awal');
+		xlsWriteLabel(1, 1, $date_awal_display);
+		xlsWriteLabel(1, 2, 'sampai Tanggal Akhir');
+		xlsWriteLabel(1, 3, $date_akhir_display);
+		xlsWriteLabel(2, 0, 'Filter SPOP');
+		xlsWriteLabel(2, 1, $spop_filter_display !== '' ? $spop_filter_display : '-');
+		xlsWriteLabel(3, 0, 'Filter Data');
+		xlsWriteLabel(3, 1, $filter_text);
+
+		$kolomhead = 0;
+		xlsWriteLabel($tablehead, $kolomhead++, 'No');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kode Akun');
+		xlsWriteLabel($tablehead, $kolomhead++, 'SPOP');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Tgl Jual');
+		xlsWriteLabel($tablehead, $kolomhead++, 'nmrkirim');
+		xlsWriteLabel($tablehead, $kolomhead++, 'nmrpesan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Konsumen');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Kode');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Nama Barang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Unit');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Harga Satuan');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Jumlah');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Total harga');
+		xlsWriteLabel($tablehead, $kolomhead++, 'UM PPH PSL 22');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Piutang');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Penjualan DPP');
+		xlsWriteLabel($tablehead, $kolomhead++, 'Utang PPN');
+
+		foreach ($export_rows as $row) {
+			$kolombody = 0;
+			if ($row['is_number']) {
+				xlsWriteNumber($tablebody, $kolombody++, $row['no']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, $row['no']);
+			}
+			xlsWriteLabel($tablebody, $kolombody++, $row['kode_akun']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['spop'] !== '' && $row['spop'] !== null ? (string) $row['spop'] : '');
+			xlsWriteLabel($tablebody, $kolombody++, $row['tgl_jual']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['nmrkirim']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['nmrpesan']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['konsumen_nama']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['kode_barang']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['nama_barang']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['unit']);
+			xlsWriteLabel($tablebody, $kolombody++, $row['satuan']);
+			if ($row['harga_satuan'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['harga_satuan']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['jumlah'] !== '') {
+				xlsWriteNumber($tablebody, $kolombody++, $row['jumlah']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['total_harga'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['total_harga']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['umpphpsl22'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['umpphpsl22']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['piutang'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['piutang']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['penjualandpp'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['penjualandpp']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			if ($row['utangppn'] !== '') {
+				xlsWriteRupiah($tablebody, $kolombody++, $row['utangppn']);
+			} else {
+				xlsWriteLabel($tablebody, $kolombody++, '');
+			}
+			$tablebody++;
+		}
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _build_setting_kode_akun_penjualan_excel_rows($Tbl_penjualan_data)
+	{
+		$export_rows = array();
+		$compare_nmr_kirim = 0;
+		$compare_nmr_pesan = 0;
+		$Total_Jumlah_per_nmrkirim = 0;
+		$Total_UMPPHPSL22_per_nmrkirim = 0;
+		$Total_piutang_per_nmrkirim = 0;
+		$Total_penjualandpp_per_nmrkirim = 0;
+		$Total_utangppn_per_nmrkirim = 0;
+		$TOTAL_ALL_JUMLAH = 0;
+		$TOTAL_ALL_UMPPHPSL22 = 0;
+		$TOTAL_ALL_piutang = 0;
+		$TOTAL_ALL_penjualandpp = 0;
+		$TOTAL_ALL_utangppn = 0;
+		$start = 0;
+		$last_row = null;
+
+		foreach ($Tbl_penjualan_data as $list_data) {
+			if (($start >= 1) && (((string) $compare_nmr_kirim !== (string) $list_data->nmrkirim) || ((string) $compare_nmr_pesan !== (string) $list_data->nmrpesan))) {
+				$export_rows[] = $this->_setting_kode_akun_penjualan_excel_total_row(++$start, $compare_nmr_kirim, $compare_nmr_pesan, $Total_Jumlah_per_nmrkirim, $Total_UMPPHPSL22_per_nmrkirim, $Total_piutang_per_nmrkirim, $Total_penjualandpp_per_nmrkirim, $Total_utangppn_per_nmrkirim);
+				$Total_Jumlah_per_nmrkirim = 0;
+				$Total_UMPPHPSL22_per_nmrkirim = 0;
+				$Total_piutang_per_nmrkirim = 0;
+				$Total_penjualandpp_per_nmrkirim = 0;
+				$Total_utangppn_per_nmrkirim = 0;
+			}
+
+			$calc = $this->_penjualan_hitung_kolom_tampilan($list_data);
+			$Total_Jumlah_per_nmrkirim += $calc['jumlah_total'];
+			$Total_UMPPHPSL22_per_nmrkirim += $calc['umpphpsl22'];
+			$Total_piutang_per_nmrkirim += $calc['piutang'];
+			$Total_penjualandpp_per_nmrkirim += $calc['penjualandpp'];
+			$Total_utangppn_per_nmrkirim += $calc['utangppn'];
+			$TOTAL_ALL_JUMLAH += $calc['jumlah_total'];
+			$TOTAL_ALL_UMPPHPSL22 += $calc['umpphpsl22'];
+			$TOTAL_ALL_piutang += $calc['piutang'];
+			$TOTAL_ALL_penjualandpp += $calc['penjualandpp'];
+			$TOTAL_ALL_utangppn += $calc['utangppn'];
+
+			$export_rows[] = array(
+				'is_number' => true,
+				'no' => ++$start,
+				'kode_akun' => $list_data->kode_akun ? $list_data->kode_akun : '',
+				'spop' => isset($list_data->spop) ? (string) $list_data->spop : '',
+				'tgl_jual' => date('d M Y', strtotime($list_data->tgl_jual)),
+				'nmrkirim' => $list_data->nmrkirim,
+				'nmrpesan' => $list_data->nmrpesan,
+				'konsumen_nama' => $list_data->konsumen_nama,
+				'kode_barang' => $list_data->kode_barang,
+				'nama_barang' => $list_data->nama_barang,
+				'unit' => $list_data->unit,
+				'satuan' => $list_data->satuan,
+				'harga_satuan' => $list_data->harga_satuan,
+				'jumlah' => $list_data->jumlah,
+				'total_harga' => $calc['jumlah_total'],
+				'umpphpsl22' => $calc['umpphpsl22'],
+				'piutang' => $calc['piutang'],
+				'penjualandpp' => $calc['penjualandpp'],
+				'utangppn' => $calc['utangppn'],
+				'is_total_nmrkirim' => false,
+			);
+
+			$compare_nmr_kirim = $list_data->nmrkirim;
+			$compare_nmr_pesan = $list_data->nmrpesan;
+			$last_row = $list_data;
+		}
+
+		if ($last_row) {
+			$export_rows[] = $this->_setting_kode_akun_penjualan_excel_total_row(++$start, $last_row->nmrkirim, $last_row->nmrpesan, $Total_Jumlah_per_nmrkirim, $Total_UMPPHPSL22_per_nmrkirim, $Total_piutang_per_nmrkirim, $Total_penjualandpp_per_nmrkirim, $Total_utangppn_per_nmrkirim);
+		}
+
+		if (!empty($export_rows)) {
+			$export_rows[] = array(
+				'is_number' => false,
+				'no' => '',
+				'kode_akun' => '',
+				'spop' => '',
+				'tgl_jual' => '',
+				'nmrkirim' => '',
+				'nmrpesan' => '',
+				'konsumen_nama' => '',
+				'kode_barang' => '',
+				'nama_barang' => '',
+				'unit' => '',
+				'satuan' => '',
+				'harga_satuan' => 'TOTAL',
+				'jumlah' => '',
+				'total_harga' => $TOTAL_ALL_JUMLAH,
+				'umpphpsl22' => $TOTAL_ALL_UMPPHPSL22,
+				'piutang' => $TOTAL_ALL_piutang,
+				'penjualandpp' => $TOTAL_ALL_penjualandpp,
+				'utangppn' => $TOTAL_ALL_utangppn,
+				'is_total_nmrkirim' => false,
+			);
+		}
+
+		return $export_rows;
+	}
+
+	private function _setting_kode_akun_penjualan_excel_total_row($no, $nmrkirim, $nmrpesan, $total_jumlah, $total_umpphpsl22, $total_piutang, $total_penjualandpp, $total_utangppn)
+	{
+		return array(
+			'is_number' => true,
+			'no' => $no,
+			'kode_akun' => '',
+			'spop' => '',
+			'tgl_jual' => 'TOTAL',
+			'nmrkirim' => (string) $nmrkirim,
+			'nmrpesan' => (string) $nmrpesan,
+			'konsumen_nama' => '',
+			'kode_barang' => '',
+			'nama_barang' => '',
+			'unit' => '',
+			'satuan' => '',
+			'harga_satuan' => '',
+			'jumlah' => '',
+			'total_harga' => $total_jumlah,
+			'umpphpsl22' => $total_umpphpsl22,
+			'piutang' => $total_piutang,
+			'penjualandpp' => $total_penjualandpp,
+			'utangppn' => $total_utangppn,
+			'is_total_nmrkirim' => true,
+		);
 	}
 
 	public function jurnal_penjualan2()
 	{
-		if ($this->input->post('bulan_ns', TRUE)) {
-			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+		$Get_bulan_ns = $this->input->post('bulan_ns', TRUE);
+		if ($Get_bulan_ns) {
+			$this->session->set_userdata('jurnal_penjualan2_bulan_ns', $Get_bulan_ns);
 		} else {
-			// $Get_date_awal = date("Y-m-1 00:00:00");
-			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+			$Get_bulan_ns = $this->session->userdata('jurnal_penjualan2_bulan_ns');
 		}
 
+		if (!$Get_bulan_ns) {
+			$Get_bulan_ns = date("Y-m");
+		}
 
-		// print_r($Get_month_selected);
-		// print_r("<br/>");
-		// print_r($Get_YEAR_selected);
-		// print_r("<br/>");
+		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
+		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
 
-		$GET_Source = "penjualan";
-		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
+		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected);
 
-		$Buku_besar_DATA = $this->db->query($sql)->result();
-
-		// $Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
-		// $start = 0;
 		$data = array(
 			'Buku_besar_DATA_data' => $Buku_besar_DATA,
-			// 'start' => $start,
+			'Buku_besar_DATA_baris' => $this->_prepare_jurnal_penjualan2_baris_rows($Buku_besar_DATA),
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
+			'bulan_ns_selected' => $Get_bulan_ns,
 		);
 
-		// print_r($data);
-		// die;
-
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list__jurnal_penjualan', $data);
+	}
+
+	private function _get_jurnal_penjualan2_rows($month_selected, $year_selected)
+	{
+		$GET_Source = "penjualan";
+		$sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$month_selected AND YEAR(`tanggal`)=$year_selected AND `source`='$GET_Source'  ORDER BY `pl`,`tanggal`,`id`";
+		return $this->db->query($sql)->result();
+	}
+
+	private function _prepare_jurnal_penjualan2_baris_rows($buku_besar_data)
+	{
+		$groups = array();
+
+		foreach ($buku_besar_data as $list_data) {
+			$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
+			$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
+			if ($debet_val == 0 && $kredit_val == 0) {
+				continue;
+			}
+
+			$tanggal = isset($list_data->tanggal) ? date('Y-m-d', strtotime($list_data->tanggal)) : '';
+			$bukti = isset($list_data->nokirim) ? (string) $list_data->nokirim : '';
+			$group_key = $tanggal . '|' . $bukti;
+
+			if (!isset($groups[$group_key])) {
+				$groups[$group_key] = array(
+					'debet' => array(),
+					'kredit' => array(),
+					'sort_pl' => isset($list_data->pl) ? (string) $list_data->pl : '',
+					'sort_tanggal' => $tanggal,
+					'sort_id' => isset($list_data->id) ? (int) $list_data->id : 0,
+				);
+			}
+
+			if ($debet_val != 0) {
+				$groups[$group_key]['debet'][] = $list_data;
+			} else {
+				$groups[$group_key]['kredit'][] = $list_data;
+			}
+		}
+
+		uasort($groups, function ($a, $b) {
+			$pl_cmp = strcmp($a['sort_pl'], $b['sort_pl']);
+			if ($pl_cmp !== 0) {
+				return $pl_cmp;
+			}
+
+			$tgl_cmp = strcmp($a['sort_tanggal'], $b['sort_tanggal']);
+			if ($tgl_cmp !== 0) {
+				return $tgl_cmp;
+			}
+
+			return $a['sort_id'] - $b['sort_id'];
+		});
+
+		$result = array();
+		foreach ($groups as $group) {
+			usort($group['kredit'], function ($a, $b) {
+				$rek_a = isset($a->kode_akun) ? (string) $a->kode_akun : '';
+				$rek_b = isset($b->kode_akun) ? (string) $b->kode_akun : '';
+				return strcmp($rek_a, $rek_b);
+			});
+
+			foreach ($group['debet'] as $row) {
+				$result[] = $row;
+			}
+			foreach ($group['kredit'] as $row) {
+				$result[] = $row;
+			}
+		}
+
+		return $result;
+	}
+
+	private function _jurnal_penjualan2_kredit_by_nokirim($nokirim, $tanggal, $kode_akun)
+	{
+		$Get_date = date("Y-m-d", strtotime($tanggal));
+		$this->db->where('kode_akun', $kode_akun);
+		$this->db->where('nokirim', $nokirim);
+		$this->db->where('tanggal', $Get_date);
+		$row = $this->db->get('buku_besar')->row();
+		return $row ? (float) $row->kredit : 0;
+	}
+
+	private function _bulan_indonesia($angka_bulan)
+	{
+		$daftar = array(
+			1 => 'Januari',
+			2 => 'Februari',
+			3 => 'Maret',
+			4 => 'April',
+			5 => 'Mei',
+			6 => 'Juni',
+			7 => 'Juli',
+			8 => 'Agustus',
+			9 => 'September',
+			10 => 'Oktober',
+			11 => 'November',
+			12 => 'Desember',
+		);
+		return isset($daftar[(int) $angka_bulan]) ? $daftar[(int) $angka_bulan] : '';
+	}
+
+	public function excel_jurnal_penjualan2()
+	{
+		$this->load->helper('exportexcel');
+
+		$Get_bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = trim((string) $this->session->userdata('jurnal_penjualan2_bulan_ns'));
+		}
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = date('Y-m');
+		}
+
+		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
+		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
+		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected);
+
+		$namaFile = "jurnal_penjualan_" . $Get_bulan_ns . ".xlsx";
+		$tablehead_row1 = 2;
+		$tablehead_row2 = 3;
+		$tablehead_row3 = 4;
+		$tablebody = 5;
+
+		$style_header = 6;
+		$style_border = 3;
+		$style_total_label = 7;
+		$style_total_amount = 8;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', 2);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan Bulan ' . $bulan_tahun_label, 0);
+
+		$this->_excel_jurnal_penjualan2_write_table_header($tablehead_row1, $tablehead_row2, $tablehead_row3, $style_header);
+
+		$nomor = 0;
+		$TOTAL_debet_11301 = 0;
+		$TOTAL_kredit_41101 = 0;
+		$TOTAL_kredit_21201 = 0;
+
+		foreach ($Buku_besar_DATA as $list_data) {
+			if ((string) $list_data->kode_akun !== '11301') {
+				continue;
+			}
+
+			$nilai_kredit_41101 = $this->_jurnal_penjualan2_kredit_by_nokirim($list_data->nokirim, $list_data->tanggal, 41101);
+			$nilai_kredit_21201 = $this->_jurnal_penjualan2_kredit_by_nokirim($list_data->nokirim, $list_data->tanggal, 21201);
+
+			$this->_excel_jurnal_penjualan2_write_data_row(
+				$tablebody,
+				++$nomor,
+				$list_data,
+				$nilai_kredit_41101,
+				$nilai_kredit_21201,
+				$style_border,
+				$style_total_amount
+			);
+			$tablebody++;
+
+			$TOTAL_debet_11301 += (float) $list_data->debet;
+			$TOTAL_kredit_41101 += (float) $nilai_kredit_41101;
+			$TOTAL_kredit_21201 += (float) $nilai_kredit_21201;
+		}
+
+		$this->_excel_jurnal_penjualan2_write_grand_total_row(
+			$tablebody,
+			$TOTAL_debet_11301,
+			$TOTAL_kredit_41101,
+			$TOTAL_kredit_21201,
+			$style_total_label,
+			$style_total_amount
+		);
+
+		xlsEOF();
+		exit();
+	}
+
+	public function excel_jurnal_penjualan2_baris()
+	{
+		$this->load->helper('exportexcel');
+
+		$Get_bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = trim((string) $this->session->userdata('jurnal_penjualan2_bulan_ns'));
+		}
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = date('Y-m');
+		}
+
+		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
+		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
+		$Buku_besar_DATA = $this->_prepare_jurnal_penjualan2_baris_rows(
+			$this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected)
+		);
+
+		$namaFile = "jurnal_penjualan_baris_" . $Get_bulan_ns . ".xlsx";
+		$tablehead_row1 = 2;
+		$tablehead_row2 = 3;
+		$tablebody = 4;
+
+		$style_header = 6;
+		$style_border = 3;
+		$style_total_label = 7;
+		$style_total_amount = 8;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', 2);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan Bulan ' . $bulan_tahun_label, 0);
+
+		$this->_excel_jurnal_penjualan2_baris_write_table_header($tablehead_row1, $tablehead_row2, $style_header);
+
+		$nomor = 0;
+		$TOTAL_debet = 0;
+		$TOTAL_kredit = 0;
+
+		foreach ($Buku_besar_DATA as $list_data) {
+			$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
+			$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
+			if ($debet_val == 0 && $kredit_val == 0) {
+				continue;
+			}
+
+			$this->_excel_jurnal_penjualan2_baris_write_data_row(
+				$tablebody,
+				++$nomor,
+				$list_data,
+				$style_border,
+				$style_total_amount
+			);
+			$tablebody++;
+
+			$TOTAL_debet += $debet_val;
+			$TOTAL_kredit += $kredit_val;
+		}
+
+		$this->_excel_jurnal_penjualan2_baris_write_grand_total_row(
+			$tablebody,
+			$TOTAL_debet,
+			$TOTAL_kredit,
+			$style_total_label,
+			$style_total_amount
+		);
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _excel_jurnal_penjualan2_write_merged_title_row($row, $text, $styleIndex, $colStart = 0, $colEnd = 8)
+	{
+		xlsWriteCellStyle($row, $colStart, $text, $styleIndex);
+		xlsAddMerge($row, $colStart, $row, $colEnd);
+		for ($col = $colStart + 1; $col <= $colEnd; $col++) {
+			xlsWriteCellStyle($row, $col, '', $styleIndex);
+		}
+	}
+
+	private function _excel_jurnal_penjualan2_format_amount($value)
+	{
+		return number_format((float) $value, 2, ',', '.');
+	}
+
+	private function _excel_jurnal_penjualan2_write_table_header($rowStart, $rowMid, $rowEnd, $style)
+	{
+		$single_headers = array('No', 'TANGGAL', 'No. INVOICE', 'No. PESAN', 'No. KIRIM', 'KONSUMEN');
+		foreach ($single_headers as $col => $label) {
+			xlsWriteCellStyle($rowStart, $col, $label, $style);
+			xlsAddMerge($rowStart, $col, $rowEnd, $col);
+			xlsWriteCellStyle($rowMid, $col, '', $style);
+			xlsWriteCellStyle($rowEnd, $col, '', $style);
+		}
+
+		xlsWriteCellStyle($rowStart, 6, 'DEBET', $style);
+		xlsAddMerge($rowStart, 6, $rowStart, 6);
+		xlsWriteCellStyle($rowStart, 7, 'KREDIT', $style);
+		xlsAddMerge($rowStart, 7, $rowStart, 8);
+		xlsWriteCellStyle($rowStart, 8, '', $style);
+
+		xlsWriteCellStyle($rowMid, 6, '11301', $style);
+		xlsWriteCellStyle($rowMid, 7, '41101', $style);
+		xlsWriteCellStyle($rowMid, 8, '21201', $style);
+
+		xlsWriteCellStyle($rowEnd, 6, 'Piutang', $style);
+		xlsWriteCellStyle($rowEnd, 7, 'Penjualan DPP', $style);
+		xlsWriteCellStyle($rowEnd, 8, 'Utang PPN', $style);
+	}
+
+	private function _excel_jurnal_penjualan2_write_data_row($row, $nomor, $list_data, $nilai_kredit_41101, $nilai_kredit_21201, $style_border, $style_amount)
+	{
+		$Get_date = date("Y-m-d", strtotime($list_data->tanggal));
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
+		xlsWriteCellStyle($row, 1, $Get_date, $style_border);
+		xlsWriteCellStyle($row, 2, '', $style_border);
+		xlsWriteCellStyle($row, 3, '', $style_border);
+		xlsWriteCellStyle($row, 4, (string) $list_data->nokirim, $style_border);
+		xlsWriteCellStyle($row, 5, (string) $list_data->konsumen_nama, $style_border);
+		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($list_data->debet), $style_amount);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($nilai_kredit_41101), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($nilai_kredit_21201), $style_amount);
+	}
+
+	private function _excel_jurnal_penjualan2_write_grand_total_row($row, $total_debet, $total_kredit_41101, $total_kredit_21201, $style_label, $style_amount)
+	{
+		xlsWriteCellStyle($row, 5, '', $style_label);
+		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($total_debet), $style_amount);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_kredit_41101), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_kredit_21201), $style_amount);
+	}
+
+	private function _excel_jurnal_penjualan2_baris_write_table_header($rowStart, $rowSub, $style)
+	{
+		$single_headers = array(
+			0 => 'No',
+			1 => 'TANGGAL',
+			2 => 'Bukti',
+			6 => 'Keterangan',
+			7 => 'DEBET',
+			8 => 'KREDIT',
+		);
+
+		foreach ($single_headers as $col => $label) {
+			xlsWriteCellStyle($rowStart, $col, $label, $style);
+			xlsAddMerge($rowStart, $col, $rowSub, $col);
+			xlsWriteCellStyle($rowSub, $col, '', $style);
+		}
+
+		xlsWriteCellStyle($rowStart, 3, 'KODE', $style);
+		xlsAddMerge($rowStart, 3, $rowStart, 5);
+		xlsWriteCellStyle($rowStart, 4, '', $style);
+		xlsWriteCellStyle($rowStart, 5, '', $style);
+
+		xlsWriteCellStyle($rowSub, 3, 'PL', $style);
+		xlsWriteCellStyle($rowSub, 4, 'Ref', $style);
+		xlsWriteCellStyle($rowSub, 5, 'Rek', $style);
+	}
+
+	private function _excel_jurnal_penjualan2_baris_write_data_row($row, $nomor, $list_data, $style_border, $style_amount)
+	{
+		$Get_date = isset($list_data->tanggal) ? date("Y-m-d", strtotime($list_data->tanggal)) : '';
+
+		$bukti = isset($list_data->nokirim) ? (string) $list_data->nokirim : '';
+		$pl = isset($list_data->pl) ? (string) $list_data->pl : '';
+		$ref = isset($list_data->ref) ? (string) $list_data->ref : ((isset($list_data->kode) ? (string) $list_data->kode : ''));
+		$rek = isset($list_data->kode_akun) ? (string) $list_data->kode_akun : '';
+		$keterangan = isset($list_data->keterangan) ? (string) $list_data->keterangan : '';
+
+		$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
+		$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
+
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
+		xlsWriteCellStyle($row, 1, $Get_date, $style_border);
+		xlsWriteCellStyle($row, 2, $bukti, $style_border);
+		xlsWriteCellStyle($row, 3, $pl, $style_border);
+		xlsWriteCellStyle($row, 4, $ref, $style_border);
+		xlsWriteCellStyle($row, 5, $rek, $style_border);
+		xlsWriteCellStyle($row, 6, $keterangan, $style_border);
+
+		xlsWriteCellStyle(
+			$row,
+			7,
+			$debet_val != 0 ? $this->_excel_jurnal_penjualan2_format_amount($debet_val) : '',
+			$style_amount
+		);
+		xlsWriteCellStyle(
+			$row,
+			8,
+			$kredit_val != 0 ? $this->_excel_jurnal_penjualan2_format_amount($kredit_val) : '',
+			$style_amount
+		);
+	}
+
+	private function _excel_jurnal_penjualan2_baris_write_grand_total_row($row, $total_debet, $total_kredit, $style_label, $style_amount)
+	{
+		xlsWriteCellStyle($row, 6, 'TOTAL', $style_label);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_debet), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_kredit), $style_amount);
 	}
 
 	public function input_kode_akun($nmrkirim = null, $Tgl_JUAL = null)
@@ -2387,29 +3080,37 @@ class Tbl_penjualan extends CI_Controller
 		// print_r("<br/>");
 
 		$Get_date = date("Y-m-d", strtotime($Tgl_JUAL));
+		$nmrpesan = trim((string) $this->input->get('nmrpesan', TRUE));
 
-		// print_r($Get_date);
-		// print_r("<br/>");
+		if ($nmrpesan !== '') {
+			$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_nmrpesan($nmrkirim, $nmrpesan);
+		} else {
+			$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
+		}
 
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
+		$spop_filter = trim((string) $this->input->get('spop_filter', TRUE));
+		$action_url = site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim . '/' . $Get_date);
+		$query = array();
+		if ($nmrpesan !== '') {
+			$query[] = 'nmrpesan=' . rawurlencode($nmrpesan);
+		}
+		if ($search_filter !== '') {
+			$query[] = 'search_filter=' . rawurlencode($search_filter);
+		}
+		if ($spop_filter !== '') {
+			$query[] = 'spop_filter=' . rawurlencode($spop_filter);
+		}
+		if (!empty($query)) {
+			$action_url .= '?' . implode('&', $query);
+		}
 
-		// Update field kode_akun by spop ==> open form input kode akun
-
-		$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
-
-		// // $Tbl_pembelian = $this->Tbl_pembelian_model->get_by_spop($spop);
-		// $Tbl_pembelian = $this->Tbl_penjualan_model->get_by_spop($data_per_uuidspop->spop);
-
-		// // SELECT `status_spop` FROM `tbl_pembelian` WHERE `uuid_spop`="53d056417ed111ef95300021ccc9061e";
-
-
-
-		// $start = 0;
 		$data = array(
 			'Tbl_penjualan_data' => $data_per_nmrkirim,
 			'nmrkirim' => $nmrkirim,
-			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim . '/' . $Get_date),
+			'nmrpesan' => $nmrpesan,
+			'action' => $action_url,
 			'button' => 'Simpan Kode AKun',
-			// 'start' => $start,
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
@@ -2452,7 +3153,12 @@ class Tbl_penjualan extends CI_Controller
 
 		// $GET_Source = "penjualan";
 		// $sql = "SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='$Tgl_JUAL' AND `nmrkirim`='$nmrkirim'  ORDER BY `id`";
-		$sql = "SELECT * FROM `tbl_penjualan` WHERE  `nmrkirim`='$nmrkirim'  ORDER BY `id`";
+		$nmrpesan = trim((string) $this->input->get('nmrpesan', TRUE));
+		$sql = "SELECT * FROM `tbl_penjualan` WHERE `nmrkirim`='" . $this->db->escape_str($nmrkirim) . "'";
+		if ($nmrpesan !== '') {
+			$sql .= " AND `nmrpesan`='" . $this->db->escape_str($nmrpesan) . "'";
+		}
+		$sql .= " ORDER BY `id`";
 
 		// SELECT * FROM `tbl_penjualan` WHERE `tgl_jual`='2025-05-12' and `nmrkirim`='qweqwewqewq';
 
@@ -2651,7 +3357,11 @@ class Tbl_penjualan extends CI_Controller
 				// 'id_buku_besar' => $GET_id_buku_besar,
 			);
 
-			$this->Tbl_penjualan_model->update_by_nmrkirim($nmrkirim, $data);
+			if ($nmrpesan !== '') {
+				$this->Tbl_penjualan_model->update_by_nmrkirim_nmrpesan($nmrkirim, $nmrpesan, $data);
+			} else {
+				$this->Tbl_penjualan_model->update_by_nmrkirim($nmrkirim, $data);
+			}
 
 			// print_r($GET_ID_buku_besar);
 			// print_r("<br/>");
@@ -2764,22 +3474,43 @@ class Tbl_penjualan extends CI_Controller
 			// print_r($data);
 			// die;
 
-			$this->Tbl_penjualan_model->update_by_nmrkirim($nmrkirim, $data);
+			if ($nmrpesan !== '') {
+				$this->Tbl_penjualan_model->update_by_nmrkirim_nmrpesan($nmrkirim, $nmrpesan, $data);
+			} else {
+				$this->Tbl_penjualan_model->update_by_nmrkirim($nmrkirim, $data);
+			}
 		}
 
 
 
 
-		redirect(site_url('Tbl_penjualan/setting_kode_akun_penjualan2'));
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
+		$spop_filter = trim((string) $this->input->get('spop_filter', TRUE));
+		$redirect_url = 'Tbl_penjualan/setting_kode_akun_penjualan2?keep_filter=1';
+		if ($search_filter !== '') {
+			$redirect_url .= '&search_filter=' . rawurlencode($search_filter);
+		}
+		if ($spop_filter !== '') {
+			$redirect_url .= '&spop_filter=' . rawurlencode($spop_filter);
+		}
+		redirect(site_url($redirect_url));
 	}
 
 
-	public function ubah_kode_akun($nmrkirim = null)
+	public function ubah_kode_akun($nmrkirim = null, $Tgl_JUAL = null)
 	{
+		$nmrpesan = trim((string) $this->input->get('nmrpesan', TRUE));
+		if ($nmrpesan !== '') {
+			$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim_nmrpesan($nmrkirim, $nmrpesan);
+		} else {
+			$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
+		}
 
-		$data_per_nmrkirim = $this->Tbl_penjualan_model->get_all_by_nmr_kirim($nmrkirim);
-
-		$sql = "SELECT `nmrkirim`,`kode_akun`,`kode_pl`,`kode_bb` FROM `tbl_penjualan` WHERE `nmrkirim`='$nmrkirim' GROUP by `nmrkirim`,`kode_akun`";
+		$sql = "SELECT `nmrkirim`,`kode_akun`,`kode_pl`,`kode_bb` FROM `tbl_penjualan` WHERE `nmrkirim`='" . $this->db->escape_str($nmrkirim) . "'";
+		if ($nmrpesan !== '') {
+			$sql .= " AND `nmrpesan`='" . $this->db->escape_str($nmrpesan) . "'";
+		}
+		$sql .= " GROUP BY `nmrkirim`,`kode_akun`";
 
 		// $this->db->query($sql)->result();
 		// print_r($this->db->query($sql)->row()->kode_akun);
@@ -2789,11 +3520,29 @@ class Tbl_penjualan extends CI_Controller
 		$get_kode_bb = $this->db->query($sql)->row()->kode_bb;
 		// die;
 
-		// $start = 0;
+		$search_filter = trim((string) $this->input->get('search_filter', TRUE));
+		$spop_filter = trim((string) $this->input->get('spop_filter', TRUE));
+		$Get_date = $Tgl_JUAL ? date('Y-m-d', strtotime($Tgl_JUAL)) : '';
+		$action_url = site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim . ($Get_date ? '/' . $Get_date : ''));
+		$query = array();
+		if ($nmrpesan !== '') {
+			$query[] = 'nmrpesan=' . rawurlencode($nmrpesan);
+		}
+		if ($search_filter !== '') {
+			$query[] = 'search_filter=' . rawurlencode($search_filter);
+		}
+		if ($spop_filter !== '') {
+			$query[] = 'spop_filter=' . rawurlencode($spop_filter);
+		}
+		if (!empty($query)) {
+			$action_url .= '?' . implode('&', $query);
+		}
+
 		$data = array(
 			'Tbl_penjualan_data' => $data_per_nmrkirim,
 			'nmrkirim' => $nmrkirim,
-			'action' => site_url('Tbl_penjualan/update_kode_akun/' . $nmrkirim),
+			'nmrpesan' => $nmrpesan,
+			'action' => $action_url,
 			'button' => 'Update Kode AKun',
 			// 'start' => $start,
 			'get_kode_akun' => $get_kode_akun,
