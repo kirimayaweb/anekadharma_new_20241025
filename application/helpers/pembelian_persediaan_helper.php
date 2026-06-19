@@ -15158,36 +15158,41 @@ function pembelian_jurnal_compare_jenis_definitions()
 {
 	return array(
 		'hanya_manual' => array(
-			'title' => 'Manual tidak ada di Online',
+			'title' => '1. Data Manual tidak ada di Online',
 			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
-			'file_suffix' => 'Manual_Tidak_Ada_Online',
+			'file_suffix' => '1_Manual_Tidak_Ada_Online',
 		),
 		'hanya_online' => array(
-			'title' => 'Online tidak ada di Manual',
+			'title' => '3. Data Online tidak ada di Manual',
 			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
-			'file_suffix' => 'Online_Tidak_Ada_Manual',
+			'file_suffix' => '3_Online_Tidak_Ada_Manual',
 		),
 		'cocok' => array(
-			'title' => 'Data Cocok Manual dan Online',
+			'title' => '2. Data Cocok (Manual & Online)',
 			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
-			'file_suffix' => 'Cocok_Manual_Online',
+			'file_suffix' => '2_Cocok_Manual_Online',
+		),
+		'hanya_manual_4' => array(
+			'title' => '4. Data Manual tidak ada di Online',
+			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
+			'file_suffix' => '4_Manual_Tidak_Ada_Online',
 		),
 		'tidak_lengkap_manual' => array(
-			'title' => 'Data Tidak Lengkap (Data Manual)',
+			'title' => '5. Data Tidak Lengkap (data manual)',
 			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
-			'file_suffix' => 'Data_Tidak_Lengkap_Manual',
+			'file_suffix' => '5_Data_Tidak_Lengkap_Manual',
 		),
 		'tidak_lengkap_online' => array(
-			'title' => 'Data Tidak Lengkap (Data Online)',
+			'title' => '6. Data Tidak Lengkap (di data online)',
 			'headers' => array('No', 'Tanggal', 'SPOP', 'Supplier', 'Jumlah', 'Keterangan'),
-			'file_suffix' => 'Data_Tidak_Lengkap_Online',
+			'file_suffix' => '6_Data_Tidak_Lengkap_Online',
 		),
 	);
 }
 
 function pembelian_jurnal_compare_get_items_by_jenis($result, $jenis)
 {
-	if ($jenis === 'hanya_manual') {
+	if ($jenis === 'hanya_manual' || $jenis === 'hanya_manual_4') {
 		return isset($result['hanya_manual']) ? $result['hanya_manual'] : array();
 	}
 	if ($jenis === 'hanya_online') {

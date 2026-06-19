@@ -753,6 +753,7 @@
 
                                 <h6 class="d-flex align-items-center flex-wrap">
                                     <span>4. Data Manual tidak ada di Online <span id="compare-pembelian-badge-manual-duplikat" class="badge badge-warning">0</span></span>
+                                    <button type="button" class="btn btn-xs btn-outline-success btn-compare-pembelian-excel ml-2 mb-1" data-jenis="hanya_manual_4"><i class="fa fa-file-excel-o"></i> Cetak ke Excel</button>
                                 </h6>
                                 <div class="alert alert-secondary py-2 small mb-2">
                                     Ringkasan sama dengan tabel <strong>1</strong> — ditampilkan terpisah agar urutan nomor selaras dengan layout Excel.
@@ -1776,6 +1777,15 @@
         }
 
         function exportComparePembelianExcel(jenis) {
+            if (!comparePembelianLastResult) {
+                if (window.Swal) {
+                    Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Jalankan Compare terlebih dahulu sebelum cetak Excel.' });
+                } else {
+                    alert('Jalankan Compare terlebih dahulu sebelum cetak Excel.');
+                }
+                return;
+            }
+
             var bulanKey = getBulanKeyComparePembelian();
             var tabel = jQuery('#compare_tabel_pembelian').val() || '';
             if (!bulanKey || !tabel) {
