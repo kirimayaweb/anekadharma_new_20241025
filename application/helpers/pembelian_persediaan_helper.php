@@ -14158,11 +14158,15 @@ function pembelian_jurnal_compare_build_column_map($fields)
 
 	$map = array(
 		'tanggal' => pembelian_jurnal_compare_pick_tanggal_column($normalized),
-		'spop' => persediaan_compare_pick_column($normalized, array('spop')),
+		'spop' => persediaan_compare_pick_column($normalized, array(
+			'spop', 'no. spop', 'no spop', 'no_spop', 'nomor_spop', 'nmr_spop',
+		)),
 		'supplier' => persediaan_compare_pick_column($normalized, array(
 			'supplier', 'supplier_nama', 'nama_supplier', 'supplier name', 'nama supplier', 'nama_supplier_pembelian',
 		)),
-		'jumlah' => persediaan_compare_pick_column($normalized, array('jumlah', 'qty', 'quantity')),
+		'jumlah' => persediaan_compare_pick_column($normalized, array(
+			'jumlah', 'debet', 'debit', 'qty', 'quantity', 'nominal', 'total',
+		)),
 	);
 
 	if (empty($map['spop']) || empty($map['supplier']) || empty($map['jumlah'])) {
@@ -14200,12 +14204,41 @@ function pembelian_jurnal_compare_validate_table($CI, $table)
 
 function pembelian_jurnal_compare_normalize_spop($spop)
 {
-	return persediaan_compare_excel_all_normalize_spop_display($spop);
+	if (persediaan_recalculate_spop_kosong_atau_nol($spop)) {
+		return '0';
+	}
+
+	$s = trim((string) $spop);
+	if ($s === '') {
+		return '0';
+	}
+
+	if (preg_match('/^\d+([.,]\d+)?$/', $s)) {
+		$s = str_replace(',', '.', $s);
+		$num = (float) $s;
+		if (abs($num - round($num)) < 0.0001) {
+			return (string) (int) round($num);
+		}
+	}
+
+	if (preg_match('/^\d+$/', $s)) {
+		return (string) (int) $s;
+	}
+
+	return strtolower(preg_replace('/\s+/', ' ', $s));
 }
 
 function pembelian_jurnal_compare_normalize_supplier($supplier)
 {
-	return strtolower(trim(preg_replace('/\s+/', ' ', (string) $supplier)));
+	$supplier = trim((string) $supplier);
+	$supplier = preg_replace('/[\x{00A0}\x{200B}\x{FEFF}]/u', '', $supplier);
+	$supplier = preg_replace('/\s+/u', ' ', $supplier);
+
+	if (function_exists('mb_strtolower')) {
+		return mb_strtolower($supplier, 'UTF-8');
+	}
+
+	return strtolower($supplier);
 }
 
 function pembelian_jurnal_compare_is_row_complete($spop, $supplier, $jumlah)
@@ -14264,12 +14297,80 @@ function pembelian_jurnal_compare_incomplete_row_to_json($row, $keterangan)
 	);
 }
 
+function pembelian_jurnal_compare_parse_jumlah_nominal($value)
+{
+	$v = trim((string) $value);
+	if ($v === '' || $v === '-') {
+		return 0.0;
+	}
+
+	$negative = false;
+	if ($v[0] === '-' || $v[0] === '(') {
+		$negative = true;
+	}
+
+	$v = preg_replace('/^\s*(Rp\.?\s*|IDR\s*)/i', '', $v);
+	$v = trim(str_replace(' ', '', $v));
+	$v = preg_replace('/[^0-9.,\-]/', '', $v);
+
+	if ($v === '' || $v === '-') {
+		return 0.0;
+	}
+
+	// Excel/jurnal sering menulis 3.208.000 menjadi 3.208.00 — lengkapi grup ribuan terakhir.
+	if (preg_match('/^(\d{1,3}(?:\.\d{3})+)\.(\d{2})$/', $v, $m)) {
+		$v = $m[1] . '.' . str_pad($m[2], 3, '0', STR_PAD_RIGHT);
+	}
+
+	$last_comma = strrpos($v, ',');
+	$last_dot = strrpos($v, '.');
+
+	if ($last_comma !== false && $last_dot !== false) {
+		if ($last_comma > $last_dot) {
+			$integer = str_replace('.', '', substr($v, 0, $last_comma));
+			$decimal = substr($v, $last_comma + 1);
+			$num = (float) ($integer . '.' . $decimal);
+		} else {
+			$num = (float) str_replace(',', '', $v);
+		}
+	} elseif ($last_comma !== false) {
+		$after_comma = substr($v, $last_comma + 1);
+		if (substr_count($v, ',') === 1 && strlen($after_comma) <= 2) {
+			$integer = str_replace('.', '', substr($v, 0, $last_comma));
+			$num = (float) ($integer . '.' . $after_comma);
+		} else {
+			$num = (float) str_replace(',', '', $v);
+		}
+	} elseif ($last_dot !== false) {
+		if (substr_count($v, '.') > 1) {
+			$num = (float) str_replace('.', '', $v);
+		} else {
+			$after_dot = substr($v, $last_dot + 1);
+			if (strlen($after_dot) === 3 && strpos($v, ',') === false) {
+				$num = (float) str_replace('.', '', $v);
+			} else {
+				$num = (float) $v;
+			}
+		}
+	} else {
+		$num = (float) $v;
+	}
+
+	if ($negative) {
+		$num = -abs($num);
+	}
+
+	return $num;
+}
+
+function pembelian_jurnal_compare_normalize_jumlah_csv_cell($value)
+{
+	return (int) round(pembelian_jurnal_compare_parse_jumlah_nominal($value));
+}
+
 function pembelian_jurnal_compare_normalize_jumlah($value)
 {
-	$CI = get_instance();
-	$CI->load->helper('persediaan_display');
-
-	return round(persediaan_parse_angka($value), 2);
+	return round(pembelian_jurnal_compare_parse_jumlah_nominal($value), 2);
 }
 
 function pembelian_jurnal_compare_normalize_tanggal($value)
@@ -14319,6 +14420,49 @@ function pembelian_jurnal_compare_make_pair_key($spop, $supplier)
 		. '|' . pembelian_jurnal_compare_normalize_supplier($supplier);
 }
 
+function pembelian_jurnal_compare_find_group_key($groups, $spop, $supplier)
+{
+	if (!is_array($groups) || count($groups) === 0) {
+		return null;
+	}
+
+	$target_key = pembelian_jurnal_compare_make_pair_key($spop, $supplier);
+	if (isset($groups[$target_key])) {
+		return $target_key;
+	}
+
+	$target_spop = pembelian_jurnal_compare_normalize_spop($spop);
+	$target_sup = pembelian_jurnal_compare_normalize_supplier($supplier);
+
+	foreach ($groups as $key => $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$row_spop = pembelian_jurnal_compare_normalize_spop(isset($row['spop']) ? $row['spop'] : '');
+		$row_sup = pembelian_jurnal_compare_normalize_supplier(isset($row['supplier']) ? $row['supplier'] : '');
+		if ($row_spop === $target_spop && $row_sup === $target_sup) {
+			return $key;
+		}
+	}
+
+	return null;
+}
+
+function pembelian_jurnal_compare_jumlah_values_equal($jumlah_a, $jumlah_b)
+{
+	$a = pembelian_jurnal_compare_normalize_jumlah($jumlah_a);
+	$b = pembelian_jurnal_compare_normalize_jumlah($jumlah_b);
+
+	if (abs($a - $b) < 0.01) {
+		return true;
+	}
+
+	$a_int = (int) round($a);
+	$b_int = (int) round($b);
+
+	return $a_int === $b_int;
+}
+
 function pembelian_jurnal_compare_format_total_display($total)
 {
 	return pembelian_jurnal_compare_format_jumlah_display($total);
@@ -14342,12 +14486,6 @@ function pembelian_jurnal_compare_rows_match($manual, $online)
 		return false;
 	}
 
-	$tgl_m = pembelian_jurnal_compare_normalize_tanggal(isset($manual['tanggal']) ? $manual['tanggal'] : '');
-	$tgl_o = pembelian_jurnal_compare_normalize_tanggal(isset($online['tanggal']) ? $online['tanggal'] : '');
-	if ($tgl_m !== $tgl_o) {
-		return false;
-	}
-
 	if (pembelian_jurnal_compare_normalize_spop(isset($manual['spop']) ? $manual['spop'] : '')
 		!== pembelian_jurnal_compare_normalize_spop(isset($online['spop']) ? $online['spop'] : '')) {
 		return false;
@@ -14358,46 +14496,48 @@ function pembelian_jurnal_compare_rows_match($manual, $online)
 		return false;
 	}
 
-	$jml_m = pembelian_jurnal_compare_normalize_jumlah(isset($manual['jumlah']) ? $manual['jumlah'] : 0);
-	$jml_o = pembelian_jurnal_compare_normalize_jumlah(isset($online['jumlah']) ? $online['jumlah'] : 0);
-
-	return abs($jml_m - $jml_o) < 0.01;
+	return pembelian_jurnal_compare_jumlah_values_equal(
+		isset($manual['jumlah']) ? $manual['jumlah'] : 0,
+		isset($online['jumlah']) ? $online['jumlah'] : 0
+	);
 }
 
 function pembelian_jurnal_compare_build_keterangan($manual, $online, $manual_groups = array(), $online_groups = array())
 {
 	if ($manual === null && $online !== null && is_array($manual_groups) && count($manual_groups) > 0) {
-		$manual = pembelian_jurnal_compare_find_row_by_spop_supplier(
+		$manual_match = pembelian_jurnal_compare_find_row_by_spop_supplier(
 			$manual_groups,
 			isset($online['spop']) ? $online['spop'] : '',
 			isset($online['supplier']) ? $online['supplier'] : ''
 		);
-		if ($manual === null) {
-			$manual = pembelian_jurnal_compare_find_row_by_spop_only(
-				$manual_groups,
-				isset($online['spop']) ? $online['spop'] : ''
-			);
+		if ($manual_match !== null) {
+			return pembelian_jurnal_compare_build_keterangan($manual_match, $online, $manual_groups, $online_groups);
 		}
-		if ($manual !== null) {
-			return pembelian_jurnal_compare_build_keterangan($manual, $online, $manual_groups, $online_groups);
-		}
+
+		return pembelian_jurnal_compare_build_spop_reference_keterangan(
+			$online,
+			$manual_groups,
+			'Online',
+			'Manual'
+		);
 	}
 
 	if ($online === null && $manual !== null && is_array($online_groups) && count($online_groups) > 0) {
-		$online = pembelian_jurnal_compare_find_row_by_spop_supplier(
+		$online_match = pembelian_jurnal_compare_find_row_by_spop_supplier(
 			$online_groups,
 			isset($manual['spop']) ? $manual['spop'] : '',
 			isset($manual['supplier']) ? $manual['supplier'] : ''
 		);
-		if ($online === null) {
-			$online = pembelian_jurnal_compare_find_row_by_spop_only(
-				$online_groups,
-				isset($manual['spop']) ? $manual['spop'] : ''
-			);
+		if ($online_match !== null) {
+			return pembelian_jurnal_compare_build_keterangan($manual, $online_match, $manual_groups, $online_groups);
 		}
-		if ($online !== null) {
-			return pembelian_jurnal_compare_build_keterangan($manual, $online, $manual_groups, $online_groups);
-		}
+
+		return pembelian_jurnal_compare_build_spop_reference_keterangan(
+			$manual,
+			$online_groups,
+			'Manual',
+			'Online'
+		);
 	}
 
 	if ($manual === null && $online === null) {
@@ -14428,8 +14568,8 @@ function pembelian_jurnal_compare_build_keterangan($manual, $online, $manual_gro
 
 	$spop_same = ($spop_m === $spop_o);
 	$sup_same = ($sup_m === $sup_o);
-	$jml_diff = (abs($jml_m - $jml_o) >= 0.01);
-	$tgl_diff = ($tgl_m !== $tgl_o);
+	$jml_diff = !pembelian_jurnal_compare_jumlah_values_equal($manual['jumlah'], $online['jumlah']);
+	$tgl_diff = ($tgl_m !== $tgl_o && $tgl_m !== '' && $tgl_o !== '');
 
 	if ($tgl_diff) {
 		$parts[] = 'Tanggal berbeda (Manual: ' . pembelian_jurnal_compare_format_tanggal_display($tgl_m)
@@ -14477,6 +14617,113 @@ function pembelian_jurnal_compare_build_keterangan($manual, $online, $manual_gro
 	$detail = implode('; ', $parts);
 
 	return ($summary !== '') ? ($summary . ' — ' . $detail) : $detail;
+}
+
+function pembelian_jurnal_compare_is_summary_row($spop, $supplier, $jumlah_raw)
+{
+	$supplier_l = strtolower(trim((string) $supplier));
+	if ($supplier_l !== '' && strpos($supplier_l, 'total pembelian unit') === 0) {
+		return true;
+	}
+
+	$spop_l = strtolower(trim((string) $spop));
+	if ($spop_l !== '' && strpos($spop_l, 'total pembelian unit') === 0) {
+		return true;
+	}
+
+	$jumlah_l = strtolower(trim((string) $jumlah_raw));
+	if ($jumlah_l !== '' && strpos($jumlah_l, 'total pembelian unit') === 0) {
+		return true;
+	}
+
+	return false;
+}
+
+function pembelian_jurnal_compare_find_all_rows_by_spop($groups, $spop)
+{
+	if (!is_array($groups) || count($groups) === 0) {
+		return array();
+	}
+
+	$target_spop = pembelian_jurnal_compare_normalize_spop($spop);
+	$found = array();
+
+	foreach ($groups as $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		if (pembelian_jurnal_compare_normalize_spop(isset($row['spop']) ? $row['spop'] : '') === $target_spop) {
+			$found[] = $row;
+		}
+	}
+
+	return $found;
+}
+
+function pembelian_jurnal_compare_build_spop_reference_keterangan($side_row, $reference_groups, $side_label, $reference_label)
+{
+	$spop_display = isset($side_row['spop_display'])
+		? $side_row['spop_display']
+		: (isset($side_row['spop']) ? $side_row['spop'] : '—');
+	$candidates = pembelian_jurnal_compare_find_all_rows_by_spop(
+		$reference_groups,
+		isset($side_row['spop']) ? $side_row['spop'] : ''
+	);
+
+	if (count($candidates) === 0) {
+		return 'Tidak ditemukan data ' . $reference_label . ' dengan SPOP ' . $spop_display . '.';
+	}
+
+	$side_supplier = isset($side_row['supplier']) ? $side_row['supplier'] : '';
+	$side_sup_norm = pembelian_jurnal_compare_normalize_supplier($side_supplier);
+	$side_jml = pembelian_jurnal_compare_normalize_jumlah(isset($side_row['jumlah']) ? $side_row['jumlah'] : 0);
+
+	$lines = array();
+	$lines[] = 'Referensi SPOP ' . $spop_display . ' — bandingkan ' . $side_label . ' vs ' . $reference_label . ':';
+
+	$has_supplier_match = false;
+	$has_jumlah_match = false;
+	$has_exact_match = false;
+
+	foreach ($candidates as $idx => $candidate) {
+		$candidate_supplier = isset($candidate['supplier']) ? $candidate['supplier'] : '';
+		$candidate_sup_norm = pembelian_jurnal_compare_normalize_supplier($candidate_supplier);
+		$candidate_jml = pembelian_jurnal_compare_normalize_jumlah(isset($candidate['jumlah']) ? $candidate['jumlah'] : 0);
+		$sup_same = ($candidate_sup_norm === $side_sup_norm);
+		$jml_same = pembelian_jurnal_compare_jumlah_values_equal(
+			isset($candidate['jumlah']) ? $candidate['jumlah'] : 0,
+			isset($side_row['jumlah']) ? $side_row['jumlah'] : 0
+		);
+
+		if ($sup_same) {
+			$has_supplier_match = true;
+		}
+		if ($jml_same) {
+			$has_jumlah_match = true;
+		}
+		if ($sup_same && $jml_same) {
+			$has_exact_match = true;
+		}
+
+		$lines[] = ($idx + 1) . '. Supplier ' . $reference_label . ': ' . ($candidate_supplier !== '' ? $candidate_supplier : '—')
+			. ' (' . ($sup_same ? 'sama' : 'beda') . ' vs ' . $side_label . ': ' . ($side_supplier !== '' ? $side_supplier : '—') . ')'
+			. '; Jumlah ' . $reference_label . ': ' . pembelian_jurnal_compare_format_jumlah_display($candidate_jml)
+			. ' (' . ($jml_same ? 'sama' : 'beda') . ' vs ' . $side_label . ': ' . pembelian_jurnal_compare_format_jumlah_display($side_jml) . ')';
+	}
+
+	if ($has_exact_match) {
+		$lines[] = 'Kesimpulan: SPOP, Supplier, dan Jumlah seharusnya cocok — periksa normalisasi data atau re-import CSV.';
+	} elseif ($has_supplier_match && !$has_jumlah_match) {
+		$lines[] = 'Kesimpulan: SPOP & Supplier sama, perbedaan di Jumlah.';
+	} elseif (!$has_supplier_match && $has_jumlah_match) {
+		$lines[] = 'Kesimpulan: SPOP & Jumlah sama, perbedaan di nama Supplier.';
+	} elseif (!$has_supplier_match && !$has_jumlah_match) {
+		$lines[] = 'Kesimpulan: SPOP sama, Supplier dan Jumlah berbeda.';
+	} else {
+		$lines[] = 'Kesimpulan: SPOP sama, lihat detail Supplier/Jumlah di atas.';
+	}
+
+	return implode(' ', $lines);
 }
 
 function pembelian_jurnal_compare_find_row_by_spop_supplier($groups, $spop, $supplier)
@@ -14548,7 +14795,7 @@ function pembelian_jurnal_compare_csv_column_error_detail($raw_headers)
 		'supplier' => persediaan_compare_pick_column($normalized, array(
 			'supplier', 'supplier_nama', 'nama_supplier', 'supplier name', 'nama supplier',
 		)),
-		'jumlah' => persediaan_compare_pick_column($normalized, array('jumlah', 'qty', 'quantity')),
+		'jumlah' => persediaan_compare_pick_column($normalized, array('jumlah', 'debet', 'debit')),
 	);
 
 	$missing = array();
@@ -14755,6 +15002,7 @@ function pembelian_jurnal_compare_import_csv_to_db($CI, $filepath, $original_fil
 
 	$db_columns_sanitized = persediaan_compare_sanitize_csv_headers($raw_headers);
 	$pembelian_map = pembelian_jurnal_compare_build_column_map($db_columns_sanitized);
+	$jumlah_col = ($pembelian_map && !empty($pembelian_map['jumlah'])) ? $pembelian_map['jumlah'] : null;
 	$db_columns = array();
 	foreach ($db_columns_sanitized as $idx => $col) {
 		if (strtolower($col) === 'id') {
@@ -14785,7 +15033,11 @@ function pembelian_jurnal_compare_import_csv_to_db($CI, $filepath, $original_fil
 
 	$field_defs = array('`id` INT(11) NOT NULL AUTO_INCREMENT');
 	foreach ($db_columns as $col) {
-		$field_defs[] = '`' . $col . '` TEXT NULL';
+		if ($jumlah_col !== null && $col === $jumlah_col) {
+			$field_defs[] = '`' . $col . '` INT(9) NULL';
+		} else {
+			$field_defs[] = '`' . $col . '` TEXT NULL';
+		}
 	}
 
 	$create_sql = 'CREATE TABLE `' . $table . '` (' . implode(', ', $field_defs)
@@ -14838,6 +15090,10 @@ function pembelian_jurnal_compare_import_csv_to_db($CI, $filepath, $original_fil
 				$tgl_ref['month'],
 				$tgl_ref['year']
 			);
+		}
+
+		if ($jumlah_col !== null && isset($data[$jumlah_col]) && trim((string) $data[$jumlah_col]) !== '') {
+			$data[$jumlah_col] = pembelian_jurnal_compare_normalize_jumlah_csv_cell($data[$jumlah_col]);
 		}
 
 		$batch[] = $data;
@@ -14905,11 +15161,14 @@ function pembelian_jurnal_compare_import_csv_to_db($CI, $filepath, $original_fil
 			. ($table_suffix > 0 || $table_exists_before
 				? "Tabel `{$table_base}` sudah ada — dibuat tabel baru: `{$table}`" . ($table_suffix > 0 ? " (_{$table_suffix}).\n" : ".\n")
 				: "1. Tabel baru dibuat: `{$table}`\n")
-			. '2. Kolom disesuaikan dari header CSV (' . count($db_columns) . " kolom) + kolom `id` (INTEGER AUTO_INCREMENT)\n"
-			. "3. Data ter-upload: {$inserted} baris\n"
-			. '4. Kolom tanggal dinormalisasi (angka 1–2 digit = hari + bulan/tahun dari tanggal awal: '
+			. '2. Kolom disesuaikan dari header CSV (' . count($db_columns) . " kolom) + kolom `id` (INT(11) AUTO_INCREMENT)\n"
+			. ($jumlah_col !== null
+				? "3. Kolom `{$jumlah_col}` disimpan sebagai INT(9); format rupiah/titik/koma dihilangkan saat import\n"
+				: '')
+			. ($jumlah_col !== null ? '4' : '3') . ". Data ter-upload: {$inserted} baris\n"
+			. ($jumlah_col !== null ? '5' : '4') . '. Kolom tanggal dinormalisasi (angka 1–2 digit = hari + bulan/tahun dari tanggal awal: '
 			. sprintf('%02d-%02d-%04d', $tgl_ref['day'], $tgl_ref['month'], $tgl_ref['year']) . ")\n"
-			. '5. Klik tombol Cek Data untuk melihat preview isi tabel.\n'
+			. ($jumlah_col !== null ? '6' : '5') . '. Klik tombol Cek Data untuk melihat preview isi tabel.\n'
 			. 'Silahkan lanjut compare menggunakan tabel ini.',
 	);
 }
@@ -14930,8 +15189,9 @@ function pembelian_jurnal_compare_load_manual_rows_for_bulan($CI, $table, $bulan
 	$date_col = persediaan_compare_detect_manual_date_column($fields);
 	$params = array();
 	$where = '';
+	$skip_date_filter = persediaan_compare_table_name_matches_bulan($table, $bulan);
 
-	if ($date_col !== null) {
+	if ($date_col !== null && !$skip_date_filter) {
 		$col_l = strtolower((string) $date_col);
 		if ($col_l === 'tanggal_beli' || $col_l === 'tgl_po' || $col_l === 'tgl_transaksi' || $col_l === 'proses_input' || $col_l === 'tgl') {
 			$where = ' WHERE `' . $date_col . '` IS NOT NULL AND `' . $date_col . "` <> '0000-00-00'"
@@ -14984,13 +15244,32 @@ function pembelian_jurnal_compare_aggregate_manual_rows($rows, $map)
 {
 	$agg = array();
 	$incomplete = array();
+	$last_spop = '';
+	$last_supplier = '';
 
 	foreach ($rows as $row) {
-		$spop = persediaan_compare_row_get($row, $map['spop']);
-		$supplier = persediaan_compare_row_get($row, $map['supplier']);
+		$spop = trim((string) persediaan_compare_row_get($row, $map['spop']));
+		$supplier = trim((string) persediaan_compare_row_get($row, $map['supplier']));
 		$jumlah_raw = persediaan_compare_row_get($row, $map['jumlah']);
 		$tanggal_raw = !empty($map['tanggal']) ? persediaan_compare_row_get($row, $map['tanggal']) : '';
 		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($tanggal_raw);
+
+		if (pembelian_jurnal_compare_is_summary_row($spop, $supplier, $jumlah_raw)) {
+			continue;
+		}
+
+		if ($spop === '' && $last_spop !== '') {
+			$spop = $last_spop;
+		}
+		if ($supplier === '' && $last_supplier !== '') {
+			$supplier = $last_supplier;
+		}
+		if ($spop !== '') {
+			$last_spop = $spop;
+		}
+		if ($supplier !== '') {
+			$last_supplier = $supplier;
+		}
 
 		if (!pembelian_jurnal_compare_is_row_complete($spop, $supplier, $jumlah_raw)) {
 			$incomplete[] = pembelian_jurnal_compare_incomplete_row_to_json(
@@ -15050,7 +15329,17 @@ function pembelian_jurnal_compare_load_manual_groups($CI, $table, $bulan)
 		return $loaded;
 	}
 
-	$aggregated = pembelian_jurnal_compare_aggregate_manual_rows($loaded['rows'], $loaded['map']);
+	$rows = $loaded['rows'];
+	if (is_array($rows) && count($rows) > 1) {
+		usort($rows, function ($a, $b) {
+			$id_a = is_object($a) && isset($a->id) ? (int) $a->id : 0;
+			$id_b = is_object($b) && isset($b->id) ? (int) $b->id : 0;
+
+			return $id_a - $id_b;
+		});
+	}
+
+	$aggregated = pembelian_jurnal_compare_aggregate_manual_rows($rows, $loaded['map']);
 
 	return array(
 		'ok' => true,
@@ -15169,6 +15458,7 @@ function pembelian_jurnal_compare_run($CI, $bulan, $table = '')
 	$tidak_lengkap_manual = array();
 	$tidak_lengkap_online = array();
 	$online_handled = array();
+	$manual_handled = array();
 
 	if (!empty($manual['incomplete']) && is_array($manual['incomplete'])) {
 		$tidak_lengkap_manual = $manual['incomplete'];
@@ -15177,17 +15467,20 @@ function pembelian_jurnal_compare_run($CI, $bulan, $table = '')
 		$tidak_lengkap_online = $online['incomplete'];
 	}
 
-	foreach ($manual['groups'] as $key => $manual_row) {
-		if (!isset($online['groups'][$key])) {
-			$hanya_manual[] = pembelian_jurnal_compare_row_to_json(
-				$manual_row,
-				pembelian_jurnal_compare_build_keterangan($manual_row, null, $manual['groups'], $online['groups'])
-			);
+	foreach ($manual['groups'] as $m_key => $manual_row) {
+		$online_key = pembelian_jurnal_compare_find_group_key(
+			$online['groups'],
+			isset($manual_row['spop']) ? $manual_row['spop'] : '',
+			isset($manual_row['supplier']) ? $manual_row['supplier'] : ''
+		);
+
+		if ($online_key === null) {
 			continue;
 		}
 
-		$online_row = $online['groups'][$key];
-		$online_handled[$key] = true;
+		$online_row = $online['groups'][$online_key];
+		$online_handled[$online_key] = true;
+		$manual_handled[$m_key] = true;
 
 		if (pembelian_jurnal_compare_rows_match($manual_row, $online_row)) {
 			$cocok[] = pembelian_jurnal_compare_row_to_json(
@@ -15206,13 +15499,46 @@ function pembelian_jurnal_compare_run($CI, $bulan, $table = '')
 		}
 	}
 
-	foreach ($online['groups'] as $key => $online_row) {
-		if (isset($online_handled[$key])) {
+	foreach ($online['groups'] as $o_key => $online_row) {
+		if (isset($online_handled[$o_key])) {
 			continue;
 		}
+
+		$matched_manual_key = null;
+		foreach ($manual['groups'] as $m_key => $manual_row) {
+			if (isset($manual_handled[$m_key])) {
+				continue;
+			}
+			if (pembelian_jurnal_compare_rows_match($manual_row, $online_row)) {
+				$matched_manual_key = $m_key;
+				break;
+			}
+		}
+
+		if ($matched_manual_key !== null) {
+			$manual_row = $manual['groups'][$matched_manual_key];
+			$online_handled[$o_key] = true;
+			$manual_handled[$matched_manual_key] = true;
+			$cocok[] = pembelian_jurnal_compare_row_to_json(
+				$manual_row,
+				pembelian_jurnal_compare_build_keterangan($manual_row, $online_row, $manual['groups'], $online['groups'])
+			);
+			continue;
+		}
+
 		$hanya_online[] = pembelian_jurnal_compare_row_to_json(
 			$online_row,
 			pembelian_jurnal_compare_build_keterangan(null, $online_row, $manual['groups'], $online['groups'])
+		);
+	}
+
+	foreach ($manual['groups'] as $m_key => $manual_row) {
+		if (isset($manual_handled[$m_key])) {
+			continue;
+		}
+		$hanya_manual[] = pembelian_jurnal_compare_row_to_json(
+			$manual_row,
+			pembelian_jurnal_compare_build_keterangan($manual_row, null, $manual['groups'], $online['groups'])
 		);
 	}
 
