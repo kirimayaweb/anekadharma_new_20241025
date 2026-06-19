@@ -308,7 +308,7 @@ $get_list_data = $x_list_data;
                             <!-- MODAL EXTRA LARGE -->
 
                             <div class="modal fade" id="modal-xl-input-barang">
-                                <div class="modal-dialog modal-xl">
+                                <div class="modal-dialog modal-xl modal-dialog-pembelian-tambah-barang">
                                     <div class="modal-content">
                                         <div class="modal-header">
                                             <h4 class="modal-title">Tambah Barang Beli</h4>
@@ -324,7 +324,7 @@ $get_list_data = $x_list_data;
                                                 <div class="row">
                                                     <div class="col-4">
                                                         <label for="konsumen_nama">Unit <?php echo form_error('konsumen_nama') ?></label>
-                                                        <select name="uuid_konsumen" id="uuid_konsumen_beli" class="form-control select2-pembelian-beli select2-pembelian-beli-unit" style="width: 100%;" required>
+                                                        <select name="uuid_konsumen" id="uuid_konsumen_beli" class="form-control select2-pembelian-beli-unit" style="width: 100%;" required>
                                                             <option value="">Pilih Konsumen/Unit </option>
                                                             <?php
 
@@ -345,29 +345,31 @@ $get_list_data = $x_list_data;
 
 
                                                 <div class="row">
-                                                    <div class="col-4">
+                                                    <div class="col-6 pembelian-barang-combobox-wrap">
                                                         <label for="uuid_barang">Barang <?php echo form_error('uuid_barang') ?></label>
                                                         <small class="text-muted d-block mb-1" id="info-bulan-persediaan-modal">
-                                                            Bulan persediaan: <strong><?php echo htmlspecialchars($filter_bulan_pembelian['bulan_label'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                                                            Daftar barang dari seluruh data persediaan (group: nama, satuan, harga satuan)
                                                         </small>
 
-                                                        <select name="uuid_barang" id="uuid_barang_beli" class="form-control select2-pembelian-beli" style="width: 100%; height: 80px;" required>
+                                                        <div class="pembelian-barang-select2-anchor">
+                                                        <select name="uuid_barang" id="uuid_barang_beli" class="form-control select2" style="width: 100%;" required>
                                                             <option value="">Pilih Barang</option>
                                                             <?php
 
-                                                            foreach (pembelian_get_barang_list_rows($this) as $m) {
+                                                            foreach (pembelian_get_barang_combobox_modal_rows($this) as $m) {
                                                                 $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : '';
                                                                 $opt_uuid = !empty($m->uuid_persediaan) ? trim((string) $m->uuid_persediaan) : trim((string) $m->uuid_barang);
-                                                                $label_barang = strtoupper($m->nama_barang);
-                                                                $spop_barang = isset($m->spop) ? trim((string) $m->spop) : '';
-                                                                if ($spop_barang !== '' && $spop_barang !== '0') {
-                                                                    $label_barang .= ' [SPOP ' . $spop_barang . ']';
-                                                                }
-                                                                echo "<option value='" . htmlspecialchars($opt_uuid, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' data-spop='" . htmlspecialchars($spop_barang, ENT_QUOTES, 'UTF-8') . "' ";
+                                                                $label_barang = pembelian_format_barang_combobox_label(
+                                                                    $m->nama_barang,
+                                                                    isset($m->satuan) ? $m->satuan : '',
+                                                                    $harga_satuan_barang
+                                                                );
+                                                                echo "<option value='" . htmlspecialchars($opt_uuid, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
                                                                 echo ">  " . htmlspecialchars($label_barang, ENT_QUOTES, 'UTF-8') . "</option>";
                                                             }
                                                             ?>
                                                         </select>
+                                                        </div>
 
                                                         <div class="row">
                                                             <div class="col-8">
@@ -378,26 +380,26 @@ $get_list_data = $x_list_data;
                                                         </div>
 
                                                     </div>
-                                                    <div class="col-4">
+                                                    <div class="col-3">
                                                         <label for="satuan">Satuan <?php echo form_error('satuan') ?></label>
                                                         <input type="text" name="satuan" id="satuan_beli" placeholder="satuan" class="form-control" required>
                                                     </div>
-                                                    <div class="col-4">
+                                                    <div class="col-3">
                                                         <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
                                                         <input type="text" name="harga_satuan" id="harga_satuan_beli" placeholder="harga Satuan" class="form-control" inputmode="numeric" autocomplete="off" required>
                                                     </div>
                                                 </div>
 
-                                                <div class="row">
-                                                    <div class="col-4">
+                                                <div class="row pembelian-row-jumlah-gudang">
+                                                    <div class="col-4 pembelian-row-jumlah-wrap">
                                                         <label for="jumlah">Jumlah <?php //echo form_error('nmrpesan') 
                                                                                     ?></label>
                                                         <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" placeholder="Jumlah" required> -->
                                                         <input type="text" name="jumlah" id="jumlah_beli" placeholder="Jumlah" class="form-control" inputmode="numeric" required>
                                                     </div>
-                                                    <div class="col-4">
+                                                    <div class="col-4 pembelian-row-gudang-wrap">
                                                         <label for="uuid_gudang">Gudang <?php echo form_error('uuid_gudang') ?></label>
-                                                        <select name="uuid_gudang" id="uuid_gudang_beli" class="form-control select2-pembelian-beli" style="width: 100%; height: 80px;" required>
+                                                        <select name="uuid_gudang" id="uuid_gudang_beli" class="form-control select2-pembelian-beli-gudang" style="width: 100%;" required>
                                                             <option value="">Pilih Gudang</option>
                                                             <?php
 
@@ -590,19 +592,84 @@ $get_list_data = $x_list_data;
 
     #modal-xl-input-barang {
         z-index: 1055 !important;
+        overflow-x: hidden !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+
+    #modal-xl-input-barang .modal-dialog {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        left: auto !important;
+        right: auto !important;
+        transform: none !important;
+        position: relative;
+    }
+
+    #modal-xl-input-barang .modal-dialog-pembelian-tambah-barang {
+        max-width: 1440px;
+        width: 98%;
+    }
+
+    #modal-xl-input-barang .modal-content {
+        overflow: visible;
+        position: relative;
+    }
+
+    #modal-xl-input-barang .modal-footer {
+        position: relative;
+        z-index: 1;
+        background: #fff;
+    }
+
+    #modal-xl-input-barang .modal-body {
+        overflow-x: hidden;
+        overflow-y: visible;
+        position: relative;
+        padding: 1.25rem 1.75rem;
+    }
+
+    #modal-xl-input-barang .pembelian-barang-combobox-wrap {
+        min-width: 0;
+        position: relative;
+        z-index: 2;
+    }
+
+    #modal-xl-input-barang .pembelian-barang-combobox-wrap.is-select2-barang-open {
+        z-index: 20;
+    }
+
+    #modal-xl-input-barang .pembelian-barang-select2-anchor {
+        position: relative;
+        width: 100%;
+    }
+
+    #modal-xl-input-barang .pembelian-row-jumlah-gudang,
+    #modal-xl-input-barang .pembelian-row-jumlah-wrap,
+    #modal-xl-input-barang .pembelian-row-gudang-wrap {
+        position: relative;
+        z-index: 1;
     }
 
     #modal-xl-input-barang .select2-container {
         width: 100% !important;
-        z-index: 1065 !important;
     }
 
-    #modal-xl-input-barang .select2-container--open {
-        z-index: 1070 !important;
+    #modal-xl-input-barang .select2-pembelian-barang-wrap.select2-container--open {
+        z-index: 1061 !important;
     }
 
-    #modal-xl-input-barang .select2-dropdown {
-        z-index: 1071 !important;
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown {
+        z-index: 1062 !important;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+        background: #fff;
+    }
+
+    #modal-xl-input-barang.is-barang-dropdown-open .pembelian-row-gudang-wrap .select2-container,
+    #modal-xl-input-barang.is-barang-dropdown-open .select2-pembelian-gudang-wrap {
+        z-index: 1 !important;
     }
 
     /* Combobox Unit: tinggi ~1.3x agar teks nama unit tidak terpotong */
@@ -635,6 +702,73 @@ $get_list_data = $x_list_data;
         word-break: break-word;
     }
 
+    /* Combobox Pilih Barang — tampilan standar Select2, nyaman dibaca */
+    #modal-xl-input-barang .select2-pembelian-barang-wrap .select2-selection--single {
+        min-height: calc(2.25rem + 2px);
+        height: auto !important;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-wrap .select2-selection__rendered {
+        line-height: 1.5;
+        padding: 0.375rem 2rem 0.375rem 0.75rem;
+        font-size: 1rem;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-wrap .select2-selection__arrow {
+        height: 100%;
+        top: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown .select2-search--dropdown,
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown .select2-search--dropdown.select2-search--hide {
+        display: block !important;
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown .select2-search__field {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 10px 14px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        border: 1px solid #ced4da !important;
+        border-radius: 0.25rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        margin: 0 !important;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown .select2-results > .select2-results__options {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-dropdown .select2-results__option {
+        padding: 8px 12px;
+        line-height: 1.5;
+        font-size: 1rem;
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    #modal-xl-input-barang .select2-pembelian-barang-wrap {
+        width: 100% !important;
+        display: block;
+    }
+
     .select2-search--dropdown {
         display: block !important;
     }
@@ -645,7 +779,6 @@ $get_list_data = $x_list_data;
 
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/select2/js/select2.full.min.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
@@ -825,6 +958,29 @@ $get_list_data = $x_list_data;
         }
         window.getTanggalPoUntukFilter = getTanggalPoUntukFilter;
 
+        function simpanTglPoCreateSession() {
+            var tgl = getTanggalPoUntukFilter();
+            if (!jQuery.trim(tgl)) {
+                return;
+            }
+            jQuery.ajax({
+                url: "<?php echo site_url('tbl_pembelian/save_tgl_po_create_ajax'); ?>",
+                type: "POST",
+                dataType: "json",
+                data: {
+                    tanggal_po: tgl
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).done(function(res) {
+                if (res && res.success && res.bulan_label) {
+                    updateInfoBulanPersediaan(res.bulan_label);
+                }
+            });
+        }
+        window.simpanTglPoCreateSession = simpanTglPoCreateSession;
+
         function simpanTambahBarangBeliDariModal() {
             var $form = jQuery('#form-pembelian-create');
             var $modal = jQuery('#modal-xl-input-barang');
@@ -899,78 +1055,193 @@ $get_list_data = $x_list_data;
             if (!bulanLabel) {
                 return;
             }
-            var teks = 'Bulan persediaan: <strong>' + bulanLabel + '</strong>';
-            $('#info-bulan-persediaan-modal').html(teks);
             $('#info-bulan-persediaan-barang').html(
                 'Daftar barang (persediaan) bulan: <strong>' + bulanLabel + '</strong> — mengikuti <em>Tgl PO</em>'
             );
         }
 
-        function initSelect2ModalTambahBarangBeli() {
-            if (!jQuery.fn.select2) {
+        function getJqPembelianModal() {
+            return window.jQuery || window.$;
+        }
+
+        function destroySelect2Element($select) {
+            if (!$select || !$select.length) {
+                return;
+            }
+            try {
+                if ($select.data('select2')) {
+                    $select.select2('destroy');
+                }
+            } catch (e) {}
+            $select.next('.select2-container').remove();
+            $select.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').removeAttr('aria-hidden').removeAttr('tabindex');
+        }
+
+        function sesuaikanDropdownBarangBeliModal($select) {
+            var $ = getJqPembelianModal();
+            if (!$ || !$select || !$select.length) {
+                return;
+            }
+            var $container = $select.next('.select2-pembelian-barang-wrap');
+            if (!$container.length) {
+                $container = $select.next('.select2-container');
+            }
+            var lebar = $container.outerWidth();
+            if (!lebar) {
                 return;
             }
 
-            var $modal = jQuery('#modal-xl-input-barang');
+            var $dropdown = $('.select2-pembelian-barang-dropdown');
+            if (!$dropdown.length) {
+                return;
+            }
+
+            $dropdown.css({
+                width: lebar + 'px',
+                minWidth: lebar + 'px'
+            });
+
+            $dropdown.find('.select2-search__field').css({
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                height: '42px',
+                minHeight: '42px',
+                fontSize: '1rem',
+                padding: '10px 14px'
+            });
+        }
+
+        function initSelect2BarangBeliModal(attempt) {
+            attempt = attempt || 0;
+            var $ = getJqPembelianModal();
+            if (!$ || !$.fn || !$.fn.select2) {
+                if (attempt < 30) {
+                    window.setTimeout(function() {
+                        initSelect2BarangBeliModal(attempt + 1);
+                    }, 100);
+                }
+                return;
+            }
+
+            var $modal = $('#modal-xl-input-barang');
+            var $select = $('#uuid_barang_beli');
+            if (!$modal.length || !$select.length) {
+                return;
+            }
+
+            destroySelect2Element($select);
+
+            $select.select2({
+                dropdownParent: $modal,
+                width: '100%',
+                minimumResultsForSearch: 0,
+                placeholder: 'Pilih Barang',
+                allowClear: false,
+                containerCssClass: 'select2-pembelian-barang-wrap',
+                dropdownCssClass: 'select2-pembelian-barang-dropdown',
+                language: {
+                    noResults: function() {
+                        return 'Nama barang tidak ditemukan';
+                    },
+                    searching: function() {
+                        return 'Mencari...';
+                    }
+                }
+            });
+
+            $select.off('select2:open.barangSearchFix select2:close.barangSearchFix select2:select.pembelianBarang change.pembelianBarang');
+            $select.on('select2:open.barangSearchFix', function() {
+                $modal.addClass('is-barang-dropdown-open');
+                $select.closest('.pembelian-barang-combobox-wrap').addClass('is-select2-barang-open');
+                window.setTimeout(function() {
+                    sesuaikanDropdownBarangBeliModal($select);
+                    var $searchWrap = $modal.find('.select2-pembelian-barang-dropdown .select2-search--dropdown');
+                    $searchWrap.removeClass('select2-search--hide').show();
+                    var $field = $modal.find('.select2-pembelian-barang-dropdown .select2-search__field');
+                    if ($field.length) {
+                        $field.attr('placeholder', 'Ketik nama barang untuk mencari...').trigger('focus');
+                    }
+                }, 0);
+            });
+            $select.on('select2:close.barangSearchFix', function() {
+                $modal.removeClass('is-barang-dropdown-open');
+                $select.closest('.pembelian-barang-combobox-wrap').removeClass('is-select2-barang-open');
+            });
+            $select.on('change.pembelianBarang select2:select.pembelianBarang', function() {
+                loadDetailBarangPembelian($(this).val());
+            });
+        }
+
+        function initSelect2UnitGudangBeliModal() {
+            var $ = getJqPembelianModal();
+            if (!$ || !$.fn || !$.fn.select2) {
+                return;
+            }
+
+            var $modal = $('#modal-xl-input-barang');
             if (!$modal.length) {
                 return;
             }
 
-            $modal.find('select.select2-pembelian-beli').each(function() {
-                var $select = jQuery(this);
-                var isUnit = $select.hasClass('select2-pembelian-beli-unit');
-                if ($select.data('select2')) {
-                    $select.select2('destroy');
-                }
-                $select.next('.select2-container').remove();
-                $select.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').removeAttr('aria-hidden').removeAttr('tabindex');
-                var options = {
-                    dropdownParent: $modal,
+            var $dropdownParentUnit = $modal;
+            $('#uuid_konsumen_beli, #uuid_gudang_beli').each(function() {
+                var $select = $(this);
+                var isGudang = $select.attr('id') === 'uuid_gudang_beli';
+                destroySelect2Element($select);
+                $select.select2({
+                    dropdownParent: $dropdownParentUnit,
                     width: '100%',
                     minimumResultsForSearch: 0,
                     placeholder: $select.find('option:first').text() || 'Pilih',
-                    allowClear: false
-                };
-                if (isUnit) {
-                    options.containerCssClass = 'select2-pembelian-unit-wrap';
-                    options.dropdownCssClass = 'select2-pembelian-unit-dropdown';
-                }
-                $select.select2(options);
+                    allowClear: false,
+                    containerCssClass: isGudang ? 'select2-pembelian-gudang-wrap' : 'select2-pembelian-unit-wrap',
+                    dropdownCssClass: isGudang ? 'select2-pembelian-gudang-dropdown' : 'select2-pembelian-unit-dropdown'
+                });
             });
+        }
 
-            bindEventBarangTambahBeli();
+        function initSelect2ModalTambahBarangBeli() {
+            initSelect2UnitGudangBeliModal();
+            initSelect2BarangBeliModal(0);
         }
         window.initSelect2ModalTambahBarangBeli = initSelect2ModalTambahBarangBeli;
 
         function resetSelect2ModalBeliAwal() {
-            jQuery('#modal-xl-input-barang select.select2-pembelian-beli').each(function() {
-                var $select = jQuery(this);
-                if ($select.data('select2')) {
-                    $select.select2('destroy');
-                }
-                $select.next('.select2-container').remove();
-                $select.removeClass('select2-hidden-accessible').removeAttr('data-select2-id').removeAttr('aria-hidden').removeAttr('tabindex');
-            });
+            var $ = getJqPembelianModal();
+            if (!$) {
+                return;
+            }
+            destroySelect2Element($('#uuid_barang_beli'));
+            destroySelect2Element($('#uuid_konsumen_beli'));
+            destroySelect2Element($('#uuid_gudang_beli'));
+        }
+
+        function formatLabelBarangComboboxModal(row) {
+            if (row && row.label_barang) {
+                return row.label_barang;
+            }
+            var nama = (row.nama_barang || '').toUpperCase();
+            var satuan = jQuery.trim(row.satuan || '');
+            var harga = formatHargaSatuanPembelian(row.harga_satuan || '');
+            return nama + ' ( satuan : ' + satuan + ', harga satuan : ' + harga + ' )';
         }
 
         function refreshBarangOptions(selectedUuid) {
-            return $.ajax({
-                url: "<?php echo site_url('sys_nama_barang/list_barang_ajax'); ?>",
+            var jq = getJqPembelianModal();
+            if (!jq) {
+                return jq;
+            }
+            return jq.ajax({
+                url: "<?php echo site_url('persediaan/list_barang_combobox_modal_ajax'); ?>",
                 type: "GET",
                 dataType: "json",
-                data: {
-                    tanggal_po: getTanggalPoUntukFilter()
-                },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             }).done(function(res) {
                 if (!res || !res.success) {
                     return;
-                }
-
-                if (res.bulan_label) {
-                    updateInfoBulanPersediaan(res.bulan_label);
                 }
 
                 var $modal = jQuery('#modal-xl-input-barang');
@@ -984,18 +1255,13 @@ $get_list_data = $x_list_data;
                 jQuery.each(res.data || [], function(_, row) {
                     var optUuid = (row.uuid_persediaan && String(row.uuid_persediaan).trim() !== '')
                         ? row.uuid_persediaan : row.uuid_barang;
-                    var label = (row.nama_barang || '').toUpperCase();
-                    var spop = (row.spop || '').toString().trim();
-                    if (spop !== '' && spop !== '0') {
-                        label += ' [SPOP ' + spop + ']';
-                    }
+                    var label = formatLabelBarangComboboxModal(row);
                     select.append(jQuery('<option>', {
                         value: optUuid,
                         text: label
                     }).attr({
                         'data-satuan': row.satuan || '',
-                        'data-harga-satuan': row.harga_satuan || '',
-                        'data-spop': spop
+                        'data-harga-satuan': row.harga_satuan || ''
                     }));
                 });
 
@@ -1008,6 +1274,7 @@ $get_list_data = $x_list_data;
                 }
             });
         }
+        window.refreshBarangOptions = refreshBarangOptions;
 
         function formatHargaSatuanPembelian(value) {
             if (value === null || typeof value === 'undefined' || value === '') {
@@ -1067,40 +1334,9 @@ $get_list_data = $x_list_data;
             }
 
             isiSatuanHargaDariOpsiBarang($modal, uuidBarang);
-
-            jQuery.ajax({
-                url: "<?php echo site_url('sys_nama_barang/detail_barang_ajax'); ?>",
-                type: "GET",
-                dataType: "json",
-                data: {
-                    uuid_barang: uuidBarang,
-                    tanggal_po: getTanggalPoUntukFilter()
-                },
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            }).done(function(res) {
-                if (!res || !res.success || !res.data) {
-                    return;
-                }
-
-                $modal.find('input[name="satuan"]').val(res.data.satuan || '');
-                $modal.find('input[name="harga_satuan"]').val(formatHargaSatuanPembelian(res.data.harga_satuan));
-            });
         }
 
         window.loadDetailBarangPembelian = loadDetailBarangPembelian;
-
-        function bindEventBarangTambahBeli() {
-            var $select = jQuery('#modal-xl-input-barang select[name="uuid_barang"]');
-            $select.off('change.pembelianBarang select2:select.pembelianBarang select2:clear.pembelianBarang');
-            $select.on('change.pembelianBarang select2:select.pembelianBarang', function() {
-                loadDetailBarangPembelian(jQuery(this).val());
-            });
-            $select.on('select2:clear.pembelianBarang', function() {
-                loadDetailBarangPembelian('');
-            });
-        }
 
         function destroySelect2IfAny($select) {
             if ($select.data('select2')) {
@@ -1285,7 +1521,7 @@ $get_list_data = $x_list_data;
             cekNamaBarangAjaxPending = true;
 
             jQuery.ajax({
-                url: "<?php echo site_url('sys_nama_barang/cek_nama_barang_persediaan_ajax'); ?>",
+                url: "<?php echo site_url('persediaan/cek_nama_barang_persediaan_ajax'); ?>",
                 type: 'GET',
                 dataType: 'json',
                 timeout: 20000,
@@ -1490,7 +1726,7 @@ $get_list_data = $x_list_data;
 
             $('#modal-input-barang-baru-body').html('<div class="text-center text-muted py-4">Memuat form...</div>');
             $.ajax({
-                url: "<?php echo site_url('sys_nama_barang/pembelian_modal_form'); ?>",
+                url: "<?php echo site_url('persediaan/pembelian_modal_form'); ?>",
                 type: "GET",
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -1645,8 +1881,6 @@ $get_list_data = $x_list_data;
             return false;
         });
 
-        bindEventBarangTambahBeli();
-
         var cekNamaBarangBlurTimer = null;
         jQuery(document).on('blur', '#modal_nama_barang', function(e) {
             if (window.skipCekNamaBarangModalPilih || pilihGunakanBarangInProgress) {
@@ -1662,29 +1896,11 @@ $get_list_data = $x_list_data;
             }, 350);
         });
 
-        $('#tgl_po').on('change.datetimepicker', function() {
-            refreshBarangOptions();
+        jQuery('#tgl_po').on('change.datetimepicker hide.datetimepicker', function() {
+            simpanTglPoCreateSession();
         });
-        $('input[name="tgl_po"]').on('change blur', function() {
-            refreshBarangOptions();
-        });
-
-        jQuery('#modal-xl-input-barang').on('show.bs.modal', function() {
-            resetSelect2ModalBeliAwal();
-            refreshBarangOptions();
-        });
-
-        jQuery('#modal-xl-input-barang').on('shown.bs.modal', function() {
-            jQuery(document).off('focusin.modal');
-            initSelect2ModalTambahBarangBeli();
-            var uuidBarang = jQuery('#modal-xl-input-barang select[name="uuid_barang"]').val();
-            if (uuidBarang) {
-                loadDetailBarangPembelian(uuidBarang);
-            }
-        });
-
-        jQuery(window).on('load', function() {
-            resetSelect2ModalBeliAwal();
+        jQuery('input[name="tgl_po"]').on('change blur', function() {
+            simpanTglPoCreateSession();
         });
 
         jQuery(document).on('input keyup paste', '#modal-xl-input-barang input[name="harga_satuan"]', function() {
@@ -1694,4 +1910,47 @@ $get_list_data = $x_list_data;
             }, 0);
         });
     })(jQuery);
+</script>
+<script>
+    /* Select2 modal: init setelah jQuery + Select2 dari layout AdminLTE dimuat */
+    (function bootSelect2ModalPembelianBeli() {
+        var jq = window.jQuery;
+        if (!jq || !jq.fn || !jq.fn.select2) {
+            window.setTimeout(bootSelect2ModalPembelianBeli, 50);
+            return;
+        }
+
+        jq(document).off('shown.bs.modal.pembelianSelect2', '#modal-xl-input-barang');
+        jq(document).on('shown.bs.modal.pembelianSelect2', '#modal-xl-input-barang', function() {
+            jq(document).off('focusin.modal');
+            jq('body').css({
+                paddingRight: '',
+                overflow: 'hidden'
+            });
+            jq('#modal-xl-input-barang').css('padding-right', '');
+
+            if (typeof window.initSelect2ModalTambahBarangBeli === 'function') {
+                window.initSelect2ModalTambahBarangBeli();
+            }
+
+            if (typeof window.refreshBarangOptions === 'function') {
+                window.refreshBarangOptions().always(function() {
+                    if (typeof window.initSelect2ModalTambahBarangBeli === 'function') {
+                        window.initSelect2ModalTambahBarangBeli();
+                    }
+                });
+            }
+        });
+
+        /* Hancurkan init default layout (tanpa dropdownParent) pada select modal */
+        jq('#modal-xl-input-barang select.select2').each(function() {
+            var $el = jq(this);
+            if ($el.data('select2')) {
+                try {
+                    $el.select2('destroy');
+                } catch (e) {}
+            }
+            $el.next('.select2-container').remove();
+        });
+    })();
 </script>

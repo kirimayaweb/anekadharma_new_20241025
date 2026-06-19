@@ -9,7 +9,7 @@ class Tbl_pembelian extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_nama_barang_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model', 'Buku_besar_model', 'Tbl_penjualan_accounting_pembayaran_model', 'Tbl_penjualan_accounting_model'));
+		$this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Sys_status_transaksi_model', 'Tbl_penjualan_pembayaran_model', 'Tbl_pembelian_pecah_satuan_model', 'Sys_kode_akun_model', 'Sys_unit_model', 'Persediaan_model', 'Tbl_kas_kecil_model', 'Buku_besar_model', 'Tbl_penjualan_accounting_pembayaran_model', 'Tbl_penjualan_accounting_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -1786,7 +1786,7 @@ class Tbl_pembelian extends CI_Controller
 	public function create()
 	{
 		$this->load->helper('pembelian_persediaan');
-		$default_tgl_po = set_value('tgl_po') !== '' ? set_value('tgl_po') : date('j-n-Y');
+		$default_tgl_po = set_value('tgl_po') !== '' ? set_value('tgl_po') : pembelian_get_default_tgl_po_create($this);
 		pembelian_sync_filter_bulan_from_tanggal_po($this, $default_tgl_po);
 
 		$data = array(
@@ -1814,6 +1814,44 @@ class Tbl_pembelian extends CI_Controller
 		);
 		// $this->load->view('anekadharma/tbl_pembelian/tbl_pembelian_form', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_form', $data);
+	}
+
+	public function save_tgl_po_create_ajax()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		$this->load->helper('pembelian_persediaan');
+
+		$tanggal_po = trim((string) $this->input->get_post('tanggal_po', TRUE));
+		if ($tanggal_po === '') {
+			header('Content-Type: application/json');
+			echo json_encode(array(
+				'success' => false,
+				'message' => 'Tanggal PO wajib diisi.',
+			));
+			return;
+		}
+
+		if (pembelian_parse_tanggal_po($tanggal_po) === false) {
+			header('Content-Type: application/json');
+			echo json_encode(array(
+				'success' => false,
+				'message' => 'Format tanggal PO tidak valid.',
+			));
+			return;
+		}
+
+		$tgl = pembelian_sync_filter_bulan_from_tanggal_po($this, $tanggal_po);
+
+		header('Content-Type: application/json');
+		echo json_encode(array(
+			'success' => true,
+			'tanggal_po' => $tanggal_po,
+			'bulan_label' => $tgl['bulan_label'],
+		));
 	}
 
 
@@ -3004,6 +3042,12 @@ class Tbl_pembelian extends CI_Controller
 
 	public function create_action_uuid_spop($uuid_spop = null)
 	{
+		$this->load->helper('pembelian_persediaan');
+		$post_tgl_po = trim((string) $this->input->post('tgl_po', TRUE));
+		if ($post_tgl_po !== '' && pembelian_parse_tanggal_po($post_tgl_po) !== false) {
+			pembelian_sync_filter_bulan_from_tanggal_po($this, $post_tgl_po);
+		}
+
 		// print_r("create_action_uuid_spop");
 		// print_r("<br/>");
 		// die;
@@ -5397,6 +5441,18 @@ class Tbl_pembelian extends CI_Controller
 		}
 		$uuid_spop_list = array_values($uuid_spop_list);
 
+		$compare_bulan_num = (int) date('m');
+		$compare_tahun_num = (int) date('Y');
+		$nama_bulan_id = array(
+			1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+			5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+			9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+		);
+		$active_tab = trim((string) $this->input->get('tab', TRUE));
+		if ($active_tab !== 'compare') {
+			$active_tab = 'setting';
+		}
+
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'pengajuan_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list),
@@ -5405,8 +5461,231 @@ class Tbl_pembelian extends CI_Controller
 			'date_akhir' => $Get_date_akhir,
 			'search_filter' => trim((string) $this->input->get('search_filter', TRUE)),
 			'start' => 0,
+			'compare_bulan_num' => $compare_bulan_num,
+			'compare_tahun_num' => $compare_tahun_num,
+			'nama_bulan_id' => $nama_bulan_id,
+			'gen_tahun_min' => 2019,
+			'gen_tahun_max' => (int) date('Y') + 1,
+			'active_tab' => $active_tab,
+			'url_compare_jurnal_pembelian_run' => site_url('tbl_pembelian/ajax_compare_jurnal_pembelian_manual_online'),
+			'url_compare_jurnal_pembelian_excel' => site_url('tbl_pembelian/excel_compare_jurnal_pembelian_manual_online'),
+			'url_compare_jurnal_pembelian_excel_all' => site_url('tbl_pembelian/excel_compare_jurnal_pembelian_all'),
+			'url_compare_jurnal_pembelian_import_csv' => site_url('tbl_pembelian/ajax_compare_import_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_check_csv' => site_url('tbl_pembelian/ajax_compare_check_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_validate_csv' => site_url('tbl_pembelian/ajax_compare_validate_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_tabel_list' => site_url('tbl_pembelian/ajax_compare_tabel_list_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_tabel_preview' => site_url('tbl_pembelian/ajax_compare_tabel_preview_jurnal_pembelian'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_setting_kode_akun', $data);
+	}
+
+	public function ajax_compare_jurnal_pembelian_manual_online()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_jurnal_pembelian_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih bulan dan tahun yang valid.',
+			));
+			return;
+		}
+
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih tabel manual yang akan dibandingkan.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, pembelian_jurnal_compare_run($this, $bulan, $table));
+	}
+
+	public function ajax_compare_tabel_list_jurnal_pembelian()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		persediaan_ajax_json_output($this, array(
+			'ok' => true,
+			'tables' => persediaan_compare_list_db_tables($this),
+		));
+	}
+
+	public function ajax_compare_check_csv_jurnal_pembelian()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		$original_name = trim((string) $this->input->post('filename', TRUE));
+		if ($original_name === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama file CSV tidak valid.',
+			));
+			return;
+		}
+
+		$bulan = $this->_compare_jurnal_pembelian_bulan_from_post();
+		persediaan_ajax_json_output($this, pembelian_jurnal_compare_check_csv_table_name($this, $original_name, $bulan));
+	}
+
+	public function ajax_compare_validate_csv_jurnal_pembelian()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih file CSV terlebih dahulu.',
+			));
+			return;
+		}
+
+		$original_name = trim((string) $_FILES['csv_file']['name']);
+		$ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+		if ($ext !== 'csv') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'File harus berformat .csv',
+			));
+			return;
+		}
+
+		$result = pembelian_jurnal_compare_validate_csv_file($_FILES['csv_file']['tmp_name']);
+		$result['file'] = $original_name;
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	public function ajax_compare_import_csv_jurnal_pembelian()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih file CSV terlebih dahulu.',
+			));
+			return;
+		}
+
+		$original_name = trim((string) $_FILES['csv_file']['name']);
+		$ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+		if ($ext !== 'csv') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'File harus berformat .csv',
+			));
+			return;
+		}
+
+		$bulan = $this->_compare_jurnal_pembelian_bulan_from_post();
+		$tgl_awal_ref = trim((string) $this->input->post('tgl_awal', TRUE));
+		$result = pembelian_jurnal_compare_import_csv_to_db(
+			$this,
+			$_FILES['csv_file']['tmp_name'],
+			$original_name,
+			$bulan,
+			$tgl_awal_ref
+		);
+
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	public function ajax_compare_tabel_preview_jurnal_pembelian()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		$table = trim((string) $this->input->post('tabel', TRUE));
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama tabel belum dipilih.',
+			));
+			return;
+		}
+
+		$limit = (int) $this->input->post('limit', TRUE);
+		persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
+	}
+
+	public function excel_compare_jurnal_pembelian_manual_online()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_jurnal_pembelian_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+		if ($table === '') {
+			show_error('Pilih tabel manual yang akan dibandingkan.', 400);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(pembelian_jurnal_compare_jenis_definitions());
+		if ($jenis === '' || !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export compare tidak valid.', 400);
+			return;
+		}
+
+		$defs = pembelian_jurnal_compare_jenis_definitions();
+		$suffix = isset($defs[$jenis]['file_suffix']) ? $defs[$jenis]['file_suffix'] : $jenis;
+		$namaFile = 'Compare_Jurnal_Pembelian_' . $suffix . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		pembelian_jurnal_compare_export_excel_output($this, $bulan, $jenis, $table);
+		exit();
+	}
+
+	public function excel_compare_jurnal_pembelian_all()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_jurnal_pembelian_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+		if ($table === '') {
+			show_error('Pilih tabel manual yang akan dibandingkan.', 400);
+			return;
+		}
+
+		$namaFile = 'Compare_Jurnal_Pembelian_ALL_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		pembelian_jurnal_compare_export_excel_all_output($this, $bulan, $table);
+		exit();
+	}
+
+	private function _compare_jurnal_pembelian_bulan_from_post()
+	{
+		$bulan_num = (int) $this->input->post('bulan_num', TRUE);
+		$tahun = (int) $this->input->post('tahun', TRUE);
+		if ($bulan_num >= 1 && $bulan_num <= 12 && $tahun >= 2000) {
+			return $tahun . '-' . str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT);
+		}
+
+		return '';
 	}
 	public function jurnal_pembelian2()
 	{

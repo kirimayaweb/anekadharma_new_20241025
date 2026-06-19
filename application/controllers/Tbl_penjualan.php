@@ -2378,6 +2378,18 @@ class Tbl_penjualan extends CI_Controller
 		$Tbl_penjualan = $this->Tbl_penjualan_model->get_for_setting_kode_akun_by_tgl_range($Get_date_awal, $Get_date_akhir, $spop_filter);
 		$this->session->set_userdata('filter_setting_kode_akun_penjualan_ids', $this->_collect_row_ids($Tbl_penjualan));
 
+		$compare_bulan_num = (int) date('m', strtotime($Get_date_awal));
+		$compare_tahun_num = (int) date('Y', strtotime($Get_date_awal));
+		$nama_bulan_id = array(
+			1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+			5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+			9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+		);
+		$active_tab = trim((string) $this->input->get('tab', TRUE));
+		if ($active_tab !== 'compare') {
+			$active_tab = 'data';
+		}
+
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan,
 			'date_awal' => $Get_date_awal,
@@ -2385,6 +2397,19 @@ class Tbl_penjualan extends CI_Controller
 			'spop_filter' => $spop_filter,
 			'search_filter' => trim((string) $this->input->get('search_filter', TRUE)),
 			'start' => 0,
+			'compare_bulan_num' => $compare_bulan_num,
+			'compare_tahun_num' => $compare_tahun_num,
+			'nama_bulan_id' => $nama_bulan_id,
+			'gen_tahun_min' => 2019,
+			'gen_tahun_max' => (int) date('Y') + 1,
+			'active_tab' => $active_tab,
+			'url_compare_jurnal_penjualan_run' => site_url('Tbl_penjualan/ajax_compare_jurnal_penjualan_manual_online'),
+			'url_compare_jurnal_penjualan_excel' => site_url('Tbl_penjualan/excel_compare_jurnal_penjualan_manual_online'),
+			'url_compare_jurnal_penjualan_import_csv' => site_url('Tbl_penjualan/ajax_compare_import_csv_jurnal_penjualan'),
+			'url_compare_jurnal_penjualan_check_csv' => site_url('Tbl_penjualan/ajax_compare_check_csv_jurnal_penjualan'),
+			'url_compare_jurnal_penjualan_validate_csv' => site_url('Tbl_penjualan/ajax_compare_validate_csv_jurnal_penjualan'),
+			'url_compare_jurnal_penjualan_tabel_list' => site_url('Tbl_penjualan/ajax_compare_tabel_list_jurnal_penjualan'),
+			'url_compare_jurnal_penjualan_tabel_preview' => site_url('Tbl_penjualan/ajax_compare_tabel_preview_jurnal_penjualan'),
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_setting_kode_akun', $data);
@@ -2677,10 +2702,12 @@ class Tbl_penjualan extends CI_Controller
 		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
 
 		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected);
+		$Buku_besar_DATA_baris = $this->_prepare_jurnal_penjualan2_baris_rows($Buku_besar_DATA);
+		$Buku_besar_DATA_baris = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA_baris, $Get_month_selected, $Get_YEAR_selected);
 
 		$data = array(
 			'Buku_besar_DATA_data' => $Buku_besar_DATA,
-			'Buku_besar_DATA_baris' => $this->_prepare_jurnal_penjualan2_baris_rows($Buku_besar_DATA),
+			'Buku_besar_DATA_baris' => $Buku_besar_DATA_baris,
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
 			'bulan_ns_selected' => $Get_bulan_ns,
@@ -2759,6 +2786,143 @@ class Tbl_penjualan extends CI_Controller
 		}
 
 		return $result;
+	}
+
+	private function _enrich_jurnal_penjualan2_baris_rows($rows, $month_selected, $year_selected)
+	{
+		$penjualan_kode_map = $this->_jurnal_penjualan2_penjualan_kode_by_nokirim_map($month_selected, $year_selected);
+		$piutang_rek_by_pl = $this->_jurnal_penjualan2_piutang_rek_by_pl_map();
+		$resolved_reks = array();
+
+		foreach ($rows as $row) {
+			$rek_display = $this->_jurnal_penjualan2_resolve_rek($row, $penjualan_kode_map, $piutang_rek_by_pl);
+			$row->rek_display = $rek_display;
+			if ($rek_display !== '') {
+				$resolved_reks[$rek_display] = $rek_display;
+			}
+		}
+
+		$nama_akun_map = $this->_jurnal_penjualan2_nama_akun_map_by_codes(array_values($resolved_reks));
+		foreach ($rows as $row) {
+			$row->keterangan_display = $this->_jurnal_penjualan2_keterangan_from_rek($row->rek_display, $nama_akun_map);
+		}
+
+		return $rows;
+	}
+
+	private function _jurnal_penjualan2_penjualan_kode_by_nokirim_map($month_selected, $year_selected)
+	{
+		$map = array();
+		$sql = "SELECT `nmrkirim`, `kode_akun`
+			FROM `tbl_penjualan`
+			WHERE MONTH(`tgl_jual`)=" . (int) $month_selected . "
+			AND YEAR(`tgl_jual`)=" . (int) $year_selected . "
+			AND `kode_akun` IS NOT NULL
+			AND TRIM(`kode_akun`) != ''
+			ORDER BY `id` DESC";
+
+		foreach ($this->db->query($sql)->result() as $row) {
+			$nokirim = trim((string) $row->nmrkirim);
+			$kode_akun = trim((string) $row->kode_akun);
+			if ($nokirim !== '' && $kode_akun !== '' && !isset($map[$nokirim])) {
+				$map[$nokirim] = $kode_akun;
+			}
+		}
+
+		return $map;
+	}
+
+	private function _jurnal_penjualan2_piutang_rek_by_pl_map()
+	{
+		$map = array();
+		$this->db->like('kode_akun', '11301-', 'after');
+		foreach ($this->db->get('sys_kode_akun')->result() as $row) {
+			$code = trim((string) $row->kode_akun);
+			$nama = trim((string) $row->nama_akun);
+			if ($code === '' || $nama === '') {
+				continue;
+			}
+
+			if (stripos($nama, 'Percetakan') !== false) {
+				$map['2'] = $code;
+			} elseif (stripos($nama, 'Angsuran PU') !== false) {
+				$map['4'] = $code;
+			}
+		}
+
+		return $map;
+	}
+
+	private function _jurnal_penjualan2_resolve_rek($list_data, $penjualan_kode_map, $piutang_rek_by_pl)
+	{
+		$base_rek = trim((string) (isset($list_data->kode_akun) ? $list_data->kode_akun : ''));
+		if ($base_rek === '') {
+			return '';
+		}
+
+		if (strpos($base_rek, '-') !== false) {
+			return $base_rek;
+		}
+
+		$nokirim = trim((string) (isset($list_data->nokirim) ? $list_data->nokirim : ''));
+		$pl = trim((string) (isset($list_data->pl) ? $list_data->pl : ''));
+		$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
+		$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
+
+		if ($debet_val > 0 && $base_rek === '11301') {
+			if ($pl !== '' && isset($piutang_rek_by_pl[$pl])) {
+				return $piutang_rek_by_pl[$pl];
+			}
+		}
+
+		if ($kredit_val > 0 && $base_rek !== '21201' && $nokirim !== '' && isset($penjualan_kode_map[$nokirim])) {
+			return $penjualan_kode_map[$nokirim];
+		}
+
+		return $base_rek;
+	}
+
+	private function _jurnal_penjualan2_nama_akun_map_by_codes($rek_codes)
+	{
+		$codes = array();
+		foreach ($rek_codes as $rek) {
+			$rek = trim((string) $rek);
+			if ($rek !== '') {
+				$codes[$rek] = $rek;
+			}
+		}
+
+		$map = array();
+		if (empty($codes)) {
+			return $map;
+		}
+
+		$this->db->where_in('kode_akun', array_values($codes));
+		foreach ($this->db->get('sys_kode_akun')->result() as $row) {
+			$key = trim((string) $row->kode_akun);
+			$map[$key] = isset($row->nama_akun) ? trim((string) $row->nama_akun) : '';
+		}
+
+		return $map;
+	}
+
+	private function _jurnal_penjualan2_nama_akun_by_rek_map($buku_besar_data)
+	{
+		$rek_codes = array();
+		foreach ($buku_besar_data as $list_data) {
+			$rek = isset($list_data->rek_display) ? trim((string) $list_data->rek_display) : trim((string) (isset($list_data->kode_akun) ? $list_data->kode_akun : ''));
+			if ($rek !== '') {
+				$rek_codes[$rek] = $rek;
+			}
+		}
+
+		return $this->_jurnal_penjualan2_nama_akun_map_by_codes(array_values($rek_codes));
+	}
+
+	private function _jurnal_penjualan2_keterangan_from_rek($rek, $nama_akun_map)
+	{
+		$rek = trim((string) $rek);
+		return ($rek !== '' && isset($nama_akun_map[$rek])) ? $nama_akun_map[$rek] : '';
 	}
 
 	private function _jurnal_penjualan2_kredit_by_nokirim($nokirim, $tanggal, $kode_akun)
@@ -2885,6 +3049,7 @@ class Tbl_penjualan extends CI_Controller
 		$Buku_besar_DATA = $this->_prepare_jurnal_penjualan2_baris_rows(
 			$this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected)
 		);
+		$Buku_besar_DATA = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA, $Get_month_selected, $Get_YEAR_selected);
 
 		$namaFile = "jurnal_penjualan_baris_" . $Get_bulan_ns . ".xlsx";
 		$tablehead_row1 = 2;
@@ -3036,8 +3201,8 @@ class Tbl_penjualan extends CI_Controller
 		$bukti = isset($list_data->nokirim) ? (string) $list_data->nokirim : '';
 		$pl = isset($list_data->pl) ? (string) $list_data->pl : '';
 		$ref = isset($list_data->ref) ? (string) $list_data->ref : ((isset($list_data->kode) ? (string) $list_data->kode : ''));
-		$rek = isset($list_data->kode_akun) ? (string) $list_data->kode_akun : '';
-		$keterangan = isset($list_data->keterangan) ? (string) $list_data->keterangan : '';
+		$rek = isset($list_data->rek_display) ? trim((string) $list_data->rek_display) : trim((string) (isset($list_data->kode_akun) ? $list_data->kode_akun : ''));
+		$keterangan = isset($list_data->keterangan_display) ? trim((string) $list_data->keterangan_display) : '';
 
 		$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
 		$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
@@ -3551,6 +3716,192 @@ class Tbl_penjualan extends CI_Controller
 		);
 		// print_r($data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_per_nmrkirim', $data);
+	}
+
+	public function ajax_compare_jurnal_penjualan_manual_online()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_jurnal_penjualan_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih bulan dan tahun yang valid.',
+			));
+			return;
+		}
+
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih tabel manual yang akan dibandingkan.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, penjualan_jurnal_compare_run($this, $bulan, $table));
+	}
+
+	public function ajax_compare_tabel_list_jurnal_penjualan()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		persediaan_ajax_json_output($this, array(
+			'ok' => true,
+			'tables' => persediaan_compare_list_db_tables($this),
+		));
+	}
+
+	public function ajax_compare_check_csv_jurnal_penjualan()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		$original_name = trim((string) $this->input->post('filename', TRUE));
+		if ($original_name === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama file CSV tidak valid.',
+			));
+			return;
+		}
+
+		$bulan = $this->_compare_jurnal_penjualan_bulan_from_post();
+		persediaan_ajax_json_output($this, penjualan_jurnal_compare_check_csv_table_name($this, $original_name, $bulan));
+	}
+
+	public function ajax_compare_validate_csv_jurnal_penjualan()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih file CSV terlebih dahulu.',
+			));
+			return;
+		}
+
+		$original_name = trim((string) $_FILES['csv_file']['name']);
+		$ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+		if ($ext !== 'csv') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'File harus berformat .csv',
+			));
+			return;
+		}
+
+		$result = penjualan_jurnal_compare_validate_csv_file($_FILES['csv_file']['tmp_name']);
+		$result['file'] = $original_name;
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	public function ajax_compare_import_csv_jurnal_penjualan()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih file CSV terlebih dahulu.',
+			));
+			return;
+		}
+
+		$original_name = trim((string) $_FILES['csv_file']['name']);
+		$ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+		if ($ext !== 'csv') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'File harus berformat .csv',
+			));
+			return;
+		}
+
+		$bulan = $this->_compare_jurnal_penjualan_bulan_from_post();
+		$bulan_num = (int) $this->input->post('bulan_num', TRUE);
+		$tahun = (int) $this->input->post('tahun', TRUE);
+		$result = penjualan_jurnal_compare_import_csv_to_db(
+			$this,
+			$_FILES['csv_file']['tmp_name'],
+			$original_name,
+			$bulan,
+			$bulan_num,
+			$tahun
+		);
+
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	public function ajax_compare_tabel_preview_jurnal_penjualan()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare'));
+
+		$table = trim((string) $this->input->post('tabel', TRUE));
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama tabel belum dipilih.',
+			));
+			return;
+		}
+
+		$limit = (int) $this->input->post('limit', TRUE);
+		persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
+	}
+
+	public function excel_compare_jurnal_penjualan_manual_online()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_jurnal_penjualan_bulan_from_post();
+		}
+		$table = trim((string) $this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+		if ($table === '') {
+			show_error('Pilih tabel manual yang akan dibandingkan.', 400);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(penjualan_jurnal_compare_jenis_definitions());
+		if ($jenis === '' || !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export compare tidak valid.', 400);
+			return;
+		}
+
+		$defs = penjualan_jurnal_compare_jenis_definitions();
+		$suffix = isset($defs[$jenis]['file_suffix']) ? $defs[$jenis]['file_suffix'] : $jenis;
+		$namaFile = 'Compare_Jurnal_Penjualan_' . $suffix . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		penjualan_jurnal_compare_export_excel_output($this, $bulan, $jenis, $table);
+		exit();
+	}
+
+	private function _compare_jurnal_penjualan_bulan_from_post()
+	{
+		$bulan_num = (int) $this->input->post('bulan_num', TRUE);
+		$tahun = (int) $this->input->post('tahun', TRUE);
+		if ($bulan_num >= 1 && $bulan_num <= 12 && $tahun >= 2000) {
+			return $tahun . '-' . str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT);
+		}
+
+		return '';
 	}
 }
 

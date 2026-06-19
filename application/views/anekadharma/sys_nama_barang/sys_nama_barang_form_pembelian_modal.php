@@ -179,7 +179,7 @@
                 var body = new URLSearchParams();
                 body.append('kategori', namaKategori);
 
-                fetch("<?php echo site_url('sys_nama_barang/add_kategori_ajax'); ?>", {
+                fetch("<?php echo site_url('persediaan/add_kategori_ajax'); ?>", {
                     method: 'POST',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',

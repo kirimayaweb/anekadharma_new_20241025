@@ -236,8 +236,9 @@
                                             $bukti = isset($list_data->nokirim) ? (string) $list_data->nokirim : '';
                                             $pl = isset($list_data->pl) ? (string) $list_data->pl : '';
                                             $ref = isset($list_data->ref) ? (string) $list_data->ref : (isset($list_data->kode) ? (string) $list_data->kode : '');
-                                            $rek = isset($list_data->kode_akun) ? (string) $list_data->kode_akun : '';
-                                            $keterangan = isset($list_data->keterangan) ? (string) $list_data->keterangan : '';
+                                            $rek = isset($list_data->rek_display) ? trim((string) $list_data->rek_display) : trim((string) (isset($list_data->kode_akun) ? $list_data->kode_akun : ''));
+                                            $keterangan = isset($list_data->keterangan_display) ? trim((string) $list_data->keterangan_display) : '';
+                                            $keterangan_style = ($kredit_val > 0 && $debet_val == 0) ? 'padding-left:4ch;' : '';
 
                                             $TOTAL_debet_baris += $debet_val;
                                             $TOTAL_kredit_baris += $kredit_val;
@@ -249,7 +250,7 @@
                                                 <td align="left"><?php echo htmlspecialchars($pl, ENT_QUOTES, 'UTF-8'); ?></td>
                                                 <td align="left"><?php echo htmlspecialchars($ref, ENT_QUOTES, 'UTF-8'); ?></td>
                                                 <td align="left"><?php echo htmlspecialchars($rek, ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td align="left"><?php echo htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                <td align="left" style="<?php echo $keterangan_style; ?>"><?php echo htmlspecialchars($keterangan, ENT_QUOTES, 'UTF-8'); ?></td>
                                                 <td align="right"><?php echo $debet_val != 0 ? number_format($debet_val, 2, ',', '.') : ''; ?></td>
                                                 <td align="right"><?php echo $kredit_val != 0 ? number_format($kredit_val, 2, ',', '.') : ''; ?></td>
                                             </tr>

@@ -163,6 +163,30 @@ class Sys_nama_barang extends CI_Controller
         ));
     }
 
+    /**
+     * AJAX combobox modal Tambah Barang Beli (create pembelian): group by nama, satuan, HPP.
+     */
+    public function list_barang_combobox_modal_ajax()
+    {
+        $this->load->helper('pembelian_persediaan');
+
+        $rows = pembelian_get_barang_combobox_modal_rows($this);
+        foreach ($rows as $row) {
+            $row->label_barang = pembelian_format_barang_combobox_label(
+                isset($row->nama_barang) ? $row->nama_barang : '',
+                isset($row->satuan) ? $row->satuan : '',
+                isset($row->harga_satuan) ? $row->harga_satuan : ''
+            );
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(array(
+            'success' => true,
+            'data' => $rows,
+            'total' => count($rows),
+        ));
+    }
+
     public function cek_nama_barang_persediaan_ajax()
     {
         if (!$this->input->is_ajax_request()) {
