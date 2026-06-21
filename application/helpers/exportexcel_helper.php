@@ -53,7 +53,30 @@ function xlsBOF()
 {
 	$GLOBALS['_excel_sheet_rows'] = array();
 	$GLOBALS['_excel_merge_cells'] = array();
+	$GLOBALS['_excel_col_widths'] = array();
 	$GLOBALS['_excel_multi_mode'] = false;
+}
+
+function xlsSetColumnWidths($widths)
+{
+	$GLOBALS['_excel_col_widths'] = is_array($widths) ? $widths : array();
+}
+
+function excel_build_cols_xml($widths)
+{
+	if (!is_array($widths) || count($widths) === 0) {
+		return '';
+	}
+
+	$xml = '<cols>';
+	foreach ($widths as $i => $width) {
+		$colNum = (int) $i + 1;
+		$w = max(1, (float) $width);
+		$xml .= '<col min="' . $colNum . '" max="' . $colNum . '" width="' . $w . '" customWidth="1"/>';
+	}
+	$xml .= '</cols>';
+
+	return $xml;
 }
 
 function xlsMultiBOF()
@@ -222,13 +245,13 @@ function excel_build_sheet_xml($rows, $mergeCells = null)
 
 	ksort($rows);
 	$sheetData = '';
-	$rowNum = 1;
 
-	foreach ($rows as $rowCells) {
+	foreach ($rows as $rowIdx => $rowCells) {
+		$excelRow = (int) $rowIdx + 1;
 		ksort($rowCells);
-		$sheetData .= '<row r="' . $rowNum . '">';
+		$sheetData .= '<row r="' . $excelRow . '">';
 		foreach ($rowCells as $colIdx => $cell) {
-			$ref = excel_column_letter((int) $colIdx) . $rowNum;
+			$ref = excel_column_letter((int) $colIdx) . $excelRow;
 			$type = isset($cell['type']) ? $cell['type'] : 'String';
 			$value = isset($cell['value']) ? $cell['value'] : '';
 			$styleAttr = isset($cell['style']) ? ' s="' . (int) $cell['style'] . '"' : '';
@@ -242,7 +265,6 @@ function excel_build_sheet_xml($rows, $mergeCells = null)
 			}
 		}
 		$sheetData .= '</row>';
-		++$rowNum;
 	}
 
 	$mergeXml = '';
@@ -259,8 +281,14 @@ function excel_build_sheet_xml($rows, $mergeCells = null)
 		$mergeXml .= '</mergeCells>';
 	}
 
+	$colsXml = '';
+	if (!empty($GLOBALS['_excel_col_widths']) && is_array($GLOBALS['_excel_col_widths'])) {
+		$colsXml = excel_build_cols_xml($GLOBALS['_excel_col_widths']);
+	}
+
 	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 		. '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+		. $colsXml
 		. '<sheetData>' . $sheetData . '</sheetData>'
 		. $mergeXml
 		. '</worksheet>';
@@ -367,16 +395,18 @@ function excel_get_styles_xml()
 {
 	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
 		. '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
-		. '<fonts count="3">'
+		. '<fonts count="4">'
 		. '<font><sz val="11"/><name val="Calibri"/></font>'
 		. '<font><b/><sz val="14"/><name val="Calibri"/></font>'
 		. '<font><b/><sz val="11"/><name val="Calibri"/></font>'
+		. '<font><i/><sz val="11"/><name val="Calibri"/></font>'
 		. '</fonts>'
-		. '<fills count="4">'
+		. '<fills count="5">'
 		. '<fill><patternFill patternType="none"/></fill>'
 		. '<fill><patternFill patternType="gray125"/></fill>'
 		. '<fill><patternFill patternType="solid"><fgColor rgb="FFD9E1F2"/><bgColor indexed="64"/></patternFill></fill>'
 		. '<fill><patternFill patternType="solid"><fgColor rgb="FFF5E6D3"/><bgColor indexed="64"/></patternFill></fill>'
+		. '<fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill>'
 		. '</fills>'
 		. '<borders count="2">'
 		. '<border><left/><right/><top/><bottom/></border>'
@@ -388,7 +418,7 @@ function excel_get_styles_xml()
 		. '</border>'
 		. '</borders>'
 		. '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellStyleXfs>'
-		. '<cellXfs count="9">'
+		. '<cellXfs count="17">'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right"/></xf>'
 		. '<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
@@ -398,6 +428,14 @@ function excel_get_styles_xml()
 		. '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
 		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>'
+		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+		. '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>'
 		. '</cellXfs>'
 		. '</styleSheet>';
 }
@@ -517,6 +555,7 @@ function xlsEOF()
 	unset(
 		$GLOBALS['_excel_sheet_rows'],
 		$GLOBALS['_excel_merge_cells'],
+		$GLOBALS['_excel_col_widths'],
 		$GLOBALS['_excel_download_filename']
 	);
 }

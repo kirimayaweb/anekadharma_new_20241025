@@ -1,4 +1,4 @@
-<div class="content-wrapper">
+﻿<div class="content-wrapper">
 
 
     <div class="content-header">
@@ -119,6 +119,43 @@
         $url_compare_penerimaan_kas_tabel_preview = isset($url_compare_penerimaan_kas_tabel_preview)
             ? $url_compare_penerimaan_kas_tabel_preview
             : site_url('Jurnal_kas/ajax_compare_tabel_preview_penerimaan_kas');
+        $url_compare_penerimaan_kas_tabel_validate = isset($url_compare_penerimaan_kas_tabel_validate)
+            ? $url_compare_penerimaan_kas_tabel_validate
+            : site_url('Jurnal_kas/ajax_compare_tabel_validate_penerimaan_kas');
+        $url_compare_penerimaan_kas_tabel_detail = isset($url_compare_penerimaan_kas_tabel_detail)
+            ? $url_compare_penerimaan_kas_tabel_detail
+            : site_url('Jurnal_kas/ajax_compare_tabel_detail_penerimaan_kas');
+        $url_compare_penerimaan_kas_tabel_import = isset($url_compare_penerimaan_kas_tabel_import)
+            ? $url_compare_penerimaan_kas_tabel_import
+            : site_url('Jurnal_kas/ajax_compare_import_table_to_penerimaan_kas');
+        $url_penerimaan_kas_excel = isset($url_penerimaan_kas_excel)
+            ? $url_penerimaan_kas_excel
+            : site_url('Jurnal_kas/excel_penerimaan_kas');
+        $url_ajax_penerimaan_kas_input = isset($url_ajax_penerimaan_kas_input)
+            ? $url_ajax_penerimaan_kas_input
+            : site_url('Jurnal_kas/ajax_penerimaan_kas_input_action');
+        if (!isset($list_kode_pl) || !is_array($list_kode_pl)) {
+            $list_kode_pl = array();
+        }
+        $can_input_penerimaan_kas = isset($can_input_penerimaan_kas) ? (bool) $can_input_penerimaan_kas : false;
+        if (!isset($penerimaan_rows) || !is_array($penerimaan_rows)) {
+            $penerimaan_rows = array();
+        }
+        if (!isset($TOTAL_debet_11101_SEMUA)) {
+            $TOTAL_debet_11101_SEMUA = 0;
+        }
+        if (!isset($TOTAL_kredit_11301_SEMUA)) {
+            $TOTAL_kredit_11301_SEMUA = 0;
+        }
+        if (!isset($TOTAL_kredit_jumlah_SEMUA)) {
+            $TOTAL_kredit_jumlah_SEMUA = 0;
+        }
+        if (!isset($modal_pk_tanggal_default)) {
+            $modal_pk_tanggal_default = date('d-m-Y');
+        }
+        $this->load->helper('penerimaan_kas_list');
+        $penerimaan_periode_label = $Get_date_awal . ' s/d ' . $Get_date_akhir;
+        $penerimaan_bulan_label = bulan_teks($compare_bulan_num) . ' ' . $compare_tahun_num;
 
         ?>
 
@@ -148,9 +185,9 @@
                                                 <div class="col-md-1" text-align="right" align="right"></div>
 
                                                 <div class="col-md-3" text-align="right">
-                                                    <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
+                                                    <div class="input-group date" id="pk_tgl_awal_wrap" data-target-input="nearest">
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#pk_tgl_awal_wrap" id="pk_tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
+                                                        <div class="input-group-append" data-target="#pk_tgl_awal_wrap" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
                                                             </div>
@@ -161,9 +198,9 @@
                                                 <div class="col-md-1" text-align="center" align="center">s/d</div>
 
                                                 <div class="col-md-3" text-align="left" align="left">
-                                                    <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
+                                                    <div class="input-group date" id="pk_tgl_akhir_wrap" data-target-input="nearest">
+                                                        <input type="text" class="form-control datetimepicker-input" data-target="#pk_tgl_akhir_wrap" id="pk_tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
+                                                        <div class="input-group-append" data-target="#pk_tgl_akhir_wrap" data-toggle="datetimepicker">
                                                             <div class="input-group-text">
                                                                 <i class="fa fa-calendar"></i>
                                                             </div>
@@ -199,7 +236,7 @@
 
                         <ul class="nav nav-tabs jurnal-penerimaan-kas-tabs" id="jurnal-penerimaan-kas-tabs" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link<?php echo $tab_data_active ? ' active' : ''; ?>" id="tab-penerimaan-data" data-toggle="pill" href="#panel-penerimaan-data" role="tab" aria-controls="panel-penerimaan-data" aria-selected="<?php echo $tab_data_active ? 'true' : 'false'; ?>">Data</a>
+                                <a class="nav-link<?php echo $tab_data_active ? ' active' : ''; ?>" id="tab-penerimaan-data" data-toggle="pill" href="#panel-penerimaan-data" role="tab" aria-controls="panel-penerimaan-data" aria-selected="<?php echo $tab_data_active ? 'true' : 'false'; ?>">Data Jurnal Penerimaan Kas (<?php echo htmlspecialchars($penerimaan_bulan_label, ENT_QUOTES, 'UTF-8'); ?>)</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php echo $tab_compare_active ? ' active' : ''; ?>" id="tab-compare-penerimaan-kas" data-toggle="pill" href="#panel-compare-penerimaan-kas" role="tab" aria-controls="panel-compare-penerimaan-kas" aria-selected="<?php echo $tab_compare_active ? 'true' : 'false'; ?>">Compare Data Manual - Online</a>
@@ -209,628 +246,87 @@
                         <div class="tab-content" id="jurnal-penerimaan-kas-tabs-content">
                             <div class="tab-pane fade<?php echo $tab_data_active ? ' show active' : ''; ?>" id="panel-penerimaan-data" role="tabpanel" aria-labelledby="tab-penerimaan-data">
 
-                        <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 penerimaan-kas-tab1-toolbar">
+                            <div>
+                                <h5 class="mb-0 text-primary"><strong>Data Jurnal Penerimaan Kas</strong> <span class="text-muted" id="penerimaan-kas-label-periode">(<?php echo htmlspecialchars($penerimaan_bulan_label, ENT_QUOTES, 'UTF-8'); ?>)</span></h5>
+                                <small class="text-muted">Periode: <span id="penerimaan-kas-label-range"><?php echo htmlspecialchars($penerimaan_periode_label, ENT_QUOTES, 'UTF-8'); ?></span> — pilih tanggal awal &amp; akhir untuk memuat ulang otomatis</small>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
+                                <?php if ($can_input_penerimaan_kas) { ?>
+                                <button type="button" class="btn btn-warning mr-2 mb-2 mb-md-0" id="btn-penerimaan-kas-input-data" data-toggle="modal" data-target="#modal-penerimaan-kas-input">
+                                    <i class="fa fa-plus"></i> Input Data
+                                </button>
+                                <?php } ?>
+                                <button type="button" class="btn btn-success mb-2 mb-md-0" id="btn-penerimaan-kas-excel">
+                                    <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="penerimaan-kas-table-wrap" class="penerimaan-kas-dt-wrap">
+                        <table id="penerimaan-kas-datatable" class="table table-bordered display nowrap penerimaan-kas-dt-table" style="width:100%">
+                            <colgroup>
+                                <col style="width:50px">
+                                <col style="width:100px">
+                                <col style="width:110px">
+                                <col style="width:120px">
+                                <col style="width:60px">
+                                <col style="width:280px">
+                                <col style="width:140px">
+                                <col style="width:165px">
+                                <col style="width:100px">
+                                <col style="width:120px">
+                            </colgroup>
                             <thead>
-
-                                <!-- <tr>
-                                    <th rowspan="3" style="text-align:left" width="10px">No</th>
-                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
-                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
-                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
-                                    <th rowspan="3" style="text-align:center">PL</th>
-                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
-
-                                    <th colspan="1" style="text-align:center">Debit</th>
-
-
-                                    <th colspan="3" style="text-align:center">KREDIT</th>
                                 <tr>
-                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
-                                    <th rowspan="2" style="text-align:center">11301-PU <br />Non Angsuran</th>
-                                    <th colspan="2" style="text-align:center">Serba-Serbi</th>
+                                    <th>No</th>
+                                    <th>Tanggal</th>
+                                    <th>Kode Akun</th>
+                                    <th>No. Bukti BKM</th>
+                                    <th>PL</th>
+                                    <th>KETERANGAN</th>
+                                    <th class="text-right">11101-Kas Besar</th>
+                                    <th class="text-right">11301-PU Non Angsuran</th>
+                                    <th>No. Rek</th>
+                                    <th class="text-right">Jumlah</th>
                                 </tr>
-                                <tr>
-                                    <th rowspan="3" style="text-align:left">Rek</th>
-                                    <th style="text-align:center">Jumlah</th>
-                                </tr> -->
-
-
-
-                                <tr>
-
-                                    <th rowspan="3" style="text-align:left" width="10px">No</th>
-                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
-                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
-                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
-                                    <th rowspan="3" style="text-align:center">PL</th>
-                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
-                                    <th colspan="1" style="text-align:center">DEBET</th>
-                                    <th colspan="3" style="text-align:center">KREDIT</th>
-
-                                </tr>
-                                <tr>
-                                    <th rowspan="2" style="text-align:center">11101-Kas Besar</th>
-                                    <th rowspan="2" style="text-align:center">11301-PU Non Angsuran</th>
-                                    <th colspan="2" style="text-align:right">Serba-Serbi</th>
-                                </tr>
-                                <tr>
-                                    <th style="text-align:left">No. Rek</th>
-                                    <th style="text-align:right">Jumlah</th>
-                                </tr>
-
-
-
-
-
                             </thead>
                             <tbody>
-                                <?php
-                                $start = 0;
-                                $TOTAL_debet_11101 = 0;
-                                $TOTAL_kredit_11301 = 0;
-                                $TOTAL_kredit_jumlah = 0;
-                                $TOTAL_saldo = 0;
-
-                                $TOTAL_debet_11101_SEMUA = 0;
-                                $TOTAL_kredit_11301_SEMUA = 0;
-                                $TOTAL_kredit_jumlah_SEMUA = 0;
-                                $TOTAL_saldo_SEMUA = 0;
-
-                                $PL_Data = 0;
-
-                                foreach ($Data_kas as $list_data) {
-
+                                <?php foreach ($penerimaan_rows as $row) {
+                                    $is_subtotal = (isset($row['type']) && $row['type'] === 'subtotal');
+                                    $tr_class = $is_subtotal ? ' class="pk-row-subtotal"' : '';
+                                    $fmt_force = $is_subtotal;
                                 ?>
-
-                                    <?php
-                                    // BARIS PERTAMA == ++START = 1
-                                    $First_row= ++$start;
-                                    if ($First_row == 1) {
-                                    ?>
-
-                                        <tr>
-                                            <td>
-                                                <?php
-                                                echo $First_row;
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php
-                                                echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                ?>
-                                            </td>
-
-                                            <!-- Kode Akun -->
-                                            <td><?php
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                } else {
-                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
-                                                ?>
-                                            </td>
-
-                                            <td><?php
-                                                echo $list_data->bukti;
-                                                ?>
-                                            </td>
-                                            <td><?php
-                                                echo $list_data->pl;
-                                                ?>
-                                            </td>
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->keterangan;
-                                                ?>
-                                            </td>
-
-                                            <!-- Debet -->
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->debet > 0) {
-                                                    echo number_format($list_data->debet, 2, ',', '.');
-                                                    $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                                    $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
-                                                } else {
-                                                    echo "";
-                                                }
-                                                ?>
-                                            </td>
-
-                                            <!-- Kredit -->
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->kode_akun == "11301") {
-                                                    echo number_format($list_data->debet, 2, ',', '.');
-                                                    $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                                    $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
-                                                } else {
-                                                    echo "";
-                                                }
-
-
-                                                ?>
-
-
-                                            </td>
-
-
-                                            <!-- rekening -->
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->kode_rekening;
-                                                ?>
-                                            </td>
-
-
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->kode_akun <> "11301") {
-                                                    echo number_format($list_data->debet, 2, ',', '.');
-                                                    $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
-                                                    $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
-                                                } else {
-                                                    echo "";
-                                                }
-
-                                                ?>
-                                            </td>
-
-                                        </tr>
-
-                                        <?php
-                                        // Simpan data pl untuk referensi baris selanjutnya
-                                        $PL_Data = $list_data->pl;
-                                    } else {
-
-                                        // Baris 2 dst : cek apakah $PL_Data == $list_data->pl? jika ya, maka tampilkan baris baru , jika beda , maka tampilkan baris total pl lama 
-                                        // dan buat baris baru lagi untuk data selanjutrnya
-
-                                        if ($PL_Data == $list_data->pl) {
-                                        ?>
-
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-                                                <td>
-                                                    <?php
-                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td><?php
-                                                    if ($list_data->kode_akun) {
-                                                        echo $list_data->kode_akun;
-                                                        echo "<br/>";
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    } else {
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <td><?php
-                                                    echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-                                                <td><?php
-                                                    echo $list_data->pl;
-                                                    ?>
-                                                </td>
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-                                                <!-- Debet -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->debet > 0) {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                                        $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "11301") {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                                        $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
-                                                        // echo "<br/>";
-                                                        // echo number_format($TOTAL_kredit_11301, 2, ',', '.');
-                                                    } else {
-                                                        echo "";
-                                                    }
-
-
-                                                    ?>
-
-
-                                                </td>
-
-
-                                                <!-- rekening -->
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->kode_rekening;
-                                                    ?>
-                                                </td>
-
-
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun <> "11301") {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
-                                                        $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
-                                                    } else {
-                                                        echo "";
-                                                    }
-
-                                                    ?>
-                                                </td>
-
-                                            </tr>
-
-                                        <?php
-                                        } else {
-                                            // PL beda   
-                                            // 1. BARIS TOTAL PL SEBELUMNYA
-                                        ?>
-
-                                            <!-- TOTAL DARI KELOMPOK PL -->
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-                                                <td>
-                                                    <?php
-                                                    // echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td>
-                                                    <?php
-                                                    // if ($list_data->kode_akun) {
-                                                    //     echo $list_data->kode_akun;
-                                                    //     echo "<br/>";
-                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    // } else {
-                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    // }
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    // echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-                                                <td>
-                                                    <?php
-                                                    // echo $list_data->pl;
-                                                    ?>
-                                                </td>
-                                                <td align="left">
-                                                    <?php
-                                                    // echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-                                                <!-- Debet -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->debet > 0) {
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_debet_11101, 2, ',', '.') . "</strong></font>";
-                                                    // $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                                    // } else {
-                                                    //     echo "";
-                                                    // }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->kode_akun == "11301") {
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11301, 2, ',', '.') . "</strong></font>";
-                                                    // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                                    // } else {
-                                                    //     echo "";
-                                                    // }
-
-
-                                                    ?>
-
-
-                                                </td>
-
-
-                                                <!-- rekening -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // echo $list_data->kode_rekening;
-                                                    ?>
-                                                </td>
-
-
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->kode_akun <> "11301") {
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_kredit_jumlah, 2, ',', '.') . "</strong></font>";
-                                                    // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                                    // } else {
-                                                    //     echo "";
-                                                    // }
-
-                                                    ?>
-                                                </td>
-
-                                            </tr>
-                                            <?php
-
-                                            // 2. BARIS TOTAL PL BARU
-                                            // menol kan total per kelompok $list_data->pl , karena sudah beda pl
-                                            $TOTAL_debet_11101 = 0;
-                                            $TOTAL_kredit_jumlah = 0;
-                                            $TOTAL_kredit_11301 = 0;
-                                            $TOTAL_saldo = 0;
-
-                                            ?>
-
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-                                                <td>
-                                                    <?php
-                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td><?php
-                                                    if ($list_data->kode_akun) {
-                                                        echo $list_data->kode_akun;
-                                                        echo "<br/>";
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    } else {
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <td><?php
-                                                    echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-                                                <td><?php
-                                                    echo $list_data->pl;
-                                                    ?>
-                                                </td>
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-                                                <!-- Debet -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->debet > 0) {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                                        $TOTAL_debet_11101_SEMUA = $TOTAL_debet_11101_SEMUA + $list_data->debet;
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "11301") {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                                        $TOTAL_kredit_11301_SEMUA = $TOTAL_kredit_11301_SEMUA + $list_data->debet;
-                                                    } else {
-                                                        echo "";
-                                                    }
-
-
-                                                    ?>
-
-
-                                                </td>
-
-
-                                                <!-- rekening -->
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->kode_rekening;
-                                                    ?>
-                                                </td>
-
-
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun <> "11301") {
-                                                        echo number_format($list_data->debet, 2, ',', '.');
-                                                        $TOTAL_kredit_jumlah = $TOTAL_kredit_jumlah + $list_data->debet;
-                                                        $TOTAL_kredit_jumlah_SEMUA = $TOTAL_kredit_jumlah_SEMUA + $list_data->debet;
-                                                    } else {
-                                                        echo "";
-                                                    }
-
-                                                    ?>
-                                                </td>
-
-                                            </tr>
-
-                                    <?php
-
-
-                                        }
-                                    }
-
-                                    ?>
-
-
-
-
-
-                                <?php
-                                    // END OF FOR EACH $Data_kas 
-                                }
-                                ?>
-
-                                <!-- BARIS TERAKHIR TOTAL DARI KELOMPOK PL -->
-                                <tr>
-                                    <td>
-                                        <?php
-                                        echo ++$start;
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <?php
-                                        // echo date("d-m-Y", strtotime($list_data->tanggal));
-                                        ?>
-                                    </td>
-
-                                    <!-- Kode Akun -->
-                                    <td>
-                                        <?php
-                                        // if ($list_data->kode_akun) {
-                                        //     echo $list_data->kode_akun;
-                                        //     echo "<br/>";
-                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                        // } else {
-                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_penerimaan/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                        // }
-                                        ?>
-                                    </td>
-
-                                    <td>
-                                        <?php
-                                        // echo $list_data->bukti;
-                                        ?>
-                                    </td>
-                                    <td>
-                                        <?php
-                                        // echo $list_data->pl;
-                                        ?>
-                                    </td>
-                                    <td align="left">
-                                        <?php
-                                        // echo $list_data->keterangan;
-                                        ?>
-                                    </td>
-
-                                    <!-- Debet -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->debet > 0) {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_debet_11101, 2, ',', '.') . "</strong></font>";
-                                        // $TOTAL_debet_11101 = $TOTAL_debet_11101 + $list_data->debet;
-                                        // } else {
-                                        //     echo "";
-                                        // }
-                                        ?>
-                                    </td>
-
-                                    <!-- Kredit -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->kode_akun == "11301") {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11301, 2, ',', '.') . "</strong></font>";
-                                        // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                        // } else {
-                                        //     echo "";
-                                        // }
-
-
-                                        ?>
-
-
-                                    </td>
-
-
-                                    <!-- rekening -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // echo $list_data->kode_rekening;
-                                        ?>
-                                    </td>
-
-
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->kode_akun <> "11301") {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_kredit_jumlah, 2, ',', '.') . "</strong></font>";
-                                        // $TOTAL_kredit_11301 = $TOTAL_kredit_11301 + $list_data->debet;
-                                        // } else {
-                                        //     echo "";
-                                        // }
-
-                                        ?>
-                                    </td>
-
+                                <tr<?php echo $tr_class; ?>>
+                                    <td><?php echo htmlspecialchars($row['no'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['tanggal'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['kode_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['bukti'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['pl'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td><?php echo htmlspecialchars($row['keterangan'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['debet_11101'], $fmt_force); ?></td>
+                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['kredit_11301'], $fmt_force); ?></td>
+                                    <td><?php echo htmlspecialchars($row['kode_rekening'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['jumlah'], $fmt_force); ?></td>
                                 </tr>
-
-
-
+                                <?php } ?>
                             </tbody>
 
                             <!-- tfoot -->
 
                             <tfoot>
-                                <tr>
-
-                                    <th style="text-align:left" width="10px"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-                                        <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_debet_11101_SEMUA, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </th> <!-- TOTAL DEBET -->
-                                    <th style="text-align:right">
-                                        <?php
-                                        // echo number_format($TOTAL_kredit_11301_SEMUA, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-                                        <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_jumlah_SEMUA + $TOTAL_kredit_11301_SEMUA, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </th> <!-- TOTAL JUMLAH -->
-
+                                <tr class="pk-row-footer-grand">
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="text-right">GRAND TOTAL</th>
+                                    <th class="text-right"><?php echo number_format($TOTAL_debet_11101_SEMUA, 2, ',', '.'); ?></th>
+                                    <th class="text-right"></th>
+                                    <th></th>
+                                    <th class="text-right"><?php echo number_format($TOTAL_kredit_jumlah_SEMUA + $TOTAL_kredit_11301_SEMUA, 2, ',', '.'); ?></th>
                                 </tr>
-
                             </tfoot>
 
 
@@ -839,6 +335,7 @@
 
 
                         </table>
+                        </div><!-- /#penerimaan-kas-table-wrap -->
                             </div><!-- /.tab-pane data -->
 
                             <?php
@@ -918,8 +415,21 @@
                                     </div>
                                 </div>
 
+                                <div id="compare-penerimaan-tabel-actions" class="compare-penerimaan-tabel-info-box py-3 mb-3 d-none">
+                                    <div id="compare-penerimaan-tabel-info-body" class="mb-2"></div>
+                                    <div id="compare-penerimaan-tabel-import-note" class="small mb-2"></div>
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <button type="button" id="btn-compare-penerimaan-tabel-detail" class="btn btn-outline-primary btn-sm mr-2 mb-1">
+                                            <i class="fas fa-table"></i> Detail Tabel
+                                        </button>
+                                        <button type="button" id="btn-compare-penerimaan-tabel-import" class="btn btn-success btn-sm mb-1" disabled>
+                                            <i class="fas fa-database"></i> Simpan ke jurnal_penerimaan_kas
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="alert alert-secondary py-2" id="compare-penerimaan-info-ringkas">
-                                    <strong>Bulan:</strong> <span id="compare-penerimaan-label-bulan">—</span>
+                                    <strong>Bulan:</strong> <span id="compare-penerimaan-label-bulan"><?php echo htmlspecialchars($penerimaan_bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                                     &nbsp;|&nbsp; <strong>Tabel manual:</strong> <span id="compare-penerimaan-label-tabel">—</span>
                                     &nbsp;|&nbsp; <strong>Cocok:</strong> <span id="compare-penerimaan-count-cocok">—</span>
                                     &nbsp;|&nbsp; <strong>Manual tidak di online:</strong> <span id="compare-penerimaan-count-manual">—</span>
@@ -1015,6 +525,43 @@
                                     </div>
                                 </div>
 
+                                <div class="modal fade" id="modal-compare-penerimaan-tabel-detail" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl" role="document" style="max-width:95%;">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info text-white py-2">
+                                                <h5 class="modal-title">Detail Tabel — Import Jurnal Penerimaan Kas</h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body pb-2">
+                                                <p class="text-muted small mb-2" id="compare-penerimaan-tabel-detail-meta">Memuat...</p>
+                                                <table id="table-compare-penerimaan-tabel-detail" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>Tanggal</th>
+                                                            <th>PL</th>
+                                                            <th>Bukti BKM</th>
+                                                            <th>Keterangan</th>
+                                                            <th>No. Rek</th>
+                                                            <th>Debet</th>
+                                                            <th>Kredit</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr class="compare-dt-total-row">
+                                                            <th colspan="6" class="text-right">Total</th>
+                                                            <th class="compare-total-debet text-right">—</th>
+                                                            <th class="compare-total-kredit text-right">—</th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                            <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div><!-- /.tab-pane compare -->
                         </div><!-- /.tab-content -->
                     </div>
@@ -1023,6 +570,79 @@
             </div>
         </div>
     </section>
+
+    <?php if ($can_input_penerimaan_kas) { ?>
+    <div class="modal fade" id="modal-penerimaan-kas-input" tabindex="-1" role="dialog" aria-labelledby="modal-penerimaan-kas-input-title" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document" style="max-width:960px;">
+            <div class="modal-content">
+                <div class="modal-header bg-warning py-2">
+                    <h5 class="modal-title" id="modal-penerimaan-kas-input-title"><i class="fa fa-edit"></i> Input Penerimaan Kas</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form id="form-penerimaan-kas-input-modal" autocomplete="off">
+                    <div class="modal-body">
+                        <div id="penerimaan-kas-input-modal-errors" class="alert alert-danger d-none" role="alert"></div>
+                        <p class="text-muted small mb-3">Field wajib: Tanggal, PL, Keterangan. Minimal salah satu dari Debet 11101, Kredit 11301, Serba-Serbi Rekening, atau Serba-Serbi Jumlah harus diisi.</p>
+                        <div class="row">
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_tanggal">Tanggal <span class="text-danger">*</span></label>
+                                <div class="input-group date" id="modal_pk_tanggal_wrap" data-target-input="nearest">
+                                    <input type="text" class="form-control datetimepicker-input" data-target="#modal_pk_tanggal_wrap" id="modal_pk_tanggal" name="tanggal" value="<?php echo htmlspecialchars($modal_pk_tanggal_default, ENT_QUOTES, 'UTF-8'); ?>" required />
+                                    <div class="input-group-append" data-target="#modal_pk_tanggal_wrap" data-toggle="datetimepicker">
+                                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_bukti">No. Bukti BKM</label>
+                                <input type="text" name="nomorbuktibkm" id="modal_pk_bukti" class="form-control" placeholder="Opsional">
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_pl">PL <span class="text-danger">*</span></label>
+                                <select name="pl" id="modal_pk_pl" class="form-control modal-pk-select2" style="width:100%;" required>
+                                    <option value="">Pilih Kode PL</option>
+                                    <?php foreach ($list_kode_pl as $pl_row) { ?>
+                                        <option value="<?php echo htmlspecialchars($pl_row->kode_pl, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <?php echo strtoupper($pl_row->kode_pl) . ' ==> ' . strtoupper($pl_row->keterangan); ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_keterangan">Keterangan <span class="text-danger">*</span></label>
+                                <input type="text" name="keterangan" id="modal_pk_keterangan" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_debet">11101 - Kas Besar</label>
+                                <input type="text" name="debet_11101_kas_besar" id="modal_pk_debet" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_kredit">11301 - PU Non Angsuran</label>
+                                <input type="text" name="kredit_11301_pu_non_angsuran" id="modal_pk_kredit" class="form-control" placeholder="0">
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_rekening">Serba-Serbi Rekening</label>
+                                <input type="text" name="serba_serbi_rekening" id="modal_pk_rekening" class="form-control" placeholder="No. rekening">
+                            </div>
+                            <div class="form-group col-md-3 col-sm-6 mb-2">
+                                <label for="modal_pk_jumlah">Serba-Serbi Jumlah</label>
+                                <input type="text" name="serba_serbi_jumlah" id="modal_pk_jumlah" class="form-control" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer py-2">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="btn-penerimaan-kas-input-simpan">
+                            <i class="fa fa-save"></i> Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php } ?>
 </div>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
@@ -1034,6 +654,35 @@
     .compare-toolbar-row .compare-toolbar-control { width: 110px; min-width: 110px; }
     #compare_tahun_penerimaan.compare-toolbar-control { width: 88px; min-width: 88px; }
     #compare_tabel_penerimaan.compare-toolbar-tabel { width: 360px; min-width: 270px; max-width: 480px; }
+    .compare-penerimaan-tabel-info-box {
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #17a2b8;
+        border-radius: 6px;
+        background: #f8fbff;
+        padding: 12px 16px;
+    }
+    .compare-penerimaan-tabel-info-box .compare-info-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #0c5460;
+    }
+    .compare-penerimaan-tabel-info-box .compare-info-line {
+        font-size: 13px;
+        margin-bottom: 4px;
+        line-height: 1.45;
+    }
+    .compare-penerimaan-tabel-info-box .compare-info-line strong { color: #212529; }
+    .compare-penerimaan-tabel-info-box .compare-info-line code {
+        background: #eef6ff;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 12px;
+    }
+    .compare-penerimaan-tabel-info-box #compare-penerimaan-tabel-import-note.text-success { color: #155724 !important; }
+    .compare-penerimaan-tabel-info-box #compare-penerimaan-tabel-import-note.text-danger { color: #721c24 !important; }
+    .compare-penerimaan-tabel-info-box .compare-info-title.text-warning { color: #856404; }
+    .compare-penerimaan-tabel-info-box .compare-info-title.text-danger { color: #721c24; }
     .compare-csv-file-wrap { max-width: 520px; min-width: 280px; flex: 0 1 520px; }
     #compare-penerimaan-results-panel { margin-top: 8px; animation: comparePenerimaanFadeIn .35s ease; }
     @keyframes comparePenerimaanFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -1063,26 +712,178 @@
     .compare-pair-gap { flex: 0 0 24px; min-width: 24px; }
     .compare-pair-card { min-height: 380px; }
     .compare-dt-total-row th { background: #fff3cd !important; font-weight: 700; }
+    .penerimaan-kas-tab1-toolbar { padding: 10px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; }
+
+    /* ===== Penerimaan Kas DataTable — border kuning hanya wrapper ===== */
+    .penerimaan-kas-dt-wrap {
+        border: 2px solid #ffc107;
+        border-radius: 4px;
+        padding: 8px;
+        background: #fff;
+        overflow-x: auto;
+    }
+    .penerimaan-kas-dt-wrap .dataTables_wrapper {
+        width: 100%;
+    }
+    .penerimaan-kas-dt-table {
+        margin-bottom: 0 !important;
+        table-layout: fixed;
+        width: 100% !important;
+        min-width: 1240px;
+    }
+    .penerimaan-kas-dt-table thead th,
+    .penerimaan-kas-dt-table tbody td,
+    .penerimaan-kas-dt-table tfoot th {
+        border: 1px solid #dee2e6 !important;
+        vertical-align: middle;
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+    .penerimaan-kas-dt-table thead th {
+        background: #f8f9fa;
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+        line-height: 1.35;
+    }
+    .penerimaan-kas-dt-table tbody td {
+        background: #fff;
+        word-wrap: break-word;
+    }
+    .penerimaan-kas-dt-table tbody td:first-child,
+    .penerimaan-kas-dt-table thead th:first-child,
+    .penerimaan-kas-dt-table tfoot th:first-child {
+        text-align: center;
+    }
+    .penerimaan-kas-dt-table tbody tr.pk-row-subtotal td {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .penerimaan-kas-dt-table tfoot th {
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting:before,
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting:after,
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_asc:before,
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_asc:after,
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_desc:before,
+    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_desc:after {
+        display: none !important;
+    }
+    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting_asc,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting_desc {
+        background-image: none !important;
+        padding-right: 8px !important;
+    }
+    .penerimaan-kas-dt-wrap .dataTables_scrollHead table,
+    .penerimaan-kas-dt-wrap .dataTables_scrollBody table,
+    .penerimaan-kas-dt-wrap .dataTables_scrollFoot table {
+        table-layout: fixed !important;
+        width: 100% !important;
+        min-width: 1240px;
+    }
+    #modal-penerimaan-kas-input .modal-header { border-bottom: none; }
+    #modal-penerimaan-kas-input .modal-content { border: none; box-shadow: 0 8px 30px rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
+    #modal-penerimaan-kas-input .modal-body { background: #fafbfc; }
+    #modal-penerimaan-kas-input label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    #modal-penerimaan-kas-input .select2-container { width: 100% !important; }
 </style>
 
 <script>
 (function() {
     var submitTimer = null;
+    var urlExcel = <?php echo json_encode($url_penerimaan_kas_excel); ?>;
+    var namaBulan = <?php echo json_encode($nama_bulan_id); ?>;
+    var pageReady = false;
+    var lastValues = { awal: '', akhir: '' };
+
+    function parseTanggalDmY(str) {
+        str = String(str || '').trim();
+        if (!str) {
+            return null;
+        }
+        var parts = str.split(/[-\/]/);
+        if (parts.length !== 3) {
+            return null;
+        }
+        var d = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var y = parseInt(parts[2], 10);
+        if (!d || !m || !y || y < 2020) {
+            return null;
+        }
+        return { day: d, month: m, year: y };
+    }
+
+    function tanggalToDateObj(parsed) {
+        return new Date(parsed.year, parsed.month - 1, parsed.day);
+    }
+
+    function isRangeTanggalValid(awalStr, akhirStr) {
+        var awal = parseTanggalDmY(awalStr);
+        var akhir = parseTanggalDmY(akhirStr);
+        if (!awal || !akhir) {
+            return false;
+        }
+        return tanggalToDateObj(awal) <= tanggalToDateObj(akhir);
+    }
 
     function getTanggalFilterPenerimaanKas() {
         var form = document.getElementById('form-cari-penerimaan-kas');
         if (!form) {
             return { awal: '', akhir: '' };
         }
-        var tglAwal = form.querySelector('input[name="tgl_awal"]');
-        var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
+        var tglAwal = form.querySelector('#pk_tgl_awal');
+        var tglAkhir = form.querySelector('#pk_tgl_akhir');
         return {
             awal: tglAwal ? String(tglAwal.value || '').trim() : '',
             akhir: tglAkhir ? String(tglAkhir.value || '').trim() : ''
         };
     }
 
+    function syncCompareBulanTahunFromDatepicker() {
+        var tgl = getTanggalFilterPenerimaanKas();
+        if (!tgl.awal || !tgl.akhir) {
+            return;
+        }
+        var parsed = parseTanggalDmY(tgl.akhir);
+        if (!parsed) {
+            return;
+        }
+
+        var $bulan = window.jQuery ? jQuery('#compare_bulan_penerimaan') : null;
+        var $tahun = window.jQuery ? jQuery('#compare_tahun_penerimaan') : null;
+        if ($bulan && $bulan.length) {
+            $bulan.val(String(parsed.month));
+        }
+        if ($tahun && $tahun.length) {
+            if ($tahun.find('option[value="' + parsed.year + '"]').length === 0) {
+                $tahun.prepend(jQuery('<option>', { value: parsed.year, text: parsed.year }));
+            }
+            $tahun.val(String(parsed.year));
+        }
+
+        var bulanLabel = (namaBulan && namaBulan[parsed.month]) ? namaBulan[parsed.month] : String(parsed.month);
+        var labelText = bulanLabel + ' ' + parsed.year;
+        var rangeText = tgl.awal + ' s/d ' + tgl.akhir;
+
+        jQuery('#penerimaan-kas-label-periode').text('(' + labelText + ')');
+        jQuery('#penerimaan-kas-label-range').text(rangeText);
+        jQuery('#compare-penerimaan-label-bulan').text(labelText);
+        jQuery('#tab-penerimaan-data').text('Data Jurnal Penerimaan Kas (' + labelText + ')');
+
+        if (window.jQuery && typeof window.toggleBtnsPenerimaanKas === 'function') {
+            window.toggleBtnsPenerimaanKas();
+        }
+    }
+
     function submitCariPenerimaanKasOtomatis() {
+        if (!pageReady) {
+            return;
+        }
+
         clearTimeout(submitTimer);
         submitTimer = setTimeout(function() {
             var form = document.getElementById('form-cari-penerimaan-kas');
@@ -1090,10 +891,63 @@
                 return;
             }
             var tgl = getTanggalFilterPenerimaanKas();
-            if (tgl.awal && tgl.akhir) {
-                form.submit();
+            if (!tgl.awal || !tgl.akhir) {
+                return;
             }
-        }, 400);
+            if (!parseTanggalDmY(tgl.awal) || !parseTanggalDmY(tgl.akhir)) {
+                return;
+            }
+            if (!isRangeTanggalValid(tgl.awal, tgl.akhir)) {
+                return;
+            }
+            if (tgl.awal === lastValues.awal && tgl.akhir === lastValues.akhir) {
+                return;
+            }
+
+            lastValues.awal = tgl.awal;
+            lastValues.akhir = tgl.akhir;
+            syncCompareBulanTahunFromDatepicker();
+            form.submit();
+        }, 350);
+    }
+
+    function onDatepickerTanggalDipilih(e) {
+        if (!pageReady) {
+            return;
+        }
+        if (!e || e.date === false || e.date === null || typeof e.date === 'undefined') {
+            return;
+        }
+        submitCariPenerimaanKasOtomatis();
+    }
+
+    function exportPenerimaanKasExcel() {
+        var tgl = getTanggalFilterPenerimaanKas();
+        if (!tgl.awal || !tgl.akhir) {
+            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+            return;
+        }
+        var f = document.createElement('form');
+        f.method = 'post';
+        f.action = urlExcel;
+        f.target = '_blank';
+        f.style.display = 'none';
+
+        var inpAwal = document.createElement('input');
+        inpAwal.type = 'hidden';
+        inpAwal.name = 'tgl_awal';
+        inpAwal.value = tgl.awal;
+        f.appendChild(inpAwal);
+
+        var inpAkhir = document.createElement('input');
+        inpAkhir.type = 'hidden';
+        inpAkhir.name = 'tgl_akhir';
+        inpAkhir.value = tgl.akhir;
+        f.appendChild(inpAkhir);
+
+        document.body.appendChild(f);
+        f.submit();
+        document.body.removeChild(f);
     }
 
     function initAutoCariPenerimaanKas() {
@@ -1101,13 +955,34 @@
         if (!form) {
             return;
         }
-        form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
-            el.addEventListener('change', submitCariPenerimaanKasOtomatis);
-        });
-        if (window.jQuery) {
-            jQuery('#tgl_awal, #tgl_akhir').off('change.datetimepicker.penerimaanKas hide.datetimepicker.penerimaanKas');
-            jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker.penerimaanKas hide.datetimepicker.penerimaanKas', submitCariPenerimaanKasOtomatis);
+
+        var tgl = getTanggalFilterPenerimaanKas();
+        lastValues.awal = tgl.awal;
+        lastValues.akhir = tgl.akhir;
+
+        var btnExcel = document.getElementById('btn-penerimaan-kas-excel');
+        if (btnExcel) {
+            btnExcel.addEventListener('click', exportPenerimaanKasExcel);
         }
+
+        if (window.jQuery) {
+            if (jQuery('#pk_tgl_awal_wrap').length && !jQuery('#pk_tgl_awal_wrap').data('datetimepicker')) {
+                jQuery('#pk_tgl_awal_wrap').datetimepicker({ format: 'D-M-YYYY' });
+            }
+            if (jQuery('#pk_tgl_akhir_wrap').length && !jQuery('#pk_tgl_akhir_wrap').data('datetimepicker')) {
+                jQuery('#pk_tgl_akhir_wrap').datetimepicker({ format: 'D-M-YYYY' });
+            }
+
+            jQuery('#pk_tgl_awal_wrap, #pk_tgl_akhir_wrap')
+                .off('change.datetimepicker.penerimaanKas')
+                .on('change.datetimepicker.penerimaanKas', onDatepickerTanggalDipilih);
+        }
+
+        syncCompareBulanTahunFromDatepicker();
+
+        setTimeout(function() {
+            pageReady = true;
+        }, 600);
     }
 
     if (document.readyState === 'complete') {
@@ -1121,6 +996,239 @@
 <script>
 window.addEventListener('load', function() {
     if (!window.jQuery || !jQuery.fn.DataTable) {
+        return;
+    }
+
+    var $wrap = jQuery('#penerimaan-kas-table-wrap');
+    var $table = jQuery('#panel-penerimaan-data #penerimaan-kas-datatable');
+    if (!$wrap.length || !$table.length) {
+        return;
+    }
+
+    if (jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+        jQuery('#tglSPOPFreeze').DataTable().destroy();
+    }
+
+    $table.find('tbody tr').each(function() {
+        var $tr = jQuery(this);
+        if ($tr.find('.pk-cell-subtotal').length) {
+            $tr.addClass('pk-row-subtotal');
+        }
+    });
+
+    if (jQuery.fn.DataTable.isDataTable($table)) {
+        $table.DataTable().clear().destroy();
+        $table.find('tfoot').appendTo($table);
+    }
+
+    jQuery('.DTFC_Cloned').remove();
+    jQuery('.DTFC_LeftWrapper, .DTFC_RightWrapper').remove();
+
+    var colWidths = ['50px', '100px', '110px', '120px', '60px', '280px', '140px', '165px', '100px', '120px'];
+
+    var dt = $table.DataTable({
+        scrollX: true,
+        scrollY: '550px',
+        scrollCollapse: true,
+        paging: true,
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+        ordering: false,
+        searching: true,
+        info: true,
+        autoWidth: false,
+        columnDefs: [
+            { orderable: false, targets: '_all' },
+            { width: colWidths[0], targets: 0 },
+            { width: colWidths[1], targets: 1 },
+            { width: colWidths[2], targets: 2 },
+            { width: colWidths[3], targets: 3 },
+            { width: colWidths[4], targets: 4 },
+            { width: colWidths[5], targets: 5 },
+            { width: colWidths[6], targets: 6, className: 'text-right' },
+            { width: colWidths[7], targets: 7, className: 'text-right' },
+            { width: colWidths[8], targets: 8 },
+            { width: colWidths[9], targets: 9, className: 'text-right' }
+        ],
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json'
+        },
+        drawCallback: function() {
+            dt.columns.adjust();
+        },
+        initComplete: function() {
+            dt.columns.adjust();
+        }
+    });
+});
+</script>
+
+<?php if ($can_input_penerimaan_kas) { ?>
+<script>
+window.addEventListener('load', function() {
+    if (!window.jQuery) {
+        return;
+    }
+
+    var urlAjaxInput = <?php echo json_encode($url_ajax_penerimaan_kas_input); ?>;
+    var modalTanggalFallback = <?php echo json_encode($modal_pk_tanggal_default); ?>;
+    var $modal = jQuery('#modal-penerimaan-kas-input');
+    var $form = jQuery('#form-penerimaan-kas-input-modal');
+    var $btnSimpan = jQuery('#btn-penerimaan-kas-input-simpan');
+    var $errors = jQuery('#penerimaan-kas-input-modal-errors');
+    var saving = false;
+    var modalPluginsReady = false;
+
+    function showModalError(msg) {
+        if (!msg) {
+            $errors.addClass('d-none').empty();
+            return;
+        }
+        $errors.removeClass('d-none').html('<i class="fa fa-exclamation-circle"></i> ' + jQuery('<span>').text(msg).html());
+    }
+
+    function setModalTanggalDefault() {
+        jQuery('#modal_pk_tanggal').val(modalTanggalFallback);
+        var $wrap = jQuery('#modal_pk_tanggal_wrap');
+        if ($wrap.data('datetimepicker') && typeof moment !== 'undefined') {
+            var m = moment(modalTanggalFallback, 'DD-MM-YYYY', true);
+            if (m.isValid()) {
+                $wrap.datetimepicker('date', m);
+            }
+        }
+    }
+
+    function resetInputForm() {
+        if ($form.length && $form[0].reset) {
+            $form[0].reset();
+        }
+        setModalTanggalDefault();
+        jQuery('.modal-pk-select2').val('').trigger('change');
+        showModalError('');
+    }
+
+    function initModalPlugins() {
+        if (!$modal.length) {
+            return;
+        }
+        jQuery('.modal-pk-select2').each(function() {
+            var $sel = jQuery(this);
+            if ($sel.hasClass('select2-hidden-accessible')) {
+                $sel.select2('destroy');
+            }
+            $sel.select2({
+                dropdownParent: $modal,
+                width: '100%',
+                placeholder: $sel.find('option:first').text() || 'Pilih'
+            });
+        });
+        if (!jQuery('#modal_pk_tanggal_wrap').data('datetimepicker')) {
+            jQuery('#modal_pk_tanggal_wrap').datetimepicker({ format: 'D-M-YYYY' });
+        }
+        modalPluginsReady = true;
+    }
+
+    function reloadPenerimaanKasPage() {
+        window.location.reload();
+    }
+
+    function showSavingAlert() {
+        if (typeof Swal === 'undefined') {
+            return;
+        }
+        Swal.fire({
+            title: 'Menyimpan Data...',
+            html: '<div style="font-size:14px;">Mohon tunggu, sedang memproses penerimaan kas.</div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function() {
+                Swal.showLoading();
+            }
+        });
+    }
+
+    function closeSavingAlert() {
+        if (typeof Swal !== 'undefined' && Swal.isVisible()) {
+            Swal.close();
+        }
+    }
+
+    function showSaveSuccessAlert() {
+        if (typeof Swal === 'undefined') {
+            alert('Data penerimaan kas berhasil disimpan.');
+            reloadPenerimaanKasPage();
+            return;
+        }
+        Swal.fire({
+            icon: 'success',
+            title: 'Simpan Berhasil!',
+            html: '<div style="font-size:15px;line-height:1.6;">Proses simpan penerimaan kas telah <strong>terproses dan sukses</strong>.<br><span class="text-muted" style="font-size:13px;">Halaman akan dimuat ulang otomatis...</span></div>',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#28a745',
+            timer: 2000,
+            timerProgressBar: true,
+            allowOutsideClick: false
+        }).then(function() {
+            reloadPenerimaanKasPage();
+        });
+    }
+
+    $modal.on('show.bs.modal', function() {
+        if (!modalPluginsReady) {
+            initModalPlugins();
+        }
+        resetInputForm();
+    });
+
+    $form.on('submit', function(e) {
+        e.preventDefault();
+        if (saving) {
+            return;
+        }
+        showModalError('');
+
+        var formData = $form.serializeArray();
+        saving = true;
+        $btnSimpan.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Proses...');
+        showSavingAlert();
+
+        jQuery.ajax({
+            url: urlAjaxInput,
+            type: 'POST',
+            dataType: 'json',
+            data: formData
+        }).done(function(res) {
+            closeSavingAlert();
+            if (!res || !res.ok) {
+                var msg = (res && res.message) ? res.message : 'Gagal menyimpan data penerimaan kas.';
+                showModalError(msg);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: msg, confirmButtonColor: '#dc3545' });
+                }
+                return;
+            }
+            $modal.modal('hide');
+            showSaveSuccessAlert();
+        }).fail(function() {
+            closeSavingAlert();
+            var msg = 'Tidak dapat menghubungi server. Periksa koneksi lalu coba lagi.';
+            showModalError(msg);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Kesalahan Server', text: msg, confirmButtonColor: '#dc3545' });
+            }
+        }).always(function() {
+            saving = false;
+            $btnSimpan.prop('disabled', false).html('<i class="fa fa-save"></i> Simpan');
+        });
+    });
+});
+</script>
+<?php } ?>
+
+<script>
+window.addEventListener('load', function() {
+    if (!window.jQuery || !jQuery.fn.DataTable) {
         console.error('Compare Penerimaan Kas: jQuery/DataTables belum dimuat.');
         return;
     }
@@ -1129,7 +1237,11 @@ window.addEventListener('load', function() {
     var urlImport = <?php echo json_encode($url_compare_penerimaan_kas_import_csv); ?>;
     var urlList = <?php echo json_encode($url_compare_penerimaan_kas_tabel_list); ?>;
     var urlPreview = <?php echo json_encode($url_compare_penerimaan_kas_tabel_preview); ?>;
+    var urlValidate = <?php echo json_encode($url_compare_penerimaan_kas_tabel_validate); ?>;
+    var urlDetail = <?php echo json_encode($url_compare_penerimaan_kas_tabel_detail); ?>;
+    var urlTabelImport = <?php echo json_encode($url_compare_penerimaan_kas_tabel_import); ?>;
     var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;
+    var tabelImportState = null, tabelDetailDt = null, tabelImportBusy = false;
 
     function bulanKey() {
         var b = parseInt(jQuery('#compare_bulan_penerimaan').val(), 10);
@@ -1160,6 +1272,250 @@ window.addEventListener('load', function() {
         jQuery('#btn-compare-penerimaan-kas').toggleClass('d-none', !show);
         if (!show) jQuery('#btn-compare-penerimaan-excel-all').addClass('d-none');
     }
+    window.toggleBtnsPenerimaanKas = toggleBtns;
+
+    function hideTabelActions() {
+        tabelImportState = null;
+        jQuery('#compare-penerimaan-tabel-actions').addClass('d-none');
+        jQuery('#compare-penerimaan-tabel-info-body').empty();
+        jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', true);
+        jQuery('#compare-penerimaan-tabel-import-note').text('').removeClass('text-danger text-success text-muted');
+    }
+
+    function buildTabelInfoHtml(res) {
+        var tbl = jQuery('#compare_tabel_penerimaan').val() || (res && res.table) || '—';
+        var bk = bulanKey() || (res && res.bulan) || '—';
+        var stats = (res && res.stats) ? res.stats : {};
+        var map = (res && res.map) ? res.map : {};
+        var mapParts = [];
+        var mapOrder = ['tanggal', 'pl', 'keterangan', 'bukti', 'kode_rekening', 'debet', 'kredit'];
+        mapOrder.forEach(function(key) {
+            if (map[key]) {
+                mapParts.push(key + ' → <code>' + jQuery('<span>').text(map[key]).html() + '</code>');
+            }
+        });
+        var html = '<div class="compare-info-title"><i class="fas fa-info-circle"></i> Informasi Tabel — Siap Diproses ke Jurnal Penerimaan Kas</div>';
+        html += '<div class="compare-info-line">Tabel terpilih: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>';
+        html += '<div class="compare-info-line">Bulan proses: <strong>' + jQuery('<span>').text(bk).html() + '</strong></div>';
+        html += '<div class="compare-info-line">Kolom wajib: <strong>tanggal</strong>, <strong>pl</strong>, <strong>keterangan</strong>, minimal salah satu <strong>debet/kredit/rekening</strong></div>';
+        if (mapParts.length) {
+            html += '<div class="compare-info-line">Mapping kolom: ' + mapParts.join(' | ') + '</div>';
+        }
+        if (stats.saveable_in_bulan != null) {
+            html += '<div class="compare-info-line">Baris siap simpan: <strong>' + (stats.saveable_in_bulan || 0) + '</strong>';
+            if (stats.in_bulan != null) html += ' &nbsp;|&nbsp; baris bulan terpilih: <strong>' + (stats.in_bulan || 0) + '</strong>';
+            if (stats.out_bulan > 0) html += ' &nbsp;|&nbsp; di luar bulan: <strong class="text-warning">' + stats.out_bulan + '</strong>';
+            if (stats.invalid_in_bulan > 0) html += ' &nbsp;|&nbsp; tidak valid: <strong class="text-danger">' + stats.invalid_in_bulan + '</strong>';
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function applyTabelImportState(res) {
+        tabelImportState = res || null;
+        var tbl = jQuery('#compare_tabel_penerimaan').val() || '';
+        if (!tbl) {
+            hideTabelActions();
+            return;
+        }
+        jQuery('#compare-penerimaan-tabel-actions').removeClass('d-none');
+        jQuery('#btn-compare-penerimaan-tabel-detail').prop('disabled', false);
+        if (!res || !res.eligible) {
+            var miss = (res && res.missing_fields && res.missing_fields.length)
+                ? ('Kolom kurang: <strong>' + res.missing_fields.join(', ') + '</strong>. ')
+                : '';
+            jQuery('#compare-penerimaan-tabel-info-body').html(
+                '<div class="compare-info-title text-warning"><i class="fas fa-exclamation-triangle"></i> Tabel belum memenuhi syarat import</div>'
+                + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+                + '<div class="compare-info-line">' + miss + jQuery('<span>').text((res && res.message) ? res.message : 'Kolom wajib minimal: tanggal, pl, keterangan, debet atau kredit.').html() + '</div>'
+            );
+            jQuery('#btn-compare-penerimaan-tabel-detail').prop('disabled', true);
+            jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', true);
+            jQuery('#compare-penerimaan-tabel-import-note').removeClass('text-danger text-success text-muted').addClass('text-muted').text('');
+            return;
+        }
+        jQuery('#compare-penerimaan-tabel-info-body').html(buildTabelInfoHtml(res));
+        var enabled = !!res.import_enabled;
+        jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', !enabled);
+        var $note = jQuery('#compare-penerimaan-tabel-import-note');
+        $note.removeClass('text-danger text-success text-muted');
+        if (enabled) {
+            $note.addClass('text-success').html('<i class="fas fa-check-circle"></i> ' + (res.import_message || 'Tanggal data sesuai bulan terpilih — siap disimpan ke jurnal_penerimaan_kas.'));
+        } else {
+            $note.addClass('text-danger').html('<i class="fas fa-exclamation-circle"></i> ' + (res.import_message || 'Data tidak bisa dimasukkan ke jurnal penerimaan kas.'));
+        }
+    }
+
+    function showTabelCheckingState(tbl) {
+        jQuery('#compare-penerimaan-tabel-actions').removeClass('d-none');
+        jQuery('#compare-penerimaan-tabel-info-body').html(
+            '<div class="compare-info-title"><i class="fas fa-spinner fa-spin"></i> Memeriksa tabel terpilih...</div>'
+            + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+        );
+        jQuery('#compare-penerimaan-tabel-import-note').removeClass('text-danger text-success').addClass('text-muted').text('');
+        jQuery('#btn-compare-penerimaan-tabel-detail').prop('disabled', true);
+        jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', true);
+    }
+
+    function validateTabelForImport() {
+        var tbl = jQuery('#compare_tabel_penerimaan').val() || '';
+        if (!tbl) {
+            hideTabelActions();
+            return;
+        }
+        showTabelCheckingState(tbl);
+        jQuery.ajax({
+            url: urlValidate,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                tabel: tbl,
+                bulan: bulanKey(),
+                bulan_num: jQuery('#compare_bulan_penerimaan').val(),
+                tahun: jQuery('#compare_tahun_penerimaan').val()
+            }
+        }).done(function(res) {
+            applyTabelImportState(res);
+        }).fail(function(xhr) {
+            var errMsg = 'Tidak dapat menghubungi server. Silakan coba lagi.';
+            if (xhr && xhr.responseText) {
+                try {
+                    var errJson = JSON.parse(xhr.responseText);
+                    if (errJson && errJson.message) errMsg = errJson.message;
+                } catch (e) {
+                    if (xhr.status) errMsg += ' (HTTP ' + xhr.status + ')';
+                }
+            }
+            jQuery('#compare-penerimaan-tabel-actions').removeClass('d-none');
+            jQuery('#compare-penerimaan-tabel-info-body').html(
+                '<div class="compare-info-title text-danger"><i class="fas fa-times-circle"></i> Gagal memeriksa tabel</div>'
+                + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+                + '<div class="compare-info-line">' + jQuery('<span>').text(errMsg).html() + '</div>'
+            );
+            jQuery('#btn-compare-penerimaan-tabel-detail').prop('disabled', true);
+            jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', true);
+        });
+    }
+
+    function buildDetailRows(items) {
+        return (items || []).map(function(it) {
+            return [
+                it.no || '',
+                it.tanggal || '',
+                it.pl ? jQuery('<span>').text(it.pl).html() : '',
+                it.bukti ? jQuery('<span>').text(it.bukti).html() : '',
+                it.keterangan ? '<span class="text-ket">' + jQuery('<span>').text(it.keterangan).html() + '</span>' : '',
+                it.kode_rekening ? jQuery('<span>').text(it.kode_rekening).html() : '',
+                fmtAmtCell(it.debet, 'debet'),
+                fmtAmtCell(it.kredit, 'kredit')
+            ];
+        });
+    }
+
+    function openTabelDetailModal() {
+        var tbl = jQuery('#compare_tabel_penerimaan').val() || '';
+        var bk = bulanKey();
+        if (!tbl || !bk) {
+            alert('Pilih tabel dan bulan terlebih dahulu.');
+            return;
+        }
+        jQuery('#compare-penerimaan-tabel-detail-meta').text('Memuat data tabel `' + tbl + '` bulan ' + bk + '...');
+        jQuery('#modal-compare-penerimaan-tabel-detail').modal('show');
+        jQuery.ajax({
+            url: urlDetail,
+            type: 'POST',
+            dataType: 'json',
+            data: { tabel: tbl, bulan: bk }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                jQuery('#compare-penerimaan-tabel-detail-meta').text((res && res.message) || 'Gagal memuat detail tabel.');
+                return;
+            }
+            var items = res.rows || [];
+            jQuery('#compare-penerimaan-tabel-detail-meta').text(
+                'Tabel: ' + (res.table || tbl) + ' | Bulan: ' + (res.bulan_label || bk) + ' | Total: ' + (res.total || items.length) + ' baris'
+            );
+            var $t = jQuery('#table-compare-penerimaan-tabel-detail');
+            if (jQuery.fn.DataTable.isDataTable($t)) {
+                $t.DataTable().clear().destroy();
+            }
+            $t.find('tbody').empty();
+            tabelDetailDt = $t.DataTable({
+                data: buildDetailRows(items),
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                scrollX: true,
+                pageLength: 25,
+                order: [[1, 'asc']],
+                autoWidth: false,
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                drawCallback: function() {
+                    var td = 0, tk = 0;
+                    items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
+                    $t.find('.compare-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
+                    $t.find('.compare-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
+                }
+            });
+        }).fail(function() {
+            jQuery('#compare-penerimaan-tabel-detail-meta').text('Gagal memuat detail tabel.');
+        });
+    }
+
+    function importTabelToPenerimaanKas() {
+        if (tabelImportBusy) return;
+        var tbl = jQuery('#compare_tabel_penerimaan').val() || '';
+        var bk = bulanKey();
+        if (!tbl || !bk) {
+            alert('Pilih tabel dan bulan terlebih dahulu.');
+            return;
+        }
+        if (!tabelImportState || !tabelImportState.import_enabled) {
+            alert((tabelImportState && tabelImportState.import_message) || 'Data tidak bisa dimasukkan ke jurnal penerimaan kas.');
+            return;
+        }
+        var confirmMsg = 'Proses simpan data tabel `' + tbl + '` ke jurnal_penerimaan_kas bulan ' + bk + '?\nRecord yang sama tidak akan disimpan ulang.';
+        if (!window.confirm(confirmMsg)) return;
+        tabelImportBusy = true;
+        jQuery('#btn-compare-penerimaan-tabel-import').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+        jQuery.ajax({
+            url: urlTabelImport,
+            type: 'POST',
+            dataType: 'json',
+            data: { tabel: tbl, bulan: bk }
+        }).done(function(res) {
+            tabelImportBusy = false;
+            jQuery('#btn-compare-penerimaan-tabel-import').html('<i class="fas fa-database"></i> Simpan ke jurnal_penerimaan_kas');
+            if (!res || !res.ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Import Gagal', text: (res && res.message) || 'Gagal menambahkan data.' });
+                } else {
+                    alert((res && res.message) || 'Gagal menambahkan data.');
+                }
+                validateTabelForImport();
+                return;
+            }
+            var msg = res.message || ('Berhasil menambahkan ' + (res.inserted || 0) + ' data.');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'success', title: 'Simpan Berhasil', text: msg, confirmButtonText: 'OK', timer: 2000, timerProgressBar: true });
+            } else {
+                alert(msg);
+            }
+            setStatus('success', msg);
+            validateTabelForImport();
+        }).fail(function() {
+            tabelImportBusy = false;
+            jQuery('#btn-compare-penerimaan-tabel-import').html('<i class="fas fa-database"></i> Simpan ke jurnal_penerimaan_kas');
+            validateTabelForImport();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Import Gagal', text: 'Tidak dapat menghubungi server.' });
+            } else {
+                alert('Import gagal.');
+            }
+        });
+    }
+
     function buildRows(items) {
         return (items || []).map(function(it, i) {
             return [i + 1, it.tanggal || '', it.keterangan ? '<span class="text-ket">' + jQuery('<span>').text(it.keterangan).html() + '</span>' : '', fmtAmtCell(it.debet, 'debet'), fmtAmtCell(it.kredit, 'kredit'), it.catatan ? '<span class="text-catatan">' + jQuery('<span>').text(it.catatan).html() + '</span>' : ''];
@@ -1217,7 +1573,9 @@ window.addEventListener('load', function() {
     function loadTableList(force, selectTable) {
         if (tablesLoaded && !force) {
             if (selectTable) jQuery('#compare_tabel_penerimaan').val(selectTable);
-            toggleBtns(); return;
+            toggleBtns();
+            validateTabelForImport();
+            return;
         }
         jQuery.ajax({ url: urlList, type: 'POST', dataType: 'json' }).done(function(res) {
             if (!res || !res.ok) { setStatus('danger', (res && res.message) || 'Gagal memuat daftar tabel.'); return; }
@@ -1227,6 +1585,7 @@ window.addEventListener('load', function() {
             (res.tables || []).forEach(function(tbl) { $sel.append(jQuery('<option>', { value: tbl, text: tbl })); });
             if (cur) $sel.val(cur);
             tablesLoaded = true;
+            validateTabelForImport();
         }).always(toggleBtns);
     }
     function runCompare() {
@@ -1295,11 +1654,32 @@ window.addEventListener('load', function() {
         var f = this.files && this.files[0];
         if (f) { jQuery(this).next('.custom-file-label').text(f.name); importCsv(f); }
     });
-    jQuery('#compare_bulan_penerimaan, #compare_tahun_penerimaan, #compare_tabel_penerimaan').on('change', toggleBtns);
+    jQuery('#compare_tabel_penerimaan').on('change', function() {
+        toggleBtns();
+        validateTabelForImport();
+    });
+    jQuery('#compare_bulan_penerimaan, #compare_tahun_penerimaan').on('change', function() {
+        var b = parseInt(jQuery('#compare_bulan_penerimaan').val(), 10);
+        var t = parseInt(jQuery('#compare_tahun_penerimaan').val(), 10);
+        if (b && t) {
+            var bulanNames = <?php echo json_encode($nama_bulan_id); ?>;
+            var labelText = (bulanNames[b] || b) + ' ' + t;
+            jQuery('#compare-penerimaan-label-bulan').text(labelText);
+        }
+        toggleBtns();
+        if (jQuery('#compare_tabel_penerimaan').val()) {
+            validateTabelForImport();
+        }
+    });
     jQuery('#btn-compare-penerimaan-kas').on('click', runCompare);
     jQuery('#btn-compare-penerimaan-excel-all').on('click', function() { exportExcel('semua'); });
     jQuery(document).on('click', '.btn-compare-penerimaan-excel', function() { exportExcel(jQuery(this).data('jenis')); });
-    jQuery('#tab-compare-penerimaan-kas').on('shown.bs.tab', function() { loadTableList(false); });
+    jQuery('#btn-compare-penerimaan-tabel-detail').on('click', openTabelDetailModal);
+    jQuery('#btn-compare-penerimaan-tabel-import').on('click', importTabelToPenerimaanKas);
+    jQuery('#tab-compare-penerimaan-kas').on('shown.bs.tab', function() {
+        loadTableList(false);
+        validateTabelForImport();
+    });
     jQuery('#btn-compare-penerimaan-csv-cek-data').on('click', function() {
         var tbl = (csvLast && csvLast.table) || jQuery('#compare_tabel_penerimaan').val();
         if (!tbl) { alert('Belum ada tabel.'); return; }
@@ -1317,7 +1697,10 @@ window.addEventListener('load', function() {
             $t.DataTable({ data: rows, scrollX: true, pageLength: 25 });
         });
     });
-    if (jQuery('#tab-compare-penerimaan-kas').hasClass('active')) loadTableList(false);
+    if (jQuery('#tab-compare-penerimaan-kas').hasClass('active')) {
+        loadTableList(false);
+        validateTabelForImport();
+    }
     toggleBtns();
 });
 </script>

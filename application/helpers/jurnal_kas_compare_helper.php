@@ -1272,3 +1272,632 @@ function jurnal_kas_compare_import_csv_to_db($CI, $filepath, $original_filename,
 			. 'Silahkan lanjut compare menggunakan tabel ini.',
 	);
 }
+
+function jurnal_kas_compare_load_import_helpers($CI)
+{
+	if (is_object($CI)) {
+		$CI->load->helper('penjualan_jurnal_compare');
+	}
+}
+
+function jurnal_kas_compare_import_field_definitions()
+{
+	return array(
+		'tanggal' => array('label' => 'tanggal', 'required' => true, 'aliases' => array('tanggal', 'tgl', 'date', 'tgl_transaksi')),
+		'keterangan' => array('label' => 'keterangan', 'required' => true, 'aliases' => array('keterangan', 'ket', 'uraian', 'deskripsi')),
+		'bukti' => array('label' => 'bukti', 'required' => false, 'aliases' => array('bukti', 'no_bukti', 'nobukti', 'no bukti')),
+		'kode_rekening' => array('label' => 'kode_rekening', 'required' => false, 'aliases' => array('kode_rekening', 'kode_rek', 'kode_akun', 'kode akun', 'kode rekening', 'rek', 'rekening', 'no_rek', 'kode')),
+		'debet' => array('label' => 'debet', 'required' => false, 'aliases' => array('debet', 'debit')),
+		'kredit' => array('label' => 'kredit', 'required' => false, 'aliases' => array('kredit', 'credit')),
+	);
+}
+
+function jurnal_kas_compare_is_import_row_saveable($row)
+{
+	$tanggal = pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '');
+	if ($tanggal === '' || $tanggal === '0000-00-00') {
+		return false;
+	}
+	if (trim((string) (isset($row['keterangan']) ? $row['keterangan'] : '')) === '') {
+		return false;
+	}
+	$deb = jurnal_kas_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0);
+	$kre = jurnal_kas_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0);
+
+	return ($deb > 0 || $kre > 0);
+}
+
+function jurnal_kas_compare_import_row_saveable_reasons($row)
+{
+	$reasons = array();
+	if (pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '') === '') {
+		$reasons[] = 'tanggal kosong/tidak valid';
+	}
+	if (trim((string) (isset($row['keterangan']) ? $row['keterangan'] : '')) === '') {
+		$reasons[] = 'keterangan kosong';
+	}
+	if (jurnal_kas_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0) <= 0
+		&& jurnal_kas_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0) <= 0) {
+		$reasons[] = 'debet dan kredit kosong';
+	}
+
+	return $reasons;
+}
+
+function jurnal_kas_compare_analyze_import_column_map($fields)
+{
+	if (!is_array($fields) || count($fields) === 0) {
+		return array('ok' => false, 'message' => 'Tabel tidak memiliki kolom.');
+	}
+
+	$normalized = array();
+	foreach ($fields as $field) {
+		$normalized[] = trim((string) $field);
+	}
+
+	$defs = jurnal_kas_compare_import_field_definitions();
+	$map = array(
+		'tanggal' => penjualan_jurnal_compare_pick_tanggal_column($normalized),
+		'bukti' => persediaan_compare_pick_column($normalized, $defs['bukti']['aliases']),
+		'keterangan' => persediaan_compare_pick_column($normalized, $defs['keterangan']['aliases']),
+		'kode_rekening' => persediaan_compare_pick_column($normalized, $defs['kode_rekening']['aliases']),
+		'debet' => persediaan_compare_pick_column($normalized, $defs['debet']['aliases']),
+		'kredit' => persediaan_compare_pick_column($normalized, $defs['kredit']['aliases']),
+	);
+
+	$missing_required = array();
+	$mapped = array();
+	foreach ($defs as $key => $def) {
+		if (!empty($map[$key])) {
+			$mapped[$key] = $map[$key];
+		} elseif (!empty($def['required'])) {
+			$missing_required[] = $def['label'];
+		}
+	}
+
+	if (empty($map['debet']) && empty($map['kredit'])) {
+		$missing_required[] = 'debet atau kredit';
+	}
+
+	$ok = count($missing_required) === 0;
+	$message = '';
+	if (!$ok) {
+		$message = 'Kolom wajib tidak ditemukan: ' . implode(', ', $missing_required)
+			. '. Kolom import minimal: tanggal, keterangan, debet atau kredit.';
+	}
+
+	return array(
+		'ok' => $ok,
+		'map' => $map,
+		'mapped' => $mapped,
+		'missing_required' => $missing_required,
+		'fields' => $normalized,
+		'message' => $message,
+	);
+}
+
+function jurnal_kas_compare_validate_import_table($CI, $table)
+{
+	jurnal_kas_compare_load_import_helpers($CI);
+
+	if (!persediaan_compare_is_valid_table_name($table)) {
+		return array('ok' => false, 'message' => 'Nama tabel tidak valid.');
+	}
+	if (!$CI->db->table_exists($table)) {
+		return array('ok' => false, 'message' => 'Tabel tidak ditemukan di database.');
+	}
+
+	$fields = $CI->db->list_fields($table);
+	$analysis = jurnal_kas_compare_analyze_import_column_map($fields);
+	if (empty($analysis['ok'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($analysis['message']) ? $analysis['message'] : 'Struktur tabel tidak valid untuk import jurnal kas.',
+			'missing_fields' => isset($analysis['missing_required']) ? $analysis['missing_required'] : array(),
+			'fields' => $fields,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'map' => $analysis['map'],
+		'fields' => $fields,
+		'mapped' => $analysis['mapped'],
+		'missing_fields' => array(),
+	);
+}
+
+function jurnal_kas_compare_import_row_from_db($row, $map, $ref_month = 0, $ref_year = 0)
+{
+	$tanggal_raw = !empty($map['tanggal']) ? persediaan_compare_row_get($row, $map['tanggal']) : '';
+	$tanggal_norm = jurnal_kas_compare_normalize_tanggal_for_db($tanggal_raw, $ref_month, $ref_year);
+
+	return array(
+		'tanggal' => $tanggal_norm,
+		'bukti' => trim((string) (!empty($map['bukti']) ? persediaan_compare_row_get($row, $map['bukti']) : '')),
+		'keterangan' => trim((string) (!empty($map['keterangan']) ? persediaan_compare_row_get($row, $map['keterangan']) : '')),
+		'kode_rekening' => trim((string) (!empty($map['kode_rekening']) ? persediaan_compare_row_get($row, $map['kode_rekening']) : '')),
+		'debet' => jurnal_kas_compare_normalize_jumlah(!empty($map['debet']) ? persediaan_compare_row_get($row, $map['debet']) : 0),
+		'kredit' => jurnal_kas_compare_normalize_jumlah(!empty($map['kredit']) ? persediaan_compare_row_get($row, $map['kredit']) : 0),
+	);
+}
+
+function jurnal_kas_compare_make_jurnal_kas_duplicate_key($row)
+{
+	$tanggal = pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '');
+
+	return $tanggal
+		. '|' . jurnal_kas_compare_normalize_keterangan(isset($row['keterangan']) ? $row['keterangan'] : '')
+		. '|' . jurnal_kas_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0)
+		. '|' . jurnal_kas_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0);
+}
+
+function jurnal_kas_compare_validate_table_for_import($CI, $table, $bulan)
+{
+	jurnal_kas_compare_load_import_helpers($CI);
+
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_kas_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array(
+			'ok' => true,
+			'eligible' => false,
+			'import_enabled' => false,
+			'bulan_match' => false,
+			'message' => isset($valid['message']) ? $valid['message'] : 'Tabel tidak memenuhi syarat import.',
+			'missing_fields' => isset($valid['missing_fields']) ? $valid['missing_fields'] : array(),
+			'table' => $table,
+			'bulan' => $bulan,
+		);
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+
+	$with_tanggal = 0;
+	$in_bulan = 0;
+	$out_bulan = 0;
+	$empty_tanggal = 0;
+	$saveable_in_bulan = 0;
+	$invalid_in_bulan = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_kas_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+			$empty_tanggal++;
+			continue;
+		}
+		$with_tanggal++;
+		if (jurnal_kas_compare_row_matches_bulan($tanggal_norm, $bulan)) {
+			$in_bulan++;
+			if (jurnal_kas_compare_is_import_row_saveable($item)) {
+				$saveable_in_bulan++;
+			} else {
+				$invalid_in_bulan++;
+			}
+		} else {
+			$out_bulan++;
+		}
+	}
+
+	$import_enabled = ($saveable_in_bulan > 0);
+	$bulan_match = $import_enabled;
+	$import_message = '';
+	if ($import_enabled) {
+		$import_message = 'Siap disimpan ke jurnal_kas: ' . $saveable_in_bulan . ' baris valid pada bulan terpilih.';
+		if ($out_bulan > 0) {
+			$import_message .= ' (' . $out_bulan . ' baris di luar bulan akan dilewati.)';
+		}
+		if ($invalid_in_bulan > 0) {
+			$import_message .= ' (' . $invalid_in_bulan . ' baris bulan terpilih tidak valid: tanggal/keterangan/debet-kredit kosong.)';
+		}
+	} elseif ($in_bulan > 0) {
+		$import_message = 'Ada ' . $in_bulan . ' baris pada bulan terpilih, tetapi tidak ada yang memenuhi syarat: tanggal, keterangan, dan debet atau kredit terisi.';
+	} elseif ($out_bulan > 0) {
+		$import_message = 'Tidak ada data dengan tanggal pada bulan terpilih. (' . $out_bulan . ' baris tanggalnya di bulan lain.)';
+	} else {
+		$import_message = 'Tidak ada data dengan tanggal valid pada tabel ini.';
+	}
+
+	$conflict = jurnal_kas_compare_build_jurnal_kas_bulan_conflict($CI, $table, $map, $ref_month, $ref_year);
+
+	return array(
+		'ok' => true,
+		'eligible' => true,
+		'import_enabled' => $import_enabled,
+		'bulan_match' => $bulan_match,
+		'import_message' => $import_message,
+		'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal kas (tanggal, keterangan, debet/kredit).',
+		'map' => $map,
+		'mapped' => isset($valid['mapped']) ? $valid['mapped'] : array(),
+		'table' => $table,
+		'bulan' => $bulan,
+		'jurnal_kas_bulan_conflict' => !empty($conflict['jurnal_kas_bulan_conflict']),
+		'first_row_bulan' => isset($conflict['first_row_bulan']) ? $conflict['first_row_bulan'] : '',
+		'first_row_bulan_label' => isset($conflict['first_row_bulan_label']) ? $conflict['first_row_bulan_label'] : '',
+		'first_row_tanggal' => isset($conflict['first_row_tanggal']) ? $conflict['first_row_tanggal'] : '',
+		'jurnal_kas_existing_count' => isset($conflict['jurnal_kas_existing_count']) ? (int) $conflict['jurnal_kas_existing_count'] : 0,
+		'conflict_warning' => isset($conflict['conflict_warning']) ? $conflict['conflict_warning'] : '',
+		'stats' => array(
+			'total_rows' => count($all_rows),
+			'with_tanggal' => $with_tanggal,
+			'in_bulan' => $in_bulan,
+			'out_bulan' => $out_bulan,
+			'empty_tanggal' => $empty_tanggal,
+			'saveable_in_bulan' => $saveable_in_bulan,
+			'invalid_in_bulan' => $invalid_in_bulan,
+		),
+	);
+}
+
+function jurnal_kas_compare_load_table_detail_for_bulan($CI, $table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_kas_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return $valid;
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$items = array();
+	$no = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_kas_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_kas_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			continue;
+		}
+		$no++;
+		$debet = (int) $item['debet'];
+		$kredit = (int) $item['kredit'];
+		$items[] = array(
+			'no' => $no,
+			'tanggal' => pembelian_jurnal_compare_format_tanggal_display($item['tanggal']),
+			'bukti' => $item['bukti'],
+			'keterangan' => $item['keterangan'],
+			'kode_rekening' => $item['kode_rekening'],
+			'debet' => $debet > 0 ? jurnal_kas_compare_format_jumlah_display($debet) : '',
+			'kredit' => $kredit > 0 ? jurnal_kas_compare_format_jumlah_display($kredit) : '',
+			'debet_raw' => $debet,
+			'kredit_raw' => $kredit,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'headers' => array('No', 'Tanggal', 'Bukti', 'Keterangan', 'Kode Rekening', 'Debet', 'Kredit'),
+		'rows' => $items,
+		'table' => $table,
+		'bulan' => $bulan,
+		'bulan_label' => $range ? $range['bulan_label'] : $bulan,
+		'total' => count($items),
+	);
+}
+
+function jurnal_kas_compare_get_first_record_bulan_info($CI, $table, $map, $ref_month, $ref_year)
+{
+	$row = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY `id` ASC LIMIT 1')->row();
+	if (!$row) {
+		return null;
+	}
+
+	$item = jurnal_kas_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+	$tanggal = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+	if ($tanggal === '' || $tanggal === '0000-00-00') {
+		return null;
+	}
+
+	$bulan_key = substr($tanggal, 0, 7);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_key)) {
+		return null;
+	}
+
+	$range = persediaan_compare_bulan_to_date_range($bulan_key);
+
+	return array(
+		'bulan' => $bulan_key,
+		'bulan_label' => $range ? $range['bulan_label'] : $bulan_key,
+		'tanggal' => $tanggal,
+	);
+}
+
+function jurnal_kas_compare_count_jurnal_kas_rows_for_bulan($CI, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return 0;
+	}
+
+	$year = (int) substr($bulan, 0, 4);
+	$month = (int) substr($bulan, 5, 2);
+	$row = $CI->db->query(
+		'SELECT COUNT(*) AS c FROM `jurnal_kas` WHERE YEAR(`tanggal`) = ? AND MONTH(`tanggal`) = ?',
+		array($year, $month)
+	)->row();
+
+	return $row ? (int) $row->c : 0;
+}
+
+function jurnal_kas_compare_build_jurnal_kas_bulan_conflict($CI, $table, $map, $ref_month, $ref_year)
+{
+	$first = jurnal_kas_compare_get_first_record_bulan_info($CI, $table, $map, $ref_month, $ref_year);
+	if ($first === null) {
+		return array(
+			'jurnal_kas_bulan_conflict' => false,
+			'first_row_bulan' => '',
+			'first_row_bulan_label' => '',
+			'first_row_tanggal' => '',
+			'jurnal_kas_existing_count' => 0,
+			'conflict_warning' => '',
+		);
+	}
+
+	$existing_count = jurnal_kas_compare_count_jurnal_kas_rows_for_bulan($CI, $first['bulan']);
+	$conflict = ($existing_count > 0);
+	$warning = '';
+	if ($conflict) {
+		$warning = 'Perhatian: record pertama tabel ini berada pada '
+			. $first['bulan_label']
+			. ' (' . pembelian_jurnal_compare_format_tanggal_display($first['tanggal']) . '). '
+			. 'Di tabel jurnal_kas sudah ada ' . $existing_count . ' data pada bulan/tahun tersebut. '
+			. 'Proses simpan akan menambahkan semua baris apa adanya — berisiko data bentrok atau duplikasi. '
+			. 'Pastikan data di jurnal_kas sudah siap menerima data baru (hapus/backup data lama bila perlu).';
+	}
+
+	return array(
+		'jurnal_kas_bulan_conflict' => $conflict,
+		'first_row_bulan' => $first['bulan'],
+		'first_row_bulan_label' => $first['bulan_label'],
+		'first_row_tanggal' => $first['tanggal'],
+		'jurnal_kas_existing_count' => $existing_count,
+		'conflict_warning' => $warning,
+	);
+}
+
+/**
+ * Tanggal key saldo akhir di jurnal_kas_saldo_akhir_bulan:
+ * tanggal-01 bulan berikutnya dari bulan terpilih (Jan 2026 → 2026-02-01).
+ */
+function jurnal_kas_compare_saldo_akhir_tanggal_for_bulan($bulan)
+{
+	if (!preg_match('/^(\d{4})-(\d{2})$/', (string) $bulan, $m)) {
+		return '';
+	}
+
+	$year = (int) $m[1];
+	$month = (int) $m[2];
+	$month++;
+	if ($month > 12) {
+		$month = 1;
+		$year++;
+	}
+
+	return sprintf('%04d-%02d-01', $year, $month);
+}
+
+function jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan, $saldo_akhir)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid untuk saldo akhir.');
+	}
+
+	if (!$CI->db->table_exists('jurnal_kas_saldo_akhir_bulan')) {
+		return array('ok' => false, 'message' => 'Tabel `jurnal_kas_saldo_akhir_bulan` tidak ditemukan.');
+	}
+
+	$tanggal = jurnal_kas_compare_saldo_akhir_tanggal_for_bulan($bulan);
+	if ($tanggal === '') {
+		return array('ok' => false, 'message' => 'Tanggal saldo akhir tidak dapat ditentukan.');
+	}
+
+	$CI->load->model('Jurnal_kas_saldo_akhir_bulan_model');
+	$saldo_value = round((float) $saldo_akhir, 2);
+
+	$CI->db->where('tanggal', $tanggal);
+	$query = $CI->db->get('jurnal_kas_saldo_akhir_bulan');
+
+	if ($query->num_rows() > 0) {
+		$CI->Jurnal_kas_saldo_akhir_bulan_model->update(
+			$query->row()->id,
+			array('saldo' => $saldo_value)
+		);
+		$action = 'update';
+	} else {
+		$CI->Jurnal_kas_saldo_akhir_bulan_model->insert(array(
+			'tanggal' => $tanggal,
+			'saldo' => $saldo_value,
+		));
+		$action = 'insert';
+	}
+
+	return array(
+		'ok' => true,
+		'action' => $action,
+		'tanggal' => $tanggal,
+		'saldo' => $saldo_value,
+	);
+}
+
+function jurnal_kas_compare_import_to_jurnal_kas($CI, $table, $bulan)
+{
+	$status = jurnal_kas_compare_validate_table_for_import($CI, $table, $bulan);
+	if (empty($status['ok'])) {
+		return $status;
+	}
+	if (empty($status['eligible'])) {
+		return array('ok' => false, 'message' => isset($status['message']) ? $status['message'] : 'Tabel tidak memenuhi syarat import.');
+	}
+	if (empty($status['import_enabled'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($status['import_message']) ? $status['import_message'] : 'Data tidak bisa di masukan ke data jurnal kas karena berbeda bulan.',
+		);
+	}
+
+	if (!$CI->db->table_exists('jurnal_kas')) {
+		return array('ok' => false, 'message' => 'Tabel `jurnal_kas` tidak ditemukan di database.');
+	}
+
+	$CI->load->model('Jurnal_kas_model');
+	$valid = jurnal_kas_compare_validate_import_table($CI, $table);
+	$map = $valid['map'];
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$inserted = 0;
+	$skipped_out_bulan = 0;
+	$skipped_invalid = 0;
+
+	$CI->db->trans_start();
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_kas_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_kas_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			$skipped_out_bulan++;
+			continue;
+		}
+		if (!jurnal_kas_compare_is_import_row_saveable($item)) {
+			$skipped_invalid++;
+			continue;
+		}
+
+		$tanggal_db = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		$data = array(
+			'tanggal' => $tanggal_db . ' ' . date('H:i:s'),
+			'bukti' => $item['bukti'] !== '' ? $item['bukti'] : null,
+			'keterangan' => substr($item['keterangan'], 0, 103),
+			'kode_rekening' => $item['kode_rekening'] !== '' ? $item['kode_rekening'] : null,
+			'debet' => $item['debet'] > 0 ? $item['debet'] : null,
+			'kredit' => $item['kredit'] > 0 ? $item['kredit'] : null,
+		);
+
+		$CI->Jurnal_kas_model->insert($data);
+		$inserted++;
+	}
+
+	// Saldo akhir Kas Bulan terpilih → jurnal_kas_saldo_akhir_bulan (tanggal = bulan+1)
+	$CI->load->helper('jurnal_kas_list');
+	$summary = jurnal_kas_compute_list_data($CI, $ref_month, $ref_year);
+	$saldo_result = jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan, $summary['SALDO_AKHIR']);
+
+	$CI->db->trans_complete();
+
+	if ($CI->db->trans_status() === FALSE) {
+		return array('ok' => false, 'message' => 'Gagal menyimpan data ke jurnal_kas.');
+	}
+
+	$conflict = jurnal_kas_compare_build_jurnal_kas_bulan_conflict($CI, $table, $map, $ref_month, $ref_year);
+	$message = 'Berhasil menambahkan ' . $inserted . ' data ke jurnal_kas (semua baris valid disimpan apa adanya).';
+	if ($skipped_out_bulan > 0) {
+		$message .= ' ' . $skipped_out_bulan . ' baris di luar bulan terpilih tidak disimpan.';
+	}
+	if ($skipped_invalid > 0) {
+		$message .= ' ' . $skipped_invalid . ' baris tidak valid (tanggal/keterangan/debet-kredit kosong) tidak disimpan.';
+	}
+	if (!empty($saldo_result['ok'])) {
+		$bulan_nama = jurnal_kas_bulan_teks($ref_month);
+		$action_label = ($saldo_result['action'] === 'insert') ? 'disimpan' : 'diperbarui';
+		$message .= ' Saldo akhir Kas Bulan ' . $bulan_nama . ' ' . $ref_year
+			. ' (' . number_format((float) $saldo_result['saldo'], 2, ',', '.') . ') '
+			. $action_label . ' ke jurnal_kas_saldo_akhir_bulan tanggal ' . $saldo_result['tanggal'] . '.';
+	} elseif (!empty($saldo_result['message'])) {
+		$message .= ' Peringatan saldo akhir: ' . $saldo_result['message'];
+	}
+	if (!empty($conflict['jurnal_kas_bulan_conflict'])) {
+		$message .= ' Catatan: jurnal_kas sudah memiliki '
+			. (int) $conflict['jurnal_kas_existing_count']
+			. ' data pada ' . $conflict['first_row_bulan_label'] . '.';
+	}
+
+	return array(
+		'ok' => true,
+		'inserted' => $inserted,
+		'skipped_out_bulan' => $skipped_out_bulan,
+		'skipped_invalid' => $skipped_invalid,
+		'saldo_akhir' => isset($summary['SALDO_AKHIR']) ? (float) $summary['SALDO_AKHIR'] : null,
+		'saldo_tanggal' => !empty($saldo_result['tanggal']) ? $saldo_result['tanggal'] : '',
+		'saldo_saved' => !empty($saldo_result['ok']),
+		'jurnal_kas_bulan_conflict' => !empty($conflict['jurnal_kas_bulan_conflict']),
+		'conflict_warning' => isset($conflict['conflict_warning']) ? $conflict['conflict_warning'] : '',
+		'message' => $message,
+	);
+}
+
+function jurnal_kas_compare_export_table_detail_excel($CI, $table, $bulan)
+{
+	@set_time_limit(600);
+	@ini_set('memory_limit', '512M');
+	$CI->load->helper(array('exportexcel', 'pembelian_persediaan'));
+
+	$result = jurnal_kas_compare_load_table_detail_for_bulan($CI, $table, $bulan);
+	if (empty($result['ok'])) {
+		xlsBOF();
+		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Export Excel gagal.');
+		xlsEOF();
+		return;
+	}
+
+	$headers = isset($result['headers']) ? $result['headers'] : array();
+	$rows = isset($result['rows']) ? $result['rows'] : array();
+	$bulan_label = isset($result['bulan_label']) ? $result['bulan_label'] : $bulan;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, 'Detail Tabel ' . $table . ' — Bulan ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+
+	$headerRow = 3;
+	foreach ($headers as $col => $label) {
+		xlsWriteCellStyle($headerRow, $col, $label, 2);
+	}
+
+	$rowNum = $headerRow + 1;
+	foreach ($rows as $item) {
+		xlsWriteNumber($rowNum, 0, isset($item['no']) ? (int) $item['no'] : 0, 'center');
+		xlsWriteLabel($rowNum, 1, isset($item['tanggal']) ? $item['tanggal'] : '');
+		xlsWriteLabel($rowNum, 2, isset($item['bukti']) ? $item['bukti'] : '');
+		xlsWriteLabel($rowNum, 3, isset($item['keterangan']) ? $item['keterangan'] : '');
+		xlsWriteLabel($rowNum, 4, isset($item['kode_rekening']) ? $item['kode_rekening'] : '');
+		$deb = isset($item['debet_raw']) ? (int) $item['debet_raw'] : 0;
+		$kre = isset($item['kredit_raw']) ? (int) $item['kredit_raw'] : 0;
+		if ($deb > 0) {
+			xlsWriteRupiah($rowNum, 5, $deb);
+		} else {
+			xlsWriteLabel($rowNum, 5, '');
+		}
+		if ($kre > 0) {
+			xlsWriteRupiah($rowNum, 6, $kre);
+		} else {
+			xlsWriteLabel($rowNum, 6, '');
+		}
+		$rowNum++;
+	}
+
+	if (count($rows) > 0) {
+		$totalDeb = 0;
+		$totalKre = 0;
+		foreach ($rows as $item) {
+			$totalDeb += isset($item['debet_raw']) ? (int) $item['debet_raw'] : 0;
+			$totalKre += isset($item['kredit_raw']) ? (int) $item['kredit_raw'] : 0;
+		}
+		xlsWriteCellStyle($rowNum, 0, 'Total', 9);
+		for ($c = 1; $c <= 4; $c++) {
+			xlsWriteLabel($rowNum, $c, '');
+		}
+		xlsWriteCellStyle($rowNum, 5, $totalDeb > 0 ? $totalDeb : '', 10);
+		xlsWriteCellStyle($rowNum, 6, $totalKre > 0 ? $totalKre : '', 10);
+	}
+
+	xlsSetColumnWidths(array(6, 14, 10, 40, 14, 14, 14));
+	xlsEOF();
+}

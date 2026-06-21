@@ -9,19 +9,24 @@ class Jurnal_kas extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Jurnal_kas_model', 'Buku_besar_model', 'Jurnal_kas_saldo_akhir_bulan_model'));
+        $this->load->model(array(
+            'Jurnal_kas_model',
+            'Buku_besar_model',
+            'Jurnal_kas_saldo_akhir_bulan_model',
+            'Jurnal_penerimaan_kas_model',
+            'Jurnal_pengeluaran_kas_model',
+        ));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
 
     public function index()
     {
-
-        // $Data_kas = $this->Jurnal_kas_model->get_all();
-        // $start = 0;
-
-        // print_r($Data_kas);
-
+        $saved_bulan = $this->_jurnal_kas_get_bulan_from_session();
+        if ($saved_bulan) {
+            redirect(site_url('Jurnal_kas/cari_between_date/' . $saved_bulan['year'] . '/' . $saved_bulan['month']));
+            return;
+        }
 
         $Get_date_awal = date("Y-m-1 00:00:00");
         // print_r($Get_date_awal);
@@ -48,8 +53,8 @@ class Jurnal_kas extends CI_Controller
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
-            'month_selected' => date("m"),
-            'year_selected' => date("Y"),
+            'month_selected' => (int) date('m'),
+            'year_selected' => (int) date('Y'),
         ));
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
@@ -66,6 +71,20 @@ class Jurnal_kas extends CI_Controller
             $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
             $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
         }
+
+        $Get_month_selected = (int) $Get_month_selected;
+        $Get_YEAR_selected = (int) $Get_YEAR_selected;
+
+        if ($Get_month_selected < 1 || $Get_month_selected > 12 || $Get_YEAR_selected < 2000) {
+            $Get_month_selected = (int) date('m');
+            $Get_YEAR_selected = (int) date('Y');
+        }
+
+        $this->_jurnal_kas_save_bulan_session($Get_YEAR_selected, $Get_month_selected);
+
+        $Get_date_awal = date('Y-m-01 00:00:00', strtotime($Get_YEAR_selected . '-' . str_pad((string) $Get_month_selected, 2, '0', STR_PAD_LEFT) . '-01'));
+        $Get_date_akhir = date('Y-m-t 23:59:59', strtotime($Get_date_awal));
+        $Get_month_akhir = $Get_month_selected;
 
         $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
 
@@ -120,9 +139,9 @@ class Jurnal_kas extends CI_Controller
 
         $data = $this->_jurnal_kas_view_data(array(
             'Data_kas' => $Data_kas,
-            'date_awal' => isset($Get_date_awal) ? $Get_date_awal : date("Y-m-1 00:00:00"),
-            'date_akhir' => isset($Get_date_akhir) ? $Get_date_akhir : date("Y-m-t 23:59:59"),
-            'month_akhir' => isset($Get_month_akhir) ? $Get_month_akhir : $Get_month_selected,
+            'date_awal' => $Get_date_awal,
+            'date_akhir' => $Get_date_akhir,
+            'month_akhir' => $Get_month_akhir,
             'month_selected' => $Get_month_selected,
             'year_selected' => $Get_YEAR_selected,
         ));
@@ -132,31 +151,22 @@ class Jurnal_kas extends CI_Controller
 
     public function Jurnal_penerimaan_kas()
     {
+        $this->load->helper('penerimaan_kas_list');
 
-        $Get_date_awal = date("Y-m-1 00:00:00");
-        // print_r($Get_date_awal);
-        // print_r("<br/>");
+        $Get_date_awal = date('Y-m-1 00:00:00');
+        $Get_date_akhir = date('Y-m-t 23:59:59');
+        $Get_month_akhir = date('m');
 
-        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-        // print_r($Get_month);
-        // print_r("<br/>");
-
-        // die;
-
-
-
-        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
+        $penerimaan_list = penerimaan_kas_compute_list_data($this, $Get_date_awal, $Get_date_akhir);
 
         $data = $this->_penerimaan_kas_view_data(array(
-            'Data_kas' => $Data_kas,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'penerimaan_rows' => $penerimaan_list['rows'],
+            'TOTAL_debet_11101_SEMUA' => $penerimaan_list['TOTAL_debet_11101_SEMUA'],
+            'TOTAL_kredit_11301_SEMUA' => $penerimaan_list['TOTAL_kredit_11301_SEMUA'],
+            'TOTAL_kredit_jumlah_SEMUA' => $penerimaan_list['TOTAL_kredit_jumlah_SEMUA'],
         ));
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
     }
@@ -164,109 +174,138 @@ class Jurnal_kas extends CI_Controller
 
     public function Jurnal_penerimaan_kas_cari_between_date()
     {
+        $this->load->helper('penerimaan_kas_list');
 
-        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-            // $Get_date_awal = date("Y-m-d 00:00:00");
-            $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-        } else {
-            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+        $Get_date_awal = penerimaan_kas_parse_filter_date($this->input->post('tgl_awal', TRUE), false);
+        $Get_date_akhir = penerimaan_kas_parse_filter_date($this->input->post('tgl_akhir', TRUE), true);
+
+        if ($Get_date_awal === null) {
+            $Get_date_awal = date('Y-m-d 00:00:00');
+        }
+        if ($Get_date_akhir === null) {
+            $Get_date_akhir = date('Y-m-t 23:59:59');
         }
 
-        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-            $Get_date_akhir = date("Y-m-d 00:00:00");
-            $Get_month_akhir = date("m");
-        } else {
-            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
-        }
+        list($Get_date_awal, $Get_date_akhir) = penerimaan_kas_normalize_filter_range($Get_date_awal, $Get_date_akhir);
+        $Get_month_akhir = (int) date('m', strtotime($Get_date_akhir));
 
-
-
-        $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `debet`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        // $sql_kas_penerimaan = "SELECT * FROM `jurnal_kas` WHERE `debet`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        $Data_kas = $this->db->query($sql_kas_penerimaan)->result();
-
+        $penerimaan_list = penerimaan_kas_compute_list_data($this, $Get_date_awal, $Get_date_akhir);
 
         $data = $this->_penerimaan_kas_view_data(array(
-            'Data_kas' => $Data_kas,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'penerimaan_rows' => $penerimaan_list['rows'],
+            'TOTAL_debet_11101_SEMUA' => $penerimaan_list['TOTAL_debet_11101_SEMUA'],
+            'TOTAL_kredit_11301_SEMUA' => $penerimaan_list['TOTAL_kredit_11301_SEMUA'],
+            'TOTAL_kredit_jumlah_SEMUA' => $penerimaan_list['TOTAL_kredit_jumlah_SEMUA'],
         ));
 
-        // print_r($data);
-
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_penerimaan_kas', $data);
+    }
+
+    public function ajax_penerimaan_kas_input_action()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penerimaan_kas_list'));
+
+        $result = penerimaan_kas_save_from_post($this);
+        persediaan_ajax_json_output($this, $result);
     }
 
 
 
     public function Jurnal_pengeluaran_kas()
     {
+        $this->load->helper('pengeluaran_kas_list');
 
+        $Get_date_awal = date('Y-m-1 00:00:00');
+        $Get_date_akhir = date('Y-m-t 23:59:59');
+        $Get_month_akhir = date('m');
 
-        $Get_date_awal = date("Y-m-1 00:00:00");
-        // print_r($Get_date_awal);
-        // print_r("<br/>");
-
-        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-        // print_r($Get_month);
-        // print_r("<br/>");
-
-        // die;
-
-
-
-        $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        // $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        $Data_kas = $this->db->query($sql_kas_pengeluaran)->result();
+        $pengeluaran_list = pengeluaran_kas_compute_list_data($this, $Get_date_awal, $Get_date_akhir);
 
         $data = $this->_pengeluaran_kas_view_data(array(
-            'Data_kas' => $Data_kas,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'pengeluaran_rows' => $pengeluaran_list['rows'],
+            'TOTAL_debet_21101_SEMUA' => $pengeluaran_list['TOTAL_debet_21101_SEMUA'],
+            'TOTAL_serba_serbi_jumlah_SEMUA' => $pengeluaran_list['TOTAL_serba_serbi_jumlah_SEMUA'],
+            'TOTAL_kredit_11101_SEMUA' => $pengeluaran_list['TOTAL_kredit_11101_SEMUA'],
         ));
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas', $data);
     }
 
     public function Jurnal_pengeluaran_kas_cari_between_date()
     {
+        $this->load->helper('pengeluaran_kas_list');
 
-        if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-            // $Get_date_awal = date("Y-m-d 00:00:00");
+        if (date('Y', strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
             $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
         } else {
-            $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+            $Get_date_awal = date('Y-m-d 00:00:00', strtotime($this->input->post('tgl_awal', TRUE)));
         }
 
-        if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-            $Get_date_akhir = date("Y-m-d 00:00:00");
-            $Get_month_akhir = date("m");
+        if (date('Y', strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
+            $Get_date_akhir = date('Y-m-d 00:00:00');
+            $Get_month_akhir = date('m');
         } else {
-            $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-            $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
+            $Get_date_akhir = date('Y-m-d 23:59:59', strtotime($this->input->post('tgl_akhir', TRUE)));
+            $Get_month_akhir = date('m', strtotime($this->input->post('tgl_akhir', TRUE)));
         }
 
-
-
-        $sql_kas_pengeluaran = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' AND '$Get_date_akhir' AND `kredit`>0 order by `pl`,`tanggal`,`id` ASC";
-
-        $Data_kas = $this->db->query($sql_kas_pengeluaran)->result();
+        $pengeluaran_list = pengeluaran_kas_compute_list_data($this, $Get_date_awal, $Get_date_akhir);
 
         $data = $this->_pengeluaran_kas_view_data(array(
-            'Data_kas' => $Data_kas,
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
             'month_akhir' => $Get_month_akhir,
+            'pengeluaran_rows' => $pengeluaran_list['rows'],
+            'TOTAL_debet_21101_SEMUA' => $pengeluaran_list['TOTAL_debet_21101_SEMUA'],
+            'TOTAL_serba_serbi_jumlah_SEMUA' => $pengeluaran_list['TOTAL_serba_serbi_jumlah_SEMUA'],
+            'TOTAL_kredit_11101_SEMUA' => $pengeluaran_list['TOTAL_kredit_11101_SEMUA'],
         ));
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_pengeluaran_kas', $data);
+    }
+
+    public function ajax_pengeluaran_kas_list()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'pengeluaran_kas_list'));
+
+        $tgl_awal = trim((string) $this->input->post('tgl_awal', TRUE));
+        $tgl_akhir = trim((string) $this->input->post('tgl_akhir', TRUE));
+        persediaan_ajax_json_output($this, pengeluaran_kas_ajax_list_response($this, $tgl_awal, $tgl_akhir));
+    }
+
+    public function ajax_pengeluaran_kas_get()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'pengeluaran_kas_list'));
+
+        $pk = trim((string) $this->input->post('pk', TRUE));
+        persediaan_ajax_json_output($this, pengeluaran_kas_get_record($this, $pk));
+    }
+
+    public function ajax_pengeluaran_kas_save()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'pengeluaran_kas_list'));
+
+        persediaan_ajax_json_output($this, pengeluaran_kas_save_from_post($this));
+    }
+
+    public function ajax_pengeluaran_kas_update()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'pengeluaran_kas_list'));
+
+        persediaan_ajax_json_output($this, pengeluaran_kas_update_from_post($this));
+    }
+
+    public function ajax_pengeluaran_kas_delete()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'pengeluaran_kas_list'));
+
+        $pk = trim((string) $this->input->post('pk', TRUE));
+        persediaan_ajax_json_output($this, pengeluaran_kas_delete_by_pk($this, $pk));
     }
 
 
@@ -502,82 +541,182 @@ class Jurnal_kas extends CI_Controller
 
     public function pemasukan_kas_action()
     {
-        $this->_rules_pemasukan();
-
-        if ($this->form_validation->run() == FALSE) {
+        $result = $this->_pemasukan_kas_save_from_post();
+        if (!$result['ok']) {
+            $this->session->set_flashdata('message', $result['message']);
             $this->pemasukan_kas();
-        } else {
-
-            if (date("Y", strtotime($this->input->post('tanggal', TRUE))) < 2020) {
-                $date_jurnal_kas = date("Y-m-d H:i:s");
-            } else {
-                $date_jurnal_kas = date("Y-m-d H:i:s", strtotime($this->input->post('tanggal', TRUE)));
-            }
-
-            // unIT
-            $this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
-            $sys_unit_data = $this->db->get('sys_unit');
-
-
-
-            if ($sys_unit_data->num_rows() > 0) {
-
-                $Get_unit_data = $sys_unit_data->row_array();
-
-                // $Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
-                $Get_kode_unit = $Get_unit_data['kode_unit'];
-                // $Get_nama_unit = $Get_unit_data['nama_unit'];
-            }
-
-
-            // print_r($this->input->post('uuid_unit', TRUE));
-            // print_r("<br/>");
-            // print_r($sys_unit_data);
-            // print_r("<br/>");
-            // print_r("<br/>");
-            // print_r($Get_unit_data['kode_unit']);
-            // print_r("<br/>");
-            // print_r("<br/>");
-            // print_r($Get_kode_unit);
-            // print_r("<br/>");
-
-            // die;
-
-            if ($this->input->post('bukti', TRUE) == "BKM") {
-                $data = array(
-                    'tanggal' => $date_jurnal_kas,
-                    'bukti' => $this->input->post('bukti', TRUE),
-                    'pl' => $this->input->post('kode_pl', TRUE),
-                    'keterangan' => $this->input->post('keterangan', TRUE),
-                    // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                    'uuid_unit' => $this->input->post('uuid_unit', TRUE),
-                    'kode_unit' => $Get_kode_unit,
-                    'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
-                    // 'kredit' => $this->input->post('kredit', TRUE),
-                );
-            } else {
-                $data = array(
-                    'tanggal' => $date_jurnal_kas,
-                    'bukti' => $this->input->post('bukti', TRUE),
-                    'pl' => $this->input->post('kode_pl', TRUE),
-                    'keterangan' => $this->input->post('keterangan', TRUE),
-                    // 'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                    'uuid_unit' => $this->input->post('uuid_unit', TRUE),
-                    'kode_unit' => $Get_kode_unit,
-                    // 'debet' => str_replace(",", ".", str_replace(".", "", $this->input->post('debet', TRUE))),
-                    'kredit' => str_replace(",", ".", str_replace(".", "", $this->input->post('nominal', TRUE))),
-                );
-            }
-
-
-
-            $this->Jurnal_kas_model->insert($data);
-
-            $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('Jurnal_kas'));
+            return;
         }
+
+        $this->session->set_flashdata('message', 'Create Record Success');
+        redirect(site_url('Jurnal_kas'));
     }
 
+    public function ajax_pemasukan_kas_action()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_penyesuaian_list'));
+
+        $result = $this->_pemasukan_kas_save_from_post();
+        if (!$result['ok']) {
+            persediaan_ajax_json_output($this, $result);
+            return;
+        }
+
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'message' => 'Data jurnal kas berhasil disimpan.',
+            'id' => isset($result['id']) ? $result['id'] : null,
+        ));
+    }
+
+    private function _build_jurnal_kas_input_from_post()
+    {
+        $this->load->helper('jurnal_penyesuaian_list');
+
+        $kode_akun = trim((string) $this->input->post('kode_akun', TRUE));
+        $kode_rekening = trim((string) $this->input->post('kode_rekening', TRUE));
+        $status_proses = trim((string) $this->input->post('status_proses', TRUE));
+        $nominal_raw = $this->input->post('nominal_penyesuaian', TRUE);
+        if ($nominal_raw === '' || $nominal_raw === null) {
+            $nominal_raw = $this->input->post('nominal', TRUE);
+        }
+        $tgl_po_raw = trim((string) $this->input->post('tgl_po', TRUE));
+        if ($tgl_po_raw === '') {
+            $tgl_po_raw = trim((string) $this->input->post('tanggal', TRUE));
+        }
+
+        if ($kode_akun === '') {
+            return array('ok' => false, 'message' => 'Kode akun wajib dipilih.');
+        }
+        if ($kode_rekening === '') {
+            return array('ok' => false, 'message' => 'Kode rekening wajib diisi.');
+        }
+        if ($status_proses !== 'debet' && $status_proses !== 'kredit') {
+            return array('ok' => false, 'message' => 'Pilih Debet atau Kredit.');
+        }
+        if ($nominal_raw === '' || !is_numeric($nominal_raw) || (float) $nominal_raw <= 0) {
+            return array('ok' => false, 'message' => 'Nominal harus diisi dan lebih dari 0.');
+        }
+
+        $date_jurnal_kas = jurnal_penyesuaian_parse_date_input($tgl_po_raw, date('Y-m-d'));
+        $date_jurnal_kas .= ' ' . date('H:i:s');
+
+        $bukti = trim((string) $this->input->post('bukti', TRUE));
+        $pl = trim((string) $this->input->post('pl', TRUE));
+        if ($pl === '') {
+            $pl = trim((string) $this->input->post('kode_pl', TRUE));
+        }
+        $keterangan = trim((string) $this->input->post('keterangan', TRUE));
+        $nominal = (float) $nominal_raw;
+
+        if ($bukti === '') {
+            $bukti = ($status_proses === 'debet') ? 'BKM' : 'BKK';
+        }
+
+        $data_kas = array(
+            'tanggal' => $date_jurnal_kas,
+            'kode_akun' => $kode_akun,
+            'keterangan' => $keterangan,
+            'kode_rekening' => $kode_rekening,
+            'bukti' => $bukti,
+            'pl' => $pl,
+        );
+
+        if ($status_proses === 'debet') {
+            $data_kas['debet'] = $nominal;
+        } else {
+            $data_kas['kredit'] = $nominal;
+        }
+
+        return array(
+            'ok' => true,
+            'data_kas' => $data_kas,
+            'status_proses' => $status_proses,
+            'nominal' => $nominal,
+            'bukti' => $bukti,
+            'pl' => $pl,
+            'keterangan' => $keterangan,
+            'kode_akun' => $kode_akun,
+            'kode_rekening' => $kode_rekening,
+            'tanggal_legacy' => date('d/m/Y', strtotime($date_jurnal_kas)),
+            'nominal_penerimaan_fmt' => number_format($nominal, 2, ',', '.'),
+            'nominal_pengeluaran_raw' => (string) (int) round($nominal),
+        );
+    }
+
+    private function _build_jurnal_penerimaan_kas_row($built)
+    {
+        $row = array(
+            'tanggal' => $built['tanggal_legacy'],
+            'nomorbuktibkm' => $built['bukti'],
+            'pl' => $built['pl'],
+            'keterangan' => $built['keterangan'],
+            'debet_11101_kas_besar' => $built['nominal_penerimaan_fmt'],
+            'kredit_11301_pu_non_angsuran' => $built['nominal_penerimaan_fmt'],
+        );
+
+        if ($built['kode_rekening'] !== '') {
+            $row['serba_serbi_rekening'] = substr($built['kode_rekening'], 0, 5);
+            $row['serba_serbi_jumlah'] = $built['nominal_penerimaan_fmt'];
+        }
+
+        return $row;
+    }
+
+    private function _build_jurnal_pengeluaran_kas_row($built)
+    {
+        $row = array(
+            'tanggal' => $built['tanggal_legacy'],
+            'nomor_bukti_bkk' => $built['bukti'],
+            'pl' => $built['pl'],
+            'keterangan' => $built['keterangan'],
+            'kredit_11101_kas_besar' => $built['nominal_pengeluaran_raw'],
+        );
+
+        $kode_akun_digits = preg_replace('/\D/', '', $built['kode_akun']);
+        $is_serba_serbi = (bool) preg_match('/^511/', $kode_akun_digits);
+
+        if ($is_serba_serbi) {
+            $rek = $built['kode_rekening'] !== '' ? $built['kode_rekening'] : $built['kode_akun'];
+            $row['serba_serbi_nomor_rekening'] = substr(preg_replace('/\D/', '', $rek), 0, 5);
+            $row['serba_serbi_jumlah'] = $built['nominal_pengeluaran_raw'];
+        } else {
+            $row['debet_21101uu_dagang'] = $built['nominal_pengeluaran_raw'];
+        }
+
+        return $row;
+    }
+
+    private function _pemasukan_kas_save_from_post()
+    {
+        $built = $this->_build_jurnal_kas_input_from_post();
+        if (empty($built['ok'])) {
+            return $built;
+        }
+
+        $this->db->trans_start();
+
+        $this->Jurnal_kas_model->insert($built['data_kas']);
+        $insert_id = $this->db->insert_id();
+
+        if ($built['status_proses'] === 'debet') {
+            $this->Jurnal_penerimaan_kas_model->insert($this->_build_jurnal_penerimaan_kas_row($built));
+        } else {
+            $this->Jurnal_pengeluaran_kas_model->insert($this->_build_jurnal_pengeluaran_kas_row($built));
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === FALSE) {
+            return array('ok' => false, 'message' => 'Gagal menyimpan data jurnal kas.');
+        }
+
+        return array(
+            'ok' => true,
+            'id' => $insert_id,
+            'message' => 'Data jurnal kas berhasil disimpan.',
+        );
+    }
 
     public function pemasukan_kas_update($id = null)
     {
@@ -990,224 +1129,16 @@ class Jurnal_kas extends CI_Controller
 
     public function excel($Tahun_selected = null, $Bulan_selected = null)
     {
+        $this->load->helper('jurnal_kas_list');
 
-        $date_sekarang = date('Y-m-d H:i:s');
-        $variabel_date_awal_selected = date('Y-m-d', strtotime('+0 month', strtotime($date_sekarang)));
+        $month = $Bulan_selected ? (int) $Bulan_selected : (int) date('m');
+        $year = $Tahun_selected ? (int) $Tahun_selected : (int) date('Y');
 
-
-
-
-
-        if ($Bulan_selected) {
-            $Get_month_selected = $Bulan_selected;
-            $Get_YEAR_selected = $Tahun_selected;
-        } else {
-            $Get_month_selected = date('m', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
-            $Get_YEAR_selected = date('Y', strtotime('+0 month', strtotime($variabel_date_awal_selected)));
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('m');
         }
 
-
-        $Get_month_from_date = $Get_month_selected;
-        $Get_month_from_date_lalu = $Get_month_selected - 1;
-        $Get_year_Tahun_ini = $Get_YEAR_selected;
-        // $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
-
-        if ($Get_month_selected > 1) {
-            $Tahun_saldo_akhir_bulan_lalu = $Get_YEAR_selected;
-        } else {
-            $Tahun_saldo_akhir_bulan_lalu = $Get_YEAR_selected - 1;
-        }
-
-
-
-        // print_r($Get_month_selected);
-        // print_r("<br/>");
-        // print_r($Get_YEAR_selected);
-        // print_r("<br/>");
-        // die;
-
-        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
-
-        $Data_kas = $this->db->query($sql)->result();
-
-
-        $tgl_sekarang = date("d-m-Y H:i:s");
-
-        function bulan_teks($angka_bulan)
-        {
-            if ($angka_bulan == 1) {
-                $bulan_teks = "Januari";
-            } elseif ($angka_bulan == 2) {
-                $bulan_teks = "Februari";
-            } elseif ($angka_bulan == 3) {
-                $bulan_teks = "Maret";
-            } elseif ($angka_bulan == 4) {
-                $bulan_teks = "April";
-            } elseif ($angka_bulan == 5) {
-                $bulan_teks = "Mei";
-            } elseif ($angka_bulan == 6) {
-                $bulan_teks = "Juni";
-            } elseif ($angka_bulan == 7) {
-                $bulan_teks = "Juli";
-            } elseif ($angka_bulan == 8) {
-                $bulan_teks = "Agustus";
-            } elseif ($angka_bulan == 9) {
-                $bulan_teks = "September";
-            } elseif ($angka_bulan == 10) {
-                $bulan_teks = "Oktober";
-            } elseif ($angka_bulan == 11) {
-                $bulan_teks = "November";
-            } elseif ($angka_bulan == 12) {
-                $bulan_teks = "Desember";
-            } else {
-                $bulan_teks = "";
-            }
-            return $bulan_teks;
-        }
-
-
-
-
-
-        if ($Get_month_selected > 1) {
-            // $Get_month_from_date = $Get_month_from_date_lalu;
-            // echo "Saldo akhir bulan: " . bulan_teks($Get_month_from_date_lalu) . " " . $Get_year_Tahun_ini;
-
-            $Get_Nama_bulan_lalu = bulan_teks($Get_month_from_date_lalu) . " " . $Get_YEAR_selected ;
-
-            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN KEMARIN
-            $Get_bulan_saldo = date("$Get_year_Tahun_ini-$Get_month_from_date_lalu-01");
-
-            $this->db->where('tanggal', $Get_bulan_saldo);
-            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
-
-            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
-                // $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-
-                if ($GET_jurnal_kas_saldo_akhir_bulan->row()->saldo > 0) {
-                    $SALDO_DEBET = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-                    $SALDO_KREDIT = 0;
-                } else {
-                    $SALDO_KREDIT = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-                    $SALDO_DEBET = 0;
-                }
-            } else {
-                $SALDO_KREDIT = 0;
-                $SALDO_DEBET = 0;
-            }
-        } else {
-
-            // echo "Saldo akhir bulan: Desember " . $Get_year_Setahun_lalu;
-
-            $Get_Nama_bulan_lalu = "Desember " . $Tahun_saldo_akhir_bulan_lalu;
-
-            // GET NOMINAL SALDO DARI TABEL SALDO AKHIR BULAN DESEMBER KEMARIN
-            $Get_bulan_saldo = date("$Get_year_Setahun_lalu-12-01");
-
-            $this->db->where('tanggal', $Get_bulan_saldo);
-            $GET_jurnal_kas_saldo_akhir_bulan = $this->db->get('jurnal_kas_saldo_akhir_bulan');
-
-            if ($GET_jurnal_kas_saldo_akhir_bulan->num_rows() > 0) {
-                // echo $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-                // $SALDO_AKHIR_BULAN_LALU = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-
-                if ($GET_jurnal_kas_saldo_akhir_bulan->row()->saldo > 0) {
-                    $SALDO_DEBET = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-                    $SALDO_KREDIT = 0;
-                } else {
-                    $SALDO_KREDIT = $GET_jurnal_kas_saldo_akhir_bulan->row()->saldo;
-                    $SALDO_DEBET = 0;
-                }
-            } else {
-                // echo "0";
-                // $SALDO_AKHIR_BULAN_LALU = 0;
-
-                $SALDO_KREDIT = 0;
-                $SALDO_DEBET = 0;
-            }
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        $this->load->helper('exportexcel');
-        $namaFile = "jurnal_kas_"  . $Get_month_selected . "_" . $Get_YEAR_selected . "_Dicetak_" . $tgl_sekarang  . ".xls";
-        $judul = "jurnal_kas";
-        $tablehead = 0;
-        $tablebody = 1;
-        $nourut = 1;
-        //penulisan header
-        header("Pragma: public");
-        header("Expires: 0");
-        header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-        header("Content-Type: application/force-download");
-        header("Content-Type: application/octet-stream");
-        header("Content-Type: application/download");
-        header("Content-Disposition: attachment;filename=" . $namaFile . "");
-        header("Content-Transfer-Encoding: binary ");
-
-        xlsBOF();
-
-        $kolomhead = 0;
-        xlsWriteLabel($tablehead, $kolomhead++, "No");
-        xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
-        xlsWriteLabel($tablehead, $kolomhead++, "Bukti");
-        // xlsWriteLabel($tablehead, $kolomhead++, "");
-        xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kode");
-        xlsWriteLabel($tablehead, $kolomhead++, "Debet");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
-
-        // BARIS SALDO BULAN LALU
-
-        $kolombody = 0;
-
-        //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-        xlsWriteNumber($tablebody, $kolombody++, $nourut);
-        xlsWriteLabel($tablebody, $kolombody++, "");
-        xlsWriteLabel($tablebody, $kolombody++, "");
-        // xlsWriteLabel($tablebody, $kolombody++, "");
-        xlsWriteLabel($tablebody, $kolombody++, "SALDO  BULAN: " . $Get_Nama_bulan_lalu);
-        xlsWriteLabel($tablebody, $kolombody++, "");
-        xlsWriteLabel($tablebody, $kolombody++, $SALDO_DEBET);
-        xlsWriteLabel($tablebody, $kolombody++, $SALDO_KREDIT);
-
-        $tablebody++;
-        $nourut++;
-
-        // END OF BARIS SALDO BULAN LALU
-
-
-
-        // foreach ($this->Jurnal_kas_model->get_all() as $data) {
-        foreach ($Data_kas as $data) {
-            $kolombody = 0;
-
-            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-            xlsWriteNumber($tablebody, $kolombody++, $nourut);
-            xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
-            xlsWriteLabel($tablebody, $kolombody++, $data->bukti);
-            // xlsWriteLabel($tablebody, $kolombody++, $data->pl);
-            xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
-            xlsWriteLabel($tablebody, $kolombody++, $data->kode_unit);
-            xlsWriteLabel($tablebody, $kolombody++, $data->debet);
-            xlsWriteLabel($tablebody, $kolombody++, $data->kredit);
-
-            $tablebody++;
-            $nourut++;
-        }
-
-        xlsEOF();
+        jurnal_kas_export_excel_list_output($this, $month, $year);
         exit();
     }
 
@@ -1246,8 +1177,55 @@ class Jurnal_kas extends CI_Controller
         $data['url_compare_penerimaan_kas_validate_csv'] = site_url('Jurnal_kas/ajax_compare_validate_csv_penerimaan_kas');
         $data['url_compare_penerimaan_kas_tabel_list'] = site_url('Jurnal_kas/ajax_compare_tabel_list_penerimaan_kas');
         $data['url_compare_penerimaan_kas_tabel_preview'] = site_url('Jurnal_kas/ajax_compare_tabel_preview_penerimaan_kas');
+        $data['url_compare_penerimaan_kas_tabel_validate'] = site_url('Jurnal_kas/ajax_compare_tabel_validate_penerimaan_kas');
+        $data['url_compare_penerimaan_kas_tabel_detail'] = site_url('Jurnal_kas/ajax_compare_tabel_detail_penerimaan_kas');
+        $data['url_compare_penerimaan_kas_tabel_import'] = site_url('Jurnal_kas/ajax_compare_import_table_to_penerimaan_kas');
+        $data['url_penerimaan_kas_excel'] = site_url('Jurnal_kas/excel_penerimaan_kas');
+        $data['url_ajax_penerimaan_kas_input'] = site_url('Jurnal_kas/ajax_penerimaan_kas_input_action');
+        $data['list_kode_pl'] = $this->db->query('SELECT * FROM `sys_kode_pl` ORDER BY `kode_pl` ASC')->result();
+        $data['can_input_penerimaan_kas'] = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
+        if (!isset($data['penerimaan_rows']) || !is_array($data['penerimaan_rows'])) {
+            $data['penerimaan_rows'] = array();
+        }
+        if (!isset($data['TOTAL_debet_11101_SEMUA'])) {
+            $data['TOTAL_debet_11101_SEMUA'] = 0;
+        }
+        if (!isset($data['TOTAL_kredit_11301_SEMUA'])) {
+            $data['TOTAL_kredit_11301_SEMUA'] = 0;
+        }
+        if (!isset($data['TOTAL_kredit_jumlah_SEMUA'])) {
+            $data['TOTAL_kredit_jumlah_SEMUA'] = 0;
+        }
+        if (!isset($data['modal_pk_tanggal_default'])) {
+            $data['modal_pk_tanggal_default'] = date('d-m-Y');
+        }
 
         return $data;
+    }
+
+    public function excel_penerimaan_kas()
+    {
+        $this->load->helper('penerimaan_kas_list');
+
+        $tgl_awal = trim((string) $this->input->post('tgl_awal', TRUE));
+        $tgl_akhir = trim((string) $this->input->post('tgl_akhir', TRUE));
+
+        if ($tgl_awal === '' || $tgl_akhir === '') {
+            $Get_date_awal = date('Y-m-1 00:00:00');
+            $Get_date_akhir = date('Y-m-t 23:59:59');
+        } else {
+            $Get_date_awal = penerimaan_kas_parse_filter_date($tgl_awal, false);
+            $Get_date_akhir = penerimaan_kas_parse_filter_date($tgl_akhir, true);
+            if ($Get_date_awal === null) {
+                $Get_date_awal = date('Y-m-d 00:00:00');
+            }
+            if ($Get_date_akhir === null) {
+                $Get_date_akhir = date('Y-m-t 23:59:59');
+            }
+        }
+
+        penerimaan_kas_export_excel_list_output($this, $Get_date_awal, $Get_date_akhir);
+        exit();
     }
 
     private function _compare_penerimaan_kas_bulan_from_post()
@@ -1402,6 +1380,119 @@ class Jurnal_kas extends CI_Controller
         persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
     }
 
+    public function ajax_compare_tabel_validate_penerimaan_kas()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'penerimaan_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_penerimaan_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => false,
+                'import_enabled' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            $structure = penerimaan_kas_compare_validate_import_table($this, $table);
+            if (empty($structure['ok'])) {
+                persediaan_ajax_json_output($this, array(
+                    'ok' => true,
+                    'eligible' => false,
+                    'import_enabled' => false,
+                    'message' => isset($structure['message']) ? $structure['message'] : 'Struktur tabel tidak valid.',
+                    'missing_fields' => isset($structure['missing_fields']) ? $structure['missing_fields'] : array(),
+                    'table' => $table,
+                ));
+                return;
+            }
+
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => true,
+                'import_enabled' => false,
+                'bulan_match' => false,
+                'import_message' => 'Pilih bulan dan tahun yang valid.',
+                'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal penerimaan kas.',
+                'map' => $structure['map'],
+                'mapped' => isset($structure['mapped']) ? $structure['mapped'] : array(),
+                'table' => $table,
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, penerimaan_kas_compare_validate_table_for_import($this, $table, $bulan));
+    }
+
+    public function ajax_compare_tabel_detail_penerimaan_kas()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'penerimaan_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_penerimaan_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, penerimaan_kas_compare_load_table_detail_for_bulan($this, $table, $bulan));
+    }
+
+    public function ajax_compare_import_table_to_penerimaan_kas()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'penerimaan_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_penerimaan_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, penerimaan_kas_compare_import_to_jurnal_penerimaan_kas($this, $table, $bulan));
+    }
+
     public function excel_compare_penerimaan_kas_manual_online()
     {
         $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'penerimaan_kas_compare', 'persediaan_display'));
@@ -1436,6 +1527,34 @@ class Jurnal_kas extends CI_Controller
         exit();
     }
 
+    private function _jurnal_kas_session_bulan_key()
+    {
+        return 'jurnal_kas_bulan_terpilih';
+    }
+
+    private function _jurnal_kas_save_bulan_session($year, $month)
+    {
+        $year = (int) $year;
+        $month = (int) $month;
+        if ($month >= 1 && $month <= 12 && $year >= 2000) {
+            $this->session->set_userdata($this->_jurnal_kas_session_bulan_key(), sprintf('%04d-%02d', $year, $month));
+        }
+    }
+
+    private function _jurnal_kas_get_bulan_from_session()
+    {
+        $val = $this->session->userdata($this->_jurnal_kas_session_bulan_key());
+        if ($val && preg_match('/^(\d{4})-(\d{1,2})$/', (string) $val, $m)) {
+            $month = (int) $m[2];
+            $year = (int) $m[1];
+            if ($month >= 1 && $month <= 12 && $year >= 2000) {
+                return array('year' => $year, 'month' => $month);
+            }
+        }
+
+        return null;
+    }
+
     private function _jurnal_kas_view_data($data = array())
     {
         if (!is_array($data)) {
@@ -1464,6 +1583,20 @@ class Jurnal_kas extends CI_Controller
         $data['url_compare_jurnal_kas_import_csv'] = site_url('Jurnal_kas/ajax_compare_import_csv_jurnal_kas');
         $data['url_compare_jurnal_kas_tabel_list'] = site_url('Jurnal_kas/ajax_compare_tabel_list_jurnal_kas');
         $data['url_compare_jurnal_kas_tabel_preview'] = site_url('Jurnal_kas/ajax_compare_tabel_preview_jurnal_kas');
+        $data['url_compare_jurnal_kas_tabel_validate'] = site_url('Jurnal_kas/ajax_compare_tabel_validate_jurnal_kas');
+        $data['url_compare_jurnal_kas_tabel_detail'] = site_url('Jurnal_kas/ajax_compare_tabel_detail_jurnal_kas');
+        $data['url_compare_jurnal_kas_tabel_import'] = site_url('Jurnal_kas/ajax_compare_import_table_to_jurnal_kas');
+        $data['url_compare_jurnal_kas_tabel_detail_excel'] = site_url('Jurnal_kas/excel_compare_tabel_detail_jurnal_kas');
+        $data['url_jurnal_kas_excel'] = site_url('Jurnal_kas/excel/' . $compare_tahun_num . '/' . $compare_bulan_num);
+        $data['bulan_ns_value'] = sprintf('%04d-%02d', $compare_tahun_num, $compare_bulan_num);
+        $data['url_cari_jurnal_kas'] = site_url('Jurnal_kas/cari_between_date');
+        $data['url_ajax_pemasukan_kas'] = site_url('Jurnal_kas/ajax_pemasukan_kas_action');
+        $data['list_kode_pl'] = $this->db->query('SELECT * FROM `sys_kode_pl` ORDER BY `kode_pl` ASC')->result();
+        $data['list_kode_akun'] = $this->db->query('SELECT * FROM `sys_kode_akun` ORDER BY `kode_akun` ASC')->result();
+        $data['can_input_jurnal_kas'] = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
+        if (!isset($data['modal_jk_tanggal_default'])) {
+            $data['modal_jk_tanggal_default'] = sprintf('01-%02d-%04d', $compare_bulan_num, $compare_tahun_num);
+        }
 
         return $data;
     }
@@ -1576,6 +1709,150 @@ class Jurnal_kas extends CI_Controller
         persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
     }
 
+    public function ajax_compare_tabel_validate_jurnal_kas()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => false,
+                'import_enabled' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            $structure = jurnal_kas_compare_validate_import_table($this, $table);
+            if (empty($structure['ok'])) {
+                persediaan_ajax_json_output($this, array(
+                    'ok' => true,
+                    'eligible' => false,
+                    'import_enabled' => false,
+                    'message' => isset($structure['message']) ? $structure['message'] : 'Struktur tabel tidak valid.',
+                    'missing_fields' => isset($structure['missing_fields']) ? $structure['missing_fields'] : array(),
+                    'table' => $table,
+                ));
+                return;
+            }
+
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => true,
+                'import_enabled' => false,
+                'bulan_match' => false,
+                'import_message' => 'Pilih bulan dan tahun yang valid.',
+                'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal kas.',
+                'map' => $structure['map'],
+                'mapped' => isset($structure['mapped']) ? $structure['mapped'] : array(),
+                'table' => $table,
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_kas_compare_validate_table_for_import($this, $table, $bulan));
+    }
+
+    public function ajax_compare_tabel_detail_jurnal_kas()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_kas_compare_load_table_detail_for_bulan($this, $table, $bulan));
+    }
+
+    public function ajax_compare_import_table_to_jurnal_kas()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_kas_compare_import_to_jurnal_kas($this, $table, $bulan));
+    }
+
+    public function excel_compare_tabel_detail_jurnal_kas()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        if ($table === '') {
+            $table = trim((string) $this->input->get('tabel', TRUE));
+        }
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = trim((string) $this->input->get('bulan', TRUE));
+        }
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_kas_bulan_from_post();
+        }
+
+        if ($table === '') {
+            show_error('Nama tabel belum dipilih.', 400);
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            show_error('Format bulan tidak valid (YYYY-MM).', 400);
+            return;
+        }
+
+        $namaFile = 'Detail_Tabel_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $table) . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        jurnal_kas_compare_export_table_detail_excel($this, $table, $bulan);
+        exit();
+    }
+
     public function excel_compare_jurnal_kas_manual_online()
     {
         $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare', 'persediaan_display'));
@@ -1634,8 +1911,59 @@ class Jurnal_kas extends CI_Controller
         $data['url_compare_pengeluaran_kas_import_csv'] = site_url('Jurnal_kas/ajax_compare_import_csv_pengeluaran_kas');
         $data['url_compare_pengeluaran_kas_tabel_list'] = site_url('Jurnal_kas/ajax_compare_tabel_list_pengeluaran_kas');
         $data['url_compare_pengeluaran_kas_tabel_preview'] = site_url('Jurnal_kas/ajax_compare_tabel_preview_pengeluaran_kas');
+        $data['url_pengeluaran_kas_excel'] = site_url('Jurnal_kas/excel_pengeluaran_kas');
+        $data['url_ajax_pengeluaran_kas_list'] = site_url('Jurnal_kas/ajax_pengeluaran_kas_list');
+        $data['url_ajax_pengeluaran_kas_get'] = site_url('Jurnal_kas/ajax_pengeluaran_kas_get');
+        $data['url_ajax_pengeluaran_kas_save'] = site_url('Jurnal_kas/ajax_pengeluaran_kas_save');
+        $data['url_ajax_pengeluaran_kas_update'] = site_url('Jurnal_kas/ajax_pengeluaran_kas_update');
+        $data['url_ajax_pengeluaran_kas_delete'] = site_url('Jurnal_kas/ajax_pengeluaran_kas_delete');
+        $data['list_kode_pl'] = $this->db->query('SELECT * FROM `sys_kode_pl` ORDER BY `kode_pl` ASC')->result();
+        $data['can_input_pengeluaran_kas'] = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
+        if (!isset($data['pengeluaran_rows']) || !is_array($data['pengeluaran_rows'])) {
+            $data['pengeluaran_rows'] = array();
+        }
+        if (!isset($data['TOTAL_debet_21101_SEMUA'])) {
+            $data['TOTAL_debet_21101_SEMUA'] = 0;
+        }
+        if (!isset($data['TOTAL_serba_serbi_jumlah_SEMUA'])) {
+            $data['TOTAL_serba_serbi_jumlah_SEMUA'] = 0;
+        }
+        if (!isset($data['TOTAL_kredit_11101_SEMUA'])) {
+            $data['TOTAL_kredit_11101_SEMUA'] = 0;
+        }
+        if (!isset($data['modal_pgk_tanggal_default'])) {
+            $data['modal_pgk_tanggal_default'] = date('d-m-Y');
+        }
 
         return $data;
+    }
+
+    public function excel_pengeluaran_kas()
+    {
+        $this->load->helper('pengeluaran_kas_list');
+
+        $tgl_awal = trim((string) $this->input->post('tgl_awal', TRUE));
+        $tgl_akhir = trim((string) $this->input->post('tgl_akhir', TRUE));
+
+        if ($tgl_awal === '' || $tgl_akhir === '') {
+            $Get_date_awal = date('Y-m-1 00:00:00');
+            $Get_date_akhir = date('Y-m-t 23:59:59');
+        } else {
+            if (date('Y', strtotime($tgl_awal)) < 2020) {
+                $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
+            } else {
+                $Get_date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal));
+            }
+
+            if (date('Y', strtotime($tgl_akhir)) < 2020) {
+                $Get_date_akhir = date('Y-m-d 00:00:00');
+            } else {
+                $Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir));
+            }
+        }
+
+        pengeluaran_kas_export_excel_list_output($this, $Get_date_awal, $Get_date_akhir);
+        exit();
     }
 
     private function _compare_pengeluaran_kas_bulan_from_post()

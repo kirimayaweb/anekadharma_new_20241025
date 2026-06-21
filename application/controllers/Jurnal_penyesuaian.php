@@ -47,112 +47,335 @@ class Jurnal_penyesuaian extends CI_Controller
 
     public function index()
     {
+        $this->load->helper('jurnal_penyesuaian_list');
 
+        $Get_date_awal = date('Y-m-01');
+        $Get_date_akhir = date('Y-m-t');
 
-
-
-        // $Get_date_awal = date("Y-m-1 00:00:00");
-        // // print_r($Get_date_awal);
-        // // print_r("<br/>");
-
-
-        // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        // $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-        // // print_r($Get_month);
-        // // print_r("<br/>");
-
-        // // die;
-
-
-
-        // $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
-
-        // $Data_kas = $this->db->query($sql)->result();
-        // ===========================================================================
-        // if ($Get_date) {
-        //     $Get_month_selected = date("m", strtotime($Get_date));
-        //     $Get_YEAR_selected = date("Y", strtotime($Get_date));
-        // } else {
-        $Get_month_selected = date("m");
-        $Get_YEAR_selected = date("Y");
-        // }
-        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
-
-        $Data_kas = $this->db->query($sql)->result();
-
-
-        $data = array(
-            'Data_kas' => $Data_kas,
-            // 'start' => $start,
+        $list_data = jurnal_penyesuaian_compute_list_data_by_date_range($this, $Get_date_awal, $Get_date_akhir);
+        $data = $this->_jurnal_penyesuaian_view_data(array_merge($list_data, array(
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
-            'month_akhir' => $Get_month_akhir,
-            'month_selected' => date("m"),
-            'year_selected' => date("Y"),
-        );
-
-        // print_r($data);
+        )));
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);
     }
 
     public function cari_between_date($Bulan_Pilih = null)
     {
-
-        // 'month_selected' => date("m", strtotime($this->input->post('bulan_ns', TRUE))),
-        // 	'year_selected' => date("Y", strtotime($this->input->post('bulan_ns', TRUE))),
-        // print_r(date("m", strtotime($this->input->post('bulan_ns', TRUE))));
-        // print_r("<br/>");
-        // print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
-
-        // $Get_date = date("Y-m-d", strtotime($Bulan_Pilih));
-
+        $this->load->helper('jurnal_penyesuaian_list');
 
         if ($Bulan_Pilih) {
-            $Get_month_selected = date("m", strtotime($Bulan_Pilih));
-            $Get_YEAR_selected = date("Y", strtotime($Bulan_Pilih));
+            $Get_date_awal = jurnal_penyesuaian_parse_date_input($Bulan_Pilih, date('Y-m-01'));
+            $Get_date_akhir = date('Y-m-t', strtotime($Get_date_awal));
         } else {
-            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
+            $tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
+            $tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
+            if ($tgl_awal_raw || $tgl_akhir_raw) {
+                $Get_date_awal = jurnal_penyesuaian_parse_date_input($tgl_awal_raw, date('Y-m-01'));
+                $Get_date_akhir = jurnal_penyesuaian_parse_date_input($tgl_akhir_raw, date('Y-m-t'));
+            } else {
+                $bulan_ns = $this->input->post('bulan_ns', TRUE);
+                if ($bulan_ns) {
+                    $Get_date_awal = date('Y-m-01', strtotime($bulan_ns));
+                    $Get_date_akhir = date('Y-m-t', strtotime($bulan_ns));
+                } else {
+                    $Get_date_awal = date('Y-m-01');
+                    $Get_date_akhir = date('Y-m-t');
+                }
+            }
         }
 
-        $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
+        if ($Get_date_awal > $Get_date_akhir) {
+            $tmp = $Get_date_awal;
+            $Get_date_awal = $Get_date_akhir;
+            $Get_date_akhir = $tmp;
+        }
 
-        $Data_kas = $this->db->query($sql)->result();
-
-        // print_r($Data_kas);
-        // die;
-
-        // if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-        //     // $Get_date_awal = date("Y-m-d 00:00:00");
-        //     $Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-        // } else {
-        //     $Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
-        // }
-
-        // if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-        //     $Get_date_akhir = date("Y-m-d 00:00:00");
-        //     $Get_month_akhir = date("m");
-        // } else {
-        //     $Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
-        //     $Get_month_akhir = date("m", strtotime($this->input->post('tgl_akhir', TRUE))); // TANGGAL AKHIR BULAN -t
-        // }
-
-        // $sql = "SELECT * FROM `jurnal_penyesuaian` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id`";
-
-        // $Data_kas = $this->db->query($sql)->result();
-
-        $data = array(
-            'Data_kas' => $Data_kas,
-            // 'start' => $start,
+        $list_data = jurnal_penyesuaian_compute_list_data_by_date_range($this, $Get_date_awal, $Get_date_akhir);
+        $data = $this->_jurnal_penyesuaian_view_data(array_merge($list_data, array(
             'date_awal' => $Get_date_awal,
             'date_akhir' => $Get_date_akhir,
-            'month_akhir' => $Get_month_akhir,
-            'month_selected' => $Get_month_selected,
-            'year_selected' => $Get_YEAR_selected,
-        );
+            'active_tab' => trim((string) $this->input->post('active_tab', TRUE)) === 'compare' ? 'compare' : 'data',
+        )));
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_penyesuaian/adminlte310_jurnal_penyesuaian', $data);
+    }
+
+    private function _jurnal_penyesuaian_view_data($data = array())
+    {
+        $this->load->helper('jurnal_penyesuaian_list');
+        if (!is_array($data)) {
+            $data = array();
+        }
+
+        $date_awal = isset($data['date_awal']) ? $data['date_awal'] : date('Y-m-01');
+        $date_akhir = isset($data['date_akhir']) ? $data['date_akhir'] : date('Y-m-t');
+
+        $compare_bulan_num = (int) date('m', strtotime($date_awal));
+        $compare_tahun_num = (int) date('Y', strtotime($date_awal));
+        if ($compare_bulan_num < 1 || $compare_bulan_num > 12) {
+            $compare_bulan_num = (int) date('m');
+        }
+
+        $data['compare_bulan_num'] = $compare_bulan_num;
+        $data['compare_tahun_num'] = $compare_tahun_num;
+        $data['nama_bulan_id'] = array(
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        );
+        $data['gen_tahun_min'] = 2019;
+        $data['gen_tahun_max'] = (int) date('Y') + 1;
+        $data['active_tab'] = isset($data['active_tab']) ? $data['active_tab'] : 'data';
+        $data['Get_date_awal'] = date('d-m-Y', strtotime($date_awal));
+        $data['Get_date_akhir'] = date('d-m-Y', strtotime($date_akhir));
+        $data['periode_label'] = isset($data['periode_label']) ? $data['periode_label'] : jurnal_penyesuaian_format_tanggal_display($date_awal) . ' s/d ' . jurnal_penyesuaian_format_tanggal_display($date_akhir);
+        $data['url_cari_between_date'] = site_url('Jurnal_penyesuaian/cari_between_date');
+        $data['url_jurnal_penyesuaian_excel'] = site_url('Jurnal_penyesuaian/excel_list');
+        $data['url_compare_jurnal_penyesuaian_run'] = site_url('Jurnal_penyesuaian/ajax_compare_jurnal_penyesuaian_manual_online');
+        $data['url_compare_jurnal_penyesuaian_excel'] = site_url('Jurnal_penyesuaian/excel_compare_jurnal_penyesuaian_manual_online');
+        $data['url_compare_jurnal_penyesuaian_import_csv'] = site_url('Jurnal_penyesuaian/ajax_compare_import_csv_jurnal_penyesuaian');
+        $data['url_compare_jurnal_penyesuaian_tabel_list'] = site_url('Jurnal_penyesuaian/ajax_compare_tabel_list_jurnal_penyesuaian');
+        $data['url_compare_jurnal_penyesuaian_tabel_preview'] = site_url('Jurnal_penyesuaian/ajax_compare_tabel_preview_jurnal_penyesuaian');
+        $data['url_compare_jurnal_penyesuaian_tabel_excel'] = site_url('Jurnal_penyesuaian/excel_compare_tabel_preview_jurnal_penyesuaian');
+        $data['url_ajax_list_jurnal_penyesuaian'] = site_url('Jurnal_penyesuaian/ajax_list_jurnal_penyesuaian');
+        $data['url_ajax_simpan_input'] = site_url('Jurnal_penyesuaian/ajax_simpan_input_data');
+
+        return $data;
+    }
+
+    public function ajax_list_jurnal_penyesuaian()
+    {
+        $this->load->helper(array('jurnal_penyesuaian_list', 'pembelian_persediaan'));
+
+        $date_awal = $this->input->post('tgl_awal', TRUE);
+        $date_akhir = $this->input->post('tgl_akhir', TRUE);
+        $list_data = jurnal_penyesuaian_compute_list_data_by_date_range($this, $date_awal, $date_akhir);
+
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'rows' => $list_data['Data_kas'],
+            'total_debet' => jurnal_penyesuaian_format_rupiah($list_data['Total_debet'], true),
+            'total_kredit' => jurnal_penyesuaian_format_rupiah($list_data['Total_kredit'], true),
+            'periode_label' => $list_data['periode_label'],
+            'total_rows' => (int) $list_data['total_rows'],
+        ));
+    }
+
+    public function ajax_simpan_input_data()
+    {
+        $this->load->helper(array('jurnal_penyesuaian_list', 'pembelian_persediaan'));
+
+        $built = $this->_build_simpan_data_from_post();
+        if (empty($built['ok'])) {
+            persediaan_ajax_json_output($this, $built);
+            return;
+        }
+
+        $this->Jurnal_penyesuaian_model->insert($built['data']);
+        $insert_id = $this->db->insert_id();
+
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'message' => 'Data berhasil disimpan.',
+            'insert_id' => $insert_id,
+            'tanggal' => $built['tanggal_display'],
+        ));
+    }
+
+    private function _build_simpan_data_from_post()
+    {
+        $this->load->helper('jurnal_penyesuaian_list');
+
+        $kode_akun = trim((string) $this->input->post('kode_akun', TRUE));
+        $kode_rekening = trim((string) $this->input->post('kode_rekening', TRUE));
+        $status_proses = trim((string) $this->input->post('status_proses', TRUE));
+        $nominal = $this->input->post('nominal_penyesuaian', TRUE);
+        $tgl_po_raw = trim((string) $this->input->post('tgl_po', TRUE));
+
+        if ($kode_akun === '') {
+            return array('ok' => false, 'message' => 'Kode akun wajib dipilih.');
+        }
+        if ($kode_rekening === '') {
+            return array('ok' => false, 'message' => 'Kode rekening wajib diisi.');
+        }
+        if ($status_proses !== 'debet' && $status_proses !== 'kredit') {
+            return array('ok' => false, 'message' => 'Pilih Debet atau Kredit.');
+        }
+        if ($nominal === '' || !is_numeric($nominal) || (float) $nominal <= 0) {
+            return array('ok' => false, 'message' => 'Nominal harus diisi dan lebih dari 0.');
+        }
+
+        $date_jurnal_penyesuaian = jurnal_penyesuaian_parse_date_input($tgl_po_raw, date('Y-m-d'));
+        $date_jurnal_penyesuaian .= ' ' . date('H:i:s');
+
+        $data = array(
+            'tanggal' => $date_jurnal_penyesuaian,
+            'kode_akun' => $kode_akun,
+            'keterangan' => trim((string) $this->input->post('keterangan', TRUE)),
+            'kode_rekening' => $kode_rekening,
+            'bukti' => trim((string) $this->input->post('bukti', TRUE)),
+            'pl' => trim((string) $this->input->post('pl', TRUE)),
+        );
+
+        if ($status_proses === 'debet') {
+            $data['debet'] = $nominal;
+        } else {
+            $data['kredit'] = $nominal;
+        }
+
+        return array(
+            'ok' => true,
+            'data' => $data,
+            'tanggal_display' => jurnal_penyesuaian_format_tanggal_display($date_jurnal_penyesuaian),
+        );
+    }
+
+    private function _compare_jurnal_penyesuaian_bulan_from_post()
+    {
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        if ($bulan_num >= 1 && $bulan_num <= 12 && $tahun >= 2000) {
+            return $tahun . '-' . str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT);
+        }
+
+        return '';
+    }
+
+    public function ajax_compare_jurnal_penyesuaian_manual_online()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_penyesuaian_compare'));
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_penyesuaian_bulan_from_post();
+        }
+        $table = trim((string) $this->input->post('tabel', TRUE));
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih tabel manual yang akan dibandingkan.',
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_penyesuaian_compare_run($this, $bulan, $table));
+    }
+
+    public function ajax_compare_tabel_list_jurnal_penyesuaian()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_penyesuaian_compare'));
+
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'tables' => persediaan_compare_list_db_tables($this),
+        ));
+    }
+
+    public function ajax_compare_import_csv_jurnal_penyesuaian()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_penyesuaian_compare'));
+
+        if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih file CSV terlebih dahulu.',
+            ));
+            return;
+        }
+
+        $original_name = trim((string) $_FILES['csv_file']['name']);
+        $ext = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
+        if ($ext !== 'csv') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'File harus berformat .csv',
+            ));
+            return;
+        }
+
+        $bulan = $this->_compare_jurnal_penyesuaian_bulan_from_post();
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        $result = jurnal_penyesuaian_compare_import_csv_to_db(
+            $this,
+            $_FILES['csv_file']['tmp_name'],
+            $original_name,
+            $bulan,
+            $bulan_num,
+            $tahun
+        );
+
+        persediaan_ajax_json_output($this, $result);
+    }
+
+    public function ajax_compare_tabel_preview_jurnal_penyesuaian()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_penyesuaian_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        $limit = (int) $this->input->post('limit', TRUE);
+        persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
+    }
+
+    public function excel_compare_jurnal_penyesuaian_manual_online()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_penyesuaian_compare', 'persediaan_display'));
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_penyesuaian_bulan_from_post();
+        }
+        $table = trim((string) $this->input->post('tabel', TRUE));
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan) || $table === '') {
+            show_error('Parameter compare tidak valid.', 400);
+        }
+
+        $namaFile = 'Compare_Jurnal_Penyesuaian_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        jurnal_penyesuaian_compare_export_excel_output($this, $bulan, $table);
+        exit();
+    }
+
+    public function excel_compare_tabel_preview_jurnal_penyesuaian()
+    {
+        $this->load->helper(array('jurnal_penyesuaian_list', 'pembelian_persediaan'));
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        if ($table === '') {
+            show_error('Nama tabel belum dipilih.', 400);
+        }
+        jurnal_penyesuaian_export_excel_table_preview_output($this, $table);
+        exit();
+    }
+
+    public function excel_list()
+    {
+        $this->load->helper('jurnal_penyesuaian_list');
+        jurnal_penyesuaian_export_excel_list_output($this);
+        exit();
     }
 
     public function read($id)
@@ -181,55 +404,19 @@ class Jurnal_penyesuaian extends CI_Controller
         $this->_rules();
 
         if ($this->form_validation->run() == FALSE) {
-            // print_r("Error");
-            // die;
             $this->index();
         } else {
-
-            // print_r("proses");
-            // print_r("<br/>");
-            // // die;
-
-            if (date("Y", strtotime($this->input->post('tgl_po', TRUE))) < 2020) {
-                $date_jurnal_penyesuaian = date("Y-m-d H:i:s");
-                $date_cari_between = date("Y-m-d");
-            } else {
-                $date_jurnal_penyesuaian = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_po', TRUE)));
-                $date_cari_between = date("Y-m-d", strtotime($this->input->post('tgl_po', TRUE)));
+            $this->load->helper('jurnal_penyesuaian_list');
+            $built = $this->_build_simpan_data_from_post();
+            if (empty($built['ok'])) {
+                $this->session->set_flashdata('message', isset($built['message']) ? $built['message'] : 'Gagal menyimpan data.');
+                redirect(site_url('Jurnal_penyesuaian'));
+                return;
             }
 
-            if ($this->input->post('status_proses', TRUE) == "debet") {
-
-                $data = array(
-                    // 'uuid_jurnal_penyesuaian' => $this->input->post('uuid_jurnal_penyesuaian', TRUE),
-
-                    'tanggal' => $date_jurnal_penyesuaian,
-                    'kode_akun' => $this->input->post('kode_akun', TRUE),
-                    'keterangan' => $this->input->post('keterangan', TRUE),
-                    'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                    'debet' => $this->input->post('nominal_penyesuaian', TRUE),
-                    // 'kredit' => $this->input->post('kredit', TRUE),
-                );
-            } else {
-
-                $data = array(
-                    // 'uuid_jurnal_penyesuaian' => $this->input->post('uuid_jurnal_penyesuaian', TRUE),
-
-                    'tanggal' => $date_jurnal_penyesuaian,
-                    'kode_akun' => $this->input->post('kode_akun', TRUE),
-                    'keterangan' => $this->input->post('keterangan', TRUE),
-                    'kode_rekening' => $this->input->post('kode_rekening', TRUE),
-                    // 'debet' => $this->input->post('debet', TRUE),
-                    'kredit' => $this->input->post('nominal_penyesuaian', TRUE),
-                );
-            }
-
-            // print_r($data);
-            // die;
-
-            $this->Jurnal_penyesuaian_model->insert($data);
+            $this->Jurnal_penyesuaian_model->insert($built['data']);
             $this->session->set_flashdata('message', 'Create Record Success');
-            redirect(site_url('Jurnal_penyesuaian/cari_between_date/' . $date_cari_between));
+            redirect(site_url('Jurnal_penyesuaian/cari_between_date/' . jurnal_penyesuaian_parse_date_input($this->input->post('tgl_po', TRUE), date('Y-m-d'))));
         }
     }
 
