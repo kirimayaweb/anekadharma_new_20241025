@@ -23,6 +23,12 @@ if (!isset($gen_tahun_min)) {
 if (!isset($gen_tahun_max)) {
     $gen_tahun_max = (int) date('Y') + 1;
 }
+if (!isset($bulan_ns_value)) {
+    $bulan_ns_value = sprintf('%04d-%02d', (int) $compare_tahun_num, (int) $compare_bulan_num);
+}
+if (!isset($bulan_label)) {
+    $bulan_label = jurnal_penyesuaian_bulan_teks($compare_bulan_num) . ' ' . $compare_tahun_num;
+}
 if (!isset($Get_date_awal)) {
     $Get_date_awal = date('d-m-Y');
 }
@@ -50,6 +56,10 @@ $url_compare_import = isset($url_compare_jurnal_penyesuaian_import_csv) ? $url_c
 $url_compare_list = isset($url_compare_jurnal_penyesuaian_tabel_list) ? $url_compare_jurnal_penyesuaian_tabel_list : site_url('Jurnal_penyesuaian/ajax_compare_tabel_list_jurnal_penyesuaian');
 $url_compare_preview = isset($url_compare_jurnal_penyesuaian_tabel_preview) ? $url_compare_jurnal_penyesuaian_tabel_preview : site_url('Jurnal_penyesuaian/ajax_compare_tabel_preview_jurnal_penyesuaian');
 $url_compare_tabel_excel = isset($url_compare_jurnal_penyesuaian_tabel_excel) ? $url_compare_jurnal_penyesuaian_tabel_excel : site_url('Jurnal_penyesuaian/excel_compare_tabel_preview_jurnal_penyesuaian');
+$url_compare_validate = isset($url_compare_jurnal_penyesuaian_tabel_validate) ? $url_compare_jurnal_penyesuaian_tabel_validate : site_url('Jurnal_penyesuaian/ajax_compare_tabel_validate_jurnal_penyesuaian');
+$url_compare_detail = isset($url_compare_jurnal_penyesuaian_tabel_detail) ? $url_compare_jurnal_penyesuaian_tabel_detail : site_url('Jurnal_penyesuaian/ajax_compare_tabel_detail_jurnal_penyesuaian');
+$url_compare_tabel_import = isset($url_compare_jurnal_penyesuaian_tabel_import) ? $url_compare_jurnal_penyesuaian_tabel_import : site_url('Jurnal_penyesuaian/ajax_compare_import_table_to_jurnal_penyesuaian');
+$url_compare_detail_excel = isset($url_compare_jurnal_penyesuaian_tabel_detail_excel) ? $url_compare_jurnal_penyesuaian_tabel_detail_excel : site_url('Jurnal_penyesuaian/excel_compare_tabel_detail_jurnal_penyesuaian');
 $url_ajax_list = isset($url_ajax_list_jurnal_penyesuaian) ? $url_ajax_list_jurnal_penyesuaian : site_url('Jurnal_penyesuaian/ajax_list_jurnal_penyesuaian');
 $url_ajax_simpan = isset($url_ajax_simpan_input) ? $url_ajax_simpan_input : site_url('Jurnal_penyesuaian/ajax_simpan_input_data');
 
@@ -79,31 +89,20 @@ $compare_sections = array(
                         <div class="row align-items-center">
                             <div class="col-lg-3">
                                 <strong>JURNAL PENYESUAIAN</strong>
+                                <span class="text-muted small d-block"><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
-                            <div class="col-lg-9">
+                            <div class="col-lg-6">
                                 <form id="form-cari-jurnal-penyesuaian" action="<?php echo htmlspecialchars($url_cari, ENT_QUOTES, 'UTF-8'); ?>" method="post">
                                     <input type="hidden" name="active_tab" id="active_tab_input" value="<?php echo $tab_compare_active ? 'compare' : 'data'; ?>">
-                                    <div class="row justify-content-end align-items-center">
-                                        <div class="col-md-3">
-                                            <div class="input-group date" id="tgl_awal" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" name="tgl_awal" value="<?php echo htmlspecialchars($Get_date_awal, ENT_QUOTES, 'UTF-8'); ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-1 text-center">s/d</div>
-                                        <div class="col-md-3">
-                                            <div class="input-group date" id="tgl_akhir" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
-                                                </div>
-                                            </div>
+                                    <div class="row justify-content-center align-items-center">
+                                        <div class="col-md-6">
+                                            <label for="bulan_ns" class="sr-only">Pilih Bulan</label>
+                                            <input type="month" class="form-control text-center jp-month-picker" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
                                     </div>
                                 </form>
                             </div>
+                            <div class="col-lg-3"></div>
                         </div>
                     </div>
 
@@ -122,7 +121,7 @@ $compare_sections = array(
                                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 jurnal-penyesuaian-tab1-toolbar">
                                     <div>
                                         <h5 class="mb-0 text-primary"><strong>Data Jurnal Penyesuaian</strong></h5>
-                                        <small class="text-muted">Periode: <span id="jp-label-periode"><?php echo htmlspecialchars($periode_label, ENT_QUOTES, 'UTF-8'); ?></span></small>
+                                        <small class="text-muted">Pilih bulan di atas — data otomatis dimuat dari tanggal 1 s/d akhir bulan terpilih (<span id="jp-label-periode"><?php echo htmlspecialchars($periode_label, ENT_QUOTES, 'UTF-8'); ?></span>)</small>
                                     </div>
                                     <div class="d-flex flex-wrap mt-2 mt-md-0">
                                         <button type="button" class="btn btn-danger mr-2 mb-1" id="btn-input-jurnal-penyesuaian" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
@@ -177,8 +176,8 @@ $compare_sections = array(
 
                             <div class="tab-pane fade<?php echo $tab_compare_active ? ' show active' : ''; ?>" id="panel-compare-jp" role="tabpanel">
                                 <small class="text-muted d-block mb-2">
-                                    Bandingkan data jurnal penyesuaian online (<strong>jurnal_penyesuaian</strong>) dengan tabel manual hasil upload CSV.
-                                    Kolom compare: <strong>tanggal, kode_akun, keterangan, kode_rekening, debet, kredit</strong>.
+                                    Upload CSV dengan kolom wajib: <strong>tanggal, keterangan, akun, debet/kredit</strong>
+                                    (isi keterangan dan akun boleh kosong; debet atau kredit salah satu harus terisi per baris).
                                 </small>
 
                                 <label for="compare_jp_csv_file" class="mb-1">Pilih file CSV</label>
@@ -187,12 +186,6 @@ $compare_sections = array(
                                         <input type="file" class="custom-file-input" id="compare_jp_csv_file" accept=".csv,text/csv">
                                         <label class="custom-file-label" for="compare_jp_csv_file" data-browse="Pilih">Cari / pilih file CSV...</label>
                                     </div>
-                                </div>
-
-                                <div id="compare-jp-csv-upload-info" class="alert alert-light border py-2 d-none mb-3">
-                                    <div class="small mb-1"><span class="text-muted">File:</span> <strong id="compare-jp-csv-filename">—</strong></div>
-                                    <div class="small mb-1"><span class="text-muted">Tabel DB:</span> <strong id="compare-jp-csv-tablename" class="text-primary">—</strong> <span class="text-muted" id="compare-jp-csv-rowcount"></span></div>
-                                    <button type="button" id="btn-compare-jp-csv-detail" class="btn btn-outline-info btn-sm"><i class="fas fa-table"></i> Detail Tabel</button>
                                 </div>
 
                                 <div class="row mb-3 align-items-end compare-toolbar-row flex-wrap">
@@ -224,6 +217,19 @@ $compare_sections = array(
                                             <button type="button" id="btn-compare-jp" class="btn btn-info btn-sm d-none"><i class="fas fa-columns"></i> Compare</button>
                                             <button type="button" id="btn-compare-jp-excel-all" class="btn btn-success btn-sm d-none ml-2"><i class="fa fa-file-excel-o"></i> Cetak ke Excel</button>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div id="compare-jp-tabel-actions" class="compare-jp-tabel-info-box py-3 mb-3 d-none">
+                                    <div id="compare-jp-tabel-info-body" class="mb-2"></div>
+                                    <div id="compare-jp-tabel-import-note" class="small mb-2"></div>
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <button type="button" id="btn-compare-jp-tabel-detail" class="btn btn-outline-primary btn-sm mr-2 mb-1">
+                                            <i class="fas fa-table"></i> Detail Tabel
+                                        </button>
+                                        <button type="button" id="btn-compare-jp-tabel-import" class="btn btn-success btn-sm mb-1" disabled>
+                                            <i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Penyesuaian
+                                        </button>
                                     </div>
                                 </div>
 
@@ -280,20 +286,34 @@ $compare_sections = array(
                                     </div>
                                 </div>
 
-                                <div class="modal fade" id="modal-compare-jp-csv-preview" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal fade" id="modal-compare-jp-tabel-detail" tabindex="-1" role="dialog" aria-hidden="true">
                                     <div class="modal-dialog modal-xl" role="document" style="max-width:95%;">
                                         <div class="modal-content">
                                             <div class="modal-header bg-primary text-white py-2">
-                                                <h5 class="modal-title">Detail Tabel CSV</h5>
+                                                <h5 class="modal-title" id="modal-compare-jp-tabel-detail-title">Jurnal Penyesuaian</h5>
                                                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
                                             </div>
                                             <div class="modal-body pb-2">
-                                                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap">
-                                                    <p class="text-muted small mb-0" id="compare-jp-csv-preview-meta">Memuat...</p>
-                                                    <button type="button" class="btn btn-success btn-sm" id="btn-compare-jp-modal-excel"><i class="fa fa-file-excel-o"></i> Cetak ke Excel</button>
+                                                <div class="d-flex flex-wrap align-items-center mb-2">
+                                                    <p class="text-muted small mb-0 mr-3" id="compare-jp-tabel-detail-meta">Memuat...</p>
+                                                    <button type="button" id="btn-compare-jp-tabel-detail-excel" class="btn btn-success btn-sm">
+                                                        <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                                    </button>
                                                 </div>
-                                                <table id="table-compare-jp-csv-preview" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
-                                                    <thead><tr></tr></thead><tbody></tbody>
+                                                <table id="table-compare-jp-tabel-detail" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                    <thead id="compare-jp-tabel-detail-thead">
+                                                        <tr>
+                                                            <th>No</th><th>Tanggal</th><th>Keterangan</th><th>Akun</th><th>Debet</th><th>Kredit</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot id="compare-jp-tabel-detail-tfoot">
+                                                        <tr class="compare-dt-total-row">
+                                                            <th colspan="4" class="text-right compare-jp-detail-total-label">Total</th>
+                                                            <th class="compare-total-debet text-right">—</th>
+                                                            <th class="compare-total-kredit text-right">—</th>
+                                                        </tr>
+                                                    </tfoot>
                                                 </table>
                                             </div>
                                             <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
@@ -415,17 +435,27 @@ $compare_sections = array(
     .text-amount-debet { color: #155724; font-weight: 600; }
     .text-amount-kredit { color: #0c5460; font-weight: 600; }
     .text-catatan { font-size: 11px; color: #856404; }
+    .jp-month-picker { font-weight: 600; border: 2px solid #dc3545; border-radius: 6px; }
+    .compare-jp-tabel-info-box {
+        border: 1px solid #f5c6cb; border-radius: 8px; background: linear-gradient(180deg, #fff8f8, #fff);
+        padding: 12px 16px; box-shadow: 0 1px 6px rgba(220,53,69,.08);
+    }
+    .compare-jp-tabel-info-box .compare-info-title { font-weight: 700; margin-bottom: 6px; color: #721c24; }
+    .compare-jp-tabel-info-box .compare-info-line { font-size: 13px; margin-bottom: 4px; }
 </style>
 
 <script>
 (function() {
     var urlExcel = <?php echo json_encode($url_excel); ?>;
+    var urlCari = <?php echo json_encode($url_cari); ?>;
     var urlRun = <?php echo json_encode($url_compare_run); ?>;
     var urlCompareExcel = <?php echo json_encode($url_compare_excel); ?>;
     var urlImport = <?php echo json_encode($url_compare_import); ?>;
     var urlList = <?php echo json_encode($url_compare_list); ?>;
-    var urlPreview = <?php echo json_encode($url_compare_preview); ?>;
-    var urlTabelExcel = <?php echo json_encode($url_compare_tabel_excel); ?>;
+    var urlValidate = <?php echo json_encode($url_compare_validate); ?>;
+    var urlDetail = <?php echo json_encode($url_compare_detail); ?>;
+    var urlTabelImport = <?php echo json_encode($url_compare_tabel_import); ?>;
+    var urlDetailExcel = <?php echo json_encode($url_compare_detail_excel); ?>;
     var urlAjaxList = <?php echo json_encode($url_ajax_list); ?>;
     var urlAjaxSimpan = <?php echo json_encode($url_ajax_simpan); ?>;
 
@@ -433,29 +463,26 @@ $compare_sections = array(
         return jQuery('<span>').text(v == null ? '' : String(v)).html();
     }
 
-    function parseDateDMY(str) {
-        if (!str) return null;
-        var p = String(str).split(/[-\/]/);
-        if (p.length !== 3) return null;
-        var d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
-        if (!d || !m || !y) return null;
-        return new Date(y, m - 1, d);
-    }
-
-    function syncCompareMonthYearFromDates() {
-        var form = document.getElementById('form-cari-jurnal-penyesuaian');
-        if (!form || !window.jQuery) return;
-        var awal = parseDateDMY(form.querySelector('[name="tgl_awal"]').value);
-        if (!awal) return;
-        jQuery('#compare_bulan_jp').val(awal.getMonth() + 1);
-        jQuery('#compare_tahun_jp').val(awal.getFullYear());
+    function syncCompareFromBulanNs() {
+        var val = jQuery('#bulan_ns').val() || '';
+        if (!/^\d{4}-\d{2}$/.test(val)) return;
+        var parts = val.split('-');
+        jQuery('#compare_tahun_jp').val(parseInt(parts[0], 10));
+        jQuery('#compare_bulan_jp').val(parseInt(parts[1], 10));
     }
 
     function submitCariJurnalPenyesuaian() {
-        syncCompareMonthYearFromDates();
+        syncCompareFromBulanNs();
         var activeTab = document.querySelector('#jurnal-penyesuaian-tabs .nav-link.active');
         document.getElementById('active_tab_input').value = (activeTab && activeTab.id === 'tab-compare-jp') ? 'compare' : 'data';
         document.getElementById('form-cari-jurnal-penyesuaian').submit();
+    }
+
+    var bulanNs = document.getElementById('bulan_ns');
+    if (bulanNs) {
+        bulanNs.addEventListener('change', function() {
+            if (this.value) submitCariJurnalPenyesuaian();
+        });
     }
 
     window.addEventListener('load', function() {
@@ -468,36 +495,12 @@ $compare_sections = array(
             language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
         });
 
-        function ensureDateInFilter(savedDateDMY) {
-            if (!savedDateDMY) return;
-            var saved = parseDateDMY(savedDateDMY);
-            if (!saved) return;
-            var form = document.getElementById('form-cari-jurnal-penyesuaian');
-            var awal = parseDateDMY(form.querySelector('[name="tgl_awal"]').value);
-            var akhir = parseDateDMY(form.querySelector('[name="tgl_akhir"]').value);
-            if (!awal || !akhir) return;
-            var savedTs = saved.getTime();
-            if (savedTs >= awal.getTime() && savedTs <= akhir.getTime()) return;
-            var pad = function(n) { return String(n).padStart(2, '0'); };
-            var fmt = function(d) { return pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear(); };
-            var monthStart = new Date(saved.getFullYear(), saved.getMonth(), 1);
-            var monthEnd = new Date(saved.getFullYear(), saved.getMonth() + 1, 0);
-            form.querySelector('[name="tgl_awal"]').value = fmt(monthStart);
-            form.querySelector('[name="tgl_akhir"]').value = fmt(monthEnd);
-            syncCompareMonthYearFromDates();
-        }
-
-        function refreshMainDatatable(savedDateDMY) {
-            ensureDateInFilter(savedDateDMY);
-            var form = document.getElementById('form-cari-jurnal-penyesuaian');
+        function refreshMainDatatable() {
             jQuery.ajax({
                 url: urlAjaxList,
                 type: 'POST',
                 dataType: 'json',
-                data: {
-                    tgl_awal: form.querySelector('[name="tgl_awal"]').value,
-                    tgl_akhir: form.querySelector('[name="tgl_akhir"]').value
-                }
+                data: { bulan_ns: jQuery('#bulan_ns').val() || '' }
             }).done(function(res) {
                 if (!res || !res.ok) return;
                 var rows = (res.rows || []).map(function(r) {
@@ -555,7 +558,7 @@ $compare_sections = array(
                     return;
                 }
                 jQuery('#modal_input_jurnal_penyesuaian').modal('hide');
-                refreshMainDatatable(res.tanggal || '');
+                refreshMainDatatable();
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message || 'Data berhasil disimpan.', timer: 2000, showConfirmButton: false });
                 }
@@ -566,19 +569,13 @@ $compare_sections = array(
         });
 
         if (jQuery.fn.datetimepicker) {
-            jQuery('#tgl_awal, #tgl_akhir, #tgl_po').datetimepicker({ format: 'DD-MM-YYYY', locale: 'id' });
-            jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', submitCariJurnalPenyesuaian);
+            jQuery('#tgl_po').datetimepicker({ format: 'DD-MM-YYYY', locale: 'id' });
         }
-        jQuery('#form-cari-jurnal-penyesuaian input[name="tgl_awal"], #form-cari-jurnal-penyesuaian input[name="tgl_akhir"]').on('change blur', function() {
-            setTimeout(submitCariJurnalPenyesuaian, 150);
-        });
 
         jQuery('#btn-jurnal-penyesuaian-excel').on('click', function() {
-            var form = document.getElementById('form-cari-jurnal-penyesuaian');
             var f = jQuery('<form method="post" target="_blank"></form>');
             f.attr('action', urlExcel);
-            f.append(jQuery('<input type="hidden" name="tgl_awal">').val(form.querySelector('[name="tgl_awal"]').value));
-            f.append(jQuery('<input type="hidden" name="tgl_akhir">').val(form.querySelector('[name="tgl_akhir"]').value));
+            f.append(jQuery('<input type="hidden" name="bulan_ns">').val(jQuery('#bulan_ns').val() || ''));
             jQuery('body').append(f); f.submit(); f.remove();
         });
 
@@ -586,7 +583,8 @@ $compare_sections = array(
             document.getElementById('active_tab_input').value = (e.target.id === 'tab-compare-jp') ? 'compare' : 'data';
         });
 
-        var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null, previewTableName = '';
+        var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;
+        var tabelImportState = null, tabelImportBusy = false;
 
         function bulanKey() {
             var b = parseInt(jQuery('#compare_bulan_jp').val(), 10);
@@ -609,6 +607,107 @@ $compare_sections = array(
             var $el = jQuery('#compare-jp-status');
             $el.removeClass('alert-info alert-success alert-danger alert-warning').addClass(type === 'success' ? 'alert-success' : (type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info'))).html(html);
         }
+        function hideTabelActions() {
+            jQuery('#compare-jp-tabel-actions').addClass('d-none');
+            jQuery('#compare-jp-tabel-info-body').empty();
+            jQuery('#btn-compare-jp-tabel-import').prop('disabled', true);
+            jQuery('#compare-jp-tabel-import-note').text('').removeClass('text-danger text-success text-muted text-warning');
+        }
+        function getSelectedTable() {
+            return jQuery('#compare_tabel_jp').val() || '';
+        }
+        function getActiveBulanNs() {
+            var bk = bulanKey();
+            if (bk && /^\d{4}-\d{2}$/.test(bk)) return bk;
+            return jQuery('#bulan_ns').val() || '';
+        }
+        function buildTabelInfoHtml(res) {
+            var tbl = getSelectedTable() || (res && res.table) || '—';
+            var bk = getActiveBulanNs() || (res && res.bulan) || '—';
+            var stats = (res && res.stats) ? res.stats : {};
+            var map = (res && res.map) ? res.map : {};
+            var mapParts = [];
+            ['tanggal', 'keterangan', 'kode_akun', 'kode_rekening', 'bukti', 'pl', 'debet', 'kredit'].forEach(function(key) {
+                if (map[key]) mapParts.push(key + ' → <code>' + jQuery('<span>').text(map[key]).html() + '</code>');
+            });
+            var html = '<div class="compare-info-title"><i class="fas fa-info-circle"></i> Informasi Tabel Terpilih</div>';
+            html += '<div class="compare-info-line">Tabel: <strong class="text-primary">' + jQuery('<span>').text(tbl).html() + '</strong></div>';
+            html += '<div class="compare-info-line">Bulan proses: <strong>' + jQuery('<span>').text(bk).html() + '</strong></div>';
+            if (mapParts.length) html += '<div class="compare-info-line">Mapping kolom: ' + mapParts.join(' | ') + '</div>';
+            if (stats.saveable_in_bulan != null) {
+                html += '<div class="compare-info-line">Baris siap simpan: <strong>' + (stats.saveable_in_bulan || 0) + '</strong>';
+                if (stats.in_bulan != null) html += ' | baris bulan terpilih: <strong>' + (stats.in_bulan || 0) + '</strong>';
+                if (stats.out_bulan > 0) html += ' | di luar bulan: <strong class="text-warning">' + stats.out_bulan + '</strong>';
+                html += '</div>';
+            }
+            html += '<div class="compare-info-line">Syarat baris: tanggal valid, debet atau kredit terisi (keterangan/akun boleh kosong).</div>';
+            if (res && res.jurnal_penyesuaian_bulan_conflict && res.conflict_warning) {
+                html += '<div class="compare-info-line text-warning"><i class="fas fa-exclamation-triangle"></i> ' + jQuery('<span>').text(res.conflict_warning).html() + '</div>';
+            }
+            return html;
+        }
+        function applyTabelImportState(res) {
+            tabelImportState = res || null;
+            var tbl = getSelectedTable();
+            if (!tbl) { hideTabelActions(); return; }
+            jQuery('#compare-jp-tabel-actions').removeClass('d-none');
+            jQuery('#btn-compare-jp-tabel-detail').prop('disabled', false);
+            if (!res || res.ok === false || !res.eligible) {
+                jQuery('#compare-jp-tabel-info-body').html(
+                    '<div class="compare-info-title text-warning"><i class="fas fa-exclamation-triangle"></i> Tabel belum memenuhi syarat import</div>'
+                    + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+                    + '<div class="compare-info-line">' + jQuery('<span>').text((res && res.message) ? res.message : 'Kolom wajib: tanggal, keterangan, akun, debet/kredit.').html() + '</div>'
+                );
+                jQuery('#btn-compare-jp-tabel-import').prop('disabled', true);
+                return;
+            }
+            jQuery('#compare-jp-tabel-info-body').html(buildTabelInfoHtml(res));
+            var enabled = !!res.import_enabled;
+            jQuery('#btn-compare-jp-tabel-import').prop('disabled', !enabled);
+            var $note = jQuery('#compare-jp-tabel-import-note');
+            $note.removeClass('text-danger text-success text-muted text-warning');
+            if (enabled) {
+                $note.addClass(res.jurnal_penyesuaian_bulan_conflict ? 'text-warning' : 'text-success');
+                $note.html('<i class="fas fa-check-circle"></i> ' + (res.import_message || 'Siap disimpan ke jurnal_penyesuaian.'));
+            } else {
+                $note.addClass('text-danger').html('<i class="fas fa-exclamation-circle"></i> ' + (res.import_message || 'Tidak ada data yang bisa disimpan.'));
+            }
+        }
+        function parseValidateError(xhr, res, fallback) {
+            var msg = fallback || 'Gagal memeriksa tabel terpilih.';
+            if (res && res.message) return res.message;
+            if (xhr && xhr.responseText) {
+                try {
+                    var j = JSON.parse(xhr.responseText);
+                    if (j && j.message) return j.message;
+                } catch (eJson) {
+                    if (xhr.responseText.indexOf('Database Error') !== -1) return 'Error database saat memeriksa tabel.';
+                }
+            }
+            return msg;
+        }
+        function validateTabelForImport() {
+            var tbl = getSelectedTable();
+            if (!tbl) { hideTabelActions(); toggleBtns(); return; }
+            jQuery('#compare-jp-tabel-actions').removeClass('d-none');
+            jQuery('#compare-jp-tabel-info-body').html('<div class="compare-info-title"><i class="fas fa-spinner fa-spin"></i> Memeriksa tabel terpilih...</div>');
+            jQuery('#btn-compare-jp-tabel-detail, #btn-compare-jp-tabel-import').prop('disabled', true);
+            var bk = getActiveBulanNs();
+            jQuery.ajax({
+                url: urlValidate, type: 'POST', dataType: 'json',
+                data: { tabel: tbl, bulan: bk, bulan_num: jQuery('#compare_bulan_jp').val(), tahun: jQuery('#compare_tahun_jp').val() }
+            }).done(function(res) {
+                applyTabelImportState(res);
+            }).fail(function(xhr) {
+                var res = null;
+                try { res = JSON.parse(xhr.responseText); } catch (e) {}
+                jQuery('#compare-jp-tabel-info-body').html(
+                    '<div class="compare-info-title text-danger"><i class="fas fa-times-circle"></i> Gagal memeriksa tabel</div>'
+                    + '<div class="compare-info-line">' + jQuery('<span>').text(parseValidateError(xhr, res, 'Gagal memeriksa tabel terpilih.')).html() + '</div>'
+                );
+                jQuery('#btn-compare-jp-tabel-import').prop('disabled', true);
+            }).always(toggleBtns);
+        }
         function toggleBtns() {
             var show = bulanKey() !== '' && (jQuery('#compare_tabel_jp').val() || '') !== '';
             jQuery('#btn-compare-jp').toggleClass('d-none', !show);
@@ -622,6 +721,55 @@ $compare_sections = array(
                     it.catatan ? '<span class="text-catatan">' + jQuery('<span>').text(it.catatan).html() + '</span>' : ''];
             });
         }
+        function buildTabelDetailRows(items, displayColumns) {
+            displayColumns = displayColumns || [
+                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'keterangan', label: 'Keterangan' },
+                { key: 'kode_akun', label: 'Akun' },
+                { key: 'debet', label: 'Debet' },
+                { key: 'kredit', label: 'Kredit' }
+            ];
+            return (items || []).map(function(it) {
+                var row = [it.no || ''];
+                displayColumns.forEach(function(col) {
+                    if (col.key === 'debet' || col.key === 'kredit') {
+                        row.push(fmtAmtCell(it[col.key], col.key));
+                    } else {
+                        row.push(it[col.key] || '');
+                    }
+                });
+                return row;
+            });
+        }
+        function setupTabelDetailTableHead(displayColumns) {
+            displayColumns = displayColumns || [
+                { key: 'tanggal', label: 'Tanggal' },
+                { key: 'keterangan', label: 'Keterangan' },
+                { key: 'kode_akun', label: 'Akun' },
+                { key: 'debet', label: 'Debet' },
+                { key: 'kredit', label: 'Kredit' }
+            ];
+            var $head = jQuery('#compare-jp-tabel-detail-thead tr').empty();
+            var $foot = jQuery('#compare-jp-tabel-detail-tfoot tr.compare-dt-total-row').empty();
+            $head.append('<th>No</th>');
+            displayColumns.forEach(function(col) {
+                $head.append('<th>' + escHtml(col.label || col.key) + '</th>');
+            });
+            var debetIdx = -1, kreditIdx = -1;
+            displayColumns.forEach(function(col, idx) {
+                if (col.key === 'debet') debetIdx = idx;
+                if (col.key === 'kredit') kreditIdx = idx;
+            });
+            var mergeSpan = (debetIdx >= 0) ? (debetIdx + 1) : Math.max(1, displayColumns.length - 1);
+            $foot.append('<th colspan="' + mergeSpan + '" class="text-right compare-jp-detail-total-label">Total</th>');
+            if (debetIdx >= 0) {
+                $foot.append('<th class="compare-total-debet text-right">—</th>');
+            }
+            if (kreditIdx >= 0) {
+                $foot.append('<th class="compare-total-kredit text-right">—</th>');
+            }
+        }
+        var tabelDetailColumns = null;
         function renderTable(sel, items) {
             var $t = jQuery(sel); if (!$t.length) return;
             items = items || [];
@@ -664,7 +812,8 @@ $compare_sections = array(
         function loadTableList(force, selectTable) {
             if (tablesLoaded && !force) {
                 if (selectTable) jQuery('#compare_tabel_jp').val(selectTable);
-                toggleBtns(); return;
+                if (getSelectedTable()) validateTabelForImport();
+                return;
             }
             jQuery.ajax({ url: urlList, type: 'POST', dataType: 'json' }).done(function(res) {
                 if (!res || !res.ok) { setStatus('danger', (res && res.message) || 'Gagal memuat daftar tabel.'); return; }
@@ -673,13 +822,14 @@ $compare_sections = array(
                 (res.tables || []).forEach(function(tbl) { $sel.append(jQuery('<option>', { value: tbl, text: tbl })); });
                 if (cur) $sel.val(cur);
                 tablesLoaded = true;
+                if (getSelectedTable()) validateTabelForImport();
             }).always(toggleBtns);
         }
         function runCompare() {
             var bk = bulanKey(), tbl = jQuery('#compare_tabel_jp').val() || '';
             if (!bk || !tbl) { alert('Pilih bulan, tahun, dan tabel database.'); return; }
             if (typeof Swal !== 'undefined') {
-                Swal.fire({ title: 'Memproses Compare...', html: 'Upload & generate tabel, lalu membandingkan data manual vs online jurnal_penyesuaian', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+                Swal.fire({ title: 'Memproses Compare...', html: 'Membandingkan data manual vs online jurnal_penyesuaian', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
             }
             setStatus('info', '<i class="fas fa-spinner fa-spin"></i> Membandingkan...');
             jQuery('#compare-jp-results-panel, #btn-compare-jp-excel-all').addClass('d-none');
@@ -713,6 +863,135 @@ $compare_sections = array(
             f.append(jQuery('<input type="hidden" name="tabel">').val(tbl));
             jQuery('body').append(f); f.submit(); f.remove();
         }
+        function openTabelDetailModal() {
+            var tbl = getSelectedTable();
+            var bk = getActiveBulanNs();
+            if (!tbl || !bk) { alert('Pilih tabel dan bulan terlebih dahulu.'); return; }
+            jQuery('#modal-compare-jp-tabel-detail-title').text('Detail Tabel — ' + tbl);
+            jQuery('#compare-jp-tabel-detail-meta').text('Memuat data tabel `' + tbl + '` bulan ' + bk + '...');
+            jQuery('#modal-compare-jp-tabel-detail').modal('show');
+            jQuery.ajax({ url: urlDetail, type: 'POST', dataType: 'json', data: { tabel: tbl, bulan: bk } })
+            .done(function(res) {
+                if (!res || !res.ok) {
+                    jQuery('#compare-jp-tabel-detail-meta').text((res && res.message) || 'Gagal memuat detail tabel.');
+                    return;
+                }
+                var items = res.rows || [];
+                tabelDetailColumns = res.display_columns || null;
+                setupTabelDetailTableHead(tabelDetailColumns);
+                jQuery('#compare-jp-tabel-detail-meta').text(
+                    'Tabel: ' + (res.table || tbl) + ' | Bulan: ' + (res.bulan_label || bk) + ' | Total: ' + (res.total || items.length) + ' baris'
+                );
+                var $t = jQuery('#table-compare-jp-tabel-detail');
+                if (jQuery.fn.DataTable.isDataTable($t)) $t.DataTable().clear().destroy();
+                $t.find('tbody').empty();
+                $t.DataTable({
+                    data: buildTabelDetailRows(items, tabelDetailColumns),
+                    paging: true, searching: true, ordering: true, scrollX: true, pageLength: 25,
+                    order: [[1, 'asc']], autoWidth: false,
+                    language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                    drawCallback: function() {
+                        var td = parseAmt(res.total_debet), tk = parseAmt(res.total_kredit);
+                        if (!td && items.length) {
+                            items.forEach(function(it) { td += parseAmt(it.debet_raw != null ? it.debet_raw : it.debet); });
+                        }
+                        if (!tk && items.length) {
+                            items.forEach(function(it) { tk += parseAmt(it.kredit_raw != null ? it.kredit_raw : it.kredit); });
+                        }
+                        $t.find('.compare-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
+                        $t.find('.compare-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
+                    }
+                });
+            }).fail(function() {
+                jQuery('#compare-jp-tabel-detail-meta').text('Gagal memuat detail tabel.');
+            });
+        }
+        function exportTabelDetailExcel() {
+            var tbl = getSelectedTable();
+            var bk = getActiveBulanNs();
+            if (!tbl || !bk) { alert('Pilih tabel dan bulan terlebih dahulu.'); return; }
+            var f = jQuery('<form method="post" target="_blank"></form>');
+            f.attr('action', urlDetailExcel);
+            f.append(jQuery('<input type="hidden" name="tabel">').val(tbl));
+            f.append(jQuery('<input type="hidden" name="bulan">').val(bk));
+            jQuery('body').append(f); f.submit(); f.remove();
+        }
+        function showImportSuccessAlert(msg) {
+            if (typeof Swal === 'undefined') {
+                alert(msg || 'Data berhasil disimpan.');
+                refreshMainDatatable();
+                return;
+            }
+            Swal.fire({
+                icon: 'success',
+                title: 'Proses Sukses!',
+                html: '<div style="font-size:15px;line-height:1.6;">' + jQuery('<div>').text(msg || 'Data berhasil disimpan ke jurnal_penyesuaian.').html()
+                    + '<br><span style="font-size:13px;color:#666;">Datatable Tab 1 akan dimuat ulang otomatis...</span></div>',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#28a745',
+                timer: 2000,
+                timerProgressBar: true,
+                allowOutsideClick: false
+            }).then(function() { refreshMainDatatable(); });
+        }
+        function runTabelImportRequest(tbl, bk) {
+            tabelImportBusy = true;
+            jQuery('#btn-compare-jp-tabel-import').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Memproses Transfer Data...', html: 'Menyimpan data ke tabel <strong>jurnal_penyesuaian</strong>', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+            }
+            jQuery.ajax({ url: urlTabelImport, type: 'POST', dataType: 'json', data: { tabel: tbl, bulan: bk } })
+            .done(function(res) {
+                tabelImportBusy = false;
+                if (typeof Swal !== 'undefined') Swal.close();
+                jQuery('#btn-compare-jp-tabel-import').html('<i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Penyesuaian');
+                if (!res || !res.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Simpan Gagal', text: (res && res.message) || 'Gagal menyimpan data.' });
+                    validateTabelForImport();
+                    return;
+                }
+                setStatus('success', res.message || 'Berhasil menyimpan data.');
+                validateTabelForImport();
+                showImportSuccessAlert(res.message);
+            }).fail(function(xhr) {
+                tabelImportBusy = false;
+                if (typeof Swal !== 'undefined') Swal.close();
+                jQuery('#btn-compare-jp-tabel-import').html('<i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Penyesuaian');
+                validateTabelForImport();
+                var res = null;
+                try { res = JSON.parse(xhr.responseText); } catch (e) {}
+                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Simpan Gagal', text: parseValidateError(xhr, res, 'Tidak dapat menghubungi server.') });
+            });
+        }
+        function importTabelToJurnalPenyesuaian() {
+            if (tabelImportBusy) return;
+            var tbl = getSelectedTable();
+            var bk = getActiveBulanNs();
+            if (!tbl || !bk) { alert('Pilih tabel dan bulan terlebih dahulu.'); return; }
+            if (!tabelImportState || !tabelImportState.import_enabled) {
+                alert((tabelImportState && tabelImportState.import_message) || 'Data tidak bisa disimpan.');
+                return;
+            }
+            var doImport = function() { runTabelImportRequest(tbl, bk); };
+            var infoHtml = 'Data valid dari tabel <strong>' + jQuery('<span>').text(tbl).html() + '</strong> akan disimpan ke tabel utama <strong>jurnal_penyesuaian</strong> untuk bulan <strong>' + jQuery('<span>').text(bk).html() + '</strong>.';
+            if (tabelImportState.jurnal_penyesuaian_bulan_conflict && tabelImportState.conflict_warning) {
+                infoHtml += '<br><br><span class="text-warning">' + jQuery('<span>').text(tabelImportState.conflict_warning).html() + '</span>';
+            }
+            infoHtml += '<br><br>Klik <strong>OK</strong> untuk memproses transfer data.';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Proses Simpan Data ke Jurnal Penyesuaian',
+                    html: infoHtml,
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#28a745',
+                    showCancelButton: true,
+                    cancelButtonText: 'Batal'
+                }).then(function(r) { if (r.isConfirmed) doImport(); });
+                return;
+            }
+            if (window.confirm('Proses simpan data ke jurnal_penyesuaian?')) doImport();
+        }
         function importCsv(file) {
             if (!file || csvBusy) return;
             if ((file.name || '').split('.').pop().toLowerCase() !== 'csv') {
@@ -731,41 +1010,23 @@ $compare_sections = array(
             jQuery.ajax({ url: urlImport, type: 'POST', data: fd, processData: false, contentType: false, dataType: 'json' })
             .done(function(res) {
                 csvBusy = false;
-                jQuery('#compare_jp_csv_file').val('').next('.custom-file-label').text('Cari / pilih file CSV...');
                 if (typeof Swal !== 'undefined') Swal.close();
                 if (!res || !res.ok) {
+                    jQuery('#compare_jp_csv_file').val('').next('.custom-file-label').text('Cari / pilih file CSV...');
                     if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Import Gagal', html: (res && res.message) ? String(res.message).replace(/\n/g, '<br/>') : 'Import gagal.' });
                     return;
                 }
                 csvLast = res;
-                previewTableName = res.table || '';
-                jQuery('#compare-jp-csv-filename').text(res.file || '—');
-                jQuery('#compare-jp-csv-tablename').text(res.table || '—');
-                jQuery('#compare-jp-csv-rowcount').text(res.rows ? (' (' + res.rows + ' baris, ' + (res.columns || 0) + ' kolom)') : '');
-                jQuery('#compare-jp-csv-upload-info').removeClass('d-none');
+                jQuery('#compare_jp_csv_file').val('');
+                jQuery('#compare_jp_csv_file').next('.custom-file-label').text(res.file || file.name || 'File CSV terpilih');
                 loadTableList(true, res.table);
+                setStatus('info', 'CSV berhasil di-upload. Tabel <strong>' + (res.table || '') + '</strong> terpilih — periksa informasi di bawah combobox Pilih tabel.');
                 if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'success', title: 'Import CSV Berhasil', html: 'Tabel <strong>' + (res.table || '') + '</strong> — ' + (res.rows || 0) + ' baris di-generate ke database.' });
+                    Swal.fire({ icon: 'success', title: 'Import CSV Berhasil', html: 'Tabel <strong>' + (res.table || '') + '</strong> — ' + (res.rows || 0) + ' baris di-generate ke database.', timer: 2200, showConfirmButton: false });
                 }
             }).fail(function() {
                 csvBusy = false;
                 if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Import Gagal', text: 'Tidak dapat menghubungi server.' });
-            });
-        }
-        function openPreviewModal(tbl) {
-            previewTableName = tbl;
-            jQuery('#compare-jp-csv-preview-meta').text('Tabel: ' + tbl);
-            jQuery('#modal-compare-jp-csv-preview').modal('show');
-            jQuery.ajax({ url: urlPreview, type: 'POST', dataType: 'json', data: { tabel: tbl, limit: 500 } })
-            .done(function(res) {
-                if (!res || !res.ok) { jQuery('#compare-jp-csv-preview-meta').text((res && res.message) || 'Gagal preview.'); return; }
-                var cols = res.columns || [];
-                var $thead = jQuery('#table-compare-jp-csv-preview thead tr').empty();
-                cols.forEach(function(c) { $thead.append(jQuery('<th>').text(c)); });
-                var rows = (res.rows || []).map(function(r) { return cols.map(function(c) { return r[c] != null ? r[c] : ''; }); });
-                var $t = jQuery('#table-compare-jp-csv-preview');
-                if (jQuery.fn.DataTable.isDataTable($t)) $t.DataTable().destroy();
-                $t.DataTable({ data: rows, scrollX: true, pageLength: 25, language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' } });
             });
         }
 
@@ -773,25 +1034,31 @@ $compare_sections = array(
             var f = this.files && this.files[0];
             if (f) { jQuery(this).next('.custom-file-label').text(f.name); importCsv(f); }
         });
-        jQuery('#compare_bulan_jp, #compare_tahun_jp, #compare_tabel_jp').on('change', toggleBtns);
+        jQuery('#compare_bulan_jp, #compare_tahun_jp').on('change', function() {
+            var bk = bulanKey();
+            if (bk && /^\d{4}-\d{2}$/.test(bk)) {
+                jQuery('#bulan_ns').val(bk);
+            }
+            if (getSelectedTable()) validateTabelForImport();
+            toggleBtns();
+        });
+        jQuery('#compare_tabel_jp').on('change', function() {
+            if (jQuery(this).val()) {
+                validateTabelForImport();
+            } else {
+                hideTabelActions();
+            }
+            toggleBtns();
+        });
         jQuery('#btn-compare-jp').on('click', runCompare);
         jQuery('#btn-compare-jp-excel-all').on('click', exportCompareExcel);
+        jQuery('#btn-compare-jp-tabel-detail').on('click', openTabelDetailModal);
+        jQuery('#btn-compare-jp-tabel-detail-excel').on('click', exportTabelDetailExcel);
+        jQuery('#btn-compare-jp-tabel-import').on('click', importTabelToJurnalPenyesuaian);
         jQuery('#tab-compare-jp').on('shown.bs.tab', function() { loadTableList(false); });
-        jQuery('#btn-compare-jp-csv-detail').on('click', function() {
-            var tbl = (csvLast && csvLast.table) || jQuery('#compare_tabel_jp').val();
-            if (!tbl) { alert('Belum ada tabel.'); return; }
-            openPreviewModal(tbl);
-        });
-        jQuery('#btn-compare-jp-modal-excel').on('click', function() {
-            if (!previewTableName) return;
-            var f = jQuery('<form method="post" target="_blank"></form>');
-            f.attr('action', urlTabelExcel);
-            f.append(jQuery('<input type="hidden" name="tabel">').val(previewTableName));
-            jQuery('body').append(f); f.submit(); f.remove();
-        });
         if (jQuery('#tab-compare-jp').hasClass('active')) loadTableList(false);
         toggleBtns();
-        syncCompareMonthYearFromDates();
+        syncCompareFromBulanNs();
     });
 })();
 </script>
