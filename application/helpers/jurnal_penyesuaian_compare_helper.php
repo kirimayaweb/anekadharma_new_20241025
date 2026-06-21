@@ -15,6 +15,114 @@ function jurnal_penyesuaian_compare_field_definitions()
 	);
 }
 
+function jurnal_penyesuaian_compare_csv_field_definitions()
+{
+	return array(
+		'tanggal' => array('label' => 'tanggal', 'required' => true, 'aliases' => array('tanggal', 'tgl', 'date', 'tgl_transaksi')),
+		'keterangan' => array('label' => 'keterangan', 'required' => true, 'aliases' => array('keterangan', 'ket', 'uraian', 'deskripsi')),
+		'kode_akun' => array('label' => 'akun', 'required' => true, 'aliases' => array('kode_akun', 'kode akun', 'akun')),
+		'kode_rekening' => array('label' => 'kode_rekening', 'required' => false, 'aliases' => array('kode_rekening', 'kode_rek', 'uraian_kode_rekening', 'kode rek')),
+		'bukti' => array('label' => 'bukti', 'required' => false, 'aliases' => array('bukti', 'no_bukti', 'nobukti', 'no bukti')),
+		'pl' => array('label' => 'pl', 'required' => false, 'aliases' => array('pl', 'kode_pl', 'profit center')),
+		'debet' => array('label' => 'debet', 'required' => false, 'aliases' => array('debet', 'debit')),
+		'kredit' => array('label' => 'kredit', 'required' => false, 'aliases' => array('kredit', 'credit')),
+	);
+}
+
+function jurnal_penyesuaian_compare_analyze_csv_column_map($fields)
+{
+	if (!is_array($fields) || count($fields) === 0) {
+		return array('ok' => false, 'message' => 'Tabel tidak memiliki kolom.');
+	}
+
+	$normalized = array();
+	foreach ($fields as $field) {
+		$normalized[] = trim((string) $field);
+	}
+
+	$defs = jurnal_penyesuaian_compare_csv_field_definitions();
+	$map = array(
+		'tanggal' => penjualan_jurnal_compare_pick_tanggal_column($normalized),
+		'keterangan' => persediaan_compare_pick_column($normalized, $defs['keterangan']['aliases']),
+		'kode_akun' => persediaan_compare_pick_column($normalized, $defs['kode_akun']['aliases']),
+		'kode_rekening' => persediaan_compare_pick_column($normalized, $defs['kode_rekening']['aliases']),
+		'bukti' => persediaan_compare_pick_column($normalized, $defs['bukti']['aliases']),
+		'pl' => persediaan_compare_pick_column($normalized, $defs['pl']['aliases']),
+		'debet' => persediaan_compare_pick_column($normalized, $defs['debet']['aliases']),
+		'kredit' => persediaan_compare_pick_column($normalized, $defs['kredit']['aliases']),
+	);
+
+	$missing_required = array();
+	foreach ($defs as $key => $def) {
+		if (empty($map[$key]) && !empty($def['required'])) {
+			$missing_required[] = $def['label'];
+		}
+	}
+
+	if (empty($map['debet']) && empty($map['kredit'])) {
+		$missing_required[] = 'debet atau kredit';
+	}
+
+	$ok = count($missing_required) === 0;
+	$message = '';
+	if (!$ok) {
+		$message = 'Kolom wajib tidak ditemukan: ' . implode(', ', $missing_required)
+			. '. Kolom CSV minimal: tanggal, keterangan, akun, debet atau kredit (isi keterangan/akun boleh kosong).';
+	}
+
+	$mapped = array();
+	foreach ($map as $key => $col) {
+		if ($col !== null && $col !== '') {
+			$mapped[$key] = $col;
+		}
+	}
+
+	return array(
+		'ok' => $ok,
+		'map' => $map,
+		'mapped' => $mapped,
+		'missing_required' => $missing_required,
+		'fields' => $normalized,
+		'message' => $message,
+	);
+}
+
+function jurnal_penyesuaian_compare_build_csv_column_map($fields)
+{
+	$analysis = jurnal_penyesuaian_compare_analyze_csv_column_map($fields);
+	return !empty($analysis['ok']) ? $analysis['map'] : null;
+}
+
+function jurnal_penyesuaian_compare_detail_display_columns($map)
+{
+	$order = array(
+		'tanggal' => 'Tanggal',
+		'keterangan' => 'Keterangan',
+		'kode_akun' => 'Akun',
+		'kode_rekening' => 'Kode Rek.',
+		'bukti' => 'Bukti',
+		'pl' => 'PL',
+		'debet' => 'Debet',
+		'kredit' => 'Kredit',
+	);
+	$cols = array();
+	foreach ($order as $key => $label) {
+		if (!empty($map[$key])) {
+			$cols[] = array('key' => $key, 'label' => $label);
+		}
+	}
+	if (count($cols) === 0) {
+		return array(
+			array('key' => 'tanggal', 'label' => 'Tanggal'),
+			array('key' => 'keterangan', 'label' => 'Keterangan'),
+			array('key' => 'kode_akun', 'label' => 'Akun'),
+			array('key' => 'debet', 'label' => 'Debet'),
+			array('key' => 'kredit', 'label' => 'Kredit'),
+		);
+	}
+	return $cols;
+}
+
 function jurnal_penyesuaian_compare_build_column_map($fields)
 {
 	$analysis = jurnal_penyesuaian_compare_analyze_column_map($fields);
@@ -973,12 +1081,12 @@ function jurnal_penyesuaian_compare_validate_csv_file($filepath)
 		return array('ok' => false, 'stage' => 'read_header', 'message' => 'File CSV kosong atau baris header tidak valid.');
 	}
 
-	$map = jurnal_penyesuaian_compare_build_column_map(persediaan_compare_sanitize_csv_headers($raw_headers));
+	$map = jurnal_penyesuaian_compare_build_csv_column_map(persediaan_compare_sanitize_csv_headers($raw_headers));
 	if ($map === null) {
 		return array(
 			'ok' => false,
 			'stage' => 'validate_columns',
-			'message' => 'Header CSV tidak memenuhi syarat Jurnal Penyesuaian. Kolom wajib: tanggal, kode_akun, keterangan, kode_rekening, debet atau kredit.',
+			'message' => 'Header CSV tidak memenuhi syarat Jurnal Penyesuaian. Kolom wajib: tanggal, keterangan, akun, debet atau kredit (isi keterangan/akun boleh kosong).',
 		);
 	}
 
@@ -1010,20 +1118,20 @@ function jurnal_penyesuaian_compare_import_csv_to_db($CI, $filepath, $original_f
 	}
 
 	$db_columns_sanitized = persediaan_compare_sanitize_csv_headers($raw_headers);
-	$column_map = jurnal_penyesuaian_compare_build_column_map($db_columns_sanitized);
+	$column_map = jurnal_penyesuaian_compare_build_csv_column_map($db_columns_sanitized);
 	$csv_col_index = array();
 	foreach ($db_columns_sanitized as $idx => $col) {
 		$csv_col_index[$col] = $idx;
 	}
 
-	$col_tanggal = !empty($column_map['tanggal']) ? $column_map['tanggal'] : 'tanggal';
-	$col_kode_akun = !empty($column_map['kode_akun']) ? $column_map['kode_akun'] : 'kode_akun';
-	$col_keterangan = !empty($column_map['keterangan']) ? $column_map['keterangan'] : 'keterangan';
-	$col_kode_rekening = !empty($column_map['kode_rekening']) ? $column_map['kode_rekening'] : 'kode_rekening';
-	$col_bukti = !empty($column_map['bukti']) ? $column_map['bukti'] : 'bukti';
-	$col_pl = !empty($column_map['pl']) ? $column_map['pl'] : 'pl';
-	$col_debet = !empty($column_map['debet']) ? $column_map['debet'] : 'debet';
-	$col_kredit = !empty($column_map['kredit']) ? $column_map['kredit'] : 'kredit';
+	$col_tanggal = !empty($column_map['tanggal']) ? $column_map['tanggal'] : null;
+	$col_kode_akun = !empty($column_map['kode_akun']) ? $column_map['kode_akun'] : null;
+	$col_keterangan = !empty($column_map['keterangan']) ? $column_map['keterangan'] : null;
+	$col_kode_rekening = !empty($column_map['kode_rekening']) ? $column_map['kode_rekening'] : null;
+	$col_bukti = !empty($column_map['bukti']) ? $column_map['bukti'] : null;
+	$col_pl = !empty($column_map['pl']) ? $column_map['pl'] : null;
+	$col_debet = !empty($column_map['debet']) ? $column_map['debet'] : null;
+	$col_kredit = !empty($column_map['kredit']) ? $column_map['kredit'] : null;
 
 	$db_columns = array();
 	foreach ($db_columns_sanitized as $col) {
@@ -1031,11 +1139,6 @@ function jurnal_penyesuaian_compare_import_csv_to_db($CI, $filepath, $original_f
 			continue;
 		}
 		$db_columns[] = $col;
-	}
-	foreach (array($col_tanggal, $col_kode_akun, $col_keterangan, $col_kode_rekening, $col_bukti, $col_pl, $col_debet, $col_kredit) as $required_col) {
-		if (!in_array($required_col, $db_columns, true)) {
-			$db_columns[] = $required_col;
-		}
 	}
 
 	$bulan_tahun_ref = penjualan_jurnal_compare_parse_bulan_tahun_from_import($bulan_key, $bulan_num, $tahun);
@@ -1109,16 +1212,18 @@ function jurnal_penyesuaian_compare_import_csv_to_db($CI, $filepath, $original_f
 			$data[$col] = ($csv_idx !== null && isset($row[$csv_idx])) ? trim((string) $row[$csv_idx]) : '';
 		}
 
-		$data[$col_tanggal] = jurnal_penyesuaian_compare_normalize_tanggal_for_db(
-			isset($data[$col_tanggal]) ? $data[$col_tanggal] : '',
-			$bulan_tahun_ref['month'],
-			$bulan_tahun_ref['year']
-		);
+		if ($col_tanggal !== null && array_key_exists($col_tanggal, $data)) {
+			$data[$col_tanggal] = jurnal_penyesuaian_compare_normalize_tanggal_for_db(
+				isset($data[$col_tanggal]) ? $data[$col_tanggal] : '',
+				$bulan_tahun_ref['month'],
+				$bulan_tahun_ref['year']
+			);
+		}
 
-		if ($col_debet !== '') {
+		if ($col_debet !== null && array_key_exists($col_debet, $data)) {
 			$data[$col_debet] = jurnal_penyesuaian_compare_normalize_jumlah(isset($data[$col_debet]) ? $data[$col_debet] : 0);
 		}
-		if ($col_kredit !== '') {
+		if ($col_kredit !== null && array_key_exists($col_kredit, $data)) {
 			$data[$col_kredit] = jurnal_penyesuaian_compare_normalize_jumlah(isset($data[$col_kredit]) ? $data[$col_kredit] : 0);
 		}
 
@@ -1180,4 +1285,462 @@ function jurnal_penyesuaian_compare_import_csv_to_db($CI, $filepath, $original_f
 		'file' => $file_label,
 		'message' => "Import CSV berhasil.\nTabel: `{$table}`\nBaris: {$inserted}\nKolom: " . count($db_columns),
 	);
+}
+
+function jurnal_penyesuaian_compare_is_import_row_saveable($row)
+{
+	if (pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '') === '') {
+		return false;
+	}
+	$deb = jurnal_penyesuaian_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0);
+	$kre = jurnal_penyesuaian_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0);
+
+	return ($deb > 0 || $kre > 0);
+}
+
+function jurnal_penyesuaian_compare_import_row_unprocessed_reasons($row)
+{
+	$reasons = array();
+	if (pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '') === '') {
+		$reasons[] = 'tanggal kosong/tidak valid';
+	}
+	if (jurnal_penyesuaian_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0) <= 0
+		&& jurnal_penyesuaian_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0) <= 0) {
+		$reasons[] = 'debet dan kredit kosong';
+	}
+	return $reasons;
+}
+
+function jurnal_penyesuaian_compare_validate_import_table($CI, $table)
+{
+	if (!persediaan_compare_is_valid_table_name($table)) {
+		return array('ok' => false, 'message' => 'Nama tabel tidak valid.');
+	}
+	if (!$CI->db->table_exists($table)) {
+		return array('ok' => false, 'message' => 'Tabel tidak ditemukan di database.');
+	}
+
+	$fields = $CI->db->list_fields($table);
+	$analysis = jurnal_penyesuaian_compare_analyze_csv_column_map($fields);
+	if (empty($analysis['ok'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($analysis['message']) ? $analysis['message'] : 'Struktur tabel tidak valid untuk import jurnal penyesuaian.',
+			'missing_fields' => isset($analysis['missing_required']) ? $analysis['missing_required'] : array(),
+			'fields' => $fields,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'map' => $analysis['map'],
+		'fields' => $fields,
+		'mapped' => $analysis['mapped'],
+		'missing_fields' => array(),
+	);
+}
+
+function jurnal_penyesuaian_compare_import_row_from_db($row, $map, $ref_month = 0, $ref_year = 0)
+{
+	$tanggal_raw = !empty($map['tanggal']) ? persediaan_compare_row_get($row, $map['tanggal']) : '';
+	$tanggal_norm = jurnal_penyesuaian_compare_normalize_tanggal_for_db($tanggal_raw, $ref_month, $ref_year);
+	if (($tanggal_norm === '' || $tanggal_norm === '0000-00-00') && $ref_month >= 1 && $ref_year >= 2000) {
+		$tanggal_norm = jurnal_penyesuaian_compare_normalize_tanggal_for_db('', $ref_month, $ref_year);
+	}
+
+	return array(
+		'tanggal' => $tanggal_norm,
+		'kode_akun' => trim((string) (!empty($map['kode_akun']) ? persediaan_compare_row_get($row, $map['kode_akun']) : '')),
+		'keterangan' => trim((string) (!empty($map['keterangan']) ? persediaan_compare_row_get($row, $map['keterangan']) : '')),
+		'kode_rekening' => trim((string) (!empty($map['kode_rekening']) ? persediaan_compare_row_get($row, $map['kode_rekening']) : '')),
+		'bukti' => trim((string) (!empty($map['bukti']) ? persediaan_compare_row_get($row, $map['bukti']) : '')),
+		'pl' => trim((string) (!empty($map['pl']) ? persediaan_compare_row_get($row, $map['pl']) : '')),
+		'debet' => jurnal_penyesuaian_compare_normalize_jumlah(!empty($map['debet']) ? persediaan_compare_row_get($row, $map['debet']) : 0),
+		'kredit' => jurnal_penyesuaian_compare_normalize_jumlah(!empty($map['kredit']) ? persediaan_compare_row_get($row, $map['kredit']) : 0),
+	);
+}
+
+function jurnal_penyesuaian_compare_count_jurnal_penyesuaian_rows_for_bulan($CI, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return 0;
+	}
+
+	$year = (int) substr($bulan, 0, 4);
+	$month = (int) substr($bulan, 5, 2);
+	$row = $CI->db->query(
+		'SELECT COUNT(*) AS c FROM `jurnal_penyesuaian` WHERE YEAR(`tanggal`) = ? AND MONTH(`tanggal`) = ?',
+		array($year, $month)
+	)->row();
+
+	return $row ? (int) $row->c : 0;
+}
+
+function jurnal_penyesuaian_compare_validate_table_for_import($CI, $table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_penyesuaian_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array(
+			'ok' => true,
+			'eligible' => false,
+			'import_enabled' => false,
+			'bulan_match' => false,
+			'message' => isset($valid['message']) ? $valid['message'] : 'Tabel tidak memenuhi syarat import.',
+			'missing_fields' => isset($valid['missing_fields']) ? $valid['missing_fields'] : array(),
+			'table' => $table,
+			'bulan' => $bulan,
+		);
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+
+	$with_tanggal = 0;
+	$in_bulan = 0;
+	$out_bulan = 0;
+	$empty_tanggal = 0;
+	$saveable_in_bulan = 0;
+	$invalid_in_bulan = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_penyesuaian_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+			$empty_tanggal++;
+			continue;
+		}
+		$with_tanggal++;
+		if (jurnal_penyesuaian_compare_row_matches_bulan($tanggal_norm, $bulan)) {
+			$in_bulan++;
+			if (jurnal_penyesuaian_compare_is_import_row_saveable($item)) {
+				$saveable_in_bulan++;
+			} else {
+				$invalid_in_bulan++;
+			}
+		} else {
+			$out_bulan++;
+		}
+	}
+
+	$import_enabled = ($saveable_in_bulan > 0);
+	$import_message = '';
+	if ($import_enabled) {
+		$import_message = 'Siap disimpan ke jurnal_penyesuaian: ' . $saveable_in_bulan . ' baris valid pada bulan terpilih.';
+		if ($out_bulan > 0) {
+			$import_message .= ' (' . $out_bulan . ' baris di luar bulan akan dilewati.)';
+		}
+	} elseif ($in_bulan > 0) {
+		$import_message = 'Ada ' . $in_bulan . ' baris pada bulan terpilih, tetapi tidak ada yang memenuhi syarat tanggal valid dan debet/kredit.';
+	} elseif ($out_bulan > 0) {
+		$import_message = 'Tidak ada data dengan tanggal pada bulan terpilih.';
+	} else {
+		$import_message = 'Tidak ada data dengan tanggal valid pada tabel ini.';
+	}
+
+	$existing_count = jurnal_penyesuaian_compare_count_jurnal_penyesuaian_rows_for_bulan($CI, $bulan);
+	$conflict_warning = '';
+	if ($existing_count > 0) {
+		$conflict_warning = 'Perhatian: di tabel jurnal_penyesuaian sudah ada ' . $existing_count
+			. ' data pada bulan ' . pembelian_jurnal_compare_bulan_label($bulan)
+			. '. Proses simpan akan menambahkan semua baris valid apa adanya tanpa cek duplikat.';
+	}
+
+	return array(
+		'ok' => true,
+		'eligible' => true,
+		'import_enabled' => $import_enabled,
+		'bulan_match' => $import_enabled,
+		'import_message' => $import_message,
+		'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal penyesuaian.',
+		'map' => $map,
+		'mapped' => isset($valid['mapped']) ? $valid['mapped'] : array(),
+		'table' => $table,
+		'bulan' => $bulan,
+		'jurnal_penyesuaian_bulan_conflict' => ($existing_count > 0),
+		'jurnal_penyesuaian_existing_count' => $existing_count,
+		'conflict_warning' => $conflict_warning,
+		'stats' => array(
+			'total_rows' => count($all_rows),
+			'with_tanggal' => $with_tanggal,
+			'in_bulan' => $in_bulan,
+			'out_bulan' => $out_bulan,
+			'empty_tanggal' => $empty_tanggal,
+			'saveable_in_bulan' => $saveable_in_bulan,
+			'invalid_in_bulan' => $invalid_in_bulan,
+		),
+	);
+}
+
+function jurnal_penyesuaian_compare_load_table_detail_for_bulan($CI, $table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_penyesuaian_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return $valid;
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$display_columns = jurnal_penyesuaian_compare_detail_display_columns($map);
+	$headers = array('No');
+	foreach ($display_columns as $col_def) {
+		$headers[] = $col_def['label'];
+	}
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$items = array();
+	$no = 0;
+	$total_debet = 0.0;
+	$total_kredit = 0.0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_penyesuaian_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_penyesuaian_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			continue;
+		}
+		$no++;
+		$debet = (float) $item['debet'];
+		$kredit = (float) $item['kredit'];
+		if ($debet > 0) {
+			$total_debet += $debet;
+		}
+		if ($kredit > 0) {
+			$total_kredit += $kredit;
+		}
+		$row_out = array(
+			'no' => $no,
+			'tanggal' => pembelian_jurnal_compare_format_tanggal_display($item['tanggal']),
+			'keterangan' => $item['keterangan'],
+			'kode_akun' => $item['kode_akun'],
+			'kode_rekening' => $item['kode_rekening'],
+			'bukti' => $item['bukti'],
+			'pl' => $item['pl'],
+			'debet' => $debet > 0 ? jurnal_penyesuaian_compare_format_jumlah_display($debet) : '',
+			'kredit' => $kredit > 0 ? jurnal_penyesuaian_compare_format_jumlah_display($kredit) : '',
+			'debet_raw' => $debet,
+			'kredit_raw' => $kredit,
+		);
+		$items[] = $row_out;
+	}
+
+	return array(
+		'ok' => true,
+		'headers' => $headers,
+		'display_columns' => $display_columns,
+		'rows' => $items,
+		'table' => $table,
+		'bulan' => $bulan,
+		'bulan_label' => $range ? $range['bulan_label'] : $bulan,
+		'total' => count($items),
+		'total_debet' => $total_debet,
+		'total_kredit' => $total_kredit,
+	);
+}
+
+function jurnal_penyesuaian_compare_build_jurnal_penyesuaian_insert_row($item, $tanggal_db)
+{
+	$data = array(
+		'tanggal' => $tanggal_db . ' ' . date('H:i:s'),
+		'kode_akun' => $item['kode_akun'],
+		'keterangan' => $item['keterangan'],
+		'kode_rekening' => $item['kode_rekening'],
+		'bukti' => $item['bukti'],
+		'pl' => $item['pl'],
+	);
+
+	if ($item['debet'] > 0) {
+		$data['debet'] = $item['debet'];
+	}
+	if ($item['kredit'] > 0) {
+		$data['kredit'] = $item['kredit'];
+	}
+
+	return array('ok' => true, 'data' => $data);
+}
+
+function jurnal_penyesuaian_compare_import_to_jurnal_penyesuaian($CI, $table, $bulan)
+{
+	$status = jurnal_penyesuaian_compare_validate_table_for_import($CI, $table, $bulan);
+	if (empty($status['ok'])) {
+		return $status;
+	}
+	if (empty($status['eligible'])) {
+		return array('ok' => false, 'message' => isset($status['message']) ? $status['message'] : 'Tabel tidak memenuhi syarat import.');
+	}
+	if (empty($status['import_enabled'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($status['import_message']) ? $status['import_message'] : 'Tidak ada data yang bisa disimpan pada bulan terpilih.',
+		);
+	}
+
+	if (!$CI->db->table_exists('jurnal_penyesuaian')) {
+		return array('ok' => false, 'message' => 'Tabel `jurnal_penyesuaian` tidak ditemukan di database.');
+	}
+
+	$valid = jurnal_penyesuaian_compare_validate_import_table($CI, $table);
+	$map = $valid['map'];
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$inserted = 0;
+	$skipped_out_bulan = 0;
+	$skipped_invalid = 0;
+	$row_num = 0;
+
+	$CI->load->model('Jurnal_penyesuaian_model');
+	$CI->db->trans_start();
+	foreach ((array) $all_rows as $row) {
+		$row_num++;
+		$item = jurnal_penyesuaian_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_penyesuaian_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			$skipped_out_bulan++;
+			continue;
+		}
+		if (!jurnal_penyesuaian_compare_is_import_row_saveable($item)) {
+			$skipped_invalid++;
+			continue;
+		}
+
+		$tanggal_db = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		$built = jurnal_penyesuaian_compare_build_jurnal_penyesuaian_insert_row($item, $tanggal_db);
+		if (empty($built['ok'])) {
+			$CI->db->trans_rollback();
+			return array(
+				'ok' => false,
+				'message' => isset($built['message']) ? $built['message'] : 'Gagal menyiapkan data insert jurnal_penyesuaian.',
+				'failed_row' => $row_num,
+			);
+		}
+
+		$CI->Jurnal_penyesuaian_model->insert($built['data']);
+		$db_err = $CI->db->error();
+		if (!empty($db_err['message'])) {
+			$CI->db->trans_rollback();
+			return array(
+				'ok' => false,
+				'message' => 'Gagal insert baris ke-' . ($inserted + 1) . ' (sumber baris #' . $row_num . ', tanggal ' . $tanggal_db . ').',
+				'db_error' => persediaan_compare_db_last_error_message($CI),
+				'failed_row' => $row_num,
+				'inserted_before_fail' => $inserted,
+			);
+		}
+		$inserted++;
+	}
+	$CI->db->trans_complete();
+
+	if ($CI->db->trans_status() === FALSE) {
+		return array(
+			'ok' => false,
+			'message' => 'Transaksi database gagal saat menyimpan ke jurnal_penyesuaian.',
+			'db_error' => persediaan_compare_db_last_error_message($CI),
+			'inserted_before_fail' => $inserted,
+		);
+	}
+
+	$message = 'Berhasil menambahkan ' . $inserted . ' data ke jurnal_penyesuaian (tanpa cek duplikat).';
+	if ($skipped_out_bulan > 0) {
+		$message .= ' ' . $skipped_out_bulan . ' baris di luar bulan tidak disimpan.';
+	}
+	if ($skipped_invalid > 0) {
+		$message .= ' ' . $skipped_invalid . ' baris tidak valid (tanggal/debet-kredit) tidak disimpan.';
+	}
+
+	return array(
+		'ok' => true,
+		'inserted' => $inserted,
+		'skipped_out_bulan' => $skipped_out_bulan,
+		'skipped_invalid' => $skipped_invalid,
+		'message' => $message,
+	);
+}
+
+function jurnal_penyesuaian_compare_export_table_detail_excel($CI, $table, $bulan)
+{
+	@set_time_limit(600);
+	@ini_set('memory_limit', '512M');
+	$CI->load->helper(array('exportexcel', 'pembelian_persediaan', 'jurnal_penyesuaian_list'));
+
+	$result = jurnal_penyesuaian_compare_load_table_detail_for_bulan($CI, $table, $bulan);
+	if (empty($result['ok'])) {
+		xlsBOF();
+		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Export Excel gagal.');
+		xlsEOF();
+		return;
+	}
+
+	$headers = isset($result['headers']) ? $result['headers'] : array('No');
+	$display_columns = isset($result['display_columns']) ? $result['display_columns'] : array();
+	$rows = isset($result['rows']) ? $result['rows'] : array();
+	$bulan_label = isset($result['bulan_label']) ? $result['bulan_label'] : $bulan;
+	$styleHeader = 4;
+	$styleBorder = 3;
+	$styleRight = 8;
+	$styleLeft = 7;
+	$styleFooter = 6;
+	$lastCol = max(0, count($headers) - 1);
+	$debetCol = null;
+	$kreditCol = null;
+	foreach ($display_columns as $idx => $col_def) {
+		if ($col_def['key'] === 'debet') {
+			$debetCol = $idx + 1;
+		}
+		if ($col_def['key'] === 'kredit') {
+			$kreditCol = $idx + 1;
+		}
+	}
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, 'Detail Tabel Penyesuaian — ' . $table);
+	xlsWriteLabel(1, 0, 'Bulan: ' . $bulan_label . ' | Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+
+	$headerRow = 3;
+	foreach ($headers as $col => $label) {
+		xlsWriteCellStyle($headerRow, $col, $label, $styleHeader);
+	}
+
+	$rowNum = 4;
+	foreach ($rows as $item) {
+		xlsWriteCellStyle($rowNum, 0, isset($item['no']) ? (int) $item['no'] : 0, $styleBorder);
+		foreach ($display_columns as $idx => $col_def) {
+			$key = $col_def['key'];
+			$colIdx = $idx + 1;
+			if ($key === 'debet' || $key === 'kredit') {
+				$raw = isset($item[$key . '_raw']) ? (float) $item[$key . '_raw'] : 0;
+				if ($raw > 0) {
+					xlsWriteCellStyle($rowNum, $colIdx, jurnal_penyesuaian_format_rupiah($raw), $styleRight);
+				} else {
+					xlsWriteCellStyle($rowNum, $colIdx, '', $styleBorder);
+				}
+				continue;
+			}
+			xlsWriteCellStyle($rowNum, $colIdx, isset($item[$key]) ? $item[$key] : '', $styleLeft);
+		}
+		$rowNum++;
+	}
+
+	$mergeEnd = ($debetCol !== null) ? max(0, $debetCol - 1) : max(0, $lastCol - 2);
+	xlsAddMerge($rowNum, 0, $rowNum, $mergeEnd);
+	xlsWriteCellStyle($rowNum, 0, 'JUMLAH DEBET / KREDIT', $styleFooter);
+	for ($c = 1; $c <= $mergeEnd; $c++) {
+		xlsEnsureCellStyle($rowNum, $c, $styleFooter, '');
+	}
+	if ($debetCol !== null) {
+		xlsWriteCellStyle($rowNum, $debetCol, jurnal_penyesuaian_format_rupiah(isset($result['total_debet']) ? $result['total_debet'] : 0, true), $styleFooter);
+	}
+	if ($kreditCol !== null) {
+		xlsWriteCellStyle($rowNum, $kreditCol, jurnal_penyesuaian_format_rupiah(isset($result['total_kredit']) ? $result['total_kredit'] : 0, true), $styleFooter);
+	}
+
+	xlsEOF();
 }
