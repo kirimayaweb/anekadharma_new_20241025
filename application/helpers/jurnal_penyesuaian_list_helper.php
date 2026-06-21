@@ -116,9 +116,15 @@ function jurnal_penyesuaian_export_excel_list_output($CI, $date_awal = null, $da
 	$CI->load->helper('exportexcel');
 
 	if ($date_awal === null) {
-		$date_awal = $CI->input->post('tgl_awal', TRUE);
-	}
-	if ($date_akhir === null) {
+		$bulan_ns = trim((string) $CI->input->post('bulan_ns', TRUE));
+		if (preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+			$date_awal = sprintf('%04d-%02d-01', (int) $m[1], (int) $m[2]);
+			$date_akhir = date('Y-m-t', strtotime($date_awal));
+		} else {
+			$date_awal = $CI->input->post('tgl_awal', TRUE);
+			$date_akhir = $CI->input->post('tgl_akhir', TRUE);
+		}
+	} elseif ($date_akhir === null) {
 		$date_akhir = $CI->input->post('tgl_akhir', TRUE);
 	}
 
