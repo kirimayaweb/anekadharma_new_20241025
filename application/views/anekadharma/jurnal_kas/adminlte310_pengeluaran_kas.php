@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+﻿<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
@@ -127,6 +127,11 @@
         $url_compare_pengeluaran_kas_tabel_preview = isset($url_compare_pengeluaran_kas_tabel_preview)
             ? $url_compare_pengeluaran_kas_tabel_preview
             : site_url('Jurnal_kas/ajax_compare_tabel_preview_pengeluaran_kas');
+        $url_pengeluaran_kas_excel = isset($url_pengeluaran_kas_excel)
+            ? $url_pengeluaran_kas_excel
+            : site_url('Jurnal_kas/excel_pengeluaran_kas');
+        $pengeluaran_periode_label = $Get_date_awal . ' s/d ' . $Get_date_akhir;
+        $pengeluaran_bulan_label = bulan_teks($compare_bulan_num) . ' ' . $compare_tahun_num;
 
         ?>
 
@@ -149,7 +154,7 @@
                                     $action_cari_between_date = site_url('Jurnal_kas/Jurnal_pengeluaran_kas_cari_between_date');
                                         ?>
 
-                                        <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                        <form id="form-cari-pengeluaran-kas" action="<?php echo $action_cari_between_date; ?>" method="post">
                                             <div class="row">
 
                                                 <div class="col-md-1" text-align="right" align="right"></div>
@@ -205,7 +210,7 @@
 
                         <ul class="nav nav-tabs jurnal-pengeluaran-kas-tabs" id="jurnal-pengeluaran-kas-tabs" role="tablist">
                             <li class="nav-item">
-                                <a class="nav-link<?php echo $tab_data_active ? ' active' : ''; ?>" id="tab-pengeluaran-data" data-toggle="pill" href="#panel-pengeluaran-data" role="tab" aria-controls="panel-pengeluaran-data" aria-selected="<?php echo $tab_data_active ? 'true' : 'false'; ?>">Data Jurnal Pengeluaran Kas</a>
+                                <a class="nav-link<?php echo $tab_data_active ? ' active' : ''; ?>" id="tab-pengeluaran-data" data-toggle="pill" href="#panel-pengeluaran-data" role="tab" aria-controls="panel-pengeluaran-data" aria-selected="<?php echo $tab_data_active ? 'true' : 'false'; ?>">Data Jurnal Pengeluaran Kas (<?php echo htmlspecialchars($pengeluaran_bulan_label, ENT_QUOTES, 'UTF-8'); ?>)</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php echo $tab_compare_active ? ' active' : ''; ?>" id="tab-compare-pengeluaran-kas" data-toggle="pill" href="#panel-compare-pengeluaran-kas" role="tab" aria-controls="panel-compare-pengeluaran-kas" aria-selected="<?php echo $tab_compare_active ? 'true' : 'false'; ?>">Compare Data Manual - Online</a>
@@ -215,647 +220,7 @@
                         <div class="tab-content" id="jurnal-pengeluaran-kas-tabs-content">
                             <div class="tab-pane fade<?php echo $tab_data_active ? ' show active' : ''; ?>" id="panel-pengeluaran-data" role="tabpanel" aria-labelledby="tab-pengeluaran-data">
 
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
-                            <thead>
-                                <!-- <tr>
-
-                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
-                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
-                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
-                                    <th rowspan="3" style="text-align:center">PL</th>
-                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
-
-                                    <th colspan="3" style="text-align:center">Debet</th>
-
-
-                                    <th colspan="1" style="text-align:center">Kredit</th>
-                                </tr>
-                                <tr>
-                                    <th rowspan="2" style="text-align:center">21101-UU Dagang</th>
-                                    <th colspan="2" style="text-align:center">Serba-Serbi</th>
-                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
-                                </tr>
-
-
-                                <tr>
-                                    <th rowspan="2" style="text-align:left">No. Rek</th>
-                                    <th rowspan="2" style="text-align:right">Jumlah</th>
-
-                                </tr>
-                                 -->
-                                <!-- ============================================ -->
-
-                                <tr>
-
-                                    <th rowspan="3" style="text-align:left" width="10px">No</th>
-                                    <th rowspan="3" style="text-align:left" width="10px">Tanggal</th>
-                                    <th rowspan="3" style="text-align:center">Kode Akun</th>
-                                    <th rowspan="3" style="text-align:center">No. Bukti BKM</th>
-                                    <th rowspan="3" style="text-align:center">PL</th>
-                                    <th rowspan="3" style="text-align:center">KETERANGAN</th>
-                                    <th colspan="3" style="text-align:center">DEBET</th>
-                                    <th colspan="1" style="text-align:center">KREDIT</th>
-
-                                </tr>
-                                <tr>
-                                    <th rowspan="2" style="text-align:center">21101-UU Dagang</th>
-                                    <th colspan="2" style="text-align:center">serba-serbi</th>
-                                    <th rowspan="2" style="text-align:right">11101-Kas Besar</th>
-                                </tr>
-                                <tr>
-                                    <th style="text-align:left">No. Rek</th>
-                                    <th style="text-align:right">Jumlah</th>
-                                </tr>
-
-                            </thead>
-                            <tbody>
-                                <?php
-                                $start = 0;
-                                $TOTAL_21101 = 0;
-                                $TOTAL_debet_jumlah = 0;
-                                $TOTAL_kredit_11101 = 0;
-                                $TOTAL_21101_SEMUA = 0;
-                                $TOTAL_debet_jumlah_SEMUA = 0;
-                                $TOTAL_kredit_11101_SEMUA = 0;
-                                $TOTAL_saldo = 0;
-                                foreach ($Data_kas as $list_data) {
-
-                                ?>
-
-                                    <?php
-                                    // Baris pertama start=1
-                                    $First_row = ++$start;
-                                    if ($First_row == 1) {
-                                        // Baris pertama
-                                    ?>
-
-                                        <tr>
-                                            <td>
-                                                <?php
-                                                echo $First_row;
-                                                ?>
-                                            </td>
-
-                                            <td>
-                                                <?php
-                                                echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                ?>
-                                            </td>
-
-                                            <!-- Kode Akun -->
-                                            <td><?php
-                                                // echo "Kode Akun";
-                                                if ($list_data->kode_akun) {
-                                                    echo $list_data->kode_akun;
-                                                    echo "<br/>";
-                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                } else {
-                                                    echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                }
-                                                ?>
-                                            </td>
-
-                                            <td>
-                                                <?php
-                                                echo $list_data->bukti;
-                                                ?>
-                                            </td>
-
-                                            <td>
-                                                <?php
-                                                echo $list_data->pl;
-                                                ?>
-                                            </td>
-
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->keterangan;
-                                                ?>
-                                            </td>
-
-
-                                            <!-- 21101-UU Dagang -->
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->kode_akun == "21101") {
-                                                    echo number_format($list_data->kredit, 2, ',', '.');
-                                                    $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
-                                                    $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
-                                                    // echo "<br/>";
-                                                    // echo number_format($TOTAL_21101, 2, ',', '.');
-                                                    // echo "<br/>";
-                                                    // echo number_format($TOTAL_21101_SEMUA, 2, ',', '.');
-                                                } else {
-                                                    echo "";
-                                                }
-                                                ?>
-                                            </td>
-
-                                            <!-- Serbi-Serbi No. Rek -->
-                                            <td>
-                                                <?php
-                                                // echo "no rek";
-                                                ?>
-                                            </td>
-
-                                            <!-- Serbi-Serbi Jumlah -->
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->kode_akun == "21101") {
-                                                    echo "";
-                                                } else {
-                                                    echo number_format($list_data->kredit, 2, ',', '.');
-                                                    $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
-                                                    $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
-                                                }
-
-                                                ?>
-                                            </td>
-
-                                            <!-- Kredit 11101-Kas Besar -->
-                                            <td style="text-align:right">
-                                                <?php
-                                                if ($list_data->kredit > 0) {
-                                                    echo number_format($list_data->kredit, 2, ',', '.');
-                                                    $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
-                                                    $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
-                                                } else {
-                                                    echo "";
-                                                }
-                                                ?>
-                                            </td>
-
-
-                                        </tr>
-
-                                        <?php
-
-                                        // Simpan data pl untuk referensi baris selanjutnya
-                                        $PL_Data = $list_data->pl;
-                                    } else {
-
-                                        // Cek apakah pl sama ?
-                                        if ($PL_Data == $list_data->pl) {
-                                            // Jika sama maka tampilkan list data
-
-                                        ?>
-                                            <!-- BARIS  2 DST YANG MASIH PL SAMA -->
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td><?php
-                                                    // echo "Kode Akun";
-                                                    if ($list_data->kode_akun) {
-                                                        echo $list_data->kode_akun;
-                                                        echo "<br/>";
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    } else {
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo $list_data->pl;
-                                                    ?>
-                                                </td>
-
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-
-                                                <!-- 21101-UU Dagang -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "21101") {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
-                                                        $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi No. Rek -->
-                                                <td>
-                                                    <?php
-                                                    // echo "no rek";
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi Jumlah -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "21101") {
-                                                        echo "";
-                                                    } else {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
-                                                        $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
-                                                    }
-
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit 11101-Kas Besar -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kredit > 0) {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
-                                                        $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-
-
-                                            </tr>
-
-                                        <?php
-
-                                        } else {
-                                            // Jika berbeda maka tampilkan jumlah dari pl lama dan buat baris baru list data
-
-                                            // TOTAL PER PL
-                                        ?>
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    // echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td><?php
-                                                    // // echo "Kode Akun";
-                                                    // if ($list_data->kode_akun) {
-                                                    //     echo $list_data->kode_akun;
-                                                    //     echo "<br/>";
-                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    // } else {
-                                                    //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    // }
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    // echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    // echo $list_data->pl;
-                                                    ?>
-                                                </td>
-
-                                                <td align="left">
-                                                    <?php
-                                                    // echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-                                                <!-- 21101-UU Dagang -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->kode_akun == "21101") {
-
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_21101, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_21101 = 0;
-
-                                                    // $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
-                                                    // $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
-                                                    // } else {
-                                                    //     echo "";
-                                                    // }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi No. Rek -->
-                                                <td>
-                                                    <?php
-                                                    // echo "no rek";
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi Jumlah -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->kode_akun == "21101") {
-                                                    //     echo "";
-                                                    // } else {
-
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_debet_jumlah = 0;
-
-                                                    //     $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
-                                                    //     $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
-                                                    // }
-
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit 11101-Kas Besar -->
-                                                <td style="background-color:yellow;text-align:right">
-                                                    <?php
-                                                    // if ($list_data->kredit > 0) {
-
-                                                    echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11101, 2, ',', '.') . "</strong></font>";
-                                                    $TOTAL_kredit_11101 = 0;
-
-                                                    //     $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
-                                                    //     $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
-                                                    // } else {
-                                                    //     echo "";
-                                                    // }
-                                                    ?>
-                                                </td>
-
-
-                                            </tr>
-
-                                            <?php
-                                            $TOTAL_21101 = 0;
-                                            $TOTAL_debet_jumlah = 0;
-                                            $TOTAL_kredit_11101 = 0;
-
-                                            // BARIS DATA BARU DENGAN PL dari awal
-                                            ?>
-                                            <tr>
-                                                <td>
-                                                    <?php
-                                                    echo ++$start;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo date("d-m-Y", strtotime($list_data->tanggal));
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kode Akun -->
-                                                <td><?php
-                                                    // echo "Kode Akun";
-                                                    if ($list_data->kode_akun) {
-                                                        echo $list_data->kode_akun;
-                                                        echo "<br/>";
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                                    } else {
-                                                        echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo $list_data->bukti;
-                                                    ?>
-                                                </td>
-
-                                                <td>
-                                                    <?php
-                                                    echo $list_data->pl;
-                                                    ?>
-                                                </td>
-
-                                                <td align="left">
-                                                    <?php
-                                                    echo $list_data->keterangan;
-                                                    ?>
-                                                </td>
-
-
-                                                <!-- 21101-UU Dagang -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "21101") {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
-                                                        $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
-                                                        // echo "<br/>";
-                                                        // echo number_format($TOTAL_21101, 2, ',', '.');
-                                                        // echo "<br/>";
-                                                        // echo number_format($TOTAL_21101_SEMUA, 2, ',', '.');
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi No. Rek -->
-                                                <td>
-                                                    <?php
-                                                    // echo "no rek";
-                                                    ?>
-                                                </td>
-
-                                                <!-- Serbi-Serbi Jumlah -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kode_akun == "21101") {
-                                                        echo "";
-                                                    } else {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
-                                                        $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
-                                                    }
-
-                                                    ?>
-                                                </td>
-
-                                                <!-- Kredit 11101-Kas Besar -->
-                                                <td style="text-align:right">
-                                                    <?php
-                                                    if ($list_data->kredit > 0) {
-                                                        echo number_format($list_data->kredit, 2, ',', '.');
-                                                        $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
-                                                        $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
-                                                    } else {
-                                                        echo "";
-                                                    }
-                                                    ?>
-                                                </td>
-                                            </tr>
-                                    <?php
-                                        }
-                                    }
-                                    ?>
-                                <?php
-                                }
-                                ?>
-
-
-                                <!-- TOTAL BARIS terakhir -->
-                                <tr>
-                                    <td>
-                                        <?php
-                                        echo ++$start;
-                                        ?>
-                                    </td>
-
-                                    <td>
-                                        <?php
-                                        // echo date("d-m-Y", strtotime($list_data->tanggal));
-                                        ?>
-                                    </td>
-
-                                    <!-- Kode Akun -->
-                                    <td><?php
-                                        // // echo "Kode Akun";
-                                        // if ($list_data->kode_akun) {
-                                        //     echo $list_data->kode_akun;
-                                        //     echo "<br/>";
-                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH KODE AKUN</i>', 'class="btn btn-warning btn-xs"');
-                                        // } else {
-                                        //     echo anchor(site_url('Jurnal_kas/ubah_kode_akun_pengeluaran/' . $list_data->uuid_jurnal_kas), '<i class="fa fa-pencil-square-o" aria-hidden="true">INPUT KODE AKUN</i>', 'class="btn btn-danger btn-xs"');
-                                        // }
-                                        ?>
-                                    </td>
-
-                                    <td>
-                                        <?php
-                                        // echo $list_data->bukti;
-                                        ?>
-                                    </td>
-
-                                    <td>
-                                        <?php
-                                        // echo $list_data->pl;
-                                        ?>
-                                    </td>
-
-                                    <td align="left">
-                                        <?php
-                                        // echo $list_data->keterangan;
-                                        ?>
-                                    </td>
-
-
-                                    <!-- 21101-UU Dagang -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->kode_akun == "21101") {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_21101, 2, ',', '.') . "</strong></font>";
-                                        // $TOTAL_21101 = $TOTAL_21101 + $list_data->kredit;
-                                        // $TOTAL_21101_SEMUA = $TOTAL_21101_SEMUA + $list_data->kredit;
-                                        // } else {
-                                        //     echo "";
-                                        // }
-                                        ?>
-                                    </td>
-
-                                    <!-- Serbi-Serbi No. Rek -->
-                                    <td>
-                                        <?php
-                                        // echo "no rek";
-                                        ?>
-                                    </td>
-
-                                    <!-- Serbi-Serbi Jumlah -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->kode_akun == "21101") {
-                                        //     echo "";
-                                        // } else {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_debet_jumlah, 2, ',', '.') . "</strong></font>";
-                                        //     $TOTAL_debet_jumlah = $TOTAL_debet_jumlah + $list_data->kredit;
-                                        //     $TOTAL_debet_jumlah_SEMUA = $TOTAL_debet_jumlah_SEMUA + $list_data->kredit;
-                                        // }
-
-                                        ?>
-                                    </td>
-
-                                    <!-- Kredit 11101-Kas Besar -->
-                                    <td style="background-color:yellow;text-align:right">
-                                        <?php
-                                        // if ($list_data->kredit > 0) {
-                                        echo "<font color='red'><strong>" . number_format($TOTAL_kredit_11101, 2, ',', '.') . "</strong></font>";
-                                        //     $TOTAL_kredit_11101 = $TOTAL_kredit_11101 + $list_data->kredit;
-                                        //     $TOTAL_kredit_11101_SEMUA = $TOTAL_kredit_11101_SEMUA + $list_data->kredit;
-                                        // } else {
-                                        //     echo "";
-                                        // }
-                                        ?>
-                                    </td>
-
-
-                                </tr>
-
-
-                            </tbody>
-
-
-                            <tfoot>
-                                <tr>
-
-                                    <th style="text-align:left" width="10px"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:center"></th>
-                                    <th style="text-align:right">
-                                        <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_21101_SEMUA + $TOTAL_debet_jumlah_SEMUA, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </th> <!-- TOTAL DEBET -->
-                                    <th style="text-align:right">
-                                        <?php
-                                        // echo number_format($TOTAL_kredit_11301_SEMUA, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:center">
-
-                                    </th>
-                                    <th style="text-align:right">
-                                        <?php
-                                        echo "<font color='blue'><strong>" . number_format($TOTAL_kredit_11101_SEMUA , 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </th> <!-- TOTAL JUMLAH -->
-
-                                </tr>
-
-                            </tfoot>
-
-
-
-
-
-
-
-                        </table>
+                        <?php $this->load->helper('pengeluaran_kas_list'); include __DIR__ . '/adminlte310_pengeluaran_kas_tab_data.php'; ?>
                             </div><!-- /.tab-pane data -->
 
                             <?php
@@ -926,7 +291,7 @@
                                 </div>
 
                                 <div class="alert alert-secondary py-2" id="compare-pengeluaran-info-ringkas">
-                                    <strong>Bulan:</strong> <span id="compare-pengeluaran-label-bulan">—</span>
+                                    <strong>Bulan:</strong> <span id="compare-pengeluaran-label-bulan"><?php echo htmlspecialchars($pengeluaran_bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                                     &nbsp;|&nbsp; <strong>Tabel manual:</strong> <span id="compare-pengeluaran-label-tabel">—</span>
                                     &nbsp;|&nbsp; <strong>Manual:</strong> <span id="compare-pengeluaran-count-manual">—</span>
                                     &nbsp;|&nbsp; <strong>Online:</strong> <span id="compare-pengeluaran-count-online">—</span>
@@ -1028,7 +393,63 @@
     .compare-dt-wrap .text-amount-jml { color: #856404; }
     .compare-dt-wrap .text-amount-kre { color: #0c5460; }
     .compare-dt-wrap .text-catatan { font-size: 11px; color: #856404; }
+    .pengeluaran-kas-tab1-toolbar { padding: 10px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; }
+
+    /* ===== Pengeluaran Kas DataTable — border kuning hanya wrapper ===== */
+    .pengeluaran-kas-dt-wrap {
+        border: 1px solid #ffc107;
+        border-radius: 4px;
+        padding: 8px;
+        background: #fff;
+        overflow-x: auto;
+    }
+    .pengeluaran-kas-dt-wrap .dataTables_wrapper { width: 100%; }
+    .pengeluaran-kas-dt-table {
+        margin-bottom: 0 !important;
+        table-layout: auto;
+        width: 100% !important;
+    }
+    .pengeluaran-kas-dt-table thead th,
+    .pengeluaran-kas-dt-table tbody td,
+    .pengeluaran-kas-dt-table tfoot th {
+        border: 1px solid #dee2e6 !important;
+        vertical-align: middle;
+        font-size: 13px;
+        padding: 6px 8px;
+    }
+    .pengeluaran-kas-dt-table thead th {
+        background: #f8f9fa;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+    }
+    .pengeluaran-kas-dt-table tbody td { background: #fff; word-wrap: break-word; }
+    .pengeluaran-kas-dt-table tbody td:first-child,
+    .pengeluaran-kas-dt-table thead th:first-child,
+    .pengeluaran-kas-dt-table tfoot th:first-child { text-align: center; }
+    .pengeluaran-kas-dt-table tfoot th { background: #f8f9fa; font-weight: 600; }
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting:before,
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting:after,
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting_asc:before,
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting_asc:after,
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting_desc:before,
+    .pengeluaran-kas-dt-wrap table.dataTable thead .sorting_desc:after { display: none !important; }
+    .pengeluaran-kas-dt-wrap table.dataTable thead th.sorting,
+    .pengeluaran-kas-dt-wrap table.dataTable thead th.sorting_asc,
+    .pengeluaran-kas-dt-wrap table.dataTable thead th.sorting_desc {
+        background-image: none !important;
+        padding-right: 8px !important;
+    }
+    .pgk-cell-tanggal { min-width: 110px; }
+    .pgk-row-actions .btn { margin-right: 2px; margin-bottom: 2px; }
+    #modal-pengeluaran-kas-form .modal-header { border-bottom: none; }
+    #modal-pengeluaran-kas-form .modal-content { border: none; box-shadow: 0 8px 30px rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
+    #modal-pengeluaran-kas-form .modal-body { background: #fafbfc; }
+    #modal-pengeluaran-kas-form label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    #modal-pengeluaran-kas-form .select2-container { width: 100% !important; }
 </style>
+
+<?php include __DIR__ . '/adminlte310_pengeluaran_kas_scripts.php'; ?>
 
 <script>
 window.addEventListener('load', function() {
@@ -1075,6 +496,7 @@ window.addEventListener('load', function() {
         jQuery('#btn-compare-pengeluaran-kas').toggleClass('d-none', !show);
         if (!show) jQuery('#btn-compare-pengeluaran-excel-all').addClass('d-none');
     }
+    window.toggleBtnsPengeluaranKas = toggleBtns;
     function buildRows(items) {
         return (items || []).map(function(it, i) {
             return [
