@@ -1011,3 +1011,403 @@ function pengeluaran_kas_compare_import_csv_to_db($CI, $filepath, $original_file
 			. 'Silahkan lanjut compare menggunakan tabel ini.',
 	);
 }
+
+function pengeluaran_kas_compare_load_import_helpers($CI)
+{
+	$CI->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_kas_compare', 'pengeluaran_kas_list'));
+}
+
+function pengeluaran_kas_compare_validate_import_table($CI, $table)
+{
+	pengeluaran_kas_compare_load_import_helpers($CI);
+
+	if (!persediaan_compare_is_valid_table_name($table)) {
+		return array('ok' => false, 'message' => 'Nama tabel tidak valid.');
+	}
+	if (!$CI->db->table_exists($table)) {
+		return array('ok' => false, 'message' => 'Tabel tidak ditemukan di database.');
+	}
+
+	$fields = $CI->db->list_fields($table);
+	$analysis = pengeluaran_kas_compare_analyze_column_map($fields);
+	$map = isset($analysis['map']) ? $analysis['map'] : array();
+	$mapped = isset($analysis['mapped']) ? $analysis['mapped'] : array();
+
+	if (empty($map['tanggal'])) {
+		return array(
+			'ok' => false,
+			'message' => 'Kolom tanggal tidak ditemukan pada tabel `' . $table . '`.',
+			'missing_fields' => array('tanggal'),
+			'fields' => $fields,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'map' => $map,
+		'mapped' => $mapped,
+		'fields' => $fields,
+		'message' => 'Tabel `' . $table . '` siap diimport ke jurnal_pengeluaran_kas.',
+	);
+}
+
+function pengeluaran_kas_compare_is_import_row_saveable($row)
+{
+	$tanggal = pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '');
+	return ($tanggal !== '' && $tanggal !== '0000-00-00');
+}
+
+function pengeluaran_kas_compare_row_raw_value($row, $col)
+{
+	if ($col === null || $col === '') {
+		return '';
+	}
+	return pengeluaran_kas_compare_get_row_value($row, $col);
+}
+
+function pengeluaran_kas_compare_row_to_insert_data($item)
+{
+	$deb = pengeluaran_kas_compare_normalize_jumlah(isset($item['debet_21101uu_dagang']) ? $item['debet_21101uu_dagang'] : 0);
+	$jml = pengeluaran_kas_compare_normalize_jumlah(isset($item['serba_serbi_jumlah']) ? $item['serba_serbi_jumlah'] : 0);
+	$kre = pengeluaran_kas_compare_normalize_jumlah(isset($item['kredit_11101_kas_besar']) ? $item['kredit_11101_kas_besar'] : 0);
+
+	return array(
+		'tanggal' => pengeluaran_kas_format_tanggal_storage(isset($item['tanggal']) ? $item['tanggal'] : ''),
+		'nomor_bukti_bkk' => trim((string) (isset($item['nomor_bukti_bkk']) ? $item['nomor_bukti_bkk'] : '')),
+		'pl' => trim((string) (isset($item['pl']) ? $item['pl'] : '')),
+		'keterangan' => trim((string) (isset($item['keterangan']) ? $item['keterangan'] : '')),
+		'debet_21101uu_dagang' => $deb > 0 ? (string) $deb : '',
+		'serba_serbi_nomor_rekening' => trim((string) (isset($item['serba_serbi_nomor_rekening']) ? $item['serba_serbi_nomor_rekening'] : '')),
+		'serba_serbi_jumlah' => $jml > 0 ? (string) $jml : '',
+		'kredit_11101_kas_besar' => $kre > 0 ? (string) $kre : '',
+	);
+}
+
+function pengeluaran_kas_compare_row_to_insert_data_as_is($CI, $row, $map, $default_tanggal)
+{
+	$item = pengeluaran_kas_compare_manual_row_from_db($row, $map, $default_tanggal);
+	$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+	if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+		return null;
+	}
+
+	$data = array(
+		'tanggal' => pengeluaran_kas_format_tanggal_storage($tanggal_norm),
+		'nomor_bukti_bkk' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['nomor_bukti_bkk']) ? $map['nomor_bukti_bkk'] : '')),
+		'pl' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['pl']) ? $map['pl'] : '')),
+		'keterangan' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['keterangan']) ? $map['keterangan'] : '')),
+		'debet_21101uu_dagang' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['debet_21101uu_dagang']) ? $map['debet_21101uu_dagang'] : '')),
+		'serba_serbi_nomor_rekening' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['serba_serbi_nomor_rekening']) ? $map['serba_serbi_nomor_rekening'] : '')),
+		'serba_serbi_jumlah' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['serba_serbi_jumlah']) ? $map['serba_serbi_jumlah'] : '')),
+		'kredit_11101_kas_besar' => trim((string) pengeluaran_kas_compare_row_raw_value($row, !empty($map['kredit_11101_kas_besar']) ? $map['kredit_11101_kas_besar'] : '')),
+	);
+
+	return pengeluaran_kas_align_insert_row($CI, $data);
+}
+
+function pengeluaran_kas_compare_validate_table_for_import($CI, $table, $bulan)
+{
+	pengeluaran_kas_compare_load_import_helpers($CI);
+
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = pengeluaran_kas_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array(
+			'ok' => true,
+			'eligible' => false,
+			'import_enabled' => false,
+			'bulan_match' => false,
+			'message' => isset($valid['message']) ? $valid['message'] : 'Tabel tidak memenuhi syarat import.',
+			'missing_fields' => isset($valid['missing_fields']) ? $valid['missing_fields'] : array(),
+			'table' => $table,
+			'bulan' => $bulan,
+		);
+	}
+
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$map = $valid['map'];
+	$default_tanggal = $range ? $range['tgl_akhir'] : '';
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+
+	$with_tanggal = 0;
+	$in_bulan = 0;
+	$out_bulan = 0;
+	$empty_tanggal = 0;
+	$saveable_in_bulan = 0;
+	$invalid_in_bulan = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = pengeluaran_kas_compare_manual_row_from_db($row, $map, $default_tanggal);
+		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+			$empty_tanggal++;
+			continue;
+		}
+		$with_tanggal++;
+		if (pengeluaran_kas_compare_row_matches_bulan($tanggal_norm, $bulan)) {
+			$in_bulan++;
+			$saveable_in_bulan++;
+		} else {
+			$out_bulan++;
+		}
+	}
+
+	$import_enabled = ($saveable_in_bulan > 0);
+	$import_message = '';
+	if ($import_enabled) {
+		$import_message = 'Siap disimpan ke jurnal_pengeluaran_kas: ' . $saveable_in_bulan . ' baris pada bulan terpilih (tanpa cek duplikat).';
+		if ($out_bulan > 0) {
+			$import_message .= ' (' . $out_bulan . ' baris di luar bulan akan dilewati.)';
+		}
+	} elseif ($out_bulan > 0) {
+		$import_message = 'Tidak ada data dengan tanggal pada bulan terpilih. (' . $out_bulan . ' baris tanggalnya di bulan lain.)';
+	} else {
+		$import_message = 'Tidak ada data dengan tanggal valid pada tabel ini.';
+	}
+
+	return array(
+		'ok' => true,
+		'eligible' => true,
+		'import_enabled' => $import_enabled,
+		'bulan_match' => $import_enabled,
+		'import_message' => $import_message,
+		'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal pengeluaran kas.',
+		'map' => $map,
+		'mapped' => isset($valid['mapped']) ? $valid['mapped'] : array(),
+		'table' => $table,
+		'bulan' => $bulan,
+		'stats' => array(
+			'total_rows' => count($all_rows),
+			'with_tanggal' => $with_tanggal,
+			'in_bulan' => $in_bulan,
+			'out_bulan' => $out_bulan,
+			'empty_tanggal' => $empty_tanggal,
+			'saveable_in_bulan' => $saveable_in_bulan,
+			'invalid_in_bulan' => $invalid_in_bulan,
+		),
+	);
+}
+
+function pengeluaran_kas_compare_load_table_detail_for_bulan($CI, $table, $bulan)
+{
+	pengeluaran_kas_compare_load_import_helpers($CI);
+
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = pengeluaran_kas_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return $valid;
+	}
+
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$map = $valid['map'];
+	$default_tanggal = $range ? $range['tgl_akhir'] : '';
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$items = array();
+	$no = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = pengeluaran_kas_compare_manual_row_from_db($row, $map, $default_tanggal);
+		if (!pengeluaran_kas_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			continue;
+		}
+		$no++;
+		$deb = pengeluaran_kas_compare_normalize_jumlah(isset($item['debet_21101uu_dagang']) ? $item['debet_21101uu_dagang'] : 0);
+		$jml = pengeluaran_kas_compare_normalize_jumlah(isset($item['serba_serbi_jumlah']) ? $item['serba_serbi_jumlah'] : 0);
+		$kre = pengeluaran_kas_compare_normalize_jumlah(isset($item['kredit_11101_kas_besar']) ? $item['kredit_11101_kas_besar'] : 0);
+		$items[] = array(
+			'no' => $no,
+			'tanggal' => pembelian_jurnal_compare_format_tanggal_display($item['tanggal']),
+			'nomor_bukti_bkk' => isset($item['nomor_bukti_bkk']) ? $item['nomor_bukti_bkk'] : '',
+			'pl' => isset($item['pl']) ? $item['pl'] : '',
+			'keterangan' => isset($item['keterangan']) ? $item['keterangan'] : '',
+			'debet_21101uu_dagang' => $deb > 0 ? pengeluaran_kas_compare_format_jumlah_display($deb) : '',
+			'serba_serbi_nomor_rekening' => isset($item['serba_serbi_nomor_rekening']) ? $item['serba_serbi_nomor_rekening'] : '',
+			'serba_serbi_jumlah' => $jml > 0 ? pengeluaran_kas_compare_format_jumlah_display($jml) : '',
+			'kredit_11101_kas_besar' => $kre > 0 ? pengeluaran_kas_compare_format_jumlah_display($kre) : '',
+			'debet_raw' => $deb,
+			'jumlah_raw' => $jml,
+			'kredit_raw' => $kre,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'headers' => array('No', 'Tanggal', 'No. Bukti BKK', 'PL', 'Keterangan', '21101-UU Dagang', 'No. Rek', 'Jumlah Serba-Serbi', '11101-Kas Besar'),
+		'rows' => $items,
+		'table' => $table,
+		'bulan' => $bulan,
+		'bulan_label' => $range ? $range['bulan_label'] : $bulan,
+		'total' => count($items),
+	);
+}
+
+function pengeluaran_kas_compare_import_to_jurnal_pengeluaran_kas($CI, $table, $bulan)
+{
+	pengeluaran_kas_compare_load_import_helpers($CI);
+
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = pengeluaran_kas_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($valid['message']) ? $valid['message'] : 'Tabel tidak memenuhi syarat import.',
+		);
+	}
+
+	$table_target = pengeluaran_kas_table_name();
+	if (!$CI->db->table_exists($table_target)) {
+		return array('ok' => false, 'message' => 'Tabel `' . $table_target . '` tidak ditemukan di database.');
+	}
+
+	$CI->load->model('Jurnal_pengeluaran_kas_model');
+	$map = $valid['map'];
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$default_tanggal = $range ? $range['tgl_akhir'] : '';
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$inserted = 0;
+	$skipped_out_bulan = 0;
+	$skipped_invalid = 0;
+
+	$CI->db->trans_start();
+	foreach ((array) $all_rows as $row) {
+		$item = pengeluaran_kas_compare_manual_row_from_db($row, $map, $default_tanggal);
+		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+			$skipped_invalid++;
+			continue;
+		}
+		if (!pengeluaran_kas_compare_row_matches_bulan($tanggal_norm, $bulan)) {
+			$skipped_out_bulan++;
+			continue;
+		}
+
+		$insert_data = pengeluaran_kas_compare_row_to_insert_data_as_is($CI, $row, $map, $default_tanggal);
+		if ($insert_data === null || !isset($insert_data['tanggal']) || $insert_data['tanggal'] === '') {
+			$skipped_invalid++;
+			continue;
+		}
+
+		$CI->Jurnal_pengeluaran_kas_model->insert($insert_data);
+		$inserted++;
+	}
+	$CI->db->trans_complete();
+
+	if ($CI->db->trans_status() === FALSE) {
+		return array('ok' => false, 'message' => 'Gagal menyimpan data ke jurnal_pengeluaran_kas.');
+	}
+
+	if ($inserted === 0) {
+		return array(
+			'ok' => false,
+			'message' => 'Tidak ada baris dengan tanggal pada bulan ' . ($range ? $range['bulan_label'] : $bulan) . ' yang dapat disimpan.',
+			'inserted' => 0,
+			'skipped_out_bulan' => $skipped_out_bulan,
+			'skipped_invalid' => $skipped_invalid,
+		);
+	}
+
+	$message = 'Berhasil menyimpan ' . $inserted . ' data ke jurnal_pengeluaran_kas (langsung insert tanpa cek duplikat).';
+	if ($skipped_out_bulan > 0) {
+		$message .= ' ' . $skipped_out_bulan . ' baris di luar bulan terpilih tidak disimpan.';
+	}
+	if ($skipped_invalid > 0) {
+		$message .= ' ' . $skipped_invalid . ' baris tanggal tidak valid tidak disimpan.';
+	}
+
+	return array(
+		'ok' => true,
+		'inserted' => $inserted,
+		'skipped_out_bulan' => $skipped_out_bulan,
+		'skipped_invalid' => $skipped_invalid,
+		'skipped' => $skipped_out_bulan + $skipped_invalid,
+		'message' => $message,
+	);
+}
+
+function pengeluaran_kas_compare_export_table_detail_excel($CI, $table, $bulan)
+{
+	@set_time_limit(600);
+	@ini_set('memory_limit', '512M');
+	$CI->load->helper(array('exportexcel', 'pembelian_persediaan'));
+
+	$result = pengeluaran_kas_compare_load_table_detail_for_bulan($CI, $table, $bulan);
+	if (empty($result['ok'])) {
+		xlsBOF();
+		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Export Excel gagal.');
+		xlsEOF();
+		return;
+	}
+
+	$headers = isset($result['headers']) ? $result['headers'] : array();
+	$rows = isset($result['rows']) ? $result['rows'] : array();
+	$bulan_label = isset($result['bulan_label']) ? $result['bulan_label'] : $bulan;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, 'Detail Tabel ' . $table . ' — Bulan ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+
+	$headerRow = 3;
+	foreach ($headers as $col => $label) {
+		xlsWriteCellStyle($headerRow, $col, $label, 2);
+	}
+
+	$rowNum = $headerRow + 1;
+	foreach ($rows as $item) {
+		xlsWriteNumber($rowNum, 0, isset($item['no']) ? (int) $item['no'] : 0, 'center');
+		xlsWriteLabel($rowNum, 1, isset($item['tanggal']) ? $item['tanggal'] : '');
+		xlsWriteLabel($rowNum, 2, isset($item['nomor_bukti_bkk']) ? $item['nomor_bukti_bkk'] : '');
+		xlsWriteLabel($rowNum, 3, isset($item['pl']) ? $item['pl'] : '');
+		xlsWriteLabel($rowNum, 4, isset($item['keterangan']) ? $item['keterangan'] : '');
+		$deb = isset($item['debet_raw']) ? (int) $item['debet_raw'] : 0;
+		$jml = isset($item['jumlah_raw']) ? (int) $item['jumlah_raw'] : 0;
+		$kre = isset($item['kredit_raw']) ? (int) $item['kredit_raw'] : 0;
+		if ($deb > 0) {
+			xlsWriteRupiah($rowNum, 5, $deb);
+		} else {
+			xlsWriteLabel($rowNum, 5, '');
+		}
+		xlsWriteLabel($rowNum, 6, isset($item['serba_serbi_nomor_rekening']) ? $item['serba_serbi_nomor_rekening'] : '');
+		if ($jml > 0) {
+			xlsWriteRupiah($rowNum, 7, $jml);
+		} else {
+			xlsWriteLabel($rowNum, 7, '');
+		}
+		if ($kre > 0) {
+			xlsWriteRupiah($rowNum, 8, $kre);
+		} else {
+			xlsWriteLabel($rowNum, 8, '');
+		}
+		$rowNum++;
+	}
+
+	if (count($rows) > 0) {
+		$totalDeb = 0;
+		$totalJml = 0;
+		$totalKre = 0;
+		foreach ($rows as $item) {
+			$totalDeb += isset($item['debet_raw']) ? (int) $item['debet_raw'] : 0;
+			$totalJml += isset($item['jumlah_raw']) ? (int) $item['jumlah_raw'] : 0;
+			$totalKre += isset($item['kredit_raw']) ? (int) $item['kredit_raw'] : 0;
+		}
+		xlsWriteCellStyle($rowNum, 0, 'Total', 9);
+		for ($c = 1; $c <= 4; $c++) {
+			xlsWriteLabel($rowNum, $c, '');
+		}
+		xlsWriteCellStyle($rowNum, 5, $totalDeb > 0 ? $totalDeb : '', 10);
+		xlsWriteLabel($rowNum, 6, '');
+		xlsWriteCellStyle($rowNum, 7, $totalJml > 0 ? $totalJml : '', 10);
+		xlsWriteCellStyle($rowNum, 8, $totalKre > 0 ? $totalKre : '', 10);
+	}
+
+	xlsSetColumnWidths(array(6, 14, 14, 10, 40, 14, 14, 14, 14));
+	xlsEOF();
+}

@@ -87,6 +87,31 @@ function penerimaan_kas_parse_filter_date($date_str, $is_end = false)
 	return $is_end ? ($ymd . ' 23:59:59') : ($ymd . ' 00:00:00');
 }
 
+function penerimaan_kas_parse_filter_month($bulan_ns)
+{
+	$bulan_ns = trim((string) $bulan_ns);
+	if (!preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+		return null;
+	}
+
+	$year = (int) $m[1];
+	$month = (int) $m[2];
+	if ($year < 2020 || $month < 1 || $month > 12) {
+		return null;
+	}
+
+	$date_awal = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+	$date_akhir = date('Y-m-t 23:59:59', strtotime($date_awal));
+
+	return array(
+		'date_awal' => $date_awal,
+		'date_akhir' => $date_akhir,
+		'month' => $month,
+		'year' => $year,
+		'bulan_ns' => sprintf('%04d-%02d', $year, $month),
+	);
+}
+
 function penerimaan_kas_sql_tanggal_expr()
 {
 	return "COALESCE(
@@ -348,13 +373,62 @@ function penerimaan_kas_save_from_post($CI)
 	);
 }
 
+function penerimaan_kas_excel_title_col_end()
+{
+	return 6;
+}
+
+function penerimaan_kas_excel_write_merged_row($rowNum, $text, $styleIndex, $colEnd = null)
+{
+	if ($colEnd === null) {
+		$colEnd = penerimaan_kas_excel_title_col_end();
+	}
+
+	xlsAddMerge($rowNum, 0, $rowNum, $colEnd);
+	xlsWriteCellStyle($rowNum, 0, $text, $styleIndex);
+	for ($c = 1; $c <= $colEnd; $c++) {
+		xlsEnsureCellStyle($rowNum, $c, $styleIndex, '');
+	}
+}
+
+function penerimaan_kas_excel_write_title_block($month, $year)
+{
+	$styleTitleBoldLeft = 11;
+	$styleTitleItalicLeft = 12;
+	$styleTitleBoldCenter = 13;
+	$bulan_nama = strtoupper(penerimaan_kas_bulan_teks((int) $month));
+	$titleColEnd = penerimaan_kas_excel_title_col_end();
+
+	penerimaan_kas_excel_write_merged_row(0, 'PERUMDA ANEKA DHARMA', $styleTitleBoldLeft, $titleColEnd);
+	penerimaan_kas_excel_write_merged_row(1, 'KABUPATEN BANTUL', $styleTitleBoldLeft, $titleColEnd);
+	penerimaan_kas_excel_write_merged_row(2, 'Jl. Jend. Sudirman 36 Bantul. Telp / Fax : 0274 367123', $styleTitleItalicLeft, $titleColEnd);
+	penerimaan_kas_excel_write_merged_row(
+		3,
+		'JURNAL PENERIMAAN KAS ' . $bulan_nama . ' ' . (int) $year,
+		$styleTitleBoldCenter,
+		$titleColEnd
+	);
+}
+
 function penerimaan_kas_export_excel_write_headers()
 {
-	$styleHeader = 4;
+	$styleTableHeaderGreen = 14;
+	$headerRow = 5;
 
-	$headers = array('No', 'Tanggal', 'Kode Akun', 'No. Bukti BKM', 'PL', 'KETERANGAN', '11101-Kas Besar', '11301-PU Non Angsuran', 'No. Rek', 'Jumlah');
+	$headers = array(
+		'NO',
+		'TANGGAL',
+		'NO. BUKTI BKM',
+		'PL',
+		'KETERANGAN',
+		'11101-KAS BESAR',
+		'11301-PU NON ANGSURAN',
+		'NO. REK',
+		'JUMLAH',
+	);
+
 	foreach ($headers as $col => $label) {
-		xlsWriteCellStyle(4, $col, $label, $styleHeader);
+		xlsWriteCellStyle($headerRow, $col, $label, $styleTableHeaderGreen);
 	}
 }
 
@@ -371,14 +445,13 @@ function penerimaan_kas_export_excel_write_row($rowNum, $item)
 
 	xlsWriteCellStyle($rowNum, 0, $item['no'], $styleBorder);
 	xlsWriteCellStyle($rowNum, 1, $item['tanggal'], $styleText);
-	xlsWriteCellStyle($rowNum, 2, $item['kode_akun'], $styleText);
-	xlsWriteCellStyle($rowNum, 3, $item['bukti'], $styleText);
-	xlsWriteCellStyle($rowNum, 4, $item['pl'], $styleText);
-	xlsWriteCellStyle($rowNum, 5, $item['keterangan'], $styleText);
-	xlsWriteCellStyle($rowNum, 6, penerimaan_kas_format_rupiah($item['debet_11101']), $styleNum);
-	xlsWriteCellStyle($rowNum, 7, penerimaan_kas_format_rupiah($item['kredit_11301']), $styleNum);
-	xlsWriteCellStyle($rowNum, 8, $item['kode_rekening'], $styleText);
-	xlsWriteCellStyle($rowNum, 9, penerimaan_kas_format_rupiah($item['jumlah']), $styleNum);
+	xlsWriteCellStyle($rowNum, 2, $item['bukti'], $styleText);
+	xlsWriteCellStyle($rowNum, 3, $item['pl'], $styleText);
+	xlsWriteCellStyle($rowNum, 4, $item['keterangan'], $styleText);
+	xlsWriteCellStyle($rowNum, 5, penerimaan_kas_format_rupiah($item['debet_11101'], $isSubtotal), $styleNum);
+	xlsWriteCellStyle($rowNum, 6, penerimaan_kas_format_rupiah($item['kredit_11301'], $isSubtotal), $styleNum);
+	xlsWriteCellStyle($rowNum, 7, $item['kode_rekening'], $styleText);
+	xlsWriteCellStyle($rowNum, 8, penerimaan_kas_format_rupiah($item['jumlah'], $isSubtotal), $styleNum);
 }
 
 function penerimaan_kas_export_excel_list_output($CI, $date_awal, $date_akhir)
@@ -387,19 +460,20 @@ function penerimaan_kas_export_excel_list_output($CI, $date_awal, $date_akhir)
 	$CI->load->helper('exportexcel');
 
 	$data = penerimaan_kas_compute_list_data($CI, $date_awal, $date_akhir);
+	$month = (int) $data['month_akhir'];
+	$year = (int) $data['year_akhir'];
 	$periode_slug = date('Ymd', strtotime($date_awal)) . '_' . date('Ymd', strtotime($date_akhir));
 	$namaFile = 'Jurnal_Penerimaan_Kas_' . $periode_slug . '_' . date('Y-m-d_H-i-s') . '.xlsx';
 	excel_prepare_download($namaFile);
 
 	xlsBOF();
+	xlsSetColumnWidths(array(5, 12, 14, 6, 36, 14, 16, 12, 14));
 
-	xlsWriteLabelBold14(0, 0, 'JURNAL PENERIMAAN KAS');
-	xlsWriteLabelBold14(1, 0, 'Periode: ' . $data['periode_label']);
-	xlsWriteLabel(2, 0, 'Bulan/Tahun referensi: ' . $data['bulan_label'] . ' | Dicetak: ' . date('d/m/Y H:i:s'));
+	penerimaan_kas_excel_write_title_block($month, $year);
 
 	penerimaan_kas_export_excel_write_headers();
 
-	$rowNum = 5;
+	$rowNum = 6;
 	foreach ($data['rows'] as $item) {
 		penerimaan_kas_export_excel_write_row($rowNum, $item);
 		$rowNum++;
@@ -410,12 +484,11 @@ function penerimaan_kas_export_excel_list_output($CI, $date_awal, $date_akhir)
 	xlsWriteCellStyle($rowNum, 1, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 2, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 3, '', $styleFooter);
-	xlsWriteCellStyle($rowNum, 4, '', $styleFooter);
-	xlsWriteCellStyle($rowNum, 5, 'GRAND TOTAL', $styleFooter);
-	xlsWriteCellStyle($rowNum, 6, penerimaan_kas_format_rupiah($data['TOTAL_debet_11101_SEMUA'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 4, 'GRAND TOTAL', $styleFooter);
+	xlsWriteCellStyle($rowNum, 5, penerimaan_kas_format_rupiah($data['TOTAL_debet_11101_SEMUA'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 6, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 7, '', $styleFooter);
-	xlsWriteCellStyle($rowNum, 8, '', $styleFooter);
-	xlsWriteCellStyle($rowNum, 9, penerimaan_kas_format_rupiah($data['TOTAL_kredit_jumlah_SEMUA'] + $data['TOTAL_kredit_11301_SEMUA'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 8, penerimaan_kas_format_rupiah($data['TOTAL_kredit_jumlah_SEMUA'] + $data['TOTAL_kredit_11301_SEMUA'], true), $styleFooter);
 
 	xlsEOF();
 }
