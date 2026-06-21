@@ -38,6 +38,206 @@
         font-weight: bold;
         opacity: 1;
     }
+
+    .jurnal-penjualan-unit-block {
+        margin-bottom: 40px;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+
+    .jurnal-penjualan-unit-block:last-child {
+        margin-bottom: 0;
+    }
+
+    .jurnal-penjualan-unit-title {
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 12px;
+        color: #5c4033;
+        letter-spacing: 0.5px;
+        width: 100%;
+    }
+
+    .jurnal-penjualan-unit-actions {
+        margin-bottom: 10px;
+    }
+
+    .jurnal-penjualan-unit-table-wrap {
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fffdf8;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.12);
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_wrapper {
+        width: 100%;
+        margin: 0;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit {
+        border-collapse: collapse;
+        width: 100% !important;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit thead th {
+        background-color: #e8d4b8 !important;
+        color: #4a3728 !important;
+        font-weight: 600;
+        border: 1px solid #d4b896 !important;
+        padding: 10px 8px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit tbody td {
+        border: 1px solid #e8e0d5;
+        padding: 8px;
+        background-color: #ffffff;
+        vertical-align: middle;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit tbody tr:nth-child(even) td {
+        background-color: #faf7f2;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit tbody tr:hover td {
+        background-color: #f5ebe0;
+    }
+
+    .jurnal-penjualan-unit-table-wrap table.tbl-jurnal-penjualan-per-unit tfoot th {
+        background-color: #f0e4d4 !important;
+        color: #4a3728 !important;
+        border: 1px solid #d4b896 !important;
+        font-weight: bold;
+        padding: 10px 8px;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scroll {
+        border: 1px solid #e8d4b8;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHead {
+        background: #e8d4b8;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHeadInner,
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHeadInner table {
+        width: 100% !important;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollBody {
+        border-top: 1px solid #d4b896;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollBody::-webkit-scrollbar,
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHead::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollBody::-webkit-scrollbar-thumb,
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHead::-webkit-scrollbar-thumb {
+        background: #d4b896;
+        border-radius: 6px;
+    }
+
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollBody::-webkit-scrollbar-track,
+    .jurnal-penjualan-unit-table-wrap .dataTables_scrollHead::-webkit-scrollbar-track {
+        background: #f5f0e8;
+    }
+
+    .jurnal-penjualan-tab-table-wrap {
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 10px;
+        background: #f8fff8;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.12);
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_wrapper {
+        width: 100%;
+        margin: 0;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display {
+        border-collapse: collapse;
+        width: 100% !important;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display thead th {
+        background-color: #d4edda !important;
+        color: #2d5a3d !important;
+        font-weight: 600;
+        border: 1px solid #b8dfc4 !important;
+        padding: 10px 8px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display tbody td {
+        border: 1px solid #dceee2;
+        padding: 8px;
+        background-color: #ffffff;
+        vertical-align: middle;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display tbody tr:nth-child(even) td {
+        background-color: #f4fbf6;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display tbody tr:hover td {
+        background-color: #e8f5ec;
+    }
+
+    .jurnal-penjualan-tab-table-wrap table.display tfoot th {
+        background-color: #c3e6cb !important;
+        color: #2d5a3d !important;
+        border: 1px solid #b8dfc4 !important;
+        font-weight: bold;
+        padding: 10px 8px;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scroll {
+        border: 1px solid #b8dfc4;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHead {
+        background: #d4edda;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHeadInner,
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHeadInner table {
+        width: 100% !important;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollBody {
+        border-top: 1px solid #b8dfc4;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollBody::-webkit-scrollbar,
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHead::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollBody::-webkit-scrollbar-thumb,
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHead::-webkit-scrollbar-thumb {
+        background: #b8dfc4;
+        border-radius: 6px;
+    }
+
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollBody::-webkit-scrollbar-track,
+    .jurnal-penjualan-tab-table-wrap .dataTables_scrollHead::-webkit-scrollbar-track {
+        background: #eef8f0;
+    }
 </style>
 
 <div class="content-wrapper">
@@ -189,6 +389,11 @@
                                     Jurnal penjualan
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tabJurnalPenjualanPerUnitTab" data-toggle="tab" href="#tabJurnalPenjualanPerUnit" role="tab" aria-controls="tabJurnalPenjualanPerUnit" aria-selected="false">
+                                    Jurnal penjualan per unit
+                                </a>
+                            </li>
                         </ul>
 
                         <div class="tab-content">
@@ -202,6 +407,7 @@
                                     </div>
                                 </div>
 
+                                <div class="jurnal-penjualan-tab-table-wrap">
                                 <table id="tblJurnalPenjualanBaris" class="display nowrap" style="width:100%">
                                     <thead>
                                         <tr>
@@ -270,6 +476,7 @@
                                         </tr>
                                     </tfoot>
                                 </table>
+                                </div>
                             </div>
 
                             <div class="tab-pane fade" id="tabJurnalPenjualanKolom" role="tabpanel" aria-labelledby="tabJurnalPenjualanKolomTab">
@@ -282,6 +489,7 @@
                                     </div>
                                 </div>
 
+                                <div class="jurnal-penjualan-tab-table-wrap">
                                 <!-- <table id="tglSPOPFreeze" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
                                 <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
@@ -552,6 +760,111 @@
 
 
                         </table>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="tabJurnalPenjualanPerUnit" role="tabpanel" aria-labelledby="tabJurnalPenjualanPerUnitTab">
+                                <?php
+                                $jurnal_penjualan_per_unit_data = isset($jurnal_penjualan_per_unit_data) ? $jurnal_penjualan_per_unit_data : array();
+                                $unit_index = 0;
+                                foreach ($jurnal_penjualan_per_unit_data as $unit_block) {
+                                    $unit_row = isset($unit_block['unit']) ? $unit_block['unit'] : null;
+                                    $unit_rows = isset($unit_block['rows']) ? $unit_block['rows'] : array();
+                                    $uuid_unit = ($unit_row && isset($unit_row->uuid_unit)) ? (string) $unit_row->uuid_unit : '';
+                                    $unit_label = '';
+                                    if ($unit_row) {
+                                        $unit_label = trim((string) (isset($unit_row->nama_unit) ? $unit_row->nama_unit : ''));
+                                        if ($unit_label === '') {
+                                            $unit_label = trim((string) (isset($unit_row->kode_unit) ? $unit_row->kode_unit : 'Unit'));
+                                        }
+                                    } else {
+                                        $unit_label = 'Unit';
+                                    }
+                                    $table_id = 'tblJurnalPenjualanPerUnit' . $unit_index;
+                                    $url_excel_per_unit = site_url('Tbl_penjualan/excel_jurnal_penjualan2_per_unit?bulan_ns=' . rawurlencode(isset($bulan_ns_selected) ? $bulan_ns_selected : date('Y-m')) . '&uuid_unit=' . rawurlencode($uuid_unit));
+
+                                    $TOTAL_piutang_unit = 0;
+                                    $TOTAL_penjualan_unit = 0;
+                                    $TOTAL_utang_ppn_unit = 0;
+                                    $TOTAL_jumlah_unit = 0;
+                                    $TOTAL_selisih_unit = 0;
+                                ?>
+                                    <div class="jurnal-penjualan-unit-block">
+                                        <div class="jurnal-penjualan-unit-title"><?php echo htmlspecialchars($unit_label, ENT_QUOTES, 'UTF-8'); ?></div>
+                                        <div class="jurnal-penjualan-unit-actions text-right">
+                                            <?php echo anchor($url_excel_per_unit, '<i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel', 'class="btn btn-success btn-flat"'); ?>
+                                        </div>
+
+                                        <div class="jurnal-penjualan-unit-table-wrap">
+                                        <table id="<?php echo $table_id; ?>" class="display nowrap tbl-jurnal-penjualan-per-unit" style="width:100%">
+                                            <thead>
+                                                <tr>
+                                                    <th style="text-align:center">No</th>
+                                                    <th style="text-align:center">Tanggal</th>
+                                                    <th style="text-align:center">NO INVOICE</th>
+                                                    <th style="text-align:center">Nomor Pesan</th>
+                                                    <th style="text-align:center">Nomor Kirim</th>
+                                                    <th style="text-align:center">KONSUMEN</th>
+                                                    <th style="text-align:right">Piutang</th>
+                                                    <th style="text-align:right">Penjualan</th>
+                                                    <th style="text-align:right">Utang PPN</th>
+                                                    <th style="text-align:center">Tanggal Bayar</th>
+                                                    <th style="text-align:right">Jumlah</th>
+                                                    <th style="text-align:right">Selisih</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $start_per_unit = 0;
+                                                foreach ($unit_rows as $list_data) {
+                                                    $piutang_val = isset($list_data->piutang) ? (float) $list_data->piutang : 0;
+                                                    $penjualan_val = isset($list_data->penjualan) ? (float) $list_data->penjualan : 0;
+                                                    $utang_ppn_val = isset($list_data->utang_ppn) ? (float) $list_data->utang_ppn : 0;
+                                                    $jumlah_bayar_val = isset($list_data->jumlah_bayar) ? (float) $list_data->jumlah_bayar : 0;
+                                                    $selisih_val = isset($list_data->selisih) ? (float) $list_data->selisih : 0;
+
+                                                    $TOTAL_piutang_unit += $piutang_val;
+                                                    $TOTAL_penjualan_unit += $penjualan_val;
+                                                    $TOTAL_utang_ppn_unit += $utang_ppn_val;
+                                                    $TOTAL_jumlah_unit += $jumlah_bayar_val;
+                                                    $TOTAL_selisih_unit += $selisih_val;
+                                                ?>
+                                                    <tr>
+                                                        <td align="left"><?php echo ++$start_per_unit; ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->tgl_jual_display) ? $list_data->tgl_jual_display : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->no_invoice) ? $list_data->no_invoice : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->nmrpesan) ? $list_data->nmrpesan : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->nmrkirim) ? $list_data->nmrkirim : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->unit) ? $list_data->unit : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="right"><?php echo number_format($piutang_val, 2, ',', '.'); ?></td>
+                                                        <td align="right"><?php echo number_format($penjualan_val, 2, ',', '.'); ?></td>
+                                                        <td align="right"><?php echo number_format($utang_ppn_val, 2, ',', '.'); ?></td>
+                                                        <td align="left"><?php echo htmlspecialchars(isset($list_data->tgl_bayar_display) ? $list_data->tgl_bayar_display : '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td align="right"><?php echo $jumlah_bayar_val != 0 ? number_format($jumlah_bayar_val, 2, ',', '.') : ''; ?></td>
+                                                        <td align="right"><?php echo $selisih_val != 0 ? number_format($selisih_val, 2, ',', '.') : ''; ?></td>
+                                                    </tr>
+                                                <?php
+                                                }
+                                                ?>
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="6" style="text-align:right">TOTAL</th>
+                                                    <th style="text-align:right"><strong><?php echo number_format($TOTAL_piutang_unit, 2, ',', '.'); ?></strong></th>
+                                                    <th style="text-align:right"><strong><?php echo number_format($TOTAL_penjualan_unit, 2, ',', '.'); ?></strong></th>
+                                                    <th style="text-align:right"><strong><?php echo number_format($TOTAL_utang_ppn_unit, 2, ',', '.'); ?></strong></th>
+                                                    <th style="text-align:center"></th>
+                                                    <th style="text-align:right"><strong><?php echo number_format($TOTAL_jumlah_unit, 2, ',', '.'); ?></strong></th>
+                                                    <th style="text-align:right"><strong><?php echo number_format($TOTAL_selisih_unit, 2, ',', '.'); ?></strong></th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+                                <?php
+                                    $unit_index++;
+                                }
+                                ?>
                             </div>
                         </div>
                     </div>
@@ -621,6 +934,55 @@
             $(api.column(8).footer()).html("<font color='blue'><strong>" + formatNominal(totalKredit21201) + "</strong></font>");
         }
 
+        function updateFooterTotalsPerUnit(api) {
+            var totalPiutang = 0;
+            var totalPenjualan = 0;
+            var totalUtangPpn = 0;
+            var totalJumlah = 0;
+            var totalSelisih = 0;
+
+            api.rows({
+                search: 'applied'
+            }).every(function() {
+                var rowData = this.data();
+                totalPiutang += parseNominal(rowData[6]);
+                totalPenjualan += parseNominal(rowData[7]);
+                totalUtangPpn += parseNominal(rowData[8]);
+                totalJumlah += parseNominal(rowData[10]);
+                totalSelisih += parseNominal(rowData[11]);
+            });
+
+            $(api.column(6).footer()).html("<strong>" + formatNominal(totalPiutang) + "</strong>");
+            $(api.column(7).footer()).html("<strong>" + formatNominal(totalPenjualan) + "</strong>");
+            $(api.column(8).footer()).html("<strong>" + formatNominal(totalUtangPpn) + "</strong>");
+            $(api.column(10).footer()).html("<strong>" + formatNominal(totalJumlah) + "</strong>");
+            $(api.column(11).footer()).html("<strong>" + formatNominal(totalSelisih) + "</strong>");
+        }
+
+        function initJurnalPenjualanPerUnitTables() {
+            $('.tbl-jurnal-penjualan-per-unit').each(function() {
+                var $table = $(this);
+                if ($.fn.DataTable.isDataTable($table)) {
+                    return;
+                }
+
+                var tablePerUnit = $table.DataTable({
+                    "scrollY": "420px",
+                    "scrollX": true,
+                    "scrollCollapse": true,
+                    "paging": false,
+                    "info": false,
+                    "order": [],
+                    "autoWidth": false,
+                    "footerCallback": function() {
+                        updateFooterTotalsPerUnit(this.api());
+                    }
+                });
+
+                updateFooterTotalsPerUnit(tablePerUnit);
+            });
+        }
+
         var tableJurnalPenjualanBaris;
         if ($.fn.DataTable.isDataTable('#tblJurnalPenjualanBaris')) {
             tableJurnalPenjualanBaris = $('#tblJurnalPenjualanBaris').DataTable();
@@ -659,7 +1021,7 @@
 
         updateFooterTotals(tableJurnalPenjualan);
 
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
             if (tableJurnalPenjualanBaris) {
                 tableJurnalPenjualanBaris.columns.adjust();
                 updateFooterTotalsBaris(tableJurnalPenjualanBaris);
@@ -667,6 +1029,14 @@
             if (tableJurnalPenjualan) {
                 tableJurnalPenjualan.columns.adjust();
                 updateFooterTotals(tableJurnalPenjualan);
+            }
+            if ($(e.target).attr('href') === '#tabJurnalPenjualanPerUnit') {
+                initJurnalPenjualanPerUnitTables();
+                $('.tbl-jurnal-penjualan-per-unit').each(function() {
+                    if ($.fn.DataTable.isDataTable(this)) {
+                        $(this).DataTable().columns.adjust();
+                    }
+                });
             }
         });
 
