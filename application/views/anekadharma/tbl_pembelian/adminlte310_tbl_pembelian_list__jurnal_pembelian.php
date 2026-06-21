@@ -4,6 +4,32 @@
         width: 100%;
         margin: 0 auto;
     }
+
+    #tglSPOPFreeze,
+    #tglSPOPFreeze thead th,
+    #tglSPOPFreeze tbody td,
+    #tglSPOPFreeze tfoot th {
+        border: 1px solid #f5e6a8 !important;
+    }
+
+    #tglSPOPFreeze thead th {
+        background-color: #d8f3dc !important;
+        color: #1b4332;
+        font-weight: 600;
+    }
+
+    #tglSPOPFreeze.dataTable thead th,
+    #tglSPOPFreeze.dataTable thead td {
+        border-bottom: 1px solid #f5e6a8 !important;
+    }
+
+    #tglSPOPFreeze.dataTable.no-footer {
+        border-bottom: 1px solid #f5e6a8;
+    }
+
+    table.dataTable#tglSPOPFreeze {
+        border-collapse: collapse !important;
+    }
 </style>
 
 <div class="content-wrapper">
