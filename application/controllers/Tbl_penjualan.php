@@ -2704,10 +2704,12 @@ class Tbl_penjualan extends CI_Controller
 		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected);
 		$Buku_besar_DATA_baris = $this->_prepare_jurnal_penjualan2_baris_rows($Buku_besar_DATA);
 		$Buku_besar_DATA_baris = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA_baris, $Get_month_selected, $Get_YEAR_selected);
+		$jurnal_penjualan_per_unit_data = $this->_get_jurnal_penjualan2_per_unit_data_by_units($Get_month_selected, $Get_YEAR_selected);
 
 		$data = array(
 			'Buku_besar_DATA_data' => $Buku_besar_DATA,
 			'Buku_besar_DATA_baris' => $Buku_besar_DATA_baris,
+			'jurnal_penjualan_per_unit_data' => $jurnal_penjualan_per_unit_data,
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
 			'bulan_ns_selected' => $Get_bulan_ns,
@@ -2969,6 +2971,7 @@ class Tbl_penjualan extends CI_Controller
 		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
 		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
 		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected);
+		$styles = $this->_excel_jurnal_penjualan2_style_map();
 
 		$namaFile = "jurnal_penjualan_" . $Get_bulan_ns . ".xlsx";
 		$tablehead_row1 = 2;
@@ -2976,19 +2979,15 @@ class Tbl_penjualan extends CI_Controller
 		$tablehead_row3 = 4;
 		$tablebody = 5;
 
-		$style_header = 6;
-		$style_border = 3;
-		$style_total_label = 7;
-		$style_total_amount = 8;
-
 		excel_prepare_download($namaFile);
 		xlsBOF();
+		xlsSetColumnWidths(array(5, 12, 12, 12, 10, 28, 14, 14, 14));
 
 		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
-		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', 2);
-		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan Bulan ' . $bulan_tahun_label, 0);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', $styles['title']);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan Bulan ' . $bulan_tahun_label, $styles['subtitle']);
 
-		$this->_excel_jurnal_penjualan2_write_table_header($tablehead_row1, $tablehead_row2, $tablehead_row3, $style_header);
+		$this->_excel_jurnal_penjualan2_write_table_header($tablehead_row1, $tablehead_row2, $tablehead_row3, $styles['header']);
 
 		$nomor = 0;
 		$TOTAL_debet_11301 = 0;
@@ -3009,8 +3008,8 @@ class Tbl_penjualan extends CI_Controller
 				$list_data,
 				$nilai_kredit_41101,
 				$nilai_kredit_21201,
-				$style_border,
-				$style_total_amount
+				$styles['left'],
+				$styles['amount']
 			);
 			$tablebody++;
 
@@ -3024,8 +3023,8 @@ class Tbl_penjualan extends CI_Controller
 			$TOTAL_debet_11301,
 			$TOTAL_kredit_41101,
 			$TOTAL_kredit_21201,
-			$style_total_label,
-			$style_total_amount
+			$styles['total_label'],
+			$styles['total_amount']
 		);
 
 		xlsEOF();
@@ -3050,25 +3049,22 @@ class Tbl_penjualan extends CI_Controller
 			$this->_get_jurnal_penjualan2_rows($Get_month_selected, $Get_YEAR_selected)
 		);
 		$Buku_besar_DATA = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA, $Get_month_selected, $Get_YEAR_selected);
+		$styles = $this->_excel_jurnal_penjualan2_style_map();
 
 		$namaFile = "jurnal_penjualan_baris_" . $Get_bulan_ns . ".xlsx";
 		$tablehead_row1 = 2;
 		$tablehead_row2 = 3;
 		$tablebody = 4;
 
-		$style_header = 6;
-		$style_border = 3;
-		$style_total_label = 7;
-		$style_total_amount = 8;
-
 		excel_prepare_download($namaFile);
 		xlsBOF();
+		xlsSetColumnWidths(array(5, 12, 10, 6, 8, 8, 35, 14, 14));
 
 		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
-		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', 2);
-		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan Bulan ' . $bulan_tahun_label, 0);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(0, 'JURNAL PENJUALAN', $styles['title']);
+		$this->_excel_jurnal_penjualan2_write_merged_title_row(1, 'Jurnal Penjualan (Baris) Bulan ' . $bulan_tahun_label, $styles['subtitle']);
 
-		$this->_excel_jurnal_penjualan2_baris_write_table_header($tablehead_row1, $tablehead_row2, $style_header);
+		$this->_excel_jurnal_penjualan2_baris_write_table_header($tablehead_row1, $tablehead_row2, $styles['header']);
 
 		$nomor = 0;
 		$TOTAL_debet = 0;
@@ -3085,8 +3081,8 @@ class Tbl_penjualan extends CI_Controller
 				$tablebody,
 				++$nomor,
 				$list_data,
-				$style_border,
-				$style_total_amount
+				$styles['left'],
+				$styles['amount']
 			);
 			$tablebody++;
 
@@ -3098,12 +3094,25 @@ class Tbl_penjualan extends CI_Controller
 			$tablebody,
 			$TOTAL_debet,
 			$TOTAL_kredit,
-			$style_total_label,
-			$style_total_amount
+			$styles['total_label'],
+			$styles['total_amount']
 		);
 
 		xlsEOF();
 		exit();
+	}
+
+	private function _excel_jurnal_penjualan2_style_map()
+	{
+		return array(
+			'title' => 2,
+			'subtitle' => 13,
+			'header' => 14,
+			'left' => 7,
+			'amount' => 8,
+			'total_label' => 9,
+			'total_amount' => 10,
+		);
 	}
 
 	private function _excel_jurnal_penjualan2_write_merged_title_row($row, $text, $styleIndex, $colStart = 0, $colEnd = 8)
@@ -3145,15 +3154,15 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteCellStyle($rowEnd, 8, 'Utang PPN', $style);
 	}
 
-	private function _excel_jurnal_penjualan2_write_data_row($row, $nomor, $list_data, $nilai_kredit_41101, $nilai_kredit_21201, $style_border, $style_amount)
+	private function _excel_jurnal_penjualan2_write_data_row($row, $nomor, $list_data, $nilai_kredit_41101, $nilai_kredit_21201, $style_left, $style_amount)
 	{
 		$Get_date = date("Y-m-d", strtotime($list_data->tanggal));
-		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
-		xlsWriteCellStyle($row, 1, $Get_date, $style_border);
-		xlsWriteCellStyle($row, 2, '', $style_border);
-		xlsWriteCellStyle($row, 3, '', $style_border);
-		xlsWriteCellStyle($row, 4, (string) $list_data->nokirim, $style_border);
-		xlsWriteCellStyle($row, 5, (string) $list_data->konsumen_nama, $style_border);
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_left);
+		xlsWriteCellStyle($row, 1, $Get_date, $style_left);
+		xlsWriteCellStyle($row, 2, '', $style_left);
+		xlsWriteCellStyle($row, 3, '', $style_left);
+		xlsWriteCellStyle($row, 4, (string) $list_data->nokirim, $style_left);
+		xlsWriteCellStyle($row, 5, (string) $list_data->konsumen_nama, $style_left);
 		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($list_data->debet), $style_amount);
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($nilai_kredit_41101), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($nilai_kredit_21201), $style_amount);
@@ -3161,7 +3170,11 @@ class Tbl_penjualan extends CI_Controller
 
 	private function _excel_jurnal_penjualan2_write_grand_total_row($row, $total_debet, $total_kredit_41101, $total_kredit_21201, $style_label, $style_amount)
 	{
-		xlsWriteCellStyle($row, 5, '', $style_label);
+		xlsAddMerge($row, 0, $row, 5);
+		xlsWriteCellStyle($row, 0, 'TOTAL', $style_label);
+		for ($col = 1; $col <= 5; $col++) {
+			xlsEnsureCellStyle($row, $col, $style_label, '');
+		}
 		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($total_debet), $style_amount);
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_kredit_41101), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_kredit_21201), $style_amount);
@@ -3194,7 +3207,7 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteCellStyle($rowSub, 5, 'Rek', $style);
 	}
 
-	private function _excel_jurnal_penjualan2_baris_write_data_row($row, $nomor, $list_data, $style_border, $style_amount)
+	private function _excel_jurnal_penjualan2_baris_write_data_row($row, $nomor, $list_data, $style_left, $style_amount)
 	{
 		$Get_date = isset($list_data->tanggal) ? date("Y-m-d", strtotime($list_data->tanggal)) : '';
 
@@ -3207,13 +3220,13 @@ class Tbl_penjualan extends CI_Controller
 		$debet_val = isset($list_data->debet) ? (float) $list_data->debet : 0;
 		$kredit_val = isset($list_data->kredit) ? (float) $list_data->kredit : 0;
 
-		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
-		xlsWriteCellStyle($row, 1, $Get_date, $style_border);
-		xlsWriteCellStyle($row, 2, $bukti, $style_border);
-		xlsWriteCellStyle($row, 3, $pl, $style_border);
-		xlsWriteCellStyle($row, 4, $ref, $style_border);
-		xlsWriteCellStyle($row, 5, $rek, $style_border);
-		xlsWriteCellStyle($row, 6, $keterangan, $style_border);
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_left);
+		xlsWriteCellStyle($row, 1, $Get_date, $style_left);
+		xlsWriteCellStyle($row, 2, $bukti, $style_left);
+		xlsWriteCellStyle($row, 3, $pl, $style_left);
+		xlsWriteCellStyle($row, 4, $ref, $style_left);
+		xlsWriteCellStyle($row, 5, $rek, $style_left);
+		xlsWriteCellStyle($row, 6, $keterangan, $style_left);
 
 		xlsWriteCellStyle(
 			$row,
@@ -3231,9 +3244,295 @@ class Tbl_penjualan extends CI_Controller
 
 	private function _excel_jurnal_penjualan2_baris_write_grand_total_row($row, $total_debet, $total_kredit, $style_label, $style_amount)
 	{
-		xlsWriteCellStyle($row, 6, 'TOTAL', $style_label);
+		xlsAddMerge($row, 0, $row, 6);
+		xlsWriteCellStyle($row, 0, 'TOTAL', $style_label);
+		for ($col = 1; $col <= 6; $col++) {
+			xlsEnsureCellStyle($row, $col, $style_label, '');
+		}
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_debet), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_kredit), $style_amount);
+	}
+
+	private function _get_sys_unit_list_ordered()
+	{
+		return $this->db->order_by('kode_unit', 'ASC')->get('sys_unit')->result();
+	}
+
+	private function _jurnal_penjualan2_per_unit_group_key($row)
+	{
+		$tgl = isset($row->tgl_jual) ? date('Y-m-d', strtotime($row->tgl_jual)) : '';
+		return $tgl . '|' . (string) $row->nmrpesan . '|' . (string) $row->nmrkirim . '|' . (string) $row->uuid_unit;
+	}
+
+	private function _jurnal_penjualan2_pembayaran_map($month_selected, $year_selected)
+	{
+		if (!$this->db->table_exists('tbl_penjualan_pembayaran')) {
+			return array();
+		}
+
+		$month_selected = (int) $month_selected;
+		$year_selected = (int) $year_selected;
+		$sql = "SELECT
+			DATE(`tgl_jual`) AS `tgl_jual`,
+			`nmrpesan`,
+			`nmrkirim`,
+			`uuid_unit`,
+			SUM(COALESCE(`nominal_bayar`, 0)) AS `jumlah_bayar`,
+			MAX(`tgl_bayar`) AS `tgl_bayar`
+		FROM `tbl_penjualan_pembayaran`
+		WHERE MONTH(`tgl_jual`) = {$month_selected}
+			AND YEAR(`tgl_jual`) = {$year_selected}
+		GROUP BY DATE(`tgl_jual`), `nmrpesan`, `nmrkirim`, `uuid_unit`";
+
+		$map = array();
+		foreach ($this->db->query($sql)->result() as $row) {
+			$key = $this->_jurnal_penjualan2_per_unit_group_key($row);
+			$map[$key] = array(
+				'jumlah_bayar' => (float) $row->jumlah_bayar,
+				'tgl_bayar' => $row->tgl_bayar,
+			);
+		}
+
+		return $map;
+	}
+
+	private function _enrich_jurnal_penjualan2_per_unit_rows($rows, $month_selected, $year_selected)
+	{
+		$payment_map = $this->_jurnal_penjualan2_pembayaran_map($month_selected, $year_selected);
+
+		foreach ($rows as $row) {
+			$key = $this->_jurnal_penjualan2_per_unit_group_key($row);
+			$piutang = (float) $row->piutang;
+			$jumlah_bayar = 0;
+			$tgl_bayar_display = '';
+
+			if (isset($payment_map[$key])) {
+				$jumlah_bayar = (float) $payment_map[$key]['jumlah_bayar'];
+				if (!empty($payment_map[$key]['tgl_bayar']) && $payment_map[$key]['tgl_bayar'] !== '0000-00-00 00:00:00') {
+					$tgl_bayar_display = date('Y-m-d', strtotime($payment_map[$key]['tgl_bayar']));
+				}
+			} elseif (!empty($row->tgl_bayar) && $row->tgl_bayar !== '0000-00-00 00:00:00') {
+				$tgl_bayar_display = date('Y-m-d', strtotime($row->tgl_bayar));
+				if (strtolower((string) $row->proses_bayar) === 'bayar') {
+					$jumlah_bayar = $piutang;
+				}
+			}
+
+			$row->tgl_jual_display = date('Y-m-d', strtotime($row->tgl_jual));
+			$row->no_invoice = '';
+			$row->tgl_bayar_display = $tgl_bayar_display;
+			$row->jumlah_bayar = $jumlah_bayar;
+			$row->selisih = $piutang - $jumlah_bayar;
+		}
+
+		return $rows;
+	}
+
+	private function _get_jurnal_penjualan2_per_unit_rows($uuid_unit, $month_selected, $year_selected)
+	{
+		$month_selected = (int) $month_selected;
+		$year_selected = (int) $year_selected;
+		$uuid_unit_esc = $this->db->escape($uuid_unit);
+
+		$sql = "SELECT
+			DATE(`tgl_jual`) AS `tgl_jual`,
+			`nmrpesan`,
+			`nmrkirim`,
+			`uuid_unit`,
+			MAX(`unit`) AS `unit`,
+			MAX(`tgl_bayar`) AS `tgl_bayar`,
+			MAX(`proses_bayar`) AS `proses_bayar`,
+			SUM(COALESCE(`harga_satuan`, 0) * COALESCE(`jumlah`, 0)) AS `piutang`,
+			SUM((COALESCE(`harga_satuan`, 0) * COALESCE(`jumlah`, 0)) / 1.11) AS `penjualan`,
+			SUM(((COALESCE(`harga_satuan`, 0) * COALESCE(`jumlah`, 0)) / 1.11) * 0.11) AS `utang_ppn`
+		FROM `tbl_penjualan`
+		WHERE MONTH(`tgl_jual`) = {$month_selected}
+			AND YEAR(`tgl_jual`) = {$year_selected}
+			AND `uuid_unit` = {$uuid_unit_esc}
+		GROUP BY DATE(`tgl_jual`), `nmrpesan`, `nmrkirim`, `uuid_unit`
+		ORDER BY `tgl_jual`, `nmrpesan`, `nmrkirim`";
+
+		$rows = $this->db->query($sql)->result();
+		return $this->_enrich_jurnal_penjualan2_per_unit_rows($rows, $month_selected, $year_selected);
+	}
+
+	private function _get_jurnal_penjualan2_per_unit_data_by_units($month_selected, $year_selected)
+	{
+		$result = array();
+		foreach ($this->_get_sys_unit_list_ordered() as $unit) {
+			$uuid_unit = isset($unit->uuid_unit) ? (string) $unit->uuid_unit : '';
+			$result[] = array(
+				'unit' => $unit,
+				'rows' => $this->_get_jurnal_penjualan2_per_unit_rows($uuid_unit, $month_selected, $year_selected),
+			);
+		}
+
+		return $result;
+	}
+
+	private function _resolve_jurnal_penjualan2_bulan_ns_from_request()
+	{
+		$Get_bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = trim((string) $this->session->userdata('jurnal_penjualan2_bulan_ns'));
+		}
+		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = date('Y-m');
+		}
+
+		return $Get_bulan_ns;
+	}
+
+	public function excel_jurnal_penjualan2_per_unit()
+	{
+		$this->load->helper('exportexcel');
+
+		$Get_bulan_ns = $this->_resolve_jurnal_penjualan2_bulan_ns_from_request();
+		$uuid_unit = trim((string) $this->input->get('uuid_unit', TRUE));
+		if ($uuid_unit === '') {
+			show_error('Unit tidak valid untuk ekspor jurnal penjualan per unit.', 400);
+			return;
+		}
+
+		$unit_row = $this->db->where('uuid_unit', $uuid_unit)->limit(1)->get('sys_unit')->row();
+		if (!$unit_row) {
+			show_error('Data unit tidak ditemukan.', 404);
+			return;
+		}
+
+		$Get_month_selected = (int) date('m', strtotime($Get_bulan_ns . '-01'));
+		$Get_YEAR_selected = (int) date('Y', strtotime($Get_bulan_ns . '-01'));
+		$rows = $this->_get_jurnal_penjualan2_per_unit_rows($uuid_unit, $Get_month_selected, $Get_YEAR_selected);
+
+		$unit_label = trim((string) (isset($unit_row->nama_unit) ? $unit_row->nama_unit : ''));
+		if ($unit_label === '') {
+			$unit_label = trim((string) (isset($unit_row->kode_unit) ? $unit_row->kode_unit : 'unit'));
+		}
+		$unit_slug = preg_replace('/[^A-Za-z0-9_-]+/', '_', $unit_label);
+		$namaFile = 'jurnal_penjualan_per_unit_' . $unit_slug . '_' . $Get_bulan_ns . '.xlsx';
+
+		$style_header = 6;
+		$style_border = 3;
+		$style_total_label = 7;
+		$style_total_amount = 8;
+		$col_end = 11;
+
+		excel_prepare_download($namaFile);
+		xlsBOF();
+
+		$bulan_tahun_label = $this->_bulan_indonesia($Get_month_selected) . ' ' . $Get_YEAR_selected;
+		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(0, 'JURNAL PENJUALAN PER UNIT', 2, 0, $col_end);
+		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(1, 'Unit: ' . $unit_label . ' | Bulan ' . $bulan_tahun_label, 0, 0, $col_end);
+
+		$tablehead_row = 3;
+		$tablebody = 4;
+		$this->_excel_jurnal_penjualan2_per_unit_write_table_header($tablehead_row, $style_header);
+
+		$nomor = 0;
+		$total_piutang = 0;
+		$total_penjualan = 0;
+		$total_utang_ppn = 0;
+		$total_jumlah = 0;
+		$total_selisih = 0;
+
+		foreach ($rows as $list_data) {
+			$this->_excel_jurnal_penjualan2_per_unit_write_data_row(
+				$tablebody,
+				++$nomor,
+				$list_data,
+				$style_border,
+				$style_total_amount
+			);
+			$tablebody++;
+
+			$total_piutang += (float) $list_data->piutang;
+			$total_penjualan += (float) $list_data->penjualan;
+			$total_utang_ppn += (float) $list_data->utang_ppn;
+			$total_jumlah += (float) $list_data->jumlah_bayar;
+			$total_selisih += (float) $list_data->selisih;
+		}
+
+		$this->_excel_jurnal_penjualan2_per_unit_write_grand_total_row(
+			$tablebody,
+			$total_piutang,
+			$total_penjualan,
+			$total_utang_ppn,
+			$total_jumlah,
+			$total_selisih,
+			$style_total_label,
+			$style_total_amount
+		);
+
+		xlsEOF();
+		exit();
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_merged_title_row($row, $text, $styleIndex, $colStart = 0, $colEnd = 11)
+	{
+		xlsWriteCellStyle($row, $colStart, $text, $styleIndex);
+		xlsAddMerge($row, $colStart, $row, $colEnd);
+		for ($col = $colStart + 1; $col <= $colEnd; $col++) {
+			xlsWriteCellStyle($row, $col, '', $styleIndex);
+		}
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_table_header($row, $style)
+	{
+		$headers = array(
+			'No',
+			'Tanggal',
+			'NO INVOICE',
+			'Nomor Pesan',
+			'Nomor Kirim',
+			'KONSUMEN',
+			'Piutang',
+			'Penjualan',
+			'Utang PPN',
+			'Tanggal Bayar',
+			'Jumlah',
+			'Selisih',
+		);
+
+		foreach ($headers as $col => $label) {
+			xlsWriteCellStyle($row, $col, $label, $style);
+		}
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_data_row($row, $nomor, $list_data, $style_border, $style_amount)
+	{
+		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
+		xlsWriteCellStyle($row, 1, (string) $list_data->tgl_jual_display, $style_border);
+		xlsWriteCellStyle($row, 2, (string) $list_data->no_invoice, $style_border);
+		xlsWriteCellStyle($row, 3, (string) $list_data->nmrpesan, $style_border);
+		xlsWriteCellStyle($row, 4, (string) $list_data->nmrkirim, $style_border);
+		xlsWriteCellStyle($row, 5, (string) $list_data->unit, $style_border);
+		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($list_data->piutang), $style_amount);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($list_data->penjualan), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($list_data->utang_ppn), $style_amount);
+		xlsWriteCellStyle($row, 9, (string) $list_data->tgl_bayar_display, $style_border);
+		xlsWriteCellStyle(
+			$row,
+			10,
+			$list_data->jumlah_bayar != 0 ? $this->_excel_jurnal_penjualan2_format_amount($list_data->jumlah_bayar) : '',
+			$style_amount
+		);
+		xlsWriteCellStyle(
+			$row,
+			11,
+			$list_data->selisih != 0 ? $this->_excel_jurnal_penjualan2_format_amount($list_data->selisih) : '',
+			$style_amount
+		);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_grand_total_row($row, $total_piutang, $total_penjualan, $total_utang_ppn, $total_jumlah, $total_selisih, $style_label, $style_amount)
+	{
+		xlsWriteCellStyle($row, 5, 'TOTAL', $style_label);
+		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($total_piutang), $style_amount);
+		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_penjualan), $style_amount);
+		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_utang_ppn), $style_amount);
+		xlsWriteCellStyle($row, 9, '', $style_label);
+		xlsWriteCellStyle($row, 10, $this->_excel_jurnal_penjualan2_format_amount($total_jumlah), $style_amount);
+		xlsWriteCellStyle($row, 11, $this->_excel_jurnal_penjualan2_format_amount($total_selisih), $style_amount);
 	}
 
 	public function input_kode_akun($nmrkirim = null, $Tgl_JUAL = null)
