@@ -1,6 +1,114 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+function jurnal_umum_compare_pick_jurnal_umum_db_column($fields, $logical_key)
+{
+	$fields = array_map('strval', (array) $fields);
+	$candidates = array();
+	if ($logical_key === 'kode_rekening') {
+		$candidates = array('uraian_kode_rekening', 'kode_rekening');
+	} elseif ($logical_key === 'debet') {
+		$candidates = array('debit', 'debet');
+	} elseif ($logical_key === 'kredit') {
+		$candidates = array('kredit');
+	} else {
+		return in_array($logical_key, $fields, true) ? $logical_key : null;
+	}
+
+	foreach ($candidates as $col) {
+		if (in_array($col, $fields, true)) {
+			return $col;
+		}
+	}
+
+	return null;
+}
+
+function jurnal_umum_compare_jurnal_umum_target_column_map($CI)
+{
+	$fields = $CI->db->list_fields('jurnal_umum');
+
+	return array(
+		'tanggal' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'tanggal'),
+		'bukti' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'bukti'),
+		'pl' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'pl'),
+		'ref' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'ref'),
+		'kode_rekening' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'kode_rekening'),
+		'rekening' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'rekening'),
+		'debet' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'debet'),
+		'kredit' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'kredit'),
+		'_fields' => $fields,
+	);
+}
+
+function jurnal_umum_compare_row_get_kode_rekening($row)
+{
+	if (isset($row->kode_rekening)) {
+		return trim((string) $row->kode_rekening);
+	}
+	if (isset($row->uraian_kode_rekening)) {
+		return trim((string) $row->uraian_kode_rekening);
+	}
+
+	return '';
+}
+
+function jurnal_umum_compare_row_get_debet_raw($row)
+{
+	if (isset($row->debet)) {
+		return $row->debet;
+	}
+	if (isset($row->debit)) {
+		return $row->debit;
+	}
+
+	return 0;
+}
+
+function jurnal_umum_compare_build_jurnal_umum_insert_row($CI, $item, $tanggal_db)
+{
+	$target = jurnal_umum_compare_jurnal_umum_target_column_map($CI);
+	$missing = array();
+	if (empty($target['kode_rekening'])) {
+		$missing[] = 'kode_rekening atau uraian_kode_rekening';
+	}
+	if (empty($target['debet'])) {
+		$missing[] = 'debet atau debit';
+	}
+	if (empty($target['kredit'])) {
+		$missing[] = 'kredit';
+	}
+	if (count($missing) > 0) {
+		return array(
+			'ok' => false,
+			'message' => 'Kolom wajib tidak ditemukan di tabel jurnal_umum: ' . implode(', ', $missing) . '.',
+		);
+	}
+
+	$data = array();
+	if (!empty($target['tanggal'])) {
+		$data[$target['tanggal']] = $tanggal_db;
+	}
+	if (!empty($target['bukti'])) {
+		$data[$target['bukti']] = $item['bukti'] !== '' ? $item['bukti'] : '';
+	}
+	if (!empty($target['pl'])) {
+		$data[$target['pl']] = $item['pl'] !== '' ? $item['pl'] : '';
+	}
+	if (!empty($target['ref'])) {
+		$data[$target['ref']] = $item['ref'] !== '' ? $item['ref'] : '';
+	}
+	if (!empty($target['rekening'])) {
+		$data[$target['rekening']] = $item['rekening'] !== '' ? $item['rekening'] : '';
+	}
+
+	$data[$target['kode_rekening']] = $item['kode_rekening'] !== '' ? $item['kode_rekening'] : '';
+	$data[$target['debet']] = $item['debet'] > 0 ? $item['debet'] : 0;
+	$data[$target['kredit']] = $item['kredit'] > 0 ? $item['kredit'] : 0;
+
+	return array('ok' => true, 'data' => $data, 'target_columns' => $target);
+}
+
 function jurnal_umum_compare_field_definitions()
 {
 	return array(
@@ -91,14 +199,14 @@ function jurnal_umum_compare_validate_online_table_detail($CI)
 
 	$fields = $CI->db->list_fields('jurnal_umum');
 	$map = array(
-		'tanggal' => in_array('tanggal', $fields, true) ? 'tanggal' : null,
-		'bukti' => in_array('bukti', $fields, true) ? 'bukti' : null,
-		'pl' => in_array('pl', $fields, true) ? 'pl' : null,
-		'ref' => in_array('ref', $fields, true) ? 'ref' : null,
-		'kode_rekening' => in_array('uraian_kode_rekening', $fields, true) ? 'uraian_kode_rekening' : null,
-		'rekening' => in_array('rekening', $fields, true) ? 'rekening' : null,
-		'debet' => in_array('debit', $fields, true) ? 'debit' : null,
-		'kredit' => in_array('kredit', $fields, true) ? 'kredit' : null,
+		'tanggal' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'tanggal'),
+		'bukti' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'bukti'),
+		'pl' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'pl'),
+		'ref' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'ref'),
+		'kode_rekening' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'kode_rekening'),
+		'rekening' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'rekening'),
+		'debet' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'debet'),
+		'kredit' => jurnal_umum_compare_pick_jurnal_umum_db_column($fields, 'kredit'),
 	);
 
 	$critical_missing = array();
@@ -106,7 +214,7 @@ function jurnal_umum_compare_validate_online_table_detail($CI)
 		$critical_missing[] = 'tanggal';
 	}
 	if (empty($map['debet']) && empty($map['kredit'])) {
-		$critical_missing[] = 'debit atau kredit';
+		$critical_missing[] = 'debet/debit atau kredit';
 	}
 
 	$soft_missing = array();
@@ -479,9 +587,9 @@ function jurnal_umum_compare_online_row_from_db($row)
 		'bukti' => isset($row->bukti) ? trim((string) $row->bukti) : '',
 		'pl' => isset($row->pl) ? trim((string) $row->pl) : '',
 		'ref' => isset($row->ref) ? trim((string) $row->ref) : '',
-		'kode_rekening' => isset($row->uraian_kode_rekening) ? trim((string) $row->uraian_kode_rekening) : '',
+		'kode_rekening' => jurnal_umum_compare_row_get_kode_rekening($row),
 		'rekening' => isset($row->rekening) ? trim((string) $row->rekening) : '',
-		'debet' => jurnal_umum_compare_normalize_jumlah(isset($row->debit) ? $row->debit : 0),
+		'debet' => jurnal_umum_compare_normalize_jumlah(jurnal_umum_compare_row_get_debet_raw($row)),
 		'kredit' => jurnal_umum_compare_normalize_jumlah(isset($row->kredit) ? $row->kredit : 0),
 	);
 }
@@ -504,14 +612,18 @@ function jurnal_umum_compare_load_online_all($CI, $bulan)
 
 	$month = (int) substr($bulan, 5, 2);
 	$year = (int) substr($bulan, 0, 4);
+	$col_kr = $online_fields['map']['kode_rekening'];
+	$col_db = $online_fields['map']['debet'];
+	$col_kr_sql = '`' . str_replace('`', '``', $col_kr) . '`';
+	$col_db_sql = '`' . str_replace('`', '``', $col_db) . '`';
 
 	$sql = "SELECT DATE(tanggal) AS tanggal,
 		COALESCE(NULLIF(TRIM(bukti), ''), '') AS bukti,
 		COALESCE(NULLIF(TRIM(pl), ''), '') AS pl,
 		COALESCE(NULLIF(TRIM(ref), ''), '') AS ref,
-		COALESCE(NULLIF(TRIM(uraian_kode_rekening), ''), '') AS uraian_kode_rekening,
+		COALESCE(NULLIF(TRIM({$col_kr_sql}), ''), '') AS kode_rekening,
 		COALESCE(NULLIF(TRIM(rekening), ''), '') AS rekening,
-		COALESCE(debit, 0) AS debit,
+		COALESCE({$col_db_sql}, 0) AS debet,
 		COALESCE(kredit, 0) AS kredit
 		FROM jurnal_umum
 		WHERE tanggal IS NOT NULL AND tanggal <> '0000-00-00'
@@ -1169,4 +1281,455 @@ function jurnal_umum_compare_import_csv_to_db($CI, $filepath, $original_filename
 		'file' => $file_label,
 		'message' => "Import CSV berhasil.\nTabel: `{$table}`\nBaris: {$inserted}\nKolom: " . count($db_columns),
 	);
+}
+
+function jurnal_umum_compare_import_field_definitions()
+{
+	return array(
+		'tanggal' => array('label' => 'tanggal', 'required' => true, 'aliases' => array('tanggal', 'tgl', 'date', 'tgl_transaksi')),
+		'bukti' => array('label' => 'bukti', 'required' => false, 'aliases' => array('bukti', 'no_bukti', 'nobukti', 'no bukti')),
+		'pl' => array('label' => 'pl', 'required' => false, 'aliases' => array('pl', 'kode_pl', 'profit center')),
+		'ref' => array('label' => 'ref', 'required' => false, 'aliases' => array('ref', 'referensi', 'reference')),
+		'kode_rekening' => array('label' => 'kode_rekening', 'required' => false, 'aliases' => array('kode_rekening', 'kode_rek', 'uraian_kode_rekening', 'kode_akun', 'kode akun', 'kode')),
+		'rekening' => array('label' => 'rekening', 'required' => false, 'aliases' => array('rekening', 'nama_rekening', 'nama akun', 'uraian')),
+		'debet' => array('label' => 'debet', 'required' => false, 'aliases' => array('debet', 'debit')),
+		'kredit' => array('label' => 'kredit', 'required' => false, 'aliases' => array('kredit', 'credit')),
+	);
+}
+
+function jurnal_umum_compare_is_import_row_saveable($row)
+{
+	$tanggal = pembelian_jurnal_compare_normalize_tanggal(isset($row['tanggal']) ? $row['tanggal'] : '');
+	if ($tanggal === '' || $tanggal === '0000-00-00') {
+		return false;
+	}
+	$deb = jurnal_umum_compare_normalize_jumlah(isset($row['debet']) ? $row['debet'] : 0);
+	$kre = jurnal_umum_compare_normalize_jumlah(isset($row['kredit']) ? $row['kredit'] : 0);
+
+	return ($deb > 0 || $kre > 0);
+}
+
+function jurnal_umum_compare_analyze_import_column_map($fields)
+{
+	if (!is_array($fields) || count($fields) === 0) {
+		return array('ok' => false, 'message' => 'Tabel tidak memiliki kolom.');
+	}
+
+	$normalized = array();
+	foreach ($fields as $field) {
+		$normalized[] = trim((string) $field);
+	}
+
+	$defs = jurnal_umum_compare_import_field_definitions();
+	$map = array(
+		'tanggal' => penjualan_jurnal_compare_pick_tanggal_column($normalized),
+		'bukti' => persediaan_compare_pick_column($normalized, $defs['bukti']['aliases']),
+		'pl' => persediaan_compare_pick_column($normalized, $defs['pl']['aliases']),
+		'ref' => persediaan_compare_pick_column($normalized, $defs['ref']['aliases']),
+		'kode_rekening' => persediaan_compare_pick_column($normalized, $defs['kode_rekening']['aliases']),
+		'rekening' => persediaan_compare_pick_column($normalized, $defs['rekening']['aliases']),
+		'debet' => persediaan_compare_pick_column($normalized, $defs['debet']['aliases']),
+		'kredit' => persediaan_compare_pick_column($normalized, $defs['kredit']['aliases']),
+	);
+
+	$missing_required = array();
+	$mapped = array();
+	foreach ($defs as $key => $def) {
+		if (!empty($map[$key])) {
+			$mapped[$key] = $map[$key];
+		} elseif (!empty($def['required'])) {
+			$missing_required[] = $def['label'];
+		}
+	}
+
+	if (empty($map['debet']) && empty($map['kredit'])) {
+		$missing_required[] = 'debet atau kredit';
+	}
+
+	$ok = count($missing_required) === 0;
+	$message = '';
+	if (!$ok) {
+		$message = 'Kolom wajib tidak ditemukan: ' . implode(', ', $missing_required)
+			. '. Kolom import minimal: tanggal, debet atau kredit.';
+	}
+
+	return array(
+		'ok' => $ok,
+		'map' => $map,
+		'mapped' => $mapped,
+		'missing_required' => $missing_required,
+		'fields' => $normalized,
+		'message' => $message,
+	);
+}
+
+function jurnal_umum_compare_validate_import_table($CI, $table)
+{
+	if (!persediaan_compare_is_valid_table_name($table)) {
+		return array('ok' => false, 'message' => 'Nama tabel tidak valid.');
+	}
+	if (!$CI->db->table_exists($table)) {
+		return array('ok' => false, 'message' => 'Tabel tidak ditemukan di database.');
+	}
+
+	$fields = $CI->db->list_fields($table);
+	$analysis = jurnal_umum_compare_analyze_import_column_map($fields);
+	if (empty($analysis['ok'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($analysis['message']) ? $analysis['message'] : 'Struktur tabel tidak valid untuk import jurnal umum.',
+			'missing_fields' => isset($analysis['missing_required']) ? $analysis['missing_required'] : array(),
+			'fields' => $fields,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'map' => $analysis['map'],
+		'fields' => $fields,
+		'mapped' => $analysis['mapped'],
+		'missing_fields' => array(),
+	);
+}
+
+function jurnal_umum_compare_import_row_from_db($row, $map, $ref_month = 0, $ref_year = 0)
+{
+	$tanggal_raw = !empty($map['tanggal']) ? persediaan_compare_row_get($row, $map['tanggal']) : '';
+	$tanggal_norm = jurnal_umum_compare_normalize_tanggal_for_db($tanggal_raw, $ref_month, $ref_year);
+
+	return array(
+		'tanggal' => $tanggal_norm,
+		'bukti' => trim((string) (!empty($map['bukti']) ? persediaan_compare_row_get($row, $map['bukti']) : '')),
+		'pl' => trim((string) (!empty($map['pl']) ? persediaan_compare_row_get($row, $map['pl']) : '')),
+		'ref' => trim((string) (!empty($map['ref']) ? persediaan_compare_row_get($row, $map['ref']) : '')),
+		'kode_rekening' => trim((string) (!empty($map['kode_rekening']) ? persediaan_compare_row_get($row, $map['kode_rekening']) : '')),
+		'rekening' => trim((string) (!empty($map['rekening']) ? persediaan_compare_row_get($row, $map['rekening']) : '')),
+		'debet' => jurnal_umum_compare_normalize_jumlah(!empty($map['debet']) ? persediaan_compare_row_get($row, $map['debet']) : 0),
+		'kredit' => jurnal_umum_compare_normalize_jumlah(!empty($map['kredit']) ? persediaan_compare_row_get($row, $map['kredit']) : 0),
+	);
+}
+
+function jurnal_umum_compare_count_jurnal_umum_rows_for_bulan($CI, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return 0;
+	}
+
+	$year = (int) substr($bulan, 0, 4);
+	$month = (int) substr($bulan, 5, 2);
+	$row = $CI->db->query(
+		'SELECT COUNT(*) AS c FROM `jurnal_umum` WHERE YEAR(`tanggal`) = ? AND MONTH(`tanggal`) = ?',
+		array($year, $month)
+	)->row();
+
+	return $row ? (int) $row->c : 0;
+}
+
+function jurnal_umum_compare_validate_table_for_import($CI, $table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_umum_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return array(
+			'ok' => true,
+			'eligible' => false,
+			'import_enabled' => false,
+			'bulan_match' => false,
+			'message' => isset($valid['message']) ? $valid['message'] : 'Tabel tidak memenuhi syarat import.',
+			'missing_fields' => isset($valid['missing_fields']) ? $valid['missing_fields'] : array(),
+			'table' => $table,
+			'bulan' => $bulan,
+		);
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+
+	$with_tanggal = 0;
+	$in_bulan = 0;
+	$out_bulan = 0;
+	$empty_tanggal = 0;
+	$saveable_in_bulan = 0;
+	$invalid_in_bulan = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_umum_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		$tanggal_norm = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		if ($tanggal_norm === '' || $tanggal_norm === '0000-00-00') {
+			$empty_tanggal++;
+			continue;
+		}
+		$with_tanggal++;
+		if (jurnal_umum_compare_row_matches_bulan($tanggal_norm, $bulan)) {
+			$in_bulan++;
+			if (jurnal_umum_compare_is_import_row_saveable($item)) {
+				$saveable_in_bulan++;
+			} else {
+				$invalid_in_bulan++;
+			}
+		} else {
+			$out_bulan++;
+		}
+	}
+
+	$import_enabled = ($saveable_in_bulan > 0);
+	$import_message = '';
+	if ($import_enabled) {
+		$import_message = 'Siap disimpan ke jurnal_umum: ' . $saveable_in_bulan . ' baris valid pada bulan terpilih.';
+		if ($out_bulan > 0) {
+			$import_message .= ' (' . $out_bulan . ' baris di luar bulan akan dilewati.)';
+		}
+	} elseif ($in_bulan > 0) {
+		$import_message = 'Ada ' . $in_bulan . ' baris pada bulan terpilih, tetapi tidak ada yang memenuhi syarat tanggal dan debet/kredit.';
+	} elseif ($out_bulan > 0) {
+		$import_message = 'Tidak ada data dengan tanggal pada bulan terpilih.';
+	} else {
+		$import_message = 'Tidak ada data dengan tanggal valid pada tabel ini.';
+	}
+
+	$existing_count = jurnal_umum_compare_count_jurnal_umum_rows_for_bulan($CI, $bulan);
+	$conflict_warning = '';
+	if ($existing_count > 0) {
+		$conflict_warning = 'Perhatian: di tabel jurnal_umum sudah ada ' . $existing_count
+			. ' data pada bulan ' . pembelian_jurnal_compare_bulan_label($bulan)
+			. '. Proses simpan akan menambahkan semua baris valid apa adanya tanpa cek duplikat.';
+	}
+
+	return array(
+		'ok' => true,
+		'eligible' => true,
+		'import_enabled' => $import_enabled,
+		'bulan_match' => $import_enabled,
+		'import_message' => $import_message,
+		'message' => 'Tabel `' . $table . '` memenuhi syarat kolom import jurnal umum.',
+		'map' => $map,
+		'mapped' => isset($valid['mapped']) ? $valid['mapped'] : array(),
+		'table' => $table,
+		'bulan' => $bulan,
+		'jurnal_umum_bulan_conflict' => ($existing_count > 0),
+		'jurnal_umum_existing_count' => $existing_count,
+		'conflict_warning' => $conflict_warning,
+		'stats' => array(
+			'total_rows' => count($all_rows),
+			'with_tanggal' => $with_tanggal,
+			'in_bulan' => $in_bulan,
+			'out_bulan' => $out_bulan,
+			'empty_tanggal' => $empty_tanggal,
+			'saveable_in_bulan' => $saveable_in_bulan,
+			'invalid_in_bulan' => $invalid_in_bulan,
+		),
+	);
+}
+
+function jurnal_umum_compare_load_table_detail_for_bulan($CI, $table, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', (string) $bulan)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$valid = jurnal_umum_compare_validate_import_table($CI, $table);
+	if (empty($valid['ok'])) {
+		return $valid;
+	}
+
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$map = $valid['map'];
+	$range = persediaan_compare_bulan_to_date_range($bulan);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$items = array();
+	$no = 0;
+
+	foreach ((array) $all_rows as $row) {
+		$item = jurnal_umum_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_umum_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			continue;
+		}
+		$no++;
+		$debet = (float) $item['debet'];
+		$kredit = (float) $item['kredit'];
+		$items[] = array(
+			'no' => $no,
+			'tanggal' => pembelian_jurnal_compare_format_tanggal_display($item['tanggal']),
+			'bukti' => $item['bukti'],
+			'pl' => $item['pl'],
+			'ref' => $item['ref'],
+			'kode_rekening' => $item['kode_rekening'],
+			'rekening' => $item['rekening'],
+			'debet' => $debet > 0 ? jurnal_umum_compare_format_jumlah_display($debet) : '',
+			'kredit' => $kredit > 0 ? jurnal_umum_compare_format_jumlah_display($kredit) : '',
+			'debet_raw' => $debet,
+			'kredit_raw' => $kredit,
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'headers' => array('No', 'Tanggal', 'Bukti', 'PL', 'Ref', 'Kode Rek.', 'Rek.', 'Debet', 'Kredit'),
+		'rows' => $items,
+		'table' => $table,
+		'bulan' => $bulan,
+		'bulan_label' => $range ? $range['bulan_label'] : $bulan,
+		'total' => count($items),
+	);
+}
+
+function jurnal_umum_compare_import_to_jurnal_umum($CI, $table, $bulan)
+{
+	$status = jurnal_umum_compare_validate_table_for_import($CI, $table, $bulan);
+	if (empty($status['ok'])) {
+		return $status;
+	}
+	if (empty($status['eligible'])) {
+		return array('ok' => false, 'message' => isset($status['message']) ? $status['message'] : 'Tabel tidak memenuhi syarat import.');
+	}
+	if (empty($status['import_enabled'])) {
+		return array(
+			'ok' => false,
+			'message' => isset($status['import_message']) ? $status['import_message'] : 'Tidak ada data yang bisa disimpan pada bulan terpilih.',
+		);
+	}
+
+	if (!$CI->db->table_exists('jurnal_umum')) {
+		return array('ok' => false, 'message' => 'Tabel `jurnal_umum` tidak ditemukan di database.');
+	}
+
+	$valid = jurnal_umum_compare_validate_import_table($CI, $table);
+	$map = $valid['map'];
+	$ref_year = (int) substr($bulan, 0, 4);
+	$ref_month = (int) substr($bulan, 5, 2);
+	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
+	$inserted = 0;
+	$skipped_out_bulan = 0;
+	$skipped_invalid = 0;
+	$row_num = 0;
+
+	$CI->db->trans_start();
+	foreach ((array) $all_rows as $row) {
+		$row_num++;
+		$item = jurnal_umum_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
+		if (!jurnal_umum_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			$skipped_out_bulan++;
+			continue;
+		}
+		if (!jurnal_umum_compare_is_import_row_saveable($item)) {
+			$skipped_invalid++;
+			continue;
+		}
+
+		$tanggal_db = pembelian_jurnal_compare_normalize_tanggal($item['tanggal']);
+		$built = jurnal_umum_compare_build_jurnal_umum_insert_row($CI, $item, $tanggal_db);
+		if (empty($built['ok'])) {
+			$CI->db->trans_rollback();
+			return array(
+				'ok' => false,
+				'message' => isset($built['message']) ? $built['message'] : 'Gagal menyiapkan data insert jurnal_umum.',
+				'failed_row' => $row_num,
+			);
+		}
+
+		$CI->db->insert('jurnal_umum', $built['data']);
+		$db_err = $CI->db->error();
+		if (!empty($db_err['message'])) {
+			$CI->db->trans_rollback();
+			return array(
+				'ok' => false,
+				'message' => 'Gagal insert baris ke-' . ($inserted + 1) . ' (sumber baris #' . $row_num . ', tanggal ' . $tanggal_db . ').',
+				'db_error' => persediaan_compare_db_last_error_message($CI),
+				'failed_row' => $row_num,
+				'inserted_before_fail' => $inserted,
+				'target_columns' => isset($built['target_columns']) ? $built['target_columns'] : array(),
+			);
+		}
+		$inserted++;
+	}
+	$CI->db->trans_complete();
+
+	if ($CI->db->trans_status() === FALSE) {
+		return array(
+			'ok' => false,
+			'message' => 'Transaksi database gagal saat menyimpan ke jurnal_umum.',
+			'db_error' => persediaan_compare_db_last_error_message($CI),
+			'inserted_before_fail' => $inserted,
+		);
+	}
+
+	$message = 'Berhasil menambahkan ' . $inserted . ' data ke jurnal_umum (tanpa cek duplikat).';
+	if ($skipped_out_bulan > 0) {
+		$message .= ' ' . $skipped_out_bulan . ' baris di luar bulan tidak disimpan.';
+	}
+	if ($skipped_invalid > 0) {
+		$message .= ' ' . $skipped_invalid . ' baris tidak valid (tanggal/debet-kredit) tidak disimpan.';
+	}
+
+	return array(
+		'ok' => true,
+		'inserted' => $inserted,
+		'skipped_out_bulan' => $skipped_out_bulan,
+		'skipped_invalid' => $skipped_invalid,
+		'message' => $message,
+	);
+}
+
+function jurnal_umum_compare_export_table_detail_excel($CI, $table, $bulan)
+{
+	@set_time_limit(600);
+	@ini_set('memory_limit', '512M');
+	$CI->load->helper(array('exportexcel', 'pembelian_persediaan', 'jurnal_umum_list'));
+
+	$result = jurnal_umum_compare_load_table_detail_for_bulan($CI, $table, $bulan);
+	if (empty($result['ok'])) {
+		xlsBOF();
+		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Export Excel gagal.');
+		xlsEOF();
+		return;
+	}
+
+	$headers = isset($result['headers']) ? $result['headers'] : array();
+	$rows = isset($result['rows']) ? $result['rows'] : array();
+	$bulan_label = isset($result['bulan_label']) ? $result['bulan_label'] : $bulan;
+	$styleHeader = 4;
+	$styleBorder = 3;
+	$styleRight = 8;
+	$styleLeft = 7;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, 'Detail Tabel ' . $table . ' — Bulan ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+
+	$headerRow = 3;
+	foreach ($headers as $col => $label) {
+		xlsWriteCellStyle($headerRow, $col, $label, $styleHeader);
+	}
+
+	$rowNum = 4;
+	foreach ($rows as $item) {
+		xlsWriteCellStyle($rowNum, 0, isset($item['no']) ? (int) $item['no'] : 0, $styleBorder);
+		xlsWriteCellStyle($rowNum, 1, isset($item['tanggal']) ? $item['tanggal'] : '', $styleLeft);
+		xlsWriteCellStyle($rowNum, 2, isset($item['bukti']) ? $item['bukti'] : '', $styleLeft);
+		xlsWriteCellStyle($rowNum, 3, isset($item['pl']) ? $item['pl'] : '', $styleLeft);
+		xlsWriteCellStyle($rowNum, 4, isset($item['ref']) ? $item['ref'] : '', $styleLeft);
+		xlsWriteCellStyle($rowNum, 5, isset($item['kode_rekening']) ? $item['kode_rekening'] : '', $styleLeft);
+		xlsWriteCellStyle($rowNum, 6, isset($item['rekening']) ? $item['rekening'] : '', $styleLeft);
+		$deb = isset($item['debet_raw']) ? (float) $item['debet_raw'] : 0;
+		$kre = isset($item['kredit_raw']) ? (float) $item['kredit_raw'] : 0;
+		if ($deb > 0) {
+			xlsWriteCellStyle($rowNum, 7, jurnal_umum_format_rupiah($deb), $styleRight);
+		} else {
+			xlsWriteCellStyle($rowNum, 7, '', $styleBorder);
+		}
+		if ($kre > 0) {
+			xlsWriteCellStyle($rowNum, 8, jurnal_umum_format_rupiah($kre), $styleRight);
+		} else {
+			xlsWriteCellStyle($rowNum, 8, '', $styleBorder);
+		}
+		$rowNum++;
+	}
+
+	xlsEOF();
 }

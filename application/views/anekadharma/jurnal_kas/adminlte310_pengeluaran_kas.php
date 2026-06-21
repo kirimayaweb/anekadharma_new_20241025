@@ -107,6 +107,13 @@
         if (!isset($gen_tahun_max)) {
             $gen_tahun_max = (int) date('Y') + 1;
         }
+        if (!isset($bulan_ns_value) || $bulan_ns_value === '') {
+            $bulan_ns_value = sprintf(
+                '%04d-%02d',
+                (int) date('Y', strtotime($date_akhir)),
+                (int) date('m', strtotime($date_akhir))
+            );
+        }
         if (!isset($active_tab)) {
             $active_tab = 'data';
         }
@@ -127,6 +134,18 @@
         $url_compare_pengeluaran_kas_tabel_preview = isset($url_compare_pengeluaran_kas_tabel_preview)
             ? $url_compare_pengeluaran_kas_tabel_preview
             : site_url('Jurnal_kas/ajax_compare_tabel_preview_pengeluaran_kas');
+        $url_compare_pengeluaran_kas_tabel_validate = isset($url_compare_pengeluaran_kas_tabel_validate)
+            ? $url_compare_pengeluaran_kas_tabel_validate
+            : site_url('Jurnal_kas/ajax_compare_tabel_validate_pengeluaran_kas');
+        $url_compare_pengeluaran_kas_tabel_detail = isset($url_compare_pengeluaran_kas_tabel_detail)
+            ? $url_compare_pengeluaran_kas_tabel_detail
+            : site_url('Jurnal_kas/ajax_compare_tabel_detail_pengeluaran_kas');
+        $url_compare_pengeluaran_kas_tabel_import = isset($url_compare_pengeluaran_kas_tabel_import)
+            ? $url_compare_pengeluaran_kas_tabel_import
+            : site_url('Jurnal_kas/ajax_compare_import_table_to_pengeluaran_kas');
+        $url_compare_pengeluaran_kas_tabel_detail_excel = isset($url_compare_pengeluaran_kas_tabel_detail_excel)
+            ? $url_compare_pengeluaran_kas_tabel_detail_excel
+            : site_url('Jurnal_kas/excel_compare_tabel_detail_pengeluaran_kas');
         $url_pengeluaran_kas_excel = isset($url_pengeluaran_kas_excel)
             ? $url_pengeluaran_kas_excel
             : site_url('Jurnal_kas/excel_pengeluaran_kas');
@@ -155,40 +174,11 @@
                                         ?>
 
                                         <form id="form-cari-pengeluaran-kas" action="<?php echo $action_cari_between_date; ?>" method="post">
-                                            <div class="row">
-
-                                                <div class="col-md-1" text-align="right" align="right"></div>
-
-                                                <div class="col-md-3" text-align="right">
-                                                    <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                                <div class="col-md-3" text-align="left" align="left">
-                                                    <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                        <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-2" text-align="left" align="left">
-                                                    <strong>
-                                                        <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                                    </strong>
-                                                </div>
-
+                                            <div class="pengeluaran-kas-month-filter d-flex align-items-center flex-wrap" id="pengeluaran-kas-month-filter">
+                                                <input type="month" class="form-control form-control-sm mr-2" id="pgk_bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required />
+                                                <button type="button" id="btn-cari-pengeluaran-kas-bulan" class="btn btn-danger btn-sm btn-flat">
+                                                    <i class="fa fa-search" aria-hidden="true"></i> Cari
+                                                </button>
                                             </div>
                                         </form>
                                     </div>
@@ -290,6 +280,19 @@
                                     </div>
                                 </div>
 
+                                <div id="compare-pengeluaran-tabel-actions" class="compare-pengeluaran-tabel-info-box py-3 mb-3 d-none">
+                                    <div id="compare-pengeluaran-tabel-info-body" class="mb-2"></div>
+                                    <div id="compare-pengeluaran-tabel-import-note" class="small mb-2"></div>
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <button type="button" id="btn-compare-pengeluaran-tabel-detail" class="btn btn-outline-primary btn-sm mr-2 mb-1">
+                                            <i class="fas fa-table"></i> Detail Tabel
+                                        </button>
+                                        <button type="button" id="btn-compare-pengeluaran-tabel-import" class="btn btn-success btn-sm mb-1" disabled>
+                                            <i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Pengeluaran Kas
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div class="alert alert-secondary py-2" id="compare-pengeluaran-info-ringkas">
                                     <strong>Bulan:</strong> <span id="compare-pengeluaran-label-bulan"><?php echo htmlspecialchars($pengeluaran_bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                                     &nbsp;|&nbsp; <strong>Tabel manual:</strong> <span id="compare-pengeluaran-label-tabel">—</span>
@@ -345,6 +348,51 @@
                                                 <p class="text-muted small mb-2" id="compare-pengeluaran-csv-preview-meta">Memuat...</p>
                                                 <table id="table-compare-pengeluaran-csv-preview" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
                                                     <thead><tr></tr></thead><tbody></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal fade" id="modal-compare-pengeluaran-tabel-detail" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-xl" role="document" style="max-width:95%;">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info text-white py-2">
+                                                <h5 class="modal-title">Detail Tabel — Import Jurnal Pengeluaran Kas</h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body pb-2">
+                                                <div class="d-flex flex-wrap align-items-center mb-2">
+                                                    <p class="text-muted small mb-0 mr-3" id="compare-pengeluaran-tabel-detail-meta">Memuat...</p>
+                                                    <button type="button" id="btn-compare-pengeluaran-tabel-detail-excel" class="btn btn-success btn-sm">
+                                                        <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                                    </button>
+                                                </div>
+                                                <table id="table-compare-pengeluaran-tabel-detail" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>Tanggal</th>
+                                                            <th>No. Bukti BKK</th>
+                                                            <th>PL</th>
+                                                            <th>Keterangan</th>
+                                                            <th>21101-UU Dagang</th>
+                                                            <th>No. Rek</th>
+                                                            <th>Jumlah Serba-Serbi</th>
+                                                            <th>11101-Kas Besar</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr class="compare-dt-total-row">
+                                                            <th colspan="5" class="text-right">Total</th>
+                                                            <th class="compare-total-debet text-right">—</th>
+                                                            <th></th>
+                                                            <th class="compare-total-jumlah text-right">—</th>
+                                                            <th class="compare-total-kredit text-right">—</th>
+                                                        </tr>
+                                                    </tfoot>
                                                 </table>
                                             </div>
                                             <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
@@ -409,25 +457,48 @@
         table-layout: auto;
         width: 100% !important;
     }
+    .pengeluaran-kas-dt-table col.pgk-col-no { width: 42px; }
+    .pengeluaran-kas-dt-table col.pgk-col-tanggal { width: 108px; }
+    .pengeluaran-kas-dt-table col.pgk-col-bukti { width: 115px; }
+    .pengeluaran-kas-dt-table col.pgk-col-pl { width: 55px; }
+    .pengeluaran-kas-dt-table col.pgk-col-ket { width: 240px; }
+    .pengeluaran-kas-dt-table col.pgk-col-debit { width: 125px; }
+    .pengeluaran-kas-dt-table col.pgk-col-rek { width: 88px; }
+    .pengeluaran-kas-dt-table col.pgk-col-jumlah { width: 118px; }
+    .pengeluaran-kas-dt-table col.pgk-col-kredit { width: 125px; }
     .pengeluaran-kas-dt-table thead th,
     .pengeluaran-kas-dt-table tbody td,
     .pengeluaran-kas-dt-table tfoot th {
         border: 1px solid #dee2e6 !important;
         vertical-align: middle;
         font-size: 13px;
-        padding: 6px 8px;
+        padding: 5px 8px;
     }
     .pengeluaran-kas-dt-table thead th {
         background: #f8f9fa;
         font-weight: 600;
         text-align: center;
         white-space: nowrap;
+        line-height: 1.35;
+    }
+    .pengeluaran-kas-dt-table thead th.pgk-th-debit-group,
+    .pengeluaran-kas-dt-table thead th.pgk-th-kredit-group,
+    .pengeluaran-kas-dt-table thead th.pgk-th-serba-group {
+        text-align: center;
+        font-weight: 700;
+    }
+    .pengeluaran-kas-dt-table thead th.pgk-th-no-sort {
+        cursor: default !important;
     }
     .pengeluaran-kas-dt-table tbody td { background: #fff; word-wrap: break-word; }
     .pengeluaran-kas-dt-table tbody td:first-child,
     .pengeluaran-kas-dt-table thead th:first-child,
     .pengeluaran-kas-dt-table tfoot th:first-child { text-align: center; }
     .pengeluaran-kas-dt-table tfoot th { background: #f8f9fa; font-weight: 600; }
+    .pengeluaran-kas-dt-table tfoot tr.pgk-row-footer-balance th {
+        background: #fff8e1;
+        border-top: 2px solid #ffc107;
+    }
     .pengeluaran-kas-dt-wrap table.dataTable thead .sorting:before,
     .pengeluaran-kas-dt-wrap table.dataTable thead .sorting:after,
     .pengeluaran-kas-dt-wrap table.dataTable thead .sorting_asc:before,
@@ -440,13 +511,80 @@
         background-image: none !important;
         padding-right: 8px !important;
     }
-    .pgk-cell-tanggal { min-width: 110px; }
-    .pgk-row-actions .btn { margin-right: 2px; margin-bottom: 2px; }
+    .pgk-cell-tanggal {
+        min-width: 108px;
+        padding: 4px 6px !important;
+        vertical-align: top;
+    }
+    .pgk-tanggal-text {
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.25;
+        color: #212529;
+    }
+    .pgk-row-actions {
+        margin-top: 2px;
+        line-height: 1;
+    }
+    .pgk-row-actions .btn-pgk-action {
+        font-size: 10px;
+        line-height: 1.15;
+        padding: 1px 5px;
+        margin-right: 2px;
+        margin-bottom: 1px;
+    }
+    .pengeluaran-kas-dt-table tbody td:nth-child(6),
+    .pengeluaran-kas-dt-table tbody td:nth-child(8),
+    .pengeluaran-kas-dt-table tbody td:nth-child(9),
+    .pengeluaran-kas-dt-table tfoot th:nth-child(6),
+    .pengeluaran-kas-dt-table tfoot th:nth-child(8),
+    .pengeluaran-kas-dt-table tfoot th:nth-child(9) {
+        text-align: right;
+    }
+    .pengeluaran-kas-dt-table tbody td:nth-child(7),
+    .pengeluaran-kas-dt-table tfoot th:nth-child(7) {
+        text-align: center;
+    }
     #modal-pengeluaran-kas-form .modal-header { border-bottom: none; }
     #modal-pengeluaran-kas-form .modal-content { border: none; box-shadow: 0 8px 30px rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
     #modal-pengeluaran-kas-form .modal-body { background: #fafbfc; }
     #modal-pengeluaran-kas-form label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
     #modal-pengeluaran-kas-form .select2-container { width: 100% !important; }
+    .pengeluaran-kas-month-filter input[type="month"] {
+        width: 180px;
+        min-width: 160px;
+        max-width: 200px;
+    }
+    .pengeluaran-kas-month-filter .btn { white-space: nowrap; }
+    .compare-pengeluaran-tabel-info-box {
+        border: 1px solid #dee2e6;
+        border-left: 4px solid #17a2b8;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #e8f7fa 0%, #fff 40%);
+        padding: 12px 16px;
+    }
+    .compare-pengeluaran-tabel-info-box .compare-info-title {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: #0c5460;
+    }
+    .compare-pengeluaran-tabel-info-box .compare-info-line {
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #495057;
+    }
+    .compare-pengeluaran-tabel-info-box .compare-info-line strong { color: #212529; }
+    .compare-pengeluaran-tabel-info-box .compare-info-line code {
+        background: #f1f3f5;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 12px;
+    }
+    .compare-pengeluaran-tabel-info-box #compare-pengeluaran-tabel-import-note.text-success { color: #155724 !important; }
+    .compare-pengeluaran-tabel-info-box #compare-pengeluaran-tabel-import-note.text-danger { color: #721c24 !important; }
+    .compare-pengeluaran-tabel-info-box .compare-info-title.text-warning { color: #856404; }
+    .compare-pengeluaran-tabel-info-box .compare-info-title.text-danger { color: #721c24; }
 </style>
 
 <?php include __DIR__ . '/adminlte310_pengeluaran_kas_scripts.php'; ?>
@@ -462,7 +600,12 @@ window.addEventListener('load', function() {
     var urlImport = <?php echo json_encode($url_compare_pengeluaran_kas_import_csv); ?>;
     var urlList = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_list); ?>;
     var urlPreview = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_preview); ?>;
+    var urlValidate = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_validate); ?>;
+    var urlDetail = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_detail); ?>;
+    var urlTabelImport = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_import); ?>;
+    var urlDetailExcel = <?php echo json_encode($url_compare_pengeluaran_kas_tabel_detail_excel); ?>;
     var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;
+    var tabelImportState = null, tabelImportBusy = false, tabelDetailDt = null, tabelDetailItems = [];
 
     function bulanKey() {
         var b = parseInt(jQuery('#compare_bulan_pengeluaran').val(), 10);
@@ -497,6 +640,281 @@ window.addEventListener('load', function() {
         if (!show) jQuery('#btn-compare-pengeluaran-excel-all').addClass('d-none');
     }
     window.toggleBtnsPengeluaranKas = toggleBtns;
+
+    function hideTabelActions() {
+        tabelImportState = null;
+        jQuery('#compare-pengeluaran-tabel-actions').addClass('d-none');
+        jQuery('#compare-pengeluaran-tabel-info-body').empty();
+        jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', true);
+        jQuery('#compare-pengeluaran-tabel-import-note').text('').removeClass('text-danger text-success text-muted');
+    }
+
+    function buildTabelInfoHtml(res) {
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || (res && res.table) || '—';
+        var bk = bulanKey() || (res && res.bulan) || '—';
+        var stats = (res && res.stats) ? res.stats : {};
+        var map = (res && res.map) ? res.map : {};
+        var mapParts = [];
+        var mapOrder = ['tanggal', 'nomor_bukti_bkk', 'pl', 'keterangan', 'debet_21101uu_dagang', 'serba_serbi_nomor_rekening', 'serba_serbi_jumlah', 'kredit_11101_kas_besar'];
+        mapOrder.forEach(function(key) {
+            if (map[key]) {
+                mapParts.push(key + ' → <code>' + jQuery('<span>').text(map[key]).html() + '</code>');
+            }
+        });
+        var html = '<div class="compare-info-title"><i class="fas fa-info-circle"></i> Informasi Tabel — Siap Diproses ke Jurnal Pengeluaran Kas</div>';
+        html += '<div class="compare-info-line">Tabel terpilih: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>';
+        html += '<div class="compare-info-line">Bulan proses: <strong>' + jQuery('<span>').text(bk).html() + '</strong></div>';
+        if (mapParts.length) {
+            html += '<div class="compare-info-line">Mapping kolom: ' + mapParts.join(' | ') + '</div>';
+        }
+        if (stats.saveable_in_bulan != null) {
+            html += '<div class="compare-info-line">Baris siap simpan: <strong>' + (stats.saveable_in_bulan || 0) + '</strong>';
+            if (stats.in_bulan != null) html += ' &nbsp;|&nbsp; baris bulan terpilih: <strong>' + (stats.in_bulan || 0) + '</strong>';
+            if (stats.out_bulan > 0) html += ' &nbsp;|&nbsp; di luar bulan: <strong class="text-warning">' + stats.out_bulan + '</strong>';
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function applyTabelImportState(res) {
+        tabelImportState = res || null;
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
+        if (!tbl) {
+            hideTabelActions();
+            return;
+        }
+        jQuery('#compare-pengeluaran-tabel-actions').removeClass('d-none');
+        jQuery('#btn-compare-pengeluaran-tabel-detail').prop('disabled', false);
+        if (!res || !res.eligible) {
+            var miss = (res && res.missing_fields && res.missing_fields.length)
+                ? ('Kolom kurang: <strong>' + res.missing_fields.join(', ') + '</strong>. ')
+                : '';
+            jQuery('#compare-pengeluaran-tabel-info-body').html(
+                '<div class="compare-info-title text-warning"><i class="fas fa-exclamation-triangle"></i> Tabel belum memenuhi syarat import</div>'
+                + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+                + '<div class="compare-info-line">' + miss + jQuery('<span>').text((res && res.message) ? res.message : 'Kolom wajib tidak lengkap.').html() + '</div>'
+            );
+            jQuery('#btn-compare-pengeluaran-tabel-detail').prop('disabled', true);
+            jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', true);
+            jQuery('#compare-pengeluaran-tabel-import-note').removeClass('text-danger text-success text-muted').addClass('text-muted').text('');
+            return;
+        }
+        jQuery('#compare-pengeluaran-tabel-info-body').html(buildTabelInfoHtml(res));
+        var enabled = !!res.import_enabled;
+        jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', !enabled);
+        var $note = jQuery('#compare-pengeluaran-tabel-import-note');
+        $note.removeClass('text-danger text-success text-muted');
+        if (enabled) {
+            $note.addClass('text-success').html('<i class="fas fa-check-circle"></i> ' + (res.import_message || 'Tanggal data sesuai bulan terpilih — siap disimpan ke jurnal_pengeluaran_kas.'));
+        } else {
+            $note.addClass('text-danger').html('<i class="fas fa-exclamation-circle"></i> ' + (res.import_message || 'Data tidak bisa dimasukkan ke jurnal pengeluaran kas.'));
+        }
+    }
+
+    function showTabelCheckingState(tbl) {
+        jQuery('#compare-pengeluaran-tabel-actions').removeClass('d-none');
+        jQuery('#compare-pengeluaran-tabel-info-body').html(
+            '<div class="compare-info-title"><i class="fas fa-spinner fa-spin"></i> Memeriksa tabel terpilih...</div>'
+            + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+        );
+        jQuery('#compare-pengeluaran-tabel-import-note').removeClass('text-danger text-success').addClass('text-muted').text('');
+        jQuery('#btn-compare-pengeluaran-tabel-detail').prop('disabled', true);
+        jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', true);
+    }
+
+    function validateTabelForImport() {
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
+        if (!tbl) {
+            hideTabelActions();
+            return;
+        }
+        showTabelCheckingState(tbl);
+        jQuery.ajax({
+            url: urlValidate,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                tabel: tbl,
+                bulan: bulanKey(),
+                bulan_num: jQuery('#compare_bulan_pengeluaran').val(),
+                tahun: jQuery('#compare_tahun_pengeluaran').val()
+            }
+        }).done(function(res) {
+            applyTabelImportState(res);
+        }).fail(function() {
+            jQuery('#compare-pengeluaran-tabel-actions').removeClass('d-none');
+            jQuery('#compare-pengeluaran-tabel-info-body').html(
+                '<div class="compare-info-title text-danger"><i class="fas fa-times-circle"></i> Gagal memeriksa tabel</div>'
+                + '<div class="compare-info-line">Tabel: <strong>' + jQuery('<span>').text(tbl).html() + '</strong></div>'
+            );
+            jQuery('#btn-compare-pengeluaran-tabel-detail').prop('disabled', true);
+            jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', true);
+        });
+    }
+    window.validateTabelPengeluaranForImport = validateTabelForImport;
+
+    function buildDetailRows(items) {
+        return (items || []).map(function(it) {
+            return [
+                it.no || '',
+                it.tanggal || '',
+                it.nomor_bukti_bkk ? jQuery('<span>').text(it.nomor_bukti_bkk).html() : '',
+                it.pl ? jQuery('<span>').text(it.pl).html() : '',
+                it.keterangan ? '<span class="text-ket">' + jQuery('<span>').text(it.keterangan).html() + '</span>' : '',
+                fmtAmtCell(it.debet_21101uu_dagang, 'deb'),
+                it.serba_serbi_nomor_rekening ? jQuery('<span>').text(it.serba_serbi_nomor_rekening).html() : '',
+                fmtAmtCell(it.serba_serbi_jumlah, 'jml'),
+                fmtAmtCell(it.kredit_11101_kas_besar, 'kre')
+            ];
+        });
+    }
+
+    function openTabelDetailModal() {
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
+        var bk = bulanKey();
+        if (!tbl || !bk) {
+            alert('Pilih tabel dan bulan terlebih dahulu.');
+            return;
+        }
+        jQuery('#compare-pengeluaran-tabel-detail-meta').text('Memuat data tabel `' + tbl + '` bulan ' + bk + '...');
+        jQuery('#modal-compare-pengeluaran-tabel-detail').modal('show');
+        jQuery.ajax({
+            url: urlDetail,
+            type: 'POST',
+            dataType: 'json',
+            data: { tabel: tbl, bulan: bk }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                jQuery('#compare-pengeluaran-tabel-detail-meta').text((res && res.message) || 'Gagal memuat detail tabel.');
+                return;
+            }
+            tabelDetailItems = res.rows || [];
+            jQuery('#compare-pengeluaran-tabel-detail-meta').text(
+                'Tabel: ' + (res.table || tbl) + ' | Bulan: ' + (res.bulan_label || bk) + ' | Total: ' + (res.total || tabelDetailItems.length) + ' baris'
+            );
+            var $t = jQuery('#table-compare-pengeluaran-tabel-detail');
+            if (jQuery.fn.DataTable.isDataTable($t)) {
+                $t.DataTable().clear().destroy();
+            }
+            $t.find('tbody').empty();
+            tabelDetailDt = $t.DataTable({
+                data: buildDetailRows(tabelDetailItems),
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                scrollX: true,
+                pageLength: 25,
+                order: [[1, 'asc']],
+                autoWidth: false,
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                drawCallback: function() {
+                    var td = 0, tj = 0, tk = 0;
+                    tabelDetailItems.forEach(function(it) {
+                        td += parseAmt(it.debet_21101uu_dagang);
+                        tj += parseAmt(it.serba_serbi_jumlah);
+                        tk += parseAmt(it.kredit_11101_kas_besar);
+                    });
+                    $t.find('.compare-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
+                    $t.find('.compare-total-jumlah').text(tj > 0 ? tj.toLocaleString('id-ID') : '—');
+                    $t.find('.compare-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
+                }
+            });
+        }).fail(function() {
+            jQuery('#compare-pengeluaran-tabel-detail-meta').text('Gagal memuat detail tabel.');
+        });
+    }
+
+    function exportTabelDetailExcel() {
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
+        var bk = bulanKey();
+        if (!tbl || !bk) {
+            alert('Pilih tabel dan bulan terlebih dahulu.');
+            return;
+        }
+        var f = jQuery('<form method="post" target="_blank"></form>');
+        f.attr('action', urlDetailExcel);
+        f.append(jQuery('<input type="hidden" name="tabel">').val(tbl));
+        f.append(jQuery('<input type="hidden" name="bulan">').val(bk));
+        jQuery('body').append(f);
+        f.submit();
+        f.remove();
+    }
+
+    function importTabelToPengeluaranKas() {
+        if (tabelImportBusy) return;
+        var tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
+        var bk = bulanKey();
+        if (!tbl || !bk) {
+            alert('Pilih tabel dan bulan terlebih dahulu.');
+            return;
+        }
+        if (!tabelImportState || !tabelImportState.import_enabled) {
+            alert((tabelImportState && tabelImportState.import_message) || 'Data tidak bisa dimasukkan ke jurnal pengeluaran kas.');
+            return;
+        }
+        var confirmMsg = 'Proses simpan semua data tabel `' + tbl + '` ke jurnal_pengeluaran_kas bulan ' + bk + '?\nSemua baris dengan tanggal pada bulan terpilih akan langsung disimpan (tanpa cek duplikat).';
+        if (!window.confirm(confirmMsg)) return;
+
+        tabelImportBusy = true;
+        jQuery('#btn-compare-pengeluaran-tabel-import').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ title: 'Memproses Simpan...', html: 'Menyimpan data ke jurnal_pengeluaran_kas', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+        }
+        jQuery.ajax({
+            url: urlTabelImport,
+            type: 'POST',
+            dataType: 'json',
+            data: { tabel: tbl, bulan: bk }
+        }).done(function(res) {
+            tabelImportBusy = false;
+            jQuery('#btn-compare-pengeluaran-tabel-import').html('<i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Pengeluaran Kas');
+            if (typeof Swal !== 'undefined') Swal.close();
+            if (!res || !res.ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Import Gagal', text: (res && res.message) || 'Gagal menambahkan data.' });
+                } else {
+                    alert((res && res.message) || 'Gagal menambahkan data.');
+                }
+                validateTabelForImport();
+                return;
+            }
+            var msg = res.message || ('Berhasil menambahkan ' + (res.inserted || 0) + ' data ke jurnal_pengeluaran_kas.');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Simpan Berhasil!',
+                    html: '<div style="font-size:15px;">' + jQuery('<span>').text(msg).html() + '<br><span class="text-muted" style="font-size:13px;">Datatable Tab 1 akan dimuat ulang otomatis...</span></div>',
+                    confirmButtonText: 'OK',
+                    timer: 2500,
+                    timerProgressBar: true
+                });
+            } else {
+                alert(msg);
+            }
+            setStatus('success', '<i class="fas fa-check-circle"></i> ' + msg);
+            validateTabelForImport();
+            if (typeof window.reloadPengeluaranKasTable === 'function') {
+                window.reloadPengeluaranKasTable(getSelectedMonthFromHeader());
+            }
+        }).fail(function() {
+            tabelImportBusy = false;
+            jQuery('#btn-compare-pengeluaran-tabel-import').html('<i class="fas fa-database"></i> Proses Simpan Data ke Tabel Jurnal Pengeluaran Kas');
+            if (typeof Swal !== 'undefined') Swal.close();
+            validateTabelForImport();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Import Gagal', text: 'Tidak dapat menghubungi server.' });
+            } else {
+                alert('Import gagal.');
+            }
+        });
+    }
+
+    function getSelectedMonthFromHeader() {
+        var el = document.getElementById('pgk_bulan_ns');
+        return el ? String(el.value || '').trim() : '';
+    }
+
     function buildRows(items) {
         return (items || []).map(function(it, i) {
             return [
@@ -562,7 +980,10 @@ window.addEventListener('load', function() {
             (res.tables || []).forEach(function(tbl) { $sel.append(jQuery('<option>', { value: tbl, text: tbl })); });
             if (cur) $sel.val(cur);
             tablesLoaded = true;
-        }).always(toggleBtns);
+        }).always(function() {
+            toggleBtns();
+            validateTabelForImport();
+        });
     }
     function runCompare() {
         var bk = bulanKey(), tbl = jQuery('#compare_tabel_pengeluaran').val() || '';
@@ -646,6 +1067,7 @@ window.addEventListener('load', function() {
             jQuery('#compare-pengeluaran-csv-rowcount').text(res.rows ? (' (' + res.rows + ' baris)') : '');
             jQuery('#compare-pengeluaran-csv-upload-info').removeClass('d-none');
             loadTableList(true, res.table);
+            validateTabelForImport();
             setStatus('success', 'Tabel <strong>' + (res.table || '') + '</strong> berhasil dibuat (' + (res.rows || 0) + ' baris).');
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
@@ -666,9 +1088,19 @@ window.addEventListener('load', function() {
         var f = this.files && this.files[0];
         if (f) { jQuery(this).next('.custom-file-label').text(f.name); importCsv(f); }
     });
-    jQuery('#compare_bulan_pengeluaran, #compare_tahun_pengeluaran, #compare_tabel_pengeluaran').on('change', toggleBtns);
+    jQuery('#compare_bulan_pengeluaran, #compare_tahun_pengeluaran').on('change', function() {
+        toggleBtns();
+        validateTabelForImport();
+    });
+    jQuery('#compare_tabel_pengeluaran').on('change', function() {
+        toggleBtns();
+        validateTabelForImport();
+    });
     jQuery('#btn-compare-pengeluaran-kas').on('click', runCompare);
     jQuery('#btn-compare-pengeluaran-excel-all').on('click', exportExcel);
+    jQuery('#btn-compare-pengeluaran-tabel-detail').on('click', openTabelDetailModal);
+    jQuery('#btn-compare-pengeluaran-tabel-detail-excel').on('click', exportTabelDetailExcel);
+    jQuery('#btn-compare-pengeluaran-tabel-import').on('click', importTabelToPengeluaranKas);
     jQuery('#tab-compare-pengeluaran-kas').on('shown.bs.tab', function() { loadTableList(false); });
     jQuery('#btn-compare-pengeluaran-csv-cek-data').on('click', function() {
         var tbl = (csvLast && csvLast.table) || jQuery('#compare_tabel_pengeluaran').val();

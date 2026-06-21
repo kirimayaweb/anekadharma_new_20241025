@@ -28,19 +28,30 @@ class Jurnal_umum extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_umum/adminlte310_jurnal_umum_list', $data);
     }
 
-    public function cari_between_date()
+    public function cari_between_date($Tahun_selected = null, $Bulan_selected = null)
     {
         $this->load->helper('jurnal_umum_list');
-        $tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
-        $tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
 
-        $Get_date_awal = jurnal_umum_parse_date_input($tgl_awal_raw, date('Y-m-01'));
-        $Get_date_akhir = jurnal_umum_parse_date_input($tgl_akhir_raw, date('Y-m-t'));
-        if ($Get_date_awal > $Get_date_akhir) {
-            $tmp = $Get_date_awal;
-            $Get_date_awal = $Get_date_akhir;
-            $Get_date_akhir = $tmp;
+        if ($Bulan_selected) {
+            $month = (int) $Bulan_selected;
+            $year = (int) $Tahun_selected;
+        } else {
+            $bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+            if (preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+                $year = (int) $m[1];
+                $month = (int) $m[2];
+            } else {
+                $year = (int) date('Y');
+                $month = (int) date('m');
+            }
         }
+
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('m');
+        }
+
+        $Get_date_awal = sprintf('%04d-%02d-01', $year, $month);
+        $Get_date_akhir = date('Y-m-t', strtotime($Get_date_awal));
 
         $list_data = $this->_load_list_data($Get_date_awal, $Get_date_akhir);
         $data = $this->_jurnal_umum_view_data(array_merge($list_data, array(
@@ -84,8 +95,8 @@ class Jurnal_umum extends CI_Controller
         $data['gen_tahun_min'] = 2019;
         $data['gen_tahun_max'] = (int) date('Y') + 1;
         $data['active_tab'] = isset($data['active_tab']) ? $data['active_tab'] : 'data';
-        $data['Get_date_awal'] = date('d-m-Y', strtotime($date_awal));
-        $data['Get_date_akhir'] = date('d-m-Y', strtotime($date_akhir));
+        $data['bulan_ns_value'] = sprintf('%04d-%02d', $compare_tahun_num, $compare_bulan_num);
+        $data['bulan_label'] = jurnal_umum_bulan_teks($compare_bulan_num) . ' ' . $compare_tahun_num;
         $data['periode_label'] = isset($data['periode_label']) ? $data['periode_label'] : jurnal_umum_format_tanggal_display($date_awal) . ' s/d ' . jurnal_umum_format_tanggal_display($date_akhir);
         $data['url_cari_between_date'] = site_url('Jurnal_umum/cari_between_date');
         $data['url_jurnal_umum_excel'] = site_url('Jurnal_umum/excel_list');
@@ -94,7 +105,10 @@ class Jurnal_umum extends CI_Controller
         $data['url_compare_jurnal_umum_import_csv'] = site_url('Jurnal_umum/ajax_compare_import_csv_jurnal_umum');
         $data['url_compare_jurnal_umum_tabel_list'] = site_url('Jurnal_umum/ajax_compare_tabel_list_jurnal_umum');
         $data['url_compare_jurnal_umum_tabel_preview'] = site_url('Jurnal_umum/ajax_compare_tabel_preview_jurnal_umum');
-        $data['url_compare_jurnal_umum_tabel_excel'] = site_url('Jurnal_umum/excel_compare_tabel_preview_jurnal_umum');
+        $data['url_compare_jurnal_umum_tabel_validate'] = site_url('Jurnal_umum/ajax_compare_tabel_validate_jurnal_umum');
+        $data['url_compare_jurnal_umum_tabel_detail'] = site_url('Jurnal_umum/ajax_compare_tabel_detail_jurnal_umum');
+        $data['url_compare_jurnal_umum_tabel_import'] = site_url('Jurnal_umum/ajax_compare_import_table_to_jurnal_umum');
+        $data['url_compare_jurnal_umum_tabel_detail_excel'] = site_url('Jurnal_umum/excel_compare_tabel_detail_jurnal_umum');
 
         return $data;
     }
@@ -207,6 +221,133 @@ class Jurnal_umum extends CI_Controller
         persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
     }
 
+    public function ajax_compare_tabel_validate_jurnal_umum()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_umum_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_umum_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => false,
+                'import_enabled' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            $structure = jurnal_umum_compare_validate_import_table($this, $table);
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => !empty($structure['ok']),
+                'import_enabled' => false,
+                'message' => isset($structure['message']) ? $structure['message'] : 'Struktur tabel tidak valid.',
+                'missing_fields' => isset($structure['missing_fields']) ? $structure['missing_fields'] : array(),
+                'table' => $table,
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_umum_compare_validate_table_for_import($this, $table, $bulan));
+    }
+
+    public function ajax_compare_tabel_detail_jurnal_umum()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_umum_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_umum_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Nama tabel belum dipilih.'));
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.'));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, jurnal_umum_compare_load_table_detail_for_bulan($this, $table, $bulan));
+    }
+
+    public function ajax_compare_import_table_to_jurnal_umum()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_umum_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_umum_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Nama tabel belum dipilih.'));
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.'));
+            return;
+        }
+
+        try {
+            $result = jurnal_umum_compare_import_to_jurnal_umum($this, $table, $bulan);
+            if (empty($result['ok']) && !empty($result['db_error'])) {
+                $result['message'] = trim((string) $result['message']) . ' Detail database: ' . $result['db_error'];
+            }
+            persediaan_ajax_json_output($this, $result);
+        } catch (Exception $e) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Gagal menyimpan ke jurnal_umum: ' . $e->getMessage(),
+                'error_detail' => $e->getMessage(),
+            ));
+        }
+    }
+
+    public function excel_compare_tabel_detail_jurnal_umum()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_umum_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        if ($table === '') {
+            $table = trim((string) $this->input->get('tabel', TRUE));
+        }
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = trim((string) $this->input->get('bulan', TRUE));
+        }
+        if ($bulan === '') {
+            $bulan = $this->_compare_jurnal_umum_bulan_from_post();
+        }
+
+        if ($table === '') {
+            show_error('Nama tabel belum dipilih.', 400);
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            show_error('Format bulan tidak valid (YYYY-MM).', 400);
+            return;
+        }
+
+        $namaFile = 'Detail_Tabel_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $table) . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        jurnal_umum_compare_export_table_detail_excel($this, $table, $bulan);
+        exit();
+    }
+
     public function excel_compare_jurnal_umum_manual_online()
     {
         $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'jurnal_umum_compare', 'persediaan_display'));
@@ -241,7 +382,16 @@ class Jurnal_umum extends CI_Controller
     public function excel_list()
     {
         $this->load->helper('jurnal_umum_list');
-        jurnal_umum_export_excel_list_output($this);
+        $bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+        if (preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+            $year = (int) $m[1];
+            $month = (int) $m[2];
+            $date_awal = sprintf('%04d-%02d-01', $year, $month);
+            $date_akhir = date('Y-m-t', strtotime($date_awal));
+            jurnal_umum_export_excel_list_output($this, $date_awal, $date_akhir);
+        } else {
+            jurnal_umum_export_excel_list_output($this);
+        }
         exit();
     }
 

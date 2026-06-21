@@ -1182,31 +1182,24 @@ function penerimaan_kas_compare_import_to_jurnal_penerimaan_kas($CI, $table, $bu
 	$map = $valid['map'];
 	$ref_year = (int) substr($bulan, 0, 4);
 	$ref_month = (int) substr($bulan, 5, 2);
-	$existing_keys = penerimaan_kas_compare_load_existing_keys($CI, $bulan);
-	$batch_keys = array();
 	$all_rows = $CI->db->query('SELECT * FROM `' . $table . '` ORDER BY id ASC')->result();
 	$inserted = 0;
-	$skipped = 0;
+	$skipped_out_bulan = 0;
+	$skipped_invalid = 0;
 
 	$CI->db->trans_start();
 	foreach ((array) $all_rows as $row) {
 		$item = penerimaan_kas_compare_import_row_from_db($row, $map, $ref_month, $ref_year);
 		if (!jurnal_kas_compare_row_matches_bulan($item['tanggal'], $bulan)) {
+			$skipped_out_bulan++;
 			continue;
 		}
 		if (!penerimaan_kas_compare_is_import_row_saveable($item)) {
-			continue;
-		}
-
-		$key = penerimaan_kas_compare_make_duplicate_key($item);
-		if (isset($existing_keys[$key]) || isset($batch_keys[$key])) {
-			$skipped++;
+			$skipped_invalid++;
 			continue;
 		}
 
 		$CI->Jurnal_penerimaan_kas_model->insert(penerimaan_kas_compare_row_to_insert_data($item));
-		$batch_keys[$key] = true;
-		$existing_keys[$key] = true;
 		$inserted++;
 	}
 	$CI->db->trans_complete();
@@ -1215,11 +1208,20 @@ function penerimaan_kas_compare_import_to_jurnal_penerimaan_kas($CI, $table, $bu
 		return array('ok' => false, 'message' => 'Gagal menyimpan data ke jurnal_penerimaan_kas.');
 	}
 
+	$message = 'Berhasil menambahkan ' . $inserted . ' data ke jurnal_penerimaan_kas (semua baris valid disimpan apa adanya).';
+	if ($skipped_out_bulan > 0) {
+		$message .= ' ' . $skipped_out_bulan . ' baris di luar bulan terpilih tidak disimpan.';
+	}
+	if ($skipped_invalid > 0) {
+		$message .= ' ' . $skipped_invalid . ' baris tidak valid (tanggal/PL/keterangan/debet-kredit kosong) tidak disimpan.';
+	}
+
 	return array(
 		'ok' => true,
 		'inserted' => $inserted,
-		'skipped' => $skipped,
-		'message' => 'Berhasil menambahkan ' . $inserted . ' data ke jurnal_penerimaan_kas.'
-			. ($skipped > 0 ? ' ' . $skipped . ' data dilewati karena record sama.' : ''),
+		'skipped_out_bulan' => $skipped_out_bulan,
+		'skipped_invalid' => $skipped_invalid,
+		'skipped' => $skipped_out_bulan + $skipped_invalid,
+		'message' => $message,
 	);
 }

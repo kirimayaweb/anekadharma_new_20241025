@@ -99,6 +99,13 @@
         if (!isset($gen_tahun_max)) {
             $gen_tahun_max = (int) date('Y') + 1;
         }
+        if (!isset($bulan_ns_value) || $bulan_ns_value === '') {
+            $bulan_ns_value = sprintf(
+                '%04d-%02d',
+                (int) date('Y', strtotime($date_akhir)),
+                (int) date('m', strtotime($date_akhir))
+            );
+        }
         if (!isset($active_tab)) {
             $active_tab = 'data';
         }
@@ -180,40 +187,11 @@
                                         ?>
 
                                         <form id="form-cari-penerimaan-kas" action="<?php echo $action_cari_between_date; ?>" method="post">
-                                            <div class="row">
-
-                                                <div class="col-md-1" text-align="right" align="right"></div>
-
-                                                <div class="col-md-3" text-align="right">
-                                                    <div class="input-group date" id="pk_tgl_awal_wrap" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#pk_tgl_awal_wrap" id="pk_tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                        <div class="input-group-append" data-target="#pk_tgl_awal_wrap" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                                <div class="col-md-3" text-align="left" align="left">
-                                                    <div class="input-group date" id="pk_tgl_akhir_wrap" data-target-input="nearest">
-                                                        <input type="text" class="form-control datetimepicker-input" data-target="#pk_tgl_akhir_wrap" id="pk_tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                        <div class="input-group-append" data-target="#pk_tgl_akhir_wrap" data-toggle="datetimepicker">
-                                                            <div class="input-group-text">
-                                                                <i class="fa fa-calendar"></i>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-2" text-align="left" align="left">
-                                                    <strong>
-                                                        <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                                    </strong>
-                                                </div>
-
+                                            <div class="penerimaan-kas-month-filter d-flex align-items-center flex-wrap" id="penerimaan-kas-month-filter">
+                                                <input type="month" class="form-control form-control-sm mr-2" id="pk_bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" required />
+                                                <button type="button" id="btn-cari-penerimaan-kas-bulan" class="btn btn-danger btn-sm btn-flat">
+                                                    <i class="fa fa-search" aria-hidden="true"></i> Cari
+                                                </button>
                                             </div>
                                         </form>
 
@@ -249,7 +227,8 @@
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 penerimaan-kas-tab1-toolbar">
                             <div>
                                 <h5 class="mb-0 text-primary"><strong>Data Jurnal Penerimaan Kas</strong> <span class="text-muted" id="penerimaan-kas-label-periode">(<?php echo htmlspecialchars($penerimaan_bulan_label, ENT_QUOTES, 'UTF-8'); ?>)</span></h5>
-                                <small class="text-muted">Periode: <span id="penerimaan-kas-label-range"><?php echo htmlspecialchars($penerimaan_periode_label, ENT_QUOTES, 'UTF-8'); ?></span> — pilih tanggal awal &amp; akhir untuk memuat ulang otomatis</small>
+                                <small class="text-muted">Periode: <span id="penerimaan-kas-label-range"><?php echo htmlspecialchars($penerimaan_periode_label, ENT_QUOTES, 'UTF-8'); ?></span> — pilih bulan di atas untuk memuat ulang otomatis</small>
+                                <div id="penerimaan-kas-month-loading" class="text-info d-none mt-1"><i class="fas fa-spinner fa-spin"></i> Memuat data jurnal penerimaan kas...</div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
                                 <?php if ($can_input_penerimaan_kas) { ?>
@@ -266,29 +245,36 @@
                         <div id="penerimaan-kas-table-wrap" class="penerimaan-kas-dt-wrap">
                         <table id="penerimaan-kas-datatable" class="table table-bordered display nowrap penerimaan-kas-dt-table" style="width:100%">
                             <colgroup>
-                                <col style="width:50px">
-                                <col style="width:100px">
-                                <col style="width:110px">
-                                <col style="width:120px">
-                                <col style="width:60px">
-                                <col style="width:280px">
-                                <col style="width:140px">
-                                <col style="width:165px">
-                                <col style="width:100px">
-                                <col style="width:120px">
+                                <col class="pk-col-no">
+                                <col class="pk-col-tanggal">
+                                <col class="pk-col-kode">
+                                <col class="pk-col-bukti">
+                                <col class="pk-col-pl">
+                                <col class="pk-col-ket">
+                                <col class="pk-col-debit">
+                                <col class="pk-col-kredit">
+                                <col class="pk-col-rek">
+                                <col class="pk-col-jumlah">
                             </colgroup>
                             <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Tanggal</th>
-                                    <th>Kode Akun</th>
-                                    <th>No. Bukti BKM</th>
-                                    <th>PL</th>
-                                    <th>KETERANGAN</th>
-                                    <th class="text-right">11101-Kas Besar</th>
-                                    <th class="text-right">11301-PU Non Angsuran</th>
-                                    <th>No. Rek</th>
-                                    <th class="text-right">Jumlah</th>
+                                <tr class="pk-head-group">
+                                    <th rowspan="3" class="pk-th-sort">No</th>
+                                    <th rowspan="3" class="pk-th-sort">Tanggal</th>
+                                    <th rowspan="3" class="pk-th-sort">Kode Akun</th>
+                                    <th rowspan="3" class="pk-th-sort">No. Bukti BKM</th>
+                                    <th rowspan="3" class="pk-th-sort">PL</th>
+                                    <th rowspan="3" class="pk-th-sort">KETERANGAN</th>
+                                    <th colspan="1" class="pk-th-debit-group pk-th-no-sort">DEBIT</th>
+                                    <th colspan="3" class="pk-th-kredit-group pk-th-no-sort">KREDIT</th>
+                                </tr>
+                                <tr class="pk-head-group">
+                                    <th rowspan="2" class="pk-th-sort text-right">11101-Kas Besar</th>
+                                    <th rowspan="2" class="pk-th-sort text-right">11301-PU Non Angsuran</th>
+                                    <th colspan="2" class="pk-th-serba-group pk-th-no-sort">Serba - serbi</th>
+                                </tr>
+                                <tr class="pk-head-leaf">
+                                    <th class="pk-th-sort">No. Rek</th>
+                                    <th class="pk-th-sort text-right">Jumlah</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -298,16 +284,23 @@
                                     $fmt_force = $is_subtotal;
                                 ?>
                                 <tr<?php echo $tr_class; ?>>
-                                    <td><?php echo htmlspecialchars($row['no'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td><?php echo htmlspecialchars($row['tanggal'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <?php
+                                    $pk_order_tanggal = penerimaan_kas_parse_tanggal_to_ts(isset($row['tanggal']) ? $row['tanggal'] : '');
+                                    $pk_order_debet = penerimaan_kas_parse_amount(isset($row['debet_11101']) ? $row['debet_11101'] : 0);
+                                    $pk_order_kredit = penerimaan_kas_parse_amount(isset($row['kredit_11301']) ? $row['kredit_11301'] : 0);
+                                    $pk_order_jumlah = penerimaan_kas_parse_amount(isset($row['jumlah']) ? $row['jumlah'] : 0);
+                                    $pk_order_no = is_numeric($row['no']) ? (float) $row['no'] : 0;
+                                    ?>
+                                    <td data-order="<?php echo htmlspecialchars((string) $pk_order_no, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($row['no'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                    <td data-order="<?php echo $pk_order_tanggal ? (int) $pk_order_tanggal : 0; ?>"><?php echo htmlspecialchars($row['tanggal'], ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td><?php echo htmlspecialchars($row['kode_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td><?php echo htmlspecialchars($row['bukti'], ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td><?php echo htmlspecialchars($row['pl'], ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td><?php echo htmlspecialchars($row['keterangan'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['debet_11101'], $fmt_force); ?></td>
-                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['kredit_11301'], $fmt_force); ?></td>
+                                    <td class="pk-cell-amount text-right" data-order="<?php echo htmlspecialchars((string) $pk_order_debet, ENT_QUOTES, 'UTF-8'); ?>"><?php echo penerimaan_kas_format_rupiah($row['debet_11101'], $fmt_force); ?></td>
+                                    <td class="pk-cell-amount text-right" data-order="<?php echo htmlspecialchars((string) $pk_order_kredit, ENT_QUOTES, 'UTF-8'); ?>"><?php echo penerimaan_kas_format_rupiah($row['kredit_11301'], $fmt_force); ?></td>
                                     <td><?php echo htmlspecialchars($row['kode_rekening'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td class="pk-cell-amount text-right"><?php echo penerimaan_kas_format_rupiah($row['jumlah'], $fmt_force); ?></td>
+                                    <td class="pk-cell-amount text-right" data-order="<?php echo htmlspecialchars((string) $pk_order_jumlah, ENT_QUOTES, 'UTF-8'); ?>"><?php echo penerimaan_kas_format_rupiah($row['jumlah'], $fmt_force); ?></td>
                                 </tr>
                                 <?php } ?>
                             </tbody>
@@ -724,13 +717,25 @@
     }
     .penerimaan-kas-dt-wrap .dataTables_wrapper {
         width: 100%;
+        min-width: 1180px;
     }
     .penerimaan-kas-dt-table {
         margin-bottom: 0 !important;
         table-layout: fixed;
         width: 100% !important;
-        min-width: 1240px;
+        min-width: 1180px;
+        border-collapse: collapse;
     }
+    .penerimaan-kas-dt-table col.pk-col-no { width: 45px; }
+    .penerimaan-kas-dt-table col.pk-col-tanggal { width: 95px; }
+    .penerimaan-kas-dt-table col.pk-col-kode { width: 100px; }
+    .penerimaan-kas-dt-table col.pk-col-bukti { width: 115px; }
+    .penerimaan-kas-dt-table col.pk-col-pl { width: 55px; }
+    .penerimaan-kas-dt-table col.pk-col-ket { width: 260px; }
+    .penerimaan-kas-dt-table col.pk-col-debit { width: 130px; }
+    .penerimaan-kas-dt-table col.pk-col-kredit { width: 150px; }
+    .penerimaan-kas-dt-table col.pk-col-rek { width: 90px; }
+    .penerimaan-kas-dt-table col.pk-col-jumlah { width: 115px; }
     .penerimaan-kas-dt-table thead th,
     .penerimaan-kas-dt-table tbody td,
     .penerimaan-kas-dt-table tfoot th {
@@ -745,6 +750,47 @@
         text-align: center;
         white-space: nowrap;
         line-height: 1.35;
+    }
+    .penerimaan-kas-dt-table thead th.pk-th-debit-group,
+    .penerimaan-kas-dt-table thead th.pk-th-kredit-group,
+    .penerimaan-kas-dt-table thead th.pk-th-serba-group {
+        text-align: center;
+        font-weight: 600;
+    }
+    .penerimaan-kas-dt-table thead th.pk-th-no-sort {
+        cursor: default !important;
+    }
+    .penerimaan-kas-dt-table thead th.pk-th-sort,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-sort.sorting,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-sort.sorting_asc,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-sort.sorting_desc {
+        cursor: pointer;
+        padding-right: 24px !important;
+        position: relative;
+    }
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-no-sort.sorting,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-no-sort.sorting_asc,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-no-sort.sorting_desc {
+        background-image: none !important;
+        cursor: default !important;
+        padding-right: 8px !important;
+    }
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-no-sort:before,
+    .penerimaan-kas-dt-wrap table.dataTable thead th.pk-th-no-sort:after {
+        display: none !important;
+    }
+    .penerimaan-kas-dt-table thead th.text-right,
+    .penerimaan-kas-dt-table tbody td:nth-child(7),
+    .penerimaan-kas-dt-table tbody td:nth-child(8),
+    .penerimaan-kas-dt-table tbody td:nth-child(10),
+    .penerimaan-kas-dt-table tfoot th:nth-child(7),
+    .penerimaan-kas-dt-table tfoot th:nth-child(8),
+    .penerimaan-kas-dt-table tfoot th:nth-child(10) {
+        text-align: right;
+    }
+    .penerimaan-kas-dt-table tbody td:nth-child(9),
+    .penerimaan-kas-dt-table tfoot th:nth-child(9) {
+        text-align: center;
     }
     .penerimaan-kas-dt-table tbody td {
         background: #fff;
@@ -763,32 +809,25 @@
         background: #f8f9fa;
         font-weight: 600;
     }
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting:before,
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting:after,
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_asc:before,
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_asc:after,
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_desc:before,
-    .penerimaan-kas-dt-wrap table.dataTable thead .sorting_desc:after {
-        display: none !important;
-    }
-    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting,
-    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting_asc,
-    .penerimaan-kas-dt-wrap table.dataTable thead th.sorting_desc {
-        background-image: none !important;
-        padding-right: 8px !important;
-    }
-    .penerimaan-kas-dt-wrap .dataTables_scrollHead table,
-    .penerimaan-kas-dt-wrap .dataTables_scrollBody table,
-    .penerimaan-kas-dt-wrap .dataTables_scrollFoot table {
-        table-layout: fixed !important;
-        width: 100% !important;
-        min-width: 1240px;
+    .penerimaan-kas-dt-wrap .dataTables_info,
+    .penerimaan-kas-dt-wrap .dataTables_length,
+    .penerimaan-kas-dt-wrap .dataTables_filter,
+    .penerimaan-kas-dt-wrap .dataTables_paginate {
+        font-size: 13px;
     }
     #modal-penerimaan-kas-input .modal-header { border-bottom: none; }
     #modal-penerimaan-kas-input .modal-content { border: none; box-shadow: 0 8px 30px rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
     #modal-penerimaan-kas-input .modal-body { background: #fafbfc; }
     #modal-penerimaan-kas-input label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
     #modal-penerimaan-kas-input .select2-container { width: 100% !important; }
+    .penerimaan-kas-month-filter input[type="month"] {
+        width: 180px;
+        min-width: 160px;
+        max-width: 200px;
+    }
+    .penerimaan-kas-month-filter .btn {
+        white-space: nowrap;
+    }
 </style>
 
 <script>
@@ -796,59 +835,57 @@
     var submitTimer = null;
     var urlExcel = <?php echo json_encode($url_penerimaan_kas_excel); ?>;
     var namaBulan = <?php echo json_encode($nama_bulan_id); ?>;
+    var bulanNsServer = <?php echo json_encode($bulan_ns_value); ?>;
     var pageReady = false;
-    var lastValues = { awal: '', akhir: '' };
+    var loading = false;
+    var lastMonth = '';
 
-    function parseTanggalDmY(str) {
-        str = String(str || '').trim();
-        if (!str) {
+    function parseMonthValue(val) {
+        if (!val || !/^\d{4}-\d{2}$/.test(val)) {
             return null;
         }
-        var parts = str.split(/[-\/]/);
-        if (parts.length !== 3) {
+        var parts = val.split('-');
+        var year = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10);
+        if (!year || month < 1 || month > 12) {
             return null;
         }
-        var d = parseInt(parts[0], 10);
-        var m = parseInt(parts[1], 10);
-        var y = parseInt(parts[2], 10);
-        if (!d || !m || !y || y < 2020) {
-            return null;
-        }
-        return { day: d, month: m, year: y };
+        return { year: year, month: month };
     }
 
-    function tanggalToDateObj(parsed) {
-        return new Date(parsed.year, parsed.month - 1, parsed.day);
+    function daysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
     }
 
-    function isRangeTanggalValid(awalStr, akhirStr) {
-        var awal = parseTanggalDmY(awalStr);
-        var akhir = parseTanggalDmY(akhirStr);
-        if (!awal || !akhir) {
-            return false;
-        }
-        return tanggalToDateObj(awal) <= tanggalToDateObj(akhir);
+    function pad2(n) {
+        return String(n).padStart(2, '0');
     }
 
-    function getTanggalFilterPenerimaanKas() {
-        var form = document.getElementById('form-cari-penerimaan-kas');
-        if (!form) {
-            return { awal: '', akhir: '' };
-        }
-        var tglAwal = form.querySelector('#pk_tgl_awal');
-        var tglAkhir = form.querySelector('#pk_tgl_akhir');
-        return {
-            awal: tglAwal ? String(tglAwal.value || '').trim() : '',
-            akhir: tglAkhir ? String(tglAkhir.value || '').trim() : ''
-        };
+    function buildRangeLabel(parsed) {
+        var awal = '01-' + pad2(parsed.month) + '-' + parsed.year;
+        var akhir = pad2(daysInMonth(parsed.year, parsed.month)) + '-' + pad2(parsed.month) + '-' + parsed.year;
+        return awal + ' s/d ' + akhir;
     }
 
-    function syncCompareBulanTahunFromDatepicker() {
-        var tgl = getTanggalFilterPenerimaanKas();
-        if (!tgl.awal || !tgl.akhir) {
-            return;
+    function getSelectedMonthValue() {
+        var el = document.getElementById('pk_bulan_ns');
+        return el ? String(el.value || '').trim() : '';
+    }
+
+    function showMonthLoading() {
+        var elLoading = document.getElementById('penerimaan-kas-month-loading');
+        var elWrap = document.getElementById('penerimaan-kas-table-wrap');
+        if (elLoading) {
+            elLoading.classList.remove('d-none');
         }
-        var parsed = parseTanggalDmY(tgl.akhir);
+        if (elWrap) {
+            elWrap.style.opacity = '0.45';
+            elWrap.style.pointerEvents = 'none';
+        }
+    }
+
+    function syncCompareBulanTahunFromMonth(monthValue) {
+        var parsed = parseMonthValue(monthValue);
         if (!parsed) {
             return;
         }
@@ -867,7 +904,7 @@
 
         var bulanLabel = (namaBulan && namaBulan[parsed.month]) ? namaBulan[parsed.month] : String(parsed.month);
         var labelText = bulanLabel + ' ' + parsed.year;
-        var rangeText = tgl.awal + ' s/d ' + tgl.akhir;
+        var rangeText = buildRangeLabel(parsed);
 
         jQuery('#penerimaan-kas-label-periode').text('(' + labelText + ')');
         jQuery('#penerimaan-kas-label-range').text(rangeText);
@@ -879,52 +916,47 @@
         }
     }
 
-    function submitCariPenerimaanKasOtomatis() {
-        if (!pageReady) {
+    function submitCariPenerimaanKasByMonth(monthValue, force) {
+        if (loading) {
+            return;
+        }
+        var parsed = parseMonthValue(monthValue);
+        if (!parsed) {
+            if (force) {
+                alert('Pilih bulan terlebih dahulu.');
+            }
+            return;
+        }
+        if (!force && !pageReady) {
+            return;
+        }
+        if (!force && monthValue === lastMonth) {
             return;
         }
 
-        clearTimeout(submitTimer);
-        submitTimer = setTimeout(function() {
-            var form = document.getElementById('form-cari-penerimaan-kas');
-            if (!form) {
-                return;
-            }
-            var tgl = getTanggalFilterPenerimaanKas();
-            if (!tgl.awal || !tgl.akhir) {
-                return;
-            }
-            if (!parseTanggalDmY(tgl.awal) || !parseTanggalDmY(tgl.akhir)) {
-                return;
-            }
-            if (!isRangeTanggalValid(tgl.awal, tgl.akhir)) {
-                return;
-            }
-            if (tgl.awal === lastValues.awal && tgl.akhir === lastValues.akhir) {
-                return;
-            }
+        var form = document.getElementById('form-cari-penerimaan-kas');
+        if (!form) {
+            return;
+        }
 
-            lastValues.awal = tgl.awal;
-            lastValues.akhir = tgl.akhir;
-            syncCompareBulanTahunFromDatepicker();
-            form.submit();
-        }, 350);
+        lastMonth = monthValue;
+        loading = true;
+        showMonthLoading();
+        syncCompareBulanTahunFromMonth(monthValue);
+        form.submit();
     }
 
-    function onDatepickerTanggalDipilih(e) {
-        if (!pageReady) {
-            return;
-        }
-        if (!e || e.date === false || e.date === null || typeof e.date === 'undefined') {
-            return;
-        }
-        submitCariPenerimaanKasOtomatis();
+    function scheduleSubmitByMonth(monthValue) {
+        clearTimeout(submitTimer);
+        submitTimer = setTimeout(function() {
+            submitCariPenerimaanKasByMonth(monthValue, false);
+        }, 300);
     }
 
     function exportPenerimaanKasExcel() {
-        var tgl = getTanggalFilterPenerimaanKas();
-        if (!tgl.awal || !tgl.akhir) {
-            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+        var monthValue = getSelectedMonthValue();
+        if (!parseMonthValue(monthValue)) {
+            alert('Pilih bulan terlebih dahulu.');
             return;
         }
         var f = document.createElement('form');
@@ -933,17 +965,11 @@
         f.target = '_blank';
         f.style.display = 'none';
 
-        var inpAwal = document.createElement('input');
-        inpAwal.type = 'hidden';
-        inpAwal.name = 'tgl_awal';
-        inpAwal.value = tgl.awal;
-        f.appendChild(inpAwal);
-
-        var inpAkhir = document.createElement('input');
-        inpAkhir.type = 'hidden';
-        inpAkhir.name = 'tgl_akhir';
-        inpAkhir.value = tgl.akhir;
-        f.appendChild(inpAkhir);
+        var inpBulan = document.createElement('input');
+        inpBulan.type = 'hidden';
+        inpBulan.name = 'bulan_ns';
+        inpBulan.value = monthValue;
+        f.appendChild(inpBulan);
 
         document.body.appendChild(f);
         f.submit();
@@ -952,33 +978,39 @@
 
     function initAutoCariPenerimaanKas() {
         var form = document.getElementById('form-cari-penerimaan-kas');
-        if (!form) {
+        var bulanNs = document.getElementById('pk_bulan_ns');
+        if (!form || !bulanNs) {
             return;
         }
 
-        var tgl = getTanggalFilterPenerimaanKas();
-        lastValues.awal = tgl.awal;
-        lastValues.akhir = tgl.akhir;
+        if (!bulanNs.value && bulanNsServer) {
+            bulanNs.value = bulanNsServer;
+        }
+        lastMonth = bulanNs.value || bulanNsServer || '';
+        syncCompareBulanTahunFromMonth(lastMonth);
 
         var btnExcel = document.getElementById('btn-penerimaan-kas-excel');
         if (btnExcel) {
             btnExcel.addEventListener('click', exportPenerimaanKasExcel);
         }
 
-        if (window.jQuery) {
-            if (jQuery('#pk_tgl_awal_wrap').length && !jQuery('#pk_tgl_awal_wrap').data('datetimepicker')) {
-                jQuery('#pk_tgl_awal_wrap').datetimepicker({ format: 'D-M-YYYY' });
-            }
-            if (jQuery('#pk_tgl_akhir_wrap').length && !jQuery('#pk_tgl_akhir_wrap').data('datetimepicker')) {
-                jQuery('#pk_tgl_akhir_wrap').datetimepicker({ format: 'D-M-YYYY' });
-            }
-
-            jQuery('#pk_tgl_awal_wrap, #pk_tgl_akhir_wrap')
-                .off('change.datetimepicker.penerimaanKas')
-                .on('change.datetimepicker.penerimaanKas', onDatepickerTanggalDipilih);
+        var btnCari = document.getElementById('btn-cari-penerimaan-kas-bulan');
+        if (btnCari) {
+            btnCari.addEventListener('click', function() {
+                submitCariPenerimaanKasByMonth(getSelectedMonthValue(), true);
+            });
         }
 
-        syncCompareBulanTahunFromDatepicker();
+        function handleMonthChange() {
+            var val = bulanNs.value || '';
+            if (!val || val === lastMonth) {
+                return;
+            }
+            scheduleSubmitByMonth(val);
+        }
+
+        bulanNs.addEventListener('change', handleMonthChange);
+        bulanNs.addEventListener('input', handleMonthChange);
 
         setTimeout(function() {
             pageReady = true;
@@ -1024,42 +1056,86 @@ window.addEventListener('load', function() {
     jQuery('.DTFC_Cloned').remove();
     jQuery('.DTFC_LeftWrapper, .DTFC_RightWrapper').remove();
 
-    var colWidths = ['50px', '100px', '110px', '120px', '60px', '280px', '140px', '165px', '100px', '120px'];
+    var pkColWidths = ['45px', '95px', '100px', '115px', '55px', '260px', '130px', '150px', '90px', '115px'];
+    var pkColClasses = ['pk-col-no', 'pk-col-tanggal', 'pk-col-kode', 'pk-col-bukti', 'pk-col-pl', 'pk-col-ket', 'pk-col-debit', 'pk-col-kredit', 'pk-col-rek', 'pk-col-jumlah'];
+    var dt = null;
 
-    var dt = $table.DataTable({
-        scrollX: true,
-        scrollY: '550px',
-        scrollCollapse: true,
+    function applyPenerimaanKasColWidths() {
+        $table.find('colgroup col').each(function(i) {
+            if (pkColWidths[i]) {
+                jQuery(this).attr('class', pkColClasses[i]).css('width', pkColWidths[i]);
+            }
+        });
+    }
+
+    function fixPenerimaanKasHeaderSort() {
+        $table.find('thead th.pk-th-no-sort')
+            .removeClass('sorting sorting_asc sorting_desc sorting_disabled')
+            .attr('aria-sort', null)
+            .css('cursor', 'default');
+    }
+
+    dt = $table.DataTable({
         paging: true,
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
-        ordering: false,
+        ordering: true,
+        order: [],
+        orderCellsTop: false,
+        orderClasses: false,
         searching: true,
         info: true,
         autoWidth: false,
         columnDefs: [
-            { orderable: false, targets: '_all' },
-            { width: colWidths[0], targets: 0 },
-            { width: colWidths[1], targets: 1 },
-            { width: colWidths[2], targets: 2 },
-            { width: colWidths[3], targets: 3 },
-            { width: colWidths[4], targets: 4 },
-            { width: colWidths[5], targets: 5 },
-            { width: colWidths[6], targets: 6, className: 'text-right' },
-            { width: colWidths[7], targets: 7, className: 'text-right' },
-            { width: colWidths[8], targets: 8 },
-            { width: colWidths[9], targets: 9, className: 'text-right' }
+            { orderable: true, targets: '_all' },
+            { width: pkColWidths[0], targets: 0 },
+            { width: pkColWidths[1], targets: 1 },
+            { width: pkColWidths[2], targets: 2 },
+            { width: pkColWidths[3], targets: 3 },
+            { width: pkColWidths[4], targets: 4 },
+            { width: pkColWidths[5], targets: 5 },
+            { width: pkColWidths[6], targets: 6, className: 'text-right' },
+            { width: pkColWidths[7], targets: 7, className: 'text-right' },
+            { width: pkColWidths[8], targets: 8 },
+            { width: pkColWidths[9], targets: 9, className: 'text-right' }
         ],
         language: {
             url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json'
         },
         drawCallback: function() {
-            dt.columns.adjust();
+            applyPenerimaanKasColWidths();
+            fixPenerimaanKasHeaderSort();
         },
         initComplete: function() {
-            dt.columns.adjust();
+            applyPenerimaanKasColWidths();
+            fixPenerimaanKasHeaderSort();
         }
     });
+
+    dt.on('order.dt', function() {
+        fixPenerimaanKasHeaderSort();
+    });
+
+    $table.on('click', 'thead th.pk-th-no-sort', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+    });
+
+    jQuery(window).on('resize.penerimaanKasDt', function() {
+        applyPenerimaanKasColWidths();
+    });
+
+    jQuery('#tab-penerimaan-data').on('shown.bs.tab', function() {
+        setTimeout(function() {
+            applyPenerimaanKasColWidths();
+            if (dt) {
+                dt.columns.adjust();
+            }
+        }, 50);
+    });
+
+    applyPenerimaanKasColWidths();
 });
 </script>
 

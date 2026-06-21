@@ -42,6 +42,20 @@ function pengeluaran_kas_format_rupiah($value, $always_show = false)
 	return number_format((float) $value, 0, ',', '.');
 }
 
+function pengeluaran_kas_compute_footer_totals($total_debet, $total_jumlah, $total_kredit)
+{
+	$total_debet = (float) $total_debet;
+	$total_jumlah = (float) $total_jumlah;
+	$total_kredit = (float) $total_kredit;
+
+	return array(
+		'debet_21101' => $total_debet,
+		'serba_serbi_jumlah' => $total_jumlah,
+		'kredit_kas' => $total_kredit,
+		'combined_debet_21101' => $total_debet + $total_jumlah,
+	);
+}
+
 function pengeluaran_kas_parse_tanggal_to_ts($tanggal_str)
 {
 	$tanggal_str = trim((string) $tanggal_str);
@@ -82,6 +96,63 @@ function pengeluaran_kas_parse_filter_date($date_str, $is_end = false)
 	return date('Y-m-d 00:00:00', strtotime($date_str));
 }
 
+function pengeluaran_kas_parse_filter_month($bulan_ns)
+{
+	$bulan_ns = trim((string) $bulan_ns);
+	if (!preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+		return null;
+	}
+
+	$year = (int) $m[1];
+	$month = (int) $m[2];
+	if ($year < 2020 || $month < 1 || $month > 12) {
+		return null;
+	}
+
+	$date_awal = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+	$date_akhir = date('Y-m-t 23:59:59', strtotime($date_awal));
+
+	return array(
+		'date_awal' => $date_awal,
+		'date_akhir' => $date_akhir,
+		'month' => $month,
+		'year' => $year,
+		'bulan_ns' => sprintf('%04d-%02d', $year, $month),
+	);
+}
+
+function pengeluaran_kas_resolve_filter_dates($tgl_awal, $tgl_akhir, $bulan_ns = '')
+{
+	$parsed_month = pengeluaran_kas_parse_filter_month($bulan_ns);
+	if ($parsed_month !== null) {
+		return array(
+			'date_awal' => $parsed_month['date_awal'],
+			'date_akhir' => $parsed_month['date_akhir'],
+			'month_akhir' => (int) $parsed_month['month'],
+		);
+	}
+
+	if (date('Y', strtotime($tgl_awal)) < 2020) {
+		$date_awal = date('Y-m-d', strtotime('-1 day'));
+	} else {
+		$date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal));
+	}
+
+	if (date('Y', strtotime($tgl_akhir)) < 2020) {
+		$date_akhir = date('Y-m-d 00:00:00');
+		$month_akhir = (int) date('m');
+	} else {
+		$date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir));
+		$month_akhir = (int) date('m', strtotime($tgl_akhir));
+	}
+
+	return array(
+		'date_awal' => $date_awal,
+		'date_akhir' => $date_akhir,
+		'month_akhir' => $month_akhir,
+	);
+}
+
 function pengeluaran_kas_pk_column($CI)
 {
 	$table = pengeluaran_kas_table_name();
@@ -95,6 +166,76 @@ function pengeluaran_kas_pk_column($CI)
 	return 'nomor';
 }
 
+function pengeluaran_kas_rekening_db_column($CI)
+{
+	static $cache = null;
+	if ($cache !== null) {
+		return $cache;
+	}
+
+	$table = pengeluaran_kas_table_name();
+	if (!$CI->db->table_exists($table)) {
+		$cache = 'serba_serbi_nomor_rekening';
+		return $cache;
+	}
+
+	$fields = $CI->db->list_fields($table);
+	if (in_array('serba-serbi_nomor_rekening', $fields, true)) {
+		$cache = 'serba-serbi_nomor_rekening';
+	} else {
+		$cache = 'serba_serbi_nomor_rekening';
+	}
+
+	return $cache;
+}
+
+function pengeluaran_kas_align_insert_row($CI, $data)
+{
+	if (!is_array($data)) {
+		return array();
+	}
+
+	$rek_key = pengeluaran_kas_rekening_db_column($CI);
+	if ($rek_key !== 'serba_serbi_nomor_rekening' && array_key_exists('serba_serbi_nomor_rekening', $data)) {
+		$data[$rek_key] = $data['serba_serbi_nomor_rekening'];
+		unset($data['serba_serbi_nomor_rekening']);
+	}
+
+	$table = pengeluaran_kas_table_name();
+	if (!$CI->db->table_exists($table)) {
+		return $data;
+	}
+
+	$fields = $CI->db->list_fields($table);
+	$out = array();
+	foreach ($data as $key => $value) {
+		if (in_array($key, $fields, true)) {
+			$out[$key] = $value;
+		}
+	}
+
+	return $out;
+}
+
+function pengeluaran_kas_session_bulan_key()
+{
+	return 'jurnal_pengeluaran_kas_bulan_terpilih';
+}
+
+function pengeluaran_kas_save_bulan_session($CI, $bulan_ns)
+{
+	$parsed = pengeluaran_kas_parse_filter_month($bulan_ns);
+	if ($parsed !== null) {
+		$CI->session->set_userdata(pengeluaran_kas_session_bulan_key(), $parsed['bulan_ns']);
+	}
+}
+
+function pengeluaran_kas_get_bulan_from_session($CI)
+{
+	$val = trim((string) $CI->session->userdata(pengeluaran_kas_session_bulan_key()));
+	return pengeluaran_kas_parse_filter_month($val);
+}
+
 function pengeluaran_kas_row_pk($row)
 {
 	if (is_array($row)) {
@@ -106,18 +247,24 @@ function pengeluaran_kas_row_pk($row)
 function pengeluaran_kas_build_row_from_db($row, $no, $can_manage = true)
 {
 	$pk = pengeluaran_kas_row_pk($row);
+	$rek = '';
+	if (is_array($row)) {
+		$rek = isset($row['serba_serbi_nomor_rekening']) ? $row['serba_serbi_nomor_rekening'] : (isset($row['serba-serbi_nomor_rekening']) ? $row['serba-serbi_nomor_rekening'] : '');
+	} else {
+		$rek = isset($row->serba_serbi_nomor_rekening) ? $row->serba_serbi_nomor_rekening : (isset($row->{'serba-serbi_nomor_rekening'}) ? $row->{'serba-serbi_nomor_rekening'} : '');
+	}
 
 	return array(
 		'no' => $no,
 		'pk' => $pk,
-		'tanggal' => pengeluaran_kas_format_tanggal_display(isset($row->tanggal) ? $row->tanggal : ''),
-		'nomor_bukti_bkk' => isset($row->nomor_bukti_bkk) ? $row->nomor_bukti_bkk : '',
-		'pl' => isset($row->pl) ? $row->pl : '',
-		'keterangan' => isset($row->keterangan) ? $row->keterangan : '',
-		'debet_21101uu_dagang' => pengeluaran_kas_parse_amount(isset($row->debet_21101uu_dagang) ? $row->debet_21101uu_dagang : 0),
-		'serba_serbi_nomor_rekening' => isset($row->serba_serbi_nomor_rekening) ? $row->serba_serbi_nomor_rekening : '',
-		'serba_serbi_jumlah' => pengeluaran_kas_parse_amount(isset($row->serba_serbi_jumlah) ? $row->serba_serbi_jumlah : 0),
-		'kredit_11101_kas_besar' => pengeluaran_kas_parse_amount(isset($row->kredit_11101_kas_besar) ? $row->kredit_11101_kas_besar : 0),
+		'tanggal' => pengeluaran_kas_format_tanggal_display(isset($row->tanggal) ? $row->tanggal : (is_array($row) && isset($row['tanggal']) ? $row['tanggal'] : '')),
+		'nomor_bukti_bkk' => isset($row->nomor_bukti_bkk) ? $row->nomor_bukti_bkk : (is_array($row) && isset($row['nomor_bukti_bkk']) ? $row['nomor_bukti_bkk'] : ''),
+		'pl' => isset($row->pl) ? $row->pl : (is_array($row) && isset($row['pl']) ? $row['pl'] : ''),
+		'keterangan' => isset($row->keterangan) ? $row->keterangan : (is_array($row) && isset($row['keterangan']) ? $row['keterangan'] : ''),
+		'debet_21101uu_dagang' => pengeluaran_kas_parse_amount(isset($row->debet_21101uu_dagang) ? $row->debet_21101uu_dagang : (is_array($row) && isset($row['debet_21101uu_dagang']) ? $row['debet_21101uu_dagang'] : 0)),
+		'serba_serbi_nomor_rekening' => $rek,
+		'serba_serbi_jumlah' => pengeluaran_kas_parse_amount(isset($row->serba_serbi_jumlah) ? $row->serba_serbi_jumlah : (is_array($row) && isset($row['serba_serbi_jumlah']) ? $row['serba_serbi_jumlah'] : 0)),
+		'kredit_11101_kas_besar' => pengeluaran_kas_parse_amount(isset($row->kredit_11101_kas_besar) ? $row->kredit_11101_kas_besar : (is_array($row) && isset($row['kredit_11101_kas_besar']) ? $row['kredit_11101_kas_besar'] : 0)),
 		'can_manage' => $can_manage,
 	);
 }
@@ -176,6 +323,7 @@ function pengeluaran_kas_compute_list_data($CI, $date_awal, $date_akhir)
 		'TOTAL_debet_21101_SEMUA' => $total_debet,
 		'TOTAL_serba_serbi_jumlah_SEMUA' => $total_jumlah,
 		'TOTAL_kredit_11101_SEMUA' => $total_kredit,
+		'TOTAL_combined_debet_21101_SEMUA' => $total_debet + $total_jumlah,
 	);
 }
 
@@ -246,7 +394,7 @@ function pengeluaran_kas_save_from_post($CI)
 		return $valid;
 	}
 
-	$data = pengeluaran_kas_build_db_payload_from_post($CI);
+	$data = pengeluaran_kas_align_insert_row($CI, pengeluaran_kas_build_db_payload_from_post($CI));
 	$CI->Jurnal_pengeluaran_kas_model->insert($data);
 
 	if ($CI->db->affected_rows() <= 0) {
@@ -276,7 +424,7 @@ function pengeluaran_kas_update_from_post($CI)
 		return array('ok' => false, 'message' => 'Data tidak ditemukan.');
 	}
 
-	$data = pengeluaran_kas_build_db_payload_from_post($CI);
+	$data = pengeluaran_kas_align_insert_row($CI, pengeluaran_kas_build_db_payload_from_post($CI));
 	$CI->db->where($pk_col, $pk);
 	$CI->db->update($table, $data);
 
@@ -317,49 +465,122 @@ function pengeluaran_kas_delete_by_pk($CI, $pk)
 	);
 }
 
-function pengeluaran_kas_ajax_list_response($CI, $tgl_awal, $tgl_akhir)
+function pengeluaran_kas_ajax_list_response($CI, $tgl_awal, $tgl_akhir, $bulan_ns = '')
 {
-	if ($tgl_awal === '' || $tgl_akhir === '') {
-		return array('ok' => false, 'message' => 'Tanggal awal dan akhir wajib diisi.');
+	$bulan_ns = trim((string) $bulan_ns);
+	if ($bulan_ns === '' && ($tgl_awal === '' || $tgl_akhir === '')) {
+		return array('ok' => false, 'message' => 'Pilih bulan terlebih dahulu.');
 	}
 
-	if (date('Y', strtotime($tgl_awal)) < 2020) {
-		$date_awal = date('Y-m-d', strtotime('-1 day'));
-	} else {
-		$date_awal = date('Y-m-d 00:00:00', strtotime($tgl_awal));
+	$resolved = pengeluaran_kas_resolve_filter_dates($tgl_awal, $tgl_akhir, $bulan_ns);
+	if ($bulan_ns !== '') {
+		pengeluaran_kas_save_bulan_session($CI, $bulan_ns);
+	} elseif ($tgl_awal !== '' && $tgl_akhir !== '') {
+		$month_from_range = pengeluaran_kas_parse_filter_month(date('Y-m', strtotime($resolved['date_akhir'])));
+		if ($month_from_range !== null) {
+			pengeluaran_kas_save_bulan_session($CI, $month_from_range['bulan_ns']);
+		}
 	}
-
-	if (date('Y', strtotime($tgl_akhir)) < 2020) {
-		$date_akhir = date('Y-m-d 00:00:00');
-	} else {
-		$date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir));
-	}
-
-	$list = pengeluaran_kas_compute_list_data($CI, $date_awal, $date_akhir);
+	$list = pengeluaran_kas_compute_list_data($CI, $resolved['date_awal'], $resolved['date_akhir']);
+	$footer_totals = pengeluaran_kas_compute_footer_totals(
+		$list['TOTAL_debet_21101_SEMUA'],
+		$list['TOTAL_serba_serbi_jumlah_SEMUA'],
+		$list['TOTAL_kredit_11101_SEMUA']
+	);
 
 	return array(
 		'ok' => true,
 		'rows' => $list['rows'],
-		'totals' => array(
-			'debet_21101' => $list['TOTAL_debet_21101_SEMUA'],
-			'serba_serbi_jumlah' => $list['TOTAL_serba_serbi_jumlah_SEMUA'],
-			'kredit_kas' => $list['TOTAL_kredit_11101_SEMUA'],
-		),
+		'totals' => $footer_totals,
 		'periode_label' => $list['periode_label'],
 		'bulan_label' => $list['bulan_label'],
+		'bulan_ns' => sprintf('%04d-%02d', (int) $list['year_akhir'], (int) $list['month_akhir']),
 	);
+}
+
+function pengeluaran_kas_excel_title_col_end()
+{
+	return 7;
+}
+
+function pengeluaran_kas_excel_write_merged_row($rowNum, $text, $styleIndex, $colEnd = null)
+{
+	if ($colEnd === null) {
+		$colEnd = pengeluaran_kas_excel_title_col_end();
+	}
+
+	xlsAddMerge($rowNum, 0, $rowNum, $colEnd);
+	xlsWriteCellStyle($rowNum, 0, $text, $styleIndex);
+	for ($c = 1; $c <= $colEnd; $c++) {
+		xlsEnsureCellStyle($rowNum, $c, $styleIndex, '');
+	}
+}
+
+function pengeluaran_kas_excel_write_title_block($month, $year)
+{
+	$styleTitleBoldLeft = 11;
+	$styleTitleItalicLeft = 12;
+	$styleTitleBoldCenter = 13;
+	$bulan_nama = strtoupper(pengeluaran_kas_bulan_teks((int) $month));
+	$titleColEnd = pengeluaran_kas_excel_title_col_end();
+
+	// Baris 1-3: kop surat (colspan 8, rata kiri)
+	pengeluaran_kas_excel_write_merged_row(0, 'PERUMDA ANEKA DHARMA', $styleTitleBoldLeft, $titleColEnd);
+	pengeluaran_kas_excel_write_merged_row(1, 'KABUPATEN BANTUL', $styleTitleBoldLeft, $titleColEnd);
+	pengeluaran_kas_excel_write_merged_row(2, 'Jl. Jend. Sudirman 36 Bantul. Telp / Fax : 0274 367123', $styleTitleItalicLeft, $titleColEnd);
+
+	// Baris 4 kosong (indeks 3)
+
+	// Baris 5: judul laporan (colspan 8, rata tengah)
+	pengeluaran_kas_excel_write_merged_row(
+		4,
+		'JURNAL PENGELUARAN KAS ' . $bulan_nama . ' ' . (int) $year,
+		$styleTitleBoldCenter,
+		$titleColEnd
+	);
+
+	// Baris 6 kosong (indeks 5)
+}
+
+function pengeluaran_kas_excel_write_merged_region($rowStart, $colStart, $rowEnd, $colEnd, $text, $styleIndex)
+{
+	if ($rowStart !== $rowEnd || $colStart !== $colEnd) {
+		xlsAddMerge($rowStart, $colStart, $rowEnd, $colEnd);
+	}
+	xlsWriteCellStyle($rowStart, $colStart, $text, $styleIndex);
+	for ($r = (int) $rowStart; $r <= (int) $rowEnd; $r++) {
+		for ($c = (int) $colStart; $c <= (int) $colEnd; $c++) {
+			if ($r === (int) $rowStart && $c === (int) $colStart) {
+				continue;
+			}
+			xlsEnsureCellStyle($r, $c, $styleIndex, '');
+		}
+	}
 }
 
 function pengeluaran_kas_export_excel_write_headers()
 {
-	$styleHeader = 4;
-	$headers = array(
-		'No', 'Tanggal', 'No. Bukti BKK', 'PL', 'KETERANGAN',
-		'21101-UU Dagang', 'No. Rek Serba-Serbi', 'Jumlah Serba-Serbi', '11101-Kas Besar',
-	);
-	foreach ($headers as $col => $label) {
-		xlsWriteCellStyle(4, $col, $label, $styleHeader);
+	$styleTableHeaderGreen = 14;
+	$rowGroup1 = 6;
+	$rowGroup2 = 7;
+	$rowLeaf = 8;
+
+	$labelsFixed = array('NO', 'TANGGAL', 'NO. BUKTI BKK', 'PL', 'KETERANGAN');
+	foreach ($labelsFixed as $col => $label) {
+		pengeluaran_kas_excel_write_merged_region($rowGroup1, $col, $rowLeaf, $col, $label, $styleTableHeaderGreen);
 	}
+
+	pengeluaran_kas_excel_write_merged_region($rowGroup1, 5, $rowGroup1, 7, 'DEBIT', $styleTableHeaderGreen);
+	pengeluaran_kas_excel_write_merged_region($rowGroup1, 8, $rowGroup1, 8, 'KREDIT', $styleTableHeaderGreen);
+
+	pengeluaran_kas_excel_write_merged_region($rowGroup2, 5, $rowLeaf, 5, '21101-UU DAGANG', $styleTableHeaderGreen);
+	pengeluaran_kas_excel_write_merged_region($rowGroup2, 6, $rowGroup2, 7, 'SERBA - SERBI', $styleTableHeaderGreen);
+	pengeluaran_kas_excel_write_merged_region($rowGroup2, 8, $rowLeaf, 8, '11101-KAS BESAR', $styleTableHeaderGreen);
+
+	xlsWriteCellStyle($rowLeaf, 6, 'NO. REK', $styleTableHeaderGreen);
+	xlsWriteCellStyle($rowLeaf, 7, 'JUMLAH SERBA-SERBI', $styleTableHeaderGreen);
+
+	return 9;
 }
 
 function pengeluaran_kas_export_excel_write_row($rowNum, $item)
@@ -390,29 +611,43 @@ function pengeluaran_kas_export_excel_list_output($CI, $date_awal, $date_akhir)
 	excel_prepare_download($namaFile);
 
 	xlsBOF();
+	xlsSetColumnWidths(array(5, 12, 14, 6, 36, 14, 12, 16, 14));
 
-	xlsWriteLabelBold14(0, 0, 'JURNAL PENGELUARAN KAS');
-	xlsWriteLabelBold14(1, 0, 'Periode: ' . $data['periode_label']);
-	xlsWriteLabel(2, 0, 'Bulan/Tahun referensi: ' . $data['bulan_label'] . ' | Dicetak: ' . date('d/m/Y H:i:s'));
+	pengeluaran_kas_excel_write_title_block($data['month_akhir'], $data['year_akhir']);
 
-	pengeluaran_kas_export_excel_write_headers();
-
-	$rowNum = 5;
+	$rowNum = pengeluaran_kas_export_excel_write_headers();
 	foreach ($data['rows'] as $item) {
 		pengeluaran_kas_export_excel_write_row($rowNum, $item);
 		$rowNum++;
 	}
 
+	$footer_totals = pengeluaran_kas_compute_footer_totals(
+		$data['TOTAL_debet_21101_SEMUA'],
+		$data['TOTAL_serba_serbi_jumlah_SEMUA'],
+		$data['TOTAL_kredit_11101_SEMUA']
+	);
 	$styleFooter = 5;
+
+	xlsWriteCellStyle($rowNum, 0, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 1, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 2, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 3, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 4, 'GRAND TOTAL', $styleFooter);
+	xlsWriteCellStyle($rowNum, 5, pengeluaran_kas_format_rupiah($footer_totals['debet_21101'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 6, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 7, pengeluaran_kas_format_rupiah($footer_totals['serba_serbi_jumlah'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 8, pengeluaran_kas_format_rupiah($footer_totals['kredit_kas'], true), $styleFooter);
+	$rowNum++;
+
 	xlsWriteCellStyle($rowNum, 0, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 1, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 2, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 3, '', $styleFooter);
 	xlsWriteCellStyle($rowNum, 4, 'TOTAL', $styleFooter);
-	xlsWriteCellStyle($rowNum, 5, pengeluaran_kas_format_rupiah($data['TOTAL_debet_21101_SEMUA'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 5, pengeluaran_kas_format_rupiah($footer_totals['combined_debet_21101'], true), $styleFooter);
 	xlsWriteCellStyle($rowNum, 6, '', $styleFooter);
-	xlsWriteCellStyle($rowNum, 7, pengeluaran_kas_format_rupiah($data['TOTAL_serba_serbi_jumlah_SEMUA'], true), $styleFooter);
-	xlsWriteCellStyle($rowNum, 8, pengeluaran_kas_format_rupiah($data['TOTAL_kredit_11101_SEMUA'], true), $styleFooter);
+	xlsWriteCellStyle($rowNum, 7, '', $styleFooter);
+	xlsWriteCellStyle($rowNum, 8, pengeluaran_kas_format_rupiah($footer_totals['kredit_kas'], true), $styleFooter);
 
 	xlsEOF();
 }

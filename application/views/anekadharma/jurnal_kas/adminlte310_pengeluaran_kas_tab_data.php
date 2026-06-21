@@ -20,11 +20,17 @@ if (!isset($modal_pgk_tanggal_default)) {
 if (!isset($list_kode_pl) || !is_array($list_kode_pl)) {
     $list_kode_pl = array();
 }
+$pgk_footer_totals = pengeluaran_kas_compute_footer_totals(
+    $TOTAL_debet_21101_SEMUA,
+    $TOTAL_serba_serbi_jumlah_SEMUA,
+    $TOTAL_kredit_11101_SEMUA
+);
 ?>
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 pengeluaran-kas-tab1-toolbar">
                             <div>
                                 <h5 class="mb-0 text-primary"><strong>Data Jurnal Pengeluaran Kas</strong> <span class="text-muted" id="pengeluaran-kas-label-periode">(<?php echo htmlspecialchars($pengeluaran_bulan_label, ENT_QUOTES, 'UTF-8'); ?>)</span></h5>
-                                <small class="text-muted">Periode: <span id="pengeluaran-kas-label-range"><?php echo htmlspecialchars($pengeluaran_periode_label, ENT_QUOTES, 'UTF-8'); ?></span> — pilih tanggal awal &amp; akhir untuk memuat ulang otomatis</small>
+                                <small class="text-muted">Periode: <span id="pengeluaran-kas-label-range"><?php echo htmlspecialchars($pengeluaran_periode_label, ENT_QUOTES, 'UTF-8'); ?></span> — pilih bulan di atas untuk memuat ulang otomatis</small>
+                                <div id="pengeluaran-kas-month-loading" class="text-info d-none mt-1"><i class="fas fa-spinner fa-spin"></i> Memuat data jurnal pengeluaran kas...</div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
                                 <?php if ($can_input_pengeluaran_kas) { ?>
@@ -40,17 +46,35 @@ if (!isset($list_kode_pl) || !is_array($list_kode_pl)) {
 
                         <div id="pengeluaran-kas-table-wrap" class="pengeluaran-kas-dt-wrap">
                         <table id="table-pengeluaran-kas" class="table table-bordered display nowrap pengeluaran-kas-dt-table" style="width:100%">
+                            <colgroup>
+                                <col class="pgk-col-no">
+                                <col class="pgk-col-tanggal">
+                                <col class="pgk-col-bukti">
+                                <col class="pgk-col-pl">
+                                <col class="pgk-col-ket">
+                                <col class="pgk-col-debit">
+                                <col class="pgk-col-rek">
+                                <col class="pgk-col-jumlah">
+                                <col class="pgk-col-kredit">
+                            </colgroup>
                             <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Tanggal</th>
-                                    <th>No. Bukti BKK</th>
-                                    <th>PL</th>
-                                    <th>KETERANGAN</th>
-                                    <th class="text-right">21101-UU Dagang</th>
-                                    <th>No. Rek</th>
-                                    <th class="text-right">Jumlah Serba-Serbi</th>
-                                    <th class="text-right">11101-Kas Besar</th>
+                                <tr class="pgk-head-group">
+                                    <th rowspan="3" class="pgk-th-no-sort">No</th>
+                                    <th rowspan="3" class="pgk-th-no-sort">Tanggal</th>
+                                    <th rowspan="3" class="pgk-th-no-sort">No. Bukti BKK</th>
+                                    <th rowspan="3" class="pgk-th-no-sort">PL</th>
+                                    <th rowspan="3" class="pgk-th-no-sort">KETERANGAN</th>
+                                    <th colspan="3" class="pgk-th-debit-group pgk-th-no-sort">Debit</th>
+                                    <th colspan="1" class="pgk-th-kredit-group pgk-th-no-sort">KREDIT</th>
+                                </tr>
+                                <tr class="pgk-head-group">
+                                    <th rowspan="2" class="text-right pgk-th-no-sort">21101-UU Dagang</th>
+                                    <th colspan="2" class="pgk-th-serba-group pgk-th-no-sort">Serba - serbi</th>
+                                    <th rowspan="2" class="text-right pgk-th-no-sort">11101-Kas Besar</th>
+                                </tr>
+                                <tr class="pgk-head-leaf">
+                                    <th class="pgk-th-no-sort">No. Rek</th>
+                                    <th class="text-right pgk-th-no-sort">Jumlah Serba-Serbi</th>
                                 </tr>
                             </thead>
                             <tbody id="pengeluaran-kas-tbody">
@@ -60,9 +84,9 @@ if (!isset($list_kode_pl) || !is_array($list_kode_pl)) {
                                     <td class="pgk-cell-tanggal">
                                         <div class="pgk-tanggal-text"><?php echo htmlspecialchars($row['tanggal'], ENT_QUOTES, 'UTF-8'); ?></div>
                                         <?php if (!empty($can_input_pengeluaran_kas)) { ?>
-                                        <div class="pgk-row-actions mt-1">
-                                            <button type="button" class="btn btn-xs btn-warning btn-pgk-ubah" data-pk="<?php echo htmlspecialchars((string) $row['pk'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa fa-pencil"></i> Ubah</button>
-                                            <button type="button" class="btn btn-xs btn-danger btn-pgk-hapus" data-pk="<?php echo htmlspecialchars((string) $row['pk'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa fa-trash"></i> Hapus</button>
+                                        <div class="pgk-row-actions">
+                                            <button type="button" class="btn btn-xs btn-warning btn-pgk-action btn-pgk-ubah" data-pk="<?php echo htmlspecialchars((string) $row['pk'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa fa-pencil"></i> Ubah</button>
+                                            <button type="button" class="btn btn-xs btn-danger btn-pgk-action btn-pgk-hapus" data-pk="<?php echo htmlspecialchars((string) $row['pk'], ENT_QUOTES, 'UTF-8'); ?>"><i class="fa fa-trash"></i> Hapus</button>
                                         </div>
                                         <?php } ?>
                                     </td>
@@ -83,10 +107,21 @@ if (!isset($list_kode_pl) || !is_array($list_kode_pl)) {
                                     <th></th>
                                     <th></th>
                                     <th class="text-right">GRAND TOTAL</th>
-                                    <th class="text-right" id="pgk-total-debet"><?php echo pengeluaran_kas_format_rupiah($TOTAL_debet_21101_SEMUA, true); ?></th>
+                                    <th class="text-right" id="pgk-total-debet"><?php echo pengeluaran_kas_format_rupiah($pgk_footer_totals['debet_21101'], true); ?></th>
                                     <th></th>
-                                    <th class="text-right" id="pgk-total-jumlah"><?php echo pengeluaran_kas_format_rupiah($TOTAL_serba_serbi_jumlah_SEMUA, true); ?></th>
-                                    <th class="text-right" id="pgk-total-kredit"><?php echo pengeluaran_kas_format_rupiah($TOTAL_kredit_11101_SEMUA, true); ?></th>
+                                    <th class="text-right" id="pgk-total-jumlah"><?php echo pengeluaran_kas_format_rupiah($pgk_footer_totals['serba_serbi_jumlah'], true); ?></th>
+                                    <th class="text-right" id="pgk-total-kredit"><?php echo pengeluaran_kas_format_rupiah($pgk_footer_totals['kredit_kas'], true); ?></th>
+                                </tr>
+                                <tr class="pgk-row-footer-balance">
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="text-right">TOTAL</th>
+                                    <th class="text-right" id="pgk-total-combined-debet"><?php echo pengeluaran_kas_format_rupiah($pgk_footer_totals['combined_debet_21101'], true); ?></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th class="text-right" id="pgk-total-balance-kredit"><?php echo pengeluaran_kas_format_rupiah($pgk_footer_totals['kredit_kas'], true); ?></th>
                                 </tr>
                             </tfoot>
                         </table>

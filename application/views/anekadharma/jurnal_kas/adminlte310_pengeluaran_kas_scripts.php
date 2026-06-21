@@ -7,6 +7,7 @@ window.PENGELUARAN_KAS_CFG = {
     urlUpdate: <?php echo json_encode(isset($url_ajax_pengeluaran_kas_update) ? $url_ajax_pengeluaran_kas_update : site_url('Jurnal_kas/ajax_pengeluaran_kas_update')); ?>,
     urlDelete: <?php echo json_encode(isset($url_ajax_pengeluaran_kas_delete) ? $url_ajax_pengeluaran_kas_delete : site_url('Jurnal_kas/ajax_pengeluaran_kas_delete')); ?>,
     namaBulan: <?php echo json_encode(isset($nama_bulan_id) ? $nama_bulan_id : array()); ?>,
+    bulanNsServer: <?php echo json_encode(isset($bulan_ns_value) ? $bulan_ns_value : date('Y-m')); ?>,
     canManage: <?php echo !empty($can_input_pengeluaran_kas) ? 'true' : 'false'; ?>,
     modalTanggalDefault: <?php echo json_encode(isset($modal_pgk_tanggal_default) ? $modal_pgk_tanggal_default : date('d-m-Y')); ?>
 };
@@ -17,28 +18,46 @@ window.PENGELUARAN_KAS_CFG = {
     var cfg = window.PENGELUARAN_KAS_CFG || {};
     var submitTimer = null;
     var pageReady = false;
-    var lastValues = { awal: '', akhir: '' };
+    var loading = false;
+    var lastMonth = '';
     var pgkDt = null;
 
-    function parseTanggalDmY(str) {
-        str = String(str || '').trim();
-        if (!str) return null;
-        var parts = str.split('-');
-        if (parts.length !== 3) return null;
-        var d = parseInt(parts[0], 10), m = parseInt(parts[1], 10), y = parseInt(parts[2], 10);
-        if (!d || !m || !y || y < 2020) return null;
-        return { day: d, month: m, year: y };
+    function parseMonthValue(val) {
+        if (!val || !/^\d{4}-\d{2}$/.test(val)) return null;
+        var parts = val.split('-');
+        var year = parseInt(parts[0], 10);
+        var month = parseInt(parts[1], 10);
+        if (!year || month < 1 || month > 12) return null;
+        return { year: year, month: month };
     }
 
-    function getTanggalFilter() {
-        var form = document.getElementById('form-cari-pengeluaran-kas');
-        if (!form) return { awal: '', akhir: '' };
-        var tglAwal = form.querySelector('input[name="tgl_awal"]');
-        var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
-        return {
-            awal: tglAwal ? String(tglAwal.value || '').trim() : '',
-            akhir: tglAkhir ? String(tglAkhir.value || '').trim() : ''
-        };
+    function daysInMonth(year, month) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function pad2(n) {
+        return String(n).padStart(2, '0');
+    }
+
+    function buildRangeLabel(parsed) {
+        var awal = '01-' + pad2(parsed.month) + '-' + parsed.year;
+        var akhir = pad2(daysInMonth(parsed.year, parsed.month)) + '-' + pad2(parsed.month) + '-' + parsed.year;
+        return awal + ' s/d ' + akhir;
+    }
+
+    function getSelectedMonthValue() {
+        var el = document.getElementById('pgk_bulan_ns');
+        return el ? String(el.value || '').trim() : '';
+    }
+
+    function showMonthLoading(show) {
+        var elLoading = document.getElementById('pengeluaran-kas-month-loading');
+        var elWrap = document.getElementById('pengeluaran-kas-table-wrap');
+        if (elLoading) elLoading.classList.toggle('d-none', !show);
+        if (elWrap) {
+            elWrap.style.opacity = show ? '0.45' : '1';
+            elWrap.style.pointerEvents = show ? 'none' : '';
+        }
     }
 
     function syncLabels(bulanLabel, rangeText) {
@@ -52,11 +71,10 @@ window.PENGELUARAN_KAS_CFG = {
         }
     }
 
-    function syncCompareFromDatepicker() {
-        var tgl = getTanggalFilter();
-        if (!tgl.awal || !tgl.akhir) return;
-        var parsed = parseTanggalDmY(tgl.akhir);
+    function syncCompareBulanTahunFromMonth(monthValue) {
+        var parsed = parseMonthValue(monthValue);
         if (!parsed) return;
+
         var $bulan = jQuery('#compare_bulan_pengeluaran');
         var $tahun = jQuery('#compare_tahun_pengeluaran');
         if ($bulan.length) $bulan.val(String(parsed.month));
@@ -66,15 +84,22 @@ window.PENGELUARAN_KAS_CFG = {
             }
             $tahun.val(String(parsed.year));
         }
+
         var namaBulan = cfg.namaBulan || {};
         var bulanLabel = (namaBulan[parsed.month]) ? namaBulan[parsed.month] + ' ' + parsed.year : (parsed.month + ' ' + parsed.year);
-        syncLabels(bulanLabel, tgl.awal + ' s/d ' + tgl.akhir);
-        if (typeof window.toggleBtnsPengeluaranKas === 'function') window.toggleBtnsPengeluaranKas();
+        syncLabels(bulanLabel, buildRangeLabel(parsed));
+
+        if (typeof window.toggleBtnsPengeluaranKas === 'function') {
+            window.toggleBtnsPengeluaranKas();
+        }
+        if (typeof window.validateTabelPengeluaranForImport === 'function') {
+            window.validateTabelPengeluaranForImport();
+        }
     }
 
-    function fmtAmount(val) {
+    function fmtAmount(val, alwaysShow) {
         val = parseFloat(val || 0);
-        if (!val) return '';
+        if (!val && !alwaysShow) return '';
         return val.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
     }
 
@@ -85,9 +110,9 @@ window.PENGELUARAN_KAS_CFG = {
     function buildRowHtml(row) {
         var actions = '';
         if (cfg.canManage) {
-            actions = '<div class="pgk-row-actions mt-1">' +
-                '<button type="button" class="btn btn-xs btn-warning btn-pgk-ubah" data-pk="' + escHtml(row.pk) + '"><i class="fa fa-pencil"></i> Ubah</button> ' +
-                '<button type="button" class="btn btn-xs btn-danger btn-pgk-hapus" data-pk="' + escHtml(row.pk) + '"><i class="fa fa-trash"></i> Hapus</button>' +
+            actions = '<div class="pgk-row-actions">' +
+                '<button type="button" class="btn btn-xs btn-warning btn-pgk-action btn-pgk-ubah" data-pk="' + escHtml(row.pk) + '"><i class="fa fa-pencil"></i> Ubah</button> ' +
+                '<button type="button" class="btn btn-xs btn-danger btn-pgk-action btn-pgk-hapus" data-pk="' + escHtml(row.pk) + '"><i class="fa fa-trash"></i> Hapus</button>' +
                 '</div>';
         }
         return '<tr data-pk="' + escHtml(row.pk) + '">' +
@@ -105,9 +130,16 @@ window.PENGELUARAN_KAS_CFG = {
 
     function updateTotals(totals) {
         totals = totals || {};
-        jQuery('#pgk-total-debet').text(fmtAmount(totals.debet_21101 || 0));
-        jQuery('#pgk-total-jumlah').text(fmtAmount(totals.serba_serbi_jumlah || 0));
-        jQuery('#pgk-total-kredit').text(fmtAmount(totals.kredit_kas || 0));
+        var deb = parseFloat(totals.debet_21101 || 0);
+        var jml = parseFloat(totals.serba_serbi_jumlah || 0);
+        var kre = parseFloat(totals.kredit_kas || 0);
+        var combined = totals.combined_debet_21101 != null ? parseFloat(totals.combined_debet_21101) : (deb + jml);
+
+        jQuery('#pgk-total-debet').text(fmtAmount(deb, true));
+        jQuery('#pgk-total-jumlah').text(fmtAmount(jml, true));
+        jQuery('#pgk-total-kredit').text(fmtAmount(kre, true));
+        jQuery('#pgk-total-combined-debet').text(fmtAmount(combined, true));
+        jQuery('#pgk-total-balance-kredit').text(fmtAmount(kre, true));
     }
 
     function renderTableRows(rows) {
@@ -150,14 +182,18 @@ window.PENGELUARAN_KAS_CFG = {
         });
     }
 
-    window.reloadPengeluaranKasTable = function() {
-        var tgl = getTanggalFilter();
-        if (!tgl.awal || !tgl.akhir) return;
+    window.reloadPengeluaranKasTable = function(forceMonth) {
+        var monthValue = forceMonth || getSelectedMonthValue();
+        var parsed = parseMonthValue(monthValue);
+        if (!parsed) return;
+
+        loading = true;
+        showMonthLoading(true);
         jQuery.ajax({
             url: cfg.urlList,
             type: 'POST',
             dataType: 'json',
-            data: { tgl_awal: tgl.awal, tgl_akhir: tgl.akhir }
+            data: { bulan_ns: monthValue }
         }).done(function(res) {
             if (!res || !res.ok) {
                 if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal Memuat', text: (res && res.message) || 'Gagal memuat data.' });
@@ -166,35 +202,47 @@ window.PENGELUARAN_KAS_CFG = {
             renderTableRows(res.rows || []);
             updateTotals(res.totals || {});
             if (res.bulan_label) syncLabels(res.bulan_label, res.periode_label);
+            if (res.bulan_ns) {
+                lastMonth = res.bulan_ns;
+                var el = document.getElementById('pgk_bulan_ns');
+                if (el && el.value !== res.bulan_ns) el.value = res.bulan_ns;
+                syncCompareBulanTahunFromMonth(res.bulan_ns);
+            }
             initDataTable();
+        }).fail(function() {
+            if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal Memuat', text: 'Tidak dapat menghubungi server.' });
+        }).always(function() {
+            loading = false;
+            showMonthLoading(false);
         });
     };
 
-    function submitCariOtomatis() {
-        if (!pageReady) return;
-        clearTimeout(submitTimer);
-        submitTimer = setTimeout(function() {
-            var tgl = getTanggalFilter();
-            if (!tgl.awal || !tgl.akhir) return;
-            if (!parseTanggalDmY(tgl.awal) || !parseTanggalDmY(tgl.akhir)) return;
-            if (tgl.awal === lastValues.awal && tgl.akhir === lastValues.akhir) return;
-            lastValues.awal = tgl.awal;
-            lastValues.akhir = tgl.akhir;
-            syncCompareFromDatepicker();
-            window.reloadPengeluaranKasTable();
-        }, 350);
+    function reloadByMonth(monthValue, force) {
+        if (loading) return;
+        var parsed = parseMonthValue(monthValue);
+        if (!parsed) {
+            if (force) alert('Pilih bulan terlebih dahulu.');
+            return;
+        }
+        if (!force && !pageReady) return;
+        if (!force && monthValue === lastMonth) return;
+
+        lastMonth = monthValue;
+        syncCompareBulanTahunFromMonth(monthValue);
+        window.reloadPengeluaranKasTable(monthValue);
     }
 
-    function onDatepickerTanggalDipilih(e) {
-        if (!pageReady) return;
-        if (!e || e.date === false || e.date === null || typeof e.date === 'undefined') return;
-        submitCariOtomatis();
+    function scheduleReloadByMonth(monthValue) {
+        clearTimeout(submitTimer);
+        submitTimer = setTimeout(function() {
+            reloadByMonth(monthValue, false);
+        }, 300);
     }
 
     function exportExcel() {
-        var tgl = getTanggalFilter();
-        if (!tgl.awal || !tgl.akhir) {
-            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+        var monthValue = getSelectedMonthValue();
+        if (!parseMonthValue(monthValue)) {
+            alert('Pilih bulan terlebih dahulu.');
             return;
         }
         var f = document.createElement('form');
@@ -202,34 +250,49 @@ window.PENGELUARAN_KAS_CFG = {
         f.action = cfg.urlExcel;
         f.target = '_blank';
         f.style.display = 'none';
-        var inpAwal = document.createElement('input');
-        inpAwal.type = 'hidden'; inpAwal.name = 'tgl_awal'; inpAwal.value = tgl.awal;
-        f.appendChild(inpAwal);
-        var inpAkhir = document.createElement('input');
-        inpAkhir.type = 'hidden'; inpAkhir.name = 'tgl_akhir'; inpAkhir.value = tgl.akhir;
-        f.appendChild(inpAkhir);
+        var inpBulan = document.createElement('input');
+        inpBulan.type = 'hidden';
+        inpBulan.name = 'bulan_ns';
+        inpBulan.value = monthValue;
+        f.appendChild(inpBulan);
         document.body.appendChild(f);
         f.submit();
         document.body.removeChild(f);
     }
 
-    function initDateFilter() {
+    function initMonthFilter() {
         var form = document.getElementById('form-cari-pengeluaran-kas');
-        if (!form) return;
-        var tgl = getTanggalFilter();
-        lastValues.awal = tgl.awal;
-        lastValues.akhir = tgl.akhir;
+        var bulanNs = document.getElementById('pgk_bulan_ns');
+        if (!form || !bulanNs) return;
+
+        if (!bulanNs.value && cfg.bulanNsServer) {
+            bulanNs.value = cfg.bulanNsServer;
+        }
+        lastMonth = bulanNs.value || cfg.bulanNsServer || '';
+        syncCompareBulanTahunFromMonth(lastMonth);
 
         var btnExcel = document.getElementById('btn-pengeluaran-kas-excel');
         if (btnExcel) btnExcel.addEventListener('click', exportExcel);
 
-        if (window.jQuery) {
-            jQuery('#form-cari-pengeluaran-kas .input-group.date')
-                .off('change.datetimepicker.pengeluaranKas')
-                .on('change.datetimepicker.pengeluaranKas', onDatepickerTanggalDipilih);
+        var btnCari = document.getElementById('btn-cari-pengeluaran-kas-bulan');
+        if (btnCari) {
+            btnCari.addEventListener('click', function() {
+                reloadByMonth(getSelectedMonthValue(), true);
+            });
         }
-        syncCompareFromDatepicker();
-        pageReady = true;
+
+        function handleMonthChange() {
+            var val = bulanNs.value || '';
+            if (!val || val === lastMonth) return;
+            scheduleReloadByMonth(val);
+        }
+
+        bulanNs.addEventListener('change', handleMonthChange);
+        bulanNs.addEventListener('input', handleMonthChange);
+
+        setTimeout(function() {
+            pageReady = true;
+        }, 600);
     }
 
     function showProcessAlert(title, html) {
@@ -431,7 +494,7 @@ window.PENGELUARAN_KAS_CFG = {
     }
 
     function boot() {
-        initDateFilter();
+        initMonthFilter();
         initDataTable();
         initCrudModal();
     }
