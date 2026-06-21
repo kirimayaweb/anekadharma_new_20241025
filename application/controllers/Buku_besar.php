@@ -16,232 +16,353 @@ class Buku_besar extends CI_Controller
 
     public function index()
     {
-
-
-
-
-
-        // $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
-        if ($this->input->post('bulan_ns', TRUE)) {
-            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-        } else {
-            // $Get_date_awal = date("Y-m-1 00:00:00");
-            // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-            $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-            $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
-        }
-
-        $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id` ASC";
-
-        $data_Buku_besar = $this->db->query($sql)->result();
-
-        // print_r($Get_month_selected);
-        // print_r("<br/>");
-        // print_r($Get_YEAR_selected);
-        // print_r("<br/>");
-        // print_r($data_Buku_besar);
-        // print_r("<br/>");
-        // die;
-
-
-        $data = array(
-            'data_Buku_besar' => $data_Buku_besar,
-            // 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-            // 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
-            'action' => site_url('Buku_besar/cari_data'),
-        );
+        $data = $this->_buku_besar_view_data();
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
     }
 
     public function cari_data($uuid_kode_akun = null, $Get_Year_Selected = null, $Get_Month_Selected = null)
-    // public function cari_data()
     {
+        $this->load->helper('buku_besar_list');
 
-        // print_r("cari_data");
-        // print_r("<br/>");
-        // print_r($kode_akun);
-        // print_r("<br/>");
-        // // die;
-
-        // Get kode akun dari uuid_kode_akun
-        // $this->db->where('uuid_kode_akun', $kode_akun);
-        // $get_kode_akun = $this->db->get('sys_kode_akun')->row()->kode_akun;
-
-        // print_r($get_kode_akun);
-
-
-
-        // print_r($uuid_kode_akun);
-        // print_r("<br/>");
-        // print_r($Get_Year_Selected);
-        // print_r("<br/>");
-        // print_r($Get_Month_Selected);
-        // print_r("<br/>");
-
-        // die;
-
-        // if ($this->input->post('bulan_ns', TRUE)) {
-        //     // $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-        //     // $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-        //     $Get_month_selected = date("m", strtotime($Get_year_month));
-        //     $Get_YEAR_selected = date("Y", strtotime($Get_year_month));
-        // } else {
-        //     // $Get_date_awal = date("Y-m-1 00:00:00");
-        //     // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        //     $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-        //     $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
-        // }
-
-        // die;
-
-        // print_r($uuid_kode_akun);
-        // print_r("<br/>");
-        // print_r($Get_year_month);
-        // print_r("<br/>");
-        // print_r($Get_month_selected);
-        // print_r("<br/>");
-        // print_r($Get_YEAR_selected);
-        // print_r("<br/>");
-
-
-        if ($uuid_kode_akun) {
-
-
-
-            // print_r("Ada Kode akun");
-            // print_r("<br/>");
-            // print_r($uuid_kode_akun);
-            // print_r("<br/>");
-
-            if ($uuid_kode_akun == "tampil_semua") {
-
-
-                // print_r("IF tampil_semua");
-                // print_r("<br/>");
-
-                $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected  ORDER BY `tanggal`,`id` ASC";
-            } else {
-
-                // Get kode akun dari uuid_kode_akun
-                $this->db->where('uuid_kode_akun', $uuid_kode_akun);
-                $get_kode_akun = $this->db->get('sys_kode_akun')->row()->kode_akun;
-                $get_nama_akun = $this->db->get('sys_kode_akun')->row()->nama_akun;
-
-                // print_r($uuid_kode_akun);
-                // print_r("<br/>");
-                // print_r($get_kode_akun);
-                // print_r("<br/>");
-                // print_r($get_nama_akun);
-                // print_r("<br/>");
-
-                $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected AND `kode_akun`='$get_kode_akun'  ORDER BY `tanggal`,`id` ASC";
-            }
-
-            // // print_r($get_kode_akun);
-
-            // $data_Buku_besar = $this->Buku_besar_model->get_all_sort_by_tanggal();
-
-
-            $data_Buku_besar = $this->db->query($sql)->result();
-
-            // print_r($uuid_kode_akun);
-            // print_r("<br/>");
-            // print_r($get_kode_akun);
-            // print_r("<br/>");
-
-            // print_r($Get_Year_Selected);
-            // print_r("<br/>");
-            //  print_r($Get_Month_Selected);
-            // print_r("<br/>");
-            // print_r($data_Buku_besar);
-            // print_r("<br/>");
-            // // die;
-
+        if ($Get_Month_Selected) {
+            $month = (int) $Get_Month_Selected;
+            $year = (int) $Get_Year_Selected;
         } else {
-
-            // print_r("TIDAK ADA KODE AKUN");
-            // print_r($uuid_kode_akun);
-            // print_r("<br/>");
-            // print_r($Get_month_selected);
-            // print_r("<br/>");
-            // print_r($Get_YEAR_selected);
-            // print_r("<br/>");
-            // // die;
-
-
-            // redirect(site_url("Buku_besar"));
-
-            $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_Month_Selected AND YEAR(`tanggal`)=$Get_Year_Selected  ORDER BY `tanggal`,`id` ASC";
-
-            $data_Buku_besar = $this->db->query($sql)->result();
+            $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+            $month = $parsed['month'];
+            $year = $parsed['year'];
         }
 
+        $uuid = $uuid_kode_akun !== null ? $uuid_kode_akun : trim((string) $this->input->post('kode_akun', TRUE));
+        $list = buku_besar_compute_list_data($this, $month, $year, $uuid);
 
+        $data = $this->_buku_besar_view_data(array_merge($list, array(
+            'active_tab' => trim((string) $this->input->post('active_tab', TRUE)) === 'compare' ? 'compare' : 'data',
+        )));
 
-
-        // // $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-        // $sql_pembelian = "SELECT tbl_pembelian.tgl_po as tanggal,        
-        // tbl_pembelian.uraian as keterangan,
-        // tbl_pembelian.jumlah as jumlah,
-        // tbl_pembelian.harga_satuan as harga_satuan,
-        // (tbl_pembelian.jumlah*tbl_pembelian.harga_satuan) as kredit,
-        // tbl_pembelian.kode_akun as kode_akun
-        //                     FROM tbl_pembelian    
-        //                     WHERE tbl_pembelian.kode_akun = '$get_kode_akun'
-        //                     ORDER BY tbl_pembelian.tgl_po DESC, tbl_pembelian.kode_akun ASC";
-        // // print_r($this->db->query($sql_pembelian)->result());
-
-        // // print_r("<br/>");
-        // // print_r("<br/>");
-        // // print_r("<br/>");
-
-        // $sql_penjualan = "SELECT tbl_penjualan.tgl_jual as tanggal,        
-        // tbl_penjualan.nama_barang as keterangan,
-        // tbl_penjualan.jumlah as jumlah,
-        // tbl_penjualan.harga_satuan as harga_satuan,
-        // (tbl_penjualan.jumlah * tbl_penjualan.harga_satuan) as debet,
-        // tbl_penjualan.kode_akun as kode_akun
-        //                     FROM tbl_penjualan    
-        //                     WHERE tbl_penjualan.kode_akun = '$get_kode_akun'
-        //                     ORDER BY tbl_penjualan.tgl_jual DESC, tbl_penjualan.kode_akun ASC";
-        // // print_r($this->db->query($sql_penjualan)->result());
-
-        // // SELECT ``,`nmrkirim`,``,`jumlah`,`harga_satuan`,`kode_akun` FROM `
-
-
-        // // die;
-
-        $data = array(
-            'uuid_kode_akun' => $uuid_kode_akun,
-            'kode_akun' => $get_kode_akun,
-            'nama_akun' => $get_nama_akun,
-            'data_Buku_besar' => $data_Buku_besar,
-            // 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-            // 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
-            'action' => site_url('Buku_besar/cari_kode_akun'),
-        );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
     }
 
     public function cari_kode_akun()
     {
-
-        if ($this->input->post('bulan_ns', TRUE)) {
-            $Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-            $Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-        } else {
-            // $Get_date_awal = date("Y-m-1 00:00:00");
-            // $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-            $Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-            $Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
-        }
-
-        // die;
-        redirect(site_url('Buku_besar/cari_data/' . $this->input->post('kode_akun', TRUE) . '/' . $Get_YEAR_selected . '/' . $Get_month_selected));
+        $this->load->helper('buku_besar_list');
+        $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+        redirect(site_url('Buku_besar/cari_data/' . $this->input->post('kode_akun', TRUE) . '/' . $parsed['year'] . '/' . $parsed['month']));
     }
 
+    public function ajax_list_data()
+    {
+        $this->load->helper(array('buku_besar_list', 'pembelian_persediaan'));
+        $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+        $uuid = trim((string) $this->input->post('kode_akun', TRUE));
+        $list = buku_besar_compute_list_data($this, $parsed['month'], $parsed['year'], $uuid);
 
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'rows' => $list['data_Buku_besar'],
+            'total_debet' => buku_besar_format_rupiah($list['total_debet'], true),
+            'total_kredit' => buku_besar_format_rupiah($list['total_kredit'], true),
+            'total_debet_raw' => $list['total_debet'],
+            'total_kredit_raw' => $list['total_kredit'],
+            'bulan_label' => $list['bulan_label'],
+            'bulan_ns_value' => $list['bulan_ns_value'],
+            'uuid_kode_akun' => $list['uuid_kode_akun'],
+            'kode_akun' => $list['kode_akun'],
+            'nama_akun' => $list['nama_akun'],
+            'total_rows' => $list['total_rows'],
+        ));
+    }
+
+    public function excel_list()
+    {
+        $this->load->helper('buku_besar_list');
+        buku_besar_export_excel_list_output($this);
+        exit();
+    }
+
+    private function _buku_besar_view_data($data = array())
+    {
+        $this->load->helper('buku_besar_list');
+        if (!is_array($data)) {
+            $data = array();
+        }
+
+        $month = isset($data['month']) ? (int) $data['month'] : (int) date('m');
+        $year = isset($data['year']) ? (int) $data['year'] : (int) date('Y');
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('m');
+        }
+
+        if (!isset($data['data_Buku_besar'])) {
+            $list = buku_besar_compute_list_data($this, $month, $year, isset($data['uuid_kode_akun']) ? $data['uuid_kode_akun'] : '');
+            $data = array_merge($data, $list);
+        }
+
+        $data['compare_bulan_num'] = $month;
+        $data['compare_tahun_num'] = $year;
+        $data['nama_bulan_id'] = array(
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        );
+        $data['gen_tahun_min'] = 2019;
+        $data['gen_tahun_max'] = (int) date('Y') + 1;
+        $data['active_tab'] = isset($data['active_tab']) ? $data['active_tab'] : 'data';
+        $data['bulan_ns_value'] = sprintf('%04d-%02d', $year, $month);
+        $data['bulan_label'] = buku_besar_bulan_teks($month) . ' ' . $year;
+        $data['action'] = site_url('Buku_besar/cari_kode_akun');
+        $data['url_cari_data'] = site_url('Buku_besar/cari_data');
+        $data['url_ajax_list'] = site_url('Buku_besar/ajax_list_data');
+        $data['url_buku_besar_excel'] = site_url('Buku_besar/excel_list');
+        $data['url_compare_run'] = site_url('Buku_besar/ajax_compare_buku_besar_manual_online');
+        $data['url_compare_excel'] = site_url('Buku_besar/excel_compare_buku_besar_manual_online');
+        $data['url_compare_import'] = site_url('Buku_besar/ajax_compare_import_csv_buku_besar');
+        $data['url_compare_list'] = site_url('Buku_besar/ajax_compare_tabel_list_buku_besar');
+        $data['url_compare_validate'] = site_url('Buku_besar/ajax_compare_tabel_validate_buku_besar');
+        $data['url_compare_detail'] = site_url('Buku_besar/ajax_compare_tabel_detail_buku_besar');
+        $data['url_compare_tabel_import'] = site_url('Buku_besar/ajax_compare_import_table_to_buku_besar');
+        $data['url_compare_detail_excel'] = site_url('Buku_besar/excel_compare_tabel_detail_buku_besar');
+        $data['url_compare_section_excel'] = site_url('Buku_besar/excel_compare_section_buku_besar');
+
+        $sql = "SELECT * FROM sys_kode_akun ORDER BY kode_akun ASC";
+        $data['list_kode_akun'] = $this->db->query($sql)->result();
+
+        return $data;
+    }
+
+    private function _compare_buku_besar_bulan_from_post()
+    {
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        if ($bulan_num >= 1 && $bulan_num <= 12 && $tahun >= 2000) {
+            return $tahun . '-' . str_pad((string) $bulan_num, 2, '0', STR_PAD_LEFT);
+        }
+        return '';
+    }
+
+    public function ajax_compare_buku_besar_manual_online()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+        $table = trim((string) $this->input->post('tabel', TRUE));
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.'));
+            return;
+        }
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih tabel manual yang akan dibandingkan.'));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, buku_besar_compare_run($this, $bulan, $table));
+    }
+
+    public function ajax_compare_tabel_list_buku_besar()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'buku_besar_compare'));
+        persediaan_ajax_json_output($this, array('ok' => true, 'tables' => persediaan_compare_list_db_tables($this)));
+    }
+
+    public function ajax_compare_import_csv_buku_besar()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        if (empty($_FILES['csv_file']) || !is_uploaded_file($_FILES['csv_file']['tmp_name'])) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih file CSV terlebih dahulu.'));
+            return;
+        }
+
+        $original_name = trim((string) $_FILES['csv_file']['name']);
+        if (strtolower(pathinfo($original_name, PATHINFO_EXTENSION)) !== 'csv') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'File harus berformat .csv'));
+            return;
+        }
+
+        $bulan = $this->_compare_buku_besar_bulan_from_post();
+        $result = buku_besar_compare_import_csv_to_db(
+            $this,
+            $_FILES['csv_file']['tmp_name'],
+            $original_name,
+            $bulan,
+            (int) $this->input->post('bulan_num', TRUE),
+            (int) $this->input->post('tahun', TRUE)
+        );
+
+        persediaan_ajax_json_output($this, $result);
+    }
+
+    public function ajax_compare_tabel_validate_buku_besar()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => true, 'eligible' => false, 'import_enabled' => false,
+                'message' => 'Nama tabel belum dipilih.',
+            ));
+            return;
+        }
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            $structure = buku_besar_compare_validate_import_table($this, $table);
+            persediaan_ajax_json_output($this, array(
+                'ok' => true,
+                'eligible' => !empty($structure['ok']),
+                'import_enabled' => false,
+                'message' => isset($structure['message']) ? $structure['message'] : 'Struktur tabel tidak valid.',
+                'missing_fields' => isset($structure['missing_fields']) ? $structure['missing_fields'] : array(),
+                'table' => $table,
+            ));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, buku_besar_compare_validate_table_for_import($this, $table, $bulan));
+    }
+
+    public function ajax_compare_tabel_detail_buku_besar()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Nama tabel belum dipilih.'));
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.'));
+            return;
+        }
+
+        persediaan_ajax_json_output($this, buku_besar_compare_load_table_detail_for_bulan($this, $table, $bulan));
+    }
+
+    public function ajax_compare_import_table_to_buku_besar()
+    {
+        @set_time_limit(0);
+        @ini_set('memory_limit', '512M');
+        $this->load->helper(array('pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+
+        if ($table === '') {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Nama tabel belum dipilih.'));
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.'));
+            return;
+        }
+
+        try {
+            $result = buku_besar_compare_import_to_buku_besar($this, $table, $bulan);
+            if (empty($result['ok']) && !empty($result['db_error'])) {
+                $result['message'] = trim((string) $result['message']) . ' Detail database: ' . $result['db_error'];
+            }
+            persediaan_ajax_json_output($this, $result);
+        } catch (Exception $e) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Gagal menyimpan ke buku_besar: ' . $e->getMessage(),
+                'error_detail' => $e->getMessage(),
+            ));
+        }
+    }
+
+    public function excel_compare_tabel_detail_buku_besar()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        if ($table === '') {
+            $table = trim((string) $this->input->get('tabel', TRUE));
+        }
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = trim((string) $this->input->get('bulan', TRUE));
+        }
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+
+        if ($table === '') {
+            show_error('Nama tabel belum dipilih.', 400);
+            return;
+        }
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            show_error('Format bulan tidak valid (YYYY-MM).', 400);
+            return;
+        }
+
+        $namaFile = 'Detail_Tabel_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $table) . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        buku_besar_compare_export_table_detail_excel($this, $table, $bulan);
+        exit();
+    }
+
+    public function excel_compare_section_buku_besar()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+        $table = trim((string) $this->input->post('tabel', TRUE));
+        $jenis = trim((string) $this->input->post('jenis', TRUE));
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan) || $table === '' || $jenis === '') {
+            show_error('Parameter export section tidak valid.', 400);
+        }
+
+        $namaFile = 'Compare_BB_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $jenis) . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        buku_besar_compare_export_section_excel($this, $bulan, $table, $jenis);
+        exit();
+    }
+
+    public function excel_compare_buku_besar_manual_online()
+    {
+        $this->load->helper(array('exportexcel', 'pembelian_persediaan', 'penjualan_jurnal_compare', 'buku_besar_compare'));
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if ($bulan === '') {
+            $bulan = $this->_compare_buku_besar_bulan_from_post();
+        }
+        $table = trim((string) $this->input->post('tabel', TRUE));
+
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan) || $table === '') {
+            show_error('Parameter compare tidak valid.', 400);
+        }
+
+        $namaFile = 'Compare_Buku_Besar_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+        excel_prepare_download($namaFile);
+        buku_besar_compare_export_excel_output($this, $bulan, $table);
+        exit();
+    }
 
     public function index_server_side()
     {
@@ -404,7 +525,6 @@ class Buku_besar extends CI_Controller
         $tablehead = 0;
         $tablebody = 1;
         $nourut = 1;
-        //penulisan header
         header("Pragma: public");
         header("Expires: 0");
         header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
@@ -429,8 +549,6 @@ class Buku_besar extends CI_Controller
 
         foreach ($this->Buku_besar_model->get_all() as $data) {
             $kolombody = 0;
-
-            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
             xlsWriteNumber($tablebody, $kolombody++, $nourut);
             xlsWriteLabel($tablebody, $kolombody++, $data->uuid_buku_besar);
             xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
@@ -451,7 +569,3 @@ class Buku_besar extends CI_Controller
 }
 
 /* End of file Buku_besar.php */
-/* Location: ./application/controllers/Buku_besar.php */
-/* Please DO NOT modify this information : */
-/* Generated by Harviacode Codeigniter CRUD Generator 2025-02-10 08:11:36 */
-/* http://harviacode.com */
