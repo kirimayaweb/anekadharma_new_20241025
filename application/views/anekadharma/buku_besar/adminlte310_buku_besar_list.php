@@ -83,19 +83,19 @@ $compare_sections = array(
         <div class="box box-warning box-solid">
             <div class="col-md-12">
                 <div class="card card-primary">
-                    <div class="card-header">
-                        <div class="row align-items-center">
-                            <div class="col-lg-3">
-                                <strong>BUKU BESAR</strong>
-                                <span class="text-muted small d-block" id="bb-bulan-label"><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
-                            </div>
-                            <div class="col-lg-9">
-                                <form id="form-cari-buku-besar" action="<?php echo htmlspecialchars($url_form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
-                                    <input type="hidden" name="active_tab" id="active_tab_input" value="<?php echo $tab_compare_active ? 'compare' : 'data'; ?>">
-                                    <div class="row justify-content-end align-items-center">
-                                        <div class="col-auto mb-2 mb-md-0 bb-kode-akun-wrap">
+                    <div class="card-header bb-card-header-compact py-2">
+                        <form id="form-cari-buku-besar" action="<?php echo htmlspecialchars($url_form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
+                            <input type="hidden" name="active_tab" id="active_tab_input" value="<?php echo $tab_compare_active ? 'compare' : 'data'; ?>">
+                            <div class="bb-header-row d-flex align-items-center flex-nowrap w-100">
+                                <div class="bb-header-left flex-grow-1 d-flex align-items-center min-width-0">
+                                    <strong class="bb-header-title-text">BUKU BESAR</strong>
+                                    <span class="text-muted small ml-2 d-none d-md-inline" id="bb-bulan-label"><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
+                                </div>
+                                <div class="bb-header-center flex-shrink-0">
+                                    <div class="bb-filter-group d-flex align-items-center flex-nowrap">
+                                        <div class="bb-kode-akun-wrap">
                                             <label for="kode_akun" class="sr-only">Pilih Kode Akun</label>
-                                            <select name="kode_akun" id="kode_akun" class="form-control select2 bb-kode-akun-select">
+                                            <select name="kode_akun" id="kode_akun" class="form-control form-control-sm select2 bb-kode-akun-select">
                                                 <option value=""<?php echo ($uuid_kode_akun === '') ? ' selected' : ''; ?>>Pilih Kode Akun</option>
                                                 <option value="tampil_semua"<?php echo ($uuid_kode_akun === 'tampil_semua') ? ' selected' : ''; ?>>Tampil Semua Data</option>
                                                 <?php foreach ($list_kode_akun as $m) { ?>
@@ -105,20 +105,21 @@ $compare_sections = array(
                                                 <?php } ?>
                                             </select>
                                         </div>
-                                        <div class="col-auto mb-2 mb-md-0">
+                                        <div class="bb-bulan-wrap">
                                             <label for="bulan_ns" class="sr-only">Pilih Bulan</label>
-                                            <input type="month" class="form-control" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
+                                            <input type="month" class="form-control form-control-sm" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-auto mb-2 mb-md-0">
+                                        <div class="bb-cari-wrap">
                                             <label class="sr-only">Cari</label>
-                                            <button type="button" class="btn btn-danger btn-flat" id="btn-cari-bb">
+                                            <button type="button" class="btn btn-danger btn-sm btn-flat" id="btn-cari-bb">
                                                 <i class="fa fa-search" aria-hidden="true"></i> Cari
                                             </button>
                                         </div>
                                     </div>
-                                </form>
+                                </div>
+                                <div class="bb-header-right flex-grow-1" aria-hidden="true"></div>
                             </div>
-                        </div>
+                        </form>
                     </div>
 
                     <div class="card-body">
@@ -361,9 +362,21 @@ $compare_sections = array(
     .bb-main-dt thead th { background: linear-gradient(180deg, #e7f1ff, #f8f9fa); border-color: #b8daff !important; font-size: 12px; white-space: nowrap; vertical-align: middle; }
     .bb-main-dt tbody td { font-size: 12px; border-color: #dee2e6 !important; padding: 6px 8px; }
     .bb-main-dt tfoot .bb-total-row th { background: #fff3cd !important; font-weight: 700; border-color: #ffc107 !important; }
-    .bb-kode-akun-wrap { max-width: 300px; width: 100%; }
-    .bb-kode-akun-select { max-width: 300px; width: 100% !important; }
-    .bb-kode-akun-wrap .select2-container { max-width: 300px !important; width: 100% !important; }
+    .bb-card-header-compact { padding-top: 0.45rem; padding-bottom: 0.45rem; }
+    .bb-header-row { gap: 0; min-height: 34px; }
+    .bb-header-left { flex: 1 1 0; min-width: 120px; }
+    .bb-header-right { flex: 1 1 0; min-width: 120px; }
+    .bb-header-center { flex: 0 0 auto; }
+    .bb-header-title-text { white-space: nowrap; font-size: 1rem; line-height: 1.2; }
+    .bb-filter-group { gap: 6px; }
+    .bb-kode-akun-wrap { width: 240px; max-width: 280px; flex: 0 0 auto; }
+    .bb-kode-akun-select { width: 100% !important; }
+    .bb-kode-akun-wrap .select2-container { width: 100% !important; max-width: 280px !important; }
+    .bb-kode-akun-wrap .select2-selection--single { height: calc(1.8125rem + 2px) !important; min-height: calc(1.8125rem + 2px) !important; }
+    .bb-kode-akun-wrap .select2-selection__rendered { line-height: calc(1.8125rem + 2px) !important; font-size: 0.875rem; }
+    .bb-kode-akun-wrap .select2-selection__arrow { height: calc(1.8125rem + 2px) !important; }
+    .bb-bulan-wrap input[type="month"] { width: 160px; min-width: 160px; }
+    .bb-cari-wrap .btn { min-width: 72px; white-space: nowrap; }
     .compare-toolbar-row .compare-toolbar-control { width: 110px; min-width: 110px; }
     #compare_tabel_bb.compare-toolbar-tabel { width: 320px; min-width: 240px; max-width: 420px; }
     .compare-csv-file-wrap { max-width: 520px; min-width: 280px; flex: 0 1 520px; }

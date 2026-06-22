@@ -84,6 +84,7 @@ $compare_sections = array(
                                 <span class="text-muted small d-block" id="bk-bulan-label"><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                             <div class="col-lg-9">
+                                <form id="form-cari-buku-bank" method="post" action="#" onsubmit="return false;">
                                 <div class="row justify-content-end align-items-center">
                                     <div class="col-auto mb-2 mb-md-0">
                                         <label for="bulan_ns" class="small mb-1">Pilih Bulan</label>
@@ -99,6 +100,7 @@ $compare_sections = array(
                                         <?php echo anchor(site_url('Bukubank/create'), 'Input Buku Bank', 'class="btn btn-success btn-sm"'); ?>
                                     </div>
                                 </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -183,18 +185,20 @@ $compare_sections = array(
                                     Kolom compare: <strong>tanggal, bank, norek, keterangan, kode, debet, kredit</strong>.
                                 </small>
 
-                                <label for="compare_bk_csv_file" class="mb-1">Pilih file CSV</label>
-                                <div class="d-flex flex-wrap align-items-end compare-csv-upload-row mb-3">
-                                    <div class="custom-file custom-file-sm mb-0 compare-csv-file-wrap">
-                                        <input type="file" class="custom-file-input" id="compare_bk_csv_file" accept=".csv,text/csv">
-                                        <label class="custom-file-label" for="compare_bk_csv_file" data-browse="Pilih">Cari / pilih file CSV...</label>
-                                    </div>
+                                <label class="mb-1 d-block">Pilih file CSV</label>
+                                <div class="d-flex flex-wrap align-items-center compare-csv-upload-row mb-3">
+                                    <button type="button" id="btn-bk-pick-csv" class="btn btn-primary btn-sm mr-2 mb-1">
+                                        <i class="fas fa-file-csv"></i> Pilih File CSV
+                                    </button>
+                                    <span id="compare-bk-csv-selected-name" class="text-muted small mb-1">Belum ada file dipilih</span>
+                                    <input type="file" class="d-none" id="compare_bk_csv_file" accept=".csv,text/csv">
                                 </div>
 
                                 <div id="compare-bk-csv-upload-info" class="compare-bk-tabel-info-box py-3 d-none mb-3">
                                     <div class="compare-info-title"><i class="fas fa-info-circle"></i> Informasi Tabel Hasil Upload CSV</div>
                                     <div class="small mb-1 compare-info-line"><span class="text-muted">File:</span> <strong id="compare-bk-csv-filename">—</strong></div>
-                                    <div class="small mb-2 compare-info-line"><span class="text-muted">Tabel DB:</span> <strong id="compare-bk-csv-tablename" class="text-primary">—</strong> <span class="text-muted" id="compare-bk-csv-rowcount"></span></div>
+                                    <div class="small mb-1 compare-info-line"><span class="text-muted">Nama Tabel DB:</span> <strong id="compare-bk-csv-tablename" class="text-primary">—</strong> <span class="text-muted" id="compare-bk-csv-rowcount"></span></div>
+                                    <div class="small mb-2 compare-info-line"><span class="text-muted">Kolom:</span> <strong id="compare-bk-csv-colcount">—</strong></div>
                                     <button type="button" id="btn-compare-bk-csv-detail" class="btn btn-outline-primary btn-sm">
                                         <i class="fas fa-table"></i> Detail Tabel
                                     </button>
@@ -319,7 +323,8 @@ $compare_sections = array(
                                                         <i class="fa fa-file-excel-o"></i> Cetak ke Excel
                                                     </button>
                                                 </div>
-                                                <table id="table-compare-bk-tabel-detail" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                <div class="compare-dt-wrap bk-detail-dt-wrap">
+                                                <table id="table-compare-bk-tabel-detail" class="table table-bordered table-striped table-sm compare-bk-detail-dt" style="width:100%;font-size:12px;">
                                                     <thead>
                                                         <tr>
                                                             <th>No</th><th>Tanggal</th><th>Bank</th><th>Norek</th><th>Keterangan</th><th>Kode</th><th>Debet</th><th>Kredit</th><th>Saldo</th>
@@ -335,6 +340,7 @@ $compare_sections = array(
                                                         </tr>
                                                     </tfoot>
                                                 </table>
+                                                </div>
                                             </div>
                                             <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
                                         </div>
@@ -387,6 +393,10 @@ $compare_sections = array(
     }
     .compare-bk-tabel-info-box .compare-info-title { font-weight: 700; margin-bottom: 6px; color: #004085; }
     .compare-bk-tabel-info-box .compare-info-line { font-size: 13px; margin-bottom: 4px; }
+    .bk-detail-dt-wrap { border: 2px solid #17a2b8; border-radius: 8px; padding: 8px; background: #fff; box-shadow: 0 2px 10px rgba(23,162,184,.12); }
+    .compare-bk-detail-dt thead th { background: linear-gradient(180deg, #e8f7fa, #f8f9fa) !important; font-size: 12px; white-space: nowrap; }
+    .compare-bk-detail-dt tbody td { font-size: 12px; padding: 6px 8px; vertical-align: middle; }
+    #table-buku-bank-data.bk-table-loading { opacity: 0.55; pointer-events: none; }
 </style>
 
 <script>
@@ -431,6 +441,93 @@ $compare_sections = array(
 
     var bkInitializing = true;
     var bkMainDt = null;
+    var bkMonthRefreshTimer = null;
+    var bkLastBulanNs = '';
+
+    function initBkMainDt(forceReinit) {
+        if (!window.jQuery || !jQuery.fn.DataTable) return null;
+        var $t = jQuery('#table-buku-bank-data');
+        if (!$t.length) return null;
+        if (forceReinit && bkMainDt && jQuery.fn.DataTable.isDataTable($t)) {
+            try { $t.DataTable().destroy(); } catch (eDestroy) {}
+            bkMainDt = null;
+        }
+        if (bkMainDt) return bkMainDt;
+        try {
+            bkMainDt = $t.DataTable({
+                scrollX: true,
+                scrollY: '450px',
+                scrollCollapse: true,
+                paging: true,
+                searching: true,
+                ordering: true,
+                pageLength: 50,
+                order: [[2, 'asc']],
+                orderCellsTop: true,
+                autoWidth: false,
+                columnDefs: [{ orderable: false, targets: [1] }],
+                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' }
+            });
+        } catch (eDt) {
+            console.error('Buku Bank: gagal init DataTable tab 1', eDt);
+            bkMainDt = null;
+        }
+        return bkMainDt;
+    }
+
+    function renderBukuBankRowsFallback(items) {
+        var $t = jQuery('#table-buku-bank-data');
+        var baseUpdate = <?php echo json_encode(site_url('Bukubank/update/')); ?>;
+        var baseDelete = <?php echo json_encode(site_url('Bukubank/delete/')); ?>;
+        var html = '';
+        (items || []).forEach(function(it) {
+            var action = '<a href="' + baseUpdate + it.id + '" class="btn btn-warning btn-sm"><i class="fa fa-pencil-square-o">Ubah</i></a> '
+                + '<a href="' + baseDelete + it.id + '" class="btn btn-danger btn-sm" onclick="return confirm(\'Anda Yakin Akan Menghapus Data ini ?\')"><i class="fa fa-trash-o">Hapus</i></a>';
+            html += '<tr>'
+                + '<td>' + bkEscapeHtml(it.no || '') + '</td>'
+                + '<td style="text-align:left">' + action + '</td>'
+                + '<td>' + bkEscapeHtml(it.tanggal || '') + '</td>'
+                + '<td>' + bkEscapeHtml(it.bank || '') + '</td>'
+                + '<td>' + bkEscapeHtml(it.norek || '') + '</td>'
+                + '<td>' + bkEscapeHtml(it.keterangan || '') + '</td>'
+                + '<td class="text-center">' + bkEscapeHtml(it.kode || '') + '</td>'
+                + '<td class="text-right">' + bkEscapeHtml(it.debet_display || '') + '</td>'
+                + '<td class="text-right">' + bkEscapeHtml(it.kredit_display || '') + '</td>'
+                + '<td class="text-right">' + bkEscapeHtml(it.saldo_display || '') + '</td>'
+                + '</tr>';
+        });
+        if (!html) {
+            html = '<tr><td colspan="10" class="text-center text-muted py-3">Tidak ada data pada bulan terpilih</td></tr>';
+        }
+        $t.find('tbody').html(html);
+    }
+
+    function applyBukuBankListResult(res) {
+        if (!res || !res.ok) return;
+        var rows = buildMainDtRowsBk(res.rows);
+        var dt = initBkMainDt(false);
+        if (dt) {
+            try {
+                dt.clear();
+                if (rows.length) dt.rows.add(rows);
+                dt.draw(false);
+            } catch (eRow) {
+                console.error('Buku Bank: gagal update DataTable, fallback HTML', eRow);
+                initBkMainDt(true);
+                renderBukuBankRowsFallback(res.rows || []);
+            }
+        } else {
+            renderBukuBankRowsFallback(res.rows || []);
+        }
+        var $t = jQuery('#table-buku-bank-data');
+        $t.find('tfoot .bk-total-debet').text(res.total_debet || '—');
+        $t.find('tfoot .bk-total-kredit').text(res.total_kredit || '—');
+        $t.find('tfoot .bk-total-saldo').text(res.total_saldo || '—');
+        if (res.bulan_label) {
+            jQuery('#bk-bulan-label').text(res.bulan_label);
+        }
+        bkLastBulanNs = jQuery('#bulan_ns').val() || '';
+    }
 
     function bkEscapeHtml(text) {
         return jQuery('<div>').text(text == null ? '' : String(text)).html();
@@ -540,14 +637,15 @@ $compare_sections = array(
 
     function loadBukuBankData() {
         if (!window.jQuery) return;
-        var $t = jQuery('#table-buku-bank-data');
+        var bulanVal = jQuery('#bulan_ns').val() || '';
+        jQuery('#table-buku-bank-data').addClass('bk-table-loading');
         jQuery.ajax({
             url: urlAjaxList,
             type: 'POST',
             dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: {
-                bulan_ns: jQuery('#bulan_ns').val() || '',
-                
+                bulan_ns: bulanVal
             }
         }).done(function(res) {
             if (!res || !res.ok) {
@@ -556,21 +654,24 @@ $compare_sections = array(
                 }
                 return;
             }
-            var rows = buildMainDtRowsBk(res.rows);
-            if (bkMainDt) {
-                bkMainDt.clear().rows.add(rows).draw(false);
-            }
-            $t.find('tfoot .bk-total-debet').text(res.total_debet || '—');
-            $t.find('tfoot .bk-total-kredit').text(res.total_kredit || '—');
-            $t.find('tfoot .bk-total-saldo').text(res.total_saldo || '—');
-            if (res.bulan_label) {
-                jQuery('#bk-bulan-label').text(res.bulan_label);
-            }
+            applyBukuBankListResult(res);
         }).fail(function() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({ icon: 'error', title: 'Gagal Memuat Data', text: 'Tidak dapat menghubungi server.' });
             }
+        }).always(function() {
+            jQuery('#table-buku-bank-data').removeClass('bk-table-loading');
         });
+    }
+
+    function scheduleBkMonthRefresh() {
+        if (bkInitializing) return;
+        var val = jQuery('#bulan_ns').val() || '';
+        if (val === bkLastBulanNs && bkLastBulanNs !== '') return;
+        clearTimeout(bkMonthRefreshTimer);
+        bkMonthRefreshTimer = setTimeout(function() {
+            refreshBukuBankFromFilters();
+        }, 150);
     }
 
     function refreshBukuBankFromFilters() {
@@ -580,38 +681,33 @@ $compare_sections = array(
     }
 
     function submitCariBukuBankForm() {
+        clearTimeout(bkMonthRefreshTimer);
+        bkLastBulanNs = '';
         updateActiveTabInput();
         saveBkLocalStorage();
         refreshBukuBankFromFilters();
     }
 
     window.addEventListener('load', function() {
-        if (!window.jQuery || !jQuery.fn.DataTable) return;
+        if (!window.jQuery) {
+            console.error('Buku Bank: jQuery belum dimuat.');
+            return;
+        }
+        var $ = window.jQuery;
+        initBkMainDt(false);
 
         restoreBkLocalStorage();
         syncCompareFromBulanNs();
 
-        bkMainDt = jQuery('#table-buku-bank-data').DataTable({
-            scrollX: true,
-            scrollY: '450px',
-            scrollCollapse: true,
-            paging: true,
-            searching: true,
-            ordering: true,
-            pageLength: 50,
-            order: [[2, 'asc']],
-            columnDefs: [{ orderable: false, targets: [1] }],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
-        });
-
         bkInitializing = false;
+        bkLastBulanNs = '';
         loadBukuBankData();
 
-        jQuery('#bulan_ns').on('change', function() {
-            if (bkInitializing) return;
-            refreshBukuBankFromFilters();
+        jQuery('#bulan_ns').on('change input', function() {
+            scheduleBkMonthRefresh();
         });
-        jQuery('#btn-cari-bk').on('click', function() {
+        jQuery('#btn-cari-bk').on('click', function(e) {
+            e.preventDefault();
             submitCariBukuBankForm();
         });
         jQuery('#form-cari-buku-bank').on('submit', function(e) {
@@ -755,7 +851,6 @@ $compare_sections = array(
                     it.catatan ? '<span class="text-catatan">' + jQuery('<span>').text(it.catatan).html() + '</span>' : ''
                 ];
             });
-        });
         }
         function buildDetailRows(items) {
             return (items || []).map(function(it) {
@@ -771,7 +866,6 @@ $compare_sections = array(
                     fmtAmtCell(it.saldo, 'saldo')
                 ];
             });
-        });
         }
         function renderTable(sel, items) {
             var $t = jQuery(sel);
@@ -1035,50 +1129,144 @@ $compare_sections = array(
             }
             if (window.confirm('Proses simpan data ke bukubank?')) doImport();
         }
-        function importCsv(file) {
+        function pad2(num) {
+            num = parseInt(num, 10);
+            return (num < 10 ? '0' : '') + num;
+        }
+        function runCsvImportAjax(file) {
             if (!file || csvBusy) return;
-            if ((file.name || '').split('.').pop().toLowerCase() !== 'csv') {
-                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Format Salah', text: 'File harus .csv' });
-                return;
-            }
             csvBusy = true;
+            var refBulan = parseInt(jQuery('#compare_bulan_bk').val(), 10);
+            var refTahun = parseInt(jQuery('#compare_tahun_bk').val(), 10);
+            if (!refBulan || refBulan < 1 || refBulan > 12) refBulan = parseInt((jQuery('#bulan_ns').val() || '').split('-')[1], 10) || (new Date()).getMonth() + 1;
+            if (!refTahun || refTahun < 2000) refTahun = parseInt((jQuery('#bulan_ns').val() || '').split('-')[0], 10) || (new Date()).getFullYear();
+
             if (typeof Swal !== 'undefined') {
-                Swal.fire({ title: 'Memproses CSV...', html: 'Upload & generate tabel database...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+                Swal.fire({
+                    title: 'Memproses Generate Tabel...',
+                    html: 'Upload file <strong>' + jQuery('<span>').text(file.name).html() + '</strong><br>Membuat tabel database dari CSV...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: function() { Swal.showLoading(); }
+                });
             }
-            var ref = { bulan: parseInt(jQuery('#compare_bulan_bk').val(), 10), tahun: parseInt(jQuery('#compare_tahun_bk').val(), 10) };
+
             var fd = new FormData();
             fd.append('csv_file', file);
-            fd.append('bulan_num', ref.bulan);
-            fd.append('tahun', ref.tahun);
-            fd.append('bulan', ref.tahun + '-' + String(ref.bulan).padStart(2, '0'));
-            jQuery.ajax({ url: urlImport, type: 'POST', data: fd, processData: false, contentType: false, dataType: 'json' })
-            .done(function(res) {
+            fd.append('bulan_num', refBulan);
+            fd.append('tahun', refTahun);
+            fd.append('bulan', refTahun + '-' + pad2(refBulan));
+
+            jQuery.ajax({
+                url: urlImport,
+                type: 'POST',
+                data: fd,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).done(function(res) {
                 csvBusy = false;
-                jQuery('#compare_bk_csv_file').val('').next('.custom-file-label').text('Cari / pilih file CSV...');
+                jQuery('#compare_bk_csv_file').val('');
+                jQuery('#compare-bk-csv-selected-name').text('Belum ada file dipilih');
                 if (typeof Swal !== 'undefined') Swal.close();
+
                 if (!res || !res.ok) {
-                    if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Import Gagal', html: (res && res.message) ? String(res.message).replace(/\n/g, '<br/>') : 'Import gagal.' });
+                    var errMsg = (res && res.message) ? String(res.message).replace(/\n/g, '<br/>') : 'Import CSV gagal.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'error', title: 'Generate Tabel Gagal', html: errMsg, width: 640 });
+                    } else {
+                        alert(errMsg.replace(/<br\/?>/g, '\n'));
+                    }
                     return;
                 }
+
                 csvLast = res;
-                jQuery('#compare-bk-csv-filename').text(res.file || '—');
+                jQuery('#compare-bk-csv-filename').text(res.file || file.name || '—');
                 jQuery('#compare-bk-csv-tablename').text(res.table || '—');
-                jQuery('#compare-bk-csv-rowcount').text(res.rows ? (' (' + res.rows + ' baris)') : '');
+                jQuery('#compare-bk-csv-rowcount').text(res.rows ? (' | ' + res.rows + ' baris') : '');
+                jQuery('#compare-bk-csv-colcount').text(res.columns ? (res.columns + ' kolom') : '—');
                 jQuery('#compare-bk-csv-upload-info').removeClass('d-none');
+
                 loadTableList(true, res.table);
+                validateTabelForImport();
+                setStatus('success', '<i class="fas fa-check-circle"></i> Tabel <strong>' + (res.table || '') + '</strong> berhasil digenerate dari CSV.');
+
                 if (typeof Swal !== 'undefined') {
-                    Swal.fire({ icon: 'success', title: 'Upload CSV Sukses', html: 'Tabel <strong>' + (res.table || '') + '</strong> — ' + (res.rows || 0) + ' baris.', timer: 2000, timerProgressBar: true, showConfirmButton: true });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Generate Tabel Berhasil',
+                        html: 'Tabel <strong>' + (res.table || '') + '</strong> berhasil dibuat.<br>Baris: <strong>' + (res.rows || 0) + '</strong> | Kolom: <strong>' + (res.columns || 0) + '</strong>',
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: true
+                    });
                 }
-            }).fail(function() {
+            }).fail(function(xhr) {
                 csvBusy = false;
-                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Import Gagal', text: 'Tidak dapat menghubungi server.' });
+                if (typeof Swal !== 'undefined') Swal.close();
+                var msg = 'Tidak dapat menghubungi server.';
+                if (xhr && xhr.responseText) {
+                    try {
+                        var j = JSON.parse(xhr.responseText);
+                        if (j && j.message) msg = j.message;
+                    } catch (eJson) {
+                        if (xhr.responseText.length < 500) msg = xhr.responseText;
+                    }
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Generate Tabel Gagal', html: jQuery('<div>').text(msg).html() });
+                } else {
+                    alert(msg);
+                }
             });
         }
+        function importCsv(file) {
+            if (!file || csvBusy) return;
+            var ext = (file.name || '').split('.').pop().toLowerCase();
+            if (ext !== 'csv') {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Format Salah', text: 'File harus berformat .csv' });
+                } else {
+                    alert('File harus berformat .csv');
+                }
+                return;
+            }
 
-        jQuery('#compare_bk_csv_file').on('change', function() {
+            var tableNameGuess = (file.name || '').replace(/\.csv$/i, '').replace(/[^a-zA-Z0-9_]+/g, '_').toLowerCase();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Proses Generate Tabel dari CSV',
+                    html: 'File: <strong>' + jQuery('<span>').text(file.name).html() + '</strong><br>'
+                        + 'Akan dibuat tabel database: <strong>' + jQuery('<span>').text(tableNameGuess).html() + '</strong><br><br>'
+                        + 'Lanjutkan proses generate tabel?',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Proses',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#007bff'
+                }).then(function(result) {
+                    if (result.isConfirmed) {
+                        runCsvImportAjax(file);
+                    } else {
+                        jQuery('#compare_bk_csv_file').val('');
+                        jQuery('#compare-bk-csv-selected-name').text('Belum ada file dipilih');
+                    }
+                });
+                return;
+            }
+            if (window.confirm('Proses generate tabel dari file ' + file.name + '?')) {
+                runCsvImportAjax(file);
+            }
+        }
+
+        jQuery('#btn-bk-pick-csv').on('click', function() {
+            jQuery('#compare_bk_csv_file').trigger('click');
+        });
+        jQuery(document).on('change', '#compare_bk_csv_file', function() {
             var f = this.files && this.files[0];
             if (f) {
-                jQuery(this).next('.custom-file-label').text(f.name);
+                jQuery('#compare-bk-csv-selected-name').text(f.name);
                 importCsv(f);
             }
         });

@@ -25,12 +25,8 @@
         $Get_year_Tahun_ini = $year_selected;
         $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
 
-
-
-        if (date("Y", strtotime($date_awal)) < 2020) {
-            $Get_date_awal = date("d-m-Y");
-        } else {
-            $Get_date_awal = date("d-m-Y", strtotime($date_awal));
+        if (!isset($bulan_ns_value) || $bulan_ns_value === '') {
+            $bulan_ns_value = sprintf('%04d-%02d', (int) $Get_year_Tahun_ini, (int) $Get_month_from_date);
         }
 
         // $futureDate=date('Y', strtotime('-1 year'));
@@ -103,7 +99,7 @@
                         <div class="row">
                             <div class="col-3">
                                 <div class="row">
-                                    <strong>NERACA SALDO <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?></strong>
+                                    <strong id="ns-periode-label">NERACA SALDO <?php echo bulan_teks($Get_month_from_date) . " " . $Get_year_Tahun_ini ?></strong>
 
 
 
@@ -115,17 +111,16 @@
 
 
                                 <?php
-                                // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
-                                $action_cari_between_date = site_url('Neraca_saldo/Cari_bulan_data');
+                                $action_cari_between_date = isset($url_cari_bulan) ? $url_cari_bulan : site_url('Neraca_saldo/Cari_bulan_data');
                                 ?>
 
-                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
+                                <form id="form-cari-neraca-saldo" action="<?php echo $action_cari_between_date; ?>" method="post">
                                     <div class="row">
                                         <div class="col-md-4" text-align="right" align="right">
-                                            <input type="month" id="bulan_ns" name="bulan_ns">
+                                            <input type="month" class="form-control form-control-sm" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
                                         </div>
                                         <div class="col-md-2" text-align="left" align="left">
-                                            <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                            <button type="submit" id="btn-cari-neraca-saldo" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                         </div>
 
                                     </div>
@@ -151,15 +146,15 @@
 
                     <div class="card-body">
 
-                        <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
+                        <div class="ns-datatable-wrap" id="ns-datatable-wrap">
+                        <table id="tglSPOPFreeze" class="display nowrap ns-datatable-green" style="width:100%">
                             <thead>
                                 <tr>
                                     <th rowspan="2" style="text-align:center" width="10px">No</th>
                                     <th rowspan="2" style="text-align:center" width="10px">Tanggal</th>
                                     <th rowspan="2" style="text-align:center">Kode Rek.</th>
                                     <th rowspan="2" style="text-align:center">Uraian</th>
-                                    <th colspan="2" style="text-align:center">NERACA SALDO 31 Desember <?php echo $Get_year_Setahun_lalu; ?></th>
+                                    <th colspan="2" style="text-align:center" id="ns-th-tahun-lalu">NERACA SALDO 31 Desember <?php echo $Get_year_Setahun_lalu; ?></th>
                                     <th colspan="2" style="text-align:center">PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">NS SETELAH PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">LABA/ RUGI</th>
@@ -177,475 +172,21 @@
 
 
                             </thead>
-                            <tbody>
+                            <tbody id="ns-tbody">
                                 <?php
-
-                                // PEMBELIAN
-                                $start = 0;
-                                $TOTAL_DEBET = 0;
-                                $TOTAL_KREDIT = 0;
-                                $TOTAL_SALDO = 0;
-
-                                foreach ($Data_Kode_Akun as $list_data) {
-
-                                    $Get_Kode_akun = $list_data->kode_akun;
-
-                                    // // PENJUALAN : 
-                                    // $Get_proses_bayar = "belum_bayar";
-                                    // $sql_pembelian = "SELECT sum(tbl_penjualan.jumlah*tbl_penjualan.harga_satuan) as kredit, tbl_penjualan.kode_akun as kode_akun
-                                    // FROM tbl_penjualan    
-                                    // WHERE tbl_penjualan.kode_akun='$Get_Kode_akun' AND tbl_penjualan.proses_bayar='$Get_proses_bayar'
-                                    // group BY tbl_penjualan.kode_akun";
-
-                                    // $Get_kode_akun_PENJUALAN_kredit = $this->db->query($sql_pembelian)->row()->kredit;
-
-
-
-                                    // // ======= CEK TABEL PEMBELIAN DAN PENJUALAN DENGAN KODE_AKUN YANG SESUAI, KEMUDIAN DI JUMLAHKAN ======
-
-                                    // // PEMBELIAN
-                                    // $sql_pembelian = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_pembelian_by_kode FROM `tbl_pembelian` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_po`)=$Get_month_from_date AND YEAR(`tgl_po`)=$year_selected";
-
-                                    // $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian = $this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode;
-
-                                    // // /PENJUALAN
-                                    // $sql_penjualan = "SELECT sum(`jumlah`*`harga_satuan`) as jumlah_penjualan_by_kode FROM `tbl_penjualan` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tgl_jual`)=$Get_month_from_date AND YEAR(`tgl_jual`)=$year_selected";
-
-                                    // $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan = $this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
-
-                                    // // print_r($this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode);
-                                    // // print_r("<br/>");
-                                    // // print_r($this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode);
-                                    // // print_r("<br/>");
-
-
-                                    // // TOTAL DARI SEMUA DATA PER KODE AKUN : Mendapatkan nominal data dan di simpan ke tabel neraca_saldo
-                                    // // $GET_jumlah_data_PER_KODE_AKUN = $this->db->query($sql_pembelian)->row()->jumlah_pembelian_by_kode + $this->db->query($sql_penjualan)->row()->jumlah_penjualan_by_kode;
-
-
-                                    // // print_r($GET_jumlah_data);
-                                    // // print_r("<br/>");
-                                    // // print_r("<br/>");
-                                    // // print_r("<br/>");
-
-                                    // // === end of CEK TABEL PEMBELIAN DAN PENJUALAN DENGAN KODE_AKUN YANG SESUAI, KEMUDIAN DI JUMLAHKAN ===
-
-
-                                    // // CEK DATA PENYESUAIAN PER MASING-MASING KODE AKUN
-
-                                    // $sql_penyesuaian = "SELECT sum(`debet`) as jumlah_debet, sum(`kredit`) as jumlah_kredit FROM `jurnal_penyesuaian` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tanggal`)=$Get_month_from_date AND YEAR(`tanggal`)=$year_selected";
-
-                                    // $Get_data_PENYESUAIAN = $this->db->query($sql_penyesuaian)->row();
-                                    // // if ($Get_Kode_akun == "11107") {
-
-
-                                    // //     print_r($Get_Kode_akun);
-                                    // //     print_r("<br/>");
-                                    // //     print_r($Get_data_PENYESUAIAN->jumlah_debet);
-                                    // //     print_r("<br/>");
-                                    // //     print_r($Get_data_PENYESUAIAN->jumlah_kredit);
-                                    // //     print_r("<br/>");
-                                    // // }
-                                    // // END OF CEK DATA PENYESUAIAN PER MASING-MASING KODE AKUN
-
-
-
-
-                                    // // Cek di tabel neraca_saldo : masing-masing kode_akun , jika belum ada maka insert dulu
-
-                                    // $sql_data = "SELECT * FROM `neraca_saldo` WHERE `kode_akun`='$Get_Kode_akun' AND MONTH(`tanggal`)=$Get_month_from_date";
-
-                                    // $Get_data_record = $this->db->query($sql_data);
-
-                                    // if ($Get_data_record->num_rows() > 0) {
-                                    //     $RECORD_data_per_kode_akun_bulan_ini = $Get_data_record->row();
-
-                                    //     // CEK FIELD DEBET PENYESUAIAN APAKAH SAMA DENGAN $GET_jumlah_data_PER_KODE_AKUN
-                                    //     // if ($Get_data_record->row()->debet_penyesuaian <> $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan) {
-
-                                    //     // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
-                                    //     $data = array(
-                                    //         // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
-                                    //         // 'kode_akun' => $this->input->post('kode_akun', TRUE),
-                                    //         // 'nama_akun' => $this->input->post('nama_akun', TRUE),
-                                    //         // 'uraian' => $this->input->post('uraian', TRUE),
-                                    //         // 'group' => $this->input->post('group', TRUE),
-                                    //         // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
-                                    //         // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                    //         'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
-                                    //         'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
-                                    //         'debet_ns_setelah_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan + $Get_data_PENYESUAIAN->jumlah_debet,
-                                    //         'kredit_ns_setelah_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian + $Get_data_PENYESUAIAN->jumlah_kredit,
-                                    //         // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
-                                    //         // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
-                                    //     );
-                                    //     // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
-                                    //     $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
-                                    //     // }
-
-                                    //     // if ($Get_data_record->row()->kredit_penyesuaian <> $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian) {
-
-                                    //     //     // update record sesuaikan dengan $GET_jumlah_data_PER_KODE_AKUN
-                                    //     //     $data = array(
-                                    //     //         // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
-                                    //     //         // 'kode_akun' => $this->input->post('kode_akun', TRUE),
-                                    //     //         // 'nama_akun' => $this->input->post('nama_akun', TRUE),
-                                    //     //         // 'uraian' => $this->input->post('uraian', TRUE),
-                                    //     //         // 'group' => $this->input->post('group', TRUE),
-                                    //     //         // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
-                                    //     //         // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                    //     //         // 'debet_penyesuaian' => $GET_jumlah_data_PER_KODE_AKUN,
-                                    //     //         'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
-                                    //     //         // 'debet_ns_setelah_penyesuaian' => $this->input->post('debet_ns_setelah_penyesuaian', TRUE),
-                                    //     //         'kredit_ns_setelah_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian + $Get_data_PENYESUAIAN->jumlah_kredit,
-                                    //     //         // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
-                                    //     //         // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
-                                    //     //     );
-                                    //     //     // $GET_id_record_neraca_saldo = $Get_data_record->row()->id;
-                                    //     //     $this->Neraca_saldo_model->update($Get_data_record->row()->id, $data);
-                                    //     // }
-                                    // } else {
-                                    //     // Proses insert record baru dengan kodeakun ini dan input data lengkap
-                                    //     $data = array(
-                                    //         // 'uuid_kode_akun' => $this->input->post('uuid_kode_akun', TRUE),
-                                    //         'tanggal' => date("Y-$month_selected-1"),
-                                    //         'kode_akun' => $Get_Kode_akun,
-                                    //         'nama_akun' => $list_data->nama_akun,
-                                    //         // 'uraian' => $this->input->post('uraian', TRUE),
-                                    //         // 'group' => $this->input->post('group', TRUE),
-                                    //         // 'debet_akhir_tahun_lalu' => $this->input->post('debet_akhir_tahun_lalu', TRUE),
-                                    //         // 'kredit_akhir_tahun_lalu' => $this->input->post('kredit_akhir_tahun_lalu', TRUE),
-                                    //         'debet_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan,
-                                    //         'kredit_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian,
-                                    //         'debet_ns_setelah_penyesuaian' => $Get_data_DEBET_PENYESUAIAN_dari_tbl_penjualan + $Get_data_PENYESUAIAN->jumlah_debet,
-                                    //         'kredit_ns_setelah_penyesuaian' => $Get_data_KREDIT_PENYESUAIAN_dari_tbl_pembelian + $Get_data_PENYESUAIAN->jumlah_kredit,
-                                    //         // 'debet_laba_rugi' => $this->input->post('debet_laba_rugi', TRUE),
-                                    //         // 'kreditdebet_laba_rugi' => $this->input->post('kreditdebet_laba_rugi', TRUE),
-                                    //     );
-
-                                    //     $this->Neraca_saldo_model->insert($data);
-                                    // }
-
-                                    // // print_r($Get_data_per_kode_akun_bulan_ini);
-
-                                    // // kemudian isi data per field
-                                    // $sql_data = "SELECT * FROM `neraca_saldo` WHERE `kode_akun`=$Get_Kode_akun AND MONTH(`tanggal`)=$Get_month_from_date";
-
-                                    // $Get_data_record = $this->db->query($sql_data);
-                                    // $Get_data_per_kode_akun_bulan_ini = $Get_data_record->row();
-
-
-
-                                    // ----------- DATA AKUN DARI BUKU BESAR FILTER BY TANGGAL DAN KODE AKUN ----------------
-                                    $sql = "SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_from_date AND YEAR(`tanggal`)=$Get_year_Tahun_ini AND `kode_akun`=$Get_Kode_akun  group by `kode_akun` ";
-
-                                    // SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `buku_besar` where `kode_akun`='1001' GROUP by `kode_akun`;
-
-                                    $Buku_besar_DATA = $this->db->query($sql);
-
-                                    // print_r($Buku_besar_DATA->row());
-                                    // print_r("<br/>");
-                                    // print_r("---------------");
-                                    // print_r("<br/>");
-
-                                    // ----------- END OF DATA AKUN DARI BUKU BESAR FILTER BY TANGGAL DAN KODE AKUN ----------------
-
-
-                                    // ---------- GET DATA JURNAL PENYESUAIAN ---------------
-
-                                    $sql = "SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=$Get_month_from_date AND YEAR(`tanggal`)=$Get_year_Tahun_ini AND `kode_akun`=$Get_Kode_akun  group by `kode_akun` ";
-
-
-                                    // SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `jurnal_penyesuaian` WHERE `kode_akun`='11106' GROUP by `kode_akun`;
-
-                                    $Jurnal_penyesuaian_DATA = $this->db->query($sql);
-
-                                    // ---------- END OF GET DATA JURNAL PENYESUAIAN ---------------
-
-
-
-                                    // ----------- NERACA SALDO --------------------
-
-                                    $sql = "SELECT * FROM `neraca_saldo` WHERE MONTH(`tanggal`)=$Get_month_from_date AND YEAR(`tanggal`)=$Get_year_Tahun_ini AND `kode_akun`=$Get_Kode_akun";
-
-                                    // SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `buku_besar` where `kode_akun`='1001' GROUP by `kode_akun`;
-
-                                    $Neraca_Saldo_DATA = $this->db->query($sql);
-
-                                    // ----------- END OF NERACA SALDO --------------------
-
-
+                                $this->load->view('anekadharma/neraca_saldo/adminlte310_neraca_saldo_tbody', array(
+                                    'Data_Kode_Akun' => $Data_Kode_Akun,
+                                    'Get_month_from_date' => (int) $Get_month_from_date,
+                                    'Get_year_Tahun_ini' => (int) $Get_year_Tahun_ini,
+                                    'month_selected' => $month_selected,
+                                    'year_selected' => $year_selected,
+                                ));
                                 ?>
-                                    <tr>
-                                        <td align="left"><?php echo ++$start; ?></td>
-                                        <td align="left"><?php echo $list_data->tanggal; ?></td>
-
-                                        <td align="left">
-                                            <?php
-                                            echo $Get_Kode_akun;
-                                            // . " id" . $Get_data_per_kode_akun_bulan_ini->id
-                                            ?>
-                                        </td>
-
-                                        <!-- <td>Uraian</td> -->
-                                        <td align="left">
-                                            <?php
-                                            // echo "uraian";
-                                            echo $list_data->nama_akun;
-                                            // echo "<br/>";
-                                            // echo $Neraca_Saldo_DATA->row()->debet_akhir_tahun_lalu;
-                                            ?>
-                                        </td>
-
-                                        <!-- <td>debet_akhir_tahun_lalu</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // // echo $Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu;
-                                            // if ($Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu > 0) {
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->debet_akhir_tahun_lalu, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            //     echo "<br/>";
-                                            // }
-
-                                            if (is_null($Neraca_Saldo_DATA->row()->debet_akhir_tahun_lalu)) {
-
-                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">Input Debet</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-
-                                            } else {
-
-                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">'.$Neraca_Saldo_DATA->row()->debet_akhir_tahun_lalu.'</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-                                            }
-
-
-                                            ?>
-
-                                            <!-- <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
-                                                Input Debet <?php //echo $list_data->id 
-                                                            ?>
-                                            </button> -->
-
-                                        </td>
-
-
-
-                                        <!-- <td>kredit_akhir_tahun_lalu</td> -->
-                                        <td align="right">
-                                            <?php
-
-                                            // if ($Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_akhir_tahun_lalu, 2, ',', '.');
-                                            //     // echo $Get_kode_akun_PEMBELIAN_kredit;
-                                            //     echo "<br/>";
-                                            // }
-
-                                            // echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">Input Kredit</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-
-
-                                            if (is_null($Neraca_Saldo_DATA->row()->kredit_akhir_tahun_lalu)) {
-
-                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">Input Kredit</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-
-                                            } else {
-
-                                                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_from_date), '<i class="fa fa-pencil-square-o">'.$Neraca_Saldo_DATA->row()->kredit_akhir_tahun_lalu.'</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-
-                                            }
-
-
-                                            ?>
-
-                                            <!-- 
-                                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#modal_input_jurnal_penyesuaian">
-                                                Input kredit <?php //echo $list_data->id 
-                                                                ?>
-                                            </button>
-                                             -->
-                                        </td>
-
-
-                                        <!-- <td>PENYESUAIAN DEBET</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // if ($Get_data_per_kode_akun_bulan_ini->debet_penyesuaian > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->debet_penyesuaian;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->debet_penyesuaian, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            //     echo "<br/>";
-                                            // }
-                                            // // print_r($GET_jumlah_data_PER_KODE_AKUN);
-
-
-                                            if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->debet;
-                                            } else {
-                                                echo "0";
-                                            }
-                                            ?>
-                                        </td>
-
-
-                                        <!-- <td>PENYESUAIAN KREDIT</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // if ($Get_data_per_kode_akun_bulan_ini->kredit_penyesuaian > 0) {
-                                            //     // echo "kredit_penyesuaian";
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_penyesuaian, 2, ',', '.');
-                                            // }
-
-
-
-                                            if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->kredit;
-                                            } else {
-                                                echo "0";
-                                            }
-
-
-
-
-
-                                            ?>
-                                        </td>
-
-                                        <!-- <td>ns_setelah_penyesuaian DEBET</td> -->
-                                        <td align="right">
-                                            <?php
-
-                                            // // $Get_data_PENYESUAIAN->jumlah_debet;
-                                            // if ($Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->debet_ns_setelah_penyesuaian, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            // }
-
-                                            if ($Jurnal_penyesuaian_DATA->num_rows() > 0 or $Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                // echo $Jurnal_penyesuaian_DATA->row()->debet;
-
-                                                // if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->debet + $Jurnal_penyesuaian_DATA->row()->debet;
-                                                // } else {
-                                                //     echo "0";
-                                                // }
-
-
-                                            } else {
-                                                echo "0";
-                                            }
-
-
-                                            ?>
-                                        </td>
-
-
-                                        <!-- <td>ns_setelah_penyesuaian KREDIT</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // if ($Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->kredit_ns_setelah_penyesuaian, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            // }
-
-                                            if ($Jurnal_penyesuaian_DATA->num_rows() > 0 or $Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                // echo $Jurnal_penyesuaian_DATA->row()->kredit;
-
-                                                // if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->kredit + $Jurnal_penyesuaian_DATA->row()->kredit;
-                                                // } else {
-                                                //     echo "0";
-                                                // }
-
-
-                                            } else {
-                                                echo "0";
-                                            }
-
-                                            ?>
-                                        </td>
-
-                                        <!-- <td>debet_laba_rugi</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // if ($Get_data_per_kode_akun_bulan_ini->debet_laba_rugi > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->debet_laba_rugi;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->debet_laba_rugi, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            // }
-
-
-                                            if ($Jurnal_penyesuaian_DATA->num_rows() > 0 or $Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                // echo $Jurnal_penyesuaian_DATA->row()->debet;
-
-                                                // if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->debet + $Jurnal_penyesuaian_DATA->row()->debet;
-                                                // } else {
-                                                //     echo "0";
-                                                // }
-
-
-                                            } else {
-                                                echo "0";
-                                            }
-
-
-                                            ?>
-                                        </td>
-
-
-                                        <!-- <td>kreditdebet_laba_rugi</td> -->
-                                        <td align="right">
-                                            <?php
-                                            // if ($Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi > 0) {
-                                            //     // echo $Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi;
-                                            //     echo number_format($Get_data_per_kode_akun_bulan_ini->kreditdebet_laba_rugi, 2, ',', '.');
-                                            //     // echo $list_data->kode_akun;
-                                            // }
-
-                                            if ($Jurnal_penyesuaian_DATA->num_rows() > 0 or $Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                // echo $Jurnal_penyesuaian_DATA->row()->kredit;
-
-                                                // if ($Buku_besar_DATA->num_rows() > 0) {
-                                                // echo "ada data ---";
-                                                echo $Buku_besar_DATA->row()->kredit + $Jurnal_penyesuaian_DATA->row()->kredit;
-                                                // } else {
-                                                //     echo "0";
-                                                // }
-
-
-                                            } else {
-                                                echo "0";
-                                            }
-
-                                            ?>
-                                        </td>
-
-
-
-                                    </tr>
-
-
-                                <?php
-                                }
-                                ?>
-
-
-
-
-
                             </tbody>
 
 
                         </table>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
@@ -826,23 +367,236 @@
         width: 100%;
         margin: 0 auto;
     }
+
+    .ns-datatable-wrap {
+        border: 2px solid #a8e6cf;
+        border-radius: 12px;
+        padding: 14px 12px 10px;
+        background: linear-gradient(180deg, #f3fbf6 0%, #ffffff 55%);
+        box-shadow: 0 4px 18px rgba(76, 175, 80, 0.10);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ns-datatable-wrap::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #81c784, #a5d6a7, #c8e6c9);
+    }
+
+    .ns-datatable-wrap.ns-loading {
+        opacity: 0.72;
+        pointer-events: none;
+    }
+
+    .ns-datatable-wrap.ns-loading::after {
+        content: 'Memuat data...';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(243, 251, 246, 0.65);
+        color: #2e7d32;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        z-index: 5;
+    }
+
+    .ns-datatable-wrap table.dataTable {
+        border-collapse: separate !important;
+        border-spacing: 0;
+    }
+
+    .ns-datatable-wrap table.dataTable thead th,
+    .ns-datatable-wrap table.dataTable tbody td {
+        border: 1px solid #b9dfc4 !important;
+    }
+
+    .ns-datatable-wrap table.dataTable thead th {
+        background: linear-gradient(180deg, #e8f5e9 0%, #f1f8f4 100%) !important;
+        color: #2e7d32;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .ns-datatable-wrap table.dataTable tbody tr:nth-child(even) td {
+        background-color: #f9fdfb;
+    }
+
+    .ns-datatable-wrap table.dataTable tbody tr:hover td {
+        background-color: #edf7ef !important;
+    }
+
+    .ns-datatable-wrap .dataTables_scrollHead table.dataTable thead th {
+        border-bottom: 2px solid #a5d6a7 !important;
+    }
+
+    .ns-datatable-wrap .dataTables_filter input,
+    .ns-datatable-wrap #bulan_ns {
+        border-color: #a5d6a7;
+    }
+
+    .ns-datatable-wrap .dataTables_filter input:focus {
+        border-color: #66bb6a;
+        box-shadow: 0 0 0 0.15rem rgba(102, 187, 106, 0.25);
+    }
 </style>
 
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 600,
-            "scrollX": true
+(function() {
+    var LS_BULAN_NS = 'ns_bulan_ns';
+    var urlAjaxRefresh = <?php echo json_encode(isset($url_ajax_refresh) ? $url_ajax_refresh : site_url('Neraca_saldo/ajax_refresh_datatable')); ?>;
+    var serverBulanNs = <?php echo json_encode($bulan_ns_value); ?>;
+    var nsRefreshing = false;
+    var nsMainDt = null;
+
+    function saveNsLocalStorage() {
+        try {
+            var val = jQuery('#bulan_ns').val() || '';
+            if (/^\d{4}-\d{2}$/.test(val)) {
+                localStorage.setItem(LS_BULAN_NS, val);
+            }
+        } catch (eLs) {}
+    }
+
+    function getDefaultBulanNs() {
+        var now = new Date();
+        return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    }
+
+    function ensureBulanNsValue() {
+        var $input = jQuery('#bulan_ns');
+        var val = ($input.val() || '').trim();
+        if (!/^\d{4}-\d{2}$/.test(val)) {
+            val = serverBulanNs || getDefaultBulanNs();
+            $input.val(val);
+        }
+        return val;
+    }
+
+    function destroyNeracaSaldoDatatable() {
+        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            jQuery('#tglSPOPFreeze').DataTable().destroy();
+            nsMainDt = null;
+        }
+    }
+
+    function initNeracaSaldoDatatable() {
+        if (!window.jQuery || !jQuery.fn.DataTable) {
+            return null;
+        }
+        var $table = jQuery('#tglSPOPFreeze');
+        if (!$table.length) {
+            return null;
+        }
+        destroyNeracaSaldoDatatable();
+        nsMainDt = $table.DataTable({
+            scrollY: 600,
+            scrollX: true,
+            scrollCollapse: true,
+            paging: false,
+            searching: true,
+            ordering: true,
+            info: false,
+            order: [],
+            language: {
+                search: 'Cari:',
+                zeroRecords: 'Data tidak ditemukan',
+                emptyTable: 'Belum ada data'
+            }
+        });
+        return nsMainDt;
+    }
+
+    function updateNeracaSaldoHeader(res) {
+        if (res.periode_label) {
+            jQuery('#ns-periode-label').text('NERACA SALDO ' + res.periode_label);
+        }
+        if (res.tahun_lalu) {
+            jQuery('#ns-th-tahun-lalu').text('NERACA SALDO 31 Desember ' + res.tahun_lalu);
+        }
+    }
+
+    function refreshNeracaSaldoDatatable() {
+        if (nsRefreshing) {
+            return;
+        }
+        var val = ensureBulanNsValue();
+        if (!val) {
+            return;
+        }
+
+        nsRefreshing = true;
+        saveNsLocalStorage();
+        jQuery('#ns-datatable-wrap').addClass('ns-loading');
+
+        jQuery.ajax({
+            url: urlAjaxRefresh,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan_ns: val }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                return;
+            }
+
+            serverBulanNs = res.bulan_ns_value || val;
+            updateNeracaSaldoHeader(res);
+
+            destroyNeracaSaldoDatatable();
+            jQuery('#ns-tbody').html(res.tbody_html || '');
+            initNeracaSaldoDatatable();
+        }).fail(function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat memuat data neraca saldo.' });
+            }
+        }).always(function() {
+            nsRefreshing = false;
+            jQuery('#ns-datatable-wrap').removeClass('ns-loading');
+        });
+    }
+
+    window.addEventListener('load', function() {
+        if (!window.jQuery) {
+            return;
+        }
+
+        var lsBulan = null;
+        try {
+            lsBulan = localStorage.getItem(LS_BULAN_NS);
+        } catch (eLs) {}
+
+        if (lsBulan && /^\d{4}-\d{2}$/.test(lsBulan)) {
+            jQuery('#bulan_ns').val(lsBulan);
+        } else {
+            ensureBulanNsValue();
+            saveNsLocalStorage();
+        }
+
+        initNeracaSaldoDatatable();
+
+        if (lsBulan && /^\d{4}-\d{2}$/.test(lsBulan) && lsBulan !== serverBulanNs) {
+            refreshNeracaSaldoDatatable();
+        }
+
+        jQuery('#bulan_ns').on('change', function() {
+            if (!this.value) {
+                return;
+            }
+            refreshNeracaSaldoDatatable();
+        });
+
+        jQuery('#form-cari-neraca-saldo').on('submit', function(e) {
+            e.preventDefault();
+            refreshNeracaSaldoDatatable();
         });
     });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 1100,
-            "scrollX": true
-        });
-    });
+})();
 </script>

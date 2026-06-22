@@ -15,6 +15,76 @@ class Neraca_saldo extends CI_Controller
 	}
 
 
+	private function _neraca_saldo_session_bulan_key()
+	{
+		return 'neraca_saldo_bulan_ns';
+	}
+
+	private function _resolve_neraca_saldo_bulan()
+	{
+		$bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+		if ($bulan_ns === '') {
+			$bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
+		}
+
+		if ($bulan_ns !== '' && preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+			$this->session->set_userdata($this->_neraca_saldo_session_bulan_key(), $bulan_ns);
+			return array(
+				'month' => (int) $m[2],
+				'year' => (int) $m[1],
+				'bulan_ns_value' => sprintf('%04d-%02d', (int) $m[1], (int) $m[2]),
+			);
+		}
+
+		$bulan_ns = trim((string) $this->session->userdata($this->_neraca_saldo_session_bulan_key()));
+		if ($bulan_ns !== '' && preg_match('/^(\d{4})-(\d{2})$/', $bulan_ns, $m)) {
+			return array(
+				'month' => (int) $m[2],
+				'year' => (int) $m[1],
+				'bulan_ns_value' => sprintf('%04d-%02d', (int) $m[1], (int) $m[2]),
+			);
+		}
+
+		return array(
+			'month' => (int) date('m'),
+			'year' => (int) date('Y'),
+			'bulan_ns_value' => date('Y-m'),
+		);
+	}
+
+	private function _neraca_saldo_view_data($extra = array())
+	{
+		$parsed = $this->_resolve_neraca_saldo_bulan();
+		$month = (int) $parsed['month'];
+		$year = (int) $parsed['year'];
+
+		if ($month < 1 || $month > 12) {
+			$month = (int) date('m');
+		}
+		if ($year < 2000) {
+			$year = (int) date('Y');
+		}
+
+		$data = array(
+			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
+			'action' => site_url('Buku_besar/cari_kode_akun'),
+			'month_selected' => sprintf('%02d', $month),
+			'year_selected' => $year,
+			'bulan_ns_value' => sprintf('%04d-%02d', $year, $month),
+			'Get_month_from_date' => $month,
+			'Get_year_Tahun_ini' => $year,
+			'Get_year_Setahun_lalu' => (int) date('Y', strtotime('-1 year')),
+			'url_cari_bulan' => site_url('Neraca_saldo/Cari_bulan_data'),
+			'url_ajax_refresh' => site_url('Neraca_saldo/ajax_refresh_datatable'),
+		);
+
+		if (!is_array($extra)) {
+			$extra = array();
+		}
+
+		return array_merge($data, $extra);
+	}
+
 	public function index()
 	{
 
@@ -67,21 +137,7 @@ class Neraca_saldo extends CI_Controller
 		// die;
 
 
-		$Get_month_from_date = date("m");
-		$Get_year_Tahun_ini = date("Y");
-
-		$data = array(
-			// 'data_Buku_besar' => $data_Buku_besar,
-			// 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-			// 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
-			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
-			'action' => site_url('Buku_besar/cari_kode_akun'),
-			'month_selected' => $Get_month_from_date,
-			'year_selected' => $Get_year_Tahun_ini,
-		);
-
-		// print_r($data);
-		// die;
+		$data = $this->_neraca_saldo_view_data();
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
 	}
@@ -245,52 +301,41 @@ class Neraca_saldo extends CI_Controller
 
 	public function Cari_bulan_data()
 	{
-		// print_r("Cari_bulan_data");
-		// print_r("<br/>");
-		// print_r(date("Y", strtotime($this->input->post('bulan_ns', TRUE))));
-		// print_r("<br/>");
-		// print_r(date("m", strtotime($this->input->post('bulan_ns', TRUE))));
-		// die;
+		$data = $this->_neraca_saldo_view_data();
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
+	}
 
-		if ($this->input->post('bulan_ns', TRUE)) {
-			$Get_month_selected = date("m", strtotime($this->input->post('bulan_ns', TRUE)));
-			$Get_YEAR_selected = date("Y", strtotime($this->input->post('bulan_ns', TRUE)));
-		} else {
-			// $Get_date_awal = date("Y-m-1 00:00:00");
-			// $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-			$Get_month_selected = date("m"); // TANGGAL AKHIR BULAN -t
-			$Get_YEAR_selected = date("Y"); // TANGGAL AKHIR BULAN -t
+	public function ajax_refresh_datatable()
+	{
+		$this->load->helper('buku_besar_list');
+		header('Content-Type: application/json; charset=utf-8');
+
+		$data = $this->_neraca_saldo_view_data();
+		$month_int = (int) $data['Get_month_from_date'];
+		$year_int = (int) $data['Get_year_Tahun_ini'];
+
+		if ($month_int < 1 || $month_int > 12) {
+			$month_int = (int) date('m');
+		}
+		if ($year_int < 2000) {
+			$year_int = (int) date('Y');
 		}
 
+		$data['Get_month_from_date'] = $month_int;
+		$data['Get_year_Tahun_ini'] = $year_int;
+		$data['month_selected'] = sprintf('%02d', $month_int);
+		$data['year_selected'] = $year_int;
+		$data['bulan_ns_value'] = sprintf('%04d-%02d', $year_int, $month_int);
 
-		// print_r($Get_month_selected);
-		// print_r("<br/>");
-		// print_r($Get_YEAR_selected);
-		// print_r("<br/>");
+		$tbody_html = $this->load->view('anekadharma/neraca_saldo/adminlte310_neraca_saldo_tbody', $data, TRUE);
 
-		// $GET_Source = "penjualan";
-		// $sql = "SELECT * FROM `buku_besar` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected  ORDER BY `tanggal`,`id`";
-
-		// $Buku_besar_DATA = $this->db->query($sql)->result();
-
-		// print_r($Buku_besar_DATA);
-
-
-		$data = array(
-			// 'data_Buku_besar' => $data_Buku_besar,
-			// 'Data_pembelian' => $this->db->query($sql_pembelian)->result(),
-			// 'Data_penjualan' => $this->db->query($sql_penjualan)->result(),
-			'Data_Kode_Akun' => $this->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
-			// 'Data_Kode_Akun' =>  $this->db->query($sql)->result(),
-			'action' => site_url('Buku_besar/cari_kode_akun'),
-			'month_selected' => $Get_month_selected,
-			'year_selected' => $Get_YEAR_selected,
-		);
-
-		// print_r($data);
-		// die;
-
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/neraca_saldo/adminlte310_neraca_saldo_list', $data);
+		echo json_encode(array(
+			'ok' => true,
+			'tbody_html' => $tbody_html,
+			'periode_label' => buku_besar_bulan_teks($month_int) . ' ' . $year_int,
+			'bulan_ns_value' => $data['bulan_ns_value'],
+			'tahun_lalu' => $data['Get_year_Setahun_lalu'],
+		));
 	}
 
 	public function index_server_side()
