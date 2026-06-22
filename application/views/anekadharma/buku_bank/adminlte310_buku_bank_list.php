@@ -85,20 +85,11 @@ $compare_sections = array(
                             </div>
                             <div class="col-lg-9">
                                 <form id="form-cari-buku-bank" method="post" action="#" onsubmit="return false;">
-                                <div class="row justify-content-end align-items-center">
-                                    <div class="col-auto mb-2 mb-md-0">
-                                        <label for="bulan_ns" class="small mb-1">Pilih Bulan</label>
-                                        <input type="month" class="form-control form-control-sm" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
-                                    </div>
-                                    <div class="col-auto mb-2 mb-md-0">
-                                        <label class="small mb-1 d-block">&nbsp;</label>
-                                        <button type="button" class="btn btn-danger btn-sm btn-flat" id="btn-cari-bk">
-                                            <i class="fa fa-search" aria-hidden="true"></i> Cari
-                                        </button>
-                                    </div>
-                                    <div class="col-auto mb-2 mb-md-0">
-                                        <?php echo anchor(site_url('Bukubank/create'), 'Input Buku Bank', 'class="btn btn-success btn-sm"'); ?>
-                                    </div>
+                                <div class="bk-filter-row d-flex flex-wrap justify-content-center align-items-center">
+                                    <input type="month" class="form-control form-control-sm bk-month-input" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <button type="button" class="btn btn-danger btn-sm btn-flat ml-2" id="btn-cari-bk">
+                                        <i class="fa fa-search" aria-hidden="true"></i> Cari
+                                    </button>
                                 </div>
                                 </form>
                             </div>
@@ -118,9 +109,10 @@ $compare_sections = array(
                         <div class="tab-content mt-3" id="buku-bank-tabs-content">
                             <div class="tab-pane fade<?php echo $tab_data_active ? ' show active' : ''; ?>" id="panel-bk-data" role="tabpanel">
                                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 buku-bank-tab1-toolbar">
-                                    <div>
-                                        <h5 class="mb-0 text-primary"><strong>Buku Bank</strong></h5>
-                                        <small class="text-muted">Pilih bulan di atas — data dimuat otomatis dari tanggal 1 s/d akhir bulan terpilih</small>
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <h5 class="mb-0 text-primary mr-2"><strong>Buku Bank</strong></h5>
+                                        <?php echo anchor(site_url('Bukubank/create'), '<i class="fa fa-plus"></i> Input Buku Bank', 'class="btn btn-success btn-sm"'); ?>
+                                        <small class="text-muted ml-2 d-none d-md-inline">Pilih bulan di atas — data dimuat otomatis</small>
                                     </div>
                                     <button type="button" class="btn btn-success mt-2 mt-md-0" id="btn-buku-bank-excel">
                                         <i class="fa fa-file-excel-o"></i> Cetak ke Excel
@@ -356,6 +348,8 @@ $compare_sections = array(
 </div>
 
 <style type="text/css">
+    .bk-filter-row { gap: 0; }
+    .bk-month-input { width: auto; min-width: 150px; }
     .nav-tabs.buku-bank-tabs { border-bottom: 2px solid #007bff; margin-bottom: 0; }
     .nav-tabs.buku-bank-tabs .nav-link { border: 2px solid #007bff; border-bottom: none; color: #666; margin-right: 4px; border-radius: 4px 4px 0 0; background: #fff; }
     .nav-tabs.buku-bank-tabs .nav-link.active { background: #007bff; color: #fff; font-weight: bold; }

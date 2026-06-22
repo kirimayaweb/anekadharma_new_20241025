@@ -1208,62 +1208,8 @@ class Tbl_kas_kecil extends CI_Controller
 
     public function excel()
     {
-
-        $tgl_sekarang = date("d-m-Y H:i:s");
-
-        $this->load->helper('exportexcel');
-        $namaFile = "KAS_KECIL_" . $tgl_sekarang . ".xls";
-        $judul = "tbl_kas_kecil";
-        $tablehead = 0;
-        $tablebody = 1;
-        $nourut = 1;
-        //penulisan header
-        header("Pragma: public");
-        header("Expires: 0");
-        header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-        header("Content-Type: application/force-download");
-        header("Content-Type: application/octet-stream");
-        header("Content-Type: application/download");
-        header("Content-Disposition: attachment;filename=" . $namaFile . "");
-        header("Content-Transfer-Encoding: binary ");
-
-        xlsBOF();
-
-        $kolomhead = 0;
-        xlsWriteLabel($tablehead, $kolomhead++, "No");
-        // xlsWriteLabel($tablehead, $kolomhead++, "Uuid Kas Kecil");
-        xlsWriteLabel($tablehead, $kolomhead++, "Tanggal");
-        xlsWriteLabel($tablehead, $kolomhead++, "Unit");
-        xlsWriteLabel($tablehead, $kolomhead++, "Keterangan");
-        xlsWriteLabel($tablehead, $kolomhead++, "Debet");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kredit");
-        xlsWriteLabel($tablehead, $kolomhead++, "Saldo");
-        // xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
-
-        $get_total_debet = 0;
-        $get_total_kredit = 0;
-        foreach ($this->Tbl_kas_kecil_model->get_all() as $data) {
-            $kolombody = 0;
-
-            $get_total_debet = $get_total_debet + $data->debet;
-            $get_total_kredit = $get_total_kredit + $data->kredit;
-
-            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-            xlsWriteNumber($tablebody, $kolombody++, $nourut);
-            // xlsWriteLabel($tablebody, $kolombody++, $data->uuid_kas_kecil);
-            xlsWriteLabel($tablebody, $kolombody++, $data->tanggal);
-            xlsWriteLabel($tablebody, $kolombody++, $data->unit);
-            xlsWriteLabel($tablebody, $kolombody++, $data->keterangan);
-            xlsWriteLabel($tablebody, $kolombody++, number_format($data->debet, 2, ',', '.'));
-            xlsWriteLabel($tablebody, $kolombody++, number_format($data->kredit, 2, ',', '.'));
-            xlsWriteLabel($tablebody, $kolombody++, number_format($get_total_debet - $get_total_kredit, 2, ',', '.'));
-            // xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
-
-            $tablebody++;
-            $nourut++;
-        }
-
-        xlsEOF();
+        $this->load->helper('kas_kecil_list');
+        kas_kecil_export_excel_output($this);
         exit();
     }
 }

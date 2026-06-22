@@ -3339,7 +3339,7 @@ class Tbl_penjualan extends CI_Controller
 			`nmrpesan`,
 			`nmrkirim`,
 			`uuid_unit`,
-			MAX(`unit`) AS `unit`,
+			MAX(`konsumen_nama`) AS `konsumen_nama`,
 			MAX(`tgl_bayar`) AS `tgl_bayar`,
 			MAX(`proses_bayar`) AS `proses_bayar`,
 			SUM(COALESCE(`harga_satuan`, 0) * COALESCE(`jumlah`, 0)) AS `piutang`,
@@ -3364,6 +3364,7 @@ class Tbl_penjualan extends CI_Controller
 			$result[] = array(
 				'unit' => $unit,
 				'rows' => $this->_get_jurnal_penjualan2_per_unit_rows($uuid_unit, $month_selected, $year_selected),
+				'format_type' => $this->_jurnal_penjualan2_per_unit_format_type($unit),
 			);
 		}
 
@@ -3381,6 +3382,62 @@ class Tbl_penjualan extends CI_Controller
 		}
 
 		return $Get_bulan_ns;
+	}
+
+	private function _jurnal_penjualan2_per_unit_format_type($unit_row)
+	{
+		if (!$unit_row) {
+			return 'standard';
+		}
+
+		$kode = strtoupper(trim((string) (isset($unit_row->kode_unit) ? $unit_row->kode_unit : '')));
+		$nama = strtoupper(trim((string) (isset($unit_row->nama_unit) ? $unit_row->nama_unit : '')));
+		$gabung = $kode . ' ' . $nama;
+		$gabung_norm = preg_replace('/[\s_\-]+/', '', $gabung);
+
+		if ($kode === 'CETAK' || $nama === 'CETAK') {
+			return 'cetak';
+		}
+
+		if ($kode === 'PU-ATK' || $nama === 'PU-ATK' || preg_replace('/[\s_\-]+/', '', $kode) === 'PUATK') {
+			return 'pu_atk';
+		}
+
+		if (strpos($gabung_norm, 'PUFCGOSE') !== false
+			|| strpos($gabung_norm, 'FCGOSE') !== false
+			|| (strpos($gabung, 'FC') !== false && strpos($gabung, 'GOSE') !== false)) {
+			return 'pu_fc_gose';
+		}
+
+		return 'standard';
+	}
+
+	private function _is_jurnal_penjualan2_per_unit_special_format($format_type)
+	{
+		return in_array($format_type, array('cetak', 'pu_atk', 'pu_fc_gose'), true);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_header_style_by_theme($theme_index)
+	{
+		$styles = array(6, 14, 4, 6, 14, 4, 6, 14);
+
+		return $styles[(int) $theme_index % count($styles)];
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_theme_index_by_uuid($uuid_unit)
+	{
+		foreach ($this->_get_sys_unit_list_ordered() as $index => $unit_row) {
+			if (isset($unit_row->uuid_unit) && (string) $unit_row->uuid_unit === (string) $uuid_unit) {
+				return (int) $index;
+			}
+		}
+
+		return 0;
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_konsumen_label($list_data)
+	{
+		return trim((string) (isset($list_data->konsumen_nama) ? $list_data->konsumen_nama : ''));
 	}
 
 	public function excel_jurnal_penjualan2_per_unit()
@@ -3403,6 +3460,10 @@ class Tbl_penjualan extends CI_Controller
 		$Get_month_selected = (int) date('m', strtotime($Get_bulan_ns . '-01'));
 		$Get_YEAR_selected = (int) date('Y', strtotime($Get_bulan_ns . '-01'));
 		$rows = $this->_get_jurnal_penjualan2_per_unit_rows($uuid_unit, $Get_month_selected, $Get_YEAR_selected);
+		$format_type = $this->_jurnal_penjualan2_per_unit_format_type($unit_row);
+		$theme_index = $this->_excel_jurnal_penjualan2_per_unit_theme_index_by_uuid($uuid_unit);
+		$header_style = $this->_excel_jurnal_penjualan2_per_unit_header_style_by_theme($theme_index);
+		$styles = $this->_excel_jurnal_penjualan2_style_map();
 
 		$unit_label = trim((string) (isset($unit_row->nama_unit) ? $unit_row->nama_unit : ''));
 		if ($unit_label === '') {
@@ -3410,23 +3471,33 @@ class Tbl_penjualan extends CI_Controller
 		}
 		$unit_slug = preg_replace('/[^A-Za-z0-9_-]+/', '_', $unit_label);
 		$namaFile = 'jurnal_penjualan_per_unit_' . $unit_slug . '_' . $Get_bulan_ns . '.xlsx';
-
-		$style_header = 6;
-		$style_border = 3;
-		$style_total_label = 7;
-		$style_total_amount = 8;
 		$col_end = 11;
 
 		excel_prepare_download($namaFile);
 		xlsBOF();
+		if ($format_type === 'pu_fc_gose') {
+			xlsSetColumnWidths(array(5, 12, 10, 10, 16, 11, 11, 12, 12, 12, 14, 14));
+		} else {
+			xlsSetColumnWidths(array(5, 12, 12, 12, 10, 16, 14, 14, 14, 12, 14, 14));
+		}
 
 		$bulan_tahun_label = $this->_bulan_indonesia($Get_month_selected) . ' ' . $Get_YEAR_selected;
-		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(0, 'JURNAL PENJUALAN PER UNIT', 2, 0, $col_end);
-		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(1, 'Unit: ' . $unit_label . ' | Bulan ' . $bulan_tahun_label, 0, 0, $col_end);
+		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(0, 'JURNAL PENJUALAN PER UNIT', $styles['title'], 0, $col_end);
+		$this->_excel_jurnal_penjualan2_per_unit_write_merged_title_row(1, 'Unit: ' . $unit_label . ' | Bulan ' . $bulan_tahun_label, $header_style, 0, $col_end);
 
-		$tablehead_row = 3;
-		$tablebody = 4;
-		$this->_excel_jurnal_penjualan2_per_unit_write_table_header($tablehead_row, $style_header);
+		if ($format_type === 'cetak') {
+			$tablebody = 6;
+			$this->_excel_jurnal_penjualan2_per_unit_write_table_header_cetak(3, 4, 5, $header_style);
+		} elseif ($format_type === 'pu_atk') {
+			$tablebody = 6;
+			$this->_excel_jurnal_penjualan2_per_unit_write_table_header_pu_atk(3, 4, 5, $header_style);
+		} elseif ($format_type === 'pu_fc_gose') {
+			$tablebody = 7;
+			$this->_excel_jurnal_penjualan2_per_unit_write_table_header_pu_fc_gose(3, 4, 5, 6, $header_style);
+		} else {
+			$tablebody = 4;
+			$this->_excel_jurnal_penjualan2_per_unit_write_table_header(3, $header_style);
+		}
 
 		$nomor = 0;
 		$total_piutang = 0;
@@ -3436,12 +3507,13 @@ class Tbl_penjualan extends CI_Controller
 		$total_selisih = 0;
 
 		foreach ($rows as $list_data) {
-			$this->_excel_jurnal_penjualan2_per_unit_write_data_row(
+			$this->_excel_jurnal_penjualan2_per_unit_write_data_row_by_format(
 				$tablebody,
 				++$nomor,
 				$list_data,
-				$style_border,
-				$style_total_amount
+				$format_type,
+				$styles['left'],
+				$styles['amount']
 			);
 			$tablebody++;
 
@@ -3452,15 +3524,16 @@ class Tbl_penjualan extends CI_Controller
 			$total_selisih += (float) $list_data->selisih;
 		}
 
-		$this->_excel_jurnal_penjualan2_per_unit_write_grand_total_row(
+		$this->_excel_jurnal_penjualan2_per_unit_write_grand_total_row_by_format(
 			$tablebody,
+			$format_type,
 			$total_piutang,
 			$total_penjualan,
 			$total_utang_ppn,
 			$total_jumlah,
 			$total_selisih,
-			$style_total_label,
-			$style_total_amount
+			$styles['total_label'],
+			$styles['total_amount']
 		);
 
 		xlsEOF();
@@ -3498,6 +3571,173 @@ class Tbl_penjualan extends CI_Controller
 		}
 	}
 
+	private function _excel_jurnal_penjualan2_per_unit_write_table_header_cetak($rowStart, $rowMid, $rowEnd, $style)
+	{
+		$this->_excel_jurnal_penjualan2_per_unit_write_table_header_debet_kredit(
+			$rowStart,
+			$rowMid,
+			$rowEnd,
+			$style,
+			'41101',
+			'Penjualan DPP'
+		);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_table_header_pu_atk($rowStart, $rowMid, $rowEnd, $style)
+	{
+		$this->_excel_jurnal_penjualan2_per_unit_write_table_header_debet_kredit(
+			$rowStart,
+			$rowMid,
+			$rowEnd,
+			$style,
+			'41116',
+			'Penjualan ATK'
+		);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_table_header_debet_kredit($rowStart, $rowMid, $rowEnd, $style, $kredit_kode_penjualan, $label_penjualan)
+	{
+		$single_headers = array(
+			0 => 'No',
+			1 => 'Tanggal',
+			2 => 'NO INVOICE',
+			3 => 'Nomor Pesan',
+			4 => 'Nomor Kirim',
+			5 => 'KONSUMEN',
+			9 => 'Tanggal Bayar',
+			10 => 'Jumlah',
+			11 => 'Selisih',
+		);
+
+		foreach ($single_headers as $col => $label) {
+			xlsWriteCellStyle($rowStart, $col, $label, $style);
+			xlsAddMerge($rowStart, $col, $rowEnd, $col);
+			xlsWriteCellStyle($rowMid, $col, '', $style);
+			xlsWriteCellStyle($rowEnd, $col, '', $style);
+		}
+
+		xlsWriteCellStyle($rowStart, 6, 'DEBET', $style);
+		xlsWriteCellStyle($rowStart, 7, 'KREDIT', $style);
+		xlsAddMerge($rowStart, 7, $rowStart, 8);
+		xlsWriteCellStyle($rowStart, 8, '', $style);
+
+		xlsWriteCellStyle($rowMid, 6, '11301', $style);
+		xlsWriteCellStyle($rowMid, 7, $kredit_kode_penjualan, $style);
+		xlsWriteCellStyle($rowMid, 8, '21201', $style);
+
+		xlsWriteCellStyle($rowEnd, 6, 'Piutang', $style);
+		xlsWriteCellStyle($rowEnd, 7, $label_penjualan, $style);
+		xlsWriteCellStyle($rowEnd, 8, 'Utang PPN', $style);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_table_header_pu_fc_gose($rowStart, $rowArgo, $rowKode, $rowLabel, $style)
+	{
+		$single_headers = array(
+			0 => 'No',
+			1 => 'Tanggal',
+			4 => 'KONSUMEN',
+			9 => 'Tanggal Bayar',
+			10 => 'Jumlah',
+			11 => 'Selisih',
+		);
+
+		foreach ($single_headers as $col => $label) {
+			xlsWriteCellStyle($rowStart, $col, $label, $style);
+			xlsAddMerge($rowStart, $col, $rowLabel, $col);
+			xlsWriteCellStyle($rowArgo, $col, '', $style);
+			xlsWriteCellStyle($rowKode, $col, '', $style);
+			xlsWriteCellStyle($rowLabel, $col, '', $style);
+		}
+
+		xlsWriteCellStyle($rowStart, 2, 'ARGO', $style);
+		xlsAddMerge($rowStart, 2, $rowStart, 3);
+		xlsWriteCellStyle($rowStart, 3, '', $style);
+
+		xlsWriteCellStyle($rowArgo, 2, 'AWAL', $style);
+		xlsAddMerge($rowArgo, 2, $rowKode, 2);
+		xlsWriteCellStyle($rowArgo, 3, 'Akhir', $style);
+		xlsAddMerge($rowArgo, 3, $rowKode, 3);
+
+		xlsWriteCellStyle($rowStart, 5, 'DEBET', $style);
+		xlsAddMerge($rowStart, 5, $rowStart, 6);
+		xlsWriteCellStyle($rowStart, 6, '', $style);
+
+		xlsWriteCellStyle($rowStart, 7, 'KREDIT', $style);
+		xlsAddMerge($rowStart, 7, $rowStart, 8);
+		xlsWriteCellStyle($rowStart, 8, '', $style);
+
+		xlsWriteCellStyle($rowKode, 5, '52711', $style);
+		xlsWriteCellStyle($rowKode, 6, '52704', $style);
+		xlsWriteCellStyle($rowKode, 7, '41102', $style);
+		xlsWriteCellStyle($rowKode, 8, '21201', $style);
+
+		xlsWriteCellStyle($rowLabel, 5, 'BOU- Lain lain', $style);
+		xlsWriteCellStyle($rowLabel, 6, 'BOU- Foto Copy & Cetak', $style);
+		xlsWriteCellStyle($rowLabel, 7, 'Penjualan FC Gose', $style);
+		xlsWriteCellStyle($rowLabel, 8, 'Utang PPN', $style);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_data_row_by_format($row, $nomor, $list_data, $format_type, $style_left, $style_amount)
+	{
+		if ($format_type === 'pu_fc_gose') {
+			xlsWriteCellStyle($row, 0, (string) $nomor, $style_left);
+			xlsWriteCellStyle($row, 1, (string) $list_data->tgl_jual_display, $style_left);
+			xlsWriteCellStyle($row, 2, (string) $list_data->no_invoice, $style_left);
+			xlsWriteCellStyle($row, 3, (string) $list_data->nmrpesan, $style_left);
+			xlsWriteCellStyle($row, 4, $this->_excel_jurnal_penjualan2_per_unit_konsumen_label($list_data), $style_left);
+			xlsWriteCellStyle($row, 5, '', $style_left);
+			xlsWriteCellStyle($row, 6, '', $style_left);
+			xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($list_data->penjualan), $style_amount);
+			xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($list_data->utang_ppn), $style_amount);
+			xlsWriteCellStyle($row, 9, (string) $list_data->tgl_bayar_display, $style_left);
+			xlsWriteCellStyle(
+				$row,
+				10,
+				$list_data->jumlah_bayar != 0 ? $this->_excel_jurnal_penjualan2_format_amount($list_data->jumlah_bayar) : '',
+				$style_amount
+			);
+			xlsWriteCellStyle(
+				$row,
+				11,
+				$list_data->selisih != 0 ? $this->_excel_jurnal_penjualan2_format_amount($list_data->selisih) : '',
+				$style_amount
+			);
+			return;
+		}
+
+		$this->_excel_jurnal_penjualan2_per_unit_write_data_row($row, $nomor, $list_data, $style_left, $style_amount);
+	}
+
+	private function _excel_jurnal_penjualan2_per_unit_write_grand_total_row_by_format($row, $format_type, $total_piutang, $total_penjualan, $total_utang_ppn, $total_jumlah, $total_selisih, $style_label, $style_amount)
+	{
+		if ($format_type === 'pu_fc_gose') {
+			xlsAddMerge($row, 0, $row, 4);
+			xlsWriteCellStyle($row, 0, 'TOTAL', $style_label);
+			for ($col = 1; $col <= 4; $col++) {
+				xlsEnsureCellStyle($row, $col, $style_label, '');
+			}
+			xlsWriteCellStyle($row, 5, '', $style_label);
+			xlsWriteCellStyle($row, 6, '', $style_label);
+			xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_penjualan), $style_amount);
+			xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_utang_ppn), $style_amount);
+			xlsWriteCellStyle($row, 9, '', $style_label);
+			xlsWriteCellStyle($row, 10, $this->_excel_jurnal_penjualan2_format_amount($total_jumlah), $style_amount);
+			xlsWriteCellStyle($row, 11, $this->_excel_jurnal_penjualan2_format_amount($total_selisih), $style_amount);
+			return;
+		}
+
+		$this->_excel_jurnal_penjualan2_per_unit_write_grand_total_row(
+			$row,
+			$total_piutang,
+			$total_penjualan,
+			$total_utang_ppn,
+			$total_jumlah,
+			$total_selisih,
+			$style_label,
+			$style_amount
+		);
+	}
+
 	private function _excel_jurnal_penjualan2_per_unit_write_data_row($row, $nomor, $list_data, $style_border, $style_amount)
 	{
 		xlsWriteCellStyle($row, 0, (string) $nomor, $style_border);
@@ -3505,7 +3745,7 @@ class Tbl_penjualan extends CI_Controller
 		xlsWriteCellStyle($row, 2, (string) $list_data->no_invoice, $style_border);
 		xlsWriteCellStyle($row, 3, (string) $list_data->nmrpesan, $style_border);
 		xlsWriteCellStyle($row, 4, (string) $list_data->nmrkirim, $style_border);
-		xlsWriteCellStyle($row, 5, (string) $list_data->unit, $style_border);
+		xlsWriteCellStyle($row, 5, $this->_excel_jurnal_penjualan2_per_unit_konsumen_label($list_data), $style_border);
 		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($list_data->piutang), $style_amount);
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($list_data->penjualan), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($list_data->utang_ppn), $style_amount);
@@ -3526,7 +3766,11 @@ class Tbl_penjualan extends CI_Controller
 
 	private function _excel_jurnal_penjualan2_per_unit_write_grand_total_row($row, $total_piutang, $total_penjualan, $total_utang_ppn, $total_jumlah, $total_selisih, $style_label, $style_amount)
 	{
-		xlsWriteCellStyle($row, 5, 'TOTAL', $style_label);
+		xlsAddMerge($row, 0, $row, 5);
+		xlsWriteCellStyle($row, 0, 'TOTAL', $style_label);
+		for ($col = 1; $col <= 5; $col++) {
+			xlsEnsureCellStyle($row, $col, $style_label, '');
+		}
 		xlsWriteCellStyle($row, 6, $this->_excel_jurnal_penjualan2_format_amount($total_piutang), $style_amount);
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_penjualan2_format_amount($total_penjualan), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_penjualan2_format_amount($total_utang_ppn), $style_amount);

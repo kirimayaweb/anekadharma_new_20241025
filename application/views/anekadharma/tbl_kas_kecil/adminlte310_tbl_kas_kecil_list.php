@@ -46,7 +46,7 @@
                                     </div>
                                     <div class="col-6" align="right">
 
-                                        <?php echo anchor(site_url('tbl_kas_kecil/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
+                                        <?php echo anchor(site_url('Tbl_kas_kecil/excel'), 'Cetak ke Excel', 'class="btn btn-success" id="btn-kas-kecil-excel"'); ?>
                                     </div>
                                 </div>
                             </div>
@@ -82,7 +82,8 @@
                                                     </div>
                                                 </div>
 
-                                                <table id="example" class="display nowrap" style="width:100%">
+                                                <div class="kas-kecil-dt-wrap">
+                                                <table id="kas-kecil-table" class="display nowrap kas-kecil-dt-table" style="width:100%">
                                                     <thead>
                                                         <tr>
                                                             <th width="80px">No</th>
@@ -111,16 +112,16 @@
                                                                 <td style="text-align:left">
                                                                     <?php
                                                                     if ($list_data->debet > 0) {
-                                                                        echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                        echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm kas-kecil-btn-action'));
                                                                     } else {
                                                                         if ($list_data->uuid_spop) {
-                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id .'/'. $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id .'/'. $list_data->uuid_spop), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm kas-kecil-btn-action'));
                                                                         } else {
-                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                            echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil_update/' . $list_data->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm kas-kecil-btn-action'));
                                                                         }
                                                                     }
                                                                     echo ' ';
-                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                                    echo anchor(site_url('Tbl_kas_kecil/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm kas-kecil-btn-action" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>
                                                                 </td>
                                                                 <td style="text-align:center">
@@ -187,6 +188,7 @@
 
 
                                                 </table>
+                                                </div>
 
 
                                             </div>
@@ -220,9 +222,72 @@
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
-    div.dataTables_wrapper {
+    /* Kas Kecil DataTable — border kuning tua hanya di luar wrapper */
+    .kas-kecil-dt-wrap {
+        border: 1px solid #d4a017;
+        border-radius: 4px;
+        padding: 8px;
+        background: #fff;
+        overflow-x: auto;
+    }
+    .kas-kecil-dt-wrap .dataTables_wrapper {
         width: 100%;
         margin: 0 auto;
+    }
+    .kas-kecil-dt-table {
+        margin-bottom: 0 !important;
+        table-layout: auto;
+        width: 100% !important;
+    }
+    .kas-kecil-dt-table thead th,
+    .kas-kecil-dt-table tbody td,
+    .kas-kecil-dt-table tfoot th {
+        border: 1px solid #dee2e6 !important;
+        vertical-align: middle;
+        font-size: 15px;
+        padding: 7px 9px;
+    }
+    .kas-kecil-dt-table .kas-kecil-btn-action {
+        padding: 0.15rem 0.38rem;
+        font-size: 0.66rem;
+        line-height: 1.25;
+    }
+    .kas-kecil-dt-table .kas-kecil-btn-action i {
+        font-size: 0.95em;
+    }
+    .kas-kecil-dt-table thead th {
+        background: #e8f5e9;
+        font-weight: 600;
+        text-align: center;
+        white-space: nowrap;
+        line-height: 1.35;
+        border-bottom: 1px solid #dee2e6 !important;
+    }
+    .kas-kecil-dt-table tbody td {
+        background: #fff;
+        word-wrap: break-word;
+    }
+    .kas-kecil-dt-table tbody tr:hover td {
+        background: #f8f9fa;
+    }
+    .kas-kecil-dt-table tfoot th {
+        background: #f8f9fa;
+        font-weight: 700;
+        border-top: 1px solid #dee2e6 !important;
+    }
+    .kas-kecil-dt-wrap table.dataTable thead .sorting:before,
+    .kas-kecil-dt-wrap table.dataTable thead .sorting:after,
+    .kas-kecil-dt-wrap table.dataTable thead .sorting_asc:before,
+    .kas-kecil-dt-wrap table.dataTable thead .sorting_asc:after,
+    .kas-kecil-dt-wrap table.dataTable thead .sorting_desc:before,
+    .kas-kecil-dt-wrap table.dataTable thead .sorting_desc:after {
+        display: none !important;
+    }
+    .kas-kecil-dt-wrap table.dataTable thead th.sorting,
+    .kas-kecil-dt-wrap table.dataTable thead th.sorting_asc,
+    .kas-kecil-dt-wrap table.dataTable thead th.sorting_desc {
+        background-image: none !important;
+        padding-right: 8px !important;
     }
 </style>
 
@@ -230,17 +295,13 @@
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 700,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+        $('#kas-kecil-table').DataTable({
+            scrollY: 700,
+            scrollX: true,
+            order: [],
+            paging: true,
+            searching: true,
+            info: true
         });
     });
 </script>

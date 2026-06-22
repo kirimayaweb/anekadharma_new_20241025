@@ -297,7 +297,7 @@
                         <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
                         <div id="jurnal-kas-table-wrap">
                         <div class="jurnal-kas-dt-responsive">
-                        <table id="jurnalKasMainTable" class="table table-bordered table-sm jurnal-kas-grid-table mb-0">
+                        <table id="jurnalKasMainTable" class="table table-bordered jurnal-kas-grid-table mb-0">
                             <colgroup>
                                 <col class="jk-w-no">
                                 <col class="jk-w-tanggal">
@@ -538,7 +538,7 @@
                         </div><!-- /.jurnal-kas-dt-responsive -->
 
                         <div class="jurnal-kas-summary-wrap">
-                        <table class="table table-bordered table-sm jurnal-kas-grid-table jurnal-kas-summary-table mb-0">
+                        <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table mb-0">
                             <colgroup>
                                 <col class="jk-w-no">
                                 <col class="jk-w-tanggal">
@@ -980,13 +980,14 @@
     #modal-jurnal-kas-input label { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
     #modal-jurnal-kas-input .select2-container { width: 100% !important; }
 
-    /* Jurnal Kas — grid 7 kolom: header, data, footer selaras */
+    /* Jurnal Kas Tab 1 — datatable nyaman dibaca */
     #jurnal-kas-table-wrap {
-        border: 2px solid #6c757d;
-        border-radius: 4px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
         padding: 0;
         background: #fff;
         overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
     }
     #jurnal-kas-table-wrap .jurnal-kas-dt-responsive {
         overflow-x: auto;
@@ -995,33 +996,53 @@
     #jurnal-kas-table-wrap .jurnal-kas-grid-table {
         table-layout: fixed;
         width: 100%;
-        min-width: 780px;
+        min-width: 920px;
         border-collapse: collapse;
         margin-bottom: 0;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #212529;
     }
-    #jurnal-kas-table-wrap col.jk-w-no { width: 40px; }
-    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 155px; }
-    #jurnal-kas-table-wrap col.jk-w-bukti { width: 55px; }
-    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 220px; }
-    #jurnal-kas-table-wrap col.jk-w-kode { width: 60px; }
-    #jurnal-kas-table-wrap col.jk-w-debet { width: 110px; }
-    #jurnal-kas-table-wrap col.jk-w-kredit { width: 110px; }
+    #jurnal-kas-table-wrap col.jk-w-no { width: 48px; }
+    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 175px; }
+    #jurnal-kas-table-wrap col.jk-w-bukti { width: 64px; }
+    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 300px; }
+    #jurnal-kas-table-wrap col.jk-w-kode { width: 72px; }
+    #jurnal-kas-table-wrap col.jk-w-debet { width: 128px; }
+    #jurnal-kas-table-wrap col.jk-w-kredit { width: 128px; }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th {
-        background: #f1f3f5;
-        border: 1px solid #495057;
-        font-size: 12px;
+        background: linear-gradient(180deg, #e9f5ec 0%, #d8eddc 100%);
+        border: 1px solid #6c9a74;
+        color: #1b4332;
+        font-size: 14px;
         font-weight: 700;
-        padding: 8px 6px;
+        padding: 11px 10px;
         vertical-align: middle;
         white-space: nowrap;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
     }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td {
-        border: 1px solid #adb5bd;
-        font-size: 12px;
-        padding: 6px;
-        vertical-align: top;
+        border: 1px solid #ced4da;
+        font-size: 14px;
+        padding: 10px 10px;
+        vertical-align: middle;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        background: #fff;
+    }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody tr:nth-child(even) td {
+        background: #f8faf9;
+    }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody tr:hover td {
+        background: #eef6ff;
+    }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody tr:first-child td {
+        background: #fff9e6;
+        font-weight: 600;
+    }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody tr:first-child:hover td {
+        background: #fff3cc;
     }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(1),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(1) { text-align: center; }
@@ -1029,45 +1050,45 @@
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(2) {
         text-align: left;
         white-space: normal;
-        line-height: 1.25;
-        vertical-align: top;
+        line-height: 1.4;
+        vertical-align: middle;
     }
     #jurnal-kas-table-wrap .jk-tanggal-cell {
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 6px;
         min-width: 0;
     }
     #jurnal-kas-table-wrap .jk-tanggal-date {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         white-space: nowrap;
-        color: #343a40;
+        color: #212529;
     }
     #jurnal-kas-table-wrap .jk-tanggal-actions {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        flex-wrap: nowrap;
+        gap: 6px;
+        flex-wrap: wrap;
     }
     #jurnal-kas-table-wrap a.jk-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 3px;
-        padding: 1px 6px;
-        min-height: 20px;
-        font-size: 10px;
+        gap: 4px;
+        padding: 4px 10px;
+        min-height: 28px;
+        font-size: 12px;
         font-weight: 600;
-        line-height: 1.2;
-        border-radius: 3px;
+        line-height: 1.25;
+        border-radius: 4px;
         border: 1px solid transparent;
         text-decoration: none !important;
         white-space: nowrap;
         transition: background-color .15s ease, color .15s ease, border-color .15s ease;
     }
     #jurnal-kas-table-wrap a.jk-btn-action i {
-        font-size: 10px;
+        font-size: 12px;
         line-height: 1;
     }
     #jurnal-kas-table-wrap a.jk-btn-edit {
@@ -1093,7 +1114,8 @@
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(4),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(4) {
         text-align: left;
-        max-width: 220px;
+        max-width: 300px;
+        line-height: 1.45;
     }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(3),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(3) { text-align: center; }
@@ -1102,37 +1124,59 @@
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(6),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(7),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(7) { text-align: right; white-space: nowrap; }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(7) {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        font-size: 14px;
+    }
     #jurnal-kas-table-wrap .jurnal-kas-summary-wrap {
-        border-top: 2px solid #868e96;
+        border-top: 2px solid #6c9a74;
         overflow-x: auto;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table tbody td {
-        background: #f8f9fa;
-        border: 1px solid #868e96;
-        font-size: 12px;
-        padding: 6px;
+        background: #f1f3f5;
+        border: 1px solid #adb5bd;
+        font-size: 14px;
+        font-weight: 700;
+        padding: 10px 10px;
+        font-variant-numeric: tabular-nums;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table .jk-summary-label {
         text-align: center !important;
         font-weight: 700;
         vertical-align: middle;
+        font-size: 14px;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table .jk-summary-row-saldo td {
         white-space: nowrap;
+        background: #e8f4ea;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table .jk-summary-row-last td {
         background: #fff3cd;
     }
     #jurnal-kas-table-wrap .dataTables_wrapper {
         padding: 0;
-        font-size: 12px;
+        font-size: 14px;
+        color: #212529;
     }
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_info,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate {
-        padding: 8px 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length select,
+    #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter input {
+        font-size: 14px;
+        padding: 4px 8px;
+        height: auto;
+    }
+    #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate .paginate_button {
+        font-size: 14px;
+        padding: 4px 10px;
     }
     #jurnal-kas-table-wrap table.dataTable {
         border-collapse: collapse !important;
@@ -1140,10 +1184,15 @@
         margin-bottom: 0 !important;
     }
     #jurnal-kas-table-wrap table.dataTable thead th {
-        border-bottom: 2px solid #495057 !important;
+        border-bottom: 2px solid #6c9a74 !important;
     }
     #jurnal-kas-table-wrap table.dataTable.no-footer {
         border-bottom: none;
+    }
+    #jurnal-kas-table-wrap table.dataTable tbody td.sorting_1,
+    #jurnal-kas-table-wrap table.dataTable tbody td.sorting_2,
+    #jurnal-kas-table-wrap table.dataTable tbody td.sorting_3 {
+        background-color: inherit;
     }
 </style>
 
@@ -1163,7 +1212,7 @@ window.addEventListener('load', function() {
         $table.DataTable().destroy();
     }
 
-    var jkColWidths = ['40px', '155px', '55px', '220px', '60px', '110px', '110px'];
+    var jkColWidths = ['48px', '175px', '64px', '300px', '72px', '128px', '128px'];
 
     function syncJurnalKasTableWidths() {
         var $mainTable = $('#jurnalKasMainTable');
