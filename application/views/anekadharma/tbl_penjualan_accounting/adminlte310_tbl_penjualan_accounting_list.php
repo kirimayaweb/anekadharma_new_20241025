@@ -47,7 +47,6 @@
                             </div>
 
                             <div class="col-2">
-                                <?php //echo anchor(site_url('tbl_penjualan_accounting/excel'), 'Cetak ke Excel', 'class="btn btn-success"'); ?>
                             </div>
 
 
@@ -62,6 +61,19 @@
 
 
                     <div class="card-body">
+
+                        <?php
+                        $url_excel = isset($url_penjualan_accounting_excel)
+                            ? $url_penjualan_accounting_excel
+                            : site_url('Tbl_penjualan_accounting/excel');
+                        ?>
+                        <div class="row mb-3">
+                            <div class="col-12 text-right">
+                                <a href="<?php echo htmlspecialchars($url_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success" id="btn-penjualan-accounting-excel">
+                                    <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                </a>
+                            </div>
+                        </div>
 
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>

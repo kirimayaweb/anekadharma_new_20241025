@@ -1,4 +1,6 @@
 <?php
+$this->load->helper('neraca_saldo_list');
+
 if (!isset($Get_month_from_date) || $Get_month_from_date === '' || $Get_month_from_date === null) {
     $Get_month_from_date = isset($month_selected) ? (int) $month_selected : (int) date('m');
 }
@@ -45,7 +47,8 @@ foreach ($Data_Kode_Akun as $list_data) {
             if (!$ns_row || is_null($ns_row->debet_akhir_tahun_lalu)) {
                 echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">Input Debet</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
             } else {
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . $ns_row->debet_akhir_tahun_lalu . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
+                $debet_tahun_lalu_label = neraca_saldo_format_rupiah($ns_row->debet_akhir_tahun_lalu, true);
+                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . htmlspecialchars($debet_tahun_lalu_label, ENT_QUOTES, 'UTF-8') . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
             }
             ?>
         </td>
@@ -54,16 +57,17 @@ foreach ($Data_Kode_Akun as $list_data) {
             if (!$ns_row || is_null($ns_row->kredit_akhir_tahun_lalu)) {
                 echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">Input Kredit</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
             } else {
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . $ns_row->kredit_akhir_tahun_lalu . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
+                $kredit_tahun_lalu_label = neraca_saldo_format_rupiah($ns_row->kredit_akhir_tahun_lalu, true);
+                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . htmlspecialchars($kredit_tahun_lalu_label, ENT_QUOTES, 'UTF-8') . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
             }
             ?>
         </td>
-        <td align="right"><?php echo $bb_debet ? $bb_debet : '0'; ?></td>
-        <td align="right"><?php echo $bb_kredit ? $bb_kredit : '0'; ?></td>
-        <td align="right"><?php echo $has_activity ? ($bb_debet + $jp_debet) : '0'; ?></td>
-        <td align="right"><?php echo $has_activity ? ($bb_kredit + $jp_kredit) : '0'; ?></td>
-        <td align="right"><?php echo $has_activity ? ($bb_debet + $jp_debet) : '0'; ?></td>
-        <td align="right"><?php echo $has_activity ? ($bb_kredit + $jp_kredit) : '0'; ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($bb_debet, true); ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($bb_kredit, true); ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_debet + $jp_debet) : 0, true); ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_kredit + $jp_kredit) : 0, true); ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_debet + $jp_debet) : 0, true); ?></td>
+        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_kredit + $jp_kredit) : 0, true); ?></td>
     </tr>
 <?php
 }
