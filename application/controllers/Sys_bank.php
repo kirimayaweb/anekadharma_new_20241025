@@ -49,6 +49,7 @@ class Sys_bank extends CI_Controller
         // $start = 0;
         $data = array(
             'sys_bank_data' => $sys_bank_data,
+            'url_sys_bank_excel' => site_url('Sys_bank/excel'),
             // 'start' => $start,
             // 'status_laporan' => $status_laporan,
         );
@@ -175,6 +176,13 @@ class Sys_bank extends CI_Controller
 
         $this->form_validation->set_rules('id', 'id', 'trim');
         $this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+    }
+
+    public function excel()
+    {
+        $this->load->helper('sys_bank_list');
+        sys_bank_export_excel_output($this);
+        exit();
     }
 }
 

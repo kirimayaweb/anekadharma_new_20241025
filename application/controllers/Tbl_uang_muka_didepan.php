@@ -26,6 +26,7 @@ class Tbl_uang_muka_didepan extends CI_Controller
         // $start = 0;
         $data = array(
             'tbl_uang_muka_didepan_data' => $tbl_uang_muka_didepan,
+            'url_uang_muka_didepan_excel' => site_url('Tbl_uang_muka_didepan/excel'),
             // 'start' => $start,
         );
         // print_r($tbl_uang_muka_didepan);
@@ -256,54 +257,8 @@ class Tbl_uang_muka_didepan extends CI_Controller
 
     public function excel()
     {
-        $this->load->helper('exportexcel');
-        $namaFile = "tbl_uang_muka_didepan.xls";
-        $judul = "tbl_uang_muka_didepan";
-        $tablehead = 0;
-        $tablebody = 1;
-        $nourut = 1;
-        //penulisan header
-        header("Pragma: public");
-        header("Expires: 0");
-        header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-        header("Content-Type: application/force-download");
-        header("Content-Type: application/octet-stream");
-        header("Content-Type: application/download");
-        header("Content-Disposition: attachment;filename=" . $namaFile . "");
-        header("Content-Transfer-Encoding: binary ");
-
-        xlsBOF();
-
-        $kolomhead = 0;
-        xlsWriteLabel($tablehead, $kolomhead++, "No");
-        xlsWriteLabel($tablehead, $kolomhead++, "Uuid Uang Muka Didepan");
-        xlsWriteLabel($tablehead, $kolomhead++, "Tgl Transaksi");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kode");
-        xlsWriteLabel($tablehead, $kolomhead++, "Dari");
-        xlsWriteLabel($tablehead, $kolomhead++, "Uraian");
-        xlsWriteLabel($tablehead, $kolomhead++, "Nominal");
-        xlsWriteLabel($tablehead, $kolomhead++, "Bank");
-        xlsWriteLabel($tablehead, $kolomhead++, "Nmr Rekening");
-
-        foreach ($this->Tbl_uang_muka_didepan_model->get_all() as $data) {
-            $kolombody = 0;
-
-            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-            xlsWriteNumber($tablebody, $kolombody++, $nourut);
-            xlsWriteLabel($tablebody, $kolombody++, $data->uuid_uang_muka_didepan);
-            xlsWriteLabel($tablebody, $kolombody++, $data->tgl_transaksi);
-            xlsWriteLabel($tablebody, $kolombody++, $data->kode);
-            xlsWriteLabel($tablebody, $kolombody++, $data->dari);
-            xlsWriteLabel($tablebody, $kolombody++, $data->uraian);
-            xlsWriteNumber($tablebody, $kolombody++, $data->nominal);
-            xlsWriteLabel($tablebody, $kolombody++, $data->bank);
-            xlsWriteLabel($tablebody, $kolombody++, $data->nmr_rekening);
-
-            $tablebody++;
-            $nourut++;
-        }
-
-        xlsEOF();
+        $this->load->helper('uang_muka_didepan_list');
+        uang_muka_didepan_export_excel_output($this);
         exit();
     }
 }

@@ -76,6 +76,7 @@ class Neraca_saldo extends CI_Controller
 			'Get_year_Setahun_lalu' => (int) date('Y', strtotime('-1 year')),
 			'url_cari_bulan' => site_url('Neraca_saldo/Cari_bulan_data'),
 			'url_ajax_refresh' => site_url('Neraca_saldo/ajax_refresh_datatable'),
+			'url_neraca_saldo_excel' => site_url('Neraca_saldo/excel_list'),
 		);
 
 		if (!is_array($extra)) {
@@ -87,6 +88,7 @@ class Neraca_saldo extends CI_Controller
 
 	public function index()
 	{
+		$this->load->helper('neraca_saldo_list');
 
 
 		// $Get_date_awal = date("Y-m-1 00:00:00");
@@ -144,17 +146,19 @@ class Neraca_saldo extends CI_Controller
 
 	public function input_neraca_saldo_waktu_lalu($kode_akun = null, $debet_kredit = null, $tahun_proses = null, $bulan_proses = null)
 	{
+		$this->load->helper('neraca_saldo_list');
 
-		// print_r("input_neraca_saldo_waktu_lalu");
-		// print_r("<br/>");
-		// print_r($kode_akun);
-		// print_r("<br/>");
-		// print_r($debet_kredit);
-		// print_r("<br/>");
-		// print_r($tahun_proses);
-		// print_r("<br/>");
-		// print_r($bulan_proses);
-		// die;
+		$nominal_existing = '';
+		$sql = 'SELECT * FROM `neraca_saldo` WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ? AND `kode_akun` = ?';
+		$neraca_saldo_data = $this->db->query($sql, array((int) $bulan_proses, (int) $tahun_proses, (int) $kode_akun));
+		if ($neraca_saldo_data->num_rows() > 0) {
+			$ns_row = $neraca_saldo_data->row();
+			if ($debet_kredit === 'debet' && !is_null($ns_row->debet_akhir_tahun_lalu)) {
+				$nominal_existing = neraca_saldo_format_rupiah($ns_row->debet_akhir_tahun_lalu, true);
+			} elseif ($debet_kredit === 'kredit' && !is_null($ns_row->kredit_akhir_tahun_lalu)) {
+				$nominal_existing = neraca_saldo_format_rupiah($ns_row->kredit_akhir_tahun_lalu, true);
+			}
+		}
 
 		$data = array(
 			// 'Tbl_pembelian_data' => $Tbl_pembelian,
@@ -170,6 +174,7 @@ class Neraca_saldo extends CI_Controller
 			'debet_kredit' => $debet_kredit,
 			'tahun_proses' => $tahun_proses,
 			'bulan_proses' => $bulan_proses,
+			'nominal_existing' => $nominal_existing,
 
 
 		);
@@ -179,9 +184,8 @@ class Neraca_saldo extends CI_Controller
 
 	public function Simpan_Nominal_tahun_lalu($kode_akun = null, $debet_kredit = null, $tahun_proses = null, $bulan_proses = null)
 	{
-
-		// print_r("Simpan_Nominal_tahun_lalu");
-		// die;
+		$this->load->helper('neraca_saldo_list');
+		$nominal = neraca_saldo_parse_nominal($this->input->post('nominal', TRUE));
 
 		// $this->_rules();
 
@@ -213,14 +217,14 @@ class Neraca_saldo extends CI_Controller
 			if ($debet_kredit == "debet") {
 
 				$data = array(
-					'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					'debet_akhir_tahun_lalu' => $nominal,
 				);
 
 				$this->Neraca_saldo_model->update($Neraca_Saldo_Data->row()->id, $data);
 			} else {
 
 				$data = array(
-					'kredit_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					'kredit_akhir_tahun_lalu' => $nominal,
 				);
 
 				$this->Neraca_saldo_model->update($Neraca_Saldo_Data->row()->id, $data);
@@ -249,7 +253,7 @@ class Neraca_saldo extends CI_Controller
 					'nama_akun' => $sys_kode_akun_Data->row()->nama_akun,
 					// 'uraian' => $sys_kode_akun_Data->row()->,
 					// 'group' => $sys_kode_akun_Data->row()->,
-					'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					'debet_akhir_tahun_lalu' => $nominal,
 					// 'kredit_akhir_tahun_lalu' => "",
 					// 'debet_penyesuaian' => "",
 					// 'kredit_penyesuaian' => "",
@@ -273,7 +277,7 @@ class Neraca_saldo extends CI_Controller
 					'uraian' => "",
 					'group' => "",
 					// 'debet_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
-					'kredit_akhir_tahun_lalu' => $this->input->post('nominal', TRUE),
+					'kredit_akhir_tahun_lalu' => $nominal,
 					// 'debet_penyesuaian' => "",
 					// 'kredit_penyesuaian' => "",
 					// 'debet_ns_setelah_penyesuaian' => "",
@@ -307,7 +311,7 @@ class Neraca_saldo extends CI_Controller
 
 	public function ajax_refresh_datatable()
 	{
-		$this->load->helper('buku_besar_list');
+		$this->load->helper(array('buku_besar_list', 'neraca_saldo_list'));
 		header('Content-Type: application/json; charset=utf-8');
 
 		$data = $this->_neraca_saldo_view_data();
@@ -519,6 +523,12 @@ class Neraca_saldo extends CI_Controller
 
 		$this->form_validation->set_rules('id', 'id', 'trim');
 		$this->form_validation->set_error_delimiters('<span class="text-danger">', '</span>');
+	}
+
+	public function excel_list()
+	{
+		$this->load->helper('neraca_saldo_list');
+		neraca_saldo_export_excel_list_output($this);
 	}
 
 	public function excel()

@@ -78,7 +78,7 @@
 
                                 <div class="col-6">
                                     <label for="kode_pl">Nominal <?php echo $debet_kredit . " , Kode Akun: " .  $kode_akun  . " , Bulan: " .  $bulan_proses . " , Tahun: " .  $tahun_proses; ?> </label>
-                                    <input type="text" class="form-control" rows="1" name="nominal" id="nominal" placeholder="Nominal" value="" required>
+                                    <input type="text" class="form-control ns-input-rupiah" rows="1" name="nominal" id="nominal" placeholder="0,00" value="<?php echo htmlspecialchars(isset($nominal_existing) ? $nominal_existing : '', ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off">
                                 </div>
 
                                 <div class="col-2"></div>
@@ -126,18 +126,34 @@
 <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
 <script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
+    function nsFormatRupiahInput(value) {
+        if (value === null || value === undefined) {
+            return '';
+        }
+        var raw = String(value).replace(/[^\d,-]/g, '');
+        var isNegative = raw.charAt(0) === '-';
+        raw = raw.replace(/-/g, '');
+        var parts = raw.split(',');
+        var integerPart = parts[0].replace(/\./g, '');
+        var decimalPart = parts.length > 1 ? parts[1].replace(/\D/g, '').substring(0, 2) : '';
+        if (integerPart === '' && decimalPart === '') {
+            return isNegative ? '-' : '';
+        }
+        integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        var formatted = decimalPart !== '' ? integerPart + ',' + decimalPart : integerPart;
+        return isNegative ? '-' + formatted : formatted;
+    }
+
     $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+        $('#nominal').on('input', function() {
+            var cursorFromEnd = this.value.length - this.selectionStart;
+            var formatted = nsFormatRupiahInput(this.value);
+            this.value = formatted;
+            var newPos = formatted.length - cursorFromEnd;
+            if (newPos < 0) {
+                newPos = 0;
+            }
+            this.setSelectionRange(newPos, newPos);
         });
     });
 </script>

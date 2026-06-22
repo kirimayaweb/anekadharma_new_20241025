@@ -50,10 +50,18 @@ class Sys_kode_akun extends CI_Controller
         // $start = 0;
         $data = array(
             'sys_kode_akun_data' => $sys_kode_akun,
+            'url_sys_kode_akun_excel' => site_url('Sys_kode_akun/excel'),
             // 'start' => $start,
             // 'status_laporan' => $status_laporan,
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_kode_akun/adminlte310_sys_kode_akun_list', $data);
+    }
+
+    public function excel()
+    {
+        $this->load->helper('sys_kode_akun_list');
+        sys_kode_akun_export_excel_output($this);
+        exit();
     }
 
 

@@ -69,6 +69,18 @@
 
                     <div class="card-body">
 
+                        <?php
+                        $url_excel = isset($url_pendapatan_lain_lain_excel)
+                            ? $url_pendapatan_lain_lain_excel
+                            : site_url('Tbl_pendapatan_lain_lain/excel');
+                        ?>
+                        <div class="row mb-3">
+                            <div class="col-12 text-right">
+                                <a href="<?php echo htmlspecialchars($url_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success" id="btn-pendapatan-lain-lain-excel">
+                                    <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                </a>
+                            </div>
+                        </div>
 
                         <!-- <table id="ExampleOnFile" class="table table-bordered" style="width:100%"> -->
                         <table class="table table-bordered" style="margin-bottom: 10px">

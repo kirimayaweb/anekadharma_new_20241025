@@ -29,19 +29,13 @@
                         <div class="row">
                         </div>
                         <div class="row">
-                            <div class="col-9">
+                            <div class="col-12">
                                 <div class="row">
-                                    <div class="col-3">
+                                    <div class="col-3" align="left">
                                         <div class="col-12" text-align="center"> <strong>DATA UANG MUKA DI DEPAN</strong></div>
                                     </div>
-                                    <div class="col-3">
+                                    <div class="col-9" align="left">
                                         <?php echo anchor(site_url('Tbl_uang_muka_didepan/pemasukan_uang_muka_didepan'), 'Pemasukan Uang Muka', 'class="btn btn-danger"');
-                                        ?>
-
-                                    </div>
-                                    <div class="col-3">
-
-                                        <?php //echo anchor(site_url('Tbl_kas_kecil/pengeluaran_kas_kecil'), 'Pengeluaran Data Kas', 'class="btn btn-success"');
                                         ?>
                                     </div>
                                 </div>
@@ -70,11 +64,16 @@
                                         <div class="tab-content" id="custom-tabs-one-tabContent">
                                             <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel" aria-labelledby="custom-tabs-one-home-tab">
 
-                                                <div class="row">
-                                                    <!-- <div class="col-1"></div> -->
-                                                    <div class="col-6">
-                                                        <?php //echo anchor(site_url('Sys_unit_produk/create_unit/'.$uuid_unit_selected), 'Input Hasil / Produk Unit: ' . $nama_unit, 'class="btn btn-success"'); 
-                                                        ?>
+                                                <?php
+                                                $url_excel = isset($url_uang_muka_didepan_excel)
+                                                    ? $url_uang_muka_didepan_excel
+                                                    : site_url('Tbl_uang_muka_didepan/excel');
+                                                ?>
+                                                <div class="row mb-3">
+                                                    <div class="col-12 text-right">
+                                                        <a href="<?php echo htmlspecialchars($url_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success" id="btn-uang-muka-didepan-excel">
+                                                            <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                                        </a>
                                                     </div>
                                                 </div>
 

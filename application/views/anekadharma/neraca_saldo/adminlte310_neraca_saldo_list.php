@@ -146,6 +146,15 @@
 
                     <div class="card-body">
 
+                        <?php
+                        $url_excel = isset($url_neraca_saldo_excel) ? $url_neraca_saldo_excel : site_url('Neraca_saldo/excel_list');
+                        ?>
+                        <div class="d-flex flex-wrap justify-content-end mb-2">
+                            <button type="button" class="btn btn-success btn-sm" id="btn-neraca-saldo-excel">
+                                <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                            </button>
+                        </div>
+
                         <div class="ns-datatable-wrap" id="ns-datatable-wrap">
                         <table id="tglSPOPFreeze" class="display nowrap ns-datatable-green" style="width:100%">
                             <thead>
@@ -453,6 +462,7 @@
 (function() {
     var LS_BULAN_NS = 'ns_bulan_ns';
     var urlAjaxRefresh = <?php echo json_encode(isset($url_ajax_refresh) ? $url_ajax_refresh : site_url('Neraca_saldo/ajax_refresh_datatable')); ?>;
+    var urlExcel = <?php echo json_encode($url_excel); ?>;
     var serverBulanNs = <?php echo json_encode($bulan_ns_value); ?>;
     var nsRefreshing = false;
     var nsMainDt = null;
@@ -596,6 +606,16 @@
         jQuery('#form-cari-neraca-saldo').on('submit', function(e) {
             e.preventDefault();
             refreshNeracaSaldoDatatable();
+        });
+
+        jQuery('#btn-neraca-saldo-excel').on('click', function() {
+            var val = ensureBulanNsValue();
+            var f = jQuery('<form method="post" target="_blank"></form>');
+            f.attr('action', urlExcel);
+            f.append(jQuery('<input type="hidden" name="bulan_ns">').val(val || ''));
+            jQuery('body').append(f);
+            f.submit();
+            f.remove();
         });
     });
 })();

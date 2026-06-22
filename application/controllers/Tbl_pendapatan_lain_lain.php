@@ -51,6 +51,7 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
         $data_pendapatan_lain_lain = $this->Tbl_pendapatan_lain_lain_model->get_all();
         $data = array(
             'pendapatan_lain_lain_data' => $data_pendapatan_lain_lain,
+            'url_pendapatan_lain_lain_excel' => site_url('Tbl_pendapatan_lain_lain/excel'),
             // 'action' => site_url('Tbl_pendapatan_lain_lain/cari_unit'),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pendapatan_lain_lain/adminlte310_tbl_pendapatan_lain_lain_list', $data);
@@ -203,54 +204,8 @@ class Tbl_pendapatan_lain_lain extends CI_Controller
 
     public function excel()
     {
-        $this->load->helper('exportexcel');
-        $namaFile = "tbl_pendapatan_lain_lain.xls";
-        $judul = "tbl_pendapatan_lain_lain";
-        $tablehead = 0;
-        $tablebody = 1;
-        $nourut = 1;
-        //penulisan header
-        header("Pragma: public");
-        header("Expires: 0");
-        header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-        header("Content-Type: application/force-download");
-        header("Content-Type: application/octet-stream");
-        header("Content-Type: application/download");
-        header("Content-Disposition: attachment;filename=" . $namaFile . "");
-        header("Content-Transfer-Encoding: binary ");
-
-        xlsBOF();
-
-        $kolomhead = 0;
-        xlsWriteLabel($tablehead, $kolomhead++, "No");
-        xlsWriteLabel($tablehead, $kolomhead++, "Uuid Pendapatan Lain Lain");
-        xlsWriteLabel($tablehead, $kolomhead++, "Tgl Transaksi");
-        xlsWriteLabel($tablehead, $kolomhead++, "Kode");
-        xlsWriteLabel($tablehead, $kolomhead++, "Dari");
-        xlsWriteLabel($tablehead, $kolomhead++, "Uraian");
-        xlsWriteLabel($tablehead, $kolomhead++, "Nominal");
-        xlsWriteLabel($tablehead, $kolomhead++, "Bank");
-        xlsWriteLabel($tablehead, $kolomhead++, "Nmr Rekening");
-
-        foreach ($this->Tbl_pendapatan_lain_lain_model->get_all() as $data) {
-            $kolombody = 0;
-
-            //ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-            xlsWriteNumber($tablebody, $kolombody++, $nourut);
-            xlsWriteLabel($tablebody, $kolombody++, $data->uuid_pendapatan_lain_lain);
-            xlsWriteLabel($tablebody, $kolombody++, $data->tgl_transaksi);
-            xlsWriteLabel($tablebody, $kolombody++, $data->kode);
-            xlsWriteLabel($tablebody, $kolombody++, $data->dari);
-            xlsWriteLabel($tablebody, $kolombody++, $data->uraian);
-            xlsWriteNumber($tablebody, $kolombody++, $data->nominal);
-            xlsWriteLabel($tablebody, $kolombody++, $data->bank);
-            xlsWriteLabel($tablebody, $kolombody++, $data->nmr_rekening);
-
-            $tablebody++;
-            $nourut++;
-        }
-
-        xlsEOF();
+        $this->load->helper('pendapatan_lain_lain_list');
+        pendapatan_lain_lain_export_excel_output($this);
         exit();
     }
 }

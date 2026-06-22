@@ -29,6 +29,7 @@ class Tbl_penjualan_accounting extends CI_Controller
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan,
+			'url_penjualan_accounting_excel' => site_url('Tbl_penjualan_accounting/excel'),
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
@@ -913,102 +914,8 @@ class Tbl_penjualan_accounting extends CI_Controller
 
 	public function excel()
 	{
-		$this->load->helper('exportexcel');
-		$namaFile = "tbl_penjualan_accounting.xls";
-		$judul = "tbl_penjualan_accounting";
-		$tablehead = 0;
-		$tablebody = 1;
-		$nourut = 1;
-		//penulisan header
-		header("Pragma: public");
-		header("Expires: 0");
-		header("Cache-Control: must-revalidate, post-check=0,pre-check=0");
-		header("Content-Type: application/force-download");
-		header("Content-Type: application/octet-stream");
-		header("Content-Type: application/download");
-		header("Content-Disposition: attachment;filename=" . $namaFile . "");
-		header("Content-Transfer-Encoding: binary ");
-
-		xlsBOF();
-
-		$kolomhead = 0;
-		xlsWriteLabel($tablehead, $kolomhead++, "No");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Penjualan Proses");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Penjualan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Persediaan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Id Persediaan Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Input");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Jual");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nmrpesan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nmrkirim");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Konsumen");
-		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Id");
-		xlsWriteLabel($tablehead, $kolomhead++, "Konsumen Nama");
-		xlsWriteLabel($tablehead, $kolomhead++, "Kode Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nama Barang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Uuid Unit");
-		xlsWriteLabel($tablehead, $kolomhead++, "Unit");
-		xlsWriteLabel($tablehead, $kolomhead++, "Satuan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Harga Satuan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Jumlah");
-		xlsWriteLabel($tablehead, $kolomhead++, "Total Nominal");
-		xlsWriteLabel($tablehead, $kolomhead++, "Umpphpsl22");
-		xlsWriteLabel($tablehead, $kolomhead++, "Piutang");
-		xlsWriteLabel($tablehead, $kolomhead++, "Penjualandpp");
-		xlsWriteLabel($tablehead, $kolomhead++, "Utangppn");
-		xlsWriteLabel($tablehead, $kolomhead++, "Cetak Bukti Penjualan");
-		xlsWriteLabel($tablehead, $kolomhead++, "Id Usr");
-		xlsWriteLabel($tablehead, $kolomhead++, "Proses Bayar");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Bayar Input");
-		xlsWriteLabel($tablehead, $kolomhead++, "Tgl Bayar");
-		xlsWriteLabel($tablehead, $kolomhead++, "Nmr Bukti Bayar");
-		xlsWriteLabel($tablehead, $kolomhead++, "Kode Akun");
-		xlsWriteLabel($tablehead, $kolomhead++, "Proses Transaksi");
-
-		foreach ($this->Tbl_penjualan_accounting_model->get_all() as $data) {
-			$kolombody = 0;
-
-			//ubah xlsWriteLabel menjadi xlsWriteNumber untuk kolom numeric
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_penjualan_proses);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_penjualan);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_persediaan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->id_persediaan_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_input);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_jual);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_konsumen);
-			xlsWriteNumber($tablebody, $kolombody++, $data->konsumen_id);
-			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
-			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->uuid_unit);
-			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
-			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
-			xlsWriteNumber($tablebody, $kolombody++, $data->total_nominal);
-			xlsWriteNumber($tablebody, $kolombody++, $data->umpphpsl22);
-			xlsWriteNumber($tablebody, $kolombody++, $data->piutang);
-			xlsWriteNumber($tablebody, $kolombody++, $data->penjualandpp);
-			xlsWriteNumber($tablebody, $kolombody++, $data->utangppn);
-			xlsWriteNumber($tablebody, $kolombody++, $data->cetak_bukti_penjualan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->id_usr);
-			xlsWriteLabel($tablebody, $kolombody++, $data->proses_bayar);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_bayar_input);
-			xlsWriteLabel($tablebody, $kolombody++, $data->tgl_bayar);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmr_bukti_bayar);
-			xlsWriteLabel($tablebody, $kolombody++, $data->kode_akun);
-			xlsWriteLabel($tablebody, $kolombody++, $data->proses_transaksi);
-
-			$tablebody++;
-			$nourut++;
-		}
-
-		xlsEOF();
+		$this->load->helper('tbl_penjualan_accounting_list');
+		tbl_penjualan_accounting_export_excel_output($this);
 		exit();
 	}
 

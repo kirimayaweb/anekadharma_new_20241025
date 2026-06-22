@@ -64,7 +64,7 @@
                             <div class="col-md-2">
                                 <div class="row">
                                     <!-- <div class="col-5" text-align="center"> <strong>DATA PENJUALAN JASA</strong></div> -->
-                                    <div class="col-12" text-align="center"> <strong><a href="<?php echo site_url('tbl_penjualan_jasa/create'); ?>" id="btn-input-penjualan-baru" class="btn btn-danger">Input Penjualan Jasa Baru</a></strong></div>
+                                    <div class="col-12" text-align="center"> <strong><a href="<?php echo site_url('tbl_penjualan_jasa/create'); ?>" id="btn-input-penjualan-baru" class="btn btn-danger">Input Penjualan Jasa</a></strong></div>
 
                                 </div>
 
@@ -116,26 +116,11 @@
 
                             </div>
 
-                            <div class="col-md-2">
-                                <?php //echo anchor(site_url('tbl_penjualan_jasa/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); ?>
-
-
-                            </div>
-
-                            <div class="col-md-2">
-                                <?php //echo anchor(site_url('tbl_penjualan_jasa/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); ?>
-                                
-                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-xl-select-unit">
-                                    REKAP DATA
-                                </button>
-
-                            </div>
-
-                            <div class="col-md-1">
+                            <div class="col-md-5" text-align="right" align="right">
                                 <input type="hidden" id="excel-export-source" value="tbl_penjualan_jasa" />
                                 <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
-                                <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPenjualan(); return false;">
-                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel (.xlsx)
+                                <button type="button" class="btn btn-success" onclick="cetakExcelPenjualan(); return false;">
+                                    <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
                                 </button>
                             </div>
 
@@ -701,61 +686,6 @@
 
 
 
-<!-- TAMBAH BARANG MODAL EXTRA LARGE -->
-<form action="<?php //echo $action_simpan_bahan; 
-                ?>" method="post">
-    <div class="modal fade" id="modal-xl-select-unit">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">REKAP DATA</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="form-group">
-
-
-                        <p class="text-muted small mb-2" id="rekap-modal-periode-info">Periode mengikuti tanggal awal dan tanggal akhir di atas.</p>
-                        <div class="row">
-                            <div class="col-4">
-                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="nama_barang" target="_blank">Rekap Per Barang</a>
-                            </div>
-                            <div class="col-4">
-                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="konsumen_nama" target="_blank">Rekap Per Konsumen</a>
-                            </div>
-                            <div class="col-4">
-                                <a href="#" class="btn btn-success btn-block btn-rekap-penjualan" data-field="unit" target="_blank">Rekap Per Unit</a>
-                            </div>
-
-                          
-
-                        </div>
-
-
-
-                    </div>
-
-                </div>
-
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                    <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                    <!-- <button type="submit" class="btn btn-primary">Proses</button> -->
-                </div>
-            </div>
-            <!-- /.modal-content -->
-        </div>
-        <!-- /.modal-dialog -->
-    </div>
-</form>
-<!-- END OF MODAL EXTRA LARGE -->
-
-
-
-
 <script>
     function isDataTablePenjualanAktif() {
         return !!(window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze'));
@@ -870,7 +800,6 @@
     }
 
 (function() {
-    var baseRekapUrl = <?php echo json_encode(site_url('tbl_penjualan_jasa/RekapData/')); ?>;
     var FILTER_STORAGE_KEY = 'anekadharma_tbl_penjualan_jasa_filter_tanggal';
     var filterRestoreAttempted = false;
     var skipFilterRestore = <?php echo (isset($skip_filter_restore) && $skip_filter_restore) ? 'true' : 'false'; ?>;
@@ -993,64 +922,6 @@
         });
     }
 
-    window.buildRekapPenjualanUrl = function(field) {
-        var tgl = getTanggalFilterPenjualan();
-        var url = baseRekapUrl + field;
-        if (tgl.awal && tgl.akhir) {
-            url += '?tgl_awal=' + encodeURIComponent(tgl.awal) + '&tgl_akhir=' + encodeURIComponent(tgl.akhir);
-        }
-        return url;
-    };
-
-    function updateRekapModalLinks() {
-        var btnCreate = document.getElementById('btn-input-penjualan-baru');
-        if (btnCreate && typeof buildUrlInputPenjualanBaru === 'function') {
-            btnCreate.href = buildUrlInputPenjualanBaru();
-        }
-
-        var tgl = getTanggalFilterPenjualan();
-        var info = document.getElementById('rekap-modal-periode-info');
-        if (info) {
-            if (tgl.awal && tgl.akhir) {
-                info.textContent = 'Periode: ' + tgl.awal + ' s/d ' + tgl.akhir;
-            } else {
-                info.textContent = 'Pilih tanggal awal dan tanggal akhir terlebih dahulu.';
-            }
-        }
-        document.querySelectorAll('.btn-rekap-penjualan').forEach(function(btn) {
-            var field = btn.getAttribute('data-field');
-            if (!field) {
-                return;
-            }
-            if (tgl.awal && tgl.akhir) {
-                btn.href = buildRekapPenjualanUrl(field);
-                btn.classList.remove('disabled');
-                btn.setAttribute('aria-disabled', 'false');
-            } else {
-                btn.href = '#';
-                btn.classList.add('disabled');
-                btn.setAttribute('aria-disabled', 'true');
-            }
-        });
-    }
-
-    document.querySelectorAll('.btn-rekap-penjualan').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            var tgl = getTanggalFilterPenjualan();
-            if (!tgl.awal || !tgl.akhir) {
-                e.preventDefault();
-                alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
-                return;
-            }
-            var field = btn.getAttribute('data-field');
-            btn.href = buildRekapPenjualanUrl(field);
-        });
-    });
-
-    if (window.jQuery) {
-        jQuery('#modal-xl-select-unit').on('show.bs.modal', updateRekapModalLinks);
-    }
-
     var submitTimer = null;
     function submitCariPenjualanOtomatis() {
         clearTimeout(submitTimer);
@@ -1078,7 +949,6 @@
                 if (tgl.awal && tgl.akhir) {
                     saveFilterTanggalSession(tgl.awal, tgl.akhir);
                 }
-                updateRekapModalLinks();
                 submitCariPenjualanOtomatis();
             });
         });
@@ -1088,7 +958,6 @@
                 if (tgl.awal && tgl.akhir) {
                     saveFilterTanggalSession(tgl.awal, tgl.akhir);
                 }
-                updateRekapModalLinks();
                 submitCariPenjualanOtomatis();
             });
         }
@@ -1097,7 +966,6 @@
             saveFilterTanggalSession(tglInit.awal, tglInit.akhir);
         }
         restoreFilterTanggalDariSession();
-        updateRekapModalLinks();
     }
 
     var formCariPenjualan = document.getElementById('form-cari-penjualan');
