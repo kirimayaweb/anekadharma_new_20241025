@@ -1337,36 +1337,8 @@ class Tbl_penjualan extends CI_Controller
 		$uuid_unit_lama = isset($row_awal->uuid_unit) ? trim((string) $row_awal->uuid_unit) : '';
 		$uuid_unit_baru = $Get_uuid_unit;
 
-		if ($uuid_unit_baru !== '') {
-			$hasil_ensure_unit_baru = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_baru);
-			if (empty($hasil_ensure_unit_baru['ok'])) {
-				$this->_penjualan_respon_simpan_detail(
-					false,
-					isset($hasil_ensure_unit_baru['message']) ? $hasil_ensure_unit_baru['message'] : 'Gagal menyiapkan kolom unit baru di persediaan.',
-					$redirect_kasir
-				);
-				return;
-			}
-		}
-
-		if ($uuid_unit_lama !== '' && $uuid_unit_baru !== '' && $uuid_unit_lama !== $uuid_unit_baru) {
-			$hasil_pindah_unit = penjualan_pindah_unit_semua_barang(
-				$this,
-				$rows_penjualan,
-				$uuid_unit_lama,
-				$uuid_unit_baru
-			);
-			if (empty($hasil_pindah_unit['ok'])) {
-				$this->_penjualan_respon_simpan_detail(
-					false,
-					isset($hasil_pindah_unit['message'])
-						? $hasil_pindah_unit['message']
-						: 'Gagal memindahkan data penjualan ke unit baru di persediaan.',
-					$redirect_kasir
-				);
-				return;
-			}
-		}
+		// Ubah header transaksi (unit/konsumen/nomor) tidak memindahkan kolom unit di persediaan.
+		// Migrasi kolom persediaan hanya relevan saat input/ubah barang, bukan saat koreksi header.
 
 		$update_data = array(
 			'tgl_jual' => $date_jual,

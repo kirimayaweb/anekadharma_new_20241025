@@ -1161,24 +1161,62 @@ function penjualan_pindah_unit_semua_barang($CI, $rows_penjualan, $uuid_unit_lam
 	$CI->load->model('Persediaan_model');
 	$CI->db->trans_start();
 
+	$tgl_jual_ref = '';
+	if (!empty($rows_penjualan[0]->tgl_jual)) {
+		$tgl_jual_ref = trim((string) $rows_penjualan[0]->tgl_jual);
+	}
+	$map_bulan = null;
+	if ($tgl_jual_ref !== '') {
+		$tanggal_beli = penjualan_get_tanggal_beli_dari_tgl_jual($CI, $tgl_jual_ref);
+		if ($tanggal_beli !== null) {
+			$map_bulan = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+		}
+	}
+
 	foreach ($rows_penjualan as $row_penjualan) {
-		$id_persediaan = isset($row_penjualan->id_persediaan_barang)
-			? (int) $row_penjualan->id_persediaan_barang
-			: 0;
 		$jumlah = isset($row_penjualan->jumlah)
 			? (int) preg_replace('/[^0-9]/', '', (string) $row_penjualan->jumlah)
 			: 0;
 
-		if ($id_persediaan <= 0 || $jumlah <= 0) {
+		if ($jumlah <= 0) {
 			continue;
 		}
 
-		$row_persediaan = $CI->Persediaan_model->get_by_id($id_persediaan);
+		$row_persediaan = penjualan_resolve_persediaan_bulan_penjualan_row(
+			$CI,
+			$row_penjualan,
+			$map_bulan,
+			$tgl_jual_ref
+		);
 		if (empty($row_persediaan)) {
-			return array(
-				'ok' => false,
-				'message' => 'Persediaan id ' . $id_persediaan . ' tidak ditemukan.',
-			);
+			$row_persediaan = penjualan_get_persediaan_by_penjualan_row($CI, $row_penjualan, $tgl_jual_ref);
+		}
+		if (empty($row_persediaan)) {
+			continue;
+		}
+
+		$id_persediaan = (int) $row_persediaan->id;
+		if ($id_persediaan <= 0) {
+			continue;
+		}
+
+		if (!empty($row_penjualan->id)) {
+			$id_persediaan_lama = isset($row_penjualan->id_persediaan_barang)
+				? (int) $row_penjualan->id_persediaan_barang
+				: 0;
+			$uuid_persediaan_lama = isset($row_penjualan->uuid_persediaan)
+				? trim((string) $row_penjualan->uuid_persediaan)
+				: '';
+			$uuid_persediaan_baru = isset($row_persediaan->uuid_persediaan)
+				? trim((string) $row_persediaan->uuid_persediaan)
+				: '';
+			if ($id_persediaan_lama !== $id_persediaan || ($uuid_persediaan_baru !== '' && $uuid_persediaan_baru !== $uuid_persediaan_lama)) {
+				$sync_penjualan = array('id_persediaan_barang' => $id_persediaan);
+				if ($uuid_persediaan_baru !== '') {
+					$sync_penjualan['uuid_persediaan'] = $uuid_persediaan_baru;
+				}
+				$CI->db->where('id', (int) $row_penjualan->id)->update('tbl_penjualan', $sync_penjualan);
+			}
 		}
 
 		$uuid_barang_penjualan = isset($row_penjualan->uuid_barang) ? trim((string) $row_penjualan->uuid_barang) : '';
@@ -1192,23 +1230,27 @@ function penjualan_pindah_unit_semua_barang($CI, $rows_penjualan, $uuid_unit_lam
 			);
 		}
 
+		$can_migrate = true;
 		if ($kolom_lama !== null) {
-			$hasil_kurang = penjualan_update_persediaan_kolom_unit_saja(
-				$CI,
-				$id_persediaan,
-				$kolom_lama,
-				$jumlah,
-				'kurangi'
-			);
-			if (empty($hasil_kurang['ok'])) {
-				$CI->db->trans_rollback();
-				$nama = isset($row_penjualan->nama_barang) ? $row_penjualan->nama_barang : '';
-				$pesan = isset($hasil_kurang['message']) ? $hasil_kurang['message'] : 'Gagal mengurangi unit lama.';
-				if ($nama !== '') {
-					$pesan .= ' (' . $nama . ')';
+			$nilai_kolom_lama = penjualan_get_nilai_kolom_unit($row_persediaan, $kolom_lama);
+			if ($nilai_kolom_lama < $jumlah) {
+				$can_migrate = false;
+			} else {
+				$hasil_kurang = penjualan_update_persediaan_kolom_unit_saja(
+					$CI,
+					$id_persediaan,
+					$kolom_lama,
+					$jumlah,
+					'kurangi'
+				);
+				if (empty($hasil_kurang['ok'])) {
+					$can_migrate = false;
 				}
-				return array('ok' => false, 'message' => $pesan);
 			}
+		}
+
+		if (!$can_migrate) {
+			continue;
 		}
 
 		if ($kolom_baru !== null) {
@@ -1220,13 +1262,7 @@ function penjualan_pindah_unit_semua_barang($CI, $rows_penjualan, $uuid_unit_lam
 				'tambah'
 			);
 			if (empty($hasil_tambah['ok'])) {
-				$CI->db->trans_rollback();
-				$nama = isset($row_penjualan->nama_barang) ? $row_penjualan->nama_barang : '';
-				$pesan = isset($hasil_tambah['message']) ? $hasil_tambah['message'] : 'Gagal menambah unit baru.';
-				if ($nama !== '') {
-					$pesan .= ' (' . $nama . ')';
-				}
-				return array('ok' => false, 'message' => $pesan);
+				continue;
 			}
 		}
 	}
@@ -1374,9 +1410,97 @@ function penjualan_hapus_semua_barang_by_uuid($CI, $uuid_penjualan)
 }
 
 /**
- * Ambil baris persediaan untuk satu baris penjualan (id → uuid_persediaan → uuid_barang).
+ * tanggal_beli (Y-m-d) untuk map persediaan dari Tgl Jual penjualan.
  */
-function penjualan_get_persediaan_by_penjualan_row($CI, $row_penjualan)
+function penjualan_get_tanggal_beli_dari_tgl_jual($CI, $tgl_jual)
+{
+	$tgl_jual = trim((string) $tgl_jual);
+	if ($tgl_jual === '') {
+		return null;
+	}
+
+	$filter = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	if (empty($filter['awal'])) {
+		return null;
+	}
+
+	$ts = strtotime($filter['awal']);
+	return ($ts !== false) ? date('Y-m-d', $ts) : null;
+}
+
+/**
+ * Cari baris persediaan bulan Tgl Jual untuk satu baris penjualan.
+ * Dipakai saat id_persediaan_barang di penjualan sudah tidak ada di persediaan bulan aktif.
+ */
+function penjualan_resolve_persediaan_bulan_penjualan_row($CI, $row_penjualan, $map_bulan = null, $tgl_jual = null)
+{
+	if (empty($row_penjualan)) {
+		return null;
+	}
+
+	if ($tgl_jual === null && isset($row_penjualan->tgl_jual)) {
+		$tgl_jual = $row_penjualan->tgl_jual;
+	}
+	$tgl_jual = trim((string) $tgl_jual);
+	if ($tgl_jual === '') {
+		return null;
+	}
+
+	if (!is_array($map_bulan) || !isset($map_bulan['by_id'])) {
+		$tanggal_beli = penjualan_get_tanggal_beli_dari_tgl_jual($CI, $tgl_jual);
+		if ($tanggal_beli === null) {
+			return null;
+		}
+		$map_bulan = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	}
+
+	if (!empty($map_bulan)) {
+		$pers = persediaan_recalculate_find_persediaan_for_sync($row_penjualan, $map_bulan);
+		if (!empty($pers)) {
+			return $pers;
+		}
+
+		$uuid_barang = isset($row_penjualan->uuid_barang) ? trim((string) $row_penjualan->uuid_barang) : '';
+		if ($uuid_barang !== '' && !empty($map_bulan['by_uuid_barang'][$uuid_barang])) {
+			$hit = persediaan_recalculate_filter_kandidat_penjualan($map_bulan['by_uuid_barang'][$uuid_barang], $row_penjualan);
+			if (!empty($hit)) {
+				return $hit;
+			}
+			return $map_bulan['by_uuid_barang'][$uuid_barang][0];
+		}
+	}
+
+	$uuid_barang = isset($row_penjualan->uuid_barang) ? trim((string) $row_penjualan->uuid_barang) : '';
+	if ($uuid_barang === '') {
+		return null;
+	}
+
+	$filter = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$bulan_where = penjualan_sql_filter_bulan_persediaan_where('persediaan');
+	$bulan_ym = date('Y-m', strtotime($filter['awal']));
+	$row = $CI->db->query(
+		"SELECT * FROM persediaan
+		WHERE uuid_barang = ?
+		AND {$bulan_where}
+		ORDER BY id ASC
+		LIMIT 1",
+		array(
+			$uuid_barang,
+			$filter['awal'],
+			$filter['akhir'],
+			$filter['awal'],
+			$filter['akhir'],
+			$bulan_ym,
+		)
+	)->row();
+
+	return !empty($row) ? $row : null;
+}
+
+/**
+ * Ambil baris persediaan untuk satu baris penjualan (id → bulan Tgl Jual → uuid_persediaan → uuid_barang).
+ */
+function penjualan_get_persediaan_by_penjualan_row($CI, $row_penjualan, $tgl_jual = null)
 {
 	if (empty($row_penjualan)) {
 		return null;
@@ -1392,6 +1516,11 @@ function penjualan_get_persediaan_by_penjualan_row($CI, $row_penjualan)
 		if (!empty($row)) {
 			return $row;
 		}
+	}
+
+	$row_bulan = penjualan_resolve_persediaan_bulan_penjualan_row($CI, $row_penjualan, null, $tgl_jual);
+	if (!empty($row_bulan)) {
+		return $row_bulan;
 	}
 
 	$uuid_persediaan = isset($row_penjualan->uuid_persediaan)
