@@ -1161,6 +1161,100 @@ window.addEventListener('load', function() {
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
 
+    var PERS_TAB_MAIN_KEY = 'persediaan_active_main_tab';
+    var PERS_TAB_SUB_KEY = 'persediaan_active_data_subtab';
+
+    function persediaanMainTabKeyFromHref(href) {
+        var map = {
+            '#panel-data-persediaan': 'data',
+            '#panel-rekap': 'rekap',
+            '#panel-generate-persediaan': 'generate',
+            '#panel-compare-manual': 'compare'
+        };
+        return map[href] || 'data';
+    }
+
+    function persediaanDataSubTabKeyFromHref(href) {
+        return href === '#panel-persediaan-jasa' ? 'jasa' : 'barang';
+    }
+
+    function savePersediaanMainTabKey(key) {
+        try {
+            localStorage.setItem(PERS_TAB_MAIN_KEY, key);
+        } catch (e) {}
+    }
+
+    function savePersediaanDataSubTabKey(key) {
+        try {
+            localStorage.setItem(PERS_TAB_SUB_KEY, key);
+        } catch (e) {}
+    }
+
+    function saveCurrentPersediaanTabs() {
+        var $main = $('#persediaan-tabs .nav-link.active');
+        if ($main.length) {
+            savePersediaanMainTabKey(persediaanMainTabKeyFromHref($main.attr('href') || ''));
+        }
+        var $sub = $('#persediaan-data-subtabs .nav-link.active');
+        if ($sub.length) {
+            savePersediaanDataSubTabKey(persediaanDataSubTabKeyFromHref($sub.attr('href') || ''));
+        }
+    }
+
+    function getSavedPersediaanMainTabKey() {
+        try {
+            var legacy = sessionStorage.getItem('persediaan_show_tab');
+            if (legacy) {
+                sessionStorage.removeItem('persediaan_show_tab');
+                savePersediaanMainTabKey(legacy);
+                return legacy;
+            }
+            return localStorage.getItem(PERS_TAB_MAIN_KEY) || 'data';
+        } catch (e) {
+            return 'data';
+        }
+    }
+
+    function getSavedPersediaanDataSubTabKey() {
+        try {
+            return localStorage.getItem(PERS_TAB_SUB_KEY) || 'barang';
+        } catch (e) {
+            return 'barang';
+        }
+    }
+
+    function activatePersediaanMainTabByKey(key) {
+        var map = {
+            data: '#tab-data-persediaan',
+            rekap: '#tab-rekap',
+            generate: '#tab-generate-persediaan',
+            compare: '#tab-compare-manual'
+        };
+        var sel = map[key] || map.data;
+        if ($(sel).length) {
+            $(sel).tab('show');
+        }
+    }
+
+    function activatePersediaanDataSubTabByKey(key) {
+        var map = {
+            barang: '#tab-persediaan-barang',
+            jasa: '#tab-persediaan-jasa'
+        };
+        var sel = map[key] || map.barang;
+        if ($(sel).length) {
+            $(sel).tab('show');
+        }
+    }
+
+    function restorePersediaanTabsFromStorage() {
+        var mainKey = getSavedPersediaanMainTabKey();
+        activatePersediaanMainTabByKey(mainKey);
+        if (mainKey === 'data') {
+            activatePersediaanDataSubTabByKey(getSavedPersediaanDataSubTabKey());
+        }
+    }
+
     function getBulanTargetGenerate() {
         var bulan = parseInt($('#gen_bulan_persediaan').val(), 10);
         var tahun = parseInt($('#gen_tahun_persediaan').val(), 10);
@@ -1956,6 +2050,8 @@ window.addEventListener('load', function() {
                 }
                 cekGeneratePersediaanBulan();
                 if (data.refresh_persediaan && $('#form-persediaan-bulan').length) {
+                    savePersediaanMainTabKey('generate');
+                    saveCurrentPersediaanTabs();
                     $('#form-persediaan-bulan').submit();
                 }
                 setTimeout(function() {
@@ -2891,6 +2987,10 @@ window.addEventListener('load', function() {
         $('#modal-tambah-persediaan').modal('show');
     });
 
+    $('#form-persediaan-bulan').on('submit', function() {
+        saveCurrentPersediaanTabs();
+    });
+
     $('#bulan_persediaan').on('change', function() {
         updateInfoBulanTambahPersediaan();
         if (!$(this).val() || rekapRecalcRunning) {
@@ -3160,6 +3260,7 @@ window.addEventListener('load', function() {
     }
 
     function tampilkanTabRekap() {
+        savePersediaanMainTabKey('rekap');
         $('#tab-rekap').tab('show');
     }
 
@@ -3283,9 +3384,7 @@ window.addEventListener('load', function() {
         })
         .then(function(res) {
             if (opts.submitFormAfter) {
-                try {
-                    sessionStorage.setItem('persediaan_show_tab', 'rekap');
-                } catch (e) {}
+                savePersediaanMainTabKey('rekap');
                 $('#form-persediaan-bulan').submit();
             } else {
                 Swal.fire({
@@ -3573,17 +3672,6 @@ window.addEventListener('load', function() {
         });
     });
 
-    // Setelah reload halaman (search), buka tab Rekap jika baru selesai rekalkulasi
-    try {
-        if (sessionStorage.getItem('persediaan_show_tab') === 'rekap') {
-            sessionStorage.removeItem('persediaan_show_tab');
-            setTimeout(function() {
-                tampilkanTabRekap();
-                loadRekapDataOnly();
-            }, 300);
-        }
-    } catch (e) {}
-
     // Tab Rekap: ubah bulan hanya memengaruhi rekap (tidak mengubah datepicker tab Persediaan)
     $('#bulan_rekap').on('change', function() {
         if (!$(this).val() || rekapRecalcRunning) {
@@ -3593,24 +3681,31 @@ window.addEventListener('load', function() {
     });
 
     $('a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
-        if ($(e.target).attr('href') === '#panel-rekap') {
+        var href = $(e.target).attr('href') || '';
+        if ($(e.target).closest('#persediaan-tabs').length) {
+            savePersediaanMainTabKey(persediaanMainTabKeyFromHref(href));
+        } else if ($(e.target).closest('#persediaan-data-subtabs').length) {
+            savePersediaanDataSubTabKey(persediaanDataSubTabKeyFromHref(href));
+        }
+
+        if (href === '#panel-rekap') {
             if (!rekapRecalcRunning && !rekapLoading && !rekapSkipNextPanelLoad) {
                 loadRekapDataOnly();
             }
             setTimeout(adjustRekapScrollArea, 150);
-        } else if ($(e.target).attr('href') === '#panel-generate-persediaan') {
+        } else if (href === '#panel-generate-persediaan') {
             cekGeneratePersediaanBulan();
             setTimeout(function() {
                 var bulanKey = getBulanTargetGenerate();
                 loadGenRecalcHistoryFromServer(bulanKey);
                 adjustAllPersediaanDataTableAreas();
             }, 150);
-        } else if ($(e.target).attr('href') === '#panel-compare-manual') {
+        } else if (href === '#panel-compare-manual') {
             updateTombolComparePersediaan();
             loadCompareTableList(false);
             updateCompareInfoRingkas();
             setTimeout(adjustAllPersediaanDataTableAreas, 150);
-        } else if ($(e.target).attr('href') === '#panel-data-persediaan') {
+        } else if (href === '#panel-data-persediaan') {
             setTimeout(adjustAllPersediaanDataTableAreas, 150);
         }
     });
@@ -3619,22 +3714,9 @@ window.addEventListener('load', function() {
         setTimeout(adjustAllPersediaanDataTableAreas, 150);
     });
 
-    try {
-        if (sessionStorage.getItem('persediaan_show_tab') === 'generate') {
-            sessionStorage.removeItem('persediaan_show_tab');
-            setTimeout(function() {
-                $('#tab-generate-persediaan').tab('show');
-                cekGeneratePersediaanBulan();
-            }, 300);
-        } else if (sessionStorage.getItem('persediaan_show_tab') === 'compare') {
-            sessionStorage.removeItem('persediaan_show_tab');
-            setTimeout(function() {
-                $('#tab-compare-manual').tab('show');
-                loadCompareTableList(false);
-                updateCompareInfoRingkas();
-            }, 300);
-        }
-    } catch (eGenTab) {}
+    setTimeout(function() {
+        restorePersediaanTabsFromStorage();
+    }, 300);
 
     if (userCanGeneratePersediaan) {
         setTimeout(function() {
