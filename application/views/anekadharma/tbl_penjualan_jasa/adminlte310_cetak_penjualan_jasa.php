@@ -1,4 +1,4 @@
-﻿<head>
+<head>
 	<style>
 		/* Margin halaman: atas, kanan, kiri 0.5cm (layar + cetak). Bawah layar 1em; cetak bawah 1cm. */
 		body {

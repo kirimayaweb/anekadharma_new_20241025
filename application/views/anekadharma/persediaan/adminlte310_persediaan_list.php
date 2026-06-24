@@ -1255,6 +1255,179 @@ window.addEventListener('load', function() {
         }
     }
 
+    var PERS_BULAN_DATA_KEY = 'persediaan_bulan_data';
+    var PERS_BULAN_REKAP_KEY = 'persediaan_bulan_rekap';
+    var PERS_GEN_BULAN_KEY = 'persediaan_gen_bulan';
+    var PERS_GEN_TAHUN_KEY = 'persediaan_gen_tahun';
+    var PERS_COMPARE_BULAN_KEY = 'persediaan_compare_bulan';
+    var PERS_COMPARE_TAHUN_KEY = 'persediaan_compare_tahun';
+    var PERS_COMPARE_TABEL_KEY = 'persediaan_compare_tabel';
+
+    function persediaanParseBulanKey(bulanKey) {
+        if (!bulanKey || !/^\d{4}-\d{2}$/.test(bulanKey)) {
+            return null;
+        }
+        var parts = bulanKey.split('-');
+        return {
+            tahun: parseInt(parts[0], 10),
+            bulan: parseInt(parts[1], 10)
+        };
+    }
+
+    function savePersediaanBulanData(val) {
+        val = (val || '').trim();
+        if (!/^\d{4}-\d{2}$/.test(val)) {
+            return;
+        }
+        try {
+            localStorage.setItem(PERS_BULAN_DATA_KEY, val);
+        } catch (e) {}
+    }
+
+    function getSavedPersediaanBulanData() {
+        try {
+            var val = (localStorage.getItem(PERS_BULAN_DATA_KEY) || '').trim();
+            return /^\d{4}-\d{2}$/.test(val) ? val : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function savePersediaanBulanRekap(val) {
+        val = (val || '').trim();
+        if (!/^\d{4}-\d{2}$/.test(val)) {
+            return;
+        }
+        try {
+            localStorage.setItem(PERS_BULAN_REKAP_KEY, val);
+        } catch (e) {}
+    }
+
+    function getSavedPersediaanBulanRekap() {
+        try {
+            var val = (localStorage.getItem(PERS_BULAN_REKAP_KEY) || '').trim();
+            return /^\d{4}-\d{2}$/.test(val) ? val : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function savePersediaanGenBulanTahun(bulan, tahun) {
+        if (typeof bulan === 'undefined' || bulan === null) {
+            bulan = $('#gen_bulan_persediaan').val();
+        }
+        if (typeof tahun === 'undefined' || tahun === null) {
+            tahun = $('#gen_tahun_persediaan').val();
+        }
+        try {
+            if (bulan) {
+                localStorage.setItem(PERS_GEN_BULAN_KEY, String(bulan));
+            }
+            if (tahun) {
+                localStorage.setItem(PERS_GEN_TAHUN_KEY, String(tahun));
+            }
+        } catch (e) {}
+    }
+
+    function savePersediaanGenFromBulanKey(bulanKey) {
+        var parsed = persediaanParseBulanKey(bulanKey);
+        if (!parsed) {
+            return;
+        }
+        if ($('#gen_bulan_persediaan option[value="' + parsed.bulan + '"]').length) {
+            $('#gen_bulan_persediaan').val(String(parsed.bulan));
+        }
+        if ($('#gen_tahun_persediaan option[value="' + parsed.tahun + '"]').length) {
+            $('#gen_tahun_persediaan').val(String(parsed.tahun));
+        }
+        savePersediaanGenBulanTahun(parsed.bulan, parsed.tahun);
+    }
+
+    function savePersediaanCompareBulanTahun() {
+        try {
+            var bulan = $('#compare_bulan_persediaan').val();
+            var tahun = $('#compare_tahun_persediaan').val();
+            if (bulan) {
+                localStorage.setItem(PERS_COMPARE_BULAN_KEY, String(bulan));
+            }
+            if (tahun) {
+                localStorage.setItem(PERS_COMPARE_TAHUN_KEY, String(tahun));
+            }
+        } catch (e) {}
+    }
+
+    function savePersediaanCompareTabel(val) {
+        val = (val || '').trim();
+        try {
+            if (val) {
+                localStorage.setItem(PERS_COMPARE_TABEL_KEY, val);
+            } else {
+                localStorage.removeItem(PERS_COMPARE_TABEL_KEY);
+            }
+        } catch (e) {}
+    }
+
+    function getSavedPersediaanCompareTabel() {
+        try {
+            return (localStorage.getItem(PERS_COMPARE_TABEL_KEY) || '').trim();
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function applySavedFilterControlsFromStorage() {
+        var savedDataBulan = getSavedPersediaanBulanData();
+        if (savedDataBulan) {
+            $('#bulan_persediaan').val(savedDataBulan);
+        }
+
+        var savedRekapBulan = getSavedPersediaanBulanRekap();
+        if (savedRekapBulan) {
+            $('#bulan_rekap').val(savedRekapBulan);
+        }
+
+        try {
+            var genBulan = localStorage.getItem(PERS_GEN_BULAN_KEY);
+            var genTahun = localStorage.getItem(PERS_GEN_TAHUN_KEY);
+            if (genBulan && $('#gen_bulan_persediaan option[value="' + genBulan + '"]').length) {
+                $('#gen_bulan_persediaan').val(genBulan);
+            }
+            if (genTahun && $('#gen_tahun_persediaan option[value="' + genTahun + '"]').length) {
+                $('#gen_tahun_persediaan').val(genTahun);
+            }
+        } catch (eGen) {}
+
+        try {
+            var cmpBulan = localStorage.getItem(PERS_COMPARE_BULAN_KEY);
+            var cmpTahun = localStorage.getItem(PERS_COMPARE_TAHUN_KEY);
+            if (cmpBulan && $('#compare_bulan_persediaan option[value="' + cmpBulan + '"]').length) {
+                $('#compare_bulan_persediaan').val(cmpBulan);
+            }
+            if (cmpTahun && $('#compare_tahun_persediaan option[value="' + cmpTahun + '"]').length) {
+                $('#compare_tahun_persediaan').val(cmpTahun);
+            }
+        } catch (eCmp) {}
+    }
+
+    function tryRestoreTab1BulanFromStorage() {
+        var savedBulan = getSavedPersediaanBulanData();
+        if (!savedBulan) {
+            return false;
+        }
+        var currentBulan = ($('#bulan_persediaan').val() || '').trim();
+        if (savedBulan === currentBulan) {
+            return false;
+        }
+        $('#bulan_persediaan').val(savedBulan);
+        saveCurrentPersediaanTabs();
+        $('#form-persediaan-bulan').submit();
+        return true;
+    }
+
+    if (tryRestoreTab1BulanFromStorage()) {
+        return;
+    }
+
     function getBulanTargetGenerate() {
         var bulan = parseInt($('#gen_bulan_persediaan').val(), 10);
         var tahun = parseInt($('#gen_tahun_persediaan').val(), 10);
@@ -1363,6 +1536,7 @@ window.addEventListener('load', function() {
     }
 
     $('#gen_bulan_persediaan, #gen_tahun_persediaan').on('change', function() {
+        savePersediaanGenBulanTahun();
         var bulanKey = getBulanTargetGenerate();
         cekGeneratePersediaanBulan();
         loadGenRecalcHistoryFromServer(bulanKey);
@@ -2048,6 +2222,8 @@ window.addEventListener('load', function() {
                 if ($('#bulan_persediaan').val() !== bulanKey) {
                     $('#bulan_persediaan').val(bulanKey);
                 }
+                savePersediaanBulanData(bulanKey);
+                savePersediaanGenFromBulanKey(bulanKey);
                 cekGeneratePersediaanBulan();
                 if (data.refresh_persediaan && $('#form-persediaan-bulan').length) {
                     savePersediaanMainTabKey('generate');
@@ -2342,12 +2518,15 @@ window.addEventListener('load', function() {
         $box.removeClass('d-none');
     }
 
-    function loadCompareTableList(force, selectTable) {
+    function loadCompareTableList(force, selectTable, onReady) {
         if (compareTablesLoaded && !force) {
             if (selectTable) {
                 $('#compare_tabel_pilihan').val(selectTable);
                 $('#compare_db_tabel_cek').val(selectTable);
                 updateCompareDbTabelInfoBox();
+            }
+            if (typeof onReady === 'function') {
+                onReady();
             }
             return;
         }
@@ -2379,7 +2558,37 @@ window.addEventListener('load', function() {
             } else {
                 $selDb.prop('disabled', false);
             }
+            if (typeof onReady === 'function') {
+                onReady();
+            }
         });
+    }
+
+    function refreshPersediaanTabDataAfterFilterRestore() {
+        var mainKey = persediaanMainTabKeyFromHref($('#persediaan-tabs .nav-link.active').attr('href') || '');
+
+        if (mainKey === 'rekap') {
+            if (!rekapRecalcRunning && !rekapLoading && !rekapSkipNextPanelLoad) {
+                loadRekapDataOnly();
+            }
+        } else if (mainKey === 'generate' && userCanGeneratePersediaan) {
+            cekGeneratePersediaanBulan();
+            loadGenRecalcHistoryFromServer(getBulanTargetGenerate());
+            adjustGenRecalcDataTables();
+        } else if (mainKey === 'compare') {
+            var savedTabel = getSavedPersediaanCompareTabel();
+            loadCompareTableList(true, savedTabel || null, function() {
+                updateCompareInfoRingkas({
+                    bulan_label: getBulanKeyCompare(),
+                    table: $('#compare_tabel_pilihan').val() || savedTabel || ''
+                });
+                if (savedTabel && getBulanKeyCompare()) {
+                    runCompareTabel();
+                }
+            });
+        }
+
+        adjustAllPersediaanDataTableAreas();
     }
 
     function showCompareCsvAlertMessage(res, icon, title) {
@@ -2820,13 +3029,23 @@ window.addEventListener('load', function() {
 
     $('a[href="#panel-compare-manual"]').on('shown.bs.tab', function() {
         updateTombolComparePersediaan();
-        loadCompareTableList(false);
-        updateCompareInfoRingkas();
+        loadCompareTableList(false, getSavedPersediaanCompareTabel() || null, function() {
+            updateCompareInfoRingkas({
+                bulan_label: getBulanKeyCompare(),
+                table: $('#compare_tabel_pilihan').val() || getSavedPersediaanCompareTabel() || ''
+            });
+        });
         setTimeout(adjustAllPersediaanDataTableAreas, 150);
     });
 
     $('#compare_db_tabel_cek').on('change', function() {
+        var tbl = ($(this).val() || '').trim();
+        if (tbl) {
+            $('#compare_tabel_pilihan').val(tbl);
+        }
+        savePersediaanCompareTabel(tbl);
         updateCompareDbTabelInfoBox();
+        updateCompareInfoRingkas({ bulan_label: getBulanKeyCompare(), table: tbl });
     });
 
     $('#btn-compare-db-cek-data').on('click', function() {
@@ -2869,6 +3088,16 @@ window.addEventListener('load', function() {
     });
 
     $('#compare_bulan_persediaan, #compare_tahun_persediaan, #compare_tabel_pilihan').on('change', function() {
+        if ($(this).attr('id') === 'compare_tabel_pilihan') {
+            var tbl = ($(this).val() || '').trim();
+            if (tbl) {
+                $('#compare_db_tabel_cek').val(tbl);
+            }
+            savePersediaanCompareTabel(tbl);
+            updateCompareDbTabelInfoBox();
+        } else {
+            savePersediaanCompareBulanTahun();
+        }
         updateCompareInfoRingkas({ bulan_label: getBulanKeyCompare(), table: $('#compare_tabel_pilihan').val() });
     });
 
@@ -2989,9 +3218,11 @@ window.addEventListener('load', function() {
 
     $('#form-persediaan-bulan').on('submit', function() {
         saveCurrentPersediaanTabs();
+        savePersediaanBulanData($('#bulan_persediaan').val());
     });
 
     $('#bulan_persediaan').on('change', function() {
+        savePersediaanBulanData($(this).val());
         updateInfoBulanTambahPersediaan();
         if (!$(this).val() || rekapRecalcRunning) {
             return;
@@ -3385,6 +3616,7 @@ window.addEventListener('load', function() {
         .then(function(res) {
             if (opts.submitFormAfter) {
                 savePersediaanMainTabKey('rekap');
+                savePersediaanBulanRekap(getBulanRekapAktif());
                 $('#form-persediaan-bulan').submit();
             } else {
                 Swal.fire({
@@ -3674,6 +3906,7 @@ window.addEventListener('load', function() {
 
     // Tab Rekap: ubah bulan hanya memengaruhi rekap (tidak mengubah datepicker tab Persediaan)
     $('#bulan_rekap').on('change', function() {
+        savePersediaanBulanRekap($(this).val());
         if (!$(this).val() || rekapRecalcRunning) {
             return;
         }
@@ -3702,8 +3935,12 @@ window.addEventListener('load', function() {
             }, 150);
         } else if (href === '#panel-compare-manual') {
             updateTombolComparePersediaan();
-            loadCompareTableList(false);
-            updateCompareInfoRingkas();
+            loadCompareTableList(false, getSavedPersediaanCompareTabel() || null, function() {
+                updateCompareInfoRingkas({
+                    bulan_label: getBulanKeyCompare(),
+                    table: $('#compare_tabel_pilihan').val() || getSavedPersediaanCompareTabel() || ''
+                });
+            });
             setTimeout(adjustAllPersediaanDataTableAreas, 150);
         } else if (href === '#panel-data-persediaan') {
             setTimeout(adjustAllPersediaanDataTableAreas, 150);
@@ -3715,17 +3952,23 @@ window.addEventListener('load', function() {
     });
 
     setTimeout(function() {
+        applySavedFilterControlsFromStorage();
+        if (typeof updateInfoBulanTambahPersediaan === 'function') {
+            updateInfoBulanTambahPersediaan();
+        }
         restorePersediaanTabsFromStorage();
+        setTimeout(function() {
+            refreshPersediaanTabDataAfterFilterRestore();
+        }, 150);
     }, 300);
 
     if (userCanGeneratePersediaan) {
         setTimeout(function() {
+            if ($('#panel-generate-persediaan').hasClass('active') || $('#panel-generate-persediaan').hasClass('show')) {
+                return;
+            }
             var bulanKey = getBulanTargetGenerate();
             loadGenRecalcHistoryFromServer(bulanKey);
-            if ($('#panel-generate-persediaan').hasClass('active') || $('#panel-generate-persediaan').hasClass('show')) {
-                cekGeneratePersediaanBulan();
-                adjustGenRecalcDataTables();
-            }
         }, 400);
     } else {
         updateTombolGeneratePersediaan('denied');
@@ -3735,11 +3978,19 @@ window.addEventListener('load', function() {
     updateTombolComparePersediaan();
 
     setTimeout(function() {
-        if ($('#panel-compare-manual').hasClass('active') || $('#panel-compare-manual').hasClass('show')) {
-            loadCompareTableList(false);
-            updateCompareInfoRingkas();
+        var mainKey = persediaanMainTabKeyFromHref($('#persediaan-tabs .nav-link.active').attr('href') || '');
+        if (mainKey !== 'compare' && ($('#panel-compare-manual').hasClass('active') || $('#panel-compare-manual').hasClass('show'))) {
+            var savedTabel = getSavedPersediaanCompareTabel();
+            loadCompareTableList(false, savedTabel || null, function() {
+                updateCompareInfoRingkas({
+                    bulan_label: getBulanKeyCompare(),
+                    table: $('#compare_tabel_pilihan').val() || savedTabel || ''
+                });
+            });
         }
-        adjustAllPersediaanDataTableAreas();
+        if (mainKey !== 'data') {
+            adjustAllPersediaanDataTableAreas();
+        }
     }, 500);
 });
 </script>

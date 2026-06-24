@@ -1,4 +1,4 @@
-﻿<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <?php
 $this->load->helper('pembelian_persediaan');
 if (!isset($filter_bulan_penjualan)) {
