@@ -24,78 +24,47 @@
                 <div class="card card-primary">
                     <div class="card-header">
 
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="row">
-                                    <div class="col-4" align="left">
-                                        <div class="row">
-                                            DAFTAR AKTIVA TETAP: <br />Harga Perolehan, Depresiasi, Ak Depresiasi, & Nilai Buku
-                                        </div>
-                                    </div>
+                        <?php
+                        $bulan_ns_value = isset($bulan_ns_value) ? $bulan_ns_value : date('Y-m');
+                        $action_cari_between_date = site_url('Tbl_penyusutan/cari_between_date');
+                        $can_input_penyusutan = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
+                        ?>
 
-                                    <div class="col-6" align="center">
-                                        <div class="row">
-                                            <div class="col-3" align="left">
-                                                <?php
-                                                if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
-                                                    echo anchor(site_url('Tbl_penyusutan/Input_list_data_baru'), 'INPUT DATA', 'class="btn btn-danger"');
-                                                }
-
-                                                ?>
-
-                                            </div>
-                                            <div class="col-9" align="center">
-
-                                                <?php
-                                                // $action_cari_between_date = site_url('tbl_pembelian/cari_between_date');
-                                                $action_cari_between_date = site_url('Tbl_penyusutan/cari_between_date');
-                                                ?>
-
-                                                <form action="<?php echo $action_cari_between_date; ?>" method="post">
-
-                                                    <div class="row">
-                                                        <div class="col-md-4" text-align="right" align="right">
-                                                            <input type="month" id="bulan_ns" name="bulan_ns">
-                                                        </div>
-                                                        <div class="col-md-2" text-align="left" align="left">
-                                                            <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                                        </div>
-
-                                                    </div>
-
-
-
-                                                </form>
-
-
-                                            </div>
-                                        </div>
-
-
-
-                                    </div>
-
-
-                                    <div class="col-2" text-align="left" align="right">
-                                        <?php echo anchor(site_url('jurnal_kas/excel'), 'Cetak', 'class="btn btn-success"'); ?>
-                                    </div>
-                                </div>
-
-
-
-
-
-
-
+                        <div class="row align-items-center">
+                            <div class="col-md-4">
+                                DAFTAR AKTIVA TETAP: <br />Harga Perolehan, Depresiasi, Ak Depresiasi, & Nilai Buku
                             </div>
+
+                            <div class="col-md-4 d-flex justify-content-center">
+                                <form action="<?php echo $action_cari_between_date; ?>" method="post" class="penyusutan-month-filter">
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <input type="month" class="form-control form-control-sm mr-2" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
+                                        <button type="submit" class="btn btn-danger btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <div class="col-md-4"></div>
                         </div>
                     </div>
-                </div>
 
 
 
 
                 <div class="card-body">
+
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 penyusutan-toolbar">
+                        <div>
+                            <?php
+                            if ($can_input_penyusutan) {
+                                echo anchor(site_url('Tbl_penyusutan/Input_list_data_baru'), '<i class="fa fa-plus"></i> INPUT DATA', 'class="btn btn-danger"');
+                            }
+                            ?>
+                        </div>
+                        <div>
+                            <?php echo anchor(site_url('Tbl_penyusutan/excel'), '<i class="fa fa-file-excel-o"></i> Cetak ke Excel', 'class="btn btn-success"'); ?>
+                        </div>
+                    </div>
 
                     <!-- <table id="example" class="table table-striped dt-responsive w-100 table-bordered display nowrap table-hover mb-0" style="width:100%"> -->
                     <table id="example9" class="display nowrap" style="width:100%">
@@ -1001,6 +970,8 @@
                     </div>
                 </div>
 
+                </div>
+
             </div>
         </div>
 
@@ -1013,6 +984,14 @@
     div.dataTables_wrapper {
         width: 100%;
         margin: 0 auto;
+    }
+
+    .penyusutan-month-filter input[type="month"] {
+        min-width: 180px;
+    }
+
+    .penyusutan-toolbar .btn {
+        min-width: 140px;
     }
 </style>
 

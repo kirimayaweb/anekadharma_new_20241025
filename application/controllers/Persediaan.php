@@ -3598,57 +3598,20 @@ class Persediaan extends CI_Controller
 		if ($bulan === '') {
 			$bulan = date('Y-m');
 		}
+
+		$filter = strtolower(trim((string) $this->input->post('filter_kategori', TRUE)));
 		$this->load->helper(array('exportexcel', 'persediaan_display', 'pembelian_persediaan'));
 		$Persediaan = $this->get_persediaan_by_bulan($bulan);
 
-		$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
-		$waktu_klik = date('Y-m-d_H-i-s');
-		$waktu_cetak_tampil = date('d/m/Y H:i:s');
-		$namaFile = 'Persediaan_' . $bagian_bulan . '_' . $waktu_klik . '.xlsx';
-		$tablehead = 1;
-		$tablebody = 2;
-		$nourut = 1;
-		$total_total_10 = 0;
-		$total_nilai_persediaan = 0;
-		$totals_nominal_unit = array();
-		foreach (persediaan_list_unit_columns($this) as $uf_excel) {
-			$totals_nominal_unit[$uf_excel] = 0;
+		if ($filter === 'jasa') {
+			$Persediaan = persediaan_filter_rows_by_kategori_tab($Persediaan, true);
+		} elseif ($filter === 'barang') {
+			$Persediaan = persediaan_filter_rows_by_kategori_tab($Persediaan, false);
+		} else {
+			$filter = 'semua';
 		}
 
-		excel_prepare_download($namaFile);
-		xlsBOF();
-
-		$col_types = persediaan_export_column_types($this);
-
-		xlsWriteLabelBold14(0, 0, 'di cetak pada : ' . $waktu_cetak_tampil);
-
-		$kolomhead = 0;
-		foreach (persediaan_export_headers($this) as $header) {
-			xlsWriteLabel($tablehead, $kolomhead++, $header);
-		}
-
-		foreach ($Persediaan as $data) {
-			$total_total_10 += persediaan_hitung_total_10_net($data);
-			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
-			foreach (persediaan_list_unit_columns($this) as $uf_excel) {
-				$totals_nominal_unit[$uf_excel] += persediaan_hitung_kolom_nominal_row($data, $uf_excel);
-			}
-			$cells = persediaan_export_row_cells($data, $nourut, $bulan, $this);
-			$kolombody = 0;
-			foreach ($cells as $cell) {
-				persediaan_export_write_cell($tablebody, $kolombody++, $cell, $col_types);
-			}
-			$tablebody++;
-			$nourut++;
-		}
-
-		$footer_cells = persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $this);
-		$kolomfoot = 0;
-		foreach ($footer_cells as $cell) {
-			persediaan_export_write_cell($tablebody, $kolomfoot++, $cell, $col_types);
-		}
-
-		xlsEOF();
+		persediaan_export_excel_tab_data_output($this, $bulan, $Persediaan, $filter);
 		exit();
 	}
 

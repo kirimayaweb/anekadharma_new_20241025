@@ -394,10 +394,7 @@ function persediaan_hitung_kolom_nominal_row($row, $field)
 function persediaan_tampil_kolom_nominal_row($row, $field)
 {
 	$nominal = persediaan_hitung_kolom_nominal_row($row, $field);
-	if ($nominal == 0.0) {
-		return '';
-	}
-	return persediaan_format_angka_tampil($nominal);
+	return persediaan_format_rupiah_tampil($nominal);
 }
 
 /**
@@ -438,7 +435,7 @@ function persediaan_list_col_index_nilai_persediaan($CI = null)
 /**
  * Baris footer datatable / export (label Total + jumlah per kolom).
  */
-function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null)
+function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true)
 {
 	$totals_nominal_unit = is_array($totals_nominal_unit) ? $totals_nominal_unit : array();
 	$footer = array();
@@ -458,15 +455,17 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 			$footer[] = '';
 			if (persediaan_field_has_nominal_column($field)) {
 				$sum_nom = isset($totals_nominal_unit[$field]) ? (float) $totals_nominal_unit[$field] : 0;
-				$footer[] = $sum_nom > 0 ? persediaan_format_angka_tampil($sum_nom) : '';
+				$footer[] = persediaan_format_rupiah_tampil($sum_nom, true);
 			}
 		}
 	}
 
-	$footer[] = persediaan_format_angka_tampil($total_nilai_persediaan);
-	$footer[] = '';
-	$footer[] = '';
-	$footer[] = '';
+	$footer[] = persediaan_format_rupiah_tampil($total_nilai_persediaan, true);
+	if ($show_keluar_columns) {
+		$footer[] = '';
+		$footer[] = '';
+		$footer[] = '';
+	}
 
 	return $footer;
 }
@@ -487,6 +486,98 @@ function persediaan_format_angka_tampil($value)
 		return number_format($value, 0, ',', '.');
 	}
 	return number_format($value, 2, ',', '.');
+}
+
+/**
+ * Format tampilan uang/rupiah (pemisah ribuan Indonesia), kosong jika nol.
+ */
+function persediaan_format_rupiah_tampil($value, $always_show = false)
+{
+	if ($value === null || $value === '') {
+		return '';
+	}
+
+	$raw = trim((string) $value);
+	if ($raw === '' || $raw === '-') {
+		return '';
+	}
+
+	if (!is_numeric($value) && !preg_match('/^[\d\s.,\-]+$/', $raw)) {
+		return $value;
+	}
+
+	$angka = persediaan_parse_angka($value);
+	if (!$always_show && $angka == 0.0) {
+		return '';
+	}
+
+	return persediaan_format_angka_tampil($angka);
+}
+
+function persediaan_list_col_index_hpp($CI = null)
+{
+	return 5;
+}
+
+function persediaan_tab_data_show_keluar_columns($tab_mode = 'barang')
+{
+	return strtolower(trim((string) $tab_mode)) !== 'jasa';
+}
+
+function persediaan_tab_data_export_headers($CI = null, $show_keluar_columns = true)
+{
+	$headers = persediaan_export_headers($CI);
+	if (!$show_keluar_columns) {
+		$headers = array_slice($headers, 0, -3);
+	}
+	return $headers;
+}
+
+function persediaan_tab_data_export_column_types($CI = null, $show_keluar_columns = true)
+{
+	$types = persediaan_export_column_types($CI);
+	if (!$show_keluar_columns) {
+		$types = array_slice($types, 0, -3);
+	}
+	return $types;
+}
+
+/**
+ * Indeks kolom datatable tab Barang/Jasa yang ditampilkan sebagai uang (rata kanan).
+ */
+function persediaan_tab_data_money_column_indexes($CI = null)
+{
+	$indexes = array(persediaan_list_col_index_hpp($CI));
+
+	foreach (persediaan_list_unit_columns($CI) as $field) {
+		if (!persediaan_field_has_nominal_column($field)) {
+			continue;
+		}
+		$idx = persediaan_list_col_index_unit_nominal($field, $CI);
+		if ($idx >= 0) {
+			$indexes[] = $idx;
+		}
+	}
+
+	$indexes[] = persediaan_list_col_index_nilai_persediaan($CI);
+
+	return array_values(array_unique(array_map('intval', $indexes)));
+}
+
+function persediaan_tab_data_is_money_column($col_index, $CI = null)
+{
+	return in_array((int) $col_index, persediaan_tab_data_money_column_indexes($CI), true);
+}
+
+function persediaan_tampil_hpp_row($row)
+{
+	$hpp = isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp');
+	return persediaan_format_rupiah_tampil($hpp);
+}
+
+function persediaan_tampil_nilai_persediaan_row($row)
+{
+	return persediaan_format_rupiah_tampil(persediaan_hitung_nilai_persediaan_row($row));
 }
 
 /**
@@ -1024,4 +1115,222 @@ function persediaan_rekap_db_query($CI, $sql, $bind = null)
 		throw new Exception(persediaan_rekap_db_error_message($CI, 'Query rekap gagal'));
 	}
 	return $q;
+}
+
+/**
+ * Filter baris persediaan tab Data: Barang (bukan jasa) atau Jasa saja.
+ */
+function persediaan_filter_rows_by_kategori_tab($rows, $want_jasa = false)
+{
+	if (!is_array($rows) || count($rows) === 0) {
+		return array();
+	}
+
+	$CI =& get_instance();
+	$CI->load->helper('pembelian_persediaan');
+
+	$filtered = array();
+	foreach ($rows as $row) {
+		$is_jasa = persediaan_row_is_kategori_jasa($row);
+		if ($want_jasa ? $is_jasa : !$is_jasa) {
+			$filtered[] = $row;
+		}
+	}
+
+	return $filtered;
+}
+
+/**
+ * Sel baris datatable tab Data Persediaan (nilai tampilan sama dengan view).
+ */
+function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = null, $show_keluar_columns = true)
+{
+	$cells = array(
+		$no,
+		persediaan_format_bulan_tahun($row, $bulan_filter),
+		isset($row->kategori) ? $row->kategori : '',
+		isset($row->namabarang) ? $row->namabarang : '',
+		isset($row->satuan) ? $row->satuan : '',
+		persediaan_tampil_hpp_row($row),
+		persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		persediaan_export_blank_if_zero(isset($row->spop) ? $row->spop : ''),
+		persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		persediaan_export_blank_if_zero(isset($row->tuj) ? $row->tuj : ''),
+	);
+
+	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
+		if ($field === 'total_10') {
+			$cells[] = persediaan_tampil_total_10_net_row($row);
+		} else {
+			$cells[] = persediaan_row_get($row, $field);
+			if (persediaan_field_has_nominal_column($field)) {
+				$cells[] = persediaan_tampil_kolom_nominal_row($row, $field);
+			}
+		}
+	}
+
+	$cells[] = persediaan_tampil_nilai_persediaan_row($row);
+	if ($show_keluar_columns) {
+		$cells[] = isset($row->penjualan) ? $row->penjualan : 0;
+		$cells[] = isset($row->pecah_satuan) ? $row->pecah_satuan : 0;
+		$cells[] = isset($row->bahan_produksi) ? $row->bahan_produksi : 0;
+	}
+
+	return $cells;
+}
+
+function persediaan_export_write_styled_cell($row, $col, $value, $col_types, $style_text = 3, $style_left = 7, $style_num = 8, $style_total = 5)
+{
+	$col_type = isset($col_types[$col]) ? $col_types[$col] : 'text';
+
+	if ($col_type === 'number') {
+		if (is_string($value) && strcasecmp(trim($value), 'Total') === 0) {
+			xlsWriteCellStyle($row, $col, 'Total', $style_total);
+			return;
+		}
+
+		$trimmed = trim((string) $value);
+		if ($trimmed === '' || $trimmed === '0' || $trimmed === '0,00' || $trimmed === '0.00') {
+			xlsWriteCellStyle($row, $col, '', $style_text);
+			return;
+		}
+
+		xlsWriteCellStyle($row, $col, $value, $style_num);
+		return;
+	}
+
+	xlsWriteCellStyle($row, $col, $value === null ? '' : $value, $style_left);
+}
+
+/**
+ * Export Excel tab Data Persediaan (Barang / Jasa) — tampilan selaras datatable + style tabel.
+ */
+function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kategori = 'barang')
+{
+	$CI->load->helper('exportexcel');
+
+	$filter_kategori = strtolower(trim((string) $filter_kategori));
+	if ($filter_kategori === 'jasa') {
+		$judul_jenis = 'Jasa';
+	} elseif ($filter_kategori === 'barang') {
+		$judul_jenis = 'Barang';
+	} else {
+		$judul_jenis = 'Semua';
+	}
+
+	$bulan = trim((string) $bulan);
+	$bagian_bulan = ($bulan !== '') ? $bulan : 'semua';
+	$bulan_label = ($bulan !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan))
+		? date('m/Y', strtotime($bulan . '-01'))
+		: $bagian_bulan;
+
+	$show_keluar_columns = persediaan_tab_data_show_keluar_columns($filter_kategori);
+
+	$styleHeader = 4;
+	$styleBorder = 3;
+	$styleRight = 8;
+	$styleLeft = 7;
+	$styleFooter = 5;
+
+	$headers = persediaan_tab_data_export_headers($CI, $show_keluar_columns);
+	$col_types = persediaan_tab_data_export_column_types($CI, $show_keluar_columns);
+	$col_count = count($headers);
+
+	$widths = array(5, 10, 10, 28, 8, 10, 8, 8, 8, 8);
+	while (count($widths) < $col_count) {
+		$widths[] = 11;
+	}
+
+	$total_total_10 = 0;
+	$total_nilai_persediaan = 0;
+	$totals_nominal_unit = array();
+	foreach (persediaan_list_unit_columns($CI) as $uf) {
+		$totals_nominal_unit[$uf] = 0;
+	}
+
+	excel_prepare_download(
+		'Persediaan_' . preg_replace('/[^A-Za-z0-9_]+/', '_', $judul_jenis) . '_' . $bagian_bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx'
+	);
+
+	xlsBOF();
+	xlsSetColumnWidths($widths);
+	xlsWriteLabelBold14(0, 0, 'DATA PERSEDIAAN — ' . strtoupper($judul_jenis) . ' — Bulan ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+
+	$header_row = 3;
+	foreach ($headers as $i => $label) {
+		xlsWriteCellStyle($header_row, $i, $label, $styleHeader);
+	}
+
+	$row_num = 4;
+	$no = 0;
+	foreach ($rows as $data) {
+		$no++;
+		$total_total_10 += persediaan_hitung_total_10_net($data);
+		$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+		foreach (persediaan_list_unit_columns($CI) as $uf) {
+			$totals_nominal_unit[$uf] += persediaan_hitung_kolom_nominal_row($data, $uf);
+		}
+
+		$cells = persediaan_tab_data_display_cells($data, $no, $bulan, $CI, $show_keluar_columns);
+		$col = 0;
+		foreach ($cells as $cell) {
+			if ($col === 0) {
+				xlsWriteCellStyle($row_num, $col, $cell, $styleBorder);
+			} else {
+				persediaan_export_write_styled_cell($row_num, $col, $cell, $col_types, $styleBorder, $styleLeft, $styleRight, $styleFooter);
+			}
+			$col++;
+		}
+		$row_num++;
+	}
+
+	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns);
+	$idx_total_10 = persediaan_list_col_index_total_10($CI);
+	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
+	$money_cols = persediaan_tab_data_money_column_indexes($CI);
+	if (isset($footer_cells[$idx_total_10])) {
+		$footer_cells[$idx_total_10] = persediaan_format_angka_tampil($total_total_10);
+	}
+	if (isset($footer_cells[$idx_nilai])) {
+		$footer_cells[$idx_nilai] = persediaan_format_rupiah_tampil($total_nilai_persediaan, true);
+	}
+	foreach (persediaan_list_unit_columns($CI) as $field) {
+		if (!persediaan_field_has_nominal_column($field)) {
+			continue;
+		}
+		$idx_nom = persediaan_list_col_index_unit_nominal($field, $CI);
+		if ($idx_nom >= 0 && isset($footer_cells[$idx_nom])) {
+			$sum_nom = isset($totals_nominal_unit[$field]) ? (float) $totals_nominal_unit[$field] : 0;
+			$footer_cells[$idx_nom] = persediaan_format_rupiah_tampil($sum_nom, true);
+		}
+	}
+
+	$col = 0;
+	foreach ($footer_cells as $cell) {
+		if ((string) $cell === 'Total') {
+			xlsWriteCellStyle($row_num, $col, 'Total', $styleFooter);
+		} elseif (in_array($col, $money_cols, true)) {
+			xlsWriteCellStyle($row_num, $col, $cell, $styleRight);
+		} elseif ($col === $idx_total_10) {
+			xlsWriteCellStyle($row_num, $col, $cell, $styleRight);
+		} else {
+			$is_nominal = false;
+			foreach (persediaan_list_unit_columns($CI) as $field) {
+				if (persediaan_field_has_nominal_column($field)
+					&& persediaan_list_col_index_unit_nominal($field, $CI) === $col) {
+					$is_nominal = true;
+					break;
+				}
+			}
+			if ($is_nominal && (string) $cell !== '') {
+				xlsWriteCellStyle($row_num, $col, $cell, $styleRight);
+			} else {
+				xlsWriteCellStyle($row_num, $col, $cell, $styleBorder);
+			}
+		}
+		$col++;
+	}
+
+	xlsEOF();
 }

@@ -41,9 +41,13 @@
                             <?php
                             $action_cari_form = isset($action_cari) && $action_cari ? $action_cari : site_url('persediaan/search');
                             $Persediaan_data = isset($Persediaan_data) && is_array($Persediaan_data) ? $Persediaan_data : array();
+                            $this->load->helper('persediaan_display');
+                            $Persediaan_data_barang = persediaan_filter_rows_by_kategori_tab($Persediaan_data, false);
+                            $Persediaan_data_jasa = persediaan_filter_rows_by_kategori_tab($Persediaan_data, true);
                             $bulan_tampil = isset($bulan_persediaan_selected) && $bulan_persediaan_selected !== ''
                                 ? $bulan_persediaan_selected
                                 : date('Y-m');
+                            $bulan_label_tampil = htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8');
                             ?>
                             <?php if ($this->session->flashdata('pesan_persediaan')): ?>
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -68,123 +72,59 @@
                                         <label for="bulan_persediaan">Bulan:</label>
                                         <input type="month" id="bulan_persediaan" name="bulan_persediaan" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil); ?>">
                                         <button type="submit" class="btn btn-danger ml-1 btn-cari-persediaan">Cari</button>
-                                        <button type="button" id="btn-cetak-excel-persediaan" class="btn btn-primary ml-1">Cetak ke Excel</button>
                                         <span class="ml-2 text-muted small" id="info-jumlah-persediaan-bulan">
-                                            Menampilkan <?php echo count($Persediaan_data); ?> baris — bulan <?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?>
+                                            Bulan <?php echo $bulan_label_tampil; ?> —
+                                            Barang: <strong><?php echo count($Persediaan_data_barang); ?></strong> baris,
+                                            Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris
+                                            (total <?php echo count($Persediaan_data); ?> baris)
                                         </span>
                                     </div>
                                 </div>
                             </form>
 
-                            <?php
-                            $persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10();
-                            $idx_col_total_10 = persediaan_list_col_index_total_10();
-                            $idx_col_nilai_persediaan = persediaan_list_col_index_nilai_persediaan();
-                            $total_kolom_persediaan = count(persediaan_export_headers()) + 1;
-                            ?>
-                            <table id="table-persediaan" class="table table-bordered table-striped" style="width:100%">
-                                <thead>
-                                    <tr>
-                                        <th width="50px">No</th>
-                                        <th>Tanggal</th>
-                                        <th>Kategori</th>
-                                        <th>Namabarang</th>
-                                        <th>Satuan</th>
-                                        <th>Hpp</th>
-                                        <th>Sa</th>
-                                        <th>Spop</th>
-                                        <th>Beli</th>
-                                        <th>Tuj</th>
-                                        <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
-                                            <th><?php echo htmlspecialchars(persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
-                                            <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
-                                                <th class="text-right"><?php echo htmlspecialchars(persediaan_field_nominal_header_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
-                                            <?php } ?>
-                                        <?php } ?>
-                                        <th>Nilai Persediaan</th>
-                                        <th>Terjual</th>
-                                        <th>Jumlah Pecah Satuan</th>
-                                        <th>Bahan Produksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    $start = 0;
-                                    $total_total_10 = 0;
-                                    $total_nilai_persediaan = 0;
-                                    $total_nominal_unit = array();
-                                    foreach (persediaan_list_unit_columns() as $uf_total) {
-                                        $total_nominal_unit[$uf_total] = 0;
-                                    }
-                                    foreach ($Persediaan_data as $persediaan) {
-                                        $total_10_row = persediaan_hitung_total_10_net($persediaan);
-                                        $nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
-                                        $total_total_10 += $total_10_row;
-                                        $total_nilai_persediaan += $nilai_persediaan_row;
-                                        foreach (persediaan_list_unit_columns() as $uf_total) {
-                                            $total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
-                                        }
-                                    ?>
-                                        <tr>
-                                            <td><?php echo ++$start ?></td>
-                                            <td><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></td>
-                                            <td><?php echo isset($persediaan->kategori) ? htmlspecialchars($persediaan->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
-                                            <td><?php echo $persediaan->namabarang ?></td>
-                                            <td><?php echo $persediaan->satuan ?></td>
-                                            <td><?php echo $persediaan->hpp ?></td>
-                                            <td><?php echo $persediaan->sa ?></td>
-                                            <td><?php echo $persediaan->spop ?></td>
-                                            <td><?php echo $persediaan->beli ?></td>
-                                            <td><?php echo $persediaan->tuj ?></td>
-                                            <?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
-                                                <td><?php
-                                                    if ($field_tgl_total === 'total_10') {
-                                                        echo persediaan_tampil_total_10_net_row($persediaan);
-                                                    } else {
-                                                        echo persediaan_row_get($persediaan, $field_tgl_total);
-                                                    }
-                                                ?></td>
-                                                <?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
-                                                    <td class="text-right"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
-                                                <?php } ?>
-                                            <?php } ?>
-                                            <td><?php echo persediaan_format_angka_tampil($nilai_persediaan_row); ?></td>
-                                            <td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
-                                            <td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
-                                            <td><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
-                                        </tr>
-                                    <?php } ?>
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <?php
-                                        $footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit);
-                                        $idx_foot_total_10 = persediaan_list_col_index_total_10();
-                                        $idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
-                                        $idx_foot_nominal = array();
-                                        foreach (persediaan_list_unit_columns() as $uf_foot) {
-                                            if (persediaan_field_has_nominal_column($uf_foot)) {
-                                                $idx_foot_nominal[] = persediaan_list_col_index_unit_nominal($uf_foot);
-                                            }
-                                        }
-                                        foreach ($footer_cells as $col_foot => $foot_val) {
-                                            $foot_val = (string) $foot_val;
-                                            $cls = '';
-                                            if ($foot_val === 'Total') {
-                                                $cls = ' persediaan-foot-total-label';
-                                            } elseif ($foot_val !== '' && (
-                                                $col_foot === $idx_foot_total_10
-                                                || $col_foot === $idx_foot_nilai
-                                                || in_array($col_foot, $idx_foot_nominal, true)
-                                            )) {
-                                                $cls = ' persediaan-foot-num';
-                                            }
-                                            echo '<th class="' . trim($cls) . '">' . htmlspecialchars($foot_val, ENT_QUOTES, 'UTF-8') . '</th>';
-                                        }
-                                        ?>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                            <ul class="nav nav-pills mb-2" id="persediaan-data-subtabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="tab-persediaan-barang" data-toggle="pill" href="#panel-persediaan-barang" role="tab" aria-controls="panel-persediaan-barang" aria-selected="true">
+                                        Barang <span class="badge badge-primary" id="badge-persediaan-barang"><?php echo count($Persediaan_data_barang); ?></span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="tab-persediaan-jasa" data-toggle="pill" href="#panel-persediaan-jasa" role="tab" aria-controls="panel-persediaan-jasa" aria-selected="false">
+                                        Jasa <span class="badge badge-info" id="badge-persediaan-jasa"><?php echo count($Persediaan_data_jasa); ?></span>
+                                    </a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="persediaan-data-subtabs-content">
+                                <div class="tab-pane fade show active" id="panel-persediaan-barang" role="tabpanel" aria-labelledby="tab-persediaan-barang">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span class="text-muted small mr-auto">Data persediaan kategori <strong>bukan Jasa</strong></span>
+                                        <button type="button" class="btn btn-primary btn-sm btn-cetak-excel-persediaan-tab" data-filter="barang">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <?php $this->load->view('anekadharma/persediaan/_persediaan_tab_data_table', array(
+                                        'Persediaan_rows' => $Persediaan_data_barang,
+                                        'table_id' => 'table-persediaan-barang',
+                                        'bulan_tampil' => $bulan_tampil,
+                                        'tab_mode' => 'barang',
+                                    )); ?>
+                                </div>
+                                <div class="tab-pane fade" id="panel-persediaan-jasa" role="tabpanel" aria-labelledby="tab-persediaan-jasa">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span class="text-muted small mr-auto">Data persediaan kategori <strong>Jasa</strong></span>
+                                        <button type="button" class="btn btn-primary btn-sm btn-cetak-excel-persediaan-tab" data-filter="jasa">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <?php $this->load->view('anekadharma/persediaan/_persediaan_tab_data_table', array(
+                                        'Persediaan_rows' => $Persediaan_data_jasa,
+                                        'table_id' => 'table-persediaan-jasa',
+                                        'bulan_tampil' => $bulan_tampil,
+                                        'tab_mode' => 'jasa',
+                                    )); ?>
+                                </div>
+                            </div>
 
                             <div class="modal fade" id="modal-tambah-persediaan" tabindex="-1" role="dialog" aria-labelledby="modalTambahPersediaanLabel" aria-hidden="true">
                                 <div class="modal-dialog" role="document">
@@ -237,7 +177,7 @@
                                     <span id="rekap-status" class="ml-2 text-muted"></span>
                                 </div>
                             </div>
-                            <div id="rekap-table-wrap" class="table-responsive" style="max-height:420px;">
+                            <div id="rekap-table-wrap" class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
                             <table id="table-rekap" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
                                 <thead>
                                     <tr>
@@ -895,7 +835,8 @@
     #panel-generate-persediaan .gen-recalc-table-scroll {
         display: block;
         width: 100%;
-        max-height: 420px;
+        min-height: 480px;
+        max-height: calc(100vh - 200px);
         overflow: auto;
         overflow-x: auto;
         overflow-y: auto;
@@ -1010,43 +951,135 @@
         border-radius: 5px;
         transition: width 0.25s ease;
     }
-    #table-persediaan tfoot th {
+    #table-persediaan tfoot th,
+    table.persediaan-tab-dt tfoot th {
         background: #f8f9fa;
         border: 1px solid #dee2e6;
         font-weight: 600;
         vertical-align: middle;
         padding: 6px 8px;
     }
-    #table-persediaan tfoot th.persediaan-foot-total-label {
+    #table-persediaan tfoot th.persediaan-foot-total-label,
+    table.persediaan-tab-dt tfoot th.persediaan-foot-total-label {
         text-align: right;
         white-space: nowrap;
     }
-    #table-persediaan tfoot th.persediaan-foot-num {
+    #table-persediaan tfoot th.persediaan-foot-num,
+    table.persediaan-tab-dt tfoot th.persediaan-foot-num {
         text-align: right;
         white-space: nowrap;
     }
-    .compare-dt-wrap {
+    .persediaan-tab-dt-wrap,
+    .compare-dt-wrap,
+    .compare-csv-preview-dt-wrap,
+    .persediaan-dt-area-scroll {
         width: 100%;
-        overflow: auto;
-        max-height: 420px;
+        overflow: visible;
+        max-height: none;
     }
-    .compare-dt-wrap .dataTables_wrapper {
+    /* Sub-tab Barang / Jasa — tab Data Persediaan */
+    #persediaan-data-subtabs {
+        border: 2px solid #ffeb3b;
+        border-radius: 6px;
+        padding: 8px 10px 6px;
+        background: #fffef8;
+        gap: 4px;
+    }
+    #persediaan-data-subtabs .nav-item {
+        margin-bottom: 4px;
+    }
+    #persediaan-data-subtabs .nav-link {
+        font-size: 1rem;
+        line-height: 1.5;
+        font-style: italic;
+        font-weight: 400;
+        color: #495057;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        margin-right: 6px;
+        padding: 0.5rem 1rem;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    #persediaan-data-subtabs .nav-link:hover {
+        color: #343a40;
+        background-color: #e9ecef;
+    }
+    #persediaan-data-subtabs .nav-link.active,
+    #persediaan-data-subtabs .nav-link.active:hover,
+    #persediaan-data-subtabs .nav-link.active:focus {
+        font-size: 1rem;
+        line-height: 1.5;
+        font-style: normal;
+        font-weight: 700;
+        color: #000 !important;
+        background-color: #0d47a1 !important;
+        border: 2px solid #f48fb1 !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+        padding: 0.5rem 1rem;
+        text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+    #persediaan-data-subtabs .nav-link.active .badge {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #000;
+        background-color: #ffeb3b;
+        border: 1px solid #f48fb1;
+        text-shadow: none;
+    }
+    #persediaan-data-subtabs .nav-link:not(.active) .badge {
+        font-size: 0.875rem;
+        font-weight: 400;
+        font-style: normal;
+    }
+    #persediaan-data-subtabs-content {
+        border: 1px solid #ffeb3b;
+        border-top: none;
+        border-radius: 0 0 6px 6px;
+        padding: 10px 8px 4px;
+        margin-top: -2px;
+        background: #fff;
+    }
+    .persediaan-dt-area-scroll {
+        overflow: auto;
+        min-height: 420px;
+        max-height: calc(100vh - 210px);
+    }
+    .persediaan-tab-dt-wrap .dataTables_wrapper {
+        width: 100%;
+        font-size: 15px;
+    }
+    .compare-dt-wrap .dataTables_wrapper,
+    .compare-csv-preview-dt-wrap .dataTables_wrapper {
         width: 100%;
         font-size: 13px;
     }
+    .persediaan-tab-dt-wrap .dataTables_scrollHead,
+    .persediaan-tab-dt-wrap .dataTables_scrollBody,
     .compare-dt-wrap .dataTables_scrollHead,
-    .compare-dt-wrap .dataTables_scrollBody {
+    .compare-dt-wrap .dataTables_scrollBody,
+    .compare-csv-preview-dt-wrap .dataTables_scrollHead,
+    .compare-csv-preview-dt-wrap .dataTables_scrollBody {
         overflow-x: auto !important;
         overflow-y: auto !important;
     }
-    .compare-dt-wrap .dataTables_scrollBody {
-        max-height: 400px;
-    }
+    .persediaan-tab-dt-wrap table.dataTable thead th,
+    .persediaan-tab-dt-wrap table.dataTable tbody td,
     .compare-dt-wrap table.dataTable thead th,
     .compare-dt-wrap table.dataTable tbody td {
         white-space: nowrap;
-        font-size: 13px;
-        padding: 6px 8px;
+        font-size: 15px;
+        padding: 7px 9px;
+    }
+    .persediaan-tab-dt-wrap table.dataTable th.persediaan-col-money,
+    .persediaan-tab-dt-wrap table.dataTable td.persediaan-col-money,
+    .persediaan-tab-dt-wrap table.dataTable tfoot th.persediaan-col-money,
+    .persediaan-tab-dt-wrap table.dataTable tfoot th.persediaan-foot-num {
+        text-align: right !important;
+        font-variant-numeric: tabular-nums;
+    }
+    .compare-dt-wrap {
+        margin-bottom: 0.5rem;
     }
     .compare-toolbar-row .compare-toolbar-control {
         width: 110px;
@@ -1093,13 +1126,10 @@
     }
     .compare-csv-preview-dt-wrap {
         width: 100%;
-        overflow: hidden;
+        overflow: visible;
     }
     .compare-csv-preview-dt-wrap .dataTables_wrapper {
         width: 100%;
-    }
-    .compare-csv-preview-dt-wrap .dataTables_scrollBody {
-        max-height: 420px;
     }
 </style>
 
@@ -1755,6 +1785,7 @@ window.addEventListener('load', function() {
     }
 
     function adjustGenRecalcDataTables() {
+        adjustGenRecalcScrollAreas();
         Object.keys(genRecalcDt).forEach(function(sel) {
             var dt = genRecalcDt[sel];
             if (dt && dt.columns) {
@@ -2077,6 +2108,82 @@ window.addEventListener('load', function() {
         paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
     };
 
+    /** Tinggi scroll body DataTables — sisakan ruang filter, info, paging, footer. */
+    function getDataTableScrollY($table, reserveBottom) {
+        reserveBottom = reserveBottom || 190;
+        if (!$table || !$table.length) {
+            return Math.max(420, Math.floor((window.innerHeight || 800) - reserveBottom));
+        }
+        var $wrap = $table.closest('.persediaan-tab-dt-wrap, .compare-dt-wrap, .compare-csv-preview-dt-wrap');
+        var $anchor = $wrap.length ? $wrap : $table;
+        var top = $anchor.offset() ? $anchor.offset().top : 0;
+        var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        return Math.max(420, Math.floor(vh - top - reserveBottom));
+    }
+
+    function applyScrollYToDataTable(dt, $table, reserveBottom) {
+        if (!dt || !$table || !$table.length) {
+            return;
+        }
+        var h = getDataTableScrollY($table, reserveBottom);
+        try {
+            var settings = dt.settings && dt.settings()[0];
+            if (settings && settings.oScroll) {
+                settings.oScroll.sY = h + 'px';
+            }
+        } catch (eScroll) {}
+        var $wrapper = $table.closest('.dataTables_wrapper');
+        $wrapper.find('.dataTables_scrollBody').css({
+            'max-height': h + 'px',
+            'height': h + 'px'
+        });
+        try {
+            dt.columns.adjust().draw(false);
+        } catch (eDraw) {}
+    }
+
+    function adjustGenRecalcScrollAreas() {
+        var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        var maxH = Math.max(480, Math.floor(vh - 200));
+        $('#panel-generate-persediaan .gen-recalc-table-scroll').css('max-height', maxH + 'px');
+    }
+
+    function adjustRekapScrollArea() {
+        var vh = window.innerHeight || document.documentElement.clientHeight || 800;
+        var $wrap = $('#rekap-table-wrap');
+        if (!$wrap.length) {
+            return;
+        }
+        var top = $wrap.offset() ? $wrap.offset().top : 0;
+        var maxH = Math.max(420, Math.floor(vh - top - 80));
+        $wrap.css('max-height', maxH + 'px');
+    }
+
+    function adjustAllPersediaanDataTableAreas() {
+        adjustGenRecalcScrollAreas();
+        adjustRekapScrollArea();
+        if (typeof dtPersediaanStore !== 'undefined') {
+            Object.keys(dtPersediaanStore).forEach(function(sel) {
+                applyScrollYToDataTable(dtPersediaanStore[sel], $(sel));
+            });
+        }
+        Object.keys(compareDtStore).forEach(function(sel) {
+            applyScrollYToDataTable(compareDtStore[sel], $(sel));
+        });
+        if (compareCsvPreviewDt) {
+            applyScrollYToDataTable(compareCsvPreviewDt, $('#table-compare-csv-preview'), 220);
+        }
+        if (typeof adjustGenRecalcDataTables === 'function') {
+            adjustGenRecalcDataTables();
+        }
+    }
+
+    var resizePersediaanDtTimer = null;
+    $(window).on('resize', function() {
+        clearTimeout(resizePersediaanDtTimer);
+        resizePersediaanDtTimer = setTimeout(adjustAllPersediaanDataTableAreas, 150);
+    });
+
     function getBulanKeyCompare() {
         var bulan = parseInt($('#compare_bulan_persediaan').val(), 10);
         var tahun = parseInt($('#compare_tahun_persediaan').val(), 10);
@@ -2239,7 +2346,7 @@ window.addEventListener('load', function() {
         compareCsvPreviewDt = $table.DataTable({
             data: dtRows,
             scrollX: true,
-            scrollY: 400,
+            scrollY: getDataTableScrollY($table, 220),
             scrollCollapse: true,
             paging: true,
             pageLength: 25,
@@ -2250,9 +2357,7 @@ window.addEventListener('load', function() {
         });
 
         setTimeout(function() {
-            if (compareCsvPreviewDt && compareCsvPreviewDt.columns) {
-                try { compareCsvPreviewDt.columns.adjust().draw(false); } catch (eAdj) {}
-            }
+            applyScrollYToDataTable(compareCsvPreviewDt, $table, 220);
         }, 200);
     }
 
@@ -2457,17 +2562,19 @@ window.addEventListener('load', function() {
     }
 
     function upsertCompareDataTable(selector, rows, orderCol) {
+        var $sel = $(selector);
         if ($.fn.DataTable.isDataTable(selector)) {
-            var dt = $(selector).DataTable();
+            var dt = $sel.DataTable();
             dt.clear();
             if (rows.length) dt.rows.add(rows);
             dt.draw(false);
             compareDtStore[selector] = dt;
+            applyScrollYToDataTable(dt, $sel);
             return dt;
         }
-        compareDtStore[selector] = $(selector).DataTable({
+        compareDtStore[selector] = $sel.DataTable({
             data: rows,
-            scrollY: 400,
+            scrollY: getDataTableScrollY($sel),
             scrollX: true,
             scrollCollapse: true,
             paging: true,
@@ -2478,6 +2585,7 @@ window.addEventListener('load', function() {
             autoWidth: false,
             deferRender: true
         });
+        applyScrollYToDataTable(compareDtStore[selector], $sel);
         return compareDtStore[selector];
     }
 
@@ -2492,12 +2600,7 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-produksi-tidak', buildCompareRows('produksi_tidak_manual', res.items_produksi_tidak_manual || []), 1);
         upsertCompareDataTable('#table-compare-pecah-tidak', buildCompareRows('pecah_tidak_manual', res.items_pecah_tidak_manual || []), 1);
         setTimeout(function() {
-            Object.keys(compareDtStore).forEach(function(sel) {
-                var dt = compareDtStore[sel];
-                if (dt && dt.columns) {
-                    try { dt.columns.adjust().draw(false); } catch (eAdj) {}
-                }
-            });
+            adjustAllPersediaanDataTableAreas();
         }, 200);
     }
 
@@ -2623,6 +2726,7 @@ window.addEventListener('load', function() {
         updateTombolComparePersediaan();
         loadCompareTableList(false);
         updateCompareInfoRingkas();
+        setTimeout(adjustAllPersediaanDataTableAreas, 150);
     });
 
     $('#compare_db_tabel_cek').on('change', function() {
@@ -2882,22 +2986,40 @@ window.addEventListener('load', function() {
         return false;
     });
 
-    var dtPersediaan = null;
-    try {
-        if ($.fn.DataTable.isDataTable('#table-persediaan')) {
-            $('#table-persediaan').DataTable().destroy();
+    var dtPersediaanStore = {};
+
+    function initPersediaanTabDataTable(selector) {
+        var $sel = $(selector);
+        if (!$sel.length) {
+            return null;
         }
-        dtPersediaan = $('#table-persediaan').DataTable({
-            scrollY: 500,
+        if ($.fn.DataTable.isDataTable(selector)) {
+            $sel.DataTable().destroy();
+        }
+        var moneyCols = [];
+        try {
+            moneyCols = JSON.parse($sel.attr('data-money-cols') || '[]');
+        } catch (eMoney) {
+            moneyCols = [];
+        }
+        var columnDefs = [
+            { targets: 0, orderable: false },
+            { targets: 3, type: 'string' }
+        ];
+        if (moneyCols.length) {
+            columnDefs.push({
+                targets: moneyCols,
+                className: 'text-right persediaan-col-money'
+            });
+        }
+        var dt = $sel.DataTable({
+            scrollY: getDataTableScrollY($sel),
             scrollX: true,
             scrollCollapse: true,
             pageLength: 25,
             lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
             order: [[3, 'asc']],
-            columnDefs: [
-                { targets: 0, orderable: false },
-                { targets: 3, type: 'string' }
-            ],
+            columnDefs: columnDefs,
             language: {
                 lengthMenu: 'Tampilkan _MENU_ baris',
                 info: 'Menampilkan _START_–_END_ dari _TOTAL_ baris',
@@ -2906,6 +3028,22 @@ window.addEventListener('load', function() {
                 zeroRecords: 'Tidak ada data persediaan untuk bulan ini'
             }
         });
+        dtPersediaanStore[selector] = dt;
+        applyScrollYToDataTable(dt, $sel);
+        return dt;
+    }
+
+    function adjustPersediaanTabDataTables() {
+        Object.keys(dtPersediaanStore).forEach(function(sel) {
+            var dt = dtPersediaanStore[sel];
+            applyScrollYToDataTable(dt, $(sel));
+        });
+    }
+
+    try {
+        initPersediaanTabDataTable('#table-persediaan-barang');
+        initPersediaanTabDataTable('#table-persediaan-jasa');
+        setTimeout(adjustAllPersediaanDataTableAreas, 300);
     } catch (dtErr) {
         console.warn('DataTable persediaan:', dtErr);
     }
@@ -2933,7 +3071,7 @@ window.addEventListener('load', function() {
     }
 
     /**
-     * Bersihkan sisa DataTable rekap (versi lama) tanpa menyentuh #table-persediaan.
+     * Bersihkan sisa DataTable rekap (versi lama) tanpa menyentuh tabel persediaan tab Barang/Jasa.
      */
     function cleanupLegacyRekapDataTable() {
         var $table = $('#table-rekap');
@@ -2979,6 +3117,7 @@ window.addEventListener('load', function() {
         }
         $('#rekap-total-detail').text(res.total_detail_tampil || '0');
         $('#rekap-status').text(res.bulan ? ('Bulan: ' + res.bulan) : '');
+        setTimeout(adjustRekapScrollArea, 50);
     }
 
     function loadRekapDataOnly() {
@@ -3331,8 +3470,7 @@ window.addEventListener('load', function() {
         window.URL.revokeObjectURL(objectUrl);
     }
 
-    $('#btn-cetak-excel-persediaan').on('click', function(e) {
-        e.preventDefault();
+    function exportPersediaanTabExcel(filterKategori) {
         if (!urlExcelPersediaan) {
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export Excel tidak tersedia.' });
             return;
@@ -3340,6 +3478,7 @@ window.addEventListener('load', function() {
         var bulan = $('#bulan_persediaan').val() || '';
         var formData = new FormData();
         formData.append('bulan_persediaan', bulan);
+        formData.append('filter_kategori', filterKategori || 'barang');
 
         tampilkanSwalExcelProgress();
 
@@ -3373,6 +3512,11 @@ window.addEventListener('load', function() {
                 text: err && err.message ? err.message : 'Terjadi kesalahan saat export Excel.'
             });
         });
+    }
+
+    $(document).on('click', '.btn-cetak-excel-persediaan-tab', function(e) {
+        e.preventDefault();
+        exportPersediaanTabExcel($(this).data('filter') || 'barang');
     });
 
     $('#btn-cetak-excel-rekap').on('click', function() {
@@ -3453,30 +3597,26 @@ window.addEventListener('load', function() {
             if (!rekapRecalcRunning && !rekapLoading && !rekapSkipNextPanelLoad) {
                 loadRekapDataOnly();
             }
+            setTimeout(adjustRekapScrollArea, 150);
         } else if ($(e.target).attr('href') === '#panel-generate-persediaan') {
             cekGeneratePersediaanBulan();
             setTimeout(function() {
                 var bulanKey = getBulanTargetGenerate();
                 loadGenRecalcHistoryFromServer(bulanKey);
-                adjustGenRecalcDataTables();
+                adjustAllPersediaanDataTableAreas();
             }, 150);
         } else if ($(e.target).attr('href') === '#panel-compare-manual') {
             updateTombolComparePersediaan();
             loadCompareTableList(false);
             updateCompareInfoRingkas();
-            setTimeout(function() {
-                Object.keys(compareDtStore).forEach(function(sel) {
-                    var dt = compareDtStore[sel];
-                    if (dt && dt.columns) {
-                        try { dt.columns.adjust().draw(false); } catch (eAdj) {}
-                    }
-                });
-            }, 150);
+            setTimeout(adjustAllPersediaanDataTableAreas, 150);
         } else if ($(e.target).attr('href') === '#panel-data-persediaan') {
-            if (dtPersediaan && dtPersediaan.columns) {
-                dtPersediaan.columns.adjust().draw();
-            }
+            setTimeout(adjustAllPersediaanDataTableAreas, 150);
         }
+    });
+
+    $('#persediaan-data-subtabs a[data-toggle="pill"]').on('shown.bs.tab', function() {
+        setTimeout(adjustAllPersediaanDataTableAreas, 150);
     });
 
     try {
@@ -3517,6 +3657,7 @@ window.addEventListener('load', function() {
             loadCompareTableList(false);
             updateCompareInfoRingkas();
         }
+        adjustAllPersediaanDataTableAreas();
     }, 500);
 });
 </script>

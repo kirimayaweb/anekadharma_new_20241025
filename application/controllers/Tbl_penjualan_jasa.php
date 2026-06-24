@@ -1551,6 +1551,35 @@ class Tbl_penjualan_jasa extends CI_Controller
 		// $date_po = date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual));
 		// die;
 
+		$konsumen_alamat_selected = '';
+		if (!empty($data_master_penjualan_per_uuidpenjualan->uuid_konsumen)) {
+			$konsumen_row = $this->Sys_konsumen_model->get_by_uuid_konsumen($data_master_penjualan_per_uuidpenjualan->uuid_konsumen);
+			if ($konsumen_row && isset($konsumen_row->alamat_konsumen)) {
+				$konsumen_alamat_selected = $konsumen_row->alamat_konsumen;
+			}
+		}
+
+		$tgl_bayar_raw = null;
+		if (!empty($data_master_penjualan_per_uuidpenjualan->tgl_bayar) && $data_master_penjualan_per_uuidpenjualan->tgl_bayar !== '0000-00-00 00:00:00') {
+			$tgl_bayar_raw = $data_master_penjualan_per_uuidpenjualan->tgl_bayar;
+		} elseif (!empty($data_master_penjualan_per_uuidpenjualan->tgl_jual)) {
+			$tgl_bayar_raw = $data_master_penjualan_per_uuidpenjualan->tgl_jual;
+		}
+
+		$tgl_bayar_selected = '';
+		if ($tgl_bayar_raw) {
+			$bulan_indo = array(
+				1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+				5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+				9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+			);
+			$ts_bayar = strtotime($tgl_bayar_raw);
+			if ($ts_bayar !== false) {
+				$bulan_ke = (int) date('n', $ts_bayar);
+				$tgl_bayar_selected = date('j', $ts_bayar) . ' - ' . $bulan_indo[$bulan_ke] . ' - ' . date('Y', $ts_bayar);
+			}
+		}
+
 		// 2.b. PERSIAPAN DATA (barang & stock dari tabel persediaan)
 		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
 		$data = array(
@@ -1558,13 +1587,15 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
+			'konsumen_alamat_selected' => $konsumen_alamat_selected,
+			'tgl_bayar_selected' => $tgl_bayar_selected,
 		);
 
 
 
 		// 2.C. MENAMPILKAN FILE DATA
 		// $data = array_merge($data);
-		$html = $this->load->view('anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan.php', $data, true);
+		$html = $this->load->view('anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa.php', $data, true);
 
 		// 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
 		$this->pdf->loadHtml($html);

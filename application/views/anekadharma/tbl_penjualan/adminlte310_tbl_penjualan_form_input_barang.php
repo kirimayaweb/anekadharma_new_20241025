@@ -31,6 +31,9 @@ if (!isset($penjualan_list_bulan_label)) {
 if (!isset($penjualan_redirect_list_url)) {
 	$penjualan_redirect_list_url = penjualan_build_redirect_list_url($this, isset($tgl_jual) ? $tgl_jual : null);
 }
+if (!isset($action_ubah_detail_nomor_kirim) || trim((string) $action_ubah_detail_nomor_kirim) === '') {
+	$action_ubah_detail_nomor_kirim = site_url('tbl_penjualan/action_ubah_detail_nomor_kirim');
+}
 $tgl_jual_X_modal = isset($tgl_jual) ? penjualan_format_tgl_jual_tampil($tgl_jual) : date('d-m-Y');
 $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	'Data_stock' => $Data_stock,
@@ -199,7 +202,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 
 
 
-                        <form action="<?php echo $action_ubah_detail_nomor_kirim; ?>" id="form_update_nmrkirim" method="post">
+                        <form action="<?php echo htmlspecialchars($action_ubah_detail_nomor_kirim, ENT_QUOTES, 'UTF-8'); ?>" id="form_update_nmrkirim" method="post">
 
                             <div class="form-group">
                                 <label for="datetime">Tgl Jual <?php echo form_error('tgl_jual') ?></label>
@@ -237,44 +240,35 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                     <div class="col-3">
                                         <label for="unit_nama">Unit <?php echo form_error('unit') ?></label>
                                         <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="<?php echo $uuid_unit ?>"><?php echo $unit ?></option>
+                                            <option value="">Pilih Unit</option>
                                             <?php
-
                                             $sql = "select * from sys_unit order by nama_unit ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_unit' ";
-                                                echo ">  " . strtoupper($m->nama_unit)  . "</option>";
+                                                $sel_unit = (isset($uuid_unit) && (string) $uuid_unit === (string) $m->uuid_unit) ? ' selected="selected"' : '';
+                                                echo "<option value='" . htmlspecialchars($m->uuid_unit, ENT_QUOTES, 'UTF-8') . "'{$sel_unit}>" . strtoupper($m->nama_unit) . "</option>";
                                             }
-
                                             ?>
                                         </select>
-
-
                                     </div>
 
                                     <!-- Konsumen -->
                                     <div class="col-3">
                                         <label for="konsumen_nama">Konsumen <?php echo form_error('konsumen_nama') ?></label>
                                         <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="<?php echo $uuid_konsumen ?>"><?php echo $nama_konsumen ?></option>
+                                            <option value="">Pilih Konsumen</option>
                                             <?php
-
-                                            // Data Unit
                                             $sql = "select * from sys_unit order by nama_unit ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_unit' ";
-                                                echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+                                                $sel_konsumen = (isset($uuid_konsumen) && (string) $uuid_konsumen === (string) $m->uuid_unit) ? ' selected="selected"' : '';
+                                                echo "<option value='" . htmlspecialchars($m->uuid_unit, ENT_QUOTES, 'UTF-8') . "'{$sel_konsumen}>" . strtoupper($m->nama_unit) . "  ==> [UNIT]</option>";
                                             }
-                                            // Data Sys_konsumen
                                             $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_konsumen' ";
-                                                echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+                                                $sel_konsumen = (isset($uuid_konsumen) && (string) $uuid_konsumen === (string) $m->uuid_konsumen) ? ' selected="selected"' : '';
+                                                echo "<option value='" . htmlspecialchars($m->uuid_konsumen, ENT_QUOTES, 'UTF-8') . "'{$sel_konsumen}>" . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
                                             }
                                             ?>
                                         </select>
-
-
                                     </div>
 
                                     <div class="col-3">
@@ -305,41 +299,12 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                         <input type="hidden" name="uuid_penjualan_proses" id="uuid_penjualan_proses" value="<?php echo $uuid_penjualan; ?>" />
                                         <input type="hidden" name="nmrkirim_proses" id="nmrkirim_proses" value="<?php echo $nmrkirim; ?>" />
 
-                                        <button type="submit" onclick="confirmUbahSPOP(event)" class="btn btn-primary"><?php echo $button_detail_nomor_kirim; ?></button>
+                                        <button type="button" id="btn-simpan-detail-nmrkirim" class="btn btn-primary"><?php echo $button_detail_nomor_kirim; ?></button>
                                     </div>
                                     <div class="col-4">
                                     </div>
                                 </div>
                             </div>
-
-
-
-                            <script>
-                                function confirmUbahSPOP(e) {
-
-                                    let input_spop = document.getElementById("nmrkirim").value;
-                                    let input_nmrkirim_proses = document.getElementById("nmrkirim_proses").value;
-
-                                    if (input_spop != input_nmrkirim_proses) {
-                                        let text = "Nomor Kirim terjadi PERBEDAAN: \n\n Nomor Kirim awal:" + input_nmrkirim_proses + "\n Nomor Kirim baru: " + input_spop + "\n\n Apakah Tetap diproses PERUBAHAN Nomor Kirim? ";
-
-                                        if (confirm(text))
-                                            // alert('Proses Ubah SPOP !');
-                                            // e.preventDefault();
-                                            document.getElementById("form_update_nmrkirim").submit();
-                                        else {
-                                            // alert('Cancelled! \n harap SPOP dikembalikan ke: ' + input_spop_proses);
-                                            e.preventDefault();
-                                        }
-
-                                    }
-
-
-                                }
-                            </script>
-
-
-
 
 
 
@@ -841,6 +806,8 @@ function penjualanInitInputBarangScript() {
 (function($) {
     var cfg = {
         urlListPersediaan: <?php echo json_encode(site_url('tbl_penjualan/list_persediaan_penjualan_ajax')); ?>,
+        urlUbahDetailNomorKirim: <?php echo json_encode($action_ubah_detail_nomor_kirim); ?>,
+        urlKasirPenjualan: <?php echo json_encode($uuid_penjualan !== '' ? site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan) : site_url('tbl_penjualan')); ?>,
         bulanKeyAwal: <?php echo json_encode($penjualan_bulan_key); ?>,
         bulanLabelAwal: <?php echo json_encode(isset($filter_bulan_penjualan['bulan_label']) ? $filter_bulan_penjualan['bulan_label'] : ''); ?>,
         listBulanKey: <?php echo json_encode(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : ''); ?>,
@@ -949,10 +916,89 @@ function penjualanInitInputBarangScript() {
 
     function syncReloadFormFields() {
         $('#reload_penjualan_tgl_jual').val(getTglJualVal());
-        $('#reload_penjualan_uuid_unit').val($('#uuid_unit').val() || '');
-        $('#reload_penjualan_uuid_konsumen').val($('#uuid_konsumen').val() || '');
-        $('#reload_penjualan_nmrpesan').val($('#nmrpesan').val() || '');
-        $('#reload_penjualan_nmrkirim').val($('#nmrkirim').val() || '');
+        $('#reload_penjualan_uuid_unit').val($('#form_update_nmrkirim select[name="uuid_unit"]').val() || '');
+        $('#reload_penjualan_uuid_konsumen').val($('#form_update_nmrkirim select[name="uuid_konsumen"]').val() || '');
+        $('#reload_penjualan_nmrpesan').val($('#form_update_nmrkirim #nmrpesan').val() || '');
+        $('#reload_penjualan_nmrkirim').val($('#form_update_nmrkirim #nmrkirim').val() || '');
+    }
+
+    function prepareFormUpdateNmrkirimForSubmit() {
+        var $form = $('#form_update_nmrkirim');
+        if (!$form.length) {
+            return;
+        }
+
+        $form.find('select.select2').each(function() {
+            var $sel = $(this);
+            if ($sel.data('select2')) {
+                var val = $sel.val();
+                if (val !== null && val !== undefined) {
+                    $sel.val(val);
+                }
+            }
+        });
+
+        var $tgl = getInputTglJual();
+        if ($tgl.length) {
+            $tgl.prop('disabled', false).prop('readonly', false);
+            if (!$tgl.val()) {
+                $tgl.val(tglJualNilaiAktif || '');
+            }
+        }
+    }
+
+    function simpanDetailNomorKirimPenjualan() {
+        var $form = $('#form_update_nmrkirim');
+        if (!$form.length) {
+            return;
+        }
+
+        prepareFormUpdateNmrkirimForSubmit();
+
+        var kirimBaru = $.trim($('#form_update_nmrkirim #nmrkirim').val() || '');
+        var kirimAwal = $.trim($('#form_update_nmrkirim #nmrkirim_proses').val() || '');
+        if (kirimBaru !== kirimAwal) {
+            var text = 'Nomor Kirim terjadi PERBEDAAN:\n\nNomor Kirim awal: ' + kirimAwal
+                + '\nNomor Kirim baru: ' + kirimBaru
+                + '\n\nApakah tetap diproses PERUBAHAN Nomor Kirim?';
+            if (!confirm(text)) {
+                return;
+            }
+        }
+
+        var $btn = $('#btn-simpan-detail-nmrkirim');
+        $btn.prop('disabled', true);
+
+        $.ajax({
+            url: cfg.urlUbahDetailNomorKirim,
+            type: 'POST',
+            dataType: 'json',
+            data: $form.serialize()
+        }).done(function(res) {
+            if (res && res.ok) {
+                window.location.href = (res.redirect || cfg.urlKasirPenjualan);
+                return;
+            }
+            penjualanAlertPesan('Gagal menyimpan', (res && res.message) ? res.message : 'Perubahan tidak dapat disimpan.', 'error');
+            $btn.prop('disabled', false);
+        }).fail(function(xhr) {
+            var msg = 'Tidak dapat menyimpan perubahan detail penjualan.';
+            if (xhr && xhr.responseText) {
+                try {
+                    var parsed = JSON.parse(xhr.responseText);
+                    if (parsed && parsed.message) {
+                        msg = parsed.message;
+                    }
+                } catch (ignoreJson) {
+                    if (xhr.status === 303 || xhr.status === 302) {
+                        window.location.href = cfg.urlKasirPenjualan;
+                        return;
+                    }
+                }
+            }
+            penjualanAlertPesan('Gagal menyimpan', msg, 'error');
+            $btn.prop('disabled', false);
+        });
     }
 
     function submitReloadHalaman() {
@@ -1085,9 +1131,7 @@ function penjualanInitInputBarangScript() {
         var $picker = getPickerTglJual();
         $input.prop('readonly', !!terkunci);
         if ($picker.length && $picker.data('DateTimePicker')) {
-            if (terkunci) {
-                $picker.datetimepicker('disable');
-            } else {
+            if (!terkunci) {
                 $picker.datetimepicker('enable');
             }
         }
@@ -1142,6 +1186,12 @@ function penjualanInitInputBarangScript() {
         if (cfg.jumlahBarang > 0) {
             setKunciTglJual(true);
         }
+
+        $(document).off('click.penjualanSimpanDetail', '#btn-simpan-detail-nmrkirim')
+            .on('click.penjualanSimpanDetail', '#btn-simpan-detail-nmrkirim', function(e) {
+                e.preventDefault();
+                simpanDetailNomorKirimPenjualan();
+            });
     }
 
     $('#modal-xl.modal-pilih-barang-penjualan').on('shown.bs.modal', function() {

@@ -845,7 +845,7 @@ class Tbl_penjualan extends CI_Controller
 			'unit' => $Get_nama_unit,
 			'filter_bulan_penjualan' => $filter_bulan_penjualan,
 			'Data_stock' => $Data_stock,
-			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $this->input->post('nmrkirim', TRUE) . '/new'),
+			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim'),
 		);
 		// 		print_r($data);
 		// die;
@@ -1238,7 +1238,7 @@ class Tbl_penjualan extends CI_Controller
 			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama,
 			'uuid_penjualan' => $uuid_penjualan,
 			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
-			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim/' . $data_penjualan_per_uuid_penjualan_first_row->nmrkirim . '/' . $uuid_penjualan),
+			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim'),
 			'filter_bulan_penjualan' => $filter_bulan_penjualan,
 			'Data_stock' => $Data_stock,
 			'jumlah_barang_penjualan' => is_array($data_penjualan_per_uuid_penjualan) ? count($data_penjualan_per_uuid_penjualan) : 0,
@@ -1255,91 +1255,96 @@ class Tbl_penjualan extends CI_Controller
 
 	public function action_ubah_detail_nomor_kirim($NomorKirim = null, $uuid_penjualan = null)
 	{
-		$uuid_penjualan = trim((string) $uuid_penjualan);
+		$this->load->helper('pembelian_persediaan');
+
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan_proses', TRUE));
+		if ($uuid_penjualan === '') {
+			$uuid_penjualan = trim((string) func_get_arg(1));
+		}
+
+		$redirect_kasir = ($uuid_penjualan !== '' && $uuid_penjualan !== 'new')
+			? site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan)
+			: site_url('tbl_penjualan');
+
+		if ($uuid_penjualan === '' || $uuid_penjualan === 'new') {
+			$this->_penjualan_respon_simpan_detail(false, 'UUID penjualan tidak valid.', $redirect_kasir);
+			return;
+		}
+
+		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		if (empty($rows_penjualan)) {
+			$this->_penjualan_respon_simpan_detail(false, 'Data penjualan tidak ditemukan.', site_url('tbl_penjualan'));
+			return;
+		}
+
+		$row_awal = $rows_penjualan[0];
 		$tgl_jual_post = trim((string) $this->input->post('tgl_jual', TRUE));
 
-		if ($uuid_penjualan !== '' && $tgl_jual_post !== '') {
-			$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
-			if (is_array($rows_penjualan) && count($rows_penjualan) > 0) {
-				$bulan_lama = penjualan_get_bulan_key_from_tgl($rows_penjualan[0]->tgl_jual);
-				$bulan_baru = penjualan_get_bulan_key_from_tgl($tgl_jual_post);
-				if ($bulan_baru !== '' && $bulan_lama !== '' && $bulan_baru !== $bulan_lama) {
-					$this->session->set_flashdata(
-						'message',
-						'Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data barang penjualan pada bulan persediaan saat ini.'
-					);
-					redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
-					return;
+		if ($tgl_jual_post !== '') {
+			$bulan_lama = penjualan_get_bulan_key_from_tgl($row_awal->tgl_jual);
+			$bulan_baru = penjualan_get_bulan_key_from_tgl($tgl_jual_post);
+			if ($bulan_baru !== '' && $bulan_lama !== '' && $bulan_baru !== $bulan_lama) {
+				$this->_penjualan_respon_simpan_detail(
+					false,
+					'Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data barang penjualan pada bulan persediaan saat ini.',
+					$redirect_kasir
+				);
+				return;
+			}
+		} elseif (isset($row_awal->tgl_jual) && trim((string) $row_awal->tgl_jual) !== '') {
+			$tgl_jual_post = penjualan_format_tgl_jual_tampil($row_awal->tgl_jual);
+		}
+
+		$ts_jual = pembelian_parse_tanggal_po($tgl_jual_post);
+		if ($ts_jual === false) {
+			$ts_jual = strtotime(str_replace('/', '-', $tgl_jual_post));
+		}
+		if ($ts_jual === false || date('Y', $ts_jual) < 2020) {
+			$date_jual = date('Y-m-d H:i:s');
+		} else {
+			$date_jual = date('Y-m-d H:i:s', $ts_jual);
+		}
+
+		$NomorKirim_baru = trim((string) $this->input->post('nmrkirim', TRUE));
+		$NomorPesan_baru = trim((string) $this->input->post('nmrpesan', TRUE));
+		$GET_uuid_konsumen = trim((string) $this->input->post('uuid_konsumen', TRUE));
+		$GET_uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
+
+		$Get_uuid_unit = isset($row_awal->uuid_unit) ? trim((string) $row_awal->uuid_unit) : '';
+		$Get_nama_unit = isset($row_awal->unit) ? trim((string) $row_awal->unit) : '';
+		if ($GET_uuid_unit !== '') {
+			$sys_unit_data = $this->db->get_where('sys_unit', array('uuid_unit' => $GET_uuid_unit));
+			if ($sys_unit_data->num_rows() > 0) {
+				$Get_unit_data = $sys_unit_data->row_array();
+				$Get_uuid_unit = $GET_uuid_unit;
+				$Get_nama_unit = $Get_unit_data['nama_unit'];
+			}
+		}
+
+		$nama_konsumen = isset($row_awal->konsumen_nama) ? trim((string) $row_awal->konsumen_nama) : '';
+		if ($GET_uuid_konsumen !== '') {
+			$GET_sys_konsumen = $this->db->get_where('sys_konsumen', array('uuid_konsumen' => $GET_uuid_konsumen));
+			if ($GET_sys_konsumen->num_rows() > 0) {
+				$nama_konsumen = $GET_sys_konsumen->row()->nama_konsumen;
+			} else {
+				$GET_sys_unit = $this->db->get_where('sys_unit', array('uuid_unit' => $GET_uuid_konsumen));
+				if ($GET_sys_unit->num_rows() > 0) {
+					$nama_konsumen = $GET_sys_unit->row()->nama_unit;
 				}
 			}
 		}
 
-		if (date("Y", strtotime($this->input->post('tgl_jual', TRUE))) < 2020) {
-			// print_r("Tahun kurang dari 2020");
-			$date_jual = date("Y-m-d H:i:s");
-		} else {
-			// print_r("Tahun lebih dari 2020");
-			$date_jual = date("Y-m-d H:i:s", strtotime($this->input->post('tgl_jual', TRUE)));
-		}
-
-		// $Get_uuid_penjualan = ;
-		$NomorKirim_baru = $this->input->post('nmrkirim', TRUE);
-		$NomorPesan_baru = $this->input->post('nmrpesan', TRUE);
-		$GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-		// $GET_uuid_unit = $this->input->post('uuid_unit', TRUE);
-
-		// unIT
-		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
-		$sys_unit_data = $this->db->get('sys_unit');
-
-		// print_r($sys_unit_data);
-		// print_r("<br/>");
-
-		if ($sys_unit_data->num_rows() > 0) {
-
-			$Get_unit_data = $sys_unit_data->row_array();
-
-			$Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
-			$Get_kode_unit = $Get_unit_data['kode_unit'];
-			$Get_nama_unit = $Get_unit_data['nama_unit'];
-		}
-
-
-
-
-		$this->db->where('uuid_unit', $GET_uuid_konsumen);
-		$GET_sys_unit = $this->db->get('sys_unit');
-		if ($GET_sys_unit->num_rows() > 0) {
-			$GET_DATA_sys_unit = $GET_sys_unit->row_array();
-
-			// $kode_konsumen = $GET_DATA_sys_unit['kode_unit'],
-			$nama_konsumen = $GET_DATA_sys_unit['nama_unit'];
-		}
-
-		$this->db->where('uuid_konsumen', $GET_uuid_konsumen);
-		$GET_sys_konsumen = $this->db->get('sys_konsumen');
-		if ($GET_sys_konsumen->num_rows() > 0) {
-			$GET_DATA_sys_konsumen = $GET_sys_konsumen->row_array();
-
-			// $kode_konsumen = $GET_DATA_sys_konsumen['kode_konsumen'],
-			$nama_konsumen = $GET_DATA_sys_konsumen['nama_konsumen'];
-		}
-
-		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
-		$uuid_unit_lama = '';
-		if (is_array($rows_penjualan) && count($rows_penjualan) > 0 && !empty($rows_penjualan[0]->uuid_unit)) {
-			$uuid_unit_lama = trim((string) $rows_penjualan[0]->uuid_unit);
-		}
-		$uuid_unit_baru = isset($Get_uuid_unit) ? trim((string) $Get_uuid_unit) : '';
+		$uuid_unit_lama = isset($row_awal->uuid_unit) ? trim((string) $row_awal->uuid_unit) : '';
+		$uuid_unit_baru = $Get_uuid_unit;
 
 		if ($uuid_unit_baru !== '') {
 			$hasil_ensure_unit_baru = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_baru);
 			if (empty($hasil_ensure_unit_baru['ok'])) {
-				$this->session->set_flashdata(
-					'message',
-					isset($hasil_ensure_unit_baru['message']) ? $hasil_ensure_unit_baru['message'] : 'Gagal menyiapkan kolom unit baru di persediaan.'
+				$this->_penjualan_respon_simpan_detail(
+					false,
+					isset($hasil_ensure_unit_baru['message']) ? $hasil_ensure_unit_baru['message'] : 'Gagal menyiapkan kolom unit baru di persediaan.',
+					$redirect_kasir
 				);
-				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 				return;
 			}
 		}
@@ -1352,25 +1357,52 @@ class Tbl_penjualan extends CI_Controller
 				$uuid_unit_baru
 			);
 			if (empty($hasil_pindah_unit['ok'])) {
-				$this->session->set_flashdata(
-					'message',
+				$this->_penjualan_respon_simpan_detail(
+					false,
 					isset($hasil_pindah_unit['message'])
 						? $hasil_pindah_unit['message']
-						: 'Gagal memindahkan data penjualan ke unit baru di persediaan.'
+						: 'Gagal memindahkan data penjualan ke unit baru di persediaan.',
+					$redirect_kasir
 				);
-				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 				return;
 			}
 		}
 
-		// $sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `nmrkirim`=$NomorKirim_baru , `tgl_jual`=$date_jual , `nmrpesan`=$NomorPesan_baru, `uuid_konsumen`=$GET_uuid_konsumen, `konsumen_nama`=$nama_konsumen  WHERE `uuid_penjualan`='$uuid_penjualan'";
+		$update_data = array(
+			'tgl_jual' => $date_jual,
+			'nmrkirim' => $NomorKirim_baru,
+			'nmrpesan' => $NomorPesan_baru,
+			'uuid_konsumen' => $GET_uuid_konsumen,
+			'konsumen_nama' => $nama_konsumen,
+			'uuid_unit' => $Get_uuid_unit,
+			'unit' => $Get_nama_unit,
+		);
 
-		$sql_update_penjualan_by_uuid_penjualan = "UPDATE `tbl_penjualan` SET `tgl_jual`='$date_jual' , `nmrkirim`='$NomorKirim_baru', `nmrpesan`='$NomorPesan_baru', `uuid_konsumen`='$GET_uuid_konsumen', `konsumen_nama`='$nama_konsumen', `uuid_unit`='$Get_uuid_unit', `unit`='$Get_nama_unit'  WHERE `uuid_penjualan`='$uuid_penjualan'";
+		$this->db->where('uuid_penjualan', $uuid_penjualan);
+		$ok_update = $this->db->update('tbl_penjualan', $update_data);
 
-		$this->db->query($sql_update_penjualan_by_uuid_penjualan);
+		if (!$ok_update) {
+			$this->_penjualan_respon_simpan_detail(false, 'Gagal menyimpan perubahan detail penjualan.', $redirect_kasir);
+			return;
+		}
 
-		$this->session->set_flashdata('message', 'Perubahan detail penjualan berhasil disimpan.');
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+		$this->_penjualan_respon_simpan_detail(true, 'Perubahan detail penjualan berhasil disimpan.', $redirect_kasir);
+	}
+
+	private function _penjualan_respon_simpan_detail($ok, $message, $redirect_url)
+	{
+		if ($this->input->is_ajax_request()) {
+			$this->output->set_content_type('application/json');
+			echo json_encode(array(
+				'ok' => (bool) $ok,
+				'message' => (string) $message,
+				'redirect' => (string) $redirect_url,
+			));
+			return;
+		}
+
+		$this->session->set_flashdata('message', $message);
+		redirect($redirect_url);
 	}
 
 
