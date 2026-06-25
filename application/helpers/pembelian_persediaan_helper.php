@@ -1789,6 +1789,17 @@ function persediaan_recalculate_map_add_row(&$map, $row)
 		}
 		$map['by_kode'][$kode_key][] = $row;
 	}
+
+	$spop_key = persediaan_recalculate_spop_match_value(isset($row->spop) ? $row->spop : '');
+	if ($spop_key !== '') {
+		if (!isset($map['by_spop_valid'])) {
+			$map['by_spop_valid'] = array();
+		}
+		if (!isset($map['by_spop_valid'][$spop_key])) {
+			$map['by_spop_valid'][$spop_key] = array();
+		}
+		$map['by_spop_valid'][$spop_key][] = $row;
+	}
 }
 
 /**
@@ -1920,6 +1931,12 @@ function persediaan_recalculate_resolve_uuid_barang_pembelian($CI, $uuid_pembeli
 function persediaan_recalculate_insert_persediaan_from_pembelian($CI, $ctx, $row_pembelian, $tabel, &$map)
 {
 	$existing = persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $map);
+	if (!$existing) {
+		$spop_cek = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
+		if (persediaan_recalculate_spop_valid($spop_cek) && is_array($map)) {
+			$existing = persediaan_generate_recalculate_find_target_by_spop_row($row_pembelian, $map);
+		}
+	}
 	if (!$existing) {
 		$nama_cek = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
 		$harga_cek = isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '';
@@ -3041,6 +3058,348 @@ function persediaan_recalculate_cleanup_spop_kosong_pesan($cleanup)
 }
 
 /**
+ * Cari baris persediaan bulan target yang sudah memakai SPOP yang sama (spop valid).
+ */
+function persediaan_ensure_asal_generate_column($CI)
+{
+	if (!$CI->db->table_exists('persediaan') || $CI->db->field_exists('asal_generate', 'persediaan')) {
+		return;
+	}
+
+	$after = $CI->db->field_exists('spop', 'persediaan') ? ' AFTER `spop`' : '';
+	$CI->db->query(
+		'ALTER TABLE `persediaan` ADD COLUMN `asal_generate` TINYINT(1) NOT NULL DEFAULT 0'
+		. $after
+		. " COMMENT '1=saldo awal hasil generate bulan lalu'"
+	);
+}
+
+function persediaan_row_apply_asal_generate_flag(&$data, $is_generate, $CI = null)
+{
+	if ($CI === null && function_exists('get_instance')) {
+		$CI = get_instance();
+	}
+	if (!$CI || !$CI->db->field_exists('asal_generate', 'persediaan')) {
+		return;
+	}
+
+	$data['asal_generate'] = $is_generate ? 1 : 0;
+}
+
+function persediaan_row_has_transaksi_beli_penjualan($row)
+{
+	$beli = max(0, (int) floor(persediaan_parse_angka(isset($row->beli) ? $row->beli : 0)));
+	$penj = max(0, (int) floor(persediaan_parse_angka(isset($row->penjualan) ? $row->penjualan : 0)));
+
+	return ($beli > 0 || $penj > 0);
+}
+
+/**
+ * Pola saldo awal hasil generate: sa>0 dan belum ada data beli/penjualan.
+ */
+function persediaan_row_is_pola_saldo_generate($row, $CI = null)
+{
+	if ($CI === null && function_exists('get_instance')) {
+		$CI = get_instance();
+	}
+
+	if ($CI && $CI->db->field_exists('asal_generate', 'persediaan')) {
+		$flag = isset($row->asal_generate) ? (int) $row->asal_generate : 0;
+		if ($flag === 1) {
+			return true;
+		}
+		if ($flag === 0 && persediaan_row_has_transaksi_beli_penjualan($row)) {
+			return false;
+		}
+	}
+
+	$sa = max(0, (int) floor(persediaan_parse_angka(isset($row->sa) ? $row->sa : 0)));
+
+	return ($sa > 0 && !persediaan_row_has_transaksi_beli_penjualan($row));
+}
+
+/**
+ * Skor prioritas keeper duplikat SPOP — lebih tinggi = lebih layak dipertahankan.
+ * Utamakan baris dengan beli/penjualan (dari tabel transaksi), bukan saldo generate.
+ */
+function persediaan_duplikat_spop_keeper_score($row, $CI = null)
+{
+	$beli = max(0, (int) floor(persediaan_parse_angka(isset($row->beli) ? $row->beli : 0)));
+	$penj = max(0, (int) floor(persediaan_parse_angka(isset($row->penjualan) ? $row->penjualan : 0)));
+	$score = 0;
+
+	if ($beli > 0) {
+		$score += 100000000 + ($beli * 1000);
+	}
+	if ($penj > 0) {
+		$score += 50000000 + ($penj * 1000);
+	}
+	if ($score === 0 && persediaan_row_is_pola_saldo_generate($row, $CI)) {
+		$sa = max(0, (int) floor(persediaan_parse_angka(isset($row->sa) ? $row->sa : 0)));
+		$score = 1 + min($sa, 999999);
+	}
+
+	return $score;
+}
+
+function persediaan_duplikat_spop_pick_keeper($rows, $CI = null)
+{
+	if (empty($rows) || !is_array($rows)) {
+		return null;
+	}
+
+	$keeper = $rows[0];
+	$best = persediaan_duplikat_spop_keeper_score($keeper, $CI);
+
+	foreach ($rows as $row) {
+		$score = persediaan_duplikat_spop_keeper_score($row, $CI);
+		if ($score > $best || ($score === $best && (int) $row->id < (int) $keeper->id)) {
+			$keeper = $row;
+			$best = $score;
+		}
+	}
+
+	return $keeper;
+}
+
+function persediaan_generate_recalculate_find_target_by_spop_row($ref_row, $map)
+{
+	if (empty($map) || empty($ref_row)) {
+		return null;
+	}
+
+	$spop = isset($ref_row->spop) ? $ref_row->spop : '';
+	if (!persediaan_recalculate_spop_valid($spop)) {
+		return null;
+	}
+
+	$spop_key = persediaan_recalculate_spop_match_value($spop);
+	if ($spop_key === '' || empty($map['by_spop_valid'][$spop_key]) || !is_array($map['by_spop_valid'][$spop_key])) {
+		return null;
+	}
+
+	$candidates = $map['by_spop_valid'][$spop_key];
+	if (count($candidates) === 1) {
+		return $candidates[0];
+	}
+
+	$nama_ref = '';
+	if (isset($ref_row->namabarang)) {
+		$nama_ref = $ref_row->namabarang;
+	} elseif (isset($ref_row->uraian)) {
+		$nama_ref = $ref_row->uraian;
+	}
+	$n_ref = persediaan_recalculate_normalize_nama(
+		persediaan_recalculate_sanitize_nama_persediaan($nama_ref)
+	);
+
+	if ($n_ref !== '') {
+		$filtered = array();
+		foreach ($candidates as $candidate) {
+			$n_c = persediaan_recalculate_normalize_nama(
+				persediaan_recalculate_sanitize_nama_persediaan(isset($candidate->namabarang) ? $candidate->namabarang : '')
+			);
+			if ($n_c !== '' && $n_c === $n_ref) {
+				$filtered[] = $candidate;
+			}
+		}
+		if (count($filtered) > 0) {
+			$candidates = $filtered;
+		}
+	}
+
+	$CI = function_exists('get_instance') ? get_instance() : null;
+
+	return persediaan_duplikat_spop_pick_keeper($candidates, $CI);
+}
+
+/**
+ * Hapus / gabung duplikat SPOP valid dalam bulan yang sama (1 spop = 1 baris persediaan).
+ * Keeper: baris dengan beli/penjualan > 0 (data transaksi). Hapus baris beli=0 & penjualan=0 (saldo generate).
+ */
+function persediaan_recalculate_cleanup_duplikat_spop_sama_bulan($CI, $tanggal_beli)
+{
+	$stats = array(
+		'deleted' => 0,
+		'groups' => 0,
+		'merged' => 0,
+		'details' => array(),
+	);
+
+	if (!$CI->db->table_exists('persediaan') || trim((string) $tanggal_beli) === '') {
+		return $stats;
+	}
+
+	if (!$CI->db->field_exists('spop', 'persediaan')) {
+		return $stats;
+	}
+
+	persediaan_ensure_asal_generate_column($CI);
+	$CI->load->helper('persediaan_display');
+	$rows = $CI->db->query(
+		"SELECT * FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
+		array($tanggal_beli)
+	)->result();
+
+	$groups = array();
+	foreach ($rows as $row) {
+		$spop_key = persediaan_recalculate_spop_match_value(isset($row->spop) ? $row->spop : '');
+		if ($spop_key === '') {
+			continue;
+		}
+		if (!isset($groups[$spop_key])) {
+			$groups[$spop_key] = array();
+		}
+		$groups[$spop_key][] = $row;
+	}
+
+	$tanggal_tampil = date('d/m/Y', strtotime($tanggal_beli));
+
+	foreach ($groups as $spop_key => $group_rows) {
+		if (count($group_rows) < 2) {
+			continue;
+		}
+
+		$stats['groups']++;
+		$keeper = persediaan_duplikat_spop_pick_keeper($group_rows, $CI);
+		if (!$keeper) {
+			continue;
+		}
+
+		$sa_merged = 0;
+		$beli_merged = max(0, (int) floor(persediaan_parse_angka(isset($keeper->beli) ? $keeper->beli : 0)));
+		$penj_merged = max(0, (int) floor(persediaan_parse_angka(isset($keeper->penjualan) ? $keeper->penjualan : 0)));
+		$pecah_merged = max(0, (int) floor(persediaan_parse_angka(isset($keeper->pecah_satuan) ? $keeper->pecah_satuan : 0)));
+		$prod_merged = max(0, (int) floor(persediaan_parse_angka(isset($keeper->bahan_produksi) ? $keeper->bahan_produksi : 0)));
+
+		foreach ($group_rows as $gr) {
+			$sa_gr = max(0, (int) floor(persediaan_parse_angka(isset($gr->sa) ? $gr->sa : 0)));
+			$sa_merged = max($sa_merged, $sa_gr);
+
+			if (persediaan_row_has_transaksi_beli_penjualan($gr)) {
+				$beli_merged = max($beli_merged, (int) floor(persediaan_parse_angka(isset($gr->beli) ? $gr->beli : 0)));
+				$penj_merged = max($penj_merged, (int) floor(persediaan_parse_angka(isset($gr->penjualan) ? $gr->penjualan : 0)));
+			}
+			if ((int) $gr->id !== (int) $keeper->id) {
+				$pecah_merged = max($pecah_merged, (int) floor(persediaan_parse_angka(isset($gr->pecah_satuan) ? $gr->pecah_satuan : 0)));
+				$prod_merged = max($prod_merged, (int) floor(persediaan_parse_angka(isset($gr->bahan_produksi) ? $gr->bahan_produksi : 0)));
+			}
+		}
+
+		$gross = $sa_merged + $beli_merged;
+		$penj_merged = min($penj_merged, $gross);
+		$sisa_penj = max(0, $gross - $penj_merged);
+		$pecah_merged = min($pecah_merged, $sisa_penj);
+		$sisa_pecah = max(0, $sisa_penj - $pecah_merged);
+		$prod_merged = min($prod_merged, $sisa_pecah);
+		$total_merged = max(0, $gross - $penj_merged - $pecah_merged - $prod_merged);
+
+		$hpp = persediaan_parse_angka(isset($keeper->hpp) ? $keeper->hpp : 0);
+		$nilai_merged = (int) floor($total_merged * $hpp);
+
+		$upd = array(
+			'sa' => (string) $sa_merged,
+			'beli' => (string) $beli_merged,
+			'penjualan' => (string) $penj_merged,
+			'total_10' => (string) $total_merged,
+			'nilai_persediaan' => (string) $nilai_merged,
+			'tanggal' => $tanggal_tampil,
+		);
+		if ($CI->db->field_exists('pecah_satuan', 'persediaan')) {
+			$upd['pecah_satuan'] = (string) $pecah_merged;
+		}
+		if ($CI->db->field_exists('bahan_produksi', 'persediaan')) {
+			$upd['bahan_produksi'] = (string) $prod_merged;
+		}
+		if ($CI->db->field_exists('tuj', 'persediaan')) {
+			$upd['tuj'] = (string) $total_merged;
+		}
+		persediaan_row_apply_asal_generate_flag($upd, false, $CI);
+
+		$CI->db->where('id', (int) $keeper->id);
+		$CI->db->update('persediaan', $upd);
+		$stats['merged']++;
+
+		$delete_ids = array();
+		foreach ($group_rows as $gr) {
+			if ((int) $gr->id === (int) $keeper->id) {
+				continue;
+			}
+
+			$hapus = false;
+			if (!persediaan_row_has_transaksi_beli_penjualan($gr)) {
+				$hapus = true;
+			} elseif (persediaan_row_has_transaksi_beli_penjualan($keeper)) {
+				$hapus = true;
+			} elseif ((int) $gr->id > (int) $keeper->id) {
+				$hapus = true;
+			}
+
+			if (!$hapus) {
+				continue;
+			}
+
+			$delete_ids[] = (int) $gr->id;
+			if (count($stats['details']) < 50) {
+				$stats['details'][] = array(
+					'id' => (int) $gr->id,
+					'keeper_id' => (int) $keeper->id,
+					'spop' => $spop_key,
+					'namabarang' => isset($gr->namabarang) ? $gr->namabarang : '',
+					'sa' => isset($gr->sa) ? $gr->sa : '',
+					'beli' => isset($gr->beli) ? $gr->beli : '',
+					'penjualan' => isset($gr->penjualan) ? $gr->penjualan : '',
+					'asal' => persediaan_row_is_pola_saldo_generate($gr, $CI) ? 'generate' : 'transaksi',
+				);
+			}
+		}
+
+		if (count($delete_ids) > 0) {
+			$CI->db->where('tanggal_beli', $tanggal_beli);
+			$CI->db->where_in('id', $delete_ids);
+			$CI->db->delete('persediaan');
+			$stats['deleted'] += (int) $CI->db->affected_rows();
+		}
+	}
+
+	return $stats;
+}
+
+function persediaan_recalculate_cleanup_duplikat_spop_sama_pesan($cleanup)
+{
+	if (!is_array($cleanup) || (int) (isset($cleanup['deleted']) ? $cleanup['deleted'] : 0) <= 0) {
+		return '';
+	}
+
+	return ' Hapus duplikat spop sama dalam bulan: '
+		. (int) $cleanup['deleted'] . ' baris saldo generate (beli=0 & penjualan=0)'
+		. ' (' . (int) (isset($cleanup['groups']) ? $cleanup['groups'] : 0) . ' grup, gabung '
+		. (int) (isset($cleanup['merged']) ? $cleanup['merged'] : 0) . ' baris transaksi/pembelian).';
+}
+
+/**
+ * Akumulasi statistik cleanup duplikat spop sama ke state generate & recalculate.
+ */
+function persediaan_generate_recalculate_merge_cleanup_duplikat_spop_state(&$state, $cleanup)
+{
+	if (!is_array($cleanup)) {
+		return;
+	}
+	if (!isset($state['cleanup_duplikat_spop']) || !is_array($state['cleanup_duplikat_spop'])) {
+		$state['cleanup_duplikat_spop'] = array('deleted' => 0, 'groups' => 0, 'merged' => 0);
+	}
+	$state['cleanup_duplikat_spop']['deleted'] = (int) (isset($state['cleanup_duplikat_spop']['deleted'])
+		? $state['cleanup_duplikat_spop']['deleted'] : 0)
+		+ (int) (isset($cleanup['deleted']) ? $cleanup['deleted'] : 0);
+	$state['cleanup_duplikat_spop']['groups'] = (int) (isset($state['cleanup_duplikat_spop']['groups'])
+		? $state['cleanup_duplikat_spop']['groups'] : 0)
+		+ (int) (isset($cleanup['groups']) ? $cleanup['groups'] : 0);
+	$state['cleanup_duplikat_spop']['merged'] = (int) (isset($state['cleanup_duplikat_spop']['merged'])
+		? $state['cleanup_duplikat_spop']['merged'] : 0)
+		+ (int) (isset($cleanup['merged']) ? $cleanup['merged'] : 0);
+}
+
+/**
  * Akumulasi statistik cleanup spop ke state generate & recalculate.
  */
 function persediaan_generate_recalculate_merge_cleanup_spop_state(&$state, $cleanup)
@@ -3145,6 +3504,7 @@ function persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli)
 		'by_nama_satuan' => array(),
 		'by_nama' => array(),
 		'by_kode' => array(),
+		'by_spop_valid' => array(),
 		'total' => count($rows),
 	);
 
@@ -4123,6 +4483,14 @@ function persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $m
 {
 	if (empty($map) || empty($row_pembelian)) {
 		return null;
+	}
+
+	$spop = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
+	if (persediaan_recalculate_spop_valid($spop)) {
+		$by_spop = persediaan_generate_recalculate_find_target_by_spop_row($row_pembelian, $map);
+		if ($by_spop) {
+			return $by_spop;
+		}
 	}
 
 	$nama = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
@@ -6280,6 +6648,14 @@ function persediaan_generate_recalculate_find_target_in_map($row, $map, $sa_for_
 		return null;
 	}
 
+	$spop = isset($row->spop) ? $row->spop : '';
+	if (persediaan_recalculate_spop_valid($spop)) {
+		$by_spop = persediaan_generate_recalculate_find_target_by_spop_row($row, $map);
+		if ($by_spop) {
+			return $by_spop;
+		}
+	}
+
 	$nama = isset($row->namabarang) ? $row->namabarang : '';
 	$hpp = isset($row->hpp) ? $row->hpp : '';
 	$spop = isset($row->spop) ? $row->spop : '';
@@ -6329,50 +6705,13 @@ function persediaan_generate_recalculate_find_target($CI, $tanggal_beli_target, 
 }
 
 /**
- * Hapus duplikat bulan target (kunci nama+sa+hpp+spop), simpan id terkecil.
+ * Hapus duplikat bulan target — delegasi ke cleanup spop sama (1 spop = 1 baris per bulan).
  */
 function persediaan_generate_recalculate_hapus_duplikat_bulan_target($CI, $tanggal_beli_target)
 {
-	$rows = $CI->db->query(
-		"SELECT `id`, `namabarang`, `sa`, `hpp`, `spop` FROM `persediaan`
-		WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
-		array($tanggal_beli_target)
-	)->result();
+	$res = persediaan_recalculate_cleanup_duplikat_spop_sama_bulan($CI, $tanggal_beli_target);
 
-	$keep_ids = array();
-	$delete_ids = array();
-
-	foreach ($rows as $row) {
-		$key = persediaan_generate_recalculate_sync_key(
-			isset($row->namabarang) ? $row->namabarang : '',
-			isset($row->sa) ? $row->sa : 0,
-			isset($row->hpp) ? $row->hpp : 0,
-			isset($row->spop) ? $row->spop : ''
-		);
-		if ($key === '') {
-			continue;
-		}
-		if (!isset($keep_ids[$key])) {
-			$keep_ids[$key] = (int) $row->id;
-			continue;
-		}
-		$delete_ids[] = (int) $row->id;
-	}
-
-	if (count($delete_ids) === 0) {
-		return 0;
-	}
-
-	$chunks = array_chunk($delete_ids, 200);
-	$deleted = 0;
-	foreach ($chunks as $chunk) {
-		$CI->db->where('tanggal_beli', $tanggal_beli_target);
-		$CI->db->where_in('id', $chunk);
-		$CI->db->delete('persediaan');
-		$deleted += (int) $CI->db->affected_rows();
-	}
-
-	return $deleted;
+	return (int) (isset($res['deleted']) ? $res['deleted'] : 0);
 }
 
 /**
@@ -6553,7 +6892,18 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 		? persediaan_generate_recalculate_find_target_in_map($row_sumber, $map, $sa_baru)
 		: persediaan_generate_recalculate_find_target($CI, $tanggal_beli_target, $row_sumber);
 
+	if (!$existing && persediaan_recalculate_spop_valid($spop) && is_array($map)) {
+		$existing = persediaan_generate_recalculate_find_target_by_spop_row($row_sumber, $map);
+	}
+
 	if ($existing) {
+		$beli_existing = max(0, (int) floor(persediaan_parse_angka(isset($existing->beli) ? $existing->beli : 0)));
+		$beli_t = (string) (int) floor($beli_existing);
+		$total_10_baru = $sa_baru + $beli_existing;
+		$total_t = (string) (int) floor($total_10_baru);
+		$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
+		$nilai_t = (string) (int) floor($nilai_persediaan_baru);
+
 		$upd = array(
 			'uuid_barang' => $uuid_barang,
 			'namabarang' => $nama,
@@ -6565,9 +6915,15 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 			'total_10' => $total_t,
 			'nilai_persediaan' => $nilai_t,
 			'tuj' => $total_t,
+			'tanggal' => $tanggal_tampilan_target,
 		);
 		if ($CI->db->field_exists('spop', 'persediaan')) {
 			$upd['spop'] = $spop !== '' ? $spop : '0';
+		}
+		if ($beli_existing > 0) {
+			persediaan_row_apply_asal_generate_flag($upd, false, $CI);
+		} else {
+			persediaan_row_apply_asal_generate_flag($upd, true, $CI);
 		}
 
 		$CI->db->where('id', (int) $existing->id);
@@ -6589,7 +6945,7 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 			'sa' => $sa_t,
 			'beli' => $beli_t,
 			'total_10' => $total_t,
-			'keterangan' => 'Update dari bulan sumber (nama+sa+hpp+spop cocok)',
+			'keterangan' => 'Update dari bulan sumber (spop sama di bulan target — gabung saldo awal, beli dipertahankan)',
 		);
 	}
 
@@ -6622,6 +6978,7 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 		'nilai_persediaan' => $nilai_t,
 	);
 	$data_insert = array_merge($data_insert, persediaan_generate_distribusi_nol_fields());
+	persediaan_row_apply_asal_generate_flag($data_insert, true, $CI);
 
 	$CI->db->set('uuid_persediaan', "replace(uuid(),'-','')", FALSE);
 	if (!$CI->db->insert('persediaan', $data_insert)) {
@@ -6792,13 +7149,16 @@ function persediaan_generate_recalculate_tambah_beli_row($CI, $row, $tambah_juml
 	$total_t = (string) (int) floor($total_10);
 	$nilai_t = (string) $nilai;
 
-	$CI->db->where('id', (int) $row->id);
-	$CI->db->update('persediaan', array(
+	$upd = array(
 		'beli' => $beli_t,
 		'total_10' => $total_t,
 		'nilai_persediaan' => $nilai_t,
 		'tuj' => $total_t,
-	));
+	);
+	persediaan_row_apply_asal_generate_flag($upd, false, $CI);
+
+	$CI->db->where('id', (int) $row->id);
+	$CI->db->update('persediaan', $upd);
 
 	return array(
 		'sa' => (string) (int) floor($sa),
@@ -8925,6 +9285,8 @@ function persediaan_generate_recalculate_build_summary($CI, $bulan, $ctx, $count
 		'pecah_skip' => (int) (isset($state['stats']['pecah_skip']) ? $state['stats']['pecah_skip'] : 0),
 		'cleanup_spop_kosong' => (int) (isset($state['cleanup_spop_kosong']['deleted']) ? $state['cleanup_spop_kosong']['deleted'] : 0),
 		'cleanup_spop_kosong_grup' => (int) (isset($state['cleanup_spop_kosong']['groups']) ? $state['cleanup_spop_kosong']['groups'] : 0),
+		'cleanup_duplikat_spop' => (int) (isset($state['cleanup_duplikat_spop']['deleted']) ? $state['cleanup_duplikat_spop']['deleted'] : 0),
+		'cleanup_duplikat_spop_grup' => (int) (isset($state['cleanup_duplikat_spop']['groups']) ? $state['cleanup_duplikat_spop']['groups'] : 0),
 	);
 }
 
@@ -9016,6 +9378,10 @@ function persediaan_generate_recalculate_finish_all($CI, $bulan, $ctx, $count_su
 		$state,
 		persediaan_recalculate_cleanup_duplikat_spop_kosong_beli_nol($CI, $ctx['tanggal_beli_target'])
 	);
+	persediaan_generate_recalculate_merge_cleanup_duplikat_spop_state(
+		$state,
+		persediaan_recalculate_cleanup_duplikat_spop_sama_bulan($CI, $ctx['tanggal_beli_target'])
+	);
 
 	$summary_done = persediaan_generate_recalculate_build_summary($CI, $bulan, $ctx, $count_sumber, $state);
 	persediaan_gen_recalc_batch_finish_history($CI, $state, $summary_done);
@@ -9074,7 +9440,8 @@ function persediaan_generate_recalculate_finish_all($CI, $bulan, $ctx, $count_su
 			. $pesan_pecah
 			. $pesan_nilai
 			. ' Baris target sa=0 & beli=0 & total_10=0 dihapus: ' . (int) $state['hapus_nol_target'] . '.'
-			. persediaan_recalculate_cleanup_spop_kosong_pesan(isset($state['cleanup_spop_kosong']) ? $state['cleanup_spop_kosong'] : array()),
+			. persediaan_recalculate_cleanup_spop_kosong_pesan(isset($state['cleanup_spop_kosong']) ? $state['cleanup_spop_kosong'] : array())
+			. persediaan_recalculate_cleanup_duplikat_spop_sama_pesan(isset($state['cleanup_duplikat_spop']) ? $state['cleanup_duplikat_spop'] : array()),
 	), $items);
 }
 
@@ -9254,6 +9621,8 @@ function persediaan_generate_recalculate_batch($CI, $bulan, $offset, $limit, $st
 			);
 		}
 
+		persediaan_ensure_asal_generate_column($CI);
+
 		$hapus_nol_target = 0;
 		$hapus_duplikat_target = 0;
 		$cleanup_spop_kosong = array('deleted' => 0, 'groups' => 0);
@@ -9357,6 +9726,10 @@ function persediaan_generate_recalculate_batch($CI, $bulan, $offset, $limit, $st
 				$state,
 				persediaan_recalculate_cleanup_duplikat_spop_kosong_beli_nol($CI, $tanggal_beli_target)
 			);
+			persediaan_generate_recalculate_merge_cleanup_duplikat_spop_state(
+				$state,
+				persediaan_recalculate_cleanup_duplikat_spop_sama_bulan($CI, $tanggal_beli_target)
+			);
 
 			persediaan_gen_recalc_history_save_batch($CI, $state, $items_persediaan, array(), array(), array(), array(), array());
 			$CI->session->set_userdata($state_key, $state);
@@ -9450,6 +9823,10 @@ function persediaan_generate_recalculate_batch($CI, $bulan, $offset, $limit, $st
 			persediaan_generate_recalculate_merge_cleanup_spop_state(
 				$state,
 				persediaan_recalculate_cleanup_duplikat_spop_kosong_beli_nol($CI, $tanggal_beli_target)
+			);
+			persediaan_generate_recalculate_merge_cleanup_duplikat_spop_state(
+				$state,
+				persediaan_recalculate_cleanup_duplikat_spop_sama_bulan($CI, $tanggal_beli_target)
 			);
 
 			persediaan_gen_recalc_history_save_batch(
