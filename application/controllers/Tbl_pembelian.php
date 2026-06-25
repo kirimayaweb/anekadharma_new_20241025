@@ -5716,18 +5716,408 @@ class Tbl_pembelian extends CI_Controller
 		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
 		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
 
-		$Buku_besar_DATA = $this->_get_jurnal_pembelian2_rows($Get_month_selected, $Get_YEAR_selected);
+		$jurnal_rows = $this->_build_jurnal_pembelian2_view_rows($Get_month_selected, $Get_YEAR_selected);
+		$sys_kode_akun_list = $this->db->query('SELECT kode_akun, nama_akun FROM sys_kode_akun ORDER BY kode_akun ASC')->result();
+		$spop_kode_akun_stats = $this->_jurnal_pembelian2_spop_kode_akun_stats($jurnal_rows['rows']);
 
-		// $Buku_besar_DATA = $this->Buku_besar_model->get_by_source($GET_Source);
-		// $start = 0;
+		$active_tab = trim((string) $this->input->get('tab', TRUE));
+		if ($active_tab !== 'compare') {
+			$active_tab = 'jurnal';
+		}
+
 		$data = array(
-			'Buku_besar_DATA_data' => $Buku_besar_DATA,
-			// 'start' => $start,
+			'jurnal_pembelian2_rows' => $jurnal_rows['rows'],
+			'jurnal_pembelian2_totals' => $jurnal_rows['totals'],
+			'jurnal_pembelian2_spop_stats' => $spop_kode_akun_stats,
+			'Buku_besar_DATA_data' => array(),
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
 			'bulan_ns_selected' => $Get_bulan_ns,
+			'sys_kode_akun_list' => $sys_kode_akun_list,
+			'active_tab' => $active_tab,
+			'compare_bulan_num' => (int) $Get_month_selected,
+			'compare_tahun_num' => (int) $Get_YEAR_selected,
+			'nama_bulan_id' => array(
+				1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+				5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+				9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+			),
+			'gen_tahun_min' => 2019,
+			'gen_tahun_max' => (int) date('Y') + 1,
+			'url_jurnal_pembelian2_update_kode_akun' => site_url('Tbl_pembelian/ajax_jurnal_pembelian2_update_kode_akun'),
+			'url_jurnal_pembelian2_detail_kode_akun' => site_url('Tbl_pembelian/ajax_jurnal_pembelian2_detail_kode_akun'),
+			'url_excel_jurnal_pembelian2' => site_url('Tbl_pembelian/excel_jurnal_pembelian2'),
+			'url_compare_jurnal_pembelian_run' => site_url('tbl_pembelian/ajax_compare_jurnal_pembelian_manual_online'),
+			'url_compare_jurnal_pembelian_excel' => site_url('tbl_pembelian/excel_compare_jurnal_pembelian_manual_online'),
+			'url_compare_jurnal_pembelian_excel_all' => site_url('tbl_pembelian/excel_compare_jurnal_pembelian_all'),
+			'url_compare_jurnal_pembelian_import_csv' => site_url('tbl_pembelian/ajax_compare_import_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_check_csv' => site_url('tbl_pembelian/ajax_compare_check_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_validate_csv' => site_url('tbl_pembelian/ajax_compare_validate_csv_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_tabel_list' => site_url('tbl_pembelian/ajax_compare_tabel_list_jurnal_pembelian'),
+			'url_compare_jurnal_pembelian_tabel_preview' => site_url('tbl_pembelian/ajax_compare_tabel_preview_jurnal_pembelian'),
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
+	}
+
+	public function ajax_jurnal_pembelian2_update_kode_akun()
+	{
+		$this->output->set_content_type('application/json');
+
+		$spop = trim((string) $this->input->post('spop', TRUE));
+		$uuid_supplier = trim((string) $this->input->post('uuid_supplier', TRUE));
+		$bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+		$kode_akun = trim((string) $this->input->post('kode_akun', TRUE));
+
+		if ($spop === '' || $uuid_supplier === '' || $bulan_ns === '' || $kode_akun === '') {
+			echo json_encode(array('ok' => false, 'message' => 'SPOP, supplier, bulan, dan kode akun wajib diisi.'));
+			return;
+		}
+
+		$ts = strtotime($bulan_ns . '-01');
+		if ($ts === false) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid.'));
+			return;
+		}
+
+		$month_start = date('Y-m-01 00:00:00', $ts);
+		$month_end = date('Y-m-t 23:59:59', $ts);
+
+		$row_akun = $this->db->where('kode_akun', $kode_akun)->get('sys_kode_akun')->row();
+		if (!$row_akun) {
+			echo json_encode(array('ok' => false, 'message' => 'Kode akun tidak ditemukan di sys_kode_akun.'));
+			return;
+		}
+
+		$groups = $this->Tbl_pembelian_model->get_distinct_uuid_spop_by_spop_uuid_supplier_month(
+			$spop,
+			$uuid_supplier,
+			$month_start,
+			$month_end
+		);
+		if (empty($groups)) {
+			echo json_encode(array('ok' => false, 'message' => 'Data pembelian tidak ditemukan untuk SPOP dan supplier terpilih.'));
+			return;
+		}
+
+		$this->load->model('Buku_besar_model');
+		$updated_spop = 0;
+
+		foreach ($groups as $group) {
+			$uuid_spop = isset($group->uuid_spop) ? $group->uuid_spop : '';
+			if ($uuid_spop === '') {
+				continue;
+			}
+
+			$GET_TOTAL_PEMBELIAN = isset($group->total_pembelian) ? (float) $group->total_pembelian : 0;
+			$GET_tanggal_pembelian = isset($group->tgl_po) ? date('Y-m-d', strtotime($group->tgl_po)) : date('Y-m-d', $ts);
+			$GET_SPOP_pembelian = $spop;
+			$GET_Supplier = isset($group->supplier_nama) ? $group->supplier_nama : '';
+			$kode_pl = isset($group->kode_pl) ? $group->kode_pl : '';
+			$kode_bb = isset($group->kode_bb) ? $group->kode_bb : '';
+			$GET_ID_buku_besar = isset($group->id_buku_besar) ? (int) $group->id_buku_besar : 0;
+
+			$data_debet = array(
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => $kode_akun,
+				'nama_akun' => $row_akun->nama_akun,
+				'source' => 'pembelian',
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
+				'keterangan' => 'Pembelian UUID SPOP' . $uuid_spop . ' SPOP: ' . $GET_SPOP_pembelian . ' ' . $kode_bb,
+				'pl' => $kode_pl,
+				'kode' => $kode_bb,
+				'debet' => $GET_TOTAL_PEMBELIAN,
+			);
+
+			if ($GET_ID_buku_besar > 0) {
+				$this->Buku_besar_model->update($GET_ID_buku_besar, $data_debet);
+			} else {
+				$GET_ID_buku_besar = $this->Buku_besar_model->insert($data_debet);
+			}
+
+			$this->db->where('kode_akun', 21101);
+			$this->db->where('uuid_spop', $uuid_spop);
+			$row_kredit = $this->db->get('buku_besar')->row();
+
+			$row_akun_21101 = $this->db->where('kode_akun', 21101)->get('sys_kode_akun')->row();
+			$nama_akun_21101 = $row_akun_21101 ? $row_akun_21101->nama_akun : '21101-UU';
+
+			$data_kredit = array(
+				'tanggal' => $GET_tanggal_pembelian,
+				'kode_akun' => 21101,
+				'nama_akun' => $nama_akun_21101,
+				'source' => 'pembelian',
+				'uuid_spop' => $uuid_spop,
+				'spop' => $GET_SPOP_pembelian,
+				'supplier' => $GET_Supplier,
+				'keterangan' => 'Pembelian UUID SPOP' . $uuid_spop . ' SPOP: ' . $GET_SPOP_pembelian . ' ' . $kode_bb,
+				'pl' => $kode_pl,
+				'kode' => $kode_bb,
+				'kredit' => $GET_TOTAL_PEMBELIAN,
+			);
+
+			if ($row_kredit) {
+				$this->Buku_besar_model->update($row_kredit->id, $data_kredit);
+			} else {
+				$this->Buku_besar_model->insert($data_kredit);
+			}
+
+			$this->Tbl_pembelian_model->update_statuslu_per_spop_tgl_po($uuid_spop, $GET_tanggal_pembelian, array(
+				'kode_akun' => $kode_akun,
+				'kode_pl' => $kode_pl,
+				'kode_bb' => $kode_bb,
+				'id_buku_besar' => $GET_ID_buku_besar,
+			));
+			$updated_spop++;
+		}
+
+		$this->Tbl_pembelian_model->update_kode_akun_by_spop_uuid_supplier_month(
+			$spop,
+			$uuid_supplier,
+			$month_start,
+			$month_end,
+			array(
+				'kode_akun' => $kode_akun,
+			)
+		);
+
+		echo json_encode(array(
+			'ok' => true,
+			'message' => 'Kode akun ' . $kode_akun . ' berhasil disimpan untuk SPOP ' . $spop . '.',
+			'kode_akun' => $kode_akun,
+			'nama_akun' => $row_akun->nama_akun,
+			'updated_groups' => $updated_spop,
+		));
+	}
+
+	public function ajax_jurnal_pembelian2_detail_kode_akun()
+	{
+		$this->output->set_content_type('application/json');
+
+		$spop = trim((string) $this->input->post('spop', TRUE));
+		$uuid_supplier = trim((string) $this->input->post('uuid_supplier', TRUE));
+		$bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+
+		if ($spop === '' || $uuid_supplier === '' || $bulan_ns === '') {
+			echo json_encode(array('ok' => false, 'message' => 'SPOP, supplier, dan bulan wajib diisi.'));
+			return;
+		}
+
+		$ts = strtotime($bulan_ns . '-01');
+		if ($ts === false) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid.'));
+			return;
+		}
+
+		$month_start = date('Y-m-01 00:00:00', $ts);
+		$month_end = date('Y-m-t 23:59:59', $ts);
+
+		$detail_rows = $this->Tbl_pembelian_model->get_jurnal_pembelian2_detail_by_spop_supplier_month(
+			$spop,
+			$uuid_supplier,
+			$month_start,
+			$month_end
+		);
+
+		if (empty($detail_rows)) {
+			echo json_encode(array('ok' => false, 'message' => 'Detail pembelian tidak ditemukan.'));
+			return;
+		}
+
+		$rows = array();
+		$grand_total = 0;
+		foreach ($detail_rows as $row) {
+			$jumlah = isset($row->jumlah) ? (float) $row->jumlah : 0;
+			$harga_satuan = isset($row->harga_satuan) ? (float) $row->harga_satuan : 0;
+			$harga_total = isset($row->harga_total) && $row->harga_total !== null && $row->harga_total !== ''
+				? (float) $row->harga_total
+				: ($jumlah * $harga_satuan);
+			$grand_total += $harga_total;
+
+			$konsumen = isset($row->konsumen) ? trim((string) $row->konsumen) : '';
+			$kode_pl = isset($row->kode_pl) ? trim((string) $row->kode_pl) : '';
+			$unit_konsumen = $konsumen;
+			if ($kode_pl !== '' && $konsumen !== '') {
+				$unit_konsumen = $kode_pl . ' / ' . $konsumen;
+			} elseif ($kode_pl !== '') {
+				$unit_konsumen = $kode_pl;
+			}
+
+			$rows[] = array(
+				'tgl_po' => isset($row->tgl_po) ? date('d-m-Y', strtotime($row->tgl_po)) : '',
+				'supplier_nama' => isset($row->supplier_nama) ? $row->supplier_nama : '',
+				'unit_konsumen' => $unit_konsumen,
+				'kode_barang' => isset($row->kode_barang) ? $row->kode_barang : '',
+				'nama_barang' => isset($row->uraian) ? $row->uraian : '',
+				'jumlah' => $jumlah,
+				'jumlah_fmt' => number_format($jumlah, 0, ',', '.'),
+				'harga_satuan' => $harga_satuan,
+				'harga_satuan_fmt' => number_format($harga_satuan, 2, ',', '.'),
+				'harga_total' => $harga_total,
+				'harga_total_fmt' => number_format($harga_total, 2, ',', '.'),
+				'status_lunas' => $this->_jurnal_pembelian2_format_status_lunas(isset($row->statuslu) ? $row->statuslu : ''),
+			);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $rows,
+			'grand_total_fmt' => number_format($grand_total, 2, ',', '.'),
+		));
+	}
+
+	private function _jurnal_pembelian2_format_status_lunas($statuslu)
+	{
+		$status = strtoupper(trim((string) $statuslu));
+		if ($status === 'L' || $status === 'LUNAS') {
+			return 'Lunas';
+		}
+		if ($status === 'U' || $status === 'HUTANG') {
+			return 'Hutang';
+		}
+
+		return trim((string) $statuslu) !== '' ? trim((string) $statuslu) : '-';
+	}
+
+	private function _build_jurnal_pembelian2_view_rows($month_selected, $year_selected)
+	{
+		$month_selected = (int) $month_selected;
+		$year_selected = (int) $year_selected;
+		$month_start = sprintf('%04d-%02d-01 00:00:00', $year_selected, $month_selected);
+
+		$groups = $this->Tbl_pembelian_model->get_jurnal_pembelian2_group_rows_by_month($month_selected, $year_selected);
+		$rows = array();
+		$no = 0;
+		$current_pl = null;
+		$pl_debet = 0;
+		$pl_kredit = 0;
+		$total_debet = 0;
+		$total_kredit = 0;
+		$pl_names = $this->_excel_jurnal_pembelian2_pl_name_map();
+		$kode_akun_cache = array();
+		$nama_akun_cache = array();
+
+		foreach ($groups as $group) {
+			$kode_pl = isset($group->kode_pl) ? trim((string) $group->kode_pl) : '';
+
+			if ($current_pl !== null && $kode_pl !== $current_pl) {
+				$rows[] = $this->_jurnal_pembelian2_make_pl_total_row(++$no, $current_pl, $pl_names, $pl_debet, $pl_kredit);
+				$total_debet += $pl_debet;
+				$total_kredit += $pl_kredit;
+				$pl_debet = 0;
+				$pl_kredit = 0;
+			}
+			$current_pl = $kode_pl;
+
+			$kode_akun = isset($group->kode_akun) ? trim((string) $group->kode_akun) : '';
+			$kode_akun_inherited = false;
+			if ($kode_akun === '') {
+				$fallback = $this->Tbl_pembelian_model->get_kode_akun_fallback_by_uuid_supplier(
+					isset($group->uuid_supplier) ? $group->uuid_supplier : '',
+					$month_start
+				);
+				if ($fallback && trim((string) $fallback->kode_akun) !== '') {
+					$kode_akun = trim((string) $fallback->kode_akun);
+					$kode_akun_inherited = true;
+				}
+			}
+
+			$nama_akun = '';
+			if ($kode_akun !== '') {
+				if (!isset($nama_akun_cache[$kode_akun])) {
+					$row_akun = $this->db->where('kode_akun', $kode_akun)->get('sys_kode_akun')->row();
+					$nama_akun_cache[$kode_akun] = $row_akun ? $row_akun->nama_akun : '';
+				}
+				$nama_akun = $nama_akun_cache[$kode_akun];
+			}
+
+			$debet = isset($group->total_pembelian) ? (float) $group->total_pembelian : 0;
+			$kredit = $debet;
+			$uuid_spop = isset($group->uuid_spop) ? $group->uuid_spop : '';
+			if ($uuid_spop !== '') {
+				$this->db->select('kredit');
+				$this->db->where('kode_akun', 21101);
+				$this->db->where('uuid_spop', $uuid_spop);
+				$row_kredit = $this->db->get('buku_besar')->row();
+				if ($row_kredit && (float) $row_kredit->kredit > 0) {
+					$kredit = (float) $row_kredit->kredit;
+				}
+			}
+
+			$pl_debet += $debet;
+			$pl_kredit += $kredit;
+
+			$unit_konsumen = isset($group->unit_konsumen) ? trim((string) $group->unit_konsumen) : '';
+			$nama_barang_list = isset($group->nama_barang_list) ? trim((string) $group->nama_barang_list) : '';
+			$nama_pl = isset($pl_names[$kode_pl]) ? trim((string) $pl_names[$kode_pl]) : '';
+			$unit_parts = array();
+			if ($kode_pl !== '') {
+				$unit_parts[] = $kode_pl;
+			}
+			if ($nama_pl !== '' && strcasecmp($nama_pl, $kode_pl) !== 0) {
+				$unit_parts[] = $nama_pl;
+			}
+			if ($unit_konsumen !== '') {
+				$unit_parts[] = $unit_konsumen;
+			}
+			$unit_label = implode(' | ', array_unique($unit_parts));
+
+			$rows[] = array(
+				'type' => 'data',
+				'no' => ++$no,
+				'tanggal' => isset($group->tanggal) ? date('d-m-Y', strtotime($group->tanggal)) : '',
+				'spop' => isset($group->spop) ? $group->spop : '',
+				'kode_pl' => $kode_pl,
+				'unit' => $unit_label,
+				'nama_barang' => $nama_barang_list,
+				'supplier' => isset($group->supplier_nama) ? $group->supplier_nama : '',
+				'uuid_supplier' => isset($group->uuid_supplier) ? $group->uuid_supplier : '',
+				'uuid_spop' => $uuid_spop,
+				'kode_akun' => $kode_akun,
+				'kode_akun_inherited' => $kode_akun_inherited,
+				'nama_akun' => $nama_akun,
+				'debet' => $debet,
+				'kredit' => $kredit,
+				'is_total' => false,
+			);
+		}
+
+		if ($current_pl !== null) {
+			$rows[] = $this->_jurnal_pembelian2_make_pl_total_row(++$no, $current_pl, $pl_names, $pl_debet, $pl_kredit);
+			$total_debet += $pl_debet;
+			$total_kredit += $pl_kredit;
+		}
+
+		return array(
+			'rows' => $rows,
+			'totals' => array(
+				'debet' => $total_debet,
+				'kredit' => $total_kredit,
+			),
+		);
+	}
+
+	private function _jurnal_pembelian2_make_pl_total_row($no, $kode_pl, $pl_names, $debet, $kredit)
+	{
+		$nama_pl = isset($pl_names[$kode_pl]) ? $pl_names[$kode_pl] : $kode_pl;
+
+		return array(
+			'type' => 'pl_total',
+			'no' => $no,
+			'tanggal' => '',
+			'spop' => '',
+			'kode_pl' => $kode_pl,
+			'supplier' => 'Total Pembelian Unit ' . $this->_jurnal_pembelian2_normalize_pl_nama($nama_pl),
+			'uuid_supplier' => '',
+			'uuid_spop' => '',
+			'kode_akun' => '',
+			'kode_akun_inherited' => false,
+			'nama_akun' => '',
+			'debet' => $debet,
+			'kredit' => $kredit,
+			'is_total' => true,
+		);
 	}
 
 	private function _get_jurnal_pembelian2_rows($month_selected, $year_selected)
@@ -5762,17 +6152,51 @@ class Tbl_pembelian extends CI_Controller
 
 		$Get_bulan_ns = trim((string) $this->input->get('bulan_ns', TRUE));
 		if ($Get_bulan_ns === '') {
+			$Get_bulan_ns = trim((string) $this->input->post('bulan_ns', TRUE));
+		}
+		if ($Get_bulan_ns === '') {
 			$Get_bulan_ns = trim((string) $this->session->userdata('jurnal_pembelian2_bulan_ns'));
 		}
 		if ($Get_bulan_ns === '') {
 			$Get_bulan_ns = date('Y-m');
 		}
 
+		$search_filter = trim((string) $this->input->get('search_spop', TRUE));
+		if ($search_filter === '') {
+			$search_filter = trim((string) $this->input->post('search_spop', TRUE));
+		}
+		if ($search_filter === '') {
+			$search_filter = trim((string) $this->input->get('search_text', TRUE));
+		}
+		if ($search_filter === '') {
+			$search_filter = trim((string) $this->input->post('search_text', TRUE));
+		}
+		if ($search_filter === '') {
+			$search_filter = trim((string) $this->input->get('search', TRUE));
+		}
+		if ($search_filter === '') {
+			$search_filter = trim((string) $this->input->post('search', TRUE));
+		}
+
+		$search_field = trim((string) $this->input->get('search_field', TRUE));
+		if ($search_field === '') {
+			$search_field = trim((string) $this->input->post('search_field', TRUE));
+		}
+		if ($search_field === '') {
+			$search_field = 'semua';
+		}
+
 		$Get_month_selected = date("m", strtotime($Get_bulan_ns . "-01"));
 		$Get_YEAR_selected = date("Y", strtotime($Get_bulan_ns . "-01"));
-		$Buku_besar_DATA = $this->_get_jurnal_pembelian2_rows($Get_month_selected, $Get_YEAR_selected);
+		$jurnal_data = $this->_build_jurnal_pembelian2_view_rows($Get_month_selected, $Get_YEAR_selected);
+		$export_rows = $this->_jurnal_pembelian2_filter_rows_for_export($jurnal_data['rows'], $search_filter, $search_field);
 
-		$namaFile = "jurnal_pembelian_" . $Get_bulan_ns . ".xlsx";
+		$namaFile = "jurnal_pembelian_" . $Get_bulan_ns;
+		if ($search_filter !== '') {
+			$namaFile .= '_filter';
+		}
+		$namaFile .= '.xlsx';
+
 		$tablehead_row1 = 2;
 		$tablehead_row2 = 3;
 		$tablebody = 4;
@@ -5787,92 +6211,240 @@ class Tbl_pembelian extends CI_Controller
 
 		$bulan_tahun_label = $this->_bulan_indonesia((int) $Get_month_selected) . ' ' . $Get_YEAR_selected;
 		$this->_excel_jurnal_pembelian2_write_merged_title_row(0, 'JURNAL PEMBELIAN', 2);
-		$this->_excel_jurnal_pembelian2_write_merged_title_row(1, 'Jurnal Pembelian Bulan ' . $bulan_tahun_label, 0);
+		$title_row2 = 'Jurnal Pembelian Bulan ' . $bulan_tahun_label;
+		if ($search_filter !== '') {
+			$field_label = 'SPOP';
+			if ($search_field === 'semua' || $search_field === 'all') {
+				$field_label = 'Semua';
+			} elseif ($search_field === 'supplier') {
+				$field_label = 'SUPPLIER';
+			} elseif ($search_field === 'unit') {
+				$field_label = 'Unit';
+			} elseif ($search_field === 'kode_akun') {
+				$field_label = 'Kode Akun';
+			} elseif ($search_field === 'rekening') {
+				$field_label = 'Rekening';
+			}
+			$title_row2 .= ' (Filter ' . $field_label . ': ' . $search_filter . ')';
+		}
+		$this->_excel_jurnal_pembelian2_write_merged_title_row(1, $title_row2, 0);
 
 		$this->_excel_jurnal_pembelian2_write_table_header($tablehead_row1, $tablehead_row2, $style_header);
 
 		$pl_names = $this->_excel_jurnal_pembelian2_pl_name_map();
-		$nomor = 0;
-		$GET_KODE_PL = '';
-		$TOTAL_debet_jumlah = 0;
-		$TOTAL_kredit_21101 = 0;
-		$TOTAL_debet_ALL = 0;
-		$TOTAL_kredit_ALL = 0;
-		$map_kredit_21101_by_uuid_spop = array();
+		$grand_debet = 0;
+		$grand_kredit = 0;
 
-		foreach ($Buku_besar_DATA as $list_data) {
-			if ((string) $list_data->kode_akun === '21101') {
-				continue;
-			}
-
-			if (!isset($map_kredit_21101_by_uuid_spop[$list_data->uuid_spop])) {
-				$this->db->select('kredit');
-				$this->db->where('kode_akun', 21101);
-				$this->db->where('uuid_spop', $list_data->uuid_spop);
-				$row_kredit = $this->db->get('buku_besar')->row();
-				$map_kredit_21101_by_uuid_spop[$list_data->uuid_spop] = $row_kredit ? (float) $row_kredit->kredit : 0;
-			}
-			$nilai_kredit_21101 = $map_kredit_21101_by_uuid_spop[$list_data->uuid_spop];
-
-			if ($GET_KODE_PL !== '' && $list_data->pl != $GET_KODE_PL) {
-				$this->_excel_jurnal_pembelian2_write_pl_total_row(
+		foreach ($export_rows as $row) {
+			if (!empty($row['is_grand_total'])) {
+				$this->_excel_jurnal_pembelian2_write_grand_total_row(
 					$tablebody,
-					$pl_names,
-					$GET_KODE_PL,
-					$TOTAL_debet_jumlah,
-					$TOTAL_kredit_21101,
+					$row['debet'],
+					$row['kredit'],
 					$style_total_label,
 					$style_total_amount
 				);
 				$tablebody++;
-
-				$TOTAL_debet_ALL += $TOTAL_debet_jumlah;
-				$TOTAL_kredit_ALL += $TOTAL_kredit_21101;
-				$TOTAL_debet_jumlah = 0;
-				$TOTAL_kredit_21101 = 0;
+				continue;
 			}
 
-			$this->_excel_jurnal_pembelian2_write_data_row(
+			if (!empty($row['is_total'])) {
+				$this->_excel_jurnal_pembelian2_write_pl_total_row(
+					$tablebody,
+					$pl_names,
+					$row['kode_pl'],
+					$row['debet'],
+					$row['kredit'],
+					$style_total_label,
+					$style_total_amount
+				);
+				$tablebody++;
+				continue;
+			}
+
+			$this->_excel_jurnal_pembelian2_write_view_data_row(
 				$tablebody,
-				++$nomor,
-				$list_data,
-				$nilai_kredit_21101,
+				$row['no'],
+				$row,
 				$style_border,
 				$style_total_amount
 			);
 			$tablebody++;
-
-			$TOTAL_debet_jumlah += (float) $list_data->debet;
-			$TOTAL_kredit_21101 += (float) $nilai_kredit_21101;
-			$GET_KODE_PL = $list_data->pl;
+			$grand_debet += (float) $row['debet'];
+			$grand_kredit += (float) $row['kredit'];
 		}
 
-		if ($GET_KODE_PL !== '') {
-			$this->_excel_jurnal_pembelian2_write_pl_total_row(
-				$tablebody,
-				$pl_names,
-				$GET_KODE_PL,
-				$TOTAL_debet_jumlah,
-				$TOTAL_kredit_21101,
-				$style_total_label,
-				$style_total_amount
-			);
-			$tablebody++;
-
-			$TOTAL_debet_ALL += $TOTAL_debet_jumlah;
-			$TOTAL_kredit_ALL += $TOTAL_kredit_21101;
+		if ($search_filter !== '' && !empty($export_rows)) {
+			$has_grand = false;
+			foreach ($export_rows as $row) {
+				if (!empty($row['is_grand_total'])) {
+					$has_grand = true;
+					break;
+				}
+			}
+			if (!$has_grand) {
+				$this->_excel_jurnal_pembelian2_write_grand_total_row(
+					$tablebody,
+					$grand_debet,
+					$grand_kredit,
+					$style_total_label,
+					$style_total_amount
+				);
+			}
 		}
-
-		$this->_excel_jurnal_pembelian2_write_grand_total_row(
-			$tablebody,
-			$TOTAL_debet_ALL,
-			$TOTAL_kredit_ALL,
-			$style_total_label,
-			$style_total_amount
-		);
 
 		xlsEOF();
 		exit();
+	}
+
+	private function _jurnal_pembelian2_spop_kode_akun_stats($rows)
+	{
+		$sudah = 0;
+		$belum = 0;
+
+		foreach ($rows as $row) {
+			if (!empty($row['is_total'])) {
+				continue;
+			}
+
+			$kode_akun = isset($row['kode_akun']) ? trim((string) $row['kode_akun']) : '';
+			if ($kode_akun !== '') {
+				$sudah++;
+			} else {
+				$belum++;
+			}
+		}
+
+		return array(
+			'sudah' => $sudah,
+			'belum' => $belum,
+			'total' => $sudah + $belum,
+		);
+	}
+
+	private function _jurnal_pembelian2_row_search_text($row)
+	{
+		$parts = array(
+			isset($row['no']) ? (string) $row['no'] : '',
+			isset($row['tanggal']) ? (string) $row['tanggal'] : '',
+			isset($row['spop']) ? (string) $row['spop'] : '',
+			isset($row['kode_pl']) ? (string) $row['kode_pl'] : '',
+			isset($row['unit']) ? (string) $row['unit'] : '',
+			isset($row['supplier']) ? (string) $row['supplier'] : '',
+			isset($row['kode_akun']) ? (string) $row['kode_akun'] : '',
+			isset($row['nama_akun']) ? (string) $row['nama_akun'] : '',
+			number_format((float) (isset($row['debet']) ? $row['debet'] : 0), 2, ',', '.'),
+			number_format((float) (isset($row['kredit']) ? $row['kredit'] : 0), 2, ',', '.'),
+		);
+
+		return strtolower(implode(' ', $parts));
+	}
+
+	private function _jurnal_pembelian2_row_matches_search($row, $search)
+	{
+		$search = trim((string) $search);
+		if ($search === '') {
+			return true;
+		}
+
+		return strpos($this->_jurnal_pembelian2_row_search_text($row), strtolower($search)) !== false;
+	}
+
+	private function _jurnal_pembelian2_row_matches_field_search($row, $field, $search_text)
+	{
+		$search_text = trim((string) $search_text);
+		if ($search_text === '') {
+			return true;
+		}
+
+		if (!empty($row['is_total'])) {
+			return false;
+		}
+
+		$field = trim((string) $field);
+		if ($field === 'semua' || $field === 'all') {
+			return $this->_jurnal_pembelian2_row_matches_search($row, $search_text);
+		}
+
+		$haystack = '';
+		if ($field === 'supplier') {
+			$haystack = isset($row['supplier']) ? (string) $row['supplier'] : '';
+		} elseif ($field === 'unit') {
+			$haystack = isset($row['unit']) ? (string) $row['unit'] : '';
+			if ($haystack === '' && isset($row['kode_pl'])) {
+				$haystack = (string) $row['kode_pl'];
+			}
+		} elseif ($field === 'kode_akun') {
+			$haystack = isset($row['kode_akun']) ? (string) $row['kode_akun'] : '';
+		} elseif ($field === 'rekening') {
+			$haystack = isset($row['nama_akun']) ? (string) $row['nama_akun'] : '';
+		} else {
+			$haystack = isset($row['spop']) ? (string) $row['spop'] : '';
+		}
+
+		return stripos($haystack, $search_text) !== false;
+	}
+
+	private function _jurnal_pembelian2_row_matches_spop_search($row, $search_spop)
+	{
+		return $this->_jurnal_pembelian2_row_matches_field_search($row, 'spop', $search_spop);
+	}
+
+	private function _jurnal_pembelian2_filter_rows_for_export($rows, $search, $search_field = 'semua')
+	{
+		$search = trim((string) $search);
+		$search_field = trim((string) $search_field);
+		if ($search_field === '') {
+			$search_field = 'semua';
+		}
+		if ($search === '') {
+			$grand_debet = 0;
+			$grand_kredit = 0;
+			foreach ($rows as $row) {
+				if (!empty($row['is_total'])) {
+					continue;
+				}
+				$grand_debet += (float) $row['debet'];
+				$grand_kredit += (float) $row['kredit'];
+			}
+
+			$export_rows = $rows;
+			$export_rows[] = array(
+				'is_total' => true,
+				'is_grand_total' => true,
+				'debet' => $grand_debet,
+				'kredit' => $grand_kredit,
+			);
+			return $export_rows;
+		}
+
+		$filtered = array();
+		$grand_debet = 0;
+		$grand_kredit = 0;
+
+		foreach ($rows as $row) {
+			if (!empty($row['is_total'])) {
+				continue;
+			}
+			if (!$this->_jurnal_pembelian2_row_matches_field_search($row, $search_field, $search)) {
+				continue;
+			}
+
+			$filtered[] = $row;
+			$grand_debet += (float) $row['debet'];
+			$grand_kredit += (float) $row['kredit'];
+		}
+
+		if (!empty($filtered)) {
+			$filtered[] = array(
+				'is_total' => true,
+				'is_grand_total' => true,
+				'debet' => $grand_debet,
+				'kredit' => $grand_kredit,
+			);
+		}
+
+		return $filtered;
 	}
 
 	private function _jurnal_pembelian2_normalize_pl_nama($nama_pl)
@@ -5946,6 +6518,19 @@ class Tbl_pembelian extends CI_Controller
 		xlsWriteCellStyle($row, 6, (string) $list_data->nama_akun, $style_border);
 		xlsWriteCellStyle($row, 7, $this->_excel_jurnal_pembelian2_format_amount($list_data->debet), $style_amount);
 		xlsWriteCellStyle($row, 8, $this->_excel_jurnal_pembelian2_format_amount($nilai_kredit_21101), $style_amount);
+	}
+
+	private function _excel_jurnal_pembelian2_write_view_data_row($row_index, $row, $style_border, $style_amount)
+	{
+		xlsWriteCellStyle($row_index, 0, (string) (isset($row['no']) ? $row['no'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 1, (string) (isset($row['tanggal']) ? $row['tanggal'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 2, (string) (isset($row['spop']) ? $row['spop'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 3, (string) (isset($row['kode_pl']) ? $row['kode_pl'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 4, (string) (isset($row['supplier']) ? $row['supplier'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 5, (string) (isset($row['kode_akun']) ? $row['kode_akun'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 6, (string) (isset($row['nama_akun']) ? $row['nama_akun'] : ''), $style_border);
+		xlsWriteCellStyle($row_index, 7, $this->_excel_jurnal_pembelian2_format_amount(isset($row['debet']) ? $row['debet'] : 0), $style_amount);
+		xlsWriteCellStyle($row_index, 8, $this->_excel_jurnal_pembelian2_format_amount(isset($row['kredit']) ? $row['kredit'] : 0), $style_amount);
 	}
 
 	private function _excel_jurnal_pembelian2_write_pl_total_row($row, $pl_names, $kode_pl, $total_debet, $total_kredit, $style_label, $style_amount)
