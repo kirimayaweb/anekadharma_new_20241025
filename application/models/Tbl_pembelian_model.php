@@ -435,6 +435,90 @@ class Tbl_pembelian_model extends CI_Model
         $this->db->where($this->id, $id);
         $this->db->delete($this->table);
     }
+    function get_jurnal_pembelian2_raw_by_month($month_selected, $year_selected)
+    {
+        $month_selected = (int) $month_selected;
+        $year_selected = (int) $year_selected;
+        $this->db->select('id, tgl_po, spop, uuid_spop, uuid_supplier, supplier_nama, kode_pl, kode_bb, kode_akun, jumlah, harga_satuan, harga_total, id_buku_besar');
+        $this->db->where('MONTH(' . $this->tgl_po . ')', $month_selected);
+        $this->db->where('YEAR(' . $this->tgl_po . ')', $year_selected);
+        $this->db->order_by('kode_pl', 'ASC');
+        $this->db->order_by($this->tgl_po, 'ASC');
+        $this->db->order_by($this->spop, 'ASC');
+        $this->db->order_by($this->id, 'ASC');
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_kode_akun_fallback_by_uuid_supplier($uuid_supplier, $before_date = null)
+    {
+        $uuid_supplier = trim((string) $uuid_supplier);
+        if ($uuid_supplier === '') {
+            return null;
+        }
+
+        $this->db->select('kode_akun, kode_pl, kode_bb');
+        $this->db->where('uuid_supplier', $uuid_supplier);
+        $this->db->where('kode_akun IS NOT NULL', null, false);
+        $this->db->where("TRIM(kode_akun) <>", '');
+        if ($before_date !== null && $before_date !== '') {
+            $this->db->where($this->tgl_po . ' <', $before_date);
+        }
+        $this->db->order_by($this->tgl_po, 'DESC');
+        $this->db->order_by($this->id, 'DESC');
+        $this->db->limit(1);
+        return $this->db->get($this->table)->row();
+    }
+
+    function get_jurnal_pembelian2_group_rows_by_month($month_selected, $year_selected)
+    {
+        $month_selected = (int) $month_selected;
+        $year_selected = (int) $year_selected;
+        $month_start = sprintf('%04d-%02d-01 00:00:00', $year_selected, $month_selected);
+        $month_end = date('Y-m-t 23:59:59', strtotime($month_start));
+
+        $this->db->select('spop, uuid_supplier, MIN(tgl_po) AS tanggal, MIN(uuid_spop) AS uuid_spop, MIN(supplier_nama) AS supplier_nama, kode_pl, GROUP_CONCAT(DISTINCT NULLIF(TRIM(konsumen), \'\') SEPARATOR \' | \') AS unit_konsumen, GROUP_CONCAT(DISTINCT NULLIF(TRIM(uraian), \'\') SEPARATOR \' | \') AS nama_barang_list, SUM(COALESCE(harga_total, jumlah * harga_satuan)) AS total_pembelian, MAX(NULLIF(TRIM(kode_akun), \'\')) AS kode_akun, MAX(NULLIF(TRIM(kode_bb), \'\')) AS kode_bb', false);
+        $this->db->where($this->tgl_po . ' >=', $month_start);
+        $this->db->where($this->tgl_po . ' <=', $month_end);
+        $this->db->group_by(array('kode_pl', 'spop', 'uuid_supplier'));
+        $this->db->order_by('kode_pl', 'ASC');
+        $this->db->order_by('tanggal', 'ASC');
+        $this->db->order_by('spop', 'ASC');
+        return $this->db->get($this->table)->result();
+    }
+
+    function update_kode_akun_by_spop_uuid_supplier_month($spop, $uuid_supplier, $month_start, $month_end, $data)
+    {
+        $this->db->where($this->spop, $spop);
+        $this->db->where('uuid_supplier', $uuid_supplier);
+        $this->db->where($this->tgl_po . ' >=', $month_start);
+        $this->db->where($this->tgl_po . ' <=', $month_end);
+        return $this->db->update($this->table, $data);
+    }
+
+    function get_distinct_uuid_spop_by_spop_uuid_supplier_month($spop, $uuid_supplier, $month_start, $month_end)
+    {
+        $this->db->distinct();
+        $this->db->select('uuid_spop, MIN(tgl_po) AS tgl_po, SUM(COALESCE(harga_total, jumlah * harga_satuan)) AS total_pembelian, MAX(id_buku_besar) AS id_buku_besar, MIN(supplier_nama) AS supplier_nama, MIN(kode_pl) AS kode_pl, MIN(kode_bb) AS kode_bb', false);
+        $this->db->where($this->spop, $spop);
+        $this->db->where('uuid_supplier', $uuid_supplier);
+        $this->db->where($this->tgl_po . ' >=', $month_start);
+        $this->db->where($this->tgl_po . ' <=', $month_end);
+        $this->db->group_by('uuid_spop');
+        return $this->db->get($this->table)->result();
+    }
+
+    function get_jurnal_pembelian2_detail_by_spop_supplier_month($spop, $uuid_supplier, $month_start, $month_end)
+    {
+        $this->db->select('id, tgl_po, supplier_nama, konsumen, kode_pl, kode_barang, uraian, jumlah, harga_satuan, harga_total, statuslu', false);
+        $this->db->where($this->spop, $spop);
+        $this->db->where('uuid_supplier', $uuid_supplier);
+        $this->db->where($this->tgl_po . ' >=', $month_start);
+        $this->db->where($this->tgl_po . ' <=', $month_end);
+        $this->db->order_by($this->tgl_po, 'ASC');
+        $this->db->order_by($this->id, 'ASC');
+        return $this->db->get($this->table)->result();
+    }
+
     function delete_by_uuid_spop($uuid_spop)
     {
         $this->db->where($this->uuid_spop, $uuid_spop);
