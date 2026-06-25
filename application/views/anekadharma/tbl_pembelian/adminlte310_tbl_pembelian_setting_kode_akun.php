@@ -1024,15 +1024,37 @@
         return ids.join(',');
     }
 
-    function simpanSearchFilterAktifSettingKodeAkun() {
-        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
-            return '';
-        }
-        var val = jQuery('#tglSPOPFreeze').DataTable().search() || '';
+    var STORAGE_KEY_SETTING_KODE_AKUN_SEARCH = 'setting_kode_akun_search_filter';
+
+    function simpanSearchFilterKeStorage(searchValue) {
+        var val = (searchValue == null) ? ambilSearchAktifDariDataTableAtauInput() : String(searchValue);
         try {
-            window.localStorage.setItem('setting_kode_akun_search_filter', val);
+            window.localStorage.setItem(STORAGE_KEY_SETTING_KODE_AKUN_SEARCH, val);
         } catch (e) {}
+        syncSearchFilterKeUrl(val);
         return val;
+    }
+
+    function simpanSearchFilterAktifSettingKodeAkun() {
+        return simpanSearchFilterKeStorage(null);
+    }
+
+    function syncSearchFilterKeUrl(searchValue) {
+        if (!window.history || !window.history.replaceState) {
+            return;
+        }
+        var val = String(searchValue == null ? '' : searchValue);
+        try {
+            var url = new URL(window.location.href);
+            if (val.trim() !== '') {
+                url.searchParams.set('search_filter', val);
+            } else if (url.searchParams.has('search_filter')) {
+                url.searchParams.set('search_filter', '');
+            } else {
+                return;
+            }
+            window.history.replaceState(null, '', url.toString());
+        } catch (e) {}
     }
 
     function ambilSearchFilterAwalSettingKodeAkun() {
@@ -1041,11 +1063,17 @@
             return val;
         }
         try {
-            val = (window.localStorage.getItem('setting_kode_akun_search_filter') || '').trim();
+            val = (window.localStorage.getItem(STORAGE_KEY_SETTING_KODE_AKUN_SEARCH) || '').trim();
         } catch (e) {
             val = '';
         }
         return val;
+    }
+
+    function setSearchInputValueSettingKodeAkun(val) {
+        jQuery('div.dataTables_filter input').each(function() {
+            this.value = val;
+        });
     }
 
     function sisipkanSearchFilterKeUrl(url, searchFilter) {
@@ -1090,20 +1118,15 @@
     function applySearchFilterKeDataTable(searchValue) {
         var val = (searchValue || '').trim();
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
-            return;
+            return false;
         }
         var table = jQuery('#tglSPOPFreeze').DataTable();
         if (table.search() !== val) {
             table.search(val).draw();
-        } else {
-            var filterInput = document.querySelector('div.dataTables_filter input');
-            if (filterInput) {
-                filterInput.value = val;
-            }
         }
-        try {
-            window.localStorage.setItem('setting_kode_akun_search_filter', val);
-        } catch (e) {}
+        setSearchInputValueSettingKodeAkun(val);
+        simpanSearchFilterKeStorage(val);
+        return true;
     }
 
     function cetakExcelSettingKodeAkun() {
@@ -1167,6 +1190,8 @@
             $('#tgl_awal, #tgl_akhir').on('change.datetimepicker.setting hide.datetimepicker.setting', submitCariSettingKodeAkunOtomatis);
         }
 
+        var settingKodeAkunSearchInitialized = false;
+
         function initAutoCariSettingKodeAkun() {
             var form = document.getElementById('form-cari-setting-kode-akun');
             if (!form) {
@@ -1176,21 +1201,34 @@
             form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
                 el.addEventListener('change', submitCariSettingKodeAkunOtomatis);
             });
-            if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
-                var table = jQuery('#tglSPOPFreeze').DataTable();
-                var initialSearch = ambilSearchFilterAwalSettingKodeAkun();
-                applySearchFilterKeDataTable(initialSearch);
-                updateTotalFooterDariDataTable();
-                updateLinkKodeAkunDenganSearchFilter();
+            if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+                return;
+            }
+
+            var table = jQuery('#tglSPOPFreeze').DataTable();
+            var initialSearch = ambilSearchFilterAwalSettingKodeAkun();
+            applySearchFilterKeDataTable(initialSearch);
+            updateTotalFooterDariDataTable();
+            updateLinkKodeAkunDenganSearchFilter();
+
+            if (!settingKodeAkunSearchInitialized) {
+                settingKodeAkunSearchInitialized = true;
+
                 table.off('draw.settingKodeAkun').on('draw.settingKodeAkun', function() {
                     updateTotalFooterDariDataTable();
                     updateLinkKodeAkunDenganSearchFilter();
                 });
-                table.off('search.settingKodeAkun order.settingKodeAkun page.settingKodeAkun')
-                    .on('search.settingKodeAkun order.settingKodeAkun page.settingKodeAkun', function() {
+                table.off('search.dt.settingKodeAkun').on('search.dt.settingKodeAkun', function() {
+                    simpanSearchFilterKeStorage(table.search());
+                    updateTotalFooterDariDataTable();
+                    updateLinkKodeAkunDenganSearchFilter();
+                });
+                table.off('order.settingKodeAkun page.settingKodeAkun')
+                    .on('order.settingKodeAkun page.settingKodeAkun', function() {
                         updateTotalFooterDariDataTable();
                         updateLinkKodeAkunDenganSearchFilter();
                     });
+
                 jQuery(document).off('click.settingKodeAkunLink', 'a[href*="/tbl_pembelian/input_kode_akun/"], a[href*="/Tbl_pembelian/input_kode_akun/"], a[href*="/tbl_pembelian/ubah_kode_akun/"], a[href*="/Tbl_pembelian/ubah_kode_akun/"]');
                 jQuery(document).on('click.settingKodeAkunLink', 'a[href*="/tbl_pembelian/input_kode_akun/"], a[href*="/Tbl_pembelian/input_kode_akun/"], a[href*="/tbl_pembelian/ubah_kode_akun/"], a[href*="/Tbl_pembelian/ubah_kode_akun/"]', function(e) {
                     var href = jQuery(this).attr('href') || '';
@@ -1198,31 +1236,50 @@
                         return;
                     }
                     e.preventDefault();
-                    var searchFilter = ambilSearchAktifDariDataTableAtauInput();
-                    try {
-                        window.localStorage.setItem('setting_kode_akun_search_filter', searchFilter);
-                    } catch (err) {}
+                    var searchFilter = simpanSearchFilterKeStorage(null);
                     var hrefFinal = href.replace(/([?&])search_filter=[^&#]*/g, '').replace(/[?&]$/, '');
                     hrefFinal = sisipkanSearchFilterKeUrl(hrefFinal, searchFilter);
                     window.location.href = hrefFinal;
                 });
+
                 jQuery(document).off('keyup.settingKodeAkunSearch input.settingKodeAkunSearch', 'div.dataTables_filter input');
                 jQuery(document).on('keyup.settingKodeAkunSearch input.settingKodeAkunSearch', 'div.dataTables_filter input', function() {
+                    var searchVal = this.value || '';
                     setTimeout(function() {
+                        simpanSearchFilterKeStorage(searchVal);
                         updateTotalFooterDariDataTable();
                         updateLinkKodeAkunDenganSearchFilter();
-                    }, 0);
+                    }, 30);
                 });
-                setTimeout(updateTotalFooterDariDataTable, 200);
-                setTimeout(updateLinkKodeAkunDenganSearchFilter, 200);
+
+                window.addEventListener('beforeunload', function() {
+                    simpanSearchFilterKeStorage(null);
+                });
             }
+
+            setTimeout(updateTotalFooterDariDataTable, 200);
+            setTimeout(updateLinkKodeAkunDenganSearchFilter, 200);
         }
 
-        if (document.readyState === 'complete') {
+        function bootSettingKodeAkunSearchPersistence(retryCount) {
+            retryCount = retryCount || 0;
+            if (!document.getElementById('form-cari-setting-kode-akun')) {
+                return;
+            }
+            if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+                if (retryCount < 120) {
+                    setTimeout(function() {
+                        bootSettingKodeAkunSearchPersistence(retryCount + 1);
+                    }, 50);
+                }
+                return;
+            }
             initAutoCariSettingKodeAkun();
-        } else {
-            window.addEventListener('load', initAutoCariSettingKodeAkun);
         }
+
+        window.addEventListener('load', function() {
+            bootSettingKodeAkunSearchPersistence(0);
+        });
     })();
 
     window.addEventListener('load', function() {

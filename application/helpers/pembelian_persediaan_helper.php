@@ -6376,28 +6376,21 @@ function persediaan_generate_recalculate_hapus_duplikat_bulan_target($CI, $tangg
 }
 
 /**
- * Record bulan sumber layak di-copy jika total_10 >= 1 (saldo akhir bulan sebelumnya).
- * Lewati jika total_10 kosong, "-", atau nilai numerik < 1.
+ * Record bulan sumber layak di-copy jika saldo akhir (total_10 net) >= 1.
+ * Saldo akhir = (sa + beli) - penjualan - pecah_satuan - bahan_produksi, selaras tab Persediaan.
  */
 function persediaan_generate_recalculate_sumber_layak_generate($row)
 {
+	if (empty($row)) {
+		return false;
+	}
+
 	$CI = function_exists('get_instance') ? get_instance() : null;
 	if ($CI) {
 		$CI->load->helper('persediaan_display');
 	}
 
-	$raw = is_array($row)
-		? (isset($row['total_10']) ? $row['total_10'] : '')
-		: (isset($row->total_10) ? $row->total_10 : '');
-	$raw = trim((string) $raw);
-
-	if ($raw === '' || $raw === '-') {
-		return false;
-	}
-
-	$total_10 = persediaan_parse_angka($raw);
-
-	return ($total_10 >= 1);
+	return persediaan_generate_recalculate_hitung_sa_dari_sumber($row) >= 1;
 }
 
 /**
@@ -6437,13 +6430,26 @@ function persediaan_generate_recalculate_kosongkan_bulan_target($CI, $tanggal_be
 }
 
 /**
- * SQL tambahan: baris sumber layak generate (total_10 >= 1).
+ * SQL tambahan: baris sumber layak generate (saldo akhir net >= 1).
  */
 function persediaan_generate_recalculate_sql_filter_total10_positif()
 {
-	$total = persediaan_generate_recalculate_sql_cast_decimal('total_10');
+	$sa = persediaan_generate_recalculate_sql_cast_decimal('sa');
+	$beli = persediaan_generate_recalculate_sql_cast_decimal('beli');
+	$penj = persediaan_generate_recalculate_sql_cast_decimal('penjualan');
+	$deductions = $penj;
 
-	return " AND {$total} >= 1";
+	$CI = function_exists('get_instance') ? get_instance() : null;
+	if ($CI && $CI->db->field_exists('pecah_satuan', 'persediaan')) {
+		$deductions .= ' + ' . persediaan_generate_recalculate_sql_cast_decimal('pecah_satuan');
+	}
+	if ($CI && $CI->db->field_exists('bahan_produksi', 'persediaan')) {
+		$deductions .= ' + ' . persediaan_generate_recalculate_sql_cast_decimal('bahan_produksi');
+	}
+
+	$saldo_akhir = "GREATEST(0, ({$sa} + {$beli}) - ({$deductions}))";
+
+	return " AND {$saldo_akhir} >= 1";
 }
 
 /**
@@ -6473,7 +6479,9 @@ function persediaan_generate_recalculate_hapus_baris_nol_bulan_target($CI, $tang
 }
 
 /**
- * Saldo awal bulan target dari record sumber: total_10, jika 0 pakai sa.
+ * Saldo awal bulan target dari record sumber (per baris/spop yang sama):
+ * sisa stok akhir bulan sebelumnya = total_10 net = (sa + beli) - penjualan - pecah_satuan - bahan_produksi.
+ * Bukan nilai total_10 kotor di DB yang belum dikurangi penjualan.
  */
 function persediaan_generate_recalculate_hitung_sa_dari_sumber($row)
 {
@@ -6486,14 +6494,15 @@ function persediaan_generate_recalculate_hitung_sa_dari_sumber($row)
 		$CI->load->helper('persediaan_display');
 	}
 
-	$total_10 = persediaan_parse_angka(is_array($row) ? (isset($row['total_10']) ? $row['total_10'] : 0) : (isset($row->total_10) ? $row->total_10 : 0));
-	if ($total_10 > 0) {
-		return $total_10;
+	$obj = is_array($row) ? (object) $row : $row;
+	$saldo_akhir = persediaan_hitung_total_10_kalkulasi($obj);
+	if ($saldo_akhir > 0) {
+		return $saldo_akhir;
 	}
 
-	$sa = persediaan_parse_angka(is_array($row) ? (isset($row['sa']) ? $row['sa'] : 0) : (isset($row->sa) ? $row->sa : 0));
-	if ($sa > 0) {
-		return $sa;
+	$saldo_net = persediaan_hitung_total_10_net($obj);
+	if ($saldo_net > 0) {
+		return $saldo_net;
 	}
 
 	return 0;

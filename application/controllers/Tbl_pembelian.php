@@ -5412,7 +5412,12 @@ class Tbl_pembelian extends CI_Controller
 			list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_post, $tgl_akhir_post);
 			$this->session->set_userdata('filter_setting_kode_akun_date_awal', $Get_date_awal);
 			$this->session->set_userdata('filter_setting_kode_akun_date_akhir', $Get_date_akhir);
-			redirect(site_url('tbl_pembelian/setting_kode_akun_pembelian2?keep_filter=1'));
+			$redirect_url = 'tbl_pembelian/setting_kode_akun_pembelian2?keep_filter=1';
+			$search_filter = trim((string) $this->session->userdata('filter_setting_kode_akun_search'));
+			if ($search_filter !== '') {
+				$redirect_url .= '&search_filter=' . rawurlencode($search_filter);
+			}
+			redirect(site_url($redirect_url));
 			return;
 		}
 		$Get_date_awal = $this->session->userdata('filter_setting_kode_akun_date_awal');
@@ -5453,13 +5458,21 @@ class Tbl_pembelian extends CI_Controller
 			$active_tab = 'setting';
 		}
 
+		$search_filter_param = $this->input->get('search_filter', TRUE);
+		if ($search_filter_param !== false && $search_filter_param !== null) {
+			$search_filter = trim((string) $search_filter_param);
+			$this->session->set_userdata('filter_setting_kode_akun_search', $search_filter);
+		} else {
+			$search_filter = trim((string) $this->session->userdata('filter_setting_kode_akun_search'));
+		}
+
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'pengajuan_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list),
 			'pengajuan_sum_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
-			'search_filter' => trim((string) $this->input->get('search_filter', TRUE)),
+			'search_filter' => $search_filter,
 			'start' => 0,
 			'compare_bulan_num' => $compare_bulan_num,
 			'compare_tahun_num' => $compare_tahun_num,

@@ -3024,7 +3024,7 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * Saldo awal generate dari record sumber (total_10, fallback sa, fallback beli).
+	 * Saldo awal generate dari sisa stok akhir bulan sumber (total_10 net per baris/spop).
 	 */
 	private function generate_hitung_sa_dari_bulan_sumber($row)
 	{
@@ -3139,7 +3139,7 @@ class Persediaan extends CI_Controller
 			'satuan' => $satuan,
 			'hpp' => $hpp,
 			'sa' => $sa_tampil,
-			'spop' => '0',
+			'spop' => isset($row->spop) ? trim((string) $row->spop) : '0',
 			'beli' => $beli_tampil,
 			'tuj' => $tuj_tampil,
 		);
@@ -3165,7 +3165,7 @@ class Persediaan extends CI_Controller
 		$keterangan = 'uuid baru: ' . ($new_row ? $new_row->uuid_persediaan : '')
 			. ' | salin: uuid_barang, namabarang, satuan, hpp'
 			. ' | sa=' . $sa_tampil . ' & total_10=' . $total_10_tampil
-			. ' (dari total_10 sumber ' . $this->format_angka_persediaan($total_10_sumber) . ')'
+			. ' (dari saldo akhir sumber/net total_10 ' . $this->format_angka_persediaan($total_10_sumber) . ')'
 			. ' | beli=0, penjualan=0 (recalculate nanti)'
 			. ' | nilai_persediaan=' . $nilai_persediaan_tampil
 			. ' | field lain=0/kosong';
