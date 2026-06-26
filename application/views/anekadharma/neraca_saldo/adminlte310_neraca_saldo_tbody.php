@@ -16,7 +16,7 @@ if ($Get_year_Tahun_ini < 2000) {
     $Get_year_Tahun_ini = (int) date('Y');
 }
 
-$ns_data = neraca_saldo_compute_list_data($this, $Get_month_from_date, $Get_year_Tahun_ini);
+$ns_data = neraca_saldo_compute_list_data(get_instance(), $Get_month_from_date, $Get_year_Tahun_ini);
 foreach ((array) $ns_data['rows'] as $item) {
     $Get_Kode_akun = (int) $item['kode_akun'];
     $saldo_debet_label = neraca_saldo_format_rupiah($item['saldo_debet'], true);

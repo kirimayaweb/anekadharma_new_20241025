@@ -181,6 +181,7 @@ function buku_besar_collect_rows_from_buku_besar_source($CI, $source_key, $buku_
 
 function buku_besar_collect_rows_from_tbl_pembelian($CI, $month, $year)
 {
+	$CI = get_instance();
 	$month = (int) $month;
 	$year = (int) $year;
 	$month_start = sprintf('%04d-%02d-01 00:00:00', $year, $month);

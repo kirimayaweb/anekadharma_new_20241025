@@ -129,6 +129,7 @@ function neraca_saldo_get_neraca_saldo_row($CI, $month, $year, $kode_akun)
 
 function neraca_saldo_compute_list_data($CI, $month, $year)
 {
+	$CI = get_instance();
 	$CI->load->helper('buku_besar_list');
 
 	$month = (int) $month;
@@ -140,6 +141,7 @@ function neraca_saldo_compute_list_data($CI, $month, $year)
 		$year = (int) date('Y');
 	}
 
+	$CI->load->model('Sys_kode_akun_model');
 	$akun_list = $CI->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC();
 	$bb_totals = neraca_saldo_aggregate_buku_besar_totals($CI, $month, $year);
 	$rows = array();
