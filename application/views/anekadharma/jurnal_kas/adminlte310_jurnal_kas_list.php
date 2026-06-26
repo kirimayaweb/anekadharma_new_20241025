@@ -446,12 +446,12 @@
                                         <td><?php
                                             echo ++$start;
                                             ?></td>
-                                        <td class="jk-col-sumber-cell">
+                                        <td class="jk-col-sumber-cell" title="<?php echo htmlspecialchars(isset($list_data->source_label) ? $list_data->source_label : '', ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php
                                             echo isset($list_data->source_label) ? htmlspecialchars($list_data->source_label, ENT_QUOTES, 'UTF-8') : '';
                                             ?>
                                         </td>
-                                        <td align="left">
+                                        <td class="jk-col-unit-cell">
                                             <?php
                                             echo $list_data->kode_unit;
                                             ?>
@@ -487,7 +487,7 @@
                                             ?>
                                         </td>
 
-                                        <td align="left">
+                                        <td class="jk-col-keterangan-cell" title="<?php echo htmlspecialchars(isset($list_data->keterangan) ? $list_data->keterangan : '', ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php
                                             echo $list_data->keterangan;
                                             ?>
@@ -1171,21 +1171,29 @@
         line-height: 1.55;
         color: #212529;
     }
-    #jurnal-kas-table-wrap .jk-col-sumber-cell {
-        font-size: 18px;
-        line-height: 1.45;
-        color: #495057;
+    #jurnal-kas-table-wrap .jk-col-sumber-cell,
+    #jurnal-kas-table-wrap .jk-col-unit-cell,
+    #jurnal-kas-table-wrap .jk-col-keterangan-cell {
+        font-size: 13px;
+        line-height: 1.3;
+        color: #212529;
         vertical-align: middle;
-        word-break: break-word;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-break: normal;
+        overflow-wrap: normal;
+        max-width: 0;
+        padding: 10px 8px !important;
     }
     #jurnal-kas-table-wrap col.jk-w-no { width: 48px; }
-    #jurnal-kas-table-wrap col.jk-w-sumber { width: 108px; }
-    #jurnal-kas-table-wrap col.jk-w-unit { width: 72px; }
-    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 168px; }
-    #jurnal-kas-table-wrap col.jk-w-bukti { width: 64px; }
-    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 440px; }
-    #jurnal-kas-table-wrap col.jk-w-debet { width: 132px; }
-    #jurnal-kas-table-wrap col.jk-w-kredit { width: 132px; }
+    #jurnal-kas-table-wrap col.jk-w-sumber { width: 100px; }
+    #jurnal-kas-table-wrap col.jk-w-unit { width: 58px; }
+    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 112px; }
+    #jurnal-kas-table-wrap col.jk-w-bukti { width: 58px; }
+    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 540px; }
+    #jurnal-kas-table-wrap col.jk-w-debet { width: 128px; }
+    #jurnal-kas-table-wrap col.jk-w-kredit { width: 128px; }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th {
         background: linear-gradient(180deg, #e9f5ec 0%, #d8eddc 100%);
         border: 1px solid #6c9a74;
@@ -1223,10 +1231,24 @@
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(1),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(1) { text-align: center; }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(2),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(2) {
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(2),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(3),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(3),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(6),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6) {
         text-align: left;
-        white-space: normal;
-        line-height: 1.4;
+        white-space: nowrap;
+        line-height: 1.3;
+        vertical-align: middle;
+    }
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(2),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(3),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6) {
+        font-size: 15px;
+        padding: 12px 8px;
+    }
+    #jurnal-kas-table-wrap .jk-col-tanggal-cell {
+        padding: 8px 6px !important;
         vertical-align: middle;
     }
     #jurnal-kas-table-wrap .jk-tanggal-cell {
@@ -1236,7 +1258,7 @@
         min-width: 0;
     }
     #jurnal-kas-table-wrap .jk-tanggal-date {
-        font-size: 22px;
+        font-size: 17px;
         font-weight: 600;
         white-space: nowrap;
         color: #212529;
@@ -1244,17 +1266,17 @@
     #jurnal-kas-table-wrap .jk-tanggal-actions {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
+        gap: 4px;
+        flex-wrap: nowrap;
     }
     #jurnal-kas-table-wrap a.jk-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 4px;
-        padding: 6px 14px;
-        min-height: 36px;
-        font-size: 17px;
+        gap: 3px;
+        padding: 3px 8px;
+        min-height: 28px;
+        font-size: 12px;
         font-weight: 600;
         line-height: 1.25;
         border-radius: 4px;
@@ -1264,7 +1286,7 @@
         transition: background-color .15s ease, color .15s ease, border-color .15s ease;
     }
     #jurnal-kas-table-wrap a.jk-btn-action i {
-        font-size: 17px;
+        font-size: 12px;
         line-height: 1;
     }
     #jurnal-kas-table-wrap a.jk-btn-edit {
@@ -1287,12 +1309,9 @@
         background: #dc3545;
         border-color: #dc3545;
     }
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(3),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(3) { text-align: center; }
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(6),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6) {
-        text-align: left;
-        line-height: 1.5;
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(4) {
+        font-size: 16px;
+        padding: 12px 6px;
     }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(7),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(8),
@@ -1519,7 +1538,7 @@ window.addEventListener('load', function() {
         $table.DataTable().destroy();
     }
 
-    var jkColWidths = ['48px', '108px', '72px', '168px', '64px', '440px', '132px', '132px'];
+    var jkColWidths = ['48px', '100px', '58px', '112px', '58px', '540px', '128px', '128px'];
 
     function syncJurnalKasTableWidths() {
         var $mainTable = $('#jurnalKasMainTable');
