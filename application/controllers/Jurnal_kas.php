@@ -42,9 +42,8 @@ class Jurnal_kas extends CI_Controller
 
 
 
-        $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
-
-        $Data_kas = $this->db->query($sql)->result();
+        $this->load->helper('jurnal_kas_sources');
+        $Data_kas = jurnal_kas_fetch_merged_rows($this, (int) date('m'), (int) date('Y'));
 
 
 
@@ -86,9 +85,8 @@ class Jurnal_kas extends CI_Controller
         $Get_date_akhir = date('Y-m-t 23:59:59', strtotime($Get_date_awal));
         $Get_month_akhir = $Get_month_selected;
 
-        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`)=$Get_month_selected AND YEAR(`tanggal`)=$Get_YEAR_selected ORDER BY `tanggal`,`id`";
-
-        $Data_kas = $this->db->query($sql)->result();
+        $this->load->helper('jurnal_kas_sources');
+        $Data_kas = jurnal_kas_fetch_merged_rows($this, $Get_month_selected, $Get_YEAR_selected);
 
         // print_r($Data_kas);
         // die;
@@ -1627,6 +1625,11 @@ class Jurnal_kas extends CI_Controller
         if (!isset($data['modal_jk_tanggal_default'])) {
             $data['modal_jk_tanggal_default'] = sprintf('01-%02d-%04d', $compare_bulan_num, $compare_tahun_num);
         }
+
+        $this->load->helper('jurnal_kas_sources');
+        $data_kas_rows = (isset($data['Data_kas']) && is_array($data['Data_kas'])) ? $data['Data_kas'] : array();
+        $data['jurnal_kas_sources_summary'] = jurnal_kas_sources_build_summary($data_kas_rows);
+        $data['jurnal_kas_sources_payload'] = jurnal_kas_sources_build_payload($data_kas_rows);
 
         return $data;
     }

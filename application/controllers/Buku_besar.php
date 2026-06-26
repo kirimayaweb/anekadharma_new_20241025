@@ -9,7 +9,7 @@ class Buku_besar extends CI_Controller
     {
         parent::__construct();
         is_login();
-        $this->load->model(array('Tbl_pembelian_model', 'Buku_besar_model'));
+        $this->load->model(array('Tbl_pembelian_model', 'Tbl_penjualan_model', 'Buku_besar_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
     }
@@ -33,8 +33,10 @@ class Buku_besar extends CI_Controller
             $year = $parsed['year'];
         }
 
-        $uuid = $uuid_kode_akun !== null ? $uuid_kode_akun : trim((string) $this->input->post('kode_akun', TRUE));
-        $list = buku_besar_compute_list_data($this, $month, $year, $uuid);
+        $uuid = 'tampil_semua';
+        $bb_filter_kode = isset($data['bb_filter_kode']) ? $data['bb_filter_kode'] : 'semua';
+        $bb_filter_teks = isset($data['bb_filter_teks']) ? $data['bb_filter_teks'] : '';
+        $list = buku_besar_compute_list_data($this, $month, $year, $uuid, $bb_filter_kode, $bb_filter_teks);
 
         $data = $this->_buku_besar_view_data(array_merge($list, array(
             'active_tab' => trim((string) $this->input->post('active_tab', TRUE)) === 'compare' ? 'compare' : 'data',
@@ -54,8 +56,13 @@ class Buku_besar extends CI_Controller
     {
         $this->load->helper(array('buku_besar_list', 'pembelian_persediaan'));
         $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
-        $uuid = trim((string) $this->input->post('kode_akun', TRUE));
-        $list = buku_besar_compute_list_data($this, $parsed['month'], $parsed['year'], $uuid);
+        $uuid = 'tampil_semua';
+        $bb_filter_kode = trim((string) $this->input->post('bb_filter_kode', TRUE));
+        $bb_filter_teks = trim((string) $this->input->post('bb_filter_teks', TRUE));
+        if ($bb_filter_kode === '') {
+            $bb_filter_kode = 'semua';
+        }
+        $list = buku_besar_compute_list_data($this, $parsed['month'], $parsed['year'], $uuid, $bb_filter_kode, $bb_filter_teks);
 
         persediaan_ajax_json_output($this, array(
             'ok' => true,
@@ -70,6 +77,7 @@ class Buku_besar extends CI_Controller
             'kode_akun' => $list['kode_akun'],
             'nama_akun' => $list['nama_akun'],
             'total_rows' => $list['total_rows'],
+            'source_stats' => isset($list['source_stats']) ? $list['source_stats'] : array(),
         ));
     }
 
@@ -94,8 +102,21 @@ class Buku_besar extends CI_Controller
         }
 
         if (!isset($data['data_Buku_besar'])) {
-            $list = buku_besar_compute_list_data($this, $month, $year, isset($data['uuid_kode_akun']) ? $data['uuid_kode_akun'] : '');
+            $bb_filter_kode = isset($data['bb_filter_kode']) ? $data['bb_filter_kode'] : 'semua';
+            $bb_filter_teks = isset($data['bb_filter_teks']) ? $data['bb_filter_teks'] : '';
+            $list = buku_besar_compute_list_data(
+                $this,
+                $month,
+                $year,
+                'tampil_semua',
+                $bb_filter_kode,
+                $bb_filter_teks
+            );
             $data = array_merge($data, $list);
+        }
+
+        if (!isset($data['source_stats'])) {
+            $data['source_stats'] = buku_besar_get_source_kode_akun_stats($this, $month, $year);
         }
 
         $data['compare_bulan_num'] = $month;
@@ -113,6 +134,8 @@ class Buku_besar extends CI_Controller
         $data['action'] = site_url('Buku_besar/cari_kode_akun');
         $data['url_cari_data'] = site_url('Buku_besar/cari_data');
         $data['url_ajax_list'] = site_url('Buku_besar/ajax_list_data');
+        $data['url_modal_jurnal_pembelian'] = site_url('Tbl_pembelian/ajax_bb_modal_jurnal_pembelian');
+        $data['url_modal_jurnal_penjualan'] = site_url('Tbl_penjualan/ajax_bb_modal_jurnal_penjualan');
         $data['url_buku_besar_excel'] = site_url('Buku_besar/excel_list');
         $data['url_compare_run'] = site_url('Buku_besar/ajax_compare_buku_besar_manual_online');
         $data['url_compare_excel'] = site_url('Buku_besar/excel_compare_buku_besar_manual_online');
