@@ -7,30 +7,24 @@
         margin: 0 auto;
     }
 
-    #tglSPOPFreeze,
+    :root {
+        --jurnal-dt-box-border: #ffb300;
+        --jurnal-dt-box-glow: rgba(255, 193, 7, 0.28);
+        --jurnal-dt-header-bg: #bbdefb;
+    }
+
     #tglSPOPFreeze thead th,
-    #tglSPOPFreeze tbody td,
-    #tglSPOPFreeze tfoot th,
-    #tglSPOPFreeze tfoot td {
-        border: 1px solid #f5e6a8 !important;
+    .dataTables_scrollHeadInner table.dataTable#tglSPOPFreeze thead th {
+        background-color: var(--jurnal-dt-header-bg) !important;
+        color: #0d47a1;
+        font-weight: 700 !important;
     }
 
-    #tglSPOPFreeze thead th {
-        background-color: #d8f3dc !important;
-        color: #1b4332;
-        font-weight: 600;
-    }
-
-    #tglSPOPFreeze.dataTable thead th,
-    #tglSPOPFreeze.dataTable thead td {
-        border-bottom: 1px solid #f5e6a8 !important;
-    }
-
-    #tglSPOPFreeze.dataTable.no-footer {
-        border-bottom: 1px solid #f5e6a8;
-    }
-
-    table.dataTable#tglSPOPFreeze {
+    table.dataTable#tglSPOPFreeze,
+    .dataTables_scrollHeadInner table.dataTable#tglSPOPFreeze,
+    .dataTables_scrollBody table.dataTable#tglSPOPFreeze,
+    .dataTables_scrollFootInner table.dataTable#tglSPOPFreeze {
+        border: none !important;
         border-collapse: collapse !important;
     }
 
@@ -73,10 +67,11 @@
         font-weight: 700;
     }
 
-    #tglSPOPFreeze tfoot td {
-        background-color: #f1f8e9;
-        font-weight: 700;
-        border: 1px solid #f5e6a8 !important;
+    #tglSPOPFreeze tfoot td,
+    .dataTables_scrollFootInner table.dataTable#tglSPOPFreeze tfoot td {
+        background-color: #e3f2fd !important;
+        font-weight: 700 !important;
+        color: #212529;
         box-sizing: border-box;
         vertical-align: middle;
     }
@@ -89,8 +84,11 @@
         white-space: nowrap;
     }
 
-    #tglSPOPFreeze tbody td {
+    #tglSPOPFreeze tbody td,
+    .dataTables_scrollBody table.dataTable#tglSPOPFreeze tbody td {
         box-sizing: border-box;
+        background-color: #fff;
+        font-weight: normal;
     }
 
     table.dataTable#tglSPOPFreeze,
@@ -104,15 +102,23 @@
 
     .jurnal-dt-wrapper {
         overflow-x: auto;
+        border: 1px solid var(--jurnal-dt-box-border);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 0 0 1px var(--jurnal-dt-box-glow), 0 2px 8px rgba(255, 179, 0, 0.12);
+        padding: 0;
     }
 
-    .dataTables_scrollFoot {
-        border-top: 1px solid #f5e6a8 !important;
-        overflow: hidden !important;
+    #tglSPOPFreeze_wrapper .dataTables_scroll {
+        border: none;
+        border-radius: 0;
+        overflow: hidden;
     }
 
+    .dataTables_scrollHead,
+    .dataTables_scrollFoot,
     .dataTables_scrollBody {
-        border-bottom: none !important;
+        border: none !important;
     }
 
     .btn-jurnal-kode-akun:hover {
@@ -295,97 +301,127 @@
         opacity: 1;
     }
 
+    .jurnal-stats-toolbar {
+        margin-bottom: 10px;
+        align-items: center;
+    }
+
     .jurnal-spop-stats-box {
         background: #f8faf8;
         border: 1px solid #e8f5e9;
-        border-radius: 10px;
-        padding: 16px 20px;
-        margin-bottom: 14px;
-        font-size: 18px;
-        line-height: 1.7;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 0;
+        font-size: 15px;
+        line-height: 1.4;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 12px;
     }
 
     .jurnal-spop-stats-box .stats-title {
-        font-size: 20px;
+        font-size: 16px;
         font-weight: 700;
         color: #1b4332;
-        display: block;
-        margin-bottom: 8px;
+        display: inline;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+
+    .jurnal-spop-stats-box .stats-separator {
+        color: #c5c5c5;
+        font-weight: 400;
+        user-select: none;
     }
 
     .jurnal-spop-stats-box .stats-item {
-        display: inline-block;
-        margin-right: 18px;
-        margin-bottom: 4px;
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+        white-space: nowrap;
     }
 
     .jurnal-spop-stats-box .stats-label {
-        font-size: 17px;
+        font-size: 15px;
         color: #37474f;
     }
 
     .jurnal-spop-stats-box .stats-value {
-        font-size: 24px;
+        font-size: 18px;
         font-weight: 700;
         margin-left: 4px;
     }
 
     .jurnal-spop-stats-box .stats-filter-note {
-        display: block;
-        font-size: 15px;
-        margin-top: 6px;
+        display: inline;
+        font-size: 14px;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    .jurnal-stats-toolbar .btn-cetak-excel-jurnal {
+        white-space: nowrap;
+    }
+
+    @media (max-width: 991px) {
+        .jurnal-stats-toolbar .text-right {
+            text-align: left !important;
+            margin-top: 8px;
+        }
     }
 
     .jurnal-spop-search-wrap {
         background: #fff;
         border: 1px solid #e8f5e9;
         border-radius: 8px;
-        padding: 8px 12px;
+        padding: 10px 14px;
         margin-bottom: 10px;
     }
 
     .jurnal-spop-search-wrap .jurnal-spop-search-label {
-        font-size: 14px;
+        font-size: 17px;
         font-weight: 700;
         color: #1b4332;
         margin-bottom: 0;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         white-space: nowrap;
         flex: 0 0 auto;
     }
 
     .jurnal-spop-search-wrap .jurnal-spop-search-input {
-        font-size: 14px;
-        height: 36px;
+        font-size: 18px;
+        height: 46px;
         border: 1px solid #c8e6c9;
-        border-radius: 6px;
-        flex: 0 1 260px;
-        width: 260px;
-        max-width: 320px;
-        min-width: 140px;
+        border-radius: 8px;
+        flex: 0 1 320px;
+        width: 320px;
+        max-width: 420px;
+        min-width: 180px;
+        padding: 8px 12px;
     }
 
     .jurnal-spop-search-wrap .jurnal-spop-search-field {
-        font-size: 14px;
-        height: 36px;
+        font-size: 18px;
+        height: 46px;
         border: 1px solid #c8e6c9;
-        border-radius: 6px;
-        min-width: 120px;
-        max-width: 150px;
-        flex: 0 0 135px;
+        border-radius: 8px;
+        min-width: 150px;
+        max-width: 200px;
+        flex: 0 0 175px;
         font-weight: 600;
         color: #1b4332;
         background-color: #f1f8e9;
-        padding-left: 8px;
-        padding-right: 24px;
+        padding-left: 10px;
+        padding-right: 28px;
     }
 
     .jurnal-spop-search-wrap .jurnal-spop-search-row {
         display: flex;
         flex-wrap: nowrap;
-        gap: 8px;
+        gap: 10px;
         align-items: center;
     }
 
@@ -596,18 +632,21 @@
                         <div class="tab-content" id="jurnal-pembelian-tabs-content">
                             <div class="tab-pane fade<?php echo $tab_jurnal_active ? ' show active' : ''; ?>" id="panel-jurnal-datatable" role="tabpanel">
 
-                                <div class="row mb-2">
-                                    <div class="col-md-8">
+                                <div class="row mb-2 jurnal-stats-toolbar">
+                                    <div class="col-md-8 col-lg-9">
                                         <div class="jurnal-spop-stats-box" id="jurnalSpopStatsBox">
                                             <span class="stats-title">Informasi SPOP bulan ini</span>
+                                            <span class="stats-separator">|</span>
                                             <span class="stats-item">
                                                 <span class="stats-label">Total SPOP:</span>
                                                 <strong id="jurnalSpopStatsTotal" class="stats-value text-primary"><?php echo (int) $jurnal_spop_stats['total']; ?></strong>
                                             </span>
+                                            <span class="stats-separator">|</span>
                                             <span class="stats-item">
                                                 <span class="stats-label">Sudah setting kode akun:</span>
                                                 <strong id="jurnalSpopStatsSudah" class="stats-value text-success"><?php echo (int) $jurnal_spop_stats['sudah']; ?></strong>
                                             </span>
+                                            <span class="stats-separator">|</span>
                                             <span class="stats-item">
                                                 <span class="stats-label">Belum setting kode akun:</span>
                                                 <strong id="jurnalSpopStatsBelum" class="stats-value text-danger"><?php echo (int) $jurnal_spop_stats['belum']; ?></strong>
@@ -615,8 +654,8 @@
                                             <span id="jurnalSpopStatsFilterNote" class="stats-filter-note text-muted"></span>
                                         </div>
                                     </div>
-                                    <div class="col-md-4 text-right">
-                                        <button type="button" class="btn btn-success btn-flat btn-lg" id="btnCetakExcelJurnalPembelian">
+                                    <div class="col-md-4 col-lg-3 text-right">
+                                        <button type="button" class="btn btn-success btn-flat btn-lg btn-cetak-excel-jurnal" id="btnCetakExcelJurnalPembelian">
                                             <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
                                         </button>
                                     </div>
@@ -1025,7 +1064,7 @@
 
             var searchText = $.trim(jurnalSearchText || '');
             var fieldLabel = jurnalSearchFieldLabels[jurnalSearchField] || jurnalSearchField;
-            $('#jurnalSpopStatsFilterNote').text(searchText !== '' ? 'Menampilkan hasil filter ' + fieldLabel + ': ' + searchText : '');
+            $('#jurnalSpopStatsFilterNote').text(searchText !== '' ? '| Menampilkan hasil filter ' + fieldLabel + ': ' + searchText : '');
         }
 
         function exportJurnalPembelianExcel() {
