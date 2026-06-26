@@ -73,16 +73,17 @@ function jurnal_kas_compute_list_data($CI, $month, $year)
 	$rows[] = array(
 		'type' => 'saldo',
 		'no' => $no++,
+		'sumber' => '',
+		'unit' => '',
 		'tanggal' => '',
 		'bukti' => '',
 		'keterangan' => $saldo_info['label'],
-		'kode' => '',
 		'debet' => ($saldo_bulan_lalu > 0) ? $saldo_bulan_lalu : null,
 		'kredit' => ($saldo_bulan_lalu < 1) ? $saldo_bulan_lalu : null,
 	);
 
-	$sql = 'SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ? ORDER BY `tanggal`, `id`';
-	$data_kas = $CI->db->query($sql, array($month, $year))->result();
+	$CI->load->helper('jurnal_kas_sources');
+	$data_kas = jurnal_kas_fetch_merged_rows($CI, $month, $year);
 
 	foreach ($data_kas as $row) {
 		$debet = ((float) $row->debet > 0) ? (float) $row->debet : null;
@@ -97,10 +98,11 @@ function jurnal_kas_compute_list_data($CI, $month, $year)
 		$rows[] = array(
 			'type' => 'data',
 			'no' => $no++,
+			'sumber' => isset($row->source_label) ? $row->source_label : '',
+			'unit' => isset($row->kode_unit) ? $row->kode_unit : '',
 			'tanggal' => date('d-m-Y', strtotime($row->tanggal)),
 			'bukti' => isset($row->bukti) ? $row->bukti : '',
 			'keterangan' => isset($row->keterangan) ? $row->keterangan : '',
-			'kode' => isset($row->kode_unit) ? $row->kode_unit : '',
 			'debet' => $debet,
 			'kredit' => $kredit,
 		);
@@ -120,7 +122,7 @@ function jurnal_kas_compute_list_data($CI, $month, $year)
 	);
 }
 
-function jurnal_kas_excel_write_merged_row($rowNum, $text, $styleIndex, $colEnd = 6)
+function jurnal_kas_excel_write_merged_row($rowNum, $text, $styleIndex, $colEnd = 7)
 {
 	xlsAddMerge($rowNum, 0, $rowNum, $colEnd);
 	xlsWriteCellStyle($rowNum, 0, $text, $styleIndex);
@@ -151,50 +153,51 @@ function jurnal_kas_excel_write_signature_names_row($rowNum, $leftText, $middleT
 {
 	jurnal_kas_excel_write_merged_cols($rowNum, $leftText, 0, 2, $styleCenter);
 	xlsWriteCellStyle($rowNum, 3, $middleText, $styleLeft);
-	jurnal_kas_excel_write_merged_cols($rowNum, $rightText, 4, 6, $styleCenter);
+	jurnal_kas_excel_write_merged_cols($rowNum, $rightText, 5, 7, $styleCenter);
 }
 
 function jurnal_kas_excel_write_data_row($rowNum, $item, $styleBorder, $styleLeft, $styleRight)
 {
 	xlsWriteCellStyle($rowNum, 0, $item['no'], $styleBorder);
-	xlsWriteCellStyle($rowNum, 1, $item['tanggal'], $styleLeft);
-	xlsWriteCellStyle($rowNum, 2, $item['bukti'], $styleLeft);
-	xlsWriteCellStyle($rowNum, 3, $item['keterangan'], $styleLeft);
-	xlsWriteCellStyle($rowNum, 4, $item['kode'], $styleLeft);
+	xlsWriteCellStyle($rowNum, 1, isset($item['sumber']) ? $item['sumber'] : '', $styleLeft);
+	xlsWriteCellStyle($rowNum, 2, isset($item['unit']) ? $item['unit'] : '', $styleLeft);
+	xlsWriteCellStyle($rowNum, 3, $item['tanggal'], $styleLeft);
+	xlsWriteCellStyle($rowNum, 4, $item['bukti'], $styleLeft);
+	xlsWriteCellStyle($rowNum, 5, $item['keterangan'], $styleLeft);
 
 	if ($item['debet'] !== null && $item['debet'] !== '') {
 		$showZero = ($item['type'] === 'saldo');
-		xlsWriteCellStyle($rowNum, 5, jurnal_kas_format_rupiah($item['debet'], $showZero), $styleRight);
+		xlsWriteCellStyle($rowNum, 6, jurnal_kas_format_rupiah($item['debet'], $showZero), $styleRight);
 	} else {
-		xlsWriteCellStyle($rowNum, 5, '', $styleBorder);
+		xlsWriteCellStyle($rowNum, 6, '', $styleBorder);
 	}
 
 	if ($item['kredit'] !== null && $item['kredit'] !== '') {
 		$showZero = ($item['type'] === 'saldo');
-		xlsWriteCellStyle($rowNum, 6, jurnal_kas_format_rupiah($item['kredit'], $showZero), $styleRight);
+		xlsWriteCellStyle($rowNum, 7, jurnal_kas_format_rupiah($item['kredit'], $showZero), $styleRight);
 	} else {
-		xlsWriteCellStyle($rowNum, 6, '', $styleBorder);
+		xlsWriteCellStyle($rowNum, 7, '', $styleBorder);
 	}
 }
 
 function jurnal_kas_excel_write_footer_row($rowNum, $label, $debet, $kredit, $styleFooterLabel, $styleFooterAmount)
 {
-	xlsAddMerge($rowNum, 0, $rowNum, 4);
+	xlsAddMerge($rowNum, 0, $rowNum, 5);
 	xlsWriteCellStyle($rowNum, 0, $label, $styleFooterLabel);
-	for ($c = 1; $c <= 4; $c++) {
+	for ($c = 1; $c <= 5; $c++) {
 		xlsEnsureCellStyle($rowNum, $c, $styleFooterLabel, '');
 	}
 
 	if ($debet !== null && $debet !== '') {
-		xlsWriteCellStyle($rowNum, 5, jurnal_kas_format_rupiah($debet, true), $styleFooterAmount);
+		xlsWriteCellStyle($rowNum, 6, jurnal_kas_format_rupiah($debet, true), $styleFooterAmount);
 	} else {
-		xlsWriteCellStyle($rowNum, 5, '', $styleFooterAmount);
+		xlsWriteCellStyle($rowNum, 6, '', $styleFooterAmount);
 	}
 
 	if ($kredit !== null && $kredit !== '') {
-		xlsWriteCellStyle($rowNum, 6, jurnal_kas_format_rupiah($kredit, true), $styleFooterAmount);
+		xlsWriteCellStyle($rowNum, 7, jurnal_kas_format_rupiah($kredit, true), $styleFooterAmount);
 	} else {
-		xlsWriteCellStyle($rowNum, 6, '', $styleFooterAmount);
+		xlsWriteCellStyle($rowNum, 7, '', $styleFooterAmount);
 	}
 }
 
@@ -224,7 +227,7 @@ function jurnal_kas_export_excel_list_output($CI, $month, $year)
 	$styleSignatureLeft = 16;
 
 	xlsBOF();
-	xlsSetColumnWidths(array(5, 14, 6, 42, 8, 14, 14));
+	xlsSetColumnWidths(array(5, 24, 8, 14, 6, 42, 14, 14));
 
 	// Baris 1-4: kop surat
 	jurnal_kas_excel_write_merged_row(0, 'PERUMDA ANEKA DHARMA', $styleTitleBoldLeft);
@@ -239,7 +242,7 @@ function jurnal_kas_export_excel_list_output($CI, $month, $year)
 	// Baris 5: spacer kosong (indeks baris 4)
 
 	$headerRow = 5;
-	$headers = array('NO', 'TANGGAL', 'BUKTI', 'KETERANGAN', 'KODE', 'DEBET', 'KREDIT');
+	$headers = array('NO', 'SUMBER', 'UNIT', 'TANGGAL', 'BUKTI', 'KETERANGAN', 'DEBET', 'KREDIT');
 	foreach ($headers as $col => $label) {
 		xlsWriteCellStyle($headerRow, $col, $label, $styleTableHeaderGreen);
 	}
@@ -275,10 +278,10 @@ function jurnal_kas_export_excel_list_output($CI, $month, $year)
 	// 2 baris kosong setelah jumlah seimbang
 	$rowNum += 2;
 
-	// Tanda tangan — merge kolom 5, 6, 7 (indeks 4-6)
-	jurnal_kas_excel_write_merged_cols($rowNum++, jurnal_kas_excel_tanggal_akhir_bulan_label($month, $year), 4, 6, $styleSignatureCenter);
-	jurnal_kas_excel_write_merged_cols($rowNum++, 'Perusahaan Daerah Aneka Dharma', 4, 6, $styleSignatureCenter);
-	jurnal_kas_excel_write_merged_cols($rowNum++, 'Kabupaten Bantul', 4, 6, $styleSignatureCenter);
+	// Tanda tangan — merge kolom 6, 7, 8 (indeks 5-7)
+	jurnal_kas_excel_write_merged_cols($rowNum++, jurnal_kas_excel_tanggal_akhir_bulan_label($month, $year), 5, 7, $styleSignatureCenter);
+	jurnal_kas_excel_write_merged_cols($rowNum++, 'Perusahaan Daerah Aneka Dharma', 5, 7, $styleSignatureCenter);
+	jurnal_kas_excel_write_merged_cols($rowNum++, 'Kabupaten Bantul', 5, 7, $styleSignatureCenter);
 
 	// 4 baris kosong setelah Kabupaten Bantul
 	$rowNum += 4;

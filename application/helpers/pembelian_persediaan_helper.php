@@ -6818,6 +6818,58 @@ function persediaan_generate_recalculate_hapus_baris_nol_bulan_target($CI, $tang
 }
 
 /**
+ * Tentukan kategori record sumber untuk generate (pertahankan jasa di tab Jasa).
+ */
+function persediaan_generate_recalculate_resolve_kategori_sumber($CI, $row)
+{
+	if (empty($row)) {
+		return '';
+	}
+
+	$kat = isset($row->kategori) ? trim((string) $row->kategori) : '';
+	if ($kat !== '') {
+		return $kat;
+	}
+
+	if (!$CI || !$CI->db->field_exists('kategori', 'persediaan')) {
+		return '';
+	}
+
+	$uuid = isset($row->uuid_barang) ? trim((string) $row->uuid_barang) : '';
+	if ($uuid !== '' && $CI->db->table_exists('tbl_jasa')) {
+		$cek_jasa = $CI->db->query(
+			"SELECT 1 AS ada FROM `tbl_jasa` WHERE TRIM(COALESCE(`uuid_barang`, '')) = ? LIMIT 1",
+			array($uuid)
+		)->row();
+		if ($cek_jasa) {
+			return 'jasa';
+		}
+	}
+
+	return '';
+}
+
+/**
+ * Jumlah qty kolom unit (sekret, dinas_umum, ...) untuk saldo jasa.
+ */
+function persediaan_generate_recalculate_hitung_jumlah_unit_row($row, $CI = null)
+{
+	if ($CI === null && function_exists('get_instance')) {
+		$CI = get_instance();
+	}
+	if ($CI) {
+		$CI->load->helper('persediaan_display');
+	}
+
+	$sum = 0;
+	foreach (persediaan_list_unit_columns($CI) as $field) {
+		$sum += max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, $field))));
+	}
+
+	return max(0, (int) $sum);
+}
+
+/**
  * Saldo awal bulan target dari record sumber (per baris/spop yang sama):
  * sisa stok akhir bulan sebelumnya = total_10 net = (sa + beli) - penjualan - pecah_satuan - bahan_produksi.
  * Bukan nilai total_10 kotor di DB yang belum dikurangi penjualan.
@@ -6842,6 +6894,18 @@ function persediaan_generate_recalculate_hitung_sa_dari_sumber($row)
 	$saldo_net = persediaan_hitung_total_10_net($obj);
 	if ($saldo_net > 0) {
 		return $saldo_net;
+	}
+
+	$kategori = persediaan_generate_recalculate_resolve_kategori_sumber($CI, $obj);
+	if (penjualan_is_kategori_jasa($kategori)) {
+		$sum_unit = persediaan_generate_recalculate_hitung_jumlah_unit_row($obj, $CI);
+		if ($sum_unit > 0) {
+			$parts = persediaan_gen_recalc_total_10_formula_parts($obj);
+			$saldo_unit = $sum_unit - (int) $parts['penjualan'] - (int) $parts['pecah_satuan'] - (int) $parts['bahan_produksi'];
+			if ($saldo_unit > 0) {
+				return max(0, (int) $saldo_unit);
+			}
+		}
 	}
 
 	return 0;
@@ -6881,6 +6945,7 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 	$total_10_baru = $sa_baru;
 	$hpp_angka = persediaan_parse_angka($hpp_raw);
 	$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
+	$kategori_sumber = persediaan_generate_recalculate_resolve_kategori_sumber($CI, $row_sumber);
 
 	$sa_t = (string) (int) floor($sa_baru);
 	$beli_t = '0';
@@ -6925,6 +6990,9 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 		} else {
 			persediaan_row_apply_asal_generate_flag($upd, true, $CI);
 		}
+		if ($kategori_sumber !== '' && $CI->db->field_exists('kategori', 'persediaan')) {
+			$upd['kategori'] = $kategori_sumber;
+		}
 
 		$CI->db->where('id', (int) $existing->id);
 		$CI->db->update('persediaan', $upd);
@@ -6963,7 +7031,7 @@ function persediaan_generate_recalculate_upsert_from_sumber($CI, $ctx, $row_sumb
 		'tanggal_beli' => $tanggal_beli_target,
 		'tanggal' => $tanggal_tampilan_target,
 		'kode' => '',
-		'kategori' => '',
+		'kategori' => ($kategori_sumber !== '' && $CI->db->field_exists('kategori', 'persediaan')) ? $kategori_sumber : '',
 		'namabarang' => $nama,
 		'satuan' => $satuan,
 		'hpp' => $hpp_t,

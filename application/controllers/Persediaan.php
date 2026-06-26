@@ -3115,6 +3115,7 @@ class Persediaan extends CI_Controller
 		$total_10_baru = $sa_baru;
 		$hpp_angka = $this->parse_angka_persediaan($hpp);
 		$nilai_persediaan_baru = $total_10_baru * $hpp_angka;
+		$kategori_sumber = persediaan_generate_recalculate_resolve_kategori_sumber($this, $row);
 
 		$sa_tampil = $this->format_angka_persediaan($sa_baru);
 		$beli_tampil = $this->format_angka_persediaan($beli_angka);
@@ -3134,7 +3135,7 @@ class Persediaan extends CI_Controller
 			'tanggal_beli' => $tanggal_beli_target,
 			'tanggal' => $tanggal_tampilan_target,
 			'kode' => '',
-			'kategori' => '',
+			'kategori' => ($kategori_sumber !== '' && $this->db->field_exists('kategori', 'persediaan')) ? $kategori_sumber : '',
 			'namabarang' => $nama,
 			'satuan' => $satuan,
 			'hpp' => $hpp,

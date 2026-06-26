@@ -2722,6 +2722,28 @@ class Tbl_penjualan extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list__jurnal_penjualan', $data);
 	}
 
+	public function ajax_bb_modal_jurnal_penjualan()
+	{
+		$this->load->helper('buku_besar_list');
+		$parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+		$month = (int) $parsed['month'];
+		$year = (int) $parsed['year'];
+		$Buku_besar_DATA = $this->_get_jurnal_penjualan2_rows($month, $year);
+		$Buku_besar_DATA_baris = $this->_prepare_jurnal_penjualan2_baris_rows($Buku_besar_DATA);
+		$Buku_besar_DATA_baris = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA_baris, $month, $year);
+		$jurnal_penjualan_per_unit_data = $this->_get_jurnal_penjualan2_per_unit_data_by_units($month, $year);
+		$data = array(
+			'Buku_besar_DATA_data' => $Buku_besar_DATA,
+			'Buku_besar_DATA_baris' => $Buku_besar_DATA_baris,
+			'jurnal_penjualan_per_unit_data' => $jurnal_penjualan_per_unit_data,
+			'month_selected' => $month,
+			'year_selected' => $year,
+			'bulan_ns_selected' => $parsed['bulan_ns'],
+			'bulan_label' => buku_besar_bulan_teks($month) . ' ' . $year,
+		);
+		$this->load->view('anekadharma/buku_besar/partials/modal_jurnal_penjualan', $data);
+	}
+
 	private function _get_jurnal_penjualan2_rows($month_selected, $year_selected)
 	{
 		$GET_Source = "penjualan";

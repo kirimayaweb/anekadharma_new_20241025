@@ -278,8 +278,8 @@
 
                         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 jurnal-kas-tab1-toolbar">
                             <div>
-                                <h5 class="mb-0 text-primary"><strong>Data Jurnal Kas</strong> <span class="text-muted" id="jurnal-kas-label-bulan">(Bulan : <?php echo bulan_teks($Get_month_from_date) . ' ' . $Get_year_Tahun_ini; ?>)</span></h5>
-                                <small class="text-muted">Pilih bulan di atas — datatable otomatis dimuat ulang</small>
+                                <h5 class="mb-0 text-primary jk-toolbar-title"><strong>Data Jurnal Kas</strong> <span class="text-muted" id="jurnal-kas-label-bulan">(Bulan : <?php echo bulan_teks($Get_month_from_date) . ' ' . $Get_year_Tahun_ini; ?>)</span></h5>
+                                <div class="jk-toolbar-hint text-muted">Pilih bulan di atas — datatable otomatis dimuat ulang</div>
                                 <div id="jurnal-kas-month-loading" class="text-info d-none mt-1"><i class="fas fa-spinner fa-spin"></i> Memuat data jurnal kas...</div>
                             </div>
                             <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
@@ -300,20 +300,22 @@
                         <table id="jurnalKasMainTable" class="table table-bordered jurnal-kas-grid-table mb-0">
                             <colgroup>
                                 <col class="jk-w-no">
+                                <col class="jk-w-sumber">
+                                <col class="jk-w-unit">
                                 <col class="jk-w-tanggal">
                                 <col class="jk-w-bukti">
                                 <col class="jk-w-keterangan">
-                                <col class="jk-w-kode">
                                 <col class="jk-w-debet">
                                 <col class="jk-w-kredit">
                             </colgroup>
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>Sumber</th>
+                                    <th>Unit</th>
                                     <th>Tanggal</th>
                                     <th>Bukti</th>
                                     <th>Keterangan</th>
-                                    <th>Kode</th>
                                     <th>Debet</th>
                                     <th>Kredit</th>
                                 </tr>
@@ -339,6 +341,10 @@
                                         echo ++$start;
                                         ?>
                                     </td>
+
+                                    <td></td>
+
+                                    <td></td>
 
                                     <!-- TANGGAL -->
                                     <td>
@@ -404,12 +410,6 @@
                                         ?>
                                     </td>
 
-                                    <td align="left">
-                                        <?php
-                                        // echo $list_data->kode_unit;
-                                        ?>
-                                    </td>
-
                                     <!-- Debet -->
                                     <td style="text-align:right">
                                         <?php
@@ -446,26 +446,39 @@
                                         <td><?php
                                             echo ++$start;
                                             ?></td>
+                                        <td class="jk-col-sumber-cell">
+                                            <?php
+                                            echo isset($list_data->source_label) ? htmlspecialchars($list_data->source_label, ENT_QUOTES, 'UTF-8') : '';
+                                            ?>
+                                        </td>
+                                        <td align="left">
+                                            <?php
+                                            echo $list_data->kode_unit;
+                                            ?>
+                                        </td>
                                         <td class="jk-col-tanggal-cell">
                                             <?php
                                             echo '<div class="jk-tanggal-cell">';
                                             echo '<div class="jk-tanggal-date">' . date('d-m-Y', strtotime($list_data->tanggal)) . '</div>';
-                                            echo '<div class="jk-tanggal-actions">';
-                                            echo anchor(
-                                                site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id),
-                                                '<i class="fa fa-pencil"></i><span>Ubah</span>',
-                                                array('title' => 'Ubah data', 'class' => 'jk-btn-action jk-btn-edit')
-                                            );
-                                            echo anchor(
-                                                site_url('jurnal_kas/delete/' . $list_data->id),
-                                                '<i class="fa fa-trash"></i><span>Hapus</span>',
-                                                array(
-                                                    'title' => 'Hapus data',
-                                                    'class' => 'jk-btn-action jk-btn-delete',
-                                                    'onclick' => "return confirm('Anda yakin akan menghapus data ini?');",
-                                                )
-                                            );
-                                            echo '</div></div>';
+                                            if (!empty($list_data->is_editable) && !empty($list_data->id)) {
+                                                echo '<div class="jk-tanggal-actions">';
+                                                echo anchor(
+                                                    site_url('Jurnal_kas/pemasukan_kas_update/' . $list_data->id),
+                                                    '<i class="fa fa-pencil"></i><span>Ubah</span>',
+                                                    array('title' => 'Ubah data', 'class' => 'jk-btn-action jk-btn-edit')
+                                                );
+                                                echo anchor(
+                                                    site_url('jurnal_kas/delete/' . $list_data->id),
+                                                    '<i class="fa fa-trash"></i><span>Hapus</span>',
+                                                    array(
+                                                        'title' => 'Hapus data',
+                                                        'class' => 'jk-btn-action jk-btn-delete',
+                                                        'onclick' => "return confirm('Anda yakin akan menghapus data ini?');",
+                                                    )
+                                                );
+                                                echo '</div>';
+                                            }
+                                            echo '</div>';
                                             ?>
                                         </td>
 
@@ -477,12 +490,6 @@
                                         <td align="left">
                                             <?php
                                             echo $list_data->keterangan;
-                                            ?>
-                                        </td>
-
-                                        <td align="left">
-                                            <?php
-                                            echo $list_data->kode_unit;
                                             ?>
                                         </td>
 
@@ -541,26 +548,27 @@
                         <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table mb-0">
                             <colgroup>
                                 <col class="jk-w-no">
+                                <col class="jk-w-sumber">
+                                <col class="jk-w-unit">
                                 <col class="jk-w-tanggal">
                                 <col class="jk-w-bukti">
                                 <col class="jk-w-keterangan">
-                                <col class="jk-w-kode">
                                 <col class="jk-w-debet">
                                 <col class="jk-w-kredit">
                             </colgroup>
                             <tbody>
                                 <tr class="jk-summary-row">
-                                    <td colspan="5" class="jk-summary-label text-center font-weight-bold">JUMLAH DEBET / KREDIT</td>
+                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">JUMLAH DEBET / KREDIT</td>
                                     <td class="text-right font-weight-bold"><?php echo number_format($TOTAL_debet, 2, ',', '.'); ?></td>
                                     <td class="text-right font-weight-bold"><?php echo number_format($TOTAL_kredit, 2, ',', '.'); ?></td>
                                 </tr>
                                 <tr class="jk-summary-row jk-summary-row-saldo">
-                                    <td colspan="5" class="jk-summary-label text-center font-weight-bold">Saldo akhir Kas Bulan <?php echo bulan_teks($Get_month_from_date); ?></td>
+                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">Saldo akhir Kas Bulan <?php echo bulan_teks($Get_month_from_date); ?></td>
                                     <td class="text-right font-weight-bold"></td>
                                     <td class="text-right font-weight-bold"><?php echo number_format($SALDO_AKHIR, 2, ',', '.'); ?></td>
                                 </tr>
                                 <tr class="jk-summary-row jk-summary-row-last">
-                                    <td colspan="5" class="jk-summary-label text-center font-weight-bold">JUMLAH SEIMBANG</td>
+                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">JUMLAH SEIMBANG</td>
                                     <td class="text-right font-weight-bold">
                                         <?php
                                         if ($SALDO_AKHIR >= 0) {
@@ -583,6 +591,61 @@
                             </tbody>
                         </table>
                         </div><!-- /.jurnal-kas-summary-wrap -->
+
+                        <?php
+                        $jk_sources_summary = isset($jurnal_kas_sources_summary) && is_array($jurnal_kas_sources_summary)
+                            ? $jurnal_kas_sources_summary
+                            : array();
+                        $jk_bulan_label = isset($nama_bulan_id[(int) $compare_bulan_num])
+                            ? $nama_bulan_id[(int) $compare_bulan_num] . ' ' . (int) $compare_tahun_num
+                            : '';
+                        ?>
+                        <div class="jk-sources-reference mt-3" id="jk-sources-reference">
+                            <div class="jk-sources-reference-header">
+                                <h6 class="mb-1"><i class="fas fa-database"></i> Referensi Sumber Data Jurnal Kas</h6>
+                                <p class="jk-ref-intro text-muted mb-2">
+                                    Bulan terpilih: <strong><?php echo htmlspecialchars($jk_bulan_label, ENT_QUOTES, 'UTF-8'); ?></strong>.
+                                    Klik kartu sumber di bawah untuk membuka detail data dalam modal.
+                                </p>
+                            </div>
+                            <div class="row">
+                                <?php foreach ($jk_sources_summary as $jk_src) {
+                                    $jk_src_key = isset($jk_src['key']) ? $jk_src['key'] : '';
+                                    $jk_src_label = isset($jk_src['label']) ? $jk_src['label'] : $jk_src_key;
+                                    $jk_src_table = isset($jk_src['table']) ? $jk_src['table'] : '';
+                                    $jk_src_detail = isset($jk_src['detail']) ? $jk_src['detail'] : '';
+                                    $jk_src_menu = isset($jk_src['menu_path']) ? site_url($jk_src['menu_path']) : '#';
+                                    $jk_src_count = isset($jk_src['jumlah_baris']) ? (int) $jk_src['jumlah_baris'] : 0;
+                                    $jk_src_debet = isset($jk_src['total_debet']) ? (float) $jk_src['total_debet'] : 0;
+                                    $jk_src_kredit = isset($jk_src['total_kredit']) ? (float) $jk_src['total_kredit'] : 0;
+                                    $jk_card_class = ($jk_src_count > 0) ? 'jk-source-card has-data' : 'jk-source-card is-empty';
+                                ?>
+                                <div class="col-md-6 col-xl-4 mb-3">
+                                    <div class="<?php echo $jk_card_class; ?>"
+                                         role="button"
+                                         tabindex="0"
+                                         data-source-key="<?php echo htmlspecialchars($jk_src_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                         data-source-label="<?php echo htmlspecialchars($jk_src_label, ENT_QUOTES, 'UTF-8'); ?>"
+                                         data-source-table="<?php echo htmlspecialchars($jk_src_table, ENT_QUOTES, 'UTF-8'); ?>"
+                                         data-source-detail="<?php echo htmlspecialchars($jk_src_detail, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <div class="jk-source-card-title"><?php echo htmlspecialchars($jk_src_label, ENT_QUOTES, 'UTF-8'); ?></div>
+                                        <div class="jk-source-card-meta"><span class="text-muted">Tabel:</span> <code><?php echo htmlspecialchars($jk_src_table, ENT_QUOTES, 'UTF-8'); ?></code></div>
+                                        <div class="jk-source-card-detail"><?php echo htmlspecialchars($jk_src_detail, ENT_QUOTES, 'UTF-8'); ?></div>
+                                        <div class="jk-source-card-stats">
+                                            <span class="badge badge-primary"><?php echo $jk_src_count; ?> baris</span>
+                                            <span class="jk-stat-debet">Debet: <?php echo number_format($jk_src_debet, 2, ',', '.'); ?></span>
+                                            <span class="jk-stat-kredit">Kredit: <?php echo number_format($jk_src_kredit, 2, ',', '.'); ?></span>
+                                        </div>
+                                        <div class="jk-source-card-foot">
+                                            <span class="jk-source-card-hint"><i class="fas fa-external-link-alt"></i> Klik untuk detail</span>
+                                            <a href="<?php echo htmlspecialchars($jk_src_menu, ENT_QUOTES, 'UTF-8'); ?>" class="jk-source-card-menu" target="_blank" onclick="event.stopPropagation();">Buka menu</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <?php } ?>
+                            </div>
+                        </div>
+
                         </div><!-- /#jurnal-kas-table-wrap -->
                             </div><!-- /.tab-pane data jurnal kas -->
 
@@ -722,7 +785,7 @@
                                             </div>
                                             <div class="modal-body pb-2">
                                                 <p class="text-muted small mb-2" id="compare-jurnal-kas-csv-preview-meta">Memuat...</p>
-                                                <table id="table-compare-jurnal-kas-csv-preview" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                <table id="table-compare-jurnal-kas-csv-preview" class="table table-bordered table-striped compare-jk-readable-table" style="width:100%;">
                                                     <thead><tr></tr></thead><tbody></tbody>
                                                 </table>
                                             </div>
@@ -745,7 +808,7 @@
                                                         <i class="fa fa-file-excel-o"></i> Cetak ke Excel
                                                     </button>
                                                 </div>
-                                                <table id="table-compare-jurnal-kas-tabel-detail" class="table table-bordered table-striped table-sm" style="width:100%;font-size:12px;">
+                                                <table id="table-compare-jurnal-kas-tabel-detail" class="table table-bordered table-striped compare-jk-readable-table" style="width:100%;">
                                                     <thead>
                                                         <tr>
                                                             <th>No</th>
@@ -863,12 +926,76 @@
         </div>
     </div>
     <?php } ?>
+
+    <div class="modal fade" id="modal-jk-source-detail" tabindex="-1" role="dialog" aria-labelledby="modal-jk-source-title" aria-hidden="true">
+        <div class="modal-dialog modal-xl" role="document" style="max-width:1200px;">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white py-2">
+                    <div>
+                        <h5 class="modal-title mb-0" id="modal-jk-source-title">Detail Sumber Data</h5>
+                        <div class="small mt-1" id="modal-jk-source-meta"></div>
+                    </div>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-2" id="modal-jk-source-desc"></p>
+                    <div class="mb-2"><span class="badge badge-primary" id="modal-jk-source-count">0 baris</span></div>
+                    <div class="table-responsive jk-source-modal-table-wrap">
+                        <table id="table-jk-source-detail" class="table table-bordered table-striped jk-source-detail-table mb-0" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Tanggal</th>
+                                    <th>Unit</th>
+                                    <th>Bukti</th>
+                                    <th>Keterangan</th>
+                                    <th>Debet</th>
+                                    <th>Kredit</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style type="text/css">
     div.dataTables_wrapper { width: 100%; margin: 0 auto; }
     .nav-tabs.jurnal-kas-tabs { border-bottom: 2px solid #dc3545; margin-bottom: 15px; }
-    .nav-tabs.jurnal-kas-tabs .nav-link { background: #fff; border: 2px solid #dc3545; border-bottom: none; color: #888; margin-right: 4px; border-radius: 4px 4px 0 0; opacity: .75; }
+    .nav-tabs.jurnal-kas-tabs .nav-link { background: #fff; border: 2px solid #dc3545; border-bottom: none; color: #888; margin-right: 4px; border-radius: 4px 4px 0 0; opacity: .75; font-size: 18px; padding: 10px 16px; }
+    #panel-jurnal-kas-data,
+    #panel-compare-jurnal-kas {
+        font-size: 18px;
+    }
+    #panel-compare-jurnal-kas label.small,
+    #panel-compare-jurnal-kas .text-muted,
+    #panel-compare-jurnal-kas small {
+        font-size: 17px !important;
+    }
+    #panel-compare-jurnal-kas .form-control-sm {
+        font-size: 17px;
+        height: auto;
+        padding: 6px 10px;
+    }
+    #panel-compare-jurnal-kas .btn-sm {
+        font-size: 17px;
+        padding: 6px 12px;
+    }
+    .compare-jk-readable-table,
+    .compare-jk-readable-table thead th,
+    .compare-jk-readable-table tbody td {
+        font-size: 18px !important;
+    }
+    .compare-jk-readable-table thead th,
+    .compare-jk-readable-table tbody td {
+        padding: 10px 12px !important;
+    }
     .nav-tabs.jurnal-kas-tabs .nav-link.active { background: #007bff; color: #000; font-weight: bold; opacity: 1; }
     .compare-toolbar-row .compare-toolbar-control { width: 110px; min-width: 110px; }
     #compare_tahun_jurnal_kas.compare-toolbar-control { width: 88px; min-width: 88px; }
@@ -885,11 +1012,11 @@
         font-weight: 600;
         margin-bottom: 6px;
         color: #0d3d6b !important;
-        font-size: 13px;
+        font-size: 18px;
     }
     .compare-jurnal-kas-tabel-info-box .compare-info-line {
-        font-size: 12px;
-        line-height: 1.55;
+        font-size: 17px;
+        line-height: 1.6;
         color: #1a2e44 !important;
     }
     .compare-jurnal-kas-tabel-info-box .compare-info-line strong {
@@ -957,23 +1084,55 @@
     .compare-jurnal-kas-section-card { border-radius: 10px; border: 1px solid #dee2e6; background: #fff; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.05); display: flex; flex-direction: column; height: 100%; }
     .compare-jurnal-kas-section-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 10px 14px; border-bottom: 1px solid rgba(0,0,0,.08); }
     .compare-jurnal-kas-section-title { display: flex; align-items: center; gap: 10px; }
-    .compare-section-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,.08); font-weight: 700; font-size: 12px; }
-    .compare-section-label { font-weight: 700; font-size: 14px; line-height: 1.2; }
-    .compare-section-subtitle { font-size: 11px; color: #6c757d; }
-    .compare-section-badge { font-size: 12px; margin-right: 6px; }
+    .compare-section-num { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(0,0,0,.08); font-weight: 700; font-size: 17px; }
+    .compare-section-label { font-weight: 700; font-size: 19px; line-height: 1.3; }
+    .compare-section-subtitle { font-size: 16px; color: #6c757d; }
+    .compare-section-badge { font-size: 17px; margin-right: 6px; }
     .compare-theme-primary .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e7f1ff, #fff); border-left: 4px solid #007bff; }
     .compare-theme-info .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e8f7fa, #fff); border-left: 4px solid #17a2b8; }
     .compare-theme-success .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e8f5e9, #fff); border-left: 4px solid #28a745; }
     .compare-theme-warning .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #fff8e1, #fff); border-left: 4px solid #ffc107; }
     .compare-theme-cyan .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e0f7fa, #fff); border-left: 4px solid #17a2b8; }
-    .compare-dt-wrap .dataTables_wrapper { font-size: 13px; }
-    .compare-dt-wrap table.dataTable thead th { background: #f8f9fa; font-size: 12px; white-space: nowrap; }
-    .compare-dt-wrap table.dataTable tbody td { font-size: 12px; padding: 6px 8px; vertical-align: middle; }
-    .compare-dt-wrap .text-amount-debet { color: #155724; font-weight: 600; }
-    .compare-dt-wrap .text-amount-kredit { color: #0c5460; font-weight: 600; }
-    .compare-dt-wrap .text-catatan { font-size: 11px; color: #856404; }
+    .compare-dt-wrap .dataTables_wrapper { font-size: 18px; }
+    .compare-dt-wrap table.dataTable thead th { background: #f8f9fa; font-size: 18px; white-space: nowrap; padding: 10px 12px; }
+    .compare-dt-wrap table.dataTable tbody td { font-size: 18px; padding: 10px 12px; vertical-align: middle; line-height: 1.5; }
+    .compare-dt-wrap .dataTables_wrapper .dataTables_length,
+    .compare-dt-wrap .dataTables_wrapper .dataTables_filter,
+    .compare-dt-wrap .dataTables_wrapper .dataTables_info,
+    .compare-dt-wrap .dataTables_wrapper .dataTables_paginate {
+        font-size: 17px;
+        padding: 10px 12px;
+    }
+    .compare-dt-wrap .dataTables_wrapper .dataTables_length select,
+    .compare-dt-wrap .dataTables_wrapper .dataTables_filter input {
+        font-size: 17px;
+        padding: 5px 10px;
+        height: auto;
+    }
+    .compare-dt-wrap .dataTables_wrapper .dataTables_paginate .paginate_button {
+        font-size: 17px;
+        padding: 5px 12px;
+    }
+    .compare-dt-wrap .text-amount-debet { color: #155724; font-weight: 600; font-size: 18px; }
+    .compare-dt-wrap .text-amount-kredit { color: #0c5460; font-weight: 600; font-size: 18px; }
+    .compare-dt-wrap .text-catatan { font-size: 16px; color: #856404; }
+    #compare-jurnal-kas-info-ringkas {
+        font-size: 18px;
+    }
     .compare-dt-total-row th { background: #fff3cd !important; font-weight: 700; }
-    .jurnal-kas-tab1-toolbar { padding: 10px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; }
+    .jurnal-kas-tab1-toolbar {
+        padding: 12px 14px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+    }
+    #panel-jurnal-kas-data .btn {
+        font-size: 17px;
+        padding: 8px 14px;
+    }
+    #jurnal-kas-month-loading {
+        font-size: 19px;
+    }
     #modal-jurnal-kas-input .modal-header { border-bottom: none; }
     #modal-jurnal-kas-input .modal-content { border: none; box-shadow: 0 8px 30px rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
     #modal-jurnal-kas-input .modal-body { background: #fafbfc; }
@@ -993,30 +1152,47 @@
         overflow-x: auto;
         overflow-y: visible;
     }
+    .jurnal-kas-tab1-toolbar .jk-toolbar-title {
+        font-size: 1.75rem;
+        line-height: 1.35;
+    }
+    .jurnal-kas-tab1-toolbar .jk-toolbar-hint {
+        font-size: 19px;
+        line-height: 1.5;
+        margin-top: 4px;
+    }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table {
         table-layout: fixed;
         width: 100%;
-        min-width: 920px;
+        min-width: 1100px;
         border-collapse: collapse;
         margin-bottom: 0;
-        font-size: 14px;
-        line-height: 1.45;
+        font-size: 22px;
+        line-height: 1.55;
         color: #212529;
     }
+    #jurnal-kas-table-wrap .jk-col-sumber-cell {
+        font-size: 18px;
+        line-height: 1.45;
+        color: #495057;
+        vertical-align: middle;
+        word-break: break-word;
+    }
     #jurnal-kas-table-wrap col.jk-w-no { width: 48px; }
-    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 175px; }
+    #jurnal-kas-table-wrap col.jk-w-sumber { width: 108px; }
+    #jurnal-kas-table-wrap col.jk-w-unit { width: 72px; }
+    #jurnal-kas-table-wrap col.jk-w-tanggal { width: 168px; }
     #jurnal-kas-table-wrap col.jk-w-bukti { width: 64px; }
-    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 300px; }
-    #jurnal-kas-table-wrap col.jk-w-kode { width: 72px; }
-    #jurnal-kas-table-wrap col.jk-w-debet { width: 128px; }
-    #jurnal-kas-table-wrap col.jk-w-kredit { width: 128px; }
+    #jurnal-kas-table-wrap col.jk-w-keterangan { width: 440px; }
+    #jurnal-kas-table-wrap col.jk-w-debet { width: 132px; }
+    #jurnal-kas-table-wrap col.jk-w-kredit { width: 132px; }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th {
         background: linear-gradient(180deg, #e9f5ec 0%, #d8eddc 100%);
         border: 1px solid #6c9a74;
         color: #1b4332;
-        font-size: 14px;
+        font-size: 20px;
         font-weight: 700;
-        padding: 11px 10px;
+        padding: 14px 12px;
         vertical-align: middle;
         white-space: nowrap;
         letter-spacing: 0.02em;
@@ -1024,8 +1200,8 @@
     }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td {
         border: 1px solid #ced4da;
-        font-size: 14px;
-        padding: 10px 10px;
+        font-size: 22px;
+        padding: 13px 12px;
         vertical-align: middle;
         word-wrap: break-word;
         overflow-wrap: break-word;
@@ -1060,7 +1236,7 @@
         min-width: 0;
     }
     #jurnal-kas-table-wrap .jk-tanggal-date {
-        font-size: 14px;
+        font-size: 22px;
         font-weight: 600;
         white-space: nowrap;
         color: #212529;
@@ -1076,9 +1252,9 @@
         align-items: center;
         justify-content: center;
         gap: 4px;
-        padding: 4px 10px;
-        min-height: 28px;
-        font-size: 12px;
+        padding: 6px 14px;
+        min-height: 36px;
+        font-size: 17px;
         font-weight: 600;
         line-height: 1.25;
         border-radius: 4px;
@@ -1088,7 +1264,7 @@
         transition: background-color .15s ease, color .15s ease, border-color .15s ease;
     }
     #jurnal-kas-table-wrap a.jk-btn-action i {
-        font-size: 12px;
+        font-size: 17px;
         line-height: 1;
     }
     #jurnal-kas-table-wrap a.jk-btn-edit {
@@ -1111,25 +1287,22 @@
         background: #dc3545;
         border-color: #dc3545;
     }
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(4),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(4) {
-        text-align: left;
-        max-width: 300px;
-        line-height: 1.45;
-    }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(3),
     #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(3) { text-align: center; }
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(5),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(5) { text-align: left; }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(6),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6) {
+        text-align: left;
+        line-height: 1.5;
+    }
     #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(7),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(6),
-    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(7) {
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table tbody td:nth-child(8),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(7),
+    #jurnal-kas-table-wrap .jurnal-kas-grid-table thead th:nth-child(8) {
         text-align: right;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 22px;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-wrap {
         border-top: 2px solid #6c9a74;
@@ -1138,16 +1311,150 @@
     #jurnal-kas-table-wrap .jurnal-kas-summary-table tbody td {
         background: #f1f3f5;
         border: 1px solid #adb5bd;
-        font-size: 14px;
+        font-size: 22px;
         font-weight: 700;
-        padding: 10px 10px;
+        padding: 14px 12px;
         font-variant-numeric: tabular-nums;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table .jk-summary-label {
         text-align: center !important;
         font-weight: 700;
         vertical-align: middle;
-        font-size: 14px;
+        font-size: 22px;
+    }
+    .jk-sources-reference {
+        border-top: 2px solid #dee2e6;
+        padding: 18px 16px 10px;
+        background: #f8fafb;
+    }
+    .jk-sources-reference-header h6 {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1b4332;
+    }
+    .jk-sources-reference-header .jk-ref-intro {
+        font-size: 20px;
+        line-height: 1.55;
+    }
+    .jk-source-card {
+        height: 100%;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        background: #fff;
+        padding: 14px 16px;
+        cursor: pointer;
+        transition: box-shadow .15s ease, border-color .15s ease, transform .1s ease;
+    }
+    .jk-source-card:hover,
+    .jk-source-card:focus {
+        outline: none;
+        border-color: #17a2b8;
+        box-shadow: 0 4px 14px rgba(23, 162, 184, .18);
+        transform: translateY(-1px);
+    }
+    .jk-source-card.is-empty {
+        opacity: .82;
+        background: #fafafa;
+    }
+    .jk-source-card.has-data {
+        border-left: 4px solid #17a2b8;
+    }
+    .jk-source-card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 10px;
+    }
+    .jk-source-card-meta {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    .jk-source-card-meta code {
+        font-size: 17px;
+        color: #0c5460;
+    }
+    .jk-source-card-detail {
+        font-size: 18px;
+        color: #495057;
+        line-height: 1.55;
+        margin-bottom: 12px;
+        min-height: 48px;
+    }
+    .jk-source-card-stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+    .jk-source-card-stats .badge {
+        font-size: 17px;
+        padding: 7px 12px;
+    }
+    .jk-source-card-stats .jk-stat-debet { color: #155724; font-weight: 600; }
+    .jk-source-card-stats .jk-stat-kredit { color: #0c5460; font-weight: 600; }
+    .jk-source-card-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 17px;
+        border-top: 1px dashed #dee2e6;
+        padding-top: 12px;
+    }
+    .jk-source-card-hint { color: #17a2b8; font-weight: 600; }
+    .jk-source-card-menu {
+        color: #6c757d;
+        text-decoration: underline;
+    }
+    .jk-source-card-menu:hover { color: #0056b3; }
+    #modal-jk-source-detail .modal-title {
+        font-size: 1.65rem;
+        font-weight: 700;
+    }
+    #modal-jk-source-detail #modal-jk-source-meta {
+        font-size: 19px;
+    }
+    #modal-jk-source-detail #modal-jk-source-desc {
+        font-size: 20px;
+        line-height: 1.55;
+    }
+    #modal-jk-source-detail #modal-jk-source-count {
+        font-size: 19px;
+        padding: 8px 14px;
+    }
+    #modal-jk-source-detail .dataTables_wrapper,
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_length,
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_filter,
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_info,
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_paginate {
+        font-size: 18px;
+    }
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_length select,
+    #modal-jk-source-detail .dataTables_wrapper .dataTables_filter input {
+        font-size: 18px;
+        padding: 6px 12px;
+    }
+    #modal-jk-source-detail .jk-source-detail-table {
+        font-size: 20px;
+    }
+    #modal-jk-source-detail .jk-source-detail-table thead th {
+        background: #e9f5ec;
+        font-size: 19px;
+        font-weight: 700;
+        padding: 12px 11px;
+    }
+    #modal-jk-source-detail .jk-source-detail-table tbody td {
+        font-size: 20px;
+        padding: 11px 11px;
+        vertical-align: top;
+        line-height: 1.5;
+    }
+    #modal-jk-source-detail .jk-source-detail-table tbody td:nth-child(6),
+    #modal-jk-source-detail .jk-source-detail-table tbody td:nth-child(7) {
+        text-align: right;
+        white-space: nowrap;
+        font-weight: 600;
     }
     #jurnal-kas-table-wrap .jurnal-kas-summary-table .jk-summary-row-saldo td {
         white-space: nowrap;
@@ -1158,25 +1465,25 @@
     }
     #jurnal-kas-table-wrap .dataTables_wrapper {
         padding: 0;
-        font-size: 14px;
+        font-size: 18px;
         color: #212529;
     }
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_info,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate {
-        padding: 10px 14px;
-        font-size: 14px;
+        padding: 14px 16px;
+        font-size: 18px;
     }
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length select,
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter input {
-        font-size: 14px;
-        padding: 4px 8px;
+        font-size: 18px;
+        padding: 6px 12px;
         height: auto;
     }
     #jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate .paginate_button {
-        font-size: 14px;
-        padding: 4px 10px;
+        font-size: 18px;
+        padding: 6px 14px;
     }
     #jurnal-kas-table-wrap table.dataTable {
         border-collapse: collapse !important;
@@ -1212,7 +1519,7 @@ window.addEventListener('load', function() {
         $table.DataTable().destroy();
     }
 
-    var jkColWidths = ['48px', '175px', '64px', '300px', '72px', '128px', '128px'];
+    var jkColWidths = ['48px', '108px', '72px', '168px', '64px', '440px', '132px', '132px'];
 
     function syncJurnalKasTableWidths() {
         var $mainTable = $('#jurnalKasMainTable');
@@ -1254,8 +1561,9 @@ window.addEventListener('load', function() {
             { targets: 2, width: jkColWidths[2], orderable: true },
             { targets: 3, width: jkColWidths[3], orderable: true },
             { targets: 4, width: jkColWidths[4], orderable: true },
-            { targets: 5, width: jkColWidths[5], orderable: true, className: 'text-right' },
-            { targets: 6, width: jkColWidths[6], orderable: true, className: 'text-right' }
+            { targets: 5, width: jkColWidths[5], orderable: true },
+            { targets: 6, width: jkColWidths[6], orderable: true, className: 'text-right' },
+            { targets: 7, width: jkColWidths[7], orderable: true, className: 'text-right' }
         ],
         drawCallback: function() {
             syncJurnalKasTableWidths();
@@ -1287,6 +1595,104 @@ window.addEventListener('load', function() {
     });
 
     setTimeout(syncJurnalKasTableWidths, 100);
+
+    var jkSourcePayload = <?php echo json_encode(isset($jurnal_kas_sources_payload) ? $jurnal_kas_sources_payload : new stdClass(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    var jkSourceSummary = <?php echo json_encode(isset($jurnal_kas_sources_summary) ? $jurnal_kas_sources_summary : array(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    var $jkSourceModal = $('#modal-jk-source-detail');
+    var $jkSourceTable = $('#table-jk-source-detail');
+    var jkSourceDt = null;
+    var jkSourcePendingKey = '';
+
+    function jkEscapeHtml(value) {
+        return $('<span>').text(value == null ? '' : String(value)).html();
+    }
+
+    function jkFindSourceDef(key) {
+        for (var i = 0; i < jkSourceSummary.length; i++) {
+            if (jkSourceSummary[i].key === key) {
+                return jkSourceSummary[i];
+            }
+        }
+        return null;
+    }
+
+    function jkDestroySourceDt() {
+        if ($jkSourceTable.length && $.fn.DataTable.isDataTable($jkSourceTable)) {
+            $jkSourceTable.DataTable().clear().destroy();
+        }
+        $jkSourceTable.find('tbody').empty();
+        jkSourceDt = null;
+    }
+
+    function jkRenderSourceModal(key) {
+        var def = jkFindSourceDef(key);
+        var label = def ? def.label : key;
+        var tableName = def ? def.table : '';
+        var detail = def ? def.detail : '';
+        var rows = (jkSourcePayload && jkSourcePayload[key]) ? jkSourcePayload[key] : [];
+
+        $('#modal-jk-source-title').text(label);
+        $('#modal-jk-source-meta').html('Tabel: <code>' + jkEscapeHtml(tableName) + '</code>');
+        $('#modal-jk-source-desc').text(detail);
+        $('#modal-jk-source-count').text(rows.length + ' baris');
+
+        jkDestroySourceDt();
+
+        var html = '';
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            html += '<tr>'
+                + '<td>' + (i + 1) + '</td>'
+                + '<td>' + jkEscapeHtml(row.tanggal) + '</td>'
+                + '<td>' + jkEscapeHtml(row.unit) + '</td>'
+                + '<td>' + jkEscapeHtml(row.bukti) + '</td>'
+                + '<td>' + jkEscapeHtml(row.keterangan) + '</td>'
+                + '<td>' + jkEscapeHtml(row.debet) + '</td>'
+                + '<td>' + jkEscapeHtml(row.kredit) + '</td>'
+                + '</tr>';
+        }
+        $jkSourceTable.find('tbody').html(html);
+
+        jkSourceDt = $jkSourceTable.DataTable({
+            paging: true,
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            searching: true,
+            ordering: true,
+            order: [[1, 'asc']],
+            autoWidth: false,
+            info: true,
+            columnDefs: [
+                { targets: 0, width: '48px', orderable: false },
+                { targets: [5, 6], className: 'text-right' }
+            ]
+        });
+    }
+
+    function jkOpenSourceModal(key) {
+        jkSourcePendingKey = key;
+        $jkSourceModal.modal('show');
+    }
+
+    $(document).on('click', '.jk-source-card', function() {
+        jkOpenSourceModal($(this).data('source-key'));
+    });
+    $(document).on('keydown', '.jk-source-card', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            jkOpenSourceModal($(this).data('source-key'));
+        }
+    });
+
+    $jkSourceModal.on('shown.bs.modal', function() {
+        if (jkSourcePendingKey) {
+            jkRenderSourceModal(jkSourcePendingKey);
+        }
+    });
+    $jkSourceModal.on('hidden.bs.modal', function() {
+        jkSourcePendingKey = '';
+        jkDestroySourceDt();
+    });
 });
 </script>
 

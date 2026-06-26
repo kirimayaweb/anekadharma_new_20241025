@@ -17,17 +17,19 @@
         </div><!-- /.container-fluid -->
     </div>
 
-    <section class="content">
+    <section class="content ns-page-content">
 
         <?php
 
         $Get_month_from_date = $month_selected;
         $Get_year_Tahun_ini = $year_selected;
-        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
 
         if (!isset($bulan_ns_value) || $bulan_ns_value === '') {
             $bulan_ns_value = sprintf('%04d-%02d', (int) $Get_year_Tahun_ini, (int) $Get_month_from_date);
         }
+
+        $this->load->helper('neraca_saldo_list');
+        $ns_header_label = neraca_saldo_periode_header_label((int) $Get_month_from_date, (int) $Get_year_Tahun_ini);
 
         // $futureDate=date('Y', strtotime('-1 year'));
 
@@ -92,8 +94,8 @@
 
         <div class="box box-warning box-solid">
 
-            <div class="col-md-12">
-                <div class="card card-primary">
+            <div class="col-12 px-0">
+                <div class="card card-primary ns-card-full">
                     <div class="card-header">
 
                         <div class="row">
@@ -163,7 +165,7 @@
                                     <th rowspan="2" style="text-align:center" width="10px">Tanggal</th>
                                     <th rowspan="2" style="text-align:center">Kode Rek.</th>
                                     <th rowspan="2" style="text-align:center">Uraian</th>
-                                    <th colspan="2" style="text-align:center" id="ns-th-tahun-lalu">NERACA SALDO 31 Desember <?php echo $Get_year_Setahun_lalu; ?></th>
+                                    <th colspan="2" style="text-align:center" id="ns-th-tahun-lalu"><?php echo htmlspecialchars($ns_header_label, ENT_QUOTES, 'UTF-8'); ?></th>
                                     <th colspan="2" style="text-align:center">PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">NS SETELAH PENYESUAIAN</th>
                                     <th colspan="2" style="text-align:center">LABA/ RUGI</th>
@@ -192,7 +194,16 @@
                                 ));
                                 ?>
                             </tbody>
-
+                            <tfoot id="ns-tfoot">
+                                <?php
+                                $this->load->view('anekadharma/neraca_saldo/adminlte310_neraca_saldo_tfoot', array(
+                                    'Get_month_from_date' => (int) $Get_month_from_date,
+                                    'Get_year_Tahun_ini' => (int) $Get_year_Tahun_ini,
+                                    'month_selected' => $month_selected,
+                                    'year_selected' => $year_selected,
+                                ));
+                                ?>
+                            </tfoot>
 
                         </table>
                         </div>
@@ -372,19 +383,39 @@
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
-    div.dataTables_wrapper {
+    .ns-page-content > .box {
         width: 100%;
-        margin: 0 auto;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .content-wrapper .ns-page-content {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 6px;
+        padding-right: 6px;
+    }
+
+    .ns-page-content .ns-card-full {
+        width: 100%;
+        margin: 0;
+    }
+
+    .ns-page-content .card-body {
+        padding: 12px 8px;
+        width: 100%;
     }
 
     .ns-datatable-wrap {
+        width: 100%;
+        max-width: 100%;
         border: 2px solid #a8e6cf;
         border-radius: 12px;
-        padding: 14px 12px 10px;
+        padding: 10px 8px 8px;
         background: linear-gradient(180deg, #f3fbf6 0%, #ffffff 55%);
         box-shadow: 0 4px 18px rgba(76, 175, 80, 0.10);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
 
     .ns-datatable-wrap::before {
@@ -395,6 +426,7 @@
         right: 0;
         height: 4px;
         background: linear-gradient(90deg, #81c784, #a5d6a7, #c8e6c9);
+        border-radius: 12px 12px 0 0;
     }
 
     .ns-datatable-wrap.ns-loading {
@@ -416,14 +448,77 @@
         z-index: 5;
     }
 
+    .ns-datatable-wrap .dataTables_wrapper {
+        width: 100% !important;
+        margin: 0 auto;
+    }
+
+    .ns-datatable-wrap .dataTables_length {
+        float: left;
+        text-align: left;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #2e7d32;
+    }
+
+    .ns-datatable-wrap .dataTables_length select {
+        border-color: #a5d6a7;
+        margin: 0 6px;
+        min-width: 72px;
+    }
+
+    .ns-datatable-wrap .dataTables_filter {
+        float: right;
+        text-align: right;
+        margin-bottom: 8px;
+    }
+
+    .ns-datatable-wrap .dataTables_info {
+        float: left;
+        padding-top: 10px;
+        color: #2e7d32;
+        font-weight: 600;
+    }
+
+    .ns-datatable-wrap .dataTables_paginate {
+        float: right;
+        padding-top: 6px;
+    }
+
+    .ns-datatable-wrap .dataTables_paginate .paginate_button {
+        border-radius: 4px !important;
+        margin-left: 2px;
+    }
+
+    .ns-datatable-wrap .dataTables_scroll {
+        width: 100% !important;
+        clear: both;
+    }
+
+    .ns-datatable-wrap .dataTables_scrollHead,
+    .ns-datatable-wrap .dataTables_scrollBody,
+    .ns-datatable-wrap .dataTables_scrollFoot {
+        width: 100% !important;
+    }
+
+    .ns-datatable-wrap .dataTables_scrollBody {
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+    }
+
     .ns-datatable-wrap table.dataTable {
+        width: 100% !important;
         border-collapse: separate !important;
         border-spacing: 0;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
 
     .ns-datatable-wrap table.dataTable thead th,
-    .ns-datatable-wrap table.dataTable tbody td {
+    .ns-datatable-wrap table.dataTable tbody td,
+    .ns-datatable-wrap table.dataTable tfoot th {
         border: 1px solid #b9dfc4 !important;
+        white-space: nowrap;
     }
 
     .ns-datatable-wrap table.dataTable thead th {
@@ -441,6 +536,13 @@
         background-color: #edf7ef !important;
     }
 
+    .ns-datatable-wrap table.dataTable tfoot th {
+        background: linear-gradient(180deg, #c8e6c9 0%, #e8f5e9 100%) !important;
+        color: #1b5e20;
+        font-weight: 700;
+        border-top: 2px solid #66bb6a !important;
+    }
+
     .ns-datatable-wrap .dataTables_scrollHead table.dataTable thead th {
         border-bottom: 2px solid #a5d6a7 !important;
     }
@@ -453,6 +555,17 @@
     .ns-datatable-wrap .dataTables_filter input:focus {
         border-color: #66bb6a;
         box-shadow: 0 0 0 0.15rem rgba(102, 187, 106, 0.25);
+    }
+
+    .ns-datatable-wrap .ns-dt-bottom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+        padding-top: 8px;
+        clear: both;
     }
 </style>
 
@@ -498,6 +611,11 @@
         }
     }
 
+    function getNsScrollHeight() {
+        var h = window.innerHeight || document.documentElement.clientHeight || 800;
+        return Math.max(360, h - 300) + 'px';
+    }
+
     function initNeracaSaldoDatatable() {
         if (!window.jQuery || !jQuery.fn.DataTable) {
             return null;
@@ -508,20 +626,50 @@
         }
         destroyNeracaSaldoDatatable();
         nsMainDt = $table.DataTable({
-            scrollY: 600,
+            dom: '<"ns-dt-top"lf>rt<"ns-dt-bottom"ip>',
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            pageLength: -1,
+            scrollY: getNsScrollHeight(),
             scrollX: true,
             scrollCollapse: true,
-            paging: false,
+            paging: true,
             searching: true,
             ordering: true,
-            info: false,
+            info: true,
+            autoWidth: false,
             order: [],
+            columnDefs: [
+                { targets: [0, 1, 2], className: 'text-left' },
+                { targets: 3, className: 'text-left' },
+                { targets: [4, 5, 6, 7, 8, 9, 10, 11], className: 'text-right', type: 'num' }
+            ],
             language: {
+                lengthMenu: 'Tampilkan _MENU_ record',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ record',
+                infoEmpty: 'Menampilkan 0 sampai 0 dari 0 record',
+                infoFiltered: '(disaring dari _MAX_ record)',
                 search: 'Cari:',
                 zeroRecords: 'Data tidak ditemukan',
-                emptyTable: 'Belum ada data'
+                emptyTable: 'Belum ada data',
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: 'Berikutnya',
+                    previous: 'Sebelumnya'
+                }
+            },
+            drawCallback: function() {
+                jQuery('#ns-datatable-wrap .dataTables_scrollFoot').show();
             }
         });
+
+        jQuery(window).off('resize.nsDatatable').on('resize.nsDatatable', function() {
+            if (nsMainDt) {
+                jQuery('.dataTables_scrollBody').css('max-height', getNsScrollHeight());
+                nsMainDt.columns.adjust();
+            }
+        });
+
         return nsMainDt;
     }
 
@@ -529,8 +677,8 @@
         if (res.periode_label) {
             jQuery('#ns-periode-label').text('NERACA SALDO ' + res.periode_label);
         }
-        if (res.tahun_lalu) {
-            jQuery('#ns-th-tahun-lalu').text('NERACA SALDO 31 Desember ' + res.tahun_lalu);
+        if (res.ns_header_label) {
+            jQuery('#ns-th-tahun-lalu').text(res.ns_header_label);
         }
     }
 
@@ -562,6 +710,9 @@
 
             destroyNeracaSaldoDatatable();
             jQuery('#ns-tbody').html(res.tbody_html || '');
+            if (res.tfoot_html) {
+                jQuery('#ns-tfoot').html(res.tfoot_html);
+            }
             initNeracaSaldoDatatable();
         }).fail(function() {
             if (typeof Swal !== 'undefined') {

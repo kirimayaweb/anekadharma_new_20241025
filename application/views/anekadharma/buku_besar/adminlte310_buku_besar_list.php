@@ -41,12 +41,23 @@ if (!isset($total_kredit)) {
 if (!isset($uuid_kode_akun)) {
     $uuid_kode_akun = '';
 }
+if (!isset($bb_filter_kode)) {
+    $bb_filter_kode = 'semua';
+}
+if (!isset($bb_filter_teks)) {
+    $bb_filter_teks = '';
+}
+if (!isset($source_stats) || !is_array($source_stats)) {
+    $source_stats = array();
+}
 if (!isset($list_kode_akun)) {
     $list_kode_akun = array();
 }
 
 $url_cari = isset($url_cari_data) ? $url_cari_data : site_url('Buku_besar/cari_data');
 $url_ajax_list = isset($url_ajax_list) ? $url_ajax_list : site_url('Buku_besar/ajax_list_data');
+$url_modal_jurnal_pembelian = isset($url_modal_jurnal_pembelian) ? $url_modal_jurnal_pembelian : site_url('Tbl_pembelian/ajax_bb_modal_jurnal_pembelian');
+$url_modal_jurnal_penjualan = isset($url_modal_jurnal_penjualan) ? $url_modal_jurnal_penjualan : site_url('Tbl_penjualan/ajax_bb_modal_jurnal_penjualan');
 $url_excel = isset($url_buku_besar_excel) ? $url_buku_besar_excel : site_url('Buku_besar/excel_list');
 $url_form_action = isset($action) ? $action : site_url('Buku_besar/cari_kode_akun');
 $url_compare_run = isset($url_compare_run) ? $url_compare_run : site_url('Buku_besar/ajax_compare_buku_besar_manual_online');
@@ -93,23 +104,11 @@ $compare_sections = array(
                                 </div>
                                 <div class="bb-header-center flex-shrink-0">
                                     <div class="bb-filter-group d-flex align-items-center flex-nowrap">
-                                        <div class="bb-kode-akun-wrap">
-                                            <label for="kode_akun" class="sr-only">Pilih Kode Akun</label>
-                                            <select name="kode_akun" id="kode_akun" class="form-control form-control-sm select2 bb-kode-akun-select">
-                                                <option value=""<?php echo ($uuid_kode_akun === '') ? ' selected' : ''; ?>>Pilih Kode Akun</option>
-                                                <option value="tampil_semua"<?php echo ($uuid_kode_akun === 'tampil_semua') ? ' selected' : ''; ?>>Tampil Semua Data</option>
-                                                <?php foreach ($list_kode_akun as $m) { ?>
-                                                <option value="<?php echo htmlspecialchars($m->uuid_kode_akun, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($uuid_kode_akun === $m->uuid_kode_akun) ? ' selected' : ''; ?>>
-                                                    <?php echo strtoupper($m->kode_akun) . ' ==> ( ' . strtoupper($m->nama_akun) . ' )'; ?>
-                                                </option>
-                                                <?php } ?>
-                                            </select>
-                                        </div>
                                         <div class="bb-bulan-wrap">
                                             <label for="bulan_ns" class="sr-only">Pilih Bulan</label>
                                             <input type="month" class="form-control form-control-sm" id="bulan_ns" name="bulan_ns" value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="bb-cari-wrap">
+                                        <div class="bb-cari-wrap ml-2">
                                             <label class="sr-only">Cari</label>
                                             <button type="button" class="btn btn-danger btn-sm btn-flat" id="btn-cari-bb">
                                                 <i class="fa fa-search" aria-hidden="true"></i> Cari
@@ -137,49 +136,175 @@ $compare_sections = array(
                                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 buku-besar-tab1-toolbar">
                                     <div>
                                         <h5 class="mb-0 text-primary"><strong>Buku Besar</strong></h5>
-                                        <small class="text-muted">Pilih kode akun dan bulan di atas — data otomatis dimuat dari tanggal 1 s/d akhir bulan terpilih</small>
+                                        <small class="text-muted">Pilih bulan di atas — data otomatis dimuat dari tanggal 1 s/d akhir bulan terpilih</small>
                                     </div>
-                                    <button type="button" class="btn btn-success mt-2 mt-md-0" id="btn-buku-besar-excel">
-                                        <i class="fa fa-file-excel-o"></i> Cetak ke Excel
-                                    </button>
+                                </div>
+
+                                <?php
+                                $stat_pembelian = isset($source_stats['pembelian']) ? $source_stats['pembelian'] : array('total' => 0, 'sudah' => 0, 'belum' => 0);
+                                $stat_penjualan = isset($source_stats['penjualan']) ? $source_stats['penjualan'] : array('total' => 0, 'sudah' => 0, 'belum' => 0);
+                                $stat_jurnal_kas = isset($source_stats['jurnal_kas']) ? $source_stats['jurnal_kas'] : array('total' => 0, 'sudah' => 0, 'belum' => 0);
+                                ?>
+                                <div class="bb-source-stats-box mb-3" id="bb-source-stats-box">
+                                    <div class="bb-source-stats-title">Sumber data gabungan Buku Besar</div>
+                                    <div class="d-flex flex-wrap">
+                                        <button type="button" class="bb-source-stat-card bb-source-pembelian" id="btn-bb-stat-pembelian" title="Klik untuk lihat jurnal pembelian">
+                                            <span class="bb-source-label"><i class="fa fa-shopping-cart"></i> Tabel Pembelian</span>
+                                            <span class="bb-source-line">Total record: <strong class="bb-stat-pembelian-total"><?php echo (int) $stat_pembelian['total']; ?></strong></span>
+                                            <span class="bb-source-line text-success">Sudah setting kode akun: <strong class="bb-stat-pembelian-sudah"><?php echo (int) $stat_pembelian['sudah']; ?></strong></span>
+                                            <span class="bb-source-line text-danger">Belum setting kode akun: <strong class="bb-stat-pembelian-belum"><?php echo (int) $stat_pembelian['belum']; ?></strong></span>
+                                        </button>
+                                        <button type="button" class="bb-source-stat-card bb-source-penjualan" id="btn-bb-stat-penjualan" title="Klik untuk lihat jurnal penjualan">
+                                            <span class="bb-source-label"><i class="fa fa-line-chart"></i> Tabel Penjualan</span>
+                                            <span class="bb-source-line">Total record: <strong class="bb-stat-penjualan-total"><?php echo (int) $stat_penjualan['total']; ?></strong></span>
+                                            <span class="bb-source-line text-success">Sudah setting kode akun: <strong class="bb-stat-penjualan-sudah"><?php echo (int) $stat_penjualan['sudah']; ?></strong></span>
+                                            <span class="bb-source-line text-danger">Belum setting kode akun: <strong class="bb-stat-penjualan-belum"><?php echo (int) $stat_penjualan['belum']; ?></strong></span>
+                                        </button>
+                                        <div class="bb-source-stat-card bb-source-jurnal-kas bb-source-stat-static" title="Data jurnal kas digabung ke buku besar">
+                                            <span class="bb-source-label"><i class="fa fa-money"></i> Jurnal Kas</span>
+                                            <span class="bb-source-line">Total record: <strong class="bb-stat-jurnal-kas-total"><?php echo (int) $stat_jurnal_kas['total']; ?></strong></span>
+                                            <span class="bb-source-line text-success">Sudah setting kode akun: <strong class="bb-stat-jurnal-kas-sudah"><?php echo (int) $stat_jurnal_kas['sudah']; ?></strong></span>
+                                            <span class="bb-source-line text-danger">Belum setting kode akun: <strong class="bb-stat-jurnal-kas-belum"><?php echo (int) $stat_jurnal_kas['belum']; ?></strong></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bb-table-filter-row d-flex flex-wrap align-items-end justify-content-between mb-2">
+                                    <div class="d-flex flex-wrap align-items-end">
+                                    <div class="bb-filter-kode-wrap mr-2 mb-2">
+                                        <label for="bb_filter_kode" class="small mb-1 d-block">Filter Kode Akun</label>
+                                        <select id="bb_filter_kode" class="form-control form-control-sm">
+                                            <option value="semua"<?php echo ($bb_filter_kode === 'semua' || $bb_filter_kode === '') ? ' selected' : ''; ?>>Semua</option>
+                                            <?php foreach ($list_kode_akun as $m) { ?>
+                                            <option value="<?php echo htmlspecialchars($m->kode_akun, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($bb_filter_kode === $m->kode_akun) ? ' selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($m->kode_akun, ENT_QUOTES, 'UTF-8'); ?> — <?php echo htmlspecialchars($m->nama_akun, ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                    <div class="bb-filter-teks-wrap mr-2 mb-2">
+                                        <label for="bb_filter_teks" class="small mb-1 d-block">Cari Teks</label>
+                                        <input type="text" id="bb_filter_teks" class="form-control form-control-sm" placeholder="Kode / nama akun (aktif jika Semua)" value="<?php echo htmlspecialchars($bb_filter_teks, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($bb_filter_kode !== 'semua' && $bb_filter_kode !== '') ? ' disabled' : ''; ?>>
+                                    </div>
+                                    </div>
+                                    <div class="bb-filter-excel-wrap mb-2">
+                                        <label class="small mb-1 d-block invisible">Excel</label>
+                                        <button type="button" class="btn btn-success btn-sm" id="btn-buku-besar-excel">
+                                            <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="bb-dt-wrap">
-                                    <table id="table-buku-besar-data" class="table table-bordered table-striped table-sm display nowrap bb-main-dt" style="width:100%;">
-                                        <thead>
-                                            <tr>
-                                                <th>No</th>
-                                                <th>Tanggal</th>
-                                                <th>PL</th>
-                                                <th>Kode</th>
-                                                <th>Kode Akun</th>
-                                                <th>Nama Akun</th>
-                                                <th class="text-right">Debet</th>
-                                                <th class="text-right">Kredit</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php foreach ($data_Buku_besar as $list_data) { ?>
-                                            <tr>
-                                                <td><?php echo (int) $list_data['no']; ?></td>
-                                                <td><?php echo htmlspecialchars($list_data['tanggal'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars($list_data['pl'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars($list_data['kode'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars($list_data['kode_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars($list_data['nama_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td class="text-right"><?php echo htmlspecialchars($list_data['debet_display'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td class="text-right"><?php echo htmlspecialchars($list_data['kredit_display'], ENT_QUOTES, 'UTF-8'); ?></td>
-                                            </tr>
-                                            <?php } ?>
-                                        </tbody>
+                                    <div class="bb-dt-toolbar" id="bb-dt-toolbar"></div>
+                                    <div class="bb-table-scroll">
+                                        <table id="table-buku-besar-data" class="table table-bordered bb-main-dt display w-100">
+                                            <colgroup>
+                                                <col class="bb-col-no">
+                                                <col class="bb-col-sumber">
+                                                <col class="bb-col-kode">
+                                                <col class="bb-col-kode-akun">
+                                                <col class="bb-col-nama-akun">
+                                                <col class="bb-col-debet">
+                                                <col class="bb-col-kredit">
+                                            </colgroup>
+                                            <thead>
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Sumber</th>
+                                                    <th>Kode</th>
+                                                    <th>Kode Akun</th>
+                                                    <th>Nama Akun</th>
+                                                    <th class="text-right">Debet</th>
+                                                    <th class="text-right">Kredit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="bb-table-body">
+                                                <?php foreach ($data_Buku_besar as $list_data) {
+                                                    $is_subtotal = (isset($list_data['row_type']) && $list_data['row_type'] === 'subtotal');
+                                                    $tr_class = $is_subtotal ? 'bb-row-subtotal' : '';
+                                                    $source_key = isset($list_data['source_key']) ? $list_data['source_key'] : '';
+                                                    $source_label = isset($list_data['source_label']) ? $list_data['source_label'] : '';
+                                                    $no_order = $is_subtotal
+                                                        ? (isset($list_data['sort_no']) ? $list_data['sort_no'] : '')
+                                                        : (isset($list_data['no']) ? (int) $list_data['no'] : '');
+                                                    $source_order = $is_subtotal ? '' : $source_label;
+                                                    $kode_order = $is_subtotal ? '' : (isset($list_data['kode']) ? $list_data['kode'] : '');
+                                                    $kode_akun_order = $is_subtotal
+                                                        ? (isset($list_data['sort_kode_akun']) ? $list_data['sort_kode_akun'] : '')
+                                                        : (isset($list_data['kode_akun']) ? $list_data['kode_akun'] : '');
+                                                    $nama_order = $is_subtotal
+                                                        ? (isset($list_data['sort_nama_akun']) ? $list_data['sort_nama_akun'] : (isset($list_data['nama_akun']) ? $list_data['nama_akun'] : ''))
+                                                        : (isset($list_data['nama_akun']) ? $list_data['nama_akun'] : '');
+                                                    $debet_order = isset($list_data['debet']) ? (float) $list_data['debet'] : 0;
+                                                    $kredit_order = isset($list_data['kredit']) ? (float) $list_data['kredit'] : 0;
+                                                ?>
+                                                <tr class="<?php echo $tr_class; ?>">
+                                                    <td class="text-center" data-order="<?php echo htmlspecialchars((string) $no_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : (int) $list_data['no']; ?></td>
+                                                    <td class="bb-col-sumber-cell" data-order="<?php echo htmlspecialchars((string) $source_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : buku_besar_source_badge_html($source_key, $source_label); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $kode_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($list_data['kode'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $kode_akun_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($list_data['kode_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $nama_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '<strong>' . htmlspecialchars($list_data['nama_akun'], ENT_QUOTES, 'UTF-8') . '</strong>' : htmlspecialchars($list_data['nama_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td class="text-right" data-order="<?php echo htmlspecialchars((string) $debet_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($list_data['debet_display'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td class="text-right" data-order="<?php echo htmlspecialchars((string) $kredit_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($list_data['kredit_display'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <table id="table-buku-besar-footer" class="table table-bordered bb-main-dt bb-footer-table">
+                                        <colgroup>
+                                            <col class="bb-col-no">
+                                            <col class="bb-col-sumber">
+                                            <col class="bb-col-kode">
+                                            <col class="bb-col-kode-akun">
+                                            <col class="bb-col-nama-akun">
+                                            <col class="bb-col-debet">
+                                            <col class="bb-col-kredit">
+                                        </colgroup>
                                         <tfoot>
-                                            <tr class="bb-total-row">
-                                                <th colspan="6" class="text-right">JUMLAH DEBET / KREDIT</th>
+                                            <tr class="bb-row-grand-total">
+                                                <th colspan="5" class="text-right">GRAND TOTAL</th>
                                                 <th class="text-right bb-total-debet"><?php echo buku_besar_format_rupiah($total_debet, true); ?></th>
                                                 <th class="text-right bb-total-kredit"><?php echo buku_besar_format_rupiah($total_kredit, true); ?></th>
                                             </tr>
                                         </tfoot>
                                     </table>
+                                </div>
+
+                                <div class="modal fade bb-jurnal-shell-modal" id="modalBbJurnalPembelian" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable bb-jurnal-shell-dialog" role="document">
+                                        <div class="modal-content bb-jurnal-shell-content bb-jurnal-shell-pembelian">
+                                            <div class="modal-header bb-jurnal-shell-header">
+                                                <div>
+                                                    <h5 class="modal-title mb-0"><i class="fa fa-shopping-cart"></i> Jurnal Pembelian</h5>
+                                                    <small class="bb-jurnal-shell-subtitle">DataTables lengkap — termasuk tombol ubah kode akun per SPOP</small>
+                                                </div>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+                                            </div>
+                                            <div class="modal-body p-3" id="modalBbJurnalPembelianBody">
+                                                <div class="text-center text-muted py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><div class="mt-2">Memuat jurnal pembelian...</div></div>
+                                            </div>
+                                            <div class="modal-footer py-2 bg-light"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><i class="fa fa-times"></i> Tutup</button></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal fade bb-jurnal-shell-modal" id="modalBbJurnalPenjualan" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-scrollable bb-jurnal-shell-dialog" role="document">
+                                        <div class="modal-content bb-jurnal-shell-content bb-jurnal-shell-penjualan">
+                                            <div class="modal-header bb-jurnal-shell-header">
+                                                <div>
+                                                    <h5 class="modal-title mb-0"><i class="fa fa-line-chart"></i> Jurnal Penjualan</h5>
+                                                    <small class="bb-jurnal-shell-subtitle">Baris, kolom, dan per unit — sama seperti halaman jurnal penjualan</small>
+                                                </div>
+                                                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Tutup"><span aria-hidden="true">&times;</span></button>
+                                            </div>
+                                            <div class="modal-body p-3" id="modalBbJurnalPenjualanBody">
+                                                <div class="text-center text-muted py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><div class="mt-2">Memuat jurnal penjualan...</div></div>
+                                            </div>
+                                            <div class="modal-footer py-2 bg-light"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal"><i class="fa fa-times"></i> Tutup</button></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -358,10 +483,117 @@ $compare_sections = array(
     .nav-tabs.buku-besar-tabs .nav-link { border: 2px solid #007bff; border-bottom: none; color: #666; margin-right: 4px; border-radius: 4px 4px 0 0; background: #fff; }
     .nav-tabs.buku-besar-tabs .nav-link.active { background: #007bff; color: #fff; font-weight: bold; }
     .buku-besar-tab1-toolbar { padding: 10px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; }
+    .bb-source-stats-box {
+        border: 1px solid #b8daff; border-radius: 8px; background: linear-gradient(180deg, #f8fbff, #fff);
+        padding: 12px 14px;
+    }
+    .bb-source-stats-title { font-weight: 700; color: #004085; margin-bottom: 10px; font-size: 14px; }
+    .bb-source-stat-card {
+        display: block; text-align: left; border: 1px solid #dee2e6; border-radius: 8px;
+        background: #fff; padding: 10px 14px; margin: 0 12px 8px 0; min-width: 260px;
+        cursor: pointer; transition: box-shadow .15s, border-color .15s;
+    }
+    .bb-source-stat-card:hover { border-color: #007bff; box-shadow: 0 2px 8px rgba(0,123,255,.15); }
+    .bb-source-stat-card.bb-source-penjualan:hover { border-color: #fb8c00; }
+    .bb-source-stat-card.bb-source-jurnal-kas { border-color: #90caf9; background: #f8fbff; }
+    .bb-source-stat-card.bb-source-stat-static { cursor: default; }
+    .bb-source-stat-card.bb-source-stat-static:hover { box-shadow: none; transform: none; }
+    .bb-filter-excel-wrap { margin-left: auto; }
+    .bb-table-filter-row .btn-success { white-space: nowrap; min-width: 130px; }
+    .bb-source-stat-card .bb-source-label { display: block; font-weight: 700; margin-bottom: 6px; color: #333; }
+    .bb-source-stat-card .bb-source-line { display: block; font-size: 13px; margin-bottom: 2px; }
+    .bb-jurnal-shell-modal .modal-backdrop { z-index: 1050; }
+    .bb-jurnal-shell-modal { z-index: 1055; }
+    .bb-jurnal-shell-dialog { max-width: min(96vw, 1480px); width: 96vw; margin: 0.75rem auto; }
+    .bb-jurnal-shell-content { border: none; border-radius: 14px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,.22); }
+    .bb-jurnal-shell-header {
+        border: none; color: #fff; padding: 14px 18px;
+        display: flex; align-items: flex-start; justify-content: space-between;
+    }
+    .bb-jurnal-shell-pembelian .bb-jurnal-shell-header { background: linear-gradient(135deg, #1b5e20, #43a047); }
+    .bb-jurnal-shell-penjualan .bb-jurnal-shell-header { background: linear-gradient(135deg, #e65100, #fb8c00); }
+    .bb-jurnal-shell-subtitle { display: block; opacity: .92; font-size: 12px; margin-top: 4px; }
+    .bb-jurnal-shell-modal .modal-body { background: #f4f6f8; max-height: calc(100vh - 150px); overflow-y: auto; }
+    .bb-jurnal-shell-modal .bb-jp-embed-header,
+    .bb-jurnal-shell-modal .bb-jn-embed-header { display: none; }
+    #bbJpModalJurnalPembelianKodeAkun { z-index: 1070 !important; }
+    #bbJpModalJurnalPembelianKodeAkun + .modal-backdrop { z-index: 1065 !important; }
+    .bb-dt-toolbar { margin-bottom: 6px; }
+    .bb-dt-toolbar .dataTables_length label { margin-bottom: 0; font-size: 15px; font-weight: 600; }
+    .bb-dt-toolbar .dataTables_length select { display: inline-block; width: auto; margin: 0 6px; font-size: 14px; }
+    .bb-dt-wrap .dataTables_wrapper .dataTables_info,
+    .bb-dt-wrap .dataTables_wrapper .dataTables_paginate { font-size: 14px; padding-top: 6px; }
+    .bb-dt-wrap .dataTables_wrapper .dataTables_paginate .paginate_button { font-size: 14px; }
+    .bb-filter-kode-wrap { width: 280px; max-width: 100%; }
+    .bb-filter-teks-wrap { width: 260px; max-width: 100%; }
     .bb-dt-wrap { border: 2px solid #007bff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,123,255,.12); padding: 8px; background: #fff; }
-    .bb-main-dt thead th { background: linear-gradient(180deg, #e7f1ff, #f8f9fa); border-color: #b8daff !important; font-size: 12px; white-space: nowrap; vertical-align: middle; }
-    .bb-main-dt tbody td { font-size: 12px; border-color: #dee2e6 !important; padding: 6px 8px; }
-    .bb-main-dt tfoot .bb-total-row th { background: #fff3cd !important; font-weight: 700; border-color: #ffc107 !important; }
+    .bb-table-scroll { max-height: 480px; overflow-y: auto; overflow-x: hidden; border: 1px solid #dee2e6; border-bottom: none; border-radius: 4px 4px 0 0; scrollbar-gutter: stable; }
+    .bb-footer-table { border-top: none !important; border-radius: 0 0 4px 4px; margin-top: 0 !important; }
+    .bb-footer-table tfoot th {
+        background: #fff3cd !important; font-weight: 700;
+        border-color: #ffc107 !important; padding: 12px;
+        font-variant-numeric: tabular-nums; font-size: 15px;
+    }
+    .bb-main-dt { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 0 !important; font-size: 15px; }
+    .bb-main-dt col.bb-col-no { width: 6%; }
+    .bb-main-dt col.bb-col-sumber { width: 11%; }
+    .bb-main-dt col.bb-col-kode { width: 12%; }
+    .bb-main-dt col.bb-col-kode-akun { width: 12%; }
+    .bb-main-dt col.bb-col-nama-akun { width: 29%; }
+    .bb-main-dt col.bb-col-debet,
+    .bb-main-dt col.bb-col-kredit { width: 15%; }
+    .bb-source-badge {
+        display: inline-flex; align-items: center; gap: 4px;
+        font-size: 13px; font-weight: 700; line-height: 1.3;
+        padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+    }
+    .bb-source-badge.bb-source-pembelian {
+        background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7;
+    }
+    .bb-source-badge.bb-source-penjualan {
+        background: #fff3e0; color: #e65100; border: 1px solid #ffcc80;
+    }
+    .bb-source-badge.bb-source-jurnal-kas {
+        background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9;
+    }
+    .bb-source-badge.bb-source-default {
+        background: #f5f5f5; color: #424242; border: 1px solid #e0e0e0;
+    }
+    .bb-col-sumber-cell { text-align: center; vertical-align: middle !important; }
+    .bb-main-dt thead th {
+        position: sticky; top: 0; z-index: 3;
+        background: linear-gradient(180deg, #e7f1ff, #f8f9fa);
+        border-color: #b8daff !important;
+        font-size: 15px; white-space: nowrap; vertical-align: middle;
+        padding: 10px 12px; box-shadow: inset 0 -1px 0 #b8daff;
+    }
+    .bb-main-dt thead th.sorting,
+    .bb-main-dt thead th.sorting_asc,
+    .bb-main-dt thead th.sorting_desc {
+        cursor: pointer; padding-right: 24px;
+    }
+    .bb-main-dt thead th.sorting:before,
+    .bb-main-dt thead th.sorting:after,
+    .bb-main-dt thead th.sorting_asc:before,
+    .bb-main-dt thead th.sorting_asc:after,
+    .bb-main-dt thead th.sorting_desc:before,
+    .bb-main-dt thead th.sorting_desc:after {
+        opacity: 0.45;
+    }
+    .bb-main-dt thead th.sorting_asc:before,
+    .bb-main-dt thead th.sorting_desc:after {
+        opacity: 0.9;
+    }
+    .bb-main-dt tbody td {
+        font-size: 15px; border-color: #dee2e6 !important;
+        padding: 9px 12px; vertical-align: middle;
+        word-wrap: break-word; overflow-wrap: break-word;
+        line-height: 1.45;
+    }
+    .bb-main-dt tbody tr.bb-row-subtotal td {
+        background: #e8f4fd !important; font-weight: 700;
+        border-top: 2px solid #90caf9 !important; border-bottom: 2px solid #90caf9 !important;
+    }
     .bb-card-header-compact { padding-top: 0.45rem; padding-bottom: 0.45rem; }
     .bb-header-row { gap: 0; min-height: 34px; }
     .bb-header-left { flex: 1 1 0; min-width: 120px; }
@@ -407,11 +639,17 @@ $compare_sections = array(
 
 <script>
 (function() {
-    var LS_KODE_AKUN = 'bb_kode_akun';
     var LS_BULAN_NS = 'bb_bulan_ns';
     var LS_ACTIVE_TAB = 'bb_active_tab';
+    var LS_FILTER_KODE = 'bb_filter_kode';
+    var LS_FILTER_TEKS = 'bb_filter_teks';
+    var bbFilterTeksTimer = null;
+    var bbMainDt = null;
+    var bbMainDtReady = false;
 
     var urlAjaxList = <?php echo json_encode($url_ajax_list); ?>;
+    var urlModalJurnalPembelian = <?php echo json_encode($url_modal_jurnal_pembelian); ?>;
+    var urlModalJurnalPenjualan = <?php echo json_encode($url_modal_jurnal_penjualan); ?>;
     var urlExcel = <?php echo json_encode($url_excel); ?>;
     var urlCari = <?php echo json_encode($url_cari); ?>;
     var urlFormAction = <?php echo json_encode($url_form_action); ?>;
@@ -426,7 +664,6 @@ $compare_sections = array(
     var urlSectionExcel = <?php echo json_encode($url_compare_section_excel); ?>;
 
     var bbInitializing = true;
-    var bbMainDt = null;
 
     function bbEscapeHtml(text) {
         return jQuery('<div>').text(text == null ? '' : String(text)).html();
@@ -503,24 +740,38 @@ $compare_sections = array(
 
     function saveBbLocalStorage() {
         try {
-            localStorage.setItem(LS_KODE_AKUN, jQuery('#kode_akun').val() || '');
             localStorage.setItem(LS_BULAN_NS, jQuery('#bulan_ns').val() || '');
             var activeTab = document.querySelector('#buku-besar-tabs .nav-link.active');
             localStorage.setItem(LS_ACTIVE_TAB, (activeTab && activeTab.id === 'tab-compare-bb') ? 'compare' : 'data');
+            localStorage.setItem(LS_FILTER_KODE, jQuery('#bb_filter_kode').val() || 'semua');
+            localStorage.setItem(LS_FILTER_TEKS, jQuery('#bb_filter_teks').val() || '');
         } catch (eLs) {}
+    }
+
+    function syncBbFilterTeksState() {
+        var isSemua = (jQuery('#bb_filter_kode').val() || 'semua') === 'semua';
+        jQuery('#bb_filter_teks').prop('disabled', !isSemua);
+        if (!isSemua) {
+            jQuery('#bb_filter_teks').val('');
+        }
     }
 
     function restoreBbLocalStorage() {
         try {
-            var lsKode = localStorage.getItem(LS_KODE_AKUN);
             var lsBulan = localStorage.getItem(LS_BULAN_NS);
             var lsTab = localStorage.getItem(LS_ACTIVE_TAB);
-            if (lsKode !== null) {
-                jQuery('#kode_akun').val(lsKode);
-            }
             if (lsBulan && /^\d{4}-\d{2}$/.test(lsBulan)) {
                 jQuery('#bulan_ns').val(lsBulan);
             }
+            var lsFilterKode = localStorage.getItem(LS_FILTER_KODE);
+            var lsFilterTeks = localStorage.getItem(LS_FILTER_TEKS);
+            if (lsFilterKode !== null && lsFilterKode !== '') {
+                jQuery('#bb_filter_kode').val(lsFilterKode);
+            }
+            if (lsFilterTeks !== null) {
+                jQuery('#bb_filter_teks').val(lsFilterTeks);
+            }
+            syncBbFilterTeksState();
             if (lsTab === 'compare') {
                 jQuery('#tab-compare-bb').tab('show');
                 document.getElementById('active_tab_input').value = 'compare';
@@ -544,31 +795,197 @@ $compare_sections = array(
         document.getElementById('active_tab_input').value = (activeTab && activeTab.id === 'tab-compare-bb') ? 'compare' : 'data';
     }
 
-    function buildMainDtRows(items) {
-        return (items || []).map(function(it) {
-            return [
-                it.no || '',
-                it.tanggal || '',
-                it.pl || '',
-                it.kode || '',
-                it.kode_akun || '',
-                it.nama_akun || '',
-                it.debet_display || '',
-                it.kredit_display || ''
-            ];
+    function bbSourceBadgeHtml(sourceKey, sourceLabel) {
+        sourceKey = (sourceKey || '').trim();
+        if (!sourceKey) return '';
+        var label = (sourceLabel || '').trim();
+        var badgeMap = {
+            pembelian: { cls: 'bb-source-pembelian', icon: 'fa-shopping-cart', fallback: 'Pembelian' },
+            penjualan: { cls: 'bb-source-penjualan', icon: 'fa-line-chart', fallback: 'Penjualan' },
+            jurnal_kas: { cls: 'bb-source-jurnal-kas', icon: 'fa-money', fallback: 'Jurnal Kas' }
+        };
+        var badge = badgeMap[sourceKey] || { cls: 'bb-source-default', icon: 'fa-database', fallback: sourceKey };
+        if (!label) label = badge.fallback;
+        return '<span class="bb-source-badge ' + badge.cls + '"><i class="fa ' + badge.icon + '"></i> ' + bbEscapeHtml(label) + '</span>';
+    }
+
+    function bbAttrOrder(val) {
+        if (val === null || val === undefined) return '';
+        return String(val);
+    }
+
+    function renderBbTableBody(items) {
+        var html = '';
+        (items || []).forEach(function(it) {
+            var isSubtotal = it.row_type === 'subtotal';
+            var trClass = isSubtotal ? ' class="bb-row-subtotal"' : '';
+            var noCell = isSubtotal ? '' : bbEscapeHtml(it.no || '');
+            var sourceCell = isSubtotal ? '' : bbSourceBadgeHtml(it.source_key, it.source_label);
+            var namaCell = isSubtotal
+                ? '<strong>' + bbEscapeHtml(it.nama_akun || '') + '</strong>'
+                : bbEscapeHtml(it.nama_akun || '');
+            var kodeCell = isSubtotal ? '' : bbEscapeHtml(it.kode_akun || '');
+            var noOrder = isSubtotal ? bbAttrOrder(it.sort_no) : bbAttrOrder(it.no);
+            var sourceOrder = isSubtotal ? '' : bbAttrOrder(it.source_label || it.source_key || '');
+            var kodeValOrder = isSubtotal ? '' : bbAttrOrder(it.kode || '');
+            var kodeAkunOrder = isSubtotal ? bbAttrOrder(it.sort_kode_akun || '') : bbAttrOrder(it.kode_akun || '');
+            var namaOrder = isSubtotal
+                ? bbAttrOrder(it.sort_nama_akun || it.nama_akun || '')
+                : bbAttrOrder(it.nama_akun || '');
+            var debetOrder = bbAttrOrder(it.debet != null ? it.debet : 0);
+            var kreditOrder = bbAttrOrder(it.kredit != null ? it.kredit : 0);
+            html += '<tr' + trClass + '>'
+                + '<td class="text-center" data-order="' + bbEscapeHtml(noOrder) + '">' + noCell + '</td>'
+                + '<td class="bb-col-sumber-cell" data-order="' + bbEscapeHtml(sourceOrder) + '">' + sourceCell + '</td>'
+                + '<td data-order="' + bbEscapeHtml(kodeValOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.kode || '')) + '</td>'
+                + '<td data-order="' + bbEscapeHtml(kodeAkunOrder) + '">' + kodeCell + '</td>'
+                + '<td data-order="' + bbEscapeHtml(namaOrder) + '">' + namaCell + '</td>'
+                + '<td class="text-right" data-order="' + bbEscapeHtml(debetOrder) + '">' + bbEscapeHtml(it.debet_display || '') + '</td>'
+                + '<td class="text-right" data-order="' + bbEscapeHtml(kreditOrder) + '">' + bbEscapeHtml(it.kredit_display || '') + '</td>'
+                + '</tr>';
         });
+        return html;
+    }
+
+    function updateBbGrandTotals(totalDebet, totalKredit) {
+        jQuery('#table-buku-besar-footer .bb-total-debet').text(totalDebet || '—');
+        jQuery('#table-buku-besar-footer .bb-total-kredit').text(totalKredit || '—');
+    }
+
+    function destroyBbMainDt() {
+        if (bbMainDt && jQuery.fn.DataTable) {
+            try {
+                bbMainDt.destroy();
+            } catch (eDt) {}
+            bbMainDt = null;
+            bbMainDtReady = false;
+        }
+    }
+
+    function initBbMainDt() {
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery('#table-buku-besar-data').length) return;
+        destroyBbMainDt();
+        bbMainDt = jQuery('#table-buku-besar-data').DataTable({
+            dom: '<"bb-dt-length-bar"l>rtip',
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            pageLength: 25,
+            ordering: true,
+            order: [],
+            orderMulti: true,
+            searching: false,
+            paging: true,
+            info: true,
+            autoWidth: false,
+            columnDefs: [
+                { targets: 0, width: '6%', className: 'text-center' },
+                { targets: 1, width: '11%', className: 'bb-col-sumber-cell text-center' },
+                { targets: 2, width: '12%' },
+                { targets: 3, width: '12%' },
+                { targets: 4, width: '29%' },
+                { targets: [5, 6], width: '15%', className: 'text-right', type: 'num' }
+            ],
+            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' },
+            drawCallback: function() {
+                syncBbFooterTableWidth();
+            }
+        });
+        bbMainDtReady = true;
+        var $length = jQuery('#bb-dt-toolbar');
+        var $lenBar = jQuery('#table-buku-besar-data_wrapper .bb-dt-length-bar');
+        if ($length.length && $lenBar.length) {
+            $length.empty().append($lenBar);
+        }
+        syncBbFooterTableWidth();
+    }
+
+    function updateBbSourceStats(stats) {
+        stats = stats || {};
+        var p = stats.pembelian || {};
+        var j = stats.penjualan || {};
+        var k = stats.jurnal_kas || {};
+        jQuery('.bb-stat-pembelian-total').text(p.total || 0);
+        jQuery('.bb-stat-pembelian-sudah').text(p.sudah || 0);
+        jQuery('.bb-stat-pembelian-belum').text(p.belum || 0);
+        jQuery('.bb-stat-penjualan-total').text(j.total || 0);
+        jQuery('.bb-stat-penjualan-sudah').text(j.sudah || 0);
+        jQuery('.bb-stat-penjualan-belum').text(j.belum || 0);
+        jQuery('.bb-stat-jurnal-kas-total').text(k.total || 0);
+        jQuery('.bb-stat-jurnal-kas-sudah').text(k.sudah || 0);
+        jQuery('.bb-stat-jurnal-kas-belum').text(k.belum || 0);
+    }
+
+    function destroyBbJurnalEmbed($body) {
+        if (!$body || !$body.length) return;
+        $body.find('table').each(function() {
+            if (jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable(this)) {
+                jQuery(this).DataTable().destroy();
+            }
+        });
+        $body.find('.bb-jp-embed').off('click.bbJpKodeAkun');
+        jQuery('#bbJpModalJurnalPembelianKodeAkun').modal('hide');
+        if (jQuery('#bbJpModalKodeAkunSelect').data('select2')) {
+            jQuery('#bbJpModalKodeAkunSelect').select2('destroy');
+        }
+    }
+
+    function initBbJurnalEmbedContent($body, type) {
+        var $kodeModal = $body.find('#bbJpModalJurnalPembelianKodeAkun');
+        if ($kodeModal.length && !$kodeModal.parent().is('body')) {
+            $kodeModal.appendTo('body');
+        }
+        if (type === 'pembelian' && typeof window.bbJpInitJurnalPembelianEmbed === 'function') {
+            window.bbJpRefreshCallback = function() {
+                openBbJurnalModal(urlModalJurnalPembelian, jQuery('#modalBbJurnalPembelian'), jQuery('#modalBbJurnalPembelianBody'), 'pembelian');
+                if (typeof loadBukuBesarData === 'function') {
+                    loadBukuBesarData();
+                }
+            };
+            window.bbJpInitJurnalPembelianEmbed();
+        }
+        if (type === 'penjualan' && typeof window.bbJnInitJurnalPenjualanEmbed === 'function') {
+            window.bbJnInitJurnalPenjualanEmbed();
+        }
+    }
+
+    function openBbJurnalModal(url, $modal, $body, embedType) {
+        destroyBbJurnalEmbed($body);
+        $body.html('<div class="text-center text-muted py-5"><i class="fa fa-spinner fa-spin fa-2x"></i><div class="mt-2">Memuat data jurnal...</div></div>');
+        $modal.modal('show');
+        jQuery.ajax({
+            url: url,
+            type: 'POST',
+            data: { bulan_ns: jQuery('#bulan_ns').val() || '' }
+        }).done(function(html) {
+            $body.html(html);
+            $body.find('script').each(function() {
+                var code = this.text || this.textContent || '';
+                if (code.trim()) {
+                    jQuery.globalEval(code);
+                }
+            });
+            initBbJurnalEmbedContent($body, embedType || '');
+        }).fail(function() {
+            $body.html('<div class="alert alert-danger mb-0">Gagal memuat data jurnal.</div>');
+        });
+    }
+
+    function syncBbFooterTableWidth() {
+        var $scroll = jQuery('.bb-table-scroll');
+        var $footer = jQuery('#table-buku-besar-footer');
+        if (!$scroll.length || !$footer.length) return;
+        $footer.css('width', $scroll[0].clientWidth + 'px');
     }
 
     function loadBukuBesarData() {
         if (!window.jQuery) return;
-        var $t = jQuery('#table-buku-besar-data');
         jQuery.ajax({
             url: urlAjaxList,
             type: 'POST',
             dataType: 'json',
             data: {
                 bulan_ns: jQuery('#bulan_ns').val() || '',
-                kode_akun: jQuery('#kode_akun').val() || ''
+                bb_filter_kode: jQuery('#bb_filter_kode').val() || 'semua',
+                bb_filter_teks: jQuery('#bb_filter_teks').prop('disabled') ? '' : (jQuery('#bb_filter_teks').val() || '')
             }
         }).done(function(res) {
             if (!res || !res.ok) {
@@ -577,12 +994,13 @@ $compare_sections = array(
                 }
                 return;
             }
-            var rows = buildMainDtRows(res.rows);
-            if (bbMainDt) {
-                bbMainDt.clear().rows.add(rows).draw(false);
+            destroyBbMainDt();
+            jQuery('#bb-table-body').html(renderBbTableBody(res.rows));
+            updateBbGrandTotals(res.total_debet, res.total_kredit);
+            updateBbSourceStats(res.source_stats);
+            if (jQuery('#tab-bb-data').hasClass('active')) {
+                initBbMainDt();
             }
-            $t.find('tfoot .bb-total-debet').text(res.total_debet || '—');
-            $t.find('tfoot .bb-total-kredit').text(res.total_kredit || '—');
             if (res.bulan_label) {
                 jQuery('#bb-bulan-label').text(res.bulan_label);
             }
@@ -606,41 +1024,71 @@ $compare_sections = array(
     }
 
     window.addEventListener('load', function() {
-        if (!window.jQuery || !jQuery.fn.DataTable) return;
-
-        if (jQuery.fn.select2 && jQuery('#kode_akun').length) {
-            jQuery('#kode_akun').select2({
-                width: '100%',
-                placeholder: 'Pilih Kode Akun',
-                allowClear: false
-            });
-        }
+        if (!window.jQuery) return;
 
         restoreBbLocalStorage();
-        if (jQuery.fn.select2 && jQuery('#kode_akun').hasClass('select2-hidden-accessible')) {
-            jQuery('#kode_akun').trigger('change.select2');
-        }
         syncCompareFromBulanNs();
 
-        bbMainDt = jQuery('#table-buku-besar-data').DataTable({
-            scrollX: true,
-            scrollY: '450px',
-            scrollCollapse: true,
-            paging: true,
-            searching: true,
-            ordering: true,
-            pageLength: 50,
-            order: [[1, 'asc']],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
+        if (jQuery('#tab-bb-data').hasClass('active')) {
+            initBbMainDt();
+        }
+
+        jQuery('#tab-bb-data').on('shown.bs.tab', function() {
+            if (!bbMainDtReady) {
+                initBbMainDt();
+            } else {
+                syncBbFooterTableWidth();
+            }
         });
 
         bbInitializing = false;
-        loadBukuBesarData();
 
-        jQuery('#kode_akun').on('change', function() {
+        if (jQuery('#tab-bb-data').hasClass('active')) {
+            loadBukuBesarData();
+        } else {
+            jQuery('#tab-bb-data').one('shown.bbLoad', function() {
+                loadBukuBesarData();
+            });
+        }
+
+        syncBbFooterTableWidth();
+        jQuery(window).on('resize.bbTable', syncBbFooterTableWidth);
+
+        jQuery('#btn-bb-stat-pembelian').on('click', function() {
+            openBbJurnalModal(urlModalJurnalPembelian, jQuery('#modalBbJurnalPembelian'), jQuery('#modalBbJurnalPembelianBody'), 'pembelian');
+        });
+        jQuery('#btn-bb-stat-penjualan').on('click', function() {
+            openBbJurnalModal(urlModalJurnalPenjualan, jQuery('#modalBbJurnalPenjualan'), jQuery('#modalBbJurnalPenjualanBody'), 'penjualan');
+        });
+
+        jQuery('#modalBbJurnalPembelian').on('hidden.bs.modal', function() {
+            destroyBbJurnalEmbed(jQuery('#modalBbJurnalPembelianBody'));
+            window.bbJpRefreshCallback = null;
+        });
+        jQuery('#modalBbJurnalPenjualan').on('hidden.bs.modal', function() {
+            destroyBbJurnalEmbed(jQuery('#modalBbJurnalPenjualanBody'));
+        });
+
+        jQuery('#bb_filter_kode').on('change', function() {
+            syncBbFilterTeksState();
             if (bbInitializing) return;
             refreshBukuBesarFromFilters();
         });
+        jQuery('#bb_filter_teks').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!bbInitializing) refreshBukuBesarFromFilters();
+            }
+        });
+        jQuery('#bb_filter_teks').on('input', function() {
+            if (bbInitializing || jQuery(this).prop('disabled')) return;
+            if (jQuery('#bb_filter_kode').val() !== 'semua') return;
+            clearTimeout(bbFilterTeksTimer);
+            bbFilterTeksTimer = setTimeout(function() {
+                refreshBukuBesarFromFilters();
+            }, 350);
+        });
+
         jQuery('#bulan_ns').on('change', function() {
             if (bbInitializing) return;
             refreshBukuBesarFromFilters();
@@ -657,7 +1105,8 @@ $compare_sections = array(
             var f = jQuery('<form method="post" target="_blank"></form>');
             f.attr('action', urlExcel);
             f.append(jQuery('<input type="hidden" name="bulan_ns">').val(jQuery('#bulan_ns').val() || ''));
-            f.append(jQuery('<input type="hidden" name="kode_akun">').val(jQuery('#kode_akun').val() || ''));
+            f.append(jQuery('<input type="hidden" name="bb_filter_kode">').val(jQuery('#bb_filter_kode').val() || 'semua'));
+            f.append(jQuery('<input type="hidden" name="bb_filter_teks">').val(jQuery('#bb_filter_teks').prop('disabled') ? '' : (jQuery('#bb_filter_teks').val() || '')));
             jQuery('body').append(f);
             f.submit();
             f.remove();
@@ -666,6 +1115,9 @@ $compare_sections = array(
         jQuery('#buku-besar-tabs a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
             updateActiveTabInput();
             saveBbLocalStorage();
+            if (jQuery(e.target).attr('id') === 'tab-bb-data') {
+                jQuery('#tab-bb-data').trigger('shown.bbLoad');
+            }
         });
 
         var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;

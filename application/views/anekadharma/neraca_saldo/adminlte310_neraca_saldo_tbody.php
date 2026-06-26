@@ -15,59 +15,32 @@ if ($Get_month_from_date < 1 || $Get_month_from_date > 12) {
 if ($Get_year_Tahun_ini < 2000) {
     $Get_year_Tahun_ini = (int) date('Y');
 }
-$Get_month_url = sprintf('%02d', $Get_month_from_date);
 
-$start = 0;
-foreach ($Data_Kode_Akun as $list_data) {
-    $Get_Kode_akun = $list_data->kode_akun;
-
-    $sql = "SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `buku_besar` WHERE MONTH(`tanggal`)=" . $Get_month_from_date . " AND YEAR(`tanggal`)=" . $Get_year_Tahun_ini . " AND `kode_akun`=" . (int) $Get_Kode_akun . " group by `kode_akun` ";
-    $Buku_besar_DATA = $this->db->query($sql);
-
-    $sql = "SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `jurnal_penyesuaian` WHERE MONTH(`tanggal`)=" . $Get_month_from_date . " AND YEAR(`tanggal`)=" . $Get_year_Tahun_ini . " AND `kode_akun`=" . (int) $Get_Kode_akun . " group by `kode_akun` ";
-    $Jurnal_penyesuaian_DATA = $this->db->query($sql);
-
-    $sql = "SELECT * FROM `neraca_saldo` WHERE MONTH(`tanggal`)=" . $Get_month_from_date . " AND YEAR(`tanggal`)=" . $Get_year_Tahun_ini . " AND `kode_akun`=" . (int) $Get_Kode_akun;
-    $Neraca_Saldo_DATA = $this->db->query($sql);
-    $ns_row = ($Neraca_Saldo_DATA->num_rows() > 0) ? $Neraca_Saldo_DATA->row() : null;
-
-    $bb_debet = ($Buku_besar_DATA->num_rows() > 0) ? (float) $Buku_besar_DATA->row()->debet : 0;
-    $bb_kredit = ($Buku_besar_DATA->num_rows() > 0) ? (float) $Buku_besar_DATA->row()->kredit : 0;
-    $jp_debet = ($Jurnal_penyesuaian_DATA->num_rows() > 0) ? (float) $Jurnal_penyesuaian_DATA->row()->debet : 0;
-    $jp_kredit = ($Jurnal_penyesuaian_DATA->num_rows() > 0) ? (float) $Jurnal_penyesuaian_DATA->row()->kredit : 0;
-    $has_activity = ($Buku_besar_DATA->num_rows() > 0 || $Jurnal_penyesuaian_DATA->num_rows() > 0);
+$ns_data = neraca_saldo_compute_list_data($this, $Get_month_from_date, $Get_year_Tahun_ini);
+foreach ((array) $ns_data['rows'] as $item) {
+    $Get_Kode_akun = (int) $item['kode_akun'];
+    $saldo_debet_label = neraca_saldo_format_rupiah($item['saldo_debet'], true);
+    $saldo_kredit_label = neraca_saldo_format_rupiah($item['saldo_kredit'], true);
+    $btn_saldo_debet_class = !empty($item['has_debet_tahun_lalu']) ? 'btn btn-success btn-sm' : 'btn btn-secondary btn-sm';
+    $btn_saldo_kredit_class = !empty($item['has_kredit_tahun_lalu']) ? 'btn btn-success btn-sm' : 'btn btn-secondary btn-sm';
 ?>
     <tr>
-        <td align="left"><?php echo ++$start; ?></td>
-        <td align="left"><?php echo $list_data->tanggal; ?></td>
+        <td align="left"><?php echo (int) $item['no']; ?></td>
+        <td align="left"><?php echo htmlspecialchars((string) $item['tanggal'], ENT_QUOTES, 'UTF-8'); ?></td>
         <td align="left"><?php echo $Get_Kode_akun; ?></td>
-        <td align="left"><?php echo $list_data->nama_akun; ?></td>
-        <td align="right">
-            <?php
-            if (!$ns_row || is_null($ns_row->debet_akhir_tahun_lalu)) {
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">Input Debet</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-            } else {
-                $debet_tahun_lalu_label = neraca_saldo_format_rupiah($ns_row->debet_akhir_tahun_lalu, true);
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/debet/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . htmlspecialchars($debet_tahun_lalu_label, ENT_QUOTES, 'UTF-8') . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-            }
-            ?>
+        <td align="left"><?php echo htmlspecialchars((string) $item['nama_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['saldo_debet']; ?>">
+            <span class="<?php echo $btn_saldo_debet_class; ?>"><?php echo htmlspecialchars($saldo_debet_label, ENT_QUOTES, 'UTF-8'); ?></span>
         </td>
-        <td align="right">
-            <?php
-            if (!$ns_row || is_null($ns_row->kredit_akhir_tahun_lalu)) {
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">Input Kredit</i>', array('title' => 'edit', 'class' => 'btn btn-danger btn-sm'));
-            } else {
-                $kredit_tahun_lalu_label = neraca_saldo_format_rupiah($ns_row->kredit_akhir_tahun_lalu, true);
-                echo anchor(site_url('Neraca_saldo/input_neraca_saldo_waktu_lalu/' . $Get_Kode_akun . '/kredit/' . $Get_year_Tahun_ini . '/' . $Get_month_url), '<i class="fa fa-pencil-square-o">' . htmlspecialchars($kredit_tahun_lalu_label, ENT_QUOTES, 'UTF-8') . '</i>', array('title' => 'edit', 'class' => 'btn btn-success btn-sm'));
-            }
-            ?>
+        <td align="right" data-order="<?php echo (float) $item['saldo_kredit']; ?>">
+            <span class="<?php echo $btn_saldo_kredit_class; ?>"><?php echo htmlspecialchars($saldo_kredit_label, ENT_QUOTES, 'UTF-8'); ?></span>
         </td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($bb_debet, true); ?></td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($bb_kredit, true); ?></td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_debet + $jp_debet) : 0, true); ?></td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_kredit + $jp_kredit) : 0, true); ?></td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_debet + $jp_debet) : 0, true); ?></td>
-        <td align="right"><?php echo neraca_saldo_format_rupiah($has_activity ? ($bb_kredit + $jp_kredit) : 0, true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['bb_debet']; ?>"><?php echo neraca_saldo_format_rupiah($item['bb_debet'], true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['bb_kredit']; ?>"><?php echo neraca_saldo_format_rupiah($item['bb_kredit'], true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['ns_debet_raw']; ?>"><?php echo neraca_saldo_format_rupiah($item['ns_debet_raw'], true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['ns_kredit_raw']; ?>"><?php echo neraca_saldo_format_rupiah($item['ns_kredit_raw'], true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['ns_debet_raw']; ?>"><?php echo neraca_saldo_format_rupiah($item['ns_debet_raw'], true); ?></td>
+        <td align="right" data-order="<?php echo (float) $item['ns_kredit_raw']; ?>"><?php echo neraca_saldo_format_rupiah($item['ns_kredit_raw'], true); ?></td>
     </tr>
 <?php
 }

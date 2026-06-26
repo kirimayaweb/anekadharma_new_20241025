@@ -332,13 +332,15 @@ class Neraca_saldo extends CI_Controller
 		$data['bulan_ns_value'] = sprintf('%04d-%02d', $year_int, $month_int);
 
 		$tbody_html = $this->load->view('anekadharma/neraca_saldo/adminlte310_neraca_saldo_tbody', $data, TRUE);
+		$tfoot_html = $this->load->view('anekadharma/neraca_saldo/adminlte310_neraca_saldo_tfoot', $data, TRUE);
 
 		echo json_encode(array(
 			'ok' => true,
 			'tbody_html' => $tbody_html,
+			'tfoot_html' => $tfoot_html,
 			'periode_label' => buku_besar_bulan_teks($month_int) . ' ' . $year_int,
+			'ns_header_label' => neraca_saldo_periode_header_label($month_int, $year_int),
 			'bulan_ns_value' => $data['bulan_ns_value'],
-			'tahun_lalu' => $data['Get_year_Setahun_lalu'],
 		));
 	}
 

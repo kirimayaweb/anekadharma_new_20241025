@@ -5759,6 +5759,27 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list__jurnal_pembelian', $data);
 	}
 
+	public function ajax_bb_modal_jurnal_pembelian()
+	{
+		$this->load->helper('buku_besar_list');
+		$parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+		$jurnal = $this->_build_jurnal_pembelian2_view_rows($parsed['month'], $parsed['year']);
+		$sys_kode_akun_list = $this->db->query('SELECT kode_akun, nama_akun FROM sys_kode_akun ORDER BY kode_akun ASC')->result();
+		$spop_kode_akun_stats = $this->_jurnal_pembelian2_spop_kode_akun_stats($jurnal['rows']);
+		$data = array(
+			'jurnal_pembelian2_rows' => $jurnal['rows'],
+			'jurnal_pembelian2_totals' => $jurnal['totals'],
+			'jurnal_pembelian2_spop_stats' => $spop_kode_akun_stats,
+			'bulan_ns_selected' => $parsed['bulan_ns'],
+			'bulan_label' => buku_besar_bulan_teks($parsed['month']) . ' ' . $parsed['year'],
+			'sys_kode_akun_list' => $sys_kode_akun_list,
+			'url_jurnal_pembelian2_update_kode_akun' => site_url('Tbl_pembelian/ajax_jurnal_pembelian2_update_kode_akun'),
+			'url_jurnal_pembelian2_detail_kode_akun' => site_url('Tbl_pembelian/ajax_jurnal_pembelian2_detail_kode_akun'),
+			'url_excel_jurnal_pembelian2' => site_url('Tbl_pembelian/excel_jurnal_pembelian2'),
+		);
+		$this->load->view('anekadharma/buku_besar/partials/modal_jurnal_pembelian', $data);
+	}
+
 	public function ajax_jurnal_pembelian2_update_kode_akun()
 	{
 		$this->output->set_content_type('application/json');
