@@ -1615,6 +1615,7 @@ class Jurnal_kas extends CI_Controller
         $data['url_compare_jurnal_kas_tabel_detail'] = site_url('Jurnal_kas/ajax_compare_tabel_detail_jurnal_kas');
         $data['url_compare_jurnal_kas_tabel_import'] = site_url('Jurnal_kas/ajax_compare_import_table_to_jurnal_kas');
         $data['url_compare_jurnal_kas_tabel_detail_excel'] = site_url('Jurnal_kas/excel_compare_tabel_detail_jurnal_kas');
+        $data['url_compare_jurnal_kas_publish_status'] = site_url('Jurnal_kas/ajax_compare_jurnal_kas_publish_status');
         $data['url_jurnal_kas_excel'] = site_url('Jurnal_kas/excel/' . $compare_tahun_num . '/' . $compare_bulan_num);
         $data['bulan_ns_value'] = sprintf('%04d-%02d', $compare_tahun_num, $compare_bulan_num);
         $data['url_cari_jurnal_kas'] = site_url('Jurnal_kas/cari_between_date');
@@ -1955,21 +1956,40 @@ class Jurnal_kas extends CI_Controller
             return;
         }
 
-        if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli') {
+        $bulan_key = jurnal_kas_lap_normalize_bulan_key($tahun, $bulan_num);
+        if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli' || strtolower($source) === 'online') {
+            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'asli', null);
+        } else {
+            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'tabel', $source);
+        }
+        if (!empty($result['ok'])) {
+            $result['lap_url'] = site_url('Lap_Jurnal_kas/cari_between_date/' . $tahun . '/' . $bulan_num);
+            $result['publish_setting'] = isset($result['setting']) ? $result['setting'] : jurnal_kas_lap_get_publish_setting($this, $bulan_key);
+        }
+
+        persediaan_ajax_json_output($this, $result);
+    }
+
+    public function ajax_compare_jurnal_kas_publish_status()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_kas_lap'));
+
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        if ($bulan_num < 1 || $bulan_num > 12 || $tahun < 2000) {
             persediaan_ajax_json_output($this, array(
                 'ok' => false,
-                'message' => 'Publish hanya tersedia untuk sumber tabel tertentu.',
+                'message' => 'Pilih bulan dan tahun yang valid.',
             ));
             return;
         }
 
         $bulan_key = jurnal_kas_lap_normalize_bulan_key($tahun, $bulan_num);
-        $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'tabel', $source);
-        if (!empty($result['ok'])) {
-            $result['lap_url'] = site_url('Lap_Jurnal_kas/cari_between_date/' . $tahun . '/' . $bulan_num);
-        }
-
-        persediaan_ajax_json_output($this, $result);
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'publish_setting' => jurnal_kas_lap_get_publish_setting($this, $bulan_key),
+            'lap_url' => site_url('Lap_Jurnal_kas/cari_between_date/' . $tahun . '/' . $bulan_num),
+        ));
     }
 
     public function excel_setting_jurnal_kas($Tahun_selected = null, $Bulan_selected = null)

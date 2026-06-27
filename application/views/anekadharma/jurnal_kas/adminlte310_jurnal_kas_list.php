@@ -142,6 +142,9 @@
         $url_compare_jurnal_kas_tabel_detail_excel = isset($url_compare_jurnal_kas_tabel_detail_excel)
             ? $url_compare_jurnal_kas_tabel_detail_excel
             : site_url('Jurnal_kas/excel_compare_tabel_detail_jurnal_kas');
+        $url_compare_jurnal_kas_publish_status = isset($url_compare_jurnal_kas_publish_status)
+            ? $url_compare_jurnal_kas_publish_status
+            : site_url('Jurnal_kas/ajax_compare_jurnal_kas_publish_status');
         $url_jurnal_kas_excel = isset($url_jurnal_kas_excel)
             ? $url_jurnal_kas_excel
             : site_url('Jurnal_kas/excel/' . (int) $Get_year_Tahun_ini . '/' . (int) $Get_month_from_date);
@@ -671,10 +674,10 @@
                             <?php
                             $compare_jurnal_kas_sections = array(
                                 array('jenis' => 'data_manual', 'num' => '1', 'label' => 'Data Manual', 'subtitle' => 'Tabel CSV / database terpilih', 'badge' => 'compare-jurnal-kas-badge-manual', 'table' => 'table-compare-jurnal-kas-manual', 'theme' => 'primary', 'icon' => 'fa-database', 'col' => 'col-lg-6'),
-                                array('jenis' => 'data_online', 'num' => '2', 'label' => 'Data Online', 'subtitle' => 'Semua data jurnal_kas bulan terpilih', 'badge' => 'compare-jurnal-kas-badge-online', 'table' => 'table-compare-jurnal-kas-online', 'theme' => 'info', 'icon' => 'fa-cloud', 'col' => 'col-lg-6'),
+                                array('jenis' => 'data_online', 'num' => '2', 'label' => 'Data Online', 'subtitle' => 'Data aplikasi dari berbagai tabel sumber (sama seperti Tab 1)', 'badge' => 'compare-jurnal-kas-badge-online', 'table' => 'table-compare-jurnal-kas-online', 'theme' => 'info', 'icon' => 'fa-cloud', 'col' => 'col-lg-6'),
                                 array('jenis' => 'data_cocok', 'num' => '3', 'label' => 'Data Cocok (Manual & Online)', 'subtitle' => 'Tanggal, bukti, kode rekening, keterangan, debet, kredit sama', 'badge' => 'compare-jurnal-kas-badge-cocok', 'table' => 'table-compare-jurnal-kas-cocok', 'theme' => 'success', 'icon' => 'fa-check-circle', 'col' => 'col-lg-6'),
-                                array('jenis' => 'manual_tidak_di_online', 'num' => '4', 'label' => 'Manual Tidak Ada di Online', 'subtitle' => 'Tidak cocok / tidak ditemukan di jurnal_kas', 'badge' => 'compare-jurnal-kas-badge-manual-miss', 'table' => 'table-compare-jurnal-kas-manual-miss', 'theme' => 'warning', 'icon' => 'fa-exclamation-triangle', 'col' => 'col-lg-6'),
-                                array('jenis' => 'online_tidak_di_manual', 'num' => '5', 'label' => 'Online Tidak Ada di Manual', 'subtitle' => 'Ada di jurnal_kas, tidak cocok di manual', 'badge' => 'compare-jurnal-kas-badge-online-miss', 'table' => 'table-compare-jurnal-kas-online-miss', 'theme' => 'cyan', 'icon' => 'fa-exchange-alt', 'col' => 'col-lg-12'),
+                                array('jenis' => 'manual_tidak_di_online', 'num' => '4', 'label' => 'Manual Tidak Ada di Online', 'subtitle' => 'Tidak cocok / tidak ditemukan di data aplikasi (Tab 1)', 'badge' => 'compare-jurnal-kas-badge-manual-miss', 'table' => 'table-compare-jurnal-kas-manual-miss', 'theme' => 'warning', 'icon' => 'fa-exclamation-triangle', 'col' => 'col-lg-6'),
+                                array('jenis' => 'online_tidak_di_manual', 'num' => '5', 'label' => 'Online Tidak Ada di Manual', 'subtitle' => 'Ada di data aplikasi, tidak cocok di manual', 'badge' => 'compare-jurnal-kas-badge-online-miss', 'table' => 'table-compare-jurnal-kas-online-miss', 'theme' => 'cyan', 'icon' => 'fa-exchange-alt', 'col' => 'col-lg-12'),
                             );
                             ?>
 
@@ -683,7 +686,7 @@
                                 <div class="row mb-2">
                                     <div class="col-md-12">
                                         <small class="text-muted d-block mb-2">
-                                            Bandingkan data jurnal kas online (<strong>jurnal_kas</strong>)
+                                            Bandingkan data jurnal kas online (<strong>data aplikasi Tab 1 — berbagai tabel sumber</strong>)
                                             dengan tabel manual hasil upload CSV.
                                             Kolom CSV minimal: <strong>tanggal, bukti, keterangan, kode_rekening, debet, kredit</strong>.
                                             Pilih file CSV — tabel database akan langsung dibuat otomatis.
@@ -782,6 +785,25 @@
                                                     <span id="<?php echo $sec['badge']; ?>" class="badge compare-section-badge">0</span>
                                                 </div>
                                             </div>
+                                            <?php if ($sec['jenis'] === 'data_manual') { ?>
+                                            <div id="compare-jurnal-kas-publish-notif-manual" class="compare-jurnal-kas-publish-notif d-none">
+                                                <i class="fas fa-check-circle"></i> TAMPIL PUBLISH LAPORAN
+                                            </div>
+                                            <div class="compare-jurnal-kas-section-toolbar px-3 pt-2 pb-0">
+                                                <button type="button" id="btn-compare-jurnal-kas-publish-manual" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-upload"></i> Publish ke Laporan
+                                                </button>
+                                            </div>
+                                            <?php } elseif ($sec['jenis'] === 'data_online') { ?>
+                                            <div id="compare-jurnal-kas-publish-notif-online" class="compare-jurnal-kas-publish-notif d-none">
+                                                <i class="fas fa-check-circle"></i> PUBLISH KE LAPORAN BUKU KAS
+                                            </div>
+                                            <div class="compare-jurnal-kas-section-toolbar px-3 pt-2 pb-0">
+                                                <button type="button" id="btn-compare-jurnal-kas-publish-online" class="btn btn-info btn-sm">
+                                                    <i class="fas fa-cloud-upload-alt"></i> Publish Online ke Laporan
+                                                </button>
+                                            </div>
+                                            <?php } ?>
                                             <div class="compare-dt-wrap">
                                                 <table id="<?php echo $sec['table']; ?>" class="table table-bordered table-sm compare-dt compare-jurnal-kas-dt" style="width:100%;">
                                                     <thead><tr><th>No</th><th>Tanggal</th><th>Bukti</th><th>Kode Rek</th><th>Keterangan</th><th>Debet</th><th>Kredit</th><th>Catatan</th></tr></thead>
@@ -803,9 +825,15 @@
                                                 <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
                                             </div>
                                             <div class="modal-body pb-2">
-                                                <p class="text-muted small mb-2" id="compare-jurnal-kas-csv-preview-meta">Memuat...</p>
+                                                <div class="d-flex flex-wrap align-items-center mb-2">
+                                                    <p class="text-muted small mb-0 mr-3" id="compare-jurnal-kas-csv-preview-meta">Memuat...</p>
+                                                    <button type="button" id="btn-compare-jurnal-kas-csv-preview-excel" class="btn btn-success btn-sm">
+                                                        <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                                    </button>
+                                                </div>
                                                 <table id="table-compare-jurnal-kas-csv-preview" class="table table-bordered table-striped compare-jk-readable-table" style="width:100%;">
                                                     <thead><tr></tr></thead><tbody></tbody>
+                                                    <tfoot><tr class="compare-dt-total-row"><th colspan="1" class="text-right csv-preview-total-label">Total</th><th class="csv-preview-total-debet text-right">—</th><th class="csv-preview-total-kredit text-right">—</th></tr></tfoot>
                                                 </table>
                                             </div>
                                             <div class="modal-footer py-2"><button type="button" class="btn btn-default btn-sm" data-dismiss="modal">Tutup</button></div>
@@ -1231,6 +1259,19 @@
     .compare-theme-success .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e8f5e9, #fff); border-left: 4px solid #28a745; }
     .compare-theme-warning .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #fff8e1, #fff); border-left: 4px solid #ffc107; }
     .compare-theme-cyan .compare-jurnal-kas-section-header { background: linear-gradient(90deg, #e0f7fa, #fff); border-left: 4px solid #17a2b8; }
+    .compare-jurnal-kas-publish-notif {
+        margin: 10px 14px 0;
+        padding: 10px 14px;
+        background: #d4edda;
+        border: 1px solid #28a745;
+        color: #155724;
+        text-align: center;
+        font-weight: 700;
+        border-radius: 6px;
+        font-size: 16px;
+        letter-spacing: 0.3px;
+    }
+    .compare-jurnal-kas-section-toolbar { border-bottom: 1px solid rgba(0,0,0,.06); }
     .compare-dt-wrap .dataTables_wrapper { font-size: 18px; }
     .compare-dt-wrap table.dataTable thead th { background: #f8f9fa; font-size: 18px; white-space: nowrap; padding: 10px 12px; }
     .compare-dt-wrap table.dataTable tbody td { font-size: 18px; padding: 10px 12px; vertical-align: middle; line-height: 1.5; }
@@ -2146,10 +2187,14 @@ window.addEventListener('load', function() {
     var urlDetail = <?php echo json_encode($url_compare_jurnal_kas_tabel_detail); ?>;
     var urlTabelImport = <?php echo json_encode($url_compare_jurnal_kas_tabel_import); ?>;
     var urlDetailExcel = <?php echo json_encode($url_compare_jurnal_kas_tabel_detail_excel); ?>;
+    var urlPublish = <?php echo json_encode($url_setting_jurnal_kas_publish); ?>;
+    var urlPublishStatus = <?php echo json_encode($url_compare_jurnal_kas_publish_status); ?>;
+    var urlLapBase = <?php echo json_encode($url_lap_jurnal_kas); ?>;
     var urlCariJurnalKas = <?php echo json_encode($url_cari_jurnal_kas); ?>;
     var jurnalKasBulanStorageKey = 'anekadharma_jurnal_kas_bulan_terpilih';
     var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;
-    var tabelImportState = null, tabelDetailDt = null, tabelImportBusy = false;
+    var lastPublishSetting = null;
+    var tabelImportState = null, tabelDetailDt = null, tabelImportBusy = false, csvPreviewTbl = null;
 
     function bulanKey() {
         var b = parseInt(jQuery('#compare_bulan_jurnal_kas').val(), 10);
@@ -2174,6 +2219,99 @@ window.addEventListener('load', function() {
         $el.removeClass('alert-info alert-success alert-danger alert-warning');
         $el.addClass(type === 'success' ? 'alert-success' : (type === 'danger' ? 'alert-danger' : (type === 'warning' ? 'alert-warning' : 'alert-info')));
         $el.html(html);
+    }
+    function updatePublishNotifs(publish, tbl) {
+        publish = publish || null;
+        tbl = tbl || jQuery('#compare_tabel_jurnal_kas').val() || '';
+        lastPublishSetting = publish;
+        var showManual = publish && publish.source_type === 'tabel' && publish.source_table && publish.source_table === tbl;
+        var showOnline = publish && publish.source_type === 'asli';
+        jQuery('#compare-jurnal-kas-publish-notif-manual').toggleClass('d-none', !showManual);
+        jQuery('#compare-jurnal-kas-publish-notif-online').toggleClass('d-none', !showOnline);
+    }
+    function loadPublishStatus() {
+        var b = parseInt(jQuery('#compare_bulan_jurnal_kas').val(), 10);
+        var t = parseInt(jQuery('#compare_tahun_jurnal_kas').val(), 10);
+        if (!b || !t) {
+            updatePublishNotifs(null);
+            return;
+        }
+        jQuery.ajax({
+            url: urlPublishStatus,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan_num: b, tahun: t }
+        }).done(function(res) {
+            if (res && res.ok) {
+                updatePublishNotifs(res.publish_setting || null);
+            }
+        });
+    }
+    function doPublish(sourceType, sourceTable) {
+        var b = parseInt(jQuery('#compare_bulan_jurnal_kas').val(), 10);
+        var t = parseInt(jQuery('#compare_tahun_jurnal_kas').val(), 10);
+        var tbl = jQuery('#compare_tabel_jurnal_kas').val() || '';
+        if (!b || !t) {
+            alert('Pilih bulan dan tahun terlebih dahulu.');
+            return;
+        }
+        if (sourceType === 'tabel' && !tbl) {
+            alert('Pilih tabel manual terlebih dahulu.');
+            return;
+        }
+        var sumber = (sourceType === 'asli') ? 'asli' : tbl;
+        var confirmTitle = (sourceType === 'asli') ? 'Publish Online ke Laporan?' : 'Publish Manual ke Laporan?';
+        var confirmText = (sourceType === 'asli')
+            ? 'Data online (aplikasi Tab 1) akan ditampilkan di Laporan Jurnal Kas dan menggantikan publish manual.'
+            : 'Data manual dari tabel `' + tbl + '` akan ditampilkan di Laporan Jurnal Kas dan menggantikan publish online.';
+        var runPublish = function() {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Memproses publish...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+            }
+            jQuery.ajax({
+                url: urlPublish,
+                type: 'POST',
+                dataType: 'json',
+                data: { bulan_num: b, tahun: t, sumber: sumber }
+            }).done(function(res) {
+                if (typeof Swal !== 'undefined') Swal.close();
+                if (!res || !res.ok) {
+                    var msg = (res && res.message) ? res.message : 'Publish gagal.';
+                    if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Publish Gagal', text: msg });
+                    else alert(msg);
+                    return;
+                }
+                updatePublishNotifs(res.publish_setting || res.setting || null, tbl);
+                var lapUrl = res.lap_url || (urlLapBase + '/cari_between_date/' + t + '/' + b);
+                var okMsg = (sourceType === 'asli')
+                    ? 'Data online berhasil dipublish ke Laporan Jurnal Kas.'
+                    : 'Data manual berhasil dipublish ke Laporan Jurnal Kas.';
+                setStatus('success', '<i class="fas fa-check-circle"></i> ' + okMsg + ' <a href="' + lapUrl + '" target="_blank" class="alert-link">Buka Laporan</a>');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Publish Berhasil',
+                        html: okMsg + '<br/><a href="' + lapUrl + '" target="_blank">Buka Laporan Jurnal Kas</a>',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            }).fail(function() {
+                if (typeof Swal !== 'undefined') Swal.close();
+                alert('Tidak dapat menghubungi server.');
+            });
+        };
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'question',
+                title: confirmTitle,
+                text: confirmText,
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Publish',
+                cancelButtonText: 'Batal'
+            }).then(function(r) { if (r.isConfirmed) runPublish(); });
+        } else if (confirm(confirmText)) {
+            runPublish();
+        }
     }
     function toggleBtns() {
         var show = bulanKey() !== '' && (jQuery('#compare_tabel_jurnal_kas').val() || '') !== '';
@@ -2576,7 +2714,7 @@ window.addEventListener('load', function() {
             if (fv.online.mapped && typeof fv.online.mapped === 'object') {
                 var mappedO = [];
                 jQuery.each(fv.online.mapped, function(k, v) { mappedO.push(k + ' → ' + v); });
-                if (mappedO.length) parts.push('<strong>Tabel online (jurnal_kas):</strong> ' + mappedO.join(', '));
+                if (mappedO.length) parts.push('<strong>Data online (Tab 1):</strong> ' + mappedO.join(', '));
             }
             if (fv.online.missing_fields && fv.online.missing_fields.length) {
                 parts.push('<strong>Online kolom tidak ada:</strong> ' + fv.online.missing_fields.join(', '));
@@ -2638,7 +2776,7 @@ window.addEventListener('load', function() {
         var bk = bulanKey(), tbl = jQuery('#compare_tabel_jurnal_kas').val() || '';
         if (!bk || !tbl) { alert('Pilih bulan, tahun, dan tabel database.'); return; }
         if (typeof Swal !== 'undefined') {
-            Swal.fire({ title: 'Memproses Compare...', html: 'Membandingkan data manual vs online jurnal_kas', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+            Swal.fire({ title: 'Memproses Compare...', html: 'Membandingkan data manual vs data aplikasi (Tab 1)', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
         }
         setStatus('info', '<i class="fas fa-spinner fa-spin"></i> Membandingkan...');
         jQuery('#compare-jurnal-kas-results-panel').addClass('d-none');
@@ -2662,6 +2800,7 @@ window.addEventListener('load', function() {
                 return;
             }
             lastResult = res; renderAll(res); updateInfo(res);
+            updatePublishNotifs(res.publish_setting || null, tbl);
             jQuery('#compare-jurnal-kas-results-panel').removeClass('d-none');
             jQuery('#btn-compare-jurnal-kas-excel-all').removeClass('d-none');
             var okMsg = '<i class="fas fa-check-circle"></i> Compare selesai. Manual: ' + (res.stats.data_manual || 0)
@@ -2751,9 +2890,11 @@ window.addEventListener('load', function() {
     });
     jQuery('#compare_tabel_jurnal_kas').on('change', function() {
         validateTabelForImport();
+        updatePublishNotifs(lastPublishSetting, jQuery(this).val() || '');
     });
     jQuery('#compare_bulan_jurnal_kas, #compare_tahun_jurnal_kas').on('change', function() {
         toggleBtns();
+        loadPublishStatus();
         if (jQuery('#compare_tabel_jurnal_kas').val()) {
             validateTabelForImport();
         }
@@ -2763,13 +2904,17 @@ window.addEventListener('load', function() {
     jQuery('#btn-compare-jurnal-kas-tabel-detail').on('click', openTabelDetailModal);
     jQuery('#btn-compare-jurnal-kas-tabel-detail-excel').on('click', exportTabelDetailExcel);
     jQuery('#btn-compare-jurnal-kas-tabel-import').on('click', importTabelToJurnalKas);
+    jQuery('#btn-compare-jurnal-kas-publish-manual').on('click', function() { doPublish('tabel'); });
+    jQuery('#btn-compare-jurnal-kas-publish-online').on('click', function() { doPublish('asli'); });
     jQuery('#tab-compare-jurnal-kas').on('shown.bs.tab', function() {
         loadTableList(false);
         validateTabelForImport();
+        loadPublishStatus();
     });
     jQuery('#btn-compare-jurnal-kas-csv-cek-data').on('click', function() {
         var tbl = (csvLast && csvLast.table) || jQuery('#compare_tabel_jurnal_kas').val();
         if (!tbl) { alert('Belum ada tabel.'); return; }
+        csvPreviewTbl = tbl;
         jQuery('#compare-jurnal-kas-csv-preview-meta').text('Tabel: ' + tbl);
         jQuery('#modal-compare-jurnal-kas-csv-preview').modal('show');
         jQuery.ajax({ url: urlPreview, type: 'POST', dataType: 'json', data: { tabel: tbl, limit: 500 } })
@@ -2779,14 +2924,60 @@ window.addEventListener('load', function() {
             var $thead = jQuery('#table-compare-jurnal-kas-csv-preview thead tr').empty();
             cols.forEach(function(c) { $thead.append(jQuery('<th>').text(c)); });
             var rows = (res.rows || []).map(function(r) { return cols.map(function(c) { return r[c] != null ? r[c] : ''; }); });
+            var debIdx = -1, kreIdx = -1;
+            cols.forEach(function(c, i) {
+                var lc = String(c).toLowerCase().replace(/\s+/g, '_');
+                if (debIdx < 0 && (lc === 'debet' || lc.indexOf('debet') >= 0)) debIdx = i;
+                if (kreIdx < 0 && (lc === 'kredit' || lc.indexOf('kredit') >= 0)) kreIdx = i;
+            });
+            var labelColspan = Math.max(1, (debIdx >= 0 ? debIdx : cols.length));
+            var $tfoot = jQuery('#table-compare-jurnal-kas-csv-preview tfoot tr');
+            $tfoot.empty();
+            $tfoot.append(jQuery('<th>').attr('colspan', labelColspan).addClass('text-right').text('Total'));
+            if (debIdx >= 0) {
+                for (var g = labelColspan; g < debIdx; g++) $tfoot.append(jQuery('<th>'));
+                $tfoot.append(jQuery('<th>').addClass('csv-preview-total-debet text-right').text('—'));
+            }
+            if (kreIdx >= 0) {
+                for (var h = (debIdx >= 0 ? debIdx + 1 : labelColspan); h < kreIdx; h++) $tfoot.append(jQuery('<th>'));
+                $tfoot.append(jQuery('<th>').addClass('csv-preview-total-kredit text-right').text('—'));
+            }
+            var restStart = Math.max(debIdx, kreIdx) + 1;
+            for (var j = restStart; j < cols.length; j++) $tfoot.append(jQuery('<th>'));
+            var td = 0, tk = 0;
+            (res.rows || []).forEach(function(r) {
+                if (debIdx >= 0) td += parseAmt(r[cols[debIdx]]);
+                if (kreIdx >= 0) tk += parseAmt(r[cols[kreIdx]]);
+            });
+            $tfoot.find('.csv-preview-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
+            $tfoot.find('.csv-preview-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
             var $t = jQuery('#table-compare-jurnal-kas-csv-preview');
             if (jQuery.fn.DataTable.isDataTable($t)) $t.DataTable().destroy();
-            $t.DataTable({ data: rows, scrollX: true, pageLength: 25 });
+            $t.DataTable({
+                data: rows,
+                scrollX: true,
+                pageLength: 25,
+                drawCallback: function() {
+                    $tfoot.find('.csv-preview-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
+                    $tfoot.find('.csv-preview-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
+                }
+            });
         });
+    });
+    jQuery('#btn-compare-jurnal-kas-csv-preview-excel').on('click', function() {
+        var tbl = csvPreviewTbl || (csvLast && csvLast.table) || jQuery('#compare_tabel_jurnal_kas').val() || '';
+        if (!tbl) { alert('Belum ada tabel.'); return; }
+        var $form = jQuery('<form>', { method: 'POST', action: urlDetailExcel, target: '_blank' });
+        $form.append(jQuery('<input>', { type: 'hidden', name: 'tabel', value: tbl }));
+        $form.append(jQuery('<input>', { type: 'hidden', name: 'bulan', value: bulanKey() || '' }));
+        jQuery('body').append($form);
+        $form.trigger('submit');
+        $form.remove();
     });
     if (jQuery('#tab-compare-jurnal-kas').hasClass('active')) loadTableList(false);
     toggleBtns();
     validateTabelForImport();
+    loadPublishStatus();
     }
 
     if (document.readyState === 'complete') {

@@ -76,64 +76,25 @@ function jurnal_kas_compare_analyze_column_map($fields)
 
 function jurnal_kas_compare_validate_online_table_detail($CI)
 {
-	if (!$CI->db->table_exists('jurnal_kas')) {
-		return array(
-			'ok' => false,
-			'message' => 'Tabel online `jurnal_kas` tidak ditemukan di database.',
-			'missing_fields' => array('jurnal_kas (tabel)'),
-		);
-	}
-
-	$fields = $CI->db->list_fields('jurnal_kas');
-	$analysis = jurnal_kas_compare_analyze_column_map($fields);
-	$map = isset($analysis['map']) ? $analysis['map'] : array();
-	$missing = isset($analysis['missing_compare']) ? $analysis['missing_compare'] : array();
-
-	if (empty($map['kode_rekening'])) {
-		$has_kode_unit = persediaan_compare_pick_column($fields, array('kode_unit', 'kode unit')) !== null;
-		if ($has_kode_unit) {
-			$map['kode_rekening'] = persediaan_compare_pick_column($fields, array('kode_unit', 'kode unit'));
-			$missing = array_values(array_diff($missing, array('kode_rekening')));
-		}
-	}
-
-	$critical_missing = array();
-	if (empty($map['tanggal'])) {
-		$critical_missing[] = 'tanggal';
-	}
-	if (empty($map['keterangan'])) {
-		$critical_missing[] = 'keterangan';
-	}
-	if (empty($map['debet']) && empty($map['kredit'])) {
-		$critical_missing[] = 'debet atau kredit';
-	}
-
-	$soft_missing = array_values(array_diff($missing, $critical_missing));
-	$ok = count($critical_missing) === 0;
-	$message = '';
-	if (!$ok) {
-		$message = 'Tabel online `jurnal_kas` tidak memiliki kolom wajib: ' . implode(', ', $critical_missing) . '.';
-	} elseif (count($soft_missing) > 0) {
-		$message = 'Tabel online `jurnal_kas` — kolom compare tidak ditemukan (akan diisi kosong): ' . implode(', ', $soft_missing) . '.';
-	}
-
-	$mapped = array();
-	foreach ($map as $key => $col) {
-		if ($col !== null && $col !== '') {
-			$mapped[$key] = $col;
-		}
-	}
+	$map = array(
+		'tanggal' => 'tanggal',
+		'bukti' => 'bukti',
+		'keterangan' => 'keterangan',
+		'kode_rekening' => 'kode_unit',
+		'debet' => 'debet',
+		'kredit' => 'kredit',
+	);
 
 	return array(
-		'ok' => $ok,
-		'table' => 'jurnal_kas',
+		'ok' => true,
+		'table' => 'sources_merged',
 		'map' => $map,
-		'mapped' => $mapped,
-		'missing_fields' => array_merge($critical_missing, $soft_missing),
-		'critical_missing' => $critical_missing,
-		'soft_missing' => $soft_missing,
-		'fields' => $fields,
-		'message' => $message,
+		'mapped' => $map,
+		'missing_fields' => array(),
+		'critical_missing' => array(),
+		'soft_missing' => array(),
+		'fields' => array('tanggal', 'bukti', 'keterangan', 'kode_unit', 'debet', 'kredit', 'source'),
+		'message' => 'Data online diambil dari berbagai tabel sumber (sama seperti Tab 1 Jurnal Kas).',
 	);
 }
 
@@ -481,6 +442,23 @@ function jurnal_kas_compare_online_row_from_db($row)
 	);
 }
 
+function jurnal_kas_compare_online_row_from_source($row)
+{
+	$kode = isset($row->kode_unit) ? trim((string) $row->kode_unit) : '';
+	if ($kode === '' && isset($row->kode_rekening)) {
+		$kode = trim((string) $row->kode_rekening);
+	}
+
+	return array(
+		'tanggal' => pembelian_jurnal_compare_normalize_tanggal(isset($row->tanggal) ? $row->tanggal : ''),
+		'bukti' => isset($row->bukti) ? trim((string) $row->bukti) : '',
+		'keterangan' => isset($row->keterangan) ? trim((string) $row->keterangan) : '',
+		'kode_rekening' => $kode,
+		'debet' => jurnal_kas_compare_normalize_jumlah(isset($row->debet) ? $row->debet : 0),
+		'kredit' => jurnal_kas_compare_normalize_jumlah(isset($row->kredit) ? $row->kredit : 0),
+	);
+}
+
 function jurnal_kas_compare_load_online_all($CI, $bulan)
 {
 	$range = persediaan_compare_bulan_to_date_range($bulan);
@@ -488,41 +466,10 @@ function jurnal_kas_compare_load_online_all($CI, $bulan)
 		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
 	}
 
-	$online_fields = jurnal_kas_compare_validate_online_table_detail($CI);
-	if (empty($online_fields['ok'])) {
-		return array(
-			'ok' => false,
-			'message' => isset($online_fields['message']) ? $online_fields['message'] : 'Struktur tabel online jurnal_kas tidak valid.',
-			'field_validation' => array('online' => $online_fields),
-		);
-	}
-
 	$month = (int) substr($bulan, 5, 2);
 	$year = (int) substr($bulan, 0, 4);
-	$fields = $online_fields['fields'];
-	$has_kode_rekening = in_array('kode_rekening', $fields, true);
-	$has_kode_unit = in_array('kode_unit', $fields, true);
-
-	if ($has_kode_rekening && $has_kode_unit) {
-		$kode_expr = "COALESCE(NULLIF(TRIM(kode_rekening), ''), NULLIF(TRIM(kode_unit), ''), '')";
-	} elseif ($has_kode_rekening) {
-		$kode_expr = "COALESCE(NULLIF(TRIM(kode_rekening), ''), '')";
-	} elseif ($has_kode_unit) {
-		$kode_expr = "COALESCE(NULLIF(TRIM(kode_unit), ''), '')";
-	} else {
-		$kode_expr = "''";
-	}
-
-	$sql = "SELECT DATE(tanggal) AS tanggal,
-		COALESCE(NULLIF(TRIM(bukti), ''), '') AS bukti,
-		COALESCE(NULLIF(TRIM(keterangan), ''), '') AS keterangan,
-		{$kode_expr} AS kode_rekening,
-		COALESCE(debet, 0) AS debet,
-		COALESCE(kredit, 0) AS kredit
-		FROM jurnal_kas
-		WHERE tanggal IS NOT NULL AND tanggal <> '0000-00-00'
-		AND MONTH(tanggal) = ? AND YEAR(tanggal) = ?
-		ORDER BY tanggal, id";
+	$CI->load->helper('jurnal_kas_sources');
+	$source_rows = jurnal_kas_fetch_merged_rows($CI, $month, $year);
 
 	$list = array();
 	$by_full = array();
@@ -530,8 +477,8 @@ function jurnal_kas_compare_load_online_all($CI, $bulan)
 	$unprocessed = array();
 	$display_all = array();
 
-	foreach ($CI->db->query($sql, array($month, $year))->result() as $row) {
-		$item = jurnal_kas_compare_online_row_from_db($row);
+	foreach ((array) $source_rows as $row) {
+		$item = jurnal_kas_compare_online_row_from_source($row);
 		$reasons = jurnal_kas_compare_row_unprocessed_reasons($item);
 		$display_all[] = jurnal_kas_compare_row_to_display(
 			$item,
@@ -686,7 +633,7 @@ function jurnal_kas_compare_run($CI, $bulan, $table = '')
 		$warnings[] = 'Semua baris manual tidak dapat diproses compare. Periksa tanggal, debet/kredit, dan kelengkapan field.';
 	}
 	if ((int) $online['stats']['processed'] === 0) {
-		$warnings[] = 'Tidak ada data online jurnal_kas yang dapat diproses pada bulan terpilih.';
+		$warnings[] = 'Tidak ada data online (aplikasi Tab 1) yang dapat diproses pada bulan terpilih.';
 	}
 
 	$data_cocok = array();
@@ -778,6 +725,9 @@ function jurnal_kas_compare_run($CI, $bulan, $table = '')
 	usort($manual_tidak, 'jurnal_kas_compare_sort_display_rows');
 	usort($online_tidak, 'jurnal_kas_compare_sort_display_rows');
 
+	$CI->load->helper('jurnal_kas_lap');
+	$publish_setting = jurnal_kas_lap_get_publish_setting($CI, $bulan);
+
 	return array(
 		'ok' => true,
 		'bulan' => $bulan,
@@ -791,6 +741,7 @@ function jurnal_kas_compare_run($CI, $bulan, $table = '')
 		'manual_tidak_terproses' => isset($manual['unprocessed']) ? $manual['unprocessed'] : array(),
 		'online_tidak_terproses' => isset($online['unprocessed']) ? $online['unprocessed'] : array(),
 		'warnings' => $warnings,
+		'publish_setting' => $publish_setting,
 		'field_validation' => array(
 			'manual' => array(
 				'ok' => true,
