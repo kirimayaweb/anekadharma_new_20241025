@@ -44,7 +44,7 @@
                         </div>
                     </div>
 
-                    <div class="card-body">
+                    <div class="card-body lap-jk-card-body">
                         <div id="lap-jurnal-kas-table-wrap" class="lap-jk-dt-box">
                             <div class="lap-jk-dt-responsive">
                                 <table id="lapJurnalKasMainTable" class="table table-bordered table-striped jurnal-kas-grid-table mb-0 w-100">
@@ -102,6 +102,7 @@
                                 </table>
                             </div>
 
+                            <div class="lap-jk-summary-scroll" id="lap-jk-summary-scroll">
                             <div class="jurnal-kas-summary-wrap lap-jk-summary-wrap">
                                 <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table lap-jk-summary-table mb-0">
                                     <colgroup>
@@ -147,6 +148,7 @@
                                     </tbody>
                                 </table>
                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,52 +159,96 @@
 
 <style type="text/css">
     #lap-jurnal-kas-table-wrap.lap-jk-dt-box {
+        --lap-jk-font-base: clamp(14px, 0.55vw + 12px, 30px);
+        --lap-jk-font-control: clamp(13px, 0.5vw + 11px, 28px);
+        --lap-jk-pad-y: clamp(8px, 0.45vw + 6px, 16px);
+        --lap-jk-pad-x: clamp(8px, 0.55vw + 6px, 18px);
+        --lap-jk-viewport-h: clamp(320px, calc(100vh - 280px), 900px);
+        --lap-jk-col-no: clamp(52px, 4.5vw, 80px);
+        --lap-jk-col-tanggal: clamp(130px, 11vw, 280px);
+        --lap-jk-col-bukti: clamp(110px, 9vw, 240px);
+        --lap-jk-col-keterangan: clamp(220px, 22vw, 520px);
+        --lap-jk-col-debet: clamp(150px, 13vw, 340px);
+        --lap-jk-col-kredit: clamp(150px, 13vw, 340px);
         border: 2px solid #ffe082;
         border-radius: 8px;
-        overflow: hidden;
+        overflow: visible;
         background: #fff;
         box-shadow: 0 1px 4px rgba(255, 193, 7, 0.15);
         padding: 0;
     }
-    #lap-jurnal-kas-table-wrap .lap-jk-dt-responsive {
+    #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_scroll {
+        border-bottom: 1px solid #dee2e6;
+    }
+    #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_scrollHead {
+        overflow: hidden !important;
+        background: #fff;
+    }
+    #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_scrollBody {
+        max-height: var(--lap-jk-viewport-h) !important;
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    #lap-jurnal-kas-table-wrap .lap-jk-summary-scroll {
         overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        border-top: 2px solid #ffe082;
+    }
+    #lap-jurnal-kas-table-wrap .lap-jk-dt-responsive {
+        width: 100%;
     }
     #lap-jurnal-kas-table-wrap .jurnal-kas-grid-table {
-        table-layout: fixed;
+        table-layout: auto;
         width: 100%;
-        min-width: 1680px;
-        font-size: 30px;
+        min-width: calc(
+            var(--lap-jk-col-no) + var(--lap-jk-col-tanggal) + var(--lap-jk-col-bukti) +
+            var(--lap-jk-col-keterangan) + var(--lap-jk-col-debet) + var(--lap-jk-col-kredit)
+        );
+        font-size: var(--lap-jk-font-base);
         color: #212529;
         border-color: #dee2e6 !important;
     }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-no { width: 72px; }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-tanggal { width: 260px; }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-bukti { width: 220px; }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-keterangan { width: auto; }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-debet { width: 320px; }
-    #lap-jurnal-kas-table-wrap col.lap-jk-w-kredit { width: 320px; }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-no { width: var(--lap-jk-col-no); min-width: var(--lap-jk-col-no); }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-tanggal { width: var(--lap-jk-col-tanggal); min-width: var(--lap-jk-col-tanggal); }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-bukti { width: var(--lap-jk-col-bukti); min-width: var(--lap-jk-col-bukti); }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-keterangan { width: var(--lap-jk-col-keterangan); min-width: var(--lap-jk-col-keterangan); }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-debet { width: var(--lap-jk-col-debet); min-width: var(--lap-jk-col-debet); }
+    #lap-jurnal-kas-table-wrap col.lap-jk-w-kredit { width: var(--lap-jk-col-kredit); min-width: var(--lap-jk-col-kredit); }
+    #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(1),
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(1) {
+        min-width: var(--lap-jk-col-no);
+        width: var(--lap-jk-col-no);
+        white-space: nowrap;
+        text-align: center;
+    }
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(2),
-    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(2),
-    #lap-jurnal-kas-table-wrap .lap-jk-summary-table td:nth-child(2) {
-        min-width: 260px;
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(2) {
+        min-width: var(--lap-jk-col-tanggal);
         white-space: nowrap;
     }
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(3),
-    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(3),
-    #lap-jurnal-kas-table-wrap .lap-jk-summary-table td:nth-child(3) {
-        min-width: 220px;
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(3) {
+        min-width: var(--lap-jk-col-bukti);
         white-space: nowrap;
     }
+    #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(4),
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(4) {
+        min-width: var(--lap-jk-col-keterangan);
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+        line-height: 1.35;
+    }
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(5),
-    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(5),
-    #lap-jurnal-kas-table-wrap .lap-jk-summary-table td:nth-child(5) {
-        min-width: 320px;
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(5) {
+        min-width: var(--lap-jk-col-debet);
         white-space: nowrap;
     }
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(6),
-    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(6),
-    #lap-jurnal-kas-table-wrap .lap-jk-summary-table td:nth-child(6) {
-        min-width: 320px;
+    #lap-jurnal-kas-table-wrap table.dataTable tbody td:nth-child(6) {
+        min-width: var(--lap-jk-col-kredit);
         white-space: nowrap;
     }
     #lap-jurnal-kas-table-wrap table.dataTable {
@@ -218,12 +264,12 @@
         border: 1px solid #dee2e6 !important;
         font-weight: 600;
         vertical-align: middle;
-        padding: 16px 18px;
+        padding: var(--lap-jk-pad-y) var(--lap-jk-pad-x);
     }
     #lap-jurnal-kas-table-wrap table.dataTable tbody td {
         border: 1px solid #dee2e6 !important;
         vertical-align: middle;
-        padding: 14px 18px;
+        padding: var(--lap-jk-pad-y) var(--lap-jk-pad-x);
         background-color: #fff;
     }
     #lap-jurnal-kas-table-wrap table.dataTable tbody tr:nth-child(even) td {
@@ -238,12 +284,12 @@
     #lap-jurnal-kas-table-wrap .dataTables_wrapper {
         width: 100%;
         padding: 0;
-        font-size: 28px;
+        font-size: var(--lap-jk-font-control);
         color: #212529;
     }
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .row:first-child {
         margin: 0;
-        padding: 16px 18px 12px;
+        padding: var(--lap-jk-pad-y) var(--lap-jk-pad-x);
         background: #fffef5;
         border-bottom: 1px solid #ffe082;
     }
@@ -267,24 +313,25 @@
     }
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length select,
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter input {
-        font-size: 28px;
-        padding: 8px 14px;
+        font-size: var(--lap-jk-font-control);
+        padding: clamp(6px, 0.4vw + 4px, 10px) clamp(8px, 0.5vw + 6px, 14px);
         height: auto;
         border: 1px solid #ced4da;
         border-radius: 4px;
         background: #fff;
     }
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter input {
-        min-width: 320px;
+        min-width: clamp(180px, 22vw, 360px);
+        max-width: 100%;
     }
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_info,
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate {
-        padding: 16px 18px;
-        font-size: 28px;
+        padding: var(--lap-jk-pad-y) var(--lap-jk-pad-x);
+        font-size: var(--lap-jk-font-control);
     }
     #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_paginate .paginate_button {
-        padding: 8px 16px;
-        font-size: 28px;
+        padding: clamp(4px, 0.35vw + 3px, 8px) clamp(8px, 0.6vw + 4px, 16px);
+        font-size: var(--lap-jk-font-control);
         border-radius: 4px;
         border: 1px solid #dee2e6 !important;
         background: #fff !important;
@@ -301,12 +348,12 @@
     #lap-jurnal-kas-table-wrap table.dataTable thead .sorting_desc {
         cursor: pointer;
         position: relative;
-        padding-right: 36px !important;
+        padding-right: clamp(24px, 2vw, 36px) !important;
         white-space: nowrap;
     }
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(5),
     #lap-jurnal-kas-table-wrap table.dataTable thead th:nth-child(6) {
-        padding-right: 36px !important;
+        padding-right: clamp(24px, 2vw, 36px) !important;
     }
     #lap-jurnal-kas-table-wrap table.dataTable tbody td.sorting_1,
     #lap-jurnal-kas-table-wrap table.dataTable tbody td.sorting_2,
@@ -314,17 +361,35 @@
         background-color: inherit;
     }
     #lap-jurnal-kas-table-wrap .lap-jk-summary-wrap {
-        border-top: 2px solid #ffe082;
+        border-top: none;
+    }
+    #lap-jurnal-kas-table-wrap .lap-jk-summary-table {
+        table-layout: auto;
+        width: 100%;
+        min-width: calc(
+            var(--lap-jk-col-no) + var(--lap-jk-col-tanggal) + var(--lap-jk-col-bukti) +
+            var(--lap-jk-col-keterangan) + var(--lap-jk-col-debet) + var(--lap-jk-col-kredit)
+        );
     }
     #lap-jurnal-kas-table-wrap .lap-jk-summary-table td {
         border: 1px solid #dee2e6 !important;
-        font-size: 30px;
-        padding: 14px 18px;
+        font-size: var(--lap-jk-font-base);
+        padding: var(--lap-jk-pad-y) var(--lap-jk-pad-x);
+        white-space: nowrap;
     }
     .jk-summary-row td {
         background: #fff8e1;
         font-weight: 700;
-        font-size: 30px;
+        font-size: var(--lap-jk-font-base);
+    }
+    .lap-jk-card-body {
+        overflow-x: auto;
+    }
+    @media (max-width: 991px) {
+        #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length label,
+        #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter label {
+            flex-wrap: wrap;
+        }
     }
 </style>
 
@@ -338,7 +403,43 @@ window.addEventListener('load', function() {
                 $table.DataTable().destroy();
             }
 
-            var lapColWidths = ['72px', '260px', '220px', 'auto', '320px', '320px'];
+            var lapColWidths = null;
+
+            function readLapColWidths() {
+                var root = document.getElementById('lap-jurnal-kas-table-wrap');
+                if (!root || !window.getComputedStyle) {
+                    return ['52px', '130px', '110px', '220px', '150px', '150px'];
+                }
+                var cs = window.getComputedStyle(root);
+                return [
+                    cs.getPropertyValue('--lap-jk-col-no').trim() || '52px',
+                    cs.getPropertyValue('--lap-jk-col-tanggal').trim() || '130px',
+                    cs.getPropertyValue('--lap-jk-col-bukti').trim() || '110px',
+                    cs.getPropertyValue('--lap-jk-col-keterangan').trim() || '220px',
+                    cs.getPropertyValue('--lap-jk-col-debet').trim() || '150px',
+                    cs.getPropertyValue('--lap-jk-col-kredit').trim() || '150px'
+                ];
+            }
+
+            function getLapScrollBody() {
+                var $wrap = $table.closest('.dataTables_wrapper');
+                var $body = $wrap.find('.dataTables_scrollBody');
+                return $body.length ? $body : $wrap.find('.dataTables_scroll').find('.dataTables_scrollBody');
+            }
+
+            function bindLapSummaryScrollSync() {
+                var $scrollBody = getLapScrollBody();
+                var $summaryScroll = $('#lap-jk-summary-scroll');
+                if (!$scrollBody.length || !$summaryScroll.length) {
+                    return;
+                }
+                $scrollBody.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
+                    $summaryScroll.scrollLeft($scrollBody.scrollLeft());
+                });
+                $summaryScroll.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
+                    $scrollBody.scrollLeft($summaryScroll.scrollLeft());
+                });
+            }
 
             function fmtLapAmount(value) {
                 var num = parseFloat(value);
@@ -374,12 +475,23 @@ window.addEventListener('load', function() {
                 $('#lap-jk-summary-seimbang-kredit').text(fmtLapAmount(seimbangVal));
             }
 
-            function syncLapJurnalKasTableWidths() {
+            function syncLapJurnalKasTableWidths(dt) {
+                lapColWidths = readLapColWidths();
                 var $mainTable = $('#lapJurnalKasMainTable');
                 var $summaryTable = $('.lap-jk-summary-table');
                 if (!$mainTable.length) {
                     return;
                 }
+                if (dt && dt.columns) {
+                    dt.columns.adjust();
+                }
+                var $scrollBody = getLapScrollBody();
+                var $innerTable = $scrollBody.length ? $scrollBody.find('table').first() : $mainTable;
+                var tableWidth = Math.max(
+                    ($innerTable[0] && $innerTable[0].scrollWidth) || 0,
+                    $mainTable[0].scrollWidth,
+                    $mainTable.outerWidth()
+                );
                 $mainTable.find('colgroup col').each(function(i) {
                     if (lapColWidths[i]) {
                         $(this).css('width', lapColWidths[i]);
@@ -390,13 +502,12 @@ window.addEventListener('load', function() {
                         $(this).css('width', lapColWidths[i]);
                     }
                 });
-                $mainTable.css('width', '100%');
-                if ($summaryTable.length) {
-                    $summaryTable.css('width', $mainTable.outerWidth() + 'px');
-                }
+                $summaryTable.css('width', tableWidth + 'px');
+                bindLapSummaryScrollSync();
             }
 
-            var lapDt = $table.DataTable({
+            var lapDt = null;
+            lapDt = $table.DataTable({
                 paging: true,
                 pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, 500], [10, 25, 50, 100, 500]],
@@ -404,7 +515,10 @@ window.addEventListener('load', function() {
                 ordering: true,
                 order: [[0, 'asc']],
                 orderClasses: false,
-                autoWidth: false,
+                autoWidth: true,
+                scrollX: true,
+                scrollY: 'var(--lap-jk-viewport-h, calc(100vh - 320px))',
+                scrollCollapse: true,
                 info: true,
                 dom: 'lfrtip',
                 language: {
@@ -423,32 +537,52 @@ window.addEventListener('load', function() {
                     }
                 },
                 columnDefs: [
-                    { targets: 0, width: lapColWidths[0], orderable: true, className: 'text-center' },
-                    { targets: 1, width: lapColWidths[1], orderable: true },
-                    { targets: 2, width: lapColWidths[2], orderable: true },
-                    { targets: 3, width: lapColWidths[3], orderable: true },
-                    { targets: 4, width: lapColWidths[4], orderable: true, className: 'text-right' },
-                    { targets: 5, width: lapColWidths[5], orderable: true, className: 'text-right' }
+                    { targets: 0, orderable: true, className: 'text-center' },
+                    { targets: 1, orderable: true },
+                    { targets: 2, orderable: true },
+                    { targets: 3, orderable: true },
+                    { targets: 4, orderable: true, className: 'text-right' },
+                    { targets: 5, orderable: true, className: 'text-right' }
                 ],
                 drawCallback: function() {
-                    syncLapJurnalKasTableWidths();
+                    syncLapJurnalKasTableWidths(this.api());
                     updateLapSummaryTotals(this.api());
                 },
                 initComplete: function() {
-                    syncLapJurnalKasTableWidths();
+                    syncLapJurnalKasTableWidths(this.api());
                     updateLapSummaryTotals(this.api());
+                    bindLapSummaryScrollSync();
                 }
             });
 
+            function lapDtReflow() {
+                if (!lapDt) {
+                    return;
+                }
+                syncLapJurnalKasTableWidths(lapDt);
+                updateLapSummaryTotals(lapDt);
+            }
+
             lapDt.on('search.dt draw.dt order.dt column-visibility.dt page.dt length.dt', function() {
-                setTimeout(function() {
-                    syncLapJurnalKasTableWidths();
-                    updateLapSummaryTotals(lapDt);
-                }, 0);
+                setTimeout(lapDtReflow, 0);
             });
-            $(window).on('resize.lapJurnalKasDt', function() {
-                syncLapJurnalKasTableWidths();
+            $(window).on('resize.lapJurnalKasDt orientationchange.lapJurnalKasDt', function() {
+                setTimeout(lapDtReflow, 100);
             });
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', function() {
+                    setTimeout(lapDtReflow, 100);
+                });
+            }
+            if (window.ResizeObserver) {
+                var lapResizeObs = new ResizeObserver(function() {
+                    lapDtReflow();
+                });
+                var lapWrapEl = document.getElementById('lap-jurnal-kas-table-wrap');
+                if (lapWrapEl) {
+                    lapResizeObs.observe(lapWrapEl);
+                }
+            }
         }
     }
 
