@@ -112,8 +112,9 @@
         if (!isset($active_tab)) {
             $active_tab = 'data';
         }
-        $tab_data_active = ($active_tab !== 'compare');
+        $tab_data_active = ($active_tab === 'data');
         $tab_compare_active = ($active_tab === 'compare');
+        $tab_setting_active = ($active_tab === 'setting');
         $url_compare_jurnal_kas_run = isset($url_compare_jurnal_kas_run)
             ? $url_compare_jurnal_kas_run
             : site_url('Jurnal_kas/ajax_compare_jurnal_kas_manual_online');
@@ -150,6 +151,21 @@
         $url_cari_jurnal_kas = isset($url_cari_jurnal_kas)
             ? $url_cari_jurnal_kas
             : site_url('Jurnal_kas/cari_between_date');
+        $url_setting_jurnal_kas_data = isset($url_setting_jurnal_kas_data)
+            ? $url_setting_jurnal_kas_data
+            : site_url('Jurnal_kas/ajax_setting_jurnal_kas_data');
+        $url_setting_jurnal_kas_publish = isset($url_setting_jurnal_kas_publish)
+            ? $url_setting_jurnal_kas_publish
+            : site_url('Jurnal_kas/ajax_setting_jurnal_kas_publish');
+        $url_setting_jurnal_kas_tabel_list = isset($url_setting_jurnal_kas_tabel_list)
+            ? $url_setting_jurnal_kas_tabel_list
+            : site_url('Jurnal_kas/ajax_setting_jurnal_kas_tabel_list');
+        $url_lap_jurnal_kas = isset($url_lap_jurnal_kas)
+            ? $url_lap_jurnal_kas
+            : site_url('Lap_Jurnal_kas');
+        $url_setting_jurnal_kas_excel = isset($url_setting_jurnal_kas_excel)
+            ? $url_setting_jurnal_kas_excel
+            : site_url('Jurnal_kas/excel_setting_jurnal_kas');
         $url_ajax_pemasukan_kas = isset($url_ajax_pemasukan_kas)
             ? $url_ajax_pemasukan_kas
             : site_url('Jurnal_kas/ajax_pemasukan_kas_action');
@@ -270,6 +286,9 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php echo $tab_compare_active ? ' active' : ''; ?>" id="tab-compare-jurnal-kas" data-toggle="pill" href="#panel-compare-jurnal-kas" role="tab" aria-controls="panel-compare-jurnal-kas" aria-selected="<?php echo $tab_compare_active ? 'true' : 'false'; ?>">Compare Data Manual - Online</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo $tab_setting_active ? ' active' : ''; ?>" id="tab-setting-jurnal-kas" data-toggle="pill" href="#panel-setting-jurnal-kas" role="tab" aria-controls="panel-setting-jurnal-kas" aria-selected="<?php echo $tab_setting_active ? 'true' : 'false'; ?>">Setting Jurnal Kas</a>
                             </li>
                         </ul>
 
@@ -836,6 +855,115 @@
                                 </div>
 
                             </div><!-- /.tab-pane compare -->
+
+                            <div class="tab-pane fade<?php echo $tab_setting_active ? ' show active' : ''; ?>" id="panel-setting-jurnal-kas" role="tabpanel" aria-labelledby="tab-setting-jurnal-kas">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 jurnal-kas-tab1-toolbar">
+                                    <div>
+                                        <h5 class="mb-0 text-primary jk-toolbar-title"><strong>Setting Jurnal Kas Laporan</strong> <span class="text-muted" id="setting-jurnal-kas-label-bulan">(Bulan : <?php echo bulan_teks($Get_month_from_date) . ' ' . $Get_year_Tahun_ini; ?>)</span></h5>
+                                        <div class="jk-toolbar-hint text-muted">Pilih sumber data — preview tanpa input. Publish untuk tabel tertentu agar tampil di halaman Lap Jurnal Kas.</div>
+                                        <div id="setting-jurnal-kas-loading" class="text-info d-none mt-1"><i class="fas fa-spinner fa-spin"></i> Memuat data setting...</div>
+                                        <div id="setting-jurnal-kas-publish-info" class="small text-muted mt-1"></div>
+                                    </div>
+                                    <div class="d-flex flex-wrap align-items-center mt-2 mt-md-0">
+                                        <button type="button" class="btn btn-primary mr-2 mb-2 mb-md-0 d-none" id="btn-setting-jurnal-kas-publish">
+                                            <i class="fa fa-upload"></i> Publish
+                                        </button>
+                                        <a href="<?php echo htmlspecialchars($url_lap_jurnal_kas, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-info mr-2 mb-2 mb-md-0" target="_blank" id="btn-setting-jurnal-kas-open-lap">
+                                            <i class="fa fa-external-link"></i> Buka Lap Jurnal Kas
+                                        </a>
+                                        <button type="button" class="btn btn-success mb-2 mb-md-0" id="btn-setting-jurnal-kas-excel">
+                                            <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3 align-items-end setting-toolbar-row flex-wrap">
+                                    <div class="col-auto mb-2">
+                                        <label for="setting_bulan_jurnal_kas" class="small mb-1">Bulan</label>
+                                        <select id="setting_bulan_jurnal_kas" class="form-control form-control-sm setting-toolbar-control">
+                                            <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
+                                                <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === (int) $compare_bulan_num) ? ' selected' : ''; ?>><?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto mb-2">
+                                        <label for="setting_tahun_jurnal_kas" class="small mb-1">Tahun</label>
+                                        <select id="setting_tahun_jurnal_kas" class="form-control form-control-sm setting-toolbar-control">
+                                            <?php for ($th = (int) $gen_tahun_min; $th <= (int) $gen_tahun_max; $th++) { ?>
+                                                <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === (int) $compare_tahun_num) ? ' selected' : ''; ?>><?php echo (int) $th; ?></option>
+                                            <?php } ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-auto mb-2">
+                                        <label for="setting_sumber_jurnal_kas" class="small mb-1">Ambil data / Pilih tabel</label>
+                                        <select id="setting_sumber_jurnal_kas" class="form-control form-control-sm setting-toolbar-sumber">
+                                            <option value="asli">Jurnal_kas Asli</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div id="setting-jurnal-kas-table-wrap">
+                                    <div class="jurnal-kas-dt-responsive">
+                                        <table id="settingJurnalKasMainTable" class="table table-bordered jurnal-kas-grid-table mb-0">
+                                            <colgroup>
+                                                <col class="jk-w-no">
+                                                <col class="jk-w-sumber">
+                                                <col class="jk-w-unit">
+                                                <col class="jk-w-tanggal">
+                                                <col class="jk-w-bukti">
+                                                <col class="jk-w-keterangan">
+                                                <col class="jk-w-debet">
+                                                <col class="jk-w-kredit">
+                                            </colgroup>
+                                            <thead>
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Sumber</th>
+                                                    <th>Unit</th>
+                                                    <th>Tanggal</th>
+                                                    <th>Bukti</th>
+                                                    <th>Keterangan</th>
+                                                    <th>Debet</th>
+                                                    <th>Kredit</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="setting-jurnal-kas-tbody"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="jurnal-kas-summary-wrap">
+                                        <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table mb-0">
+                                            <colgroup>
+                                                <col class="jk-w-no">
+                                                <col class="jk-w-sumber">
+                                                <col class="jk-w-unit">
+                                                <col class="jk-w-tanggal">
+                                                <col class="jk-w-bukti">
+                                                <col class="jk-w-keterangan">
+                                                <col class="jk-w-debet">
+                                                <col class="jk-w-kredit">
+                                            </colgroup>
+                                            <tbody>
+                                                <tr class="jk-summary-row">
+                                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">JUMLAH DEBET / KREDIT</td>
+                                                    <td class="text-right font-weight-bold" id="setting-jk-total-debet">—</td>
+                                                    <td class="text-right font-weight-bold" id="setting-jk-total-kredit">—</td>
+                                                </tr>
+                                                <tr class="jk-summary-row jk-summary-row-saldo">
+                                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">Saldo akhir Kas Bulan <span id="setting-jk-bulan-nama"><?php echo bulan_teks($Get_month_from_date); ?></span></td>
+                                                    <td class="text-right font-weight-bold"></td>
+                                                    <td class="text-right font-weight-bold" id="setting-jk-saldo-akhir">—</td>
+                                                </tr>
+                                                <tr class="jk-summary-row jk-summary-row-last">
+                                                    <td colspan="6" class="jk-summary-label text-center font-weight-bold">JUMLAH SEIMBANG</td>
+                                                    <td class="text-right font-weight-bold" id="setting-jk-seimbang-debet">—</td>
+                                                    <td class="text-right font-weight-bold" id="setting-jk-seimbang-kredit">—</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div><!-- /.tab-pane setting -->
+
                         </div><!-- /.tab-content -->
                     </div>
                     <!-- /.card-body -->
@@ -970,7 +1098,8 @@
     .nav-tabs.jurnal-kas-tabs { border-bottom: 2px solid #dc3545; margin-bottom: 15px; }
     .nav-tabs.jurnal-kas-tabs .nav-link { background: #fff; border: 2px solid #dc3545; border-bottom: none; color: #888; margin-right: 4px; border-radius: 4px 4px 0 0; opacity: .75; font-size: 18px; padding: 10px 16px; }
     #panel-jurnal-kas-data,
-    #panel-compare-jurnal-kas {
+    #panel-compare-jurnal-kas,
+    #panel-setting-jurnal-kas {
         font-size: 18px;
     }
     #panel-compare-jurnal-kas label.small,
@@ -998,6 +1127,15 @@
     }
     .nav-tabs.jurnal-kas-tabs .nav-link.active { background: #007bff; color: #000; font-weight: bold; opacity: 1; }
     .compare-toolbar-row .compare-toolbar-control { width: 110px; min-width: 110px; }
+    .setting-toolbar-row .setting-toolbar-control { width: 110px; min-width: 110px; }
+    #setting_tahun_jurnal_kas.setting-toolbar-control { width: 88px; min-width: 88px; }
+    #setting_sumber_jurnal_kas.setting-toolbar-sumber { width: 360px; min-width: 270px; max-width: 480px; }
+    #setting-jurnal-kas-table-wrap {
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+    }
     #compare_tahun_jurnal_kas.compare-toolbar-control { width: 88px; min-width: 88px; }
     #compare_tabel_jurnal_kas.compare-toolbar-tabel { width: 360px; min-width: 270px; max-width: 480px; }
     .compare-jurnal-kas-tabel-info-box {
@@ -2655,6 +2793,217 @@ window.addEventListener('load', function() {
         bootCompareJurnalKas();
     } else {
         window.addEventListener('load', bootCompareJurnalKas);
+    }
+})();
+</script>
+
+<script>
+(function settingJurnalKasInit() {
+    function bootSettingJurnalKas() {
+        if (!window.jQuery) return;
+
+        var urlData = <?php echo json_encode($url_setting_jurnal_kas_data); ?>;
+        var urlPublish = <?php echo json_encode($url_setting_jurnal_kas_publish); ?>;
+        var urlList = <?php echo json_encode($url_setting_jurnal_kas_tabel_list); ?>;
+        var urlLapBase = <?php echo json_encode($url_lap_jurnal_kas); ?>;
+        var urlExcelBase = <?php echo json_encode($url_setting_jurnal_kas_excel); ?>;
+        var namaBulan = <?php echo json_encode($nama_bulan_id); ?>;
+        var tablesLoaded = false;
+        var loading = false;
+        var lastData = null;
+
+        function bulanParts() {
+            var b = parseInt(jQuery('#setting_bulan_jurnal_kas').val(), 10);
+            var t = parseInt(jQuery('#setting_tahun_jurnal_kas').val(), 10);
+            if (!b || !t) return null;
+            return { bulan_num: b, tahun: t, bulan_key: t + '-' + String(b).padStart(2, '0') };
+        }
+
+        function selectedSumber() {
+            return jQuery('#setting_sumber_jurnal_kas').val() || 'asli';
+        }
+
+        function togglePublishBtn() {
+            var src = selectedSumber();
+            jQuery('#btn-setting-jurnal-kas-publish').toggleClass('d-none', src === 'asli' || src === '');
+        }
+
+        function updateBulanLabel(parts, label) {
+            var txt = label || (parts && namaBulan[parts.bulan_num] ? namaBulan[parts.bulan_num] + ' ' + parts.tahun : '—');
+            jQuery('#setting-jurnal-kas-label-bulan').text('(Bulan : ' + txt + ')');
+            jQuery('#setting-jk-bulan-nama').text(parts && namaBulan[parts.bulan_num] ? namaBulan[parts.bulan_num] : '—');
+            if (parts) {
+                jQuery('#btn-setting-jurnal-kas-open-lap').attr('href', urlLapBase + '/cari_between_date/' + parts.tahun + '/' + parts.bulan_num);
+                jQuery('#btn-setting-jurnal-kas-excel').off('click.settingExcel').on('click.settingExcel', function() {
+                    var src = selectedSumber();
+                    var q = '?sumber=' + encodeURIComponent(src || 'asli');
+                    window.location.href = urlExcelBase + '/' + parts.tahun + '/' + parts.bulan_num + q;
+                });
+            }
+        }
+
+        function updatePublishInfo(publish) {
+            var $info = jQuery('#setting-jurnal-kas-publish-info');
+            if (!publish || !publish.source_type) {
+                $info.text('Belum ada publish untuk bulan ini.');
+                return;
+            }
+            var txt = 'Publish aktif: ';
+            if (publish.source_type === 'tabel' && publish.source_table) {
+                txt += 'Tabel `' + publish.source_table + '`';
+            } else {
+                txt += 'Jurnal Kas Asli';
+            }
+            if (publish.published_at) {
+                txt += ' — ' + publish.published_at;
+            }
+            $info.text(txt);
+        }
+
+        function renderRows(rows) {
+            var html = '';
+            (rows || []).forEach(function(r) {
+                html += '<tr>'
+                    + '<td>' + (r.no != null ? r.no : '') + '</td>'
+                    + '<td>' + jQuery('<span>').text(r.sumber || '').html() + '</td>'
+                    + '<td>' + jQuery('<span>').text(r.unit || '').html() + '</td>'
+                    + '<td>' + jQuery('<span>').text(r.tanggal || '').html() + '</td>'
+                    + '<td>' + jQuery('<span>').text(r.bukti || '').html() + '</td>'
+                    + '<td>' + jQuery('<span>').text(r.keterangan || '').html() + '</td>'
+                    + '<td class="text-right">' + (r.debet || '') + '</td>'
+                    + '<td class="text-right">' + (r.kredit || '') + '</td>'
+                    + '</tr>';
+            });
+            jQuery('#setting-jurnal-kas-tbody').html(html);
+        }
+
+        function renderSummary(res) {
+            jQuery('#setting-jk-total-debet').text(res.TOTAL_debet_fmt || '—');
+            jQuery('#setting-jk-total-kredit').text(res.TOTAL_kredit_fmt || '—');
+            jQuery('#setting-jk-saldo-akhir').text(res.SALDO_AKHIR_fmt || '—');
+            var saldo = parseFloat(res.SALDO_AKHIR) || 0;
+            var debet = parseFloat(res.TOTAL_debet) || 0;
+            var seimbang = saldo >= 0 ? debet : saldo;
+            jQuery('#setting-jk-seimbang-debet').text(res.TOTAL_debet_fmt || '—');
+            jQuery('#setting-jk-seimbang-kredit').text(res.TOTAL_debet_fmt || '—');
+            if (saldo < 0 && res.SALDO_AKHIR_fmt) {
+                jQuery('#setting-jk-seimbang-debet').text(res.SALDO_AKHIR_fmt);
+                jQuery('#setting-jk-seimbang-kredit').text(res.SALDO_AKHIR_fmt);
+            }
+        }
+
+        function loadSettingData() {
+            var parts = bulanParts();
+            if (!parts || loading) return;
+            loading = true;
+            jQuery('#setting-jurnal-kas-loading').removeClass('d-none');
+            jQuery('#setting-jurnal-kas-table-wrap').css('opacity', '0.45');
+
+            jQuery.ajax({
+                url: urlData,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    bulan_num: parts.bulan_num,
+                    tahun: parts.tahun,
+                    sumber: selectedSumber()
+                }
+            }).done(function(res) {
+                if (!res || !res.ok) {
+                    alert((res && res.message) ? res.message : 'Gagal memuat data setting.');
+                    return;
+                }
+                lastData = res;
+                renderRows(res.rows);
+                renderSummary(res);
+                updateBulanLabel(parts, res.bulan_label);
+                updatePublishInfo(res.publish_setting);
+            }).fail(function() {
+                alert('Tidak dapat menghubungi server.');
+            }).always(function() {
+                loading = false;
+                jQuery('#setting-jurnal-kas-loading').addClass('d-none');
+                jQuery('#setting-jurnal-kas-table-wrap').css('opacity', '1');
+            });
+        }
+
+        function loadTableList(force) {
+            if (tablesLoaded && !force) return;
+            jQuery.ajax({ url: urlList, type: 'POST', dataType: 'json' }).done(function(res) {
+                if (!res || !res.ok) return;
+                var $sel = jQuery('#setting_sumber_jurnal_kas');
+                var cur = $sel.val() || 'asli';
+                $sel.find('option:not(:first)').remove();
+                (res.tables || []).forEach(function(tbl) {
+                    $sel.append(jQuery('<option>', { value: tbl, text: tbl }));
+                });
+                $sel.val(cur);
+                tablesLoaded = true;
+                togglePublishBtn();
+            });
+        }
+
+        function publishSetting() {
+            var parts = bulanParts();
+            var src = selectedSumber();
+            if (!parts || src === 'asli' || src === '') {
+                alert('Pilih tabel tertentu untuk publish.');
+                return;
+            }
+            if (!confirm('Publish data tabel `' + src + '` untuk bulan ' + (namaBulan[parts.bulan_num] || '') + ' ' + parts.tahun + '?\n\nHalaman Lap Jurnal Kas akan menampilkan data ini.')) {
+                return;
+            }
+            jQuery.ajax({
+                url: urlPublish,
+                type: 'POST',
+                dataType: 'json',
+                data: { bulan_num: parts.bulan_num, tahun: parts.tahun, sumber: src }
+            }).done(function(res) {
+                if (!res || !res.ok) {
+                    alert((res && res.message) ? res.message : 'Publish gagal.');
+                    return;
+                }
+                updatePublishInfo(res.setting || null);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Publish Berhasil',
+                        html: 'Data laporan jurnal kas untuk bulan ini sudah dipublish.<br/><a href="' + (res.lap_url || '#') + '" target="_blank">Buka Lap Jurnal Kas</a>',
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert(res.message || 'Publish berhasil.');
+                }
+            }).fail(function() {
+                alert('Tidak dapat menghubungi server.');
+            });
+        }
+
+        jQuery('#setting_sumber_jurnal_kas').on('change', function() {
+            togglePublishBtn();
+            loadSettingData();
+        });
+        jQuery('#setting_bulan_jurnal_kas, #setting_tahun_jurnal_kas').on('change', function() {
+            togglePublishBtn();
+            loadSettingData();
+        });
+        jQuery('#btn-setting-jurnal-kas-publish').on('click', publishSetting);
+        jQuery('#tab-setting-jurnal-kas').on('shown.bs.tab', function() {
+            loadTableList(false);
+            togglePublishBtn();
+            loadSettingData();
+        });
+        if (jQuery('#tab-setting-jurnal-kas').hasClass('active')) {
+            loadTableList(false);
+            togglePublishBtn();
+            loadSettingData();
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        bootSettingJurnalKas();
+    } else {
+        window.addEventListener('load', bootSettingJurnalKas);
     }
 })();
 </script>

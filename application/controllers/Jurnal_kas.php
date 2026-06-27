@@ -1619,6 +1619,11 @@ class Jurnal_kas extends CI_Controller
         $data['bulan_ns_value'] = sprintf('%04d-%02d', $compare_tahun_num, $compare_bulan_num);
         $data['url_cari_jurnal_kas'] = site_url('Jurnal_kas/cari_between_date');
         $data['url_ajax_pemasukan_kas'] = site_url('Jurnal_kas/ajax_pemasukan_kas_action');
+        $data['url_setting_jurnal_kas_data'] = site_url('Jurnal_kas/ajax_setting_jurnal_kas_data');
+        $data['url_setting_jurnal_kas_publish'] = site_url('Jurnal_kas/ajax_setting_jurnal_kas_publish');
+        $data['url_setting_jurnal_kas_tabel_list'] = site_url('Jurnal_kas/ajax_setting_jurnal_kas_tabel_list');
+        $data['url_setting_jurnal_kas_excel'] = site_url('Jurnal_kas/excel_setting_jurnal_kas');
+        $data['url_lap_jurnal_kas'] = site_url('Lap_Jurnal_kas');
         $data['list_kode_pl'] = $this->db->query('SELECT * FROM `sys_kode_pl` ORDER BY `kode_pl` ASC')->result();
         $data['list_kode_akun'] = $this->db->query('SELECT * FROM `sys_kode_akun` ORDER BY `kode_akun` ASC')->result();
         $data['can_input_jurnal_kas'] = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
@@ -1883,6 +1888,112 @@ class Jurnal_kas extends CI_Controller
         $namaFile = 'Detail_Tabel_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $table) . '_' . $bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx';
         excel_prepare_download($namaFile);
         jurnal_kas_compare_export_table_detail_excel($this, $table, $bulan);
+        exit();
+    }
+
+    public function ajax_setting_jurnal_kas_tabel_list()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_kas_compare'));
+
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'tables' => persediaan_compare_list_db_tables($this),
+        ));
+    }
+
+    public function ajax_setting_jurnal_kas_data()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_kas_lap', 'jurnal_kas_list'));
+
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        $source = trim((string) $this->input->post('sumber', TRUE));
+
+        if ($bulan_num < 1 || $bulan_num > 12 || $tahun < 2000) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli') {
+            $source_type = 'asli';
+            $source_table = null;
+        } else {
+            $source_type = 'tabel';
+            $source_table = $source;
+        }
+
+        $result = jurnal_kas_lap_ajax_preview_response($this, $bulan_num, $tahun, $source_type, $source_table);
+        if (empty($result['ok'])) {
+            persediaan_ajax_json_output($this, $result);
+            return;
+        }
+
+        $result['rows'] = jurnal_kas_lap_format_rows_for_json($result['rows']);
+        $result['TOTAL_debet_fmt'] = jurnal_kas_format_rupiah($result['TOTAL_debet'], true);
+        $result['TOTAL_kredit_fmt'] = jurnal_kas_format_rupiah($result['TOTAL_kredit'], true);
+        $result['SALDO_AKHIR_fmt'] = jurnal_kas_format_rupiah($result['SALDO_AKHIR'], true);
+
+        persediaan_ajax_json_output($this, $result);
+    }
+
+    public function ajax_setting_jurnal_kas_publish()
+    {
+        $this->load->helper(array('pembelian_persediaan', 'jurnal_kas_lap', 'jurnal_kas_list'));
+
+        $bulan_num = (int) $this->input->post('bulan_num', TRUE);
+        $tahun = (int) $this->input->post('tahun', TRUE);
+        $source = trim((string) $this->input->post('sumber', TRUE));
+
+        if ($bulan_num < 1 || $bulan_num > 12 || $tahun < 2000) {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Pilih bulan dan tahun yang valid.',
+            ));
+            return;
+        }
+
+        if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli') {
+            persediaan_ajax_json_output($this, array(
+                'ok' => false,
+                'message' => 'Publish hanya tersedia untuk sumber tabel tertentu.',
+            ));
+            return;
+        }
+
+        $bulan_key = jurnal_kas_lap_normalize_bulan_key($tahun, $bulan_num);
+        $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'tabel', $source);
+        if (!empty($result['ok'])) {
+            $result['lap_url'] = site_url('Lap_Jurnal_kas/cari_between_date/' . $tahun . '/' . $bulan_num);
+        }
+
+        persediaan_ajax_json_output($this, $result);
+    }
+
+    public function excel_setting_jurnal_kas($Tahun_selected = null, $Bulan_selected = null)
+    {
+        $this->load->helper(array('jurnal_kas_lap', 'jurnal_kas_list', 'exportexcel'));
+
+        $month = $Bulan_selected ? (int) $Bulan_selected : (int) date('m');
+        $year = $Tahun_selected ? (int) $Tahun_selected : (int) date('Y');
+        $source = trim((string) $this->input->get('sumber', TRUE));
+
+        if ($month < 1 || $month > 12) {
+            $month = (int) date('m');
+        }
+
+        if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli') {
+            jurnal_kas_export_excel_list_output($this, $month, $year);
+        } else {
+            $data = jurnal_kas_lap_compute_from_table($this, $month, $year, $source);
+            if (empty($data['ok'])) {
+                show_error(isset($data['message']) ? $data['message'] : 'Data tidak tersedia.', 400);
+                return;
+            }
+            jurnal_kas_lap_export_excel_from_rows($this, $data);
+        }
         exit();
     }
 
