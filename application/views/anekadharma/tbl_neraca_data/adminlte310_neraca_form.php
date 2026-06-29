@@ -3367,10 +3367,14 @@ echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharj
 
 					<?php
 					if ($button == "Update") {
+						$this->load->helper('dashboard_laporan_publish');
+						if (!empty($bulan_transaksi) && (int) $bulan_transaksi > 0 && dashboard_laporan_is_published($this, 'neraca', $tahun_neraca, $bulan_transaksi)) {
 					?>
 						<a href="<?php echo site_url('tbl_neraca_data/neraca_cetak/' . $tahun_neraca . '/' . $bulan_transaksi)
 									?>" class="btn btn-success" target="_blank">Cetak Neraca (PDF)</a>
-					<?php } ?>
+					<?php
+						}
+					} ?>
 
 
 

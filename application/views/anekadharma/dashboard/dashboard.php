@@ -613,6 +613,8 @@
 
                                 <?php
 
+                                $this->load->helper('dashboard');
+
                                 function bulan_teks($angka_bulan)
                                 {
                                     if ($angka_bulan == 1) {
@@ -658,432 +660,59 @@
 
                                 <div class="row">
 
-
-                                    <!-- HIDE UNTUK SEMUA ICON -->
-
-                                    <!-- LABA-RUGI -->
-                                    <div class="col-lg-6 col-xs-12">
-                                        <div class="card card-primary">
-
-                                            <div class="card-header">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <form action="<?php echo $action_input_labarugi_baru_bulanan; ?>" method="post">
-                                                            <div class="row">
-                                                                <?php
-                                                                if ($status_laporan == "bukan_laporan") {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong>INPUT LABA-RUGI BULANAN:</strong></div>
-                                                                <?php
-                                                                } else {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong>LABA-RUGI BULANAN</strong></div>
-
-                                                                <?php
-                                                                }
-                                                                ?>
-                                                                <div class="col-4" text-align="left">
-                                                                    <?php
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-                                                                        <div class="col-4" text-align="left">
-
-                                                                            <!-- <form action="/action_page.php"> -->
-                                                                            <!-- <label for="bulan">BULAN :</label> -->
-                                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
-                                                                            <!-- <input type="submit"> -->
-                                                                            <!-- </form> -->
-
-                                                                        </div>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-
-                                                                </div>
-                                                                <div class="col-3" text-align="right">
-
-                                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-
-                                                                        <button type="submit" class="btn btn-danger">Tambah</button>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-                                                                </div>
-                                                            </div>
-
-                                                        </form>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <table id="example_labarugi" class="display nowrap" style="width:100%">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="text-align:center" width="10px">No</th>
-                                                                    <th>Tahun</th>
-                                                                    <th>Bulan</th>
-                                                                    <th>Action</th>
-
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php
-
-
-
-                                                                $start = 0;
-                                                                foreach ($Tbl_BULAN_labarugi_data as $list_data) {
-                                                                    // if ($list_data->bulan_transaksi > 0) {
-                                                                ?>
-
-                                                                    <tr>
-
-                                                                        <td><?php echo ++$start ?></td>
-
-                                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
-                                                                        <td align="left"><?php echo $list_data->bulan_neraca . " (" . bulan_teks($list_data->bulan_neraca) . ")"; ?></td>
-                                                                        <td align="left">
-                                                                            <?php
-
-                                                                            // if ($status_laporan == "bukan_laporan") {
-
-                                                                            // $this->session->userdata('id_user_level') == 1 //superadmin
-                                                                            // $this->session->userdata('id_user_level') == 2 //admin
-                                                                            // $this->session->userdata('id_user_level') == 888 //kabagkeuangan
-
-                                                                            // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
-
-                                                                            //     echo anchor(site_url('Tbl_laba_rugi/labarugi_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                            // }
-
-                                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
-
-                                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                            }
-
-
-
-                                                                            $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$list_data->bulan_neraca' ";
-
-                                                                            $GET_tbl_labarugi_data_RECORD = $this->db->query($sql);
-
-                                                                            if ($GET_tbl_labarugi_data_RECORD->num_rows() > 0) {
-                                                                                echo anchor(site_url('Tbl_laba_rugi/labarugi_print/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Laba-Rugi</i>', 'class="btn btn-success btn-xs" target="_blank"');
-                                                                            }
-
-                                                                            ?>
-                                                                        </td>
-
-                                                                    </tr>
-                                                                <?php
-                                                                    // }
-                                                                }
-                                                                ?>
-
-
-                                                            </tbody>
-                                                        </table>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!-- END OF LABA-RUGI -->
-                                    <!-- END OF HIDE UNTUK SEMUA ICON -->
-
-
-                                    <!-- NERACA DATA -->
-                                    <div class="col-lg-6 col-xs-12">
-                                        <div class="card card-primary">
-
-                                            <div class="card-header">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
-                                                            <div class="row">
-                                                                <?php
-                                                                if ($status_laporan == "bukan_laporan") {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong>INPUT NERACA BULANAN:</strong></div>
-                                                                <?php
-                                                                } else {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong>NERACA BULANAN</strong></div>
-
-                                                                <?php
-                                                                }
-                                                                ?>
-                                                                <div class="col-4" text-align="left">
-                                                                    <?php
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-                                                                        <div class="col-4" text-align="left">
-
-                                                                            <!-- <form action="/action_page.php"> -->
-                                                                            <!-- <label for="bulan">BULAN :</label> -->
-                                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
-                                                                            <!-- <input type="submit"> -->
-                                                                            <!-- </form> -->
-
-                                                                        </div>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-
-                                                                </div>
-                                                                <div class="col-3" text-align="right">
-
-                                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-
-                                                                        <button type="submit" class="btn btn-danger">Tambah</button>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-                                                                </div>
-                                                            </div>
-
-                                                        </form>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <table id="example" class="display nowrap" style="width:100%">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="text-align:center" width="10px">No</th>
-                                                                    <th>Tahun</th>
-                                                                    <th>Bulan</th>
-                                                                    <th>Action</th>
-
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php
-
-
-
-                                                                $start = 0;
-                                                                foreach ($Tbl_BULAN_neraca_data as $list_data) {
-                                                                    // if ($list_data->bulan_transaksi > 0) {
-                                                                ?>
-
-                                                                    <tr>
-
-                                                                        <td><?php echo ++$start ?></td>
-
-                                                                        <td align="left"><?php echo $list_data->tahun_neraca; ?></td>
-                                                                        <td align="left"><?php echo $list_data->bulan_neraca . " (" . bulan_teks($list_data->bulan_neraca) . ")"; ?></td>
-                                                                        <td align="left">
-                                                                            <?php
-
-                                                                            // if ($status_laporan == "bukan_laporan") {
-
-                                                                            // $this->session->userdata('id_user_level') == 1 //superadmin
-                                                                            // $this->session->userdata('id_user_level') == 2 //admin
-                                                                            // $this->session->userdata('id_user_level') == 888 //kabagkeuangan
-
-                                                                            // if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 888) {
-
-                                                                            //     echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                            // }
-
-                                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
-
-                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                            }
-
-
-
-                                                                            $sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$list_data->tahun_neraca' And `bulan_transaksi`='$list_data->bulan_neraca' ";
-
-                                                                            $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-                                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-                                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
-                                                                            }
-
-                                                                            ?>
-                                                                        </td>
-
-                                                                    </tr>
-                                                                <?php
-                                                                    // }
-                                                                }
-                                                                ?>
-
-
-                                                            </tbody>
-                                                        </table>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!-- END OF NERACA DATA -->
-
-
-
+                                    <?php
+                                    $this->load->view('anekadharma/dashboard/partials/laporan_bulan_datatable', array(
+                                        'table_id' => 'example_labarugi',
+                                        'card_title' => 'LABA-RUGI BULANAN',
+                                        'card_icon' => 'fa-chart-line',
+                                        'theme_class' => 'dashboard-dt-theme-green',
+                                        'rows' => $Tbl_BULAN_labarugi_data,
+                                        'can_edit' => !empty($can_edit_laporan_dashboard),
+                                        'can_publish' => !empty($can_edit_laporan_dashboard),
+                                        'report_type' => 'laba_rugi',
+                                        'publish_ajax_url' => site_url('Dashboard/ajax_laporan_publish_toggle'),
+                                        'update_label' => 'Update',
+                                        'cetak_label' => 'Cetak',
+                                        'col_class' => 'col-lg-6 col-xs-12',
+                                        'yellow_border' => true,
+                                    ));
+
+                                    $this->load->view('anekadharma/dashboard/partials/laporan_bulan_datatable', array(
+                                        'table_id' => 'example_neraca',
+                                        'card_title' => 'NERACA BULANAN',
+                                        'card_icon' => 'fa-balance-scale',
+                                        'theme_class' => 'dashboard-dt-theme-purple',
+                                        'rows' => $Tbl_BULAN_neraca_data,
+                                        'can_edit' => !empty($can_edit_laporan_dashboard),
+                                        'can_publish' => !empty($can_edit_laporan_dashboard),
+                                        'report_type' => 'neraca',
+                                        'publish_ajax_url' => site_url('Dashboard/ajax_laporan_publish_toggle'),
+                                        'update_label' => 'Update',
+                                        'cetak_label' => 'Cetak',
+                                        'col_class' => 'col-lg-6 col-xs-12',
+                                        'yellow_border' => true,
+                                    ));
+                                    ?>
 
                                 </div>
 
 
                                 <div class="row">
 
-                                    <div class="col-lg-3 col-xs-12"></div>
+                                    <?php
+                                    $this->load->view('anekadharma/dashboard/partials/laporan_bulan_datatable', array(
+                                        'table_id' => 'example_jurnal_kas',
+                                        'card_title' => 'JURNAL KAS',
+                                        'card_icon' => 'fa-cash-register',
+                                        'theme_class' => 'dashboard-dt-theme-blue',
+                                        'rows' => $Data_group_by_month_Jurnal_kas,
+                                        'can_edit' => !empty($can_edit_jurnal_kas_dashboard),
+                                        'update_label' => 'Update',
+                                        'cetak_label' => 'Cetak',
+                                        'col_class' => 'col-lg-10 offset-lg-1 col-xs-12',
+                                    ));
+                                    ?>
 
-                                    <!-- JURNAL KAS -->
-                                    <div class="col-lg-6 col-xs-12">
-                                        <div class="card card-primary">
-
-                                            <div class="card-header">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <form action="<?php echo $action_input_neraca_baru_bulanan; ?>" method="post">
-                                                            <div class="row">
-                                                                <?php
-                                                                if ($status_laporan == "bukan_laporan") {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong>INPUT JURNAL KAS:</strong></div>
-                                                                <?php
-                                                                } else {
-                                                                ?>
-                                                                    <div class="col-5" text-align="right"> <strong> JURNAL KAS</strong></div>
-
-                                                                <?php
-                                                                }
-                                                                ?>
-                                                                <div class="col-4" text-align="left">
-                                                                    <?php
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-                                                                        <div class="col-4" text-align="left">
-
-                                                                            <!-- <form action="/action_page.php"> -->
-                                                                            <!-- <label for="bulan">BULAN :</label> -->
-                                                                            <input type="month" id="bulan_neraca" name="bulan_neraca">
-                                                                            <!-- <input type="submit"> -->
-                                                                            <!-- </form> -->
-
-                                                                        </div>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-
-                                                                </div>
-                                                                <div class="col-3" text-align="right">
-
-                                                                    <?php //echo anchor(site_url('Sys_supplier/stock/'), 'CARI', 'class="btn btn-danger"');
-                                                                    if ($status_laporan == "bukan_laporan") {
-                                                                    ?>
-
-                                                                        <button type="submit" class="btn btn-danger">Tambah</button>
-                                                                    <?php
-                                                                    }
-                                                                    ?>
-                                                                </div>
-                                                            </div>
-
-                                                        </form>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                            <div class="card-body">
-                                                <div class="row">
-                                                    <div class="col-12">
-
-                                                        <table id="example" class="display nowrap" style="width:100%">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th style="text-align:center" width="10px">No</th>
-                                                                    <th>Tahun</th>
-                                                                    <th>Bulan</th>
-                                                                    <th>Action</th>
-
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php
-
-
-
-                                                                $start = 0;
-                                                                // $Year_process=0;
-                                                                // $Month_process=0;
-                                                                foreach ($Data_group_by_month_Jurnal_kas as $list_data) {
-                                                                    // if ($list_data->bulan_transaksi > 0) {
-                                                                
-                                                                ?>
-
-                                                                    <tr>
-
-                                                                        <td><?php echo ++$start ?></td>
-
-                                                                        <td align="left"><?php echo $list_data->year_process; ?></td>
-                                                                        <td align="left"><?php echo $list_data->month_process . " (" . bulan_teks($list_data->month_process) . ")"; ?></td>
-                                                                        <td align="left">
-                                                                            <?php
-
-                                                                            $can_edit_jurnal_kas = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
-                                                                            $show_update = isset($list_data->show_update) ? (bool) $list_data->show_update : true;
-                                                                            $show_cetak = isset($list_data->show_cetak) ? (bool) $list_data->show_cetak : true;
-
-                                                                            if ($can_edit_jurnal_kas && $show_update) {
-                                                                                echo anchor(site_url('jurnal_kas/cari_between_date/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
-                                                                            }
-
-                                                                            if ($show_cetak) {
-                                                                                echo anchor(site_url('Jurnal_kas/excel/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Jurnal Kas</i>', 'class="btn btn-success btn-xs" target="_blank"');
-                                                                            }
-
-                                                                            ?>
-                                                                        </td>
-
-                                                                    </tr>
-                                                                <?php
-                                                                    // }
-                                                                }
-                                                                ?>
-
-
-                                                            </tbody>
-                                                        </table>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!-- END OF JURNAL KAS -->
-
-                                    <div class="col-lg-3 col-xs-12"></div>
-                                
                                 </div>
 
 
@@ -1118,16 +747,562 @@
 
 
 <script>
-    $(document).ready(function() {
-        $('#example_labarugi').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+    function initDashboardLaporanDt(selector) {
+        if (!$.fn.DataTable) {
+            return;
+        }
+        $(selector).each(function() {
+            var $table = $(this);
+            if ($.fn.DataTable.isDataTable($table)) {
+                return;
+            }
+            var dt = $table.DataTable({
+                dom: '<"dashboard-dt-toolbar"lpf>rt<"dashboard-dt-footer"i>',
+                scrollY: '320px',
+                scrollX: true,
+                scrollCollapse: true,
+                autoWidth: false,
+                pageLength: 12,
+                lengthMenu: [[6, 12, 24, -1], [6, 12, 24, 'Semua']],
+                order: [[2, 'desc']],
+                columnDefs: [
+                    { orderable: false, targets: [0, 3] },
+                    { searchable: false, targets: [0, 3] }
+                ],
+                language: {
+                    search: 'Cari:',
+                    searchPlaceholder: 'Tahun / bulan...',
+                    lengthMenu: 'Tampilkan _MENU_',
+                    info: 'Menampilkan _START_–_END_ dari _TOTAL_ bulan',
+                    infoEmpty: 'Belum ada bulan',
+                    infoFiltered: '(filter dari _MAX_ bulan)',
+                    zeroRecords: 'Tidak ditemukan',
+                    paginate: {
+                        first: 'Awal',
+                        last: 'Akhir',
+                        next: '&rsaquo;',
+                        previous: '&lsaquo;'
+                    }
+                },
+                drawCallback: function() {
+                    var api = this.api();
+                    var start = api.page.info().start;
+                    api.column(0, { page: 'current' }).nodes().each(function(cell, i) {
+                        cell.innerHTML = '<span class="dashboard-dt-no-index">' + (start + i + 1) + '</span>';
+                    });
+                }
+            });
+            dt.draw(false);
         });
-    });
+    }
+
+    function dashboardLaporanCetakUrl(reportType, year, month) {
+        if (reportType === 'laba_rugi') {
+            return '<?php echo site_url('Tbl_laba_rugi/labarugi_print'); ?>/' + year + '/' + month;
+        }
+        if (reportType === 'neraca') {
+            return '<?php echo site_url('Tbl_neraca_data/neraca_cetak'); ?>/' + year + '/' + month;
+        }
+        return '';
+    }
+
+    function dashboardSyncPublishRowActions($table, year, month, isPublished, cetakLabel) {
+        var reportType = $table.attr('data-publish-report-type') || '';
+        var cetakUrl = isPublished ? dashboardLaporanCetakUrl(reportType, year, month) : '';
+        var label = cetakLabel || $table.attr('data-cetak-label') || 'Cetak';
+        var $scope = $table.closest('.dashboard-dt-card');
+        if (!$scope.length) {
+            $scope = $table.closest('.dataTables_wrapper');
+        }
+        if (!$scope.length) {
+            $scope = $table;
+        }
+
+        $scope.find('tr[data-year="' + year + '"][data-month="' + month + '"]').each(function() {
+            var $row = $(this);
+            var $actions = $row.find('td.dashboard-dt-actions');
+            var hasData = $row.attr('data-has-data') === '1';
+
+            $row.attr('data-published', isPublished ? '1' : '0');
+
+            if (isPublished) {
+                $actions.find('.dashboard-dt-btn-publish').hide();
+                $actions.find('.dashboard-dt-btn-cancel-publish').show();
+            } else {
+                $actions.find('.dashboard-dt-btn-cancel-publish').hide();
+                $actions.find('.dashboard-dt-btn-publish').show().prop('disabled', !hasData);
+            }
+
+            var $cetak = $actions.find('.dashboard-dt-btn-cetak');
+            if (isPublished && cetakUrl) {
+                if ($cetak.is('span')) {
+                    $cetak.replaceWith(
+                        '<a href="' + cetakUrl + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"><i class="fa fa-print"></i> ' + label + '</a>'
+                    );
+                } else {
+                    $cetak.attr('href', cetakUrl).removeClass('dashboard-dt-btn-cetak-off dashboard-dt-btn-cetak-placeholder');
+                }
+            } else {
+                if ($cetak.is('a')) {
+                    $cetak.replaceWith(
+                        '<span class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak dashboard-dt-btn-cetak-placeholder dashboard-dt-btn-cetak-off"><i class="fa fa-print"></i> ' + label + '</span>'
+                    );
+                } else {
+                    $cetak.addClass('dashboard-dt-btn-cetak-off dashboard-dt-btn-cetak-placeholder');
+                }
+            }
+        });
+    }
+
     $(document).ready(function() {
-        $('#example_neraca').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+        initDashboardLaporanDt('.dashboard-laporan-dt');
+
+        $(document).on('click', '.dashboard-dt-btn-publish, .dashboard-dt-btn-cancel-publish', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            var $btn = $(this);
+            if ($btn.prop('disabled')) {
+                return;
+            }
+
+            var $table = $btn.closest('table.dashboard-laporan-dt');
+            if (!$table.length || !$table.attr('data-publish-ajax-url')) {
+                return;
+            }
+
+            var ajaxUrl = $table.attr('data-publish-ajax-url');
+            var reportType = $table.attr('data-publish-report-type');
+            var $row = $btn.closest('tr');
+            var year = parseInt($row.attr('data-year'), 10);
+            var month = parseInt($row.attr('data-month'), 10);
+            var action = $btn.hasClass('dashboard-dt-btn-publish') ? 'publish' : 'cancel';
+            var willPublish = action === 'publish';
+
+            $btn.prop('disabled', true);
+
+            // Update tombol langsung (optimistic UI)
+            dashboardSyncPublishRowActions($table, year, month, willPublish);
+
+            $.ajax({
+                url: ajaxUrl,
+                type: 'POST',
+                dataType: 'json',
+                data: {
+                    report_type: reportType,
+                    year: year,
+                    month: month,
+                    action: action
+                }
+            }).done(function(res) {
+                if (!res || !res.ok) {
+                    dashboardSyncPublishRowActions($table, year, month, !willPublish);
+                    alert((res && res.message) ? res.message : 'Gagal memproses publish.');
+                    return;
+                }
+
+                dashboardSyncPublishRowActions($table, year, month, !!res.is_published);
+            }).fail(function(xhr) {
+                dashboardSyncPublishRowActions($table, year, month, !willPublish);
+                var msg = 'Gagal menghubungi server.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                alert(msg);
+            }).always(function() {
+                var $scope = $table.closest('.dashboard-dt-card');
+                if (!$scope.length) {
+                    $scope = $table;
+                }
+                $scope.find('tr[data-year="' + year + '"][data-month="' + month + '"] .dashboard-dt-btn-publish, tr[data-year="' + year + '"][data-month="' + month + '"] .dashboard-dt-btn-cancel-publish').prop('disabled', false);
+            });
         });
     });
 </script>
+
+<style>
+    .dashboard-dt-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 60, 120, 0.1) !important;
+        margin-bottom: 18px;
+    }
+
+    .dashboard-dt-yellow-border {
+        border: 2px solid #ffe566 !important;
+        box-shadow:
+            0 0 0 1px #fffbea,
+            0 0 12px rgba(255, 214, 0, 0.35),
+            0 8px 24px rgba(255, 193, 7, 0.18) !important;
+        background: linear-gradient(180deg, #fffef8 0%, #ffffff 100%);
+    }
+
+    .dashboard-dt-yellow-border .dashboard-dt-wrap {
+        border: 1px solid #fff0a8;
+        border-radius: 10px;
+        background: #fffef5;
+        padding: 4px;
+    }
+
+    .dashboard-dt-yellow-border .dashboard-dt-table {
+        border: 1px solid #ffe999;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .dashboard-dt-yellow-border .dashboard-dt-table thead th {
+        border-bottom: 2px solid #ffe566 !important;
+    }
+
+    .dashboard-dt-yellow-border .dashboard-dt-table tbody td {
+        border-top: 1px solid #fff4c2 !important;
+    }
+
+    .dashboard-dt-yellow-border .dashboard-dt-card-header {
+        border-bottom: 2px solid #ffe566 !important;
+    }
+
+    .dashboard-dt-card-header {
+        color: #fff;
+        border-bottom: none;
+        padding: 14px 20px;
+    }
+
+    .dashboard-dt-card-header .card-title {
+        color: #fff;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+        font-size: 1.05rem;
+    }
+
+    .dashboard-dt-theme-green-card .dashboard-dt-card-header {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 55%, #155724 100%);
+    }
+
+    .dashboard-dt-theme-purple-card .dashboard-dt-card-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 55%, #432681 100%);
+    }
+
+    .dashboard-dt-theme-blue-card .dashboard-dt-card-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 55%, #004085 100%);
+    }
+
+    .dashboard-dt-theme-green-card .dashboard-dt-table thead th {
+        border-bottom-color: #28a745 !important;
+    }
+
+    .dashboard-dt-theme-green-card .dashboard-dt-table tbody tr:hover {
+        box-shadow: inset 3px 0 0 #28a745;
+    }
+
+    .dashboard-dt-theme-purple-card .dashboard-dt-table thead th {
+        border-bottom-color: #6f42c1 !important;
+    }
+
+    .dashboard-dt-theme-purple-card .dashboard-dt-table tbody tr:hover {
+        box-shadow: inset 3px 0 0 #6f42c1;
+    }
+
+    .dashboard-dt-theme-blue-card .dashboard-dt-table thead th {
+        border-bottom-color: #007bff !important;
+    }
+
+    .dashboard-dt-theme-blue-card .dashboard-dt-table tbody tr:hover {
+        box-shadow: inset 3px 0 0 #007bff;
+    }
+
+    .dashboard-dt-title-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        margin-right: 10px;
+        background: rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        vertical-align: middle;
+    }
+
+    .dashboard-dt-card-body {
+        padding: 18px 20px 14px;
+        background: #fafbfd;
+    }
+
+    .dashboard-dt-wrap {
+        width: 100%;
+        background: #fff;
+        border-radius: 10px;
+        border: 1px solid #e3eaf3;
+        padding: 12px;
+    }
+
+    .dashboard-dt-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .dashboard-dt-table thead th {
+        background: linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 100%);
+        color: #1e3a5f;
+        font-weight: 700;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        vertical-align: middle;
+        white-space: nowrap;
+        border-bottom: 2px solid #007bff !important;
+        padding: 12px 14px !important;
+    }
+
+    .dashboard-dt-table tbody td {
+        vertical-align: middle;
+        padding: 11px 14px !important;
+        border-top: 1px solid #edf2f7;
+        font-size: 0.92rem;
+    }
+
+    .dashboard-dt-table tbody tr {
+        transition: background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .dashboard-dt-table tbody tr:hover {
+        background-color: #f0f7ff !important;
+    }
+
+    .dashboard-dt-row-current {
+        background: linear-gradient(90deg, #e3f2fd 0%, #f8fbff 100%) !important;
+        box-shadow: inset 4px 0 0 #17a2b8;
+    }
+
+    .dashboard-dt-row-current:hover {
+        background: linear-gradient(90deg, #d6ebfa 0%, #eef6ff 100%) !important;
+    }
+
+    .dashboard-dt-no-index {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        background: #e9ecef;
+        color: #495057;
+        font-weight: 700;
+        border-radius: 50%;
+        font-size: 0.82rem;
+    }
+
+    .dashboard-dt-row-current .dashboard-dt-no-index {
+        background: #17a2b8;
+        color: #fff;
+    }
+
+    .dashboard-dt-year-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: #e8f0fe;
+        color: #1a56db;
+        font-weight: 700;
+        border-radius: 20px;
+        font-size: 0.88rem;
+    }
+
+    .dashboard-dt-bulan-cell {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .dashboard-dt-bulan-nama {
+        font-weight: 700;
+        color: #212529;
+        font-size: 0.95rem;
+    }
+
+    .dashboard-dt-bulan-num {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #f1f3f5;
+        color: #6c757d;
+        border-radius: 4px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+
+    .dashboard-dt-badge-current {
+        background: #17a2b8;
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+    }
+
+    .dashboard-dt-actions {
+        white-space: nowrap;
+    }
+
+    .dashboard-dt-actions-triple {
+        min-width: 300px;
+    }
+
+    .dashboard-dt-actions-triple .btn-dt-update,
+    .dashboard-dt-actions-triple .btn-dt-publish,
+    .dashboard-dt-actions-triple .btn-dt-cancel-publish,
+    .dashboard-dt-actions-triple .btn-dt-cetak {
+        min-width: 88px;
+    }
+
+    .dashboard-dt-btn-cetak-off {
+        opacity: 0.42;
+        filter: grayscale(0.35);
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .dashboard-dt-btn-cetak-placeholder {
+        border: none;
+    }
+
+    .dashboard-dt-actions .btn {
+        min-width: 92px;
+        margin: 2px 3px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.82rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .dashboard-dt-actions .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-dt-update {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        color: #212529;
+    }
+
+    .btn-dt-update:hover {
+        background: linear-gradient(135deg, #ffcd39 0%, #ffc107 100%);
+        color: #212529;
+    }
+
+    .btn-dt-cetak {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-cetak:hover {
+        background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
+        color: #fff;
+    }
+
+    .btn-dt-publish {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-publish:hover {
+        background: linear-gradient(135deg, #1fc8e3 0%, #17a2b8 100%);
+        color: #fff;
+    }
+
+    .btn-dt-cancel-publish {
+        background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-cancel-publish:hover {
+        background: linear-gradient(135deg, #e4606d 0%, #dc3545 100%);
+        color: #fff;
+    }
+
+    .dashboard-dt-no-action {
+        color: #adb5bd;
+        font-size: 1.1rem;
+    }
+
+    .dt-col-no { width: 56px; }
+    .dt-col-tahun { width: 90px; }
+    .dt-col-action { min-width: 320px; }
+
+    .dashboard-dt-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px 20px;
+        margin-bottom: 14px;
+        padding: 10px 14px;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef3f9 100%);
+        border: 1px solid #d8e2ef;
+        border-radius: 8px;
+    }
+
+    .dashboard-dt-toolbar .dataTables_length,
+    .dashboard-dt-toolbar .dataTables_filter,
+    .dashboard-dt-toolbar .dataTables_paginate {
+        float: none !important;
+        text-align: left !important;
+        margin: 0 !important;
+    }
+
+    .dashboard-dt-toolbar .dataTables_length select {
+        border-radius: 6px;
+        border-color: #ced4da;
+        padding: 3px 8px;
+    }
+
+    .dashboard-dt-toolbar .dataTables_filter input {
+        min-width: 200px;
+        margin-left: 6px;
+        border-radius: 20px;
+        border: 1px solid #ced4da;
+        padding: 5px 14px;
+    }
+
+    .dashboard-dt-toolbar .dataTables_filter input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.2);
+        outline: none;
+    }
+
+    .dashboard-dt-toolbar .paginate_button {
+        border-radius: 6px !important;
+        margin: 0 2px;
+    }
+
+    .dashboard-dt-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px solid #e9ecef;
+        color: #6c757d;
+        font-size: 0.88rem;
+    }
+
+    .dashboard-dt-footer .dataTables_info {
+        float: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    div.dataTables_wrapper div.dataTables_scrollHead table.dataTable {
+        margin-bottom: 0 !important;
+    }
+
+    div.dataTables_scrollBody {
+        border-bottom: 1px solid #e3eaf3 !important;
+    }
+</style>

@@ -318,7 +318,10 @@
                                                             $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
 
                                                             if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+                                                                $this->load->helper('dashboard_laporan_publish');
+                                                                if (dashboard_laporan_is_published($this, 'neraca', $list_data->tahun_neraca, $list_data->bulan_neraca)) {
                                                                 echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                }
                                                             }
 
                                                             ?>

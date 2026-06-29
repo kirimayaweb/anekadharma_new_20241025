@@ -521,7 +521,10 @@ class Tbl_laba_rugi extends CI_Controller
     public function labarugi_print($Get_tahun = null, $Get_bulan = null)
     {
 
-
+        if ($Get_bulan && (int) $Get_bulan > 0) {
+            $this->load->helper('dashboard_laporan_publish');
+            dashboard_laporan_require_published_or_deny($this, 'laba_rugi', $Get_tahun, $Get_bulan);
+        }
 
         if ($Get_bulan) {
             $sql = "SELECT * FROM `tbl_laba_rugi` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";

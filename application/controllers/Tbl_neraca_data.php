@@ -1168,15 +1168,10 @@ class Tbl_neraca_data extends CI_Controller
 	public function neraca_cetak($Get_tahun = null, $Get_bulan = null)
 	{
 
-		// if ($uuid_data_neraca) {
-		// 	$data_detail = $this->Tbl_neraca_data_model->get_all_by_uuid_data_neraca($uuid_data_neraca);
-		// } else {
-		// 	$year_sekarang = date("Y", strtotime(date("Y-m-d H:i:s")));
-
-		// 	$data_detail = $this->Tbl_neraca_data_model->get_all_by_year($year_sekarang);
-		// }
-
-
+		if ($Get_bulan && (int) $Get_bulan > 0) {
+			$this->load->helper('dashboard_laporan_publish');
+			dashboard_laporan_require_published_or_deny($this, 'neraca', $Get_tahun, $Get_bulan);
+		}
 
 		if ($Get_bulan) {
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";

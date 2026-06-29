@@ -31,65 +31,16 @@ class Dashboard extends CI_Controller
         }
 
 
-        // LABA-RUGI (tampilkan mulai Januari 2026)
-        $dashboard_min_date = '2026-01-01';
+        // LABA-RUGI, NERACA, JURNAL KAS — Jan 2026 s/d bulan aktif (list bulan sama)
+        $this->load->helper(array('dashboard', 'jurnal_kas_list'));
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
-
-        $tahun_labarugi_data = $this->db->query($sql)->result();
-
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
-
-        $bulan_neraca_labarugi_data = $this->db->query($sql)->result();
-
-
-
-        // NERACA (tampilkan mulai Januari 2026)
-
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
-
-        $tahun_neraca_data = $this->db->query($sql)->result();
-
-
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
-
-        $bulan_neraca_neraca_data = $this->db->query($sql)->result();
-
-        // print_r($Tbl_neraca_data);
-        // print_r("<br/>");
-        // print_r("<br/>");
+        $Tbl_BULAN_labarugi_data = dashboard_laba_rugi_bulan_list($this);
+        $Tbl_BULAN_neraca_data = dashboard_neraca_bulan_list($this);
+        $Data_group_by_month_Jurnal_kas = dashboard_filter_jurnal_kas_bulan_rows(
+            dashboard_jurnal_kas_bulan_list($this)
+        );
 
         $start = 0;
-
-        // JURNAL KAS
-        $Get_date_awal = date("Y-m-1 00:00:00");
-
-        $Get_date_akhir = date("Y-m-t 23:59:59"); // TANGGAL AKHIR BULAN -t
-        $Get_month_akhir = date("m"); // TANGGAL AKHIR BULAN -t
-        $Get_YEAR_akhir = date("Y"); // TANGGAL AKHIR BULAN -t
-
-
-        // print_r($Get_month_akhir);
-        // print_r("<br/>");
-        // print_r($Get_YEAR_akhir);
-        // print_r("<br/>");
-
-        // $sql = "SELECT * FROM `jurnal_kas` WHERE `tanggal` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tanggal`,`id` DESC";
-        $sql = "SELECT * FROM `jurnal_kas` WHERE MONTH(`tanggal`) = '$Get_month_akhir'  and YEAR(`tanggal`) = '$Get_YEAR_akhir' ORDER BY `tanggal`,`id` DESC";
-
-        $Data_Jurnal_kas = $this->db->query($sql)->result();
-
-        // print_r($Data_Jurnal_kas);
-        // print_r("<br/>");
-        // print_r("<br/>");
-        // print_r("<br/>");
-        // END OF JURNAL KAS
-
-        $sql_group_by_month = "SELECT month(`tanggal`) as month_process, year(`tanggal`) as year_process FROM `jurnal_kas` WHERE `tanggal` >= '$dashboard_min_date' GROUP by year(`tanggal`), month(`tanggal`) ORDER BY `tanggal` DESC;";
-
-        $Data_group_by_month_Jurnal_kas = $this->db->query($sql_group_by_month)->result();
-
-        // print_r($Data_group_by_month_Jurnal_kas);
 
 
         $data = array(
@@ -104,24 +55,21 @@ class Dashboard extends CI_Controller
 
 
             // Laba-rugi
-            'Tbl_TAHUN_labarugi_data' => $tahun_labarugi_data,
-            'Tbl_BULAN_labarugi_data' => $bulan_neraca_labarugi_data,
+            'Tbl_BULAN_labarugi_data' => $Tbl_BULAN_labarugi_data,
             'start' => $start,
             'status_laporan' => $status_laporan,
             'action_input_labarugi_baru' => site_url('Tbl_laba_rugi/labarugi_form_input/'),
             'action_input_labarugi_baru_bulanan' => site_url('Tbl_laba_rugi/labarugi_form_input_bulanan/'),
+            'can_edit_laporan_dashboard' => dashboard_user_can_update_laporan_bulanan($this),
+            'can_edit_jurnal_kas_dashboard' => in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9, 99), true),
 
 
             // NERACA
-            'Tbl_TAHUN_neraca_data' => $tahun_neraca_data,
-            'Tbl_BULAN_neraca_data' => $bulan_neraca_neraca_data,
-            'start' => $start,
-            'status_laporan' => $status_laporan,
+            'Tbl_BULAN_neraca_data' => $Tbl_BULAN_neraca_data,
             'action_input_neraca_baru' => site_url('Tbl_neraca_data/neraca_form_input/'),
             'action_input_neraca_baru_bulanan' => site_url('Tbl_neraca_data/neraca_form_input_bulanan/'),
 
             // JURNAL KAS
-            'Data_kas' => $Data_Jurnal_kas,
             'Data_group_by_month_Jurnal_kas' => $Data_group_by_month_Jurnal_kas,
 
 
@@ -129,6 +77,50 @@ class Dashboard extends CI_Controller
 
         // $this->template->load('template', 'dashboard/dashboard', $data);
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/dashboard/dashboard', $data);
+    }
+
+    public function ajax_laporan_publish_toggle()
+    {
+        $this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (!dashboard_user_can_update_laporan_bulanan($this)) {
+            echo json_encode(array('ok' => false, 'message' => 'Akses ditolak.'));
+            return;
+        }
+
+        $report_type = trim((string) $this->input->post('report_type'));
+        $year = (int) $this->input->post('year');
+        $month = (int) $this->input->post('month');
+        $action = trim((string) $this->input->post('action'));
+
+        if (!dashboard_laporan_publish_valid_type($report_type)) {
+            echo json_encode(array('ok' => false, 'message' => 'Jenis laporan tidak valid.'));
+            return;
+        }
+
+        if (!dashboard_bulan_in_valid_range($year, $month)) {
+            echo json_encode(array('ok' => false, 'message' => 'Bulan tidak valid.'));
+            return;
+        }
+
+        $table = ($report_type === 'laba_rugi') ? 'tbl_laba_rugi' : 'tbl_neraca_data';
+        if (!dashboard_laporan_has_saved_data($this, $table, $year, $month)) {
+            echo json_encode(array('ok' => false, 'message' => 'Data laporan belum tersimpan.'));
+            return;
+        }
+
+        if ($action === 'publish') {
+            $result = dashboard_laporan_set_published($this, $report_type, $year, $month, true);
+        } elseif ($action === 'cancel') {
+            $result = dashboard_laporan_set_published($this, $report_type, $year, $month, false);
+        } else {
+            echo json_encode(array('ok' => false, 'message' => 'Aksi tidak valid.'));
+            return;
+        }
+
+        echo json_encode($result);
+        exit;
     }
 
 
