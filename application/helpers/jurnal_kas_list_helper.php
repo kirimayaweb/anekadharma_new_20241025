@@ -318,3 +318,53 @@ function jurnal_kas_export_excel_list_output($CI, $month, $year)
 
 	xlsEOF();
 }
+
+/**
+ * Daftar bulan Jurnal Kas untuk Dashboard (Jan 2026 s/d bulan aktif).
+ * Selaras dengan halaman Jurnal_kas: hanya bulan yang punya baris transaksi
+ * dari sumber merged (selain baris saldo akhir bulan sebelumnya).
+ */
+function dashboard_jurnal_kas_bulan_list($CI, $min_year = 2026, $min_month = 1)
+{
+	$CI->load->helper('jurnal_kas_sources');
+
+	$current_year = (int) date('Y');
+	$current_month = (int) date('m');
+	$min_year = (int) $min_year;
+	$min_month = (int) $min_month;
+
+	$list = array();
+	$year = $min_year;
+	$month = $min_month;
+
+	while ($year < $current_year || ($year === $current_year && $month <= $current_month)) {
+		$merged_rows = jurnal_kas_fetch_merged_rows($CI, $month, $year);
+		$data_row_count = count($merged_rows);
+		$is_current_month = ($year === $current_year && $month === $current_month);
+
+		if ($data_row_count >= 1) {
+			$list[] = (object) array(
+				'year_process' => $year,
+				'month_process' => $month,
+				'data_row_count' => $data_row_count,
+				'show_update' => $is_current_month ? ($data_row_count >= 1) : true,
+				'show_cetak' => true,
+			);
+		}
+
+		$month++;
+		if ($month > 12) {
+			$month = 1;
+			$year++;
+		}
+	}
+
+	usort($list, function ($a, $b) {
+		if ((int) $a->year_process !== (int) $b->year_process) {
+			return (int) $b->year_process - (int) $a->year_process;
+		}
+		return (int) $b->month_process - (int) $a->month_process;
+	});
+
+	return $list;
+}

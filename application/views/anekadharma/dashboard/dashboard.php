@@ -1049,18 +1049,15 @@
                                                                         <td align="left">
                                                                             <?php
 
-                                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                                            $can_edit_jurnal_kas = in_array((int) $this->session->userdata('id_user_level'), array(1, 2, 9), true);
+                                                                            $show_update = isset($list_data->show_update) ? (bool) $list_data->show_update : true;
+                                                                            $show_cetak = isset($list_data->show_cetak) ? (bool) $list_data->show_cetak : true;
 
+                                                                            if ($can_edit_jurnal_kas && $show_update) {
                                                                                 echo anchor(site_url('jurnal_kas/cari_between_date/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                                             }
 
-
-
-                                                                            $sql = "SELECT * FROM `jurnal_kas` WHERE year(`tanggal`)='$list_data->year_process' And month(`tanggal`)='$list_data->month_process' ";
-
-                                                                            $GET_jurnal_kas_data_RECORD = $this->db->query($sql);
-
-                                                                            if ($GET_jurnal_kas_data_RECORD->num_rows() > 0) {
+                                                                            if ($show_cetak) {
                                                                                 echo anchor(site_url('Jurnal_kas/excel/' . $list_data->year_process . '/' . $list_data->month_process), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Jurnal Kas</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                                             }
 
