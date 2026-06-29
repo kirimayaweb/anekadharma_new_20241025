@@ -1632,10 +1632,11 @@ class Jurnal_kas extends CI_Controller
             $data['modal_jk_tanggal_default'] = sprintf('01-%02d-%04d', $compare_bulan_num, $compare_tahun_num);
         }
 
-        $this->load->helper('jurnal_kas_sources');
+        $this->load->helper(array('jurnal_kas_sources', 'jurnal_kas_list'));
         $data_kas_rows = (isset($data['Data_kas']) && is_array($data['Data_kas'])) ? $data['Data_kas'] : array();
         $data['jurnal_kas_sources_summary'] = jurnal_kas_sources_build_summary($data_kas_rows);
         $data['jurnal_kas_sources_payload'] = jurnal_kas_sources_build_payload($data_kas_rows);
+        $data['jk_saldo_awal'] = jurnal_kas_get_saldo_bulan_lalu($this, $compare_bulan_num, $compare_tahun_num);
 
         return $data;
     }

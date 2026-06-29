@@ -56,6 +56,28 @@ function jurnal_kas_get_saldo_bulan_lalu($CI, $month, $year)
 		}
 	}
 
+	$prev_month = ($month > 1) ? ($month - 1) : 12;
+	$prev_year = ($month > 1) ? $year : ($year - 1);
+	$CI->load->helper('jurnal_kas_lap');
+	$bulan_key_prev = jurnal_kas_lap_normalize_bulan_key($prev_year, $prev_month);
+	if ($bulan_key_prev !== null) {
+		$publish = jurnal_kas_lap_get_publish_setting($CI, $bulan_key_prev);
+		if ($publish && !empty($publish['source_type'])) {
+			$src_table = isset($publish['source_table']) ? $publish['source_table'] : null;
+			$report = jurnal_kas_lap_compute_report_data(
+				$CI,
+				$prev_month,
+				$prev_year,
+				$publish['source_type'],
+				$src_table,
+				false
+			);
+			if (!empty($report['ok']) && isset($report['SALDO_AKHIR'])) {
+				$saldo = (float) $report['SALDO_AKHIR'];
+			}
+		}
+	}
+
 	return array(
 		'label' => $label,
 		'saldo' => $saldo,
