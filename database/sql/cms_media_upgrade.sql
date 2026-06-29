@@ -41,9 +41,15 @@ CREATE TABLE IF NOT EXISTS `cms_media_embeds` (
   KEY `idx_cms_media_pub` (`is_published`,`is_active`,`published_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- Perluas galeri (kolom ditambah satu per satu agar aman di-upgrade ulang)
+-- Perluas galeri (kolom ditambah otomatis via cms_ensure_gallery_schema() saat install/upgrade)
 ALTER TABLE `cms_gallery`
   MODIFY COLUMN `media_type` enum('image','video','youtube','tiktok','instagram','facebook') NOT NULL DEFAULT 'image';
+
+ALTER TABLE `cms_gallery` ADD COLUMN `thumbnail_url` varchar(500) DEFAULT NULL;
+ALTER TABLE `cms_gallery` ADD COLUMN `category` varchar(50) DEFAULT 'umum';
+ALTER TABLE `cms_gallery` ADD COLUMN `is_published` tinyint(1) NOT NULL DEFAULT 1;
+ALTER TABLE `cms_gallery` ADD COLUMN `published_at` datetime DEFAULT NULL;
+ALTER TABLE `cms_gallery` ADD COLUMN `share_title` varchar(300) DEFAULT NULL;
 
 -- Update pengaturan bisnis ATK & Jasa
 UPDATE `cms_settings` SET `setting_value` = 'Aneka Dharma — ATK, Fotokopi, Percetakan & Jasa' WHERE `setting_key` = 'site_title';

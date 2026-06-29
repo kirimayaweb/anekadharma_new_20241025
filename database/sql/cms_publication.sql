@@ -76,11 +76,16 @@ CREATE TABLE IF NOT EXISTS `cms_gallery` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(300) DEFAULT NULL,
   `description` text DEFAULT NULL,
-  `media_type` enum('image','video','youtube') NOT NULL DEFAULT 'image',
+  `media_type` enum('image','video','youtube','tiktok','instagram','facebook') NOT NULL DEFAULT 'image',
   `file_path` varchar(500) DEFAULT NULL,
   `external_url` varchar(500) DEFAULT NULL,
+  `thumbnail_url` varchar(500) DEFAULT NULL,
+  `category` varchar(50) DEFAULT 'umum',
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `is_published` tinyint(1) NOT NULL DEFAULT 1,
+  `published_at` datetime DEFAULT NULL,
+  `share_title` varchar(300) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

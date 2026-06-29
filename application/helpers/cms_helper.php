@@ -26,6 +26,35 @@ function cms_is_installed()
     return $ci->db->table_exists('cms_posts');
 }
 
+/**
+ * Tambah kolom galeri yang diperlukan CMS media upgrade (aman dijalankan ulang).
+ */
+function cms_ensure_gallery_schema()
+{
+    $ci = get_instance();
+    if (!$ci->db->table_exists('cms_gallery')) {
+        return;
+    }
+
+    $fields = array(
+        'thumbnail_url' => 'varchar(500) DEFAULT NULL',
+        'category'      => "varchar(50) DEFAULT 'umum'",
+        'is_published'  => 'tinyint(1) NOT NULL DEFAULT 1',
+        'published_at'  => 'datetime DEFAULT NULL',
+        'share_title'   => 'varchar(300) DEFAULT NULL',
+    );
+
+    foreach ($fields as $name => $definition) {
+        if (!$ci->db->field_exists($name, 'cms_gallery')) {
+            $ci->db->query("ALTER TABLE `cms_gallery` ADD COLUMN `{$name}` {$definition}");
+        }
+    }
+
+    if ($ci->db->field_exists('media_type', 'cms_gallery')) {
+        @$ci->db->query("ALTER TABLE `cms_gallery` MODIFY COLUMN `media_type` enum('image','video','youtube','tiktok','instagram','facebook') NOT NULL DEFAULT 'image'");
+    }
+}
+
 function cms_get_setting($key, $default = '')
 {
     $ci = get_instance();

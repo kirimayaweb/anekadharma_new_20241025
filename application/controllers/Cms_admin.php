@@ -94,8 +94,10 @@ class Cms_admin extends CI_Controller
             if ($statement === '' || stripos($statement, '--') === 0) {
                 continue;
             }
-            $this->db->query($statement);
+            @$this->db->query($statement);
         }
+
+        cms_ensure_gallery_schema();
 
         $upload_base = $this->config->item('cms_upload_path', 'cms');
         if ($upload_base && !is_dir($upload_base)) {
@@ -129,6 +131,8 @@ class Cms_admin extends CI_Controller
 
     private function _run_media_upgrade()
     {
+        cms_ensure_gallery_schema();
+
         $files = array(
             FCPATH . 'database/sql/cms_media_upgrade.sql',
             FCPATH . 'database/sql/cms_demo_presentation.sql',
