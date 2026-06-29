@@ -59,23 +59,25 @@ INSERT IGNORE INTO `cms_categories` (`slug`, `name`, `description`, `icon`, `sor
 ('jasa-layanan', 'Jasa & Layanan', 'Berbagai layanan jasa untuk kebutuhan Anda', 'bi bi-briefcase', 7, 1, NOW());
 
 -- Layanan / ilustrasi bisnis (gambar Unsplash — bisa diganti upload admin)
-INSERT INTO `cms_services` (`title`, `slug`, `description`, `icon`, `image_url`, `link_url`, `sort_order`, `is_active`, `is_published`, `published_at`, `created_at`) 
-SELECT * FROM (SELECT
-  'Alat Tulis Kantor (ATK)' AS title, 'atk' AS slug,
-  'Pensil, pulpen, kertas, map, binder, stapler, dan ribuan produk ATK untuk kantor, sekolah, dan usaha.' AS description,
-  'bi bi-pencil-square' AS icon,
-  'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=1200&q=80' AS image_url,
-  '' AS link_url, 1 AS sort_order, 1 AS is_active, 1 AS is_published, NOW() AS published_at, NOW() AS created_at
-) AS t WHERE NOT EXISTS (SELECT 1 FROM cms_services WHERE slug='atk' LIMIT 1);
+INSERT INTO `cms_services` (`title`, `slug`, `description`, `icon`, `image_url`, `link_url`, `sort_order`, `is_active`, `is_published`, `published_at`, `created_at`)
+SELECT 'Alat Tulis Kantor (ATK)', 'atk',
+  'Pensil, pulpen, kertas, map, binder, stapler, dan ribuan produk ATK untuk kantor, sekolah, dan usaha.',
+  'bi bi-pencil-square',
+  'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=1200&q=80',
+  '', 1, 1, 1, NOW(), NOW()
+FROM DUAL WHERE NOT EXISTS (SELECT id FROM cms_services WHERE slug='atk' LIMIT 1);
 
 INSERT INTO `cms_services` (`title`, `slug`, `description`, `icon`, `image_url`, `link_url`, `sort_order`, `is_active`, `is_published`, `published_at`, `created_at`)
-SELECT * FROM (SELECT 'Fotokopi & Digital Printing', 'fotokopi', 'Fotocopy hitam putih & warna, scan dokumen, print PDF, laminating, dan jasa digital printing cepat.', 'bi bi-printer', 'https://images.unsplash.com/photo-1612815159322-444f042139bb?w=1200&q=80', '', 2, 1, 1, NOW(), NOW()) AS t WHERE NOT EXISTS (SELECT 1 FROM cms_services WHERE slug='fotokopi' LIMIT 1);
+SELECT 'Fotokopi & Digital Printing', 'fotokopi', 'Fotocopy hitam putih & warna, scan dokumen, print PDF, laminating, dan jasa digital printing cepat.', 'bi bi-printer', 'https://images.unsplash.com/photo-1612815159322-444f042139bb?w=1200&q=80', '', 2, 1, 1, NOW(), NOW()
+FROM DUAL WHERE NOT EXISTS (SELECT id FROM cms_services WHERE slug='fotokopi' LIMIT 1);
 
 INSERT INTO `cms_services` (`title`, `slug`, `description`, `icon`, `image_url`, `link_url`, `sort_order`, `is_active`, `is_published`, `published_at`, `created_at`)
-SELECT * FROM (SELECT 'Percetakan & Media Promosi', 'percetakan', 'Cetak brosur, flyer, spanduk, kartu nama, stiker, buku, dan berbagai kebutuhan percetakan promosi.', 'bi bi-layers', 'https://images.unsplash.com/photo-1562564055-71e051d33c19?w=1200&q=80', '', 3, 1, 1, NOW(), NOW()) AS t WHERE NOT EXISTS (SELECT 1 FROM cms_services WHERE slug='percetakan' LIMIT 1);
+SELECT 'Percetakan & Media Promosi', 'percetakan', 'Cetak brosur, flyer, spanduk, kartu nama, stiker, buku, dan berbagai kebutuhan percetakan promosi.', 'bi bi-layers', 'https://images.unsplash.com/photo-1562564055-71e051d33c19?w=1200&q=80', '', 3, 1, 1, NOW(), NOW()
+FROM DUAL WHERE NOT EXISTS (SELECT id FROM cms_services WHERE slug='percetakan' LIMIT 1);
 
 INSERT INTO `cms_services` (`title`, `slug`, `description`, `icon`, `image_url`, `link_url`, `sort_order`, `is_active`, `is_published`, `published_at`, `created_at`)
-SELECT * FROM (SELECT 'Jasa & Layanan Profesional', 'jasa', 'Penjilidan, cutting, design grafis, pengiriman dokumen, dan layanan jasa pendukung operasional kantor & bisnis.', 'bi bi-briefcase', 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80', '', 4, 1, 1, NOW(), NOW()) AS t WHERE NOT EXISTS (SELECT 1 FROM cms_services WHERE slug='jasa' LIMIT 1);
+SELECT 'Jasa & Layanan Profesional', 'jasa', 'Penjilidan, cutting, design grafis, pengiriman dokumen, dan layanan jasa pendukung operasional kantor & bisnis.', 'bi bi-briefcase', 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80', '', 4, 1, 1, NOW(), NOW()
+FROM DUAL WHERE NOT EXISTS (SELECT id FROM cms_services WHERE slug='jasa' LIMIT 1);
 
 -- Slider hero bisnis
 INSERT INTO `cms_sliders` (`title`, `subtitle`, `image`, `link_url`, `button_text`, `sort_order`, `is_active`, `created_at`)
