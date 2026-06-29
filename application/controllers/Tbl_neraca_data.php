@@ -706,9 +706,8 @@ class Tbl_neraca_data extends CI_Controller
 		// die;
 
 		$this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
-		$level = dashboard_session_user_level($this);
+		$data['neraca_can_publish'] = dashboard_user_can_update_laporan_bulanan($this);
 		$data['neraca_is_published'] = false;
-		$data['neraca_can_publish'] = in_array($level, array(1, 2, 9, 99), true);
 		$data['neraca_has_record'] = isset($data['data_tbl_neraca_data']);
 		if ($Get_bulan && (int) $Get_bulan > 0) {
 			$data['neraca_is_published'] = dashboard_laporan_is_published($this, 'neraca', $Get_tahun, $Get_bulan);
@@ -724,8 +723,7 @@ class Tbl_neraca_data extends CI_Controller
 	{
 		$this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
 
-		$level = dashboard_session_user_level($this);
-		if (!in_array($level, array(1, 2, 9, 99), true)) {
+		if (!dashboard_user_can_update_laporan_bulanan($this)) {
 			show_error('Akses ditolak.', 403);
 			return;
 		}

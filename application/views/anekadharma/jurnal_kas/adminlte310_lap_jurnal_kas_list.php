@@ -334,10 +334,11 @@
     var urlCariBase = <?php echo json_encode($url_cari_lap_jurnal_kas); ?>;
     var STORAGE_KEY = 'anekadharma_lap_jurnal_kas_bulan_terpilih';
     var serverBulanNs = <?php echo json_encode($bulan_ns_value); ?>;
+    var lastLoadedBulanNs = serverBulanNs || '';
     var lapDt = null;
     var lapRefreshing = false;
     var lapMonthDebounce = null;
-    var lapBooted = false;
+    var lapLibsReady = false;
 
     function parseMonthValue(val) {
         if (!val || !/^\d{4}-\d{2}$/.test(val)) return null;
@@ -350,16 +351,24 @@
     }
 
     function hasDataTable() {
-        return !!(window.jQuery && (jQuery.fn.dataTable || jQuery.fn.DataTable));
+        return !!(window.jQuery && jQuery.fn && (jQuery.fn.dataTable || jQuery.fn.DataTable));
     }
 
-    function ensureBulanNsValue() {
+    function waitForLibs(cb) {
+        if (hasDataTable()) {
+            cb();
+            return;
+        }
+        setTimeout(function() { waitForLibs(cb); }, 50);
+    }
+
+    function getBulanNsValue() {
         var el = document.getElementById('bulan_ns_lap');
         if (!el) return '';
         var val = (el.value || '').trim();
         if (!/^\d{4}-\d{2}$/.test(val)) {
-            val = serverBulanNs || '';
-            el.value = val;
+            val = lastLoadedBulanNs || serverBulanNs || '';
+            if (val) el.value = val;
         }
         return val;
     }
@@ -384,6 +393,7 @@
 
     function getLapScrollBody() {
         var $table = getLapMainTable();
+        if (!$table || !$table.length) return jQuery();
         var $wrap = $table.closest('.dataTables_wrapper');
         var $body = $wrap.find('.dataTables_scrollBody');
         return $body.length ? $body : $wrap.find('.dataTables_scroll').find('.dataTables_scrollBody');
@@ -440,7 +450,7 @@
         lapColWidths = readLapColWidths();
         var $mainTable = getLapMainTable();
         var $summaryTable = jQuery('.lap-jk-summary-table');
-        if (!$mainTable.length) return;
+        if (!$mainTable || !$mainTable.length) return;
 
         if (dt && dt.columns) {
             dt.columns.adjust();
@@ -469,16 +479,16 @@
     }
 
     function getLapMainTable() {
+        if (!hasDataTable()) return null;
         var $table = jQuery('#lap-jurnal-kas-table-wrap .lap-jk-dt-responsive > table#lapJurnalKasMainTable');
-        if ($table.length) {
-            return $table.first();
-        }
+        if ($table.length) return $table.first();
         return jQuery('#lapJurnalKasMainTable').first();
     }
 
     function restoreLapTableDom() {
+        if (!hasDataTable()) return;
         var $table = getLapMainTable();
-        if (!$table.length) return;
+        if (!$table || !$table.length) return;
 
         var $responsive = jQuery('#lap-jurnal-kas-table-wrap .lap-jk-dt-responsive');
         var $wrapper = $table.closest('.dataTables_wrapper');
@@ -498,33 +508,28 @@
     function destroyLapJurnalKasDatatable() {
         if (!hasDataTable()) {
             lapDt = null;
-            restoreLapTableDom();
             return;
         }
-
-        if (lapDt) {
+        var $table = getLapMainTable();
+        if ($table && $table.length && jQuery.fn.DataTable.isDataTable($table)) {
             try {
-                lapDt.off('search.dt draw.dt order.dt column-visibility.dt page.dt length.dt');
-                lapDt.clear();
-                lapDt.destroy(false);
-            } catch (e1) {}
-            lapDt = null;
-        }
-
-        jQuery('#lap-jurnal-kas-table-wrap table').each(function() {
-            if (jQuery.fn.DataTable.isDataTable(this)) {
-                try {
-                    jQuery(this).DataTable().clear().destroy(false);
-                } catch (e2) {}
+                $table.DataTable().clear().destroy();
+            } catch (e1) {
+                try { $table.DataTable().destroy(); } catch (e2) {}
             }
-        });
-
+        }
+        if (lapDt) {
+            try { lapDt.destroy(); } catch (e3) {}
+        }
+        lapDt = null;
+        jQuery('.DTFC_Cloned, .DTFC_LeftWrapper, .DTFC_RightWrapper').remove();
         restoreLapTableDom();
     }
 
     function setLapTableBodyHtml(html) {
+        if (!hasDataTable()) return;
         var $table = getLapMainTable();
-        if (!$table.length) return;
+        if (!$table || !$table.length) return;
 
         var $tbody = $table.children('tbody');
         if (!$tbody.length) {
@@ -538,12 +543,9 @@
         if (!hasDataTable()) return null;
 
         var $table = getLapMainTable();
-        if (!$table.length) return null;
+        if (!$table || !$table.length) return null;
 
-        if (jQuery.fn.DataTable.isDataTable($table[0])) {
-            lapDt = $table.DataTable();
-            return lapDt;
-        }
+        if (jQuery.fn.DataTable.isDataTable($table)) return lapDt;
 
         var scrollH = 'calc(100vh - 320px)';
         var root = document.getElementById('lap-jurnal-kas-table-wrap');
@@ -612,6 +614,7 @@
             jQuery('#lap-jk-bulan-label').text(res.bulan_label);
         }
         if (res.bulan_ns_value) {
+            lastLoadedBulanNs = res.bulan_ns_value;
             serverBulanNs = res.bulan_ns_value;
             var el = document.getElementById('bulan_ns_lap');
             if (el && el.value !== res.bulan_ns_value) {
@@ -634,58 +637,70 @@
         }
     }
 
+    function applyLapJurnalKasData(res, val) {
+        updateLapJurnalKasHeader(res);
+        destroyLapJurnalKasDatatable();
+        setLapTableBodyHtml(res.tbody_html || '');
+        initLapJurnalKasDatatable();
+        lastLoadedBulanNs = res.bulan_ns_value || val;
+        saveMonthChoice(lastLoadedBulanNs);
+
+        var parsed = parseMonthValue(lastLoadedBulanNs);
+        if (parsed && window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', urlCariBase + '/' + parsed.year + '/' + parsed.month);
+        }
+    }
+
     function refreshLapJurnalKasDatatable(force) {
-        if (lapRefreshing) return;
-        if (!hasDataTable()) return;
-
-        var val = ensureBulanNsValue();
+        var val = getBulanNsValue();
         if (!val) return;
-        if (!force && val === serverBulanNs) return;
+        if (!force && val === lastLoadedBulanNs) return;
+        if (lapRefreshing) return;
 
-        lapRefreshing = true;
-        saveMonthChoice(val);
-        jQuery('#lap-jurnal-kas-table-wrap').addClass('lap-jk-loading');
-        jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', true);
+        waitForLibs(function() {
+            if (lapRefreshing) return;
+            if (!force && val === lastLoadedBulanNs) return;
 
-        jQuery.ajax({
-            url: urlAjaxRefresh,
-            type: 'POST',
-            dataType: 'json',
-            data: { bulan_ns: val },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        }).done(function(res) {
-            if (!res || !res.ok) {
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Gagal',
-                        text: (res && res.message) ? res.message : 'Gagal memuat data Laporan Buku Kas.'
-                    });
+            lapRefreshing = true;
+            jQuery('#lap-jurnal-kas-table-wrap').addClass('lap-jk-loading');
+            jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', true);
+
+            jQuery.ajax({
+                url: urlAjaxRefresh,
+                type: 'POST',
+                dataType: 'json',
+                data: { bulan_ns: val },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).done(function(res) {
+                if (!res || !res.ok) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Gagal',
+                            text: (res && res.message) ? res.message : 'Gagal memuat data Laporan Buku Kas.'
+                        });
+                    }
+                    return;
                 }
-                return;
-            }
-
-            updateLapJurnalKasHeader(res);
-            destroyLapJurnalKasDatatable();
-            setLapTableBodyHtml(res.tbody_html || '');
-            initLapJurnalKasDatatable();
-
-            var parsed = parseMonthValue(res.bulan_ns_value || val);
-            if (parsed && window.history && window.history.replaceState) {
-                window.history.replaceState(null, '', urlCariBase + '/' + parsed.year + '/' + parsed.month);
-            }
-        }).fail(function(xhr) {
-            var msg = 'Tidak dapat memuat data Laporan Buku Kas.';
-            if (xhr && xhr.responseText && xhr.responseText.indexOf('<') === 0) {
-                msg = 'Sesi login habis atau server mengembalikan halaman HTML. Silakan login ulang.';
-            }
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
-            }
-        }).always(function() {
-            lapRefreshing = false;
-            jQuery('#lap-jurnal-kas-table-wrap').removeClass('lap-jk-loading');
-            jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', false);
+                applyLapJurnalKasData(res, val);
+            }).fail(function(xhr) {
+                var parsed = parseMonthValue(val);
+                if (parsed) {
+                    window.location.href = urlCariBase + '/' + parsed.year + '/' + parsed.month;
+                    return;
+                }
+                var msg = 'Tidak dapat memuat data Laporan Buku Kas.';
+                if (xhr && xhr.responseText && xhr.responseText.indexOf('<') === 0) {
+                    msg = 'Sesi login habis. Silakan login ulang.';
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
+                }
+            }).always(function() {
+                lapRefreshing = false;
+                jQuery('#lap-jurnal-kas-table-wrap').removeClass('lap-jk-loading');
+                jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', false);
+            });
         });
     }
 
@@ -693,27 +708,31 @@
         clearTimeout(lapMonthDebounce);
         lapMonthDebounce = setTimeout(function() {
             refreshLapJurnalKasDatatable(!!force);
-        }, force ? 0 : 300);
+        }, force ? 0 : 250);
     }
 
-    function bindMonthPicker() {
-        var $bulanNs = jQuery('#bulan_ns_lap');
-        if (!$bulanNs.length) return;
+    function bindMonthPickerEvents() {
+        var bulanEl = document.getElementById('bulan_ns_lap');
+        if (bulanEl) {
+            bulanEl.addEventListener('change', function() {
+                var val = (this.value || '').trim();
+                if (!/^\d{4}-\d{2}$/.test(val)) return;
+                scheduleMonthRefresh(false);
+            });
+            bulanEl.addEventListener('input', function() {
+                var val = (this.value || '').trim();
+                if (!/^\d{4}-\d{2}$/.test(val)) return;
+                scheduleMonthRefresh(false);
+            });
+        }
 
-        if ($bulanNs.val()) saveMonthChoice($bulanNs.val());
-
-        $bulanNs.off('.lapJkMonth').on('change.lapJkMonth input.lapJkMonth', function() {
-            var val = (this.value || '').trim();
-            if (!/^\d{4}-\d{2}$/.test(val)) return;
-            scheduleMonthRefresh(false);
-        });
-    }
-
-    function bindCariButton() {
-        jQuery('#btn-cari-lap-jurnal-kas').off('click.lapJk').on('click.lapJk', function(e) {
-            e.preventDefault();
-            scheduleMonthRefresh(true);
-        });
+        var btnCari = document.getElementById('btn-cari-lap-jurnal-kas');
+        if (btnCari) {
+            btnCari.addEventListener('click', function(e) {
+                e.preventDefault();
+                scheduleMonthRefresh(true);
+            });
+        }
     }
 
     function bindResizeHandlers() {
@@ -737,27 +756,24 @@
     }
 
     function bootLapJurnalKas() {
-        if (!hasDataTable()) {
-            setTimeout(bootLapJurnalKas, 80);
-            return;
-        }
-        if (lapBooted) return;
-        lapBooted = true;
-
-        bindMonthPicker();
-        bindCariButton();
-        bindResizeHandlers();
-
-        try {
-            initLapJurnalKasDatatable();
-        } catch (err) {
-            console.error('Lap Jurnal Kas DataTable init error:', err);
-        }
+        if (lapLibsReady) return;
+        waitForLibs(function() {
+            if (lapLibsReady) return;
+            lapLibsReady = true;
+            lastLoadedBulanNs = getBulanNsValue() || serverBulanNs || '';
+            if (lastLoadedBulanNs) saveMonthChoice(lastLoadedBulanNs);
+            try {
+                initLapJurnalKasDatatable();
+            } catch (err) {
+                console.error('Lap Jurnal Kas DataTable init error:', err);
+            }
+            bindResizeHandlers();
+        });
     }
 
-    if (document.readyState === 'complete') {
-        bootLapJurnalKas();
-    } else {
+    bindMonthPickerEvents();
+    bootLapJurnalKas();
+    if (document.readyState !== 'complete') {
         window.addEventListener('load', bootLapJurnalKas);
     }
 })();
