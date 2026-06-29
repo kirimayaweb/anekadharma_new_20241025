@@ -113,6 +113,8 @@
 
 	?>
 
+	<?php $this->load->view('anekadharma/tbl_neraca_data/partials/neraca_publish_bar'); ?>
+
 	<div class="card-header">
 
 		<div class="row">
@@ -3340,42 +3342,6 @@ echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharj
 
 
 	<!-- <div class="card card-success"> -->
-	<?php if (!empty($bulan_transaksi) && (int) $bulan_transaksi > 0 && !empty($neraca_can_publish)) { ?>
-	<div class="card-header">
-		<div class="row">
-			<div class="form-group">
-				<div class="row">
-					<div class="col-12" align="center" style="margin-top: 15px; margin-bottom: 15px;">
-						<?php if ($this->session->flashdata('message')) { ?>
-							<div class="alert alert-info alert-dismissible fade show" role="alert" style="max-width: 500px; margin: 0 auto 15px;">
-								<?php echo $this->session->flashdata('message'); ?>
-								<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-							</div>
-						<?php } ?>
-						<?php if (!empty($neraca_is_published)) { ?>
-							<form action="<?php echo site_url('Tbl_neraca_data/publish_neraca/' . $tahun_neraca . '/' . $bulan_transaksi); ?>" method="post" style="display: inline;">
-								<input type="hidden" name="action" value="cancel">
-								<button type="submit" class="btn" style="background-color: #28a745; border-color: #28a745; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold;">
-									<i class="fa fa-ban"></i> Cancel Publish
-								</button>
-							</form>
-						<?php } else { ?>
-							<form action="<?php echo site_url('Tbl_neraca_data/publish_neraca/' . $tahun_neraca . '/' . $bulan_transaksi); ?>" method="post" style="display: inline;">
-								<input type="hidden" name="action" value="publish">
-								<button type="submit" class="btn" style="background-color: #dc3545; border-color: #dc3545; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold;" <?php echo !empty($neraca_has_record) ? '' : 'disabled'; ?>>
-									<i class="fa fa-upload"></i> Publish
-								</button>
-							</form>
-							<?php if (empty($neraca_has_record)) { ?>
-								<p class="text-muted small mt-2 mb-0">Simpan data terlebih dahulu sebelum publish.</p>
-							<?php } ?>
-						<?php } ?>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<?php } ?>
 	<div class="card-header">
 
 		<!-- <div class="row"> -->
