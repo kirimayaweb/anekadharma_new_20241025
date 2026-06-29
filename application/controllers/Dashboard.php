@@ -31,26 +31,27 @@ class Dashboard extends CI_Controller
         }
 
 
-        // LABA-RUGI
+        // LABA-RUGI (tampilkan mulai Januari 2026)
+        $dashboard_min_date = '2026-01-01';
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
 
         $tahun_labarugi_data = $this->db->query($sql)->result();
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
 
         $bulan_neraca_labarugi_data = $this->db->query($sql)->result();
 
 
 
-        // NERACA
+        // NERACA (tampilkan mulai Januari 2026)
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
 
         $tahun_neraca_data = $this->db->query($sql)->result();
 
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
+        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` WHERE `tgl_po` >= '$dashboard_min_date' GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
 
         $bulan_neraca_neraca_data = $this->db->query($sql)->result();
 
@@ -84,7 +85,7 @@ class Dashboard extends CI_Controller
         // print_r("<br/>");
         // END OF JURNAL KAS
 
-        $sql_group_by_month = "SELECT month(`tanggal`) as month_process, year(`tanggal`) as year_process FROM `jurnal_kas` GROUP by month_process ORDER BY `tanggal` DESC;";
+        $sql_group_by_month = "SELECT month(`tanggal`) as month_process, year(`tanggal`) as year_process FROM `jurnal_kas` WHERE `tanggal` >= '$dashboard_min_date' GROUP by year(`tanggal`), month(`tanggal`) ORDER BY `tanggal` DESC;";
 
         $Data_group_by_month_Jurnal_kas = $this->db->query($sql_group_by_month)->result();
 
