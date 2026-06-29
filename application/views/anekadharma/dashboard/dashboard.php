@@ -835,21 +835,22 @@
 
             var $cetak = $actions.find('.dashboard-dt-btn-cetak');
             if (isPublished && cetakUrl) {
-                if ($cetak.is('span')) {
-                    $cetak.replaceWith(
+                if (!$actions.find('.dashboard-dt-btn-cetak').length) {
+                    $actions.append(
                         '<a href="' + cetakUrl + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"><i class="fa fa-print"></i> ' + label + '</a>'
                     );
                 } else {
-                    $cetak.attr('href', cetakUrl).removeClass('dashboard-dt-btn-cetak-off dashboard-dt-btn-cetak-placeholder');
+                    var $cetak = $actions.find('.dashboard-dt-btn-cetak');
+                    if ($cetak.is('span')) {
+                        $cetak.replaceWith(
+                            '<a href="' + cetakUrl + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"><i class="fa fa-print"></i> ' + label + '</a>'
+                        );
+                    } else {
+                        $cetak.attr('href', cetakUrl).show();
+                    }
                 }
             } else {
-                if ($cetak.is('a')) {
-                    $cetak.replaceWith(
-                        '<span class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak dashboard-dt-btn-cetak-placeholder dashboard-dt-btn-cetak-off"><i class="fa fa-print"></i> ' + label + '</span>'
-                    );
-                } else {
-                    $cetak.addClass('dashboard-dt-btn-cetak-off dashboard-dt-btn-cetak-placeholder');
-                }
+                $actions.find('.dashboard-dt-btn-cetak').remove();
             }
         });
     }
@@ -1199,6 +1200,17 @@
 
     .btn-dt-cetak:hover {
         background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
+        color: #fff;
+    }
+
+    .btn-dt-view {
+        background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-view:hover {
+        background: linear-gradient(135deg, #8556d3 0%, #6f42c1 100%);
         color: #fff;
     }
 

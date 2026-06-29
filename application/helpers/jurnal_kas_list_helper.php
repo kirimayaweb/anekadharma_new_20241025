@@ -368,7 +368,7 @@ function dashboard_jurnal_kas_count_page_data_rows($CI, $month, $year)
  */
 function dashboard_jurnal_kas_bulan_list($CI, $min_year = 2026, $min_month = 1)
 {
-	$CI->load->helper(array('jurnal_kas_sources', 'dashboard'));
+	$CI->load->helper(array('jurnal_kas_sources', 'dashboard', 'jurnal_kas_lap'));
 
 	$list = array();
 	foreach (dashboard_bulan_list_range($min_year, $min_month) as $base) {
@@ -376,17 +376,21 @@ function dashboard_jurnal_kas_bulan_list($CI, $min_year = 2026, $min_month = 1)
 		$month = (int) $base->month_process;
 		$data_row_count = dashboard_jurnal_kas_count_page_data_rows($CI, $month, $year);
 		$has_data = ($data_row_count >= 1);
+		$is_published = jurnal_kas_lap_is_published($CI, $year, $month);
 
 		$list[] = (object) array(
 			'year_process' => $year,
 			'month_process' => $month,
 			'data_row_count' => $data_row_count,
 			'has_data' => $has_data,
+			'is_published' => $is_published,
 			'show_update' => $has_data,
-			'show_cetak' => $has_data,
+			'show_cetak' => $is_published,
+			'cetak_enabled' => $is_published,
 			'is_current_month' => !empty($base->is_current_month),
 			'update_url' => site_url('jurnal_kas/cari_between_date/' . $year . '/' . $month),
-			'cetak_url' => site_url('Jurnal_kas/excel/' . $year . '/' . $month),
+			'cetak_url' => site_url('Lap_Jurnal_kas/excel/' . $year . '/' . $month),
+			'view_url' => site_url('Lap_Jurnal_kas/cari_between_date/' . $year . '/' . $month),
 		);
 	}
 

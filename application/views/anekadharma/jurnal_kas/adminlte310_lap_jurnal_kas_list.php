@@ -37,14 +37,23 @@
                                 </div>
                             </div>
                             <div class="col-md-4 text-right">
+                                <?php if (!empty($is_published)) { ?>
                                 <a href="<?php echo htmlspecialchars($url_lap_jurnal_kas_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success" id="btn-lap-jurnal-kas-excel">
                                     <i class="fa fa-file-excel-o"></i> Cetak Buku Kas Ke Excel
                                 </a>
+                                <?php } ?>
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body lap-jk-card-body">
+                        <?php if (!empty($not_published)) { ?>
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            Laporan Buku Kas <strong><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></strong> belum dipublish.
+                            Silakan publish dari halaman <strong>Jurnal Kas → Compare Data Manual - Online (Tab 2)</strong> terlebih dahulu.
+                        </div>
+                        <?php } ?>
                         <div id="lap-jurnal-kas-table-wrap" class="lap-jk-dt-box">
                             <div class="lap-jk-dt-responsive">
                                 <table id="lapJurnalKasMainTable" class="table table-bordered table-striped jurnal-kas-grid-table mb-0 w-100">
@@ -67,6 +76,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        <?php if (!empty($not_published)) { ?>
+                                            <tr class="lap-jk-empty-row">
+                                                <td colspan="6" class="text-center text-muted py-4">
+                                                    Data belum tersedia — bulan ini belum dipublish ke Laporan Buku Kas.
+                                                </td>
+                                            </tr>
+                                        <?php } ?>
                                         <?php foreach ((array) $report_rows as $row) {
                                             $tanggal = isset($row['tanggal']) ? (string) $row['tanggal'] : '';
                                             $tanggal_order = '';
@@ -102,6 +118,7 @@
                                 </table>
                             </div>
 
+                            <?php if (!empty($is_published)) { ?>
                             <div class="lap-jk-summary-scroll" id="lap-jk-summary-scroll">
                             <div class="jurnal-kas-summary-wrap lap-jk-summary-wrap">
                                 <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table lap-jk-summary-table mb-0">
@@ -149,6 +166,7 @@
                                 </table>
                             </div>
                             </div>
+                            <?php } ?>
                         </div>
                     </div>
                 </div>

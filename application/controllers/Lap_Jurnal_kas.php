@@ -96,6 +96,9 @@ class Lap_Jurnal_kas extends CI_Controller
             return;
         }
 
+        $is_published = empty($report['not_published']);
+        $publish_setting = isset($report['publish_setting']) ? $report['publish_setting'] : null;
+
         $date_awal = date('Y-m-01 00:00:00', mktime(0, 0, 0, $month, 1, $year));
         $date_akhir = date('Y-m-t 23:59:59', mktime(0, 0, 0, $month, 1, $year));
 
@@ -106,7 +109,9 @@ class Lap_Jurnal_kas extends CI_Controller
             'SALDO_AKHIR' => $report['SALDO_AKHIR'],
             'source_type' => $report['source_type'],
             'source_table' => $report['source_table'],
-            'publish_setting' => isset($report['publish_setting']) ? $report['publish_setting'] : null,
+            'publish_setting' => $publish_setting,
+            'is_published' => $is_published,
+            'not_published' => !$is_published,
             'date_awal' => $date_awal,
             'date_akhir' => $date_akhir,
             'month_selected' => $month,

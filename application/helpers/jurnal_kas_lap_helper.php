@@ -60,6 +60,18 @@ function jurnal_kas_lap_get_publish_setting($CI, $bulan_key)
 	);
 }
 
+function jurnal_kas_lap_is_published($CI, $year, $month)
+{
+	$bulan_key = jurnal_kas_lap_normalize_bulan_key($year, $month);
+	if ($bulan_key === null) {
+		return false;
+	}
+
+	$publish = jurnal_kas_lap_get_publish_setting($CI, $bulan_key);
+
+	return !empty($publish) && !empty($publish['published_at']);
+}
+
 function jurnal_kas_lap_save_publish_setting($CI, $bulan_key, $source_type, $source_table = null, $saldo_override = null)
 {
 	$CI->load->helper(array('pembelian_persediaan', 'jurnal_kas_compare'));
@@ -260,10 +272,25 @@ function jurnal_kas_lap_compute_report_data($CI, $month, $year, $source_type = n
 	$publish = null;
 	if ($use_publish && ($source_type === null || $source_type === '')) {
 		$publish = jurnal_kas_lap_get_publish_setting($CI, $bulan_key);
-		if ($publish) {
-			$source_type = $publish['source_type'];
-			$source_table = $publish['source_table'];
+		if (!$publish) {
+			return array(
+				'ok' => true,
+				'not_published' => true,
+				'month' => $month,
+				'year' => $year,
+				'bulan_key' => $bulan_key,
+				'bulan_label' => jurnal_kas_bulan_teks($month) . ' ' . $year,
+				'rows' => array(),
+				'TOTAL_debet' => 0,
+				'TOTAL_kredit' => 0,
+				'SALDO_AKHIR' => 0,
+				'source_type' => null,
+				'source_table' => null,
+				'publish_setting' => null,
+			);
 		}
+		$source_type = $publish['source_type'];
+		$source_table = $publish['source_table'];
 	}
 
 	if ($source_type === null || $source_type === '') {
@@ -411,6 +438,11 @@ function jurnal_kas_lap_excel_write_footer_row($rowNum, $label, $debet, $kredit,
 
 function jurnal_kas_lap_export_excel_output($CI, $month, $year)
 {
+	if (!jurnal_kas_lap_is_published($CI, $year, $month)) {
+		show_error('Laporan Buku Kas bulan ini belum dipublish. Silakan publish dari halaman Compare Jurnal Kas (Tab 2).', 403, 'Akses Cetak Ditolak');
+		return;
+	}
+
 	$data = jurnal_kas_lap_compute_report_data($CI, $month, $year, null, null, true);
 	if (empty($data['ok'])) {
 		show_error(isset($data['message']) ? $data['message'] : 'Data laporan tidak tersedia.', 400);

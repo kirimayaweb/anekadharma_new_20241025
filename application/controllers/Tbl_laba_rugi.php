@@ -21,19 +21,22 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function index()
     {
-        if ($laporan_status) {
-            $status_laporan = $laporan_status;
-        } else {
-            $status_laporan = "laporan";
+        $status_laporan = "laporan";
+
+        $this->load->helper('dashboard');
+        $current_year = (int) date('Y');
+        $tahun_labarugi_data = array();
+        for ($y = $current_year; $y >= 2026; $y--) {
+            $tahun_labarugi_data[] = (object) array('tahun_neraca' => $y);
         }
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
-
-        $tahun_labarugi_data = $this->db->query($sql)->result();
-
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
-
-        $bulan_neraca_labarugi_data = $this->db->query($sql)->result();
+        $bulan_neraca_labarugi_data = array();
+        foreach (dashboard_bulan_list_range() as $row) {
+            $bulan_neraca_labarugi_data[] = (object) array(
+                'tahun_neraca' => $row->year_process,
+                'bulan_neraca' => $row->month_process,
+            );
+        }
 
         $start = 0;
         $data = array(
@@ -57,13 +60,20 @@ class Tbl_laba_rugi extends CI_Controller
             $status_laporan = "laporan";
         }
 
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
+        $this->load->helper('dashboard');
+        $current_year = (int) date('Y');
+        $tahun_labarugi_data = array();
+        for ($y = $current_year; $y >= 2026; $y--) {
+            $tahun_labarugi_data[] = (object) array('tahun_neraca' => $y);
+        }
 
-        $tahun_labarugi_data = $this->db->query($sql)->result();
-
-        $sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
-
-        $bulan_neraca_labarugi_data = $this->db->query($sql)->result();
+        $bulan_neraca_labarugi_data = array();
+        foreach (dashboard_bulan_list_range() as $row) {
+            $bulan_neraca_labarugi_data[] = (object) array(
+                'tahun_neraca' => $row->year_process,
+                'bulan_neraca' => $row->month_process,
+            );
+        }
 
         $start = 0;
         $data = array(
@@ -185,7 +195,48 @@ class Tbl_laba_rugi extends CI_Controller
             }
         }
 
+        $this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
+        $level = dashboard_session_user_level($this);
+        $data['labarugi_is_published'] = false;
+        $data['labarugi_can_publish'] = in_array($level, array(1, 2, 9, 99), true);
+        $data['labarugi_has_record'] = isset($data['data_tbl_laba_rugi']);
+        if ($Get_bulan && (int) $Get_bulan > 0) {
+            $data['labarugi_is_published'] = dashboard_laporan_is_published($this, 'laba_rugi', $Get_tahun, $Get_bulan);
+            if (!$data['labarugi_has_record']) {
+                $data['labarugi_has_record'] = dashboard_laporan_has_saved_data($this, 'tbl_laba_rugi', $Get_tahun, $Get_bulan);
+            }
+        }
+
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_laba_rugi/adminlte310_labarugi_form', $data);
+    }
+
+    public function publish_labarugi($Get_tahun = null, $Get_bulan = null)
+    {
+        $this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
+
+        $level = dashboard_session_user_level($this);
+        if (!in_array($level, array(1, 2, 9, 99), true)) {
+            show_error('Akses ditolak.', 403);
+            return;
+        }
+
+        if (!(int) $Get_bulan) {
+            redirect(site_url('Tbl_laba_rugi/labarugi_form/' . $Get_tahun));
+            return;
+        }
+
+        if (!dashboard_laporan_has_saved_data($this, 'tbl_laba_rugi', $Get_tahun, $Get_bulan)) {
+            $this->session->set_flashdata('message', 'Data laporan belum tersimpan. Simpan data terlebih dahulu.');
+            redirect(site_url('Tbl_laba_rugi/labarugi_form/' . $Get_tahun . '/' . $Get_bulan));
+            return;
+        }
+
+        $action = trim((string) $this->input->post('action'));
+        $publish = ($action !== 'cancel');
+        $result = dashboard_laporan_set_published($this, 'laba_rugi', $Get_tahun, $Get_bulan, $publish);
+
+        $this->session->set_flashdata('message', $result['message']);
+        redirect(site_url('Tbl_laba_rugi/labarugi_form/' . $Get_tahun . '/' . $Get_bulan));
     }
 
 

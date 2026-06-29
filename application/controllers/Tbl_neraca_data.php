@@ -77,17 +77,21 @@ class Tbl_neraca_data extends CI_Controller
 
 		// $Tbl_neraca_data = $this->Tbl_neraca_data_model->get_all();
 
-		// SELECT year(`tgl_po`) FROM `tbl_pembelian` GROUP by year(`tgl_po`);
+		$this->load->helper('dashboard');
 
+		$current_year = (int) date('Y');
+		$tahun_neraca_data = array();
+		for ($y = $current_year; $y >= 2026; $y--) {
+			$tahun_neraca_data[] = (object) array('tahun_neraca' => $y);
+		}
 
-		$sql = "SELECT year(`tgl_po`) as tahun_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`) order by  `tgl_po` DESC";
-
-		$tahun_neraca_data = $this->db->query($sql)->result();
-
-
-		$sql = "SELECT year(`tgl_po`) as tahun_neraca, month(`tgl_po`) as bulan_neraca FROM `tbl_pembelian` GROUP by year(`tgl_po`), month(`tgl_po`) order by `tgl_po` DESC;";
-
-		$bulan_neraca_neraca_data = $this->db->query($sql)->result();
+		$bulan_neraca_neraca_data = array();
+		foreach (dashboard_bulan_list_range() as $row) {
+			$bulan_neraca_neraca_data[] = (object) array(
+				'tahun_neraca' => $row->year_process,
+				'bulan_neraca' => $row->month_process,
+			);
+		}
 
 		// print_r($Tbl_neraca_data);
 		// print_r("<br/>");

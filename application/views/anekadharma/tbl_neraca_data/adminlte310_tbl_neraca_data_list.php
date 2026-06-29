@@ -281,9 +281,12 @@
                                                     return $bulan_teks;
                                                 }
 
+                                                $this->load->helper('dashboard');
                                                 $start = 0;
                                                 foreach ($Tbl_BULAN_neraca_data as $list_data) {
-                                                    // if ($list_data->bulan_transaksi > 0) {
+                                                    if (!dashboard_bulan_in_valid_range($list_data->tahun_neraca, $list_data->bulan_neraca)) {
+                                                        continue;
+                                                    }
                                                 ?>
 
                                                     <tr>
@@ -306,7 +309,9 @@
                                                             //     echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->uuid_data_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             // }
 
-                                                            if ($this->session->userdata('id_user_level') == 1 or $this->session->userdata('id_user_level') == 2 or $this->session->userdata('id_user_level') == 9) {
+                                                            $this->load->helper('dashboard');
+
+                                                            if (in_array(dashboard_session_user_level($this), array(1, 2, 9), true)) {
 
                                                                 echo anchor(site_url('Tbl_neraca_data/neraca_form/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Update Data</i>', 'class="btn btn-warning btn-xs"');
                                                             }
@@ -317,10 +322,10 @@
 
                                                             $GET_tbl_neraca_data_RECORD = $this->db->query($sql);
 
-                                                            if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
+                                                            if (dashboard_user_can_cetak_laporan($this) && $GET_tbl_neraca_data_RECORD->num_rows() > 0) {
                                                                 $this->load->helper('dashboard_laporan_publish');
                                                                 if (dashboard_laporan_is_published($this, 'neraca', $list_data->tahun_neraca, $list_data->bulan_neraca)) {
-                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                                echo anchor(site_url('Tbl_neraca_data/neraca_cetak/' . $list_data->tahun_neraca . '/' . $list_data->bulan_neraca), '<i class="fa fa-print" aria-hidden="true"> Cetak Neraca</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                                 }
                                                             }
 

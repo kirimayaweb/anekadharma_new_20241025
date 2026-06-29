@@ -51,11 +51,14 @@ $card_extra_class = $yellow_border ? ' dashboard-dt-yellow-border' : '';
                             $show_cetak = isset($list_data->show_cetak) ? (bool) $list_data->show_cetak : $cetak_enabled;
                             $update_url = isset($list_data->update_url) ? $list_data->update_url : '#';
                             $cetak_url = isset($list_data->cetak_url) ? $list_data->cetak_url : '#';
+                            $view_url = isset($list_data->view_url) ? $list_data->view_url : '';
                             $has_any_action = false;
                             if ($supports_publish && $can_edit) {
-                                $has_any_action = $show_update || $show_publish || $show_cancel_publish || $show_cetak;
+                                $has_any_action = $show_update || $show_publish || $show_cancel_publish || $cetak_enabled;
                             } else {
-                                $has_any_action = ($can_edit && $show_update && $update_url !== '#') || ($show_cetak && $cetak_enabled && $cetak_url !== '#');
+                                $has_any_action = ($can_edit && $show_update && $update_url !== '#')
+                                    || ($cetak_enabled && $view_url !== '')
+                                    || ($cetak_enabled && $cetak_url !== '#');
                             }
                         ?>
                             <tr class="<?php echo $is_current ? 'dashboard-dt-row-current' : ''; ?>" data-year="<?php echo (int) $list_data->year_process; ?>" data-month="<?php echo (int) $list_data->month_process; ?>" data-has-data="<?php echo $has_data ? '1' : '0'; ?>" data-published="<?php echo !empty($list_data->is_published) ? '1' : '0'; ?>">
@@ -89,15 +92,12 @@ $card_extra_class = $yellow_border ? ' dashboard-dt-yellow-border' : '';
                                         echo '<button type="button" class="btn btn-dt-publish btn-sm dashboard-dt-btn-publish"' . $publish_style . $publish_disabled . '><i class="fa fa-upload"></i> Publish</button>';
                                         echo '<button type="button" class="btn btn-dt-cancel-publish btn-sm dashboard-dt-btn-cancel-publish"' . $cancel_style . '><i class="fa fa-ban"></i> Cancel Publish</button>';
 
-                                        $cetak_hidden_class = $cetak_enabled ? '' : ' dashboard-dt-btn-cetak-off';
                                         if ($cetak_enabled && $cetak_url !== '#') {
                                             echo anchor(
                                                 $cetak_url,
                                                 '<i class="fa fa-print"></i> ' . htmlspecialchars($cetak_label, ENT_QUOTES, 'UTF-8'),
-                                                'class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak' . $cetak_hidden_class . '" target="_blank"'
+                                                'class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"'
                                             );
-                                        } else {
-                                            echo '<span class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak dashboard-dt-btn-cetak-placeholder' . $cetak_hidden_class . '"><i class="fa fa-print"></i> ' . htmlspecialchars($cetak_label, ENT_QUOTES, 'UTF-8') . '</span>';
                                         }
                                     } else {
                                         if ($can_edit && $show_update && $update_url !== '#') {
@@ -105,6 +105,13 @@ $card_extra_class = $yellow_border ? ' dashboard-dt-yellow-border' : '';
                                                 $update_url,
                                                 '<i class="fa fa-pencil-square-o"></i> ' . htmlspecialchars($update_label, ENT_QUOTES, 'UTF-8'),
                                                 'class="btn btn-dt-update btn-sm dashboard-dt-btn-update"'
+                                            );
+                                        }
+                                        if ($cetak_enabled && $view_url !== '') {
+                                            echo anchor(
+                                                $view_url,
+                                                '<i class="fa fa-eye"></i> View',
+                                                'class="btn btn-dt-view btn-sm dashboard-dt-btn-view" target="_blank"'
                                             );
                                         }
                                         if ($cetak_enabled && $cetak_url !== '#') {

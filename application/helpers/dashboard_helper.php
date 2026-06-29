@@ -134,13 +134,49 @@ function dashboard_laporan_has_saved_data($CI, $table, $year, $month)
 }
 
 /**
+ * Ambil id_user_level dari session (sess_id_user_level atau id_user_level).
+ */
+function dashboard_session_user_level($CI)
+{
+	$level = $CI->session->userdata('sess_id_user_level');
+	if ($level === null || $level === '' || $level === false) {
+		$level = $CI->session->userdata('id_user_level');
+	}
+
+	return (int) $level;
+}
+
+/**
+ * Level yang boleh melihat tombol Cetak Laba-Rugi / Neraca (setelah publish).
+ */
+function dashboard_laporan_cetak_level_ids()
+{
+	$levels = array(1, 2, 6, 9, 99, 888, 999);
+
+	if (function_exists('hak_akses_keuangan_level_ids')) {
+		$levels = array_merge($levels, hak_akses_keuangan_level_ids());
+	} else {
+		$levels[] = 666;
+	}
+
+	$levels = array_map('intval', $levels);
+
+	return array_values(array_unique($levels));
+}
+
+function dashboard_user_can_cetak_laporan($CI)
+{
+	return in_array(dashboard_session_user_level($CI), dashboard_laporan_cetak_level_ids(), true);
+}
+
+/**
  * Admin (2), accounting (9), administrator (99) — Update Laba-Rugi/Neraca semua bulan.
  */
 function dashboard_user_can_update_laporan_bulanan($CI)
 {
-	$level = (int) $CI->session->userdata('id_user_level');
+	$level = dashboard_session_user_level($CI);
 
-	return in_array($level, array(2, 9, 99), true);
+	return in_array($level, array(1, 2, 9, 99), true);
 }
 
 function dashboard_laba_rugi_bulan_list($CI)
@@ -156,8 +192,8 @@ function dashboard_laba_rugi_bulan_list($CI)
 		$row->show_update = $always_show_update ? true : $has_data;
 		$row->show_publish = $always_show_update && !$is_published;
 		$row->show_cancel_publish = $always_show_update && $is_published;
-		$row->show_cetak = $always_show_update || ($has_data && $is_published);
 		$row->cetak_enabled = $has_data && $is_published;
+		$row->show_cetak = $row->cetak_enabled;
 		$row->update_url = site_url('Tbl_laba_rugi/labarugi_form/' . $row->year_process . '/' . $row->month_process);
 		$row->cetak_url = site_url('Tbl_laba_rugi/labarugi_print/' . $row->year_process . '/' . $row->month_process);
 	}
@@ -178,8 +214,8 @@ function dashboard_neraca_bulan_list($CI)
 		$row->show_update = $always_show_update ? true : $has_data;
 		$row->show_publish = $always_show_update && !$is_published;
 		$row->show_cancel_publish = $always_show_update && $is_published;
-		$row->show_cetak = $always_show_update || ($has_data && $is_published);
 		$row->cetak_enabled = $has_data && $is_published;
+		$row->show_cetak = $row->cetak_enabled;
 		$row->update_url = site_url('Tbl_neraca_data/neraca_form/' . $row->year_process . '/' . $row->month_process);
 		$row->cetak_url = site_url('Tbl_neraca_data/neraca_cetak/' . $row->year_process . '/' . $row->month_process);
 	}
