@@ -352,6 +352,7 @@
                                 $jk_saldo_awal = (isset($jk_saldo_awal) && is_array($jk_saldo_awal))
                                     ? $jk_saldo_awal
                                     : array('label' => '', 'saldo' => 0.0);
+                                // Saldo bulan lalu: hanya dibaca dari jurnal_kas_saldo_akhir_bulan (hasil Publish Tab 2).
                                 $SALDO_AKHIR_BULAN_LALU = (float) (isset($jk_saldo_awal['saldo']) ? $jk_saldo_awal['saldo'] : 0);
                                 if ($SALDO_AKHIR_BULAN_LALU > 0) {
                                     $TOTAL_debet += $SALDO_AKHIR_BULAN_LALU;

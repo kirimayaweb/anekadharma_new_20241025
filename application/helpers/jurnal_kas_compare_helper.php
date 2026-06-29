@@ -1833,11 +1833,6 @@ function jurnal_kas_compare_import_to_jurnal_kas($CI, $table, $bulan)
 		$inserted++;
 	}
 
-	// Saldo akhir Kas Bulan terpilih → jurnal_kas_saldo_akhir_bulan (tanggal = 01 bulan terpilih)
-	$CI->load->helper('jurnal_kas_list');
-	$summary = jurnal_kas_compute_list_data($CI, $ref_month, $ref_year);
-	$saldo_result = jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan, $summary['SALDO_AKHIR']);
-
 	$CI->db->trans_complete();
 
 	if ($CI->db->trans_status() === FALSE) {
@@ -1852,15 +1847,6 @@ function jurnal_kas_compare_import_to_jurnal_kas($CI, $table, $bulan)
 	if ($skipped_invalid > 0) {
 		$message .= ' ' . $skipped_invalid . ' baris tidak valid (tanggal/keterangan/debet-kredit kosong) tidak disimpan.';
 	}
-	if (!empty($saldo_result['ok'])) {
-		$bulan_nama = jurnal_kas_bulan_teks($ref_month);
-		$action_label = ($saldo_result['action'] === 'insert') ? 'disimpan' : 'diperbarui';
-		$message .= ' Saldo akhir Kas Bulan ' . $bulan_nama . ' ' . $ref_year
-			. ' (' . number_format((float) $saldo_result['saldo'], 2, ',', '.') . ') '
-			. $action_label . ' ke jurnal_kas_saldo_akhir_bulan tanggal ' . $saldo_result['tanggal'] . '.';
-	} elseif (!empty($saldo_result['message'])) {
-		$message .= ' Peringatan saldo akhir: ' . $saldo_result['message'];
-	}
 	if (!empty($conflict['jurnal_kas_bulan_conflict'])) {
 		$message .= ' Catatan: jurnal_kas sudah memiliki '
 			. (int) $conflict['jurnal_kas_existing_count']
@@ -1872,9 +1858,6 @@ function jurnal_kas_compare_import_to_jurnal_kas($CI, $table, $bulan)
 		'inserted' => $inserted,
 		'skipped_out_bulan' => $skipped_out_bulan,
 		'skipped_invalid' => $skipped_invalid,
-		'saldo_akhir' => isset($summary['SALDO_AKHIR']) ? (float) $summary['SALDO_AKHIR'] : null,
-		'saldo_tanggal' => !empty($saldo_result['tanggal']) ? $saldo_result['tanggal'] : '',
-		'saldo_saved' => !empty($saldo_result['ok']),
 		'jurnal_kas_bulan_conflict' => !empty($conflict['jurnal_kas_bulan_conflict']),
 		'conflict_warning' => isset($conflict['conflict_warning']) ? $conflict['conflict_warning'] : '',
 		'message' => $message,
