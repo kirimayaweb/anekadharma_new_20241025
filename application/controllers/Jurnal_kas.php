@@ -852,17 +852,14 @@ class Jurnal_kas extends CI_Controller
             $Data_kas = $this->db->query($sql)->result();
 
 
-            $data = array(
+            $data = $this->_jurnal_kas_view_data(array(
                 'Data_kas' => $Data_kas,
-                // 'start' => $start,
                 'date_awal' => $Get_date_awal,
                 'date_akhir' => $Get_date_akhir,
                 'month_akhir' => $Get_month_akhir,
                 'month_selected' => date("m", strtotime($this->input->post('tanggal', TRUE))),
                 'year_selected' => date("Y", strtotime($this->input->post('tanggal', TRUE))),
-            );
-
-            // print_r($data);
+            ));
 
             $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/jurnal_kas/adminlte310_jurnal_kas_list', $data);
         }
