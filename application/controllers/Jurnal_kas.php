@@ -1957,10 +1957,11 @@ class Jurnal_kas extends CI_Controller
         }
 
         $bulan_key = jurnal_kas_lap_normalize_bulan_key($tahun, $bulan_num);
+        $saldo_akhir = trim((string) $this->input->post('saldo_akhir', TRUE));
         if ($source === '' || $source === 'asli' || strtolower($source) === 'jurnal_kas_asli' || strtolower($source) === 'online') {
-            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'asli', null);
+            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'asli', null, $saldo_akhir);
         } else {
-            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'tabel', $source);
+            $result = jurnal_kas_lap_save_publish_setting($this, $bulan_key, 'tabel', $source, $saldo_akhir);
         }
         if (!empty($result['ok'])) {
             $result['lap_url'] = site_url('Lap_Jurnal_kas/cari_between_date/' . $tahun . '/' . $bulan_num);

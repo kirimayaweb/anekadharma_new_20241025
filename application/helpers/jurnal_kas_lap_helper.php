@@ -60,7 +60,7 @@ function jurnal_kas_lap_get_publish_setting($CI, $bulan_key)
 	);
 }
 
-function jurnal_kas_lap_save_publish_setting($CI, $bulan_key, $source_type, $source_table = null)
+function jurnal_kas_lap_save_publish_setting($CI, $bulan_key, $source_type, $source_table = null, $saldo_override = null)
 {
 	$CI->load->helper(array('pembelian_persediaan', 'jurnal_kas_compare'));
 
@@ -112,9 +112,57 @@ function jurnal_kas_lap_save_publish_setting($CI, $bulan_key, $source_type, $sou
 		$CI->db->insert($table, $payload);
 	}
 
+	$month = (int) substr($bulan_key, 5, 2);
+	$year = (int) substr($bulan_key, 0, 4);
+	$CI->load->helper(array('jurnal_kas_list', 'jurnal_kas_compare'));
+	$saldo_result = array('ok' => false);
+	$report = null;
+	$saldo_to_save = null;
+
+	if ($source_type === 'tabel') {
+		$report = jurnal_kas_lap_compute_from_table($CI, $month, $year, $source_table);
+		$manual = jurnal_kas_compare_load_manual_all($CI, $source_table, $bulan_key);
+		if (!empty($manual['ok'])) {
+			$compare_summary = jurnal_kas_compare_build_tab1_summary($CI, $bulan_key, $manual['display_list']);
+			if (!empty($compare_summary['ok'])) {
+				$saldo_to_save = (float) $compare_summary['SALDO_AKHIR'];
+			}
+		}
+	} else {
+		$report = jurnal_kas_compute_list_data($CI, $month, $year);
+		if (is_array($report)) {
+			$report['ok'] = true;
+		}
+	}
+
+	$saldo_override = trim((string) $saldo_override);
+	if ($saldo_override !== '' && is_numeric($saldo_override)) {
+		$saldo_to_save = (float) $saldo_override;
+	}
+
+	if ($saldo_to_save === null && !empty($report['ok']) && isset($report['SALDO_AKHIR'])) {
+		$saldo_to_save = (float) $report['SALDO_AKHIR'];
+	}
+
+	if ($saldo_to_save !== null) {
+		$saldo_result = jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan_key, $saldo_to_save);
+	}
+
+	$message = 'Pengaturan laporan jurnal kas berhasil dipublish.';
+	if (!empty($saldo_result['ok'])) {
+		$message .= ' Saldo akhir Kas Bulan ' . jurnal_kas_bulan_teks($month) . ' ' . $year
+			. ' (' . number_format((float) $saldo_result['saldo'], 2, ',', '.') . ') '
+			. 'telah diperbarui dan akan digunakan sebagai saldo bulan berikutnya.';
+	} elseif (!empty($saldo_result['message'])) {
+		$message .= ' Peringatan saldo akhir: ' . $saldo_result['message'];
+	}
+
 	return array(
 		'ok' => true,
-		'message' => 'Pengaturan laporan jurnal kas berhasil dipublish.',
+		'message' => $message,
+		'saldo_saved' => !empty($saldo_result['ok']),
+		'saldo_akhir' => ($saldo_to_save !== null) ? (float) $saldo_to_save : (($report && isset($report['SALDO_AKHIR'])) ? (float) $report['SALDO_AKHIR'] : null),
+		'saldo_tanggal' => !empty($saldo_result['tanggal']) ? $saldo_result['tanggal'] : '',
 		'setting' => jurnal_kas_lap_get_publish_setting($CI, $bulan_key),
 	);
 }

@@ -732,7 +732,7 @@
                                     <div class="col-auto mb-2">
                                         <label class="small mb-1 d-block">&nbsp;</label>
                                         <div class="d-flex flex-wrap align-items-center">
-                                            <button type="button" id="btn-compare-jurnal-kas" class="btn btn-info btn-sm d-none"><i class="fas fa-columns"></i> Compare</button>
+                                            <button type="button" id="btn-compare-jurnal-kas" class="btn btn-info btn-sm"><i class="fas fa-columns"></i> Compare</button>
                                             <button type="button" id="btn-compare-jurnal-kas-excel-all" class="btn btn-success btn-sm d-none ml-2"><i class="fa fa-file-excel-o"></i> Cetak ke Excel</button>
                                         </div>
                                     </div>
@@ -808,9 +808,16 @@
                                                 <table id="<?php echo $sec['table']; ?>" class="table table-bordered table-sm compare-dt compare-jurnal-kas-dt" style="width:100%;">
                                                     <thead><tr><th>No</th><th>Tanggal</th><th>Bukti</th><th>Kode Rek</th><th>Keterangan</th><th>Debet</th><th>Kredit</th><th>Catatan</th></tr></thead>
                                                     <tbody></tbody>
+                                                    <?php if (!in_array($sec['jenis'], array('data_manual', 'data_online'), true)) { ?>
                                                     <tfoot><tr class="compare-dt-total-row"><th colspan="5" class="text-right">Total</th><th class="compare-total-debet text-right">—</th><th class="compare-total-kredit text-right">—</th><th></th></tr></tfoot>
+                                                    <?php } ?>
                                                 </table>
                                             </div>
+                                            <?php if ($sec['jenis'] === 'data_manual') { ?>
+                                            <div id="compare-jurnal-kas-summary-manual" class="compare-jk-summary-host d-none"></div>
+                                            <?php } elseif ($sec['jenis'] === 'data_online') { ?>
+                                            <div id="compare-jurnal-kas-summary-online" class="compare-jk-summary-host d-none"></div>
+                                            <?php } ?>
                                         </div>
                                     </div>
                                     <?php } ?>
@@ -1272,6 +1279,12 @@
         letter-spacing: 0.3px;
     }
     .compare-jurnal-kas-section-toolbar { border-bottom: 1px solid rgba(0,0,0,.06); }
+    .compare-jk-summary-host { padding: 0 14px 12px; }
+    .compare-jk-summary-table { font-size: 16px; margin-bottom: 0; }
+    .compare-jk-summary-table td { padding: 8px 10px; vertical-align: middle; }
+    .compare-jk-summary-table .compare-jk-summary-label { background: #f8f9fa; }
+    .compare-jk-summary-table .compare-jk-summary-row-saldo td { background: #fff8e1; }
+    .compare-jk-summary-table .compare-jk-summary-row-last td { background: #e8f5e9; }
     .compare-dt-wrap .dataTables_wrapper { font-size: 18px; }
     .compare-dt-wrap table.dataTable thead th { background: #f8f9fa; font-size: 18px; white-space: nowrap; padding: 10px 12px; }
     .compare-dt-wrap table.dataTable tbody td { font-size: 18px; padding: 10px 12px; vertical-align: middle; line-height: 1.5; }
@@ -2268,11 +2281,17 @@ window.addEventListener('load', function() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({ title: 'Memproses publish...', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
             }
+            var publishData = { bulan_num: b, tahun: t, sumber: sumber };
+            if (sourceType === 'tabel' && lastResult && lastResult.manual_summary && lastResult.manual_summary.SALDO_AKHIR != null) {
+                publishData.saldo_akhir = lastResult.manual_summary.SALDO_AKHIR;
+            } else if (sourceType === 'asli' && lastResult && lastResult.online_summary && lastResult.online_summary.SALDO_AKHIR != null) {
+                publishData.saldo_akhir = lastResult.online_summary.SALDO_AKHIR;
+            }
             jQuery.ajax({
                 url: urlPublish,
                 type: 'POST',
                 dataType: 'json',
-                data: { bulan_num: b, tahun: t, sumber: sumber }
+                data: publishData
             }).done(function(res) {
                 if (typeof Swal !== 'undefined') Swal.close();
                 if (!res || !res.ok) {
@@ -2283,9 +2302,9 @@ window.addEventListener('load', function() {
                 }
                 updatePublishNotifs(res.publish_setting || res.setting || null, tbl);
                 var lapUrl = res.lap_url || (urlLapBase + '/cari_between_date/' + t + '/' + b);
-                var okMsg = (sourceType === 'asli')
+                var okMsg = (res && res.message) ? res.message : ((sourceType === 'asli')
                     ? 'Data online berhasil dipublish ke Laporan Jurnal Kas.'
-                    : 'Data manual berhasil dipublish ke Laporan Jurnal Kas.';
+                    : 'Data manual berhasil dipublish ke Laporan Jurnal Kas.');
                 setStatus('success', '<i class="fas fa-check-circle"></i> ' + okMsg + ' <a href="' + lapUrl + '" target="_blank" class="alert-link">Buka Laporan</a>');
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
@@ -2314,9 +2333,10 @@ window.addEventListener('load', function() {
         }
     }
     function toggleBtns() {
-        var show = bulanKey() !== '' && (jQuery('#compare_tabel_jurnal_kas').val() || '') !== '';
-        jQuery('#btn-compare-jurnal-kas').toggleClass('d-none', !show);
-        if (!show) jQuery('#btn-compare-jurnal-kas-excel-all').addClass('d-none');
+        jQuery('#btn-compare-jurnal-kas').removeClass('d-none');
+        if (!lastResult) {
+            jQuery('#btn-compare-jurnal-kas-excel-all').addClass('d-none');
+        }
     }
     function hideTabelActions() {
         tabelImportState = null;
@@ -2670,29 +2690,64 @@ window.addEventListener('load', function() {
             ];
         });
     }
-    function renderTable(sel, items) {
+    function renderTable(sel, items, opts) {
+        opts = opts || {};
         var $t = jQuery(sel); if (!$t.length) return;
         items = items || [];
         if (!hasDataTable()) return;
         if (jQuery.fn.DataTable.isDataTable($t)) $t.DataTable().clear().destroy();
         $t.find('tbody').empty();
-        var dt = $t.DataTable({
+        var dtOpts = {
             data: buildRows(items), paging: true, searching: true, ordering: true, info: true,
             scrollX: true, scrollY: '300px', scrollCollapse: true, pageLength: 25,
             order: [[1, 'asc']], autoWidth: false,
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
-            drawCallback: function() {
+            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
+        };
+        if (!opts.skipSimpleFooter) {
+            dtOpts.drawCallback = function() {
                 var td = 0, tk = 0;
                 items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
                 $t.find('.compare-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
                 $t.find('.compare-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');
-            }
-        });
+            };
+        }
+        var dt = $t.DataTable(dtOpts);
         dtMap[sel] = dt;
     }
+    function renderTab1Summary(hostId, summary) {
+        var $host = jQuery(hostId);
+        if (!$host.length) return;
+        if (!summary || !summary.TOTAL_debet_fmt) {
+            $host.addClass('d-none').empty();
+            return;
+        }
+        var bulanNama = summary.bulan_nama || '—';
+        var html = '<div class="compare-jk-summary-wrap">'
+            + '<table class="table table-bordered table-sm compare-jk-summary-table mb-0"><tbody>'
+            + '<tr class="compare-jk-summary-row">'
+            + '<td colspan="5" class="compare-jk-summary-label text-center font-weight-bold">JUMLAH DEBET / KREDIT</td>'
+            + '<td class="text-right font-weight-bold">' + jQuery('<span>').text(summary.TOTAL_debet_fmt).html() + '</td>'
+            + '<td class="text-right font-weight-bold">' + jQuery('<span>').text(summary.TOTAL_kredit_fmt).html() + '</td>'
+            + '<td></td></tr>'
+            + '<tr class="compare-jk-summary-row compare-jk-summary-row-saldo">'
+            + '<td colspan="5" class="compare-jk-summary-label text-center font-weight-bold">Saldo akhir Kas Bulan '
+            + jQuery('<span>').text(bulanNama).html() + '</td>'
+            + '<td class="text-right font-weight-bold"></td>'
+            + '<td class="text-right font-weight-bold">' + jQuery('<span>').text(summary.SALDO_AKHIR_fmt).html() + '</td>'
+            + '<td></td></tr>'
+            + '<tr class="compare-jk-summary-row compare-jk-summary-row-last">'
+            + '<td colspan="5" class="compare-jk-summary-label text-center font-weight-bold">JUMLAH SEIMBANG</td>'
+            + '<td class="text-right font-weight-bold">' + jQuery('<span>').text(summary.seimbang_debet_fmt).html() + '</td>'
+            + '<td class="text-right font-weight-bold">' + jQuery('<span>').text(summary.seimbang_kredit_fmt).html() + '</td>'
+            + '<td></td></tr>'
+            + '</tbody></table></div>';
+        $host.html(html).removeClass('d-none');
+    }
     function renderAll(res) {
-        renderTable('#table-compare-jurnal-kas-manual', res.data_manual);
-        renderTable('#table-compare-jurnal-kas-online', res.data_online);
+        renderTable('#table-compare-jurnal-kas-manual', res.data_manual, { skipSimpleFooter: true });
+        renderTable('#table-compare-jurnal-kas-online', res.data_online, { skipSimpleFooter: true });
+        renderTab1Summary('#compare-jurnal-kas-summary-manual', res.manual_summary || null);
+        renderTab1Summary('#compare-jurnal-kas-summary-online', res.online_summary || null);
         renderTable('#table-compare-jurnal-kas-cocok', res.data_cocok);
         renderTable('#table-compare-jurnal-kas-manual-miss', res.manual_tidak_di_online);
         renderTable('#table-compare-jurnal-kas-online-miss', res.online_tidak_di_manual);
@@ -2821,7 +2876,8 @@ window.addEventListener('load', function() {
     }
     function exportExcel() {
         var bk = bulanKey(), tbl = jQuery('#compare_tabel_jurnal_kas').val() || '';
-        if (!bk || !tbl) { alert('Pilih bulan, tahun, dan tabel.'); return; }
+        if (!bk || !tbl) { alert('Pilih bulan, tahun, dan tabel terlebih dahulu.'); return; }
+        if (!lastResult) { alert('Jalankan Compare terlebih dahulu sebelum cetak Excel.'); return; }
         var f = jQuery('<form method="post" target="_blank"></form>');
         f.attr('action', urlExcel);
         f.append(jQuery('<input type="hidden" name="bulan">').val(bk));
@@ -2910,6 +2966,7 @@ window.addEventListener('load', function() {
         loadTableList(false);
         validateTabelForImport();
         loadPublishStatus();
+        toggleBtns();
     });
     jQuery('#btn-compare-jurnal-kas-csv-cek-data').on('click', function() {
         var tbl = (csvLast && csvLast.table) || jQuery('#compare_tabel_jurnal_kas').val();
@@ -2974,7 +3031,7 @@ window.addEventListener('load', function() {
         $form.trigger('submit');
         $form.remove();
     });
-    if (jQuery('#tab-compare-jurnal-kas').hasClass('active')) loadTableList(false);
+    loadTableList(false);
     toggleBtns();
     validateTabelForImport();
     loadPublishStatus();

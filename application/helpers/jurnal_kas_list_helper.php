@@ -42,7 +42,19 @@ function jurnal_kas_get_saldo_bulan_lalu($CI, $month, $year)
 
 	$CI->db->where('tanggal', $tanggal_saldo);
 	$query = $CI->db->get('jurnal_kas_saldo_akhir_bulan');
-	$saldo = ($query->num_rows() > 0) ? (float) $query->row()->saldo : 0.0;
+	if ($query->num_rows() > 0) {
+		$saldo = (float) $query->row()->saldo;
+	} else {
+		// Fallback key lama: saldo bulan lalu pernah disimpan di tanggal-01 bulan berjalan.
+		$legacy_tanggal = sprintf('%04d-%02d-01', $year, $month);
+		if ($legacy_tanggal !== $tanggal_saldo) {
+			$CI->db->where('tanggal', $legacy_tanggal);
+			$legacy_query = $CI->db->get('jurnal_kas_saldo_akhir_bulan');
+			$saldo = ($legacy_query->num_rows() > 0) ? (float) $legacy_query->row()->saldo : 0.0;
+		} else {
+			$saldo = 0.0;
+		}
+	}
 
 	return array(
 		'label' => $label,

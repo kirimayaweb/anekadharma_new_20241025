@@ -525,6 +525,71 @@ function jurnal_kas_compare_load_online_all($CI, $bulan)
 	);
 }
 
+function jurnal_kas_compare_build_tab1_summary($CI, $bulan, $display_items)
+{
+	$CI->load->helper('jurnal_kas_list');
+
+	if (!preg_match('/^(\d{4})-(\d{2})$/', (string) $bulan, $m)) {
+		return array(
+			'ok' => false,
+			'message' => 'Format bulan tidak valid (YYYY-MM).',
+		);
+	}
+
+	$year = (int) $m[1];
+	$month = (int) $m[2];
+	$saldo_info = jurnal_kas_get_saldo_bulan_lalu($CI, $month, $year);
+	$saldo_bulan_lalu = (float) $saldo_info['saldo'];
+
+	$TOTAL_debet = 0.0;
+	$TOTAL_kredit = 0.0;
+	if ($saldo_bulan_lalu > 0) {
+		$TOTAL_debet += $saldo_bulan_lalu;
+	} else {
+		$TOTAL_kredit += $saldo_bulan_lalu;
+	}
+
+	foreach ((array) $display_items as $item) {
+		$debet = jurnal_kas_compare_normalize_jumlah(isset($item['debet']) ? $item['debet'] : 0);
+		$kredit = jurnal_kas_compare_normalize_jumlah(isset($item['kredit']) ? $item['kredit'] : 0);
+		if ($debet > 0) {
+			$TOTAL_debet += $debet;
+		}
+		if ($kredit > 0) {
+			$TOTAL_kredit += $kredit;
+		}
+	}
+
+	$SALDO_AKHIR = $TOTAL_debet - $TOTAL_kredit;
+	$seimbang_val = ($SALDO_AKHIR >= 0) ? $TOTAL_debet : $SALDO_AKHIR;
+
+	$saldo_row = jurnal_kas_compare_row_to_display(array(
+		'tanggal' => '',
+		'bukti' => '',
+		'keterangan' => $saldo_info['label'],
+		'kode_rekening' => '',
+		'debet' => ($saldo_bulan_lalu > 0) ? $saldo_bulan_lalu : 0,
+		'kredit' => ($saldo_bulan_lalu < 1) ? $saldo_bulan_lalu : 0,
+	));
+
+	return array(
+		'ok' => true,
+		'saldo_label' => $saldo_info['label'],
+		'saldo_bulan_lalu' => $saldo_bulan_lalu,
+		'saldo_row' => $saldo_row,
+		'bulan_nama' => jurnal_kas_bulan_teks($month),
+		'tahun' => $year,
+		'TOTAL_debet' => $TOTAL_debet,
+		'TOTAL_kredit' => $TOTAL_kredit,
+		'SALDO_AKHIR' => $SALDO_AKHIR,
+		'TOTAL_debet_fmt' => number_format($TOTAL_debet, 2, ',', '.'),
+		'TOTAL_kredit_fmt' => number_format($TOTAL_kredit, 2, ',', '.'),
+		'SALDO_AKHIR_fmt' => number_format($SALDO_AKHIR, 2, ',', '.'),
+		'seimbang_debet_fmt' => number_format($seimbang_val, 2, ',', '.'),
+		'seimbang_kredit_fmt' => number_format($seimbang_val, 2, ',', '.'),
+	);
+}
+
 function jurnal_kas_compare_pick_best_candidate($row, $candidates)
 {
 	if (!is_array($candidates) || count($candidates) === 0) {
@@ -728,14 +793,27 @@ function jurnal_kas_compare_run($CI, $bulan, $table = '')
 	$CI->load->helper('jurnal_kas_lap');
 	$publish_setting = jurnal_kas_lap_get_publish_setting($CI, $bulan);
 
+	$manual_summary = jurnal_kas_compare_build_tab1_summary($CI, $bulan, $manual['display_list']);
+	$online_summary = jurnal_kas_compare_build_tab1_summary($CI, $bulan, $online['display_list']);
+	$data_manual_display = $manual['display_list'];
+	$data_online_display = $online['display_list'];
+	if (!empty($manual_summary['ok']) && !empty($manual_summary['saldo_row'])) {
+		$data_manual_display = array_merge(array($manual_summary['saldo_row']), $manual['display_list']);
+	}
+	if (!empty($online_summary['ok']) && !empty($online_summary['saldo_row'])) {
+		$data_online_display = array_merge(array($online_summary['saldo_row']), $online['display_list']);
+	}
+
 	return array(
 		'ok' => true,
 		'bulan' => $bulan,
 		'bulan_label' => pembelian_jurnal_compare_bulan_label($bulan),
 		'table' => $table,
 		'data_cocok' => $data_cocok,
-		'data_manual' => $manual['display_list'],
-		'data_online' => $online['display_list'],
+		'data_manual' => $data_manual_display,
+		'data_online' => $data_online_display,
+		'manual_summary' => !empty($manual_summary['ok']) ? $manual_summary : null,
+		'online_summary' => !empty($online_summary['ok']) ? $online_summary : null,
 		'manual_tidak_di_online' => $manual_tidak,
 		'online_tidak_di_manual' => $online_tidak,
 		'manual_tidak_terproses' => isset($manual['unprocessed']) ? $manual['unprocessed'] : array(),
@@ -1619,9 +1697,21 @@ function jurnal_kas_compare_build_jurnal_kas_bulan_conflict($CI, $table, $map, $
 
 /**
  * Tanggal key saldo akhir di jurnal_kas_saldo_akhir_bulan:
- * tanggal-01 bulan berikutnya dari bulan terpilih (Jan 2026 → 2026-02-01).
+ * tanggal-01 bulan terpilih (Jan 2026 → 2026-01-01), sama dengan pembacaan get_saldo_bulan_lalu.
  */
 function jurnal_kas_compare_saldo_akhir_tanggal_for_bulan($bulan)
+{
+	if (!preg_match('/^(\d{4})-(\d{2})$/', (string) $bulan, $m)) {
+		return '';
+	}
+
+	return sprintf('%04d-%02d-01', (int) $m[1], (int) $m[2]);
+}
+
+/**
+ * Key lama (publish/import sebelumnya): tanggal-01 bulan berikutnya (Jan 2026 → 2026-02-01).
+ */
+function jurnal_kas_compare_saldo_akhir_tanggal_legacy_next_bulan($bulan)
 {
 	if (!preg_match('/^(\d{4})-(\d{2})$/', (string) $bulan, $m)) {
 		return '';
@@ -1671,6 +1761,12 @@ function jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan, $saldo_akhir)
 			'saldo' => $saldo_value,
 		));
 		$action = 'insert';
+	}
+
+	$legacy_tanggal = jurnal_kas_compare_saldo_akhir_tanggal_legacy_next_bulan($bulan);
+	if ($legacy_tanggal !== '' && $legacy_tanggal !== $tanggal) {
+		$CI->db->where('tanggal', $legacy_tanggal);
+		$CI->db->delete('jurnal_kas_saldo_akhir_bulan');
 	}
 
 	return array(
@@ -1737,7 +1833,7 @@ function jurnal_kas_compare_import_to_jurnal_kas($CI, $table, $bulan)
 		$inserted++;
 	}
 
-	// Saldo akhir Kas Bulan terpilih → jurnal_kas_saldo_akhir_bulan (tanggal = bulan+1)
+	// Saldo akhir Kas Bulan terpilih → jurnal_kas_saldo_akhir_bulan (tanggal = 01 bulan terpilih)
 	$CI->load->helper('jurnal_kas_list');
 	$summary = jurnal_kas_compute_list_data($CI, $ref_month, $ref_year);
 	$saldo_result = jurnal_kas_compare_save_saldo_akhir_bulan($CI, $bulan, $summary['SALDO_AKHIR']);

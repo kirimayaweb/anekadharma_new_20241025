@@ -20,9 +20,17 @@
             <a href="#"><b>Forgot Pasword?</b>   </a>
         </div>
         <div class="login-box-body">
+            <?php
+            $this->load->helper('login_security');
+            $message = login_flash_message('');
+            if ($message !== '') {
+                echo '<p class="login-box-msg">' . html_escape($message) . '</p>';
+            }
+            ?>
             <?php echo form_open('Anekadharmamasuk/sendwhatsappnumber'); ?>
+            <?php echo login_csrf_field(); ?>
                 <div class="form-group has-feedback">
-                    <input type="text" class="form-control" name="whatsappnumber" placeholder="Your Whatsapp Number">
+                    <input type="text" class="form-control" name="whatsappnumber" placeholder="Your Whatsapp Number" inputmode="numeric" autocomplete="tel">
                     <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
                     exp.: 081...........
                 </div>
@@ -30,6 +38,9 @@
                 <div class="row">
                     <div class="col-xs-4">
                         <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Send Code</button>
+                    </div>
+                    <div class="col-xs-8">
+                        <?php echo anchor('Anekadharmamasuk', '<i class="fa fa-arrow-left"></i> Kembali ke Login', array('class' => 'btn btn-default btn-block btn-flat')); ?>
                     </div>
                 </div>
             </form>          
