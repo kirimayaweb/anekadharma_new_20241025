@@ -52,3 +52,24 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $route['default_controller'] = 'Anekadharmamasuk';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
+
+/*
+| -------------------------------------------------------------------------
+| CMS PUBLIKASI — ubah alias URL di sini
+| Controller: Cms (publik) | Cms_admin (admin)
+| -------------------------------------------------------------------------
+*/
+$route['publikasi'] = 'cms/index';
+$route['publikasi/berita'] = 'cms/berita';
+$route['publikasi/informasi'] = 'cms/informasi';
+$route['publikasi/profil'] = 'cms/profil';
+$route['publikasi/galeri'] = 'cms/galeri';
+$route['publikasi/media-sosial'] = 'cms/media_sosial';
+$route['publikasi/cari'] = 'cms/cari';
+$route['publikasi/kategori/(:any)'] = 'cms/kategori/$1';
+$route['publikasi/berita/(:any)'] = 'cms/detail/$1';
+$route['publikasi/(:any)'] = 'cms/halaman/$1';
+
+$route['cms-admin'] = 'cms_admin/index';
+$route['cms-admin/(:any)'] = 'cms_admin/$1';
+$route['cms-admin/(:any)/(:num)'] = 'cms_admin/$1/$2';
