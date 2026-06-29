@@ -705,11 +705,48 @@ class Tbl_neraca_data extends CI_Controller
 		// print_r($GET_tbl_neraca_data_RECORD->row());
 		// die;
 
-
-
-
+		$this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
+		$level = dashboard_session_user_level($this);
+		$data['neraca_is_published'] = false;
+		$data['neraca_can_publish'] = in_array($level, array(1, 2, 9, 99), true);
+		$data['neraca_has_record'] = isset($data['data_tbl_neraca_data']);
+		if ($Get_bulan && (int) $Get_bulan > 0) {
+			$data['neraca_is_published'] = dashboard_laporan_is_published($this, 'neraca', $Get_tahun, $Get_bulan);
+			if (!$data['neraca_has_record']) {
+				$data['neraca_has_record'] = dashboard_laporan_has_saved_data($this, 'tbl_neraca_data', $Get_tahun, $Get_bulan);
+			}
+		}
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
+	public function publish_neraca($Get_tahun = null, $Get_bulan = null)
+	{
+		$this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
+
+		$level = dashboard_session_user_level($this);
+		if (!in_array($level, array(1, 2, 9, 99), true)) {
+			show_error('Akses ditolak.', 403);
+			return;
+		}
+
+		if (!(int) $Get_bulan) {
+			redirect(site_url('Tbl_neraca_data/neraca_form/' . $Get_tahun));
+			return;
+		}
+
+		if (!dashboard_laporan_has_saved_data($this, 'tbl_neraca_data', $Get_tahun, $Get_bulan)) {
+			$this->session->set_flashdata('message', 'Data laporan belum tersimpan. Simpan data terlebih dahulu.');
+			redirect(site_url('Tbl_neraca_data/neraca_form/' . $Get_tahun . '/' . $Get_bulan));
+			return;
+		}
+
+		$action = trim((string) $this->input->post('action'));
+		$publish = ($action !== 'cancel');
+		$result = dashboard_laporan_set_published($this, 'neraca', $Get_tahun, $Get_bulan, $publish);
+
+		$this->session->set_flashdata('message', $result['message']);
+		redirect(site_url('Tbl_neraca_data/neraca_form/' . $Get_tahun . '/' . $Get_bulan));
 	}
 
 	public function update_neraca_data($Get_id_RECORD = null, $data_name = null)

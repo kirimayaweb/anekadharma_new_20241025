@@ -16,10 +16,6 @@
     </div>
 
     <section class="content">
-        <?php
-        $Get_month_from_date = (int) $month_selected;
-        ?>
-
         <div class="box box-warning box-solid">
             <div class="col-md-12">
                 <div class="card card-primary">
@@ -27,33 +23,30 @@
                         <div class="row align-items-center">
                             <div class="col-md-4">
                                 <strong>LAPORAN BUKU KAS</strong>
-                                <?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?>
+                                <span id="lap-jk-bulan-label"><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                             <div class="col-md-4">
-                                <div class="lap-jurnal-kas-month-filter">
+                                <div class="lap-jurnal-kas-month-filter d-flex align-items-center flex-nowrap">
                                     <input type="month" class="form-control" id="bulan_ns_lap" name="bulan_ns_lap"
                                         value="<?php echo htmlspecialchars($bulan_ns_value, ENT_QUOTES, 'UTF-8'); ?>"
                                         autocomplete="off">
+                                    <button type="button" class="btn btn-danger btn-sm btn-flat ml-2 flex-shrink-0" id="btn-cari-lap-jurnal-kas">
+                                        <i class="fa fa-search" aria-hidden="true"></i> Cari
+                                    </button>
                                 </div>
                             </div>
                             <div class="col-md-4 text-right">
-                                <?php if (!empty($is_published)) { ?>
-                                <a href="<?php echo htmlspecialchars($url_lap_jurnal_kas_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success" id="btn-lap-jurnal-kas-excel">
+                                <a href="<?php echo htmlspecialchars($url_lap_jurnal_kas_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success<?php echo empty($is_published) ? ' d-none' : ''; ?>" id="btn-lap-jurnal-kas-excel">
                                     <i class="fa fa-file-excel-o"></i> Cetak Buku Kas Ke Excel
                                 </a>
-                                <?php } ?>
                             </div>
                         </div>
                     </div>
 
                     <div class="card-body lap-jk-card-body">
-                        <?php if (!empty($not_published)) { ?>
-                        <div class="alert alert-warning mb-3">
-                            <i class="fas fa-info-circle"></i>
-                            Laporan Buku Kas <strong><?php echo htmlspecialchars($bulan_label, ENT_QUOTES, 'UTF-8'); ?></strong> belum dipublish.
-                            Silakan publish dari halaman <strong>Jurnal Kas → Compare Data Manual - Online (Tab 2)</strong> terlebih dahulu.
+                        <div id="lap-jk-alert-wrap">
+                        <?php $this->load->view('anekadharma/jurnal_kas/partials/lap_jurnal_kas_not_published_alert'); ?>
                         </div>
-                        <?php } ?>
                         <div id="lap-jurnal-kas-table-wrap" class="lap-jk-dt-box">
                             <div class="lap-jk-dt-responsive">
                                 <table id="lapJurnalKasMainTable" class="table table-bordered table-striped jurnal-kas-grid-table mb-0 w-100">
@@ -75,98 +68,15 @@
                                             <th>Kredit</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <?php if (!empty($not_published)) { ?>
-                                            <tr class="lap-jk-empty-row">
-                                                <td colspan="6" class="text-center text-muted py-4">
-                                                    Data belum tersedia — bulan ini belum dipublish ke Laporan Buku Kas.
-                                                </td>
-                                            </tr>
-                                        <?php } ?>
-                                        <?php foreach ((array) $report_rows as $row) {
-                                            $tanggal = isset($row['tanggal']) ? (string) $row['tanggal'] : '';
-                                            $tanggal_order = '';
-                                            if (preg_match('/^(\d{2})-(\d{2})-(\d{4})$/', $tanggal, $m_tgl)) {
-                                                $tanggal_order = $m_tgl[3] . $m_tgl[2] . $m_tgl[1];
-                                            }
-                                            $debet_raw = ($row['debet'] !== null && $row['debet'] !== '') ? (float) $row['debet'] : 0;
-                                            $kredit_raw = ($row['kredit'] !== null && $row['kredit'] !== '') ? (float) $row['kredit'] : 0;
-                                            $row_type = isset($row['type']) ? (string) $row['type'] : 'data';
-                                        ?>
-                                            <tr data-row-type="<?php echo htmlspecialchars($row_type, ENT_QUOTES, 'UTF-8'); ?>" data-debet="<?php echo $debet_raw; ?>" data-kredit="<?php echo $kredit_raw; ?>">
-                                                <td data-order="<?php echo isset($row['no']) ? (int) $row['no'] : 0; ?>"><?php echo isset($row['no']) ? (int) $row['no'] : ''; ?></td>
-                                                <td data-order="<?php echo htmlspecialchars($tanggal_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tanggal, ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars(isset($row['bukti']) ? $row['bukti'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td><?php echo htmlspecialchars(isset($row['keterangan']) ? $row['keterangan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                <td class="text-right" data-order="<?php echo $debet_raw; ?>">
-                                                    <?php
-                                                    if ($row['debet'] !== null && $row['debet'] !== '') {
-                                                        echo number_format((float) $row['debet'], 2, ',', '.');
-                                                    }
-                                                    ?>
-                                                </td>
-                                                <td class="text-right" data-order="<?php echo $kredit_raw; ?>">
-                                                    <?php
-                                                    if ($row['kredit'] !== null && $row['kredit'] !== '') {
-                                                        echo number_format((float) $row['kredit'], 2, ',', '.');
-                                                    }
-                                                    ?>
-                                                </td>
-                                            </tr>
-                                        <?php } ?>
+                                    <tbody id="lap-jk-tbody">
+                                        <?php $this->load->view('anekadharma/jurnal_kas/partials/lap_jurnal_kas_tbody'); ?>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <?php if (!empty($is_published)) { ?>
-                            <div class="lap-jk-summary-scroll" id="lap-jk-summary-scroll">
-                            <div class="jurnal-kas-summary-wrap lap-jk-summary-wrap">
-                                <table class="table table-bordered jurnal-kas-grid-table jurnal-kas-summary-table lap-jk-summary-table mb-0">
-                                    <colgroup>
-                                        <col class="lap-jk-w-no">
-                                        <col class="lap-jk-w-tanggal">
-                                        <col class="lap-jk-w-bukti">
-                                        <col class="lap-jk-w-keterangan">
-                                        <col class="lap-jk-w-debet">
-                                        <col class="lap-jk-w-kredit">
-                                    </colgroup>
-                                    <tbody>
-                                        <tr class="jk-summary-row">
-                                            <td colspan="4" class="jk-summary-label text-center font-weight-bold">JUMLAH DEBET / KREDIT</td>
-                                            <td class="text-right font-weight-bold" id="lap-jk-summary-total-debet"><?php echo number_format((float) $TOTAL_debet, 2, ',', '.'); ?></td>
-                                            <td class="text-right font-weight-bold" id="lap-jk-summary-total-kredit"><?php echo number_format((float) $TOTAL_kredit, 2, ',', '.'); ?></td>
-                                        </tr>
-                                        <tr class="jk-summary-row jk-summary-row-saldo">
-                                            <td colspan="4" class="jk-summary-label text-center font-weight-bold">Saldo akhir Kas Bulan <?php echo jurnal_kas_bulan_teks($Get_month_from_date); ?></td>
-                                            <td class="text-right font-weight-bold"></td>
-                                            <td class="text-right font-weight-bold" id="lap-jk-summary-saldo-akhir"><?php echo number_format((float) $SALDO_AKHIR, 2, ',', '.'); ?></td>
-                                        </tr>
-                                        <tr class="jk-summary-row jk-summary-row-last">
-                                            <td colspan="4" class="jk-summary-label text-center font-weight-bold">JUMLAH SEIMBANG</td>
-                                            <td class="text-right font-weight-bold" id="lap-jk-summary-seimbang-debet">
-                                                <?php
-                                                if ($SALDO_AKHIR >= 0) {
-                                                    echo number_format((float) $TOTAL_debet, 2, ',', '.');
-                                                } else {
-                                                    echo number_format((float) $SALDO_AKHIR, 2, ',', '.');
-                                                }
-                                                ?>
-                                            </td>
-                                            <td class="text-right font-weight-bold" id="lap-jk-summary-seimbang-kredit">
-                                                <?php
-                                                if ($SALDO_AKHIR >= 0) {
-                                                    echo number_format((float) $TOTAL_debet, 2, ',', '.');
-                                                } else {
-                                                    echo number_format((float) $SALDO_AKHIR, 2, ',', '.');
-                                                }
-                                                ?>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div id="lap-jk-summary-wrap">
+                            <?php $this->load->view('anekadharma/jurnal_kas/partials/lap_jurnal_kas_summary'); ?>
                             </div>
-                            </div>
-                            <?php } ?>
                         </div>
                     </div>
                 </div>
@@ -403,6 +313,13 @@
     .lap-jk-card-body {
         overflow-x: auto;
     }
+    .lap-jurnal-kas-month-filter .form-control {
+        min-width: 0;
+    }
+    #lap-jurnal-kas-table-wrap.lap-jk-loading {
+        opacity: 0.55;
+        pointer-events: none;
+    }
     @media (max-width: 991px) {
         #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_length label,
         #lap-jurnal-kas-table-wrap .dataTables_wrapper .dataTables_filter label {
@@ -412,200 +329,15 @@
 </style>
 
 <script>
-window.addEventListener('load', function() {
-    if (window.jQuery && jQuery.fn.DataTable) {
-        var $ = jQuery;
-        var $table = $('#lapJurnalKasMainTable');
-        if ($table.length) {
-            if ($.fn.DataTable.isDataTable($table)) {
-                $table.DataTable().destroy();
-            }
-
-            var lapColWidths = null;
-
-            function readLapColWidths() {
-                var root = document.getElementById('lap-jurnal-kas-table-wrap');
-                if (!root || !window.getComputedStyle) {
-                    return ['52px', '130px', '110px', '220px', '150px', '150px'];
-                }
-                var cs = window.getComputedStyle(root);
-                return [
-                    cs.getPropertyValue('--lap-jk-col-no').trim() || '52px',
-                    cs.getPropertyValue('--lap-jk-col-tanggal').trim() || '130px',
-                    cs.getPropertyValue('--lap-jk-col-bukti').trim() || '110px',
-                    cs.getPropertyValue('--lap-jk-col-keterangan').trim() || '220px',
-                    cs.getPropertyValue('--lap-jk-col-debet').trim() || '150px',
-                    cs.getPropertyValue('--lap-jk-col-kredit').trim() || '150px'
-                ];
-            }
-
-            function getLapScrollBody() {
-                var $wrap = $table.closest('.dataTables_wrapper');
-                var $body = $wrap.find('.dataTables_scrollBody');
-                return $body.length ? $body : $wrap.find('.dataTables_scroll').find('.dataTables_scrollBody');
-            }
-
-            function bindLapSummaryScrollSync() {
-                var $scrollBody = getLapScrollBody();
-                var $summaryScroll = $('#lap-jk-summary-scroll');
-                if (!$scrollBody.length || !$summaryScroll.length) {
-                    return;
-                }
-                $scrollBody.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
-                    $summaryScroll.scrollLeft($scrollBody.scrollLeft());
-                });
-                $summaryScroll.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
-                    $scrollBody.scrollLeft($summaryScroll.scrollLeft());
-                });
-            }
-
-            function fmtLapAmount(value) {
-                var num = parseFloat(value);
-                if (isNaN(num)) {
-                    num = 0;
-                }
-                var parts = num.toFixed(2).split('.');
-                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                return parts.join(',');
-            }
-
-            function updateLapSummaryTotals(dt) {
-                var totalDebet = 0;
-                var totalKredit = 0;
-
-                dt.rows({ search: 'applied' }).every(function() {
-                    var node = this.node();
-                    if (!node) {
-                        return;
-                    }
-                    var $row = $(node);
-                    totalDebet += parseFloat($row.attr('data-debet') || 0) || 0;
-                    totalKredit += parseFloat($row.attr('data-kredit') || 0) || 0;
-                });
-
-                var saldoAkhir = totalDebet - totalKredit;
-                var seimbangVal = saldoAkhir >= 0 ? totalDebet : saldoAkhir;
-
-                $('#lap-jk-summary-total-debet').text(fmtLapAmount(totalDebet));
-                $('#lap-jk-summary-total-kredit').text(fmtLapAmount(totalKredit));
-                $('#lap-jk-summary-saldo-akhir').text(fmtLapAmount(saldoAkhir));
-                $('#lap-jk-summary-seimbang-debet').text(fmtLapAmount(seimbangVal));
-                $('#lap-jk-summary-seimbang-kredit').text(fmtLapAmount(seimbangVal));
-            }
-
-            function syncLapJurnalKasTableWidths(dt) {
-                lapColWidths = readLapColWidths();
-                var $mainTable = $('#lapJurnalKasMainTable');
-                var $summaryTable = $('.lap-jk-summary-table');
-                if (!$mainTable.length) {
-                    return;
-                }
-                if (dt && dt.columns) {
-                    dt.columns.adjust();
-                }
-                var $scrollBody = getLapScrollBody();
-                var $innerTable = $scrollBody.length ? $scrollBody.find('table').first() : $mainTable;
-                var tableWidth = Math.max(
-                    ($innerTable[0] && $innerTable[0].scrollWidth) || 0,
-                    $mainTable[0].scrollWidth,
-                    $mainTable.outerWidth()
-                );
-                $mainTable.find('colgroup col').each(function(i) {
-                    if (lapColWidths[i]) {
-                        $(this).css('width', lapColWidths[i]);
-                    }
-                });
-                $summaryTable.find('colgroup col').each(function(i) {
-                    if (lapColWidths[i]) {
-                        $(this).css('width', lapColWidths[i]);
-                    }
-                });
-                $summaryTable.css('width', tableWidth + 'px');
-                bindLapSummaryScrollSync();
-            }
-
-            var lapDt = null;
-            lapDt = $table.DataTable({
-                paging: true,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, 100, 500], [10, 25, 50, 100, 500]],
-                searching: true,
-                ordering: true,
-                order: [[0, 'asc']],
-                orderClasses: false,
-                autoWidth: true,
-                scrollX: true,
-                scrollY: 'var(--lap-jk-viewport-h, calc(100vh - 320px))',
-                scrollCollapse: true,
-                info: true,
-                dom: 'lfrtip',
-                language: {
-                    lengthMenu: 'Tampilkan _MENU_ record',
-                    search: 'Cari:',
-                    searchPlaceholder: 'Ketik kata kunci...',
-                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ record',
-                    infoEmpty: 'Menampilkan 0 sampai 0 dari 0 record',
-                    infoFiltered: '(difilter dari _MAX_ total record)',
-                    zeroRecords: 'Tidak ada data yang cocok',
-                    paginate: {
-                        first: 'Awal',
-                        last: 'Akhir',
-                        next: 'Next',
-                        previous: 'Prev'
-                    }
-                },
-                columnDefs: [
-                    { targets: 0, orderable: true, className: 'text-center' },
-                    { targets: 1, orderable: true },
-                    { targets: 2, orderable: true },
-                    { targets: 3, orderable: true },
-                    { targets: 4, orderable: true, className: 'text-right' },
-                    { targets: 5, orderable: true, className: 'text-right' }
-                ],
-                drawCallback: function() {
-                    syncLapJurnalKasTableWidths(this.api());
-                    updateLapSummaryTotals(this.api());
-                },
-                initComplete: function() {
-                    syncLapJurnalKasTableWidths(this.api());
-                    updateLapSummaryTotals(this.api());
-                    bindLapSummaryScrollSync();
-                }
-            });
-
-            function lapDtReflow() {
-                if (!lapDt) {
-                    return;
-                }
-                syncLapJurnalKasTableWidths(lapDt);
-                updateLapSummaryTotals(lapDt);
-            }
-
-            lapDt.on('search.dt draw.dt order.dt column-visibility.dt page.dt length.dt', function() {
-                setTimeout(lapDtReflow, 0);
-            });
-            $(window).on('resize.lapJurnalKasDt orientationchange.lapJurnalKasDt', function() {
-                setTimeout(lapDtReflow, 100);
-            });
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', function() {
-                    setTimeout(lapDtReflow, 100);
-                });
-            }
-            if (window.ResizeObserver) {
-                var lapResizeObs = new ResizeObserver(function() {
-                    lapDtReflow();
-                });
-                var lapWrapEl = document.getElementById('lap-jurnal-kas-table-wrap');
-                if (lapWrapEl) {
-                    lapResizeObs.observe(lapWrapEl);
-                }
-            }
-        }
-    }
-
+(function() {
+    var urlAjaxRefresh = <?php echo json_encode(isset($url_ajax_refresh) ? $url_ajax_refresh : site_url('Lap_Jurnal_kas/ajax_refresh_datatable')); ?>;
     var urlCariBase = <?php echo json_encode($url_cari_lap_jurnal_kas); ?>;
     var STORAGE_KEY = 'anekadharma_lap_jurnal_kas_bulan_terpilih';
+    var serverBulanNs = <?php echo json_encode($bulan_ns_value); ?>;
+    var lapDt = null;
+    var lapRefreshing = false;
+    var lapMonthDebounce = null;
+    var lapBooted = false;
 
     function parseMonthValue(val) {
         if (!val || !/^\d{4}-\d{2}$/.test(val)) return null;
@@ -617,23 +349,416 @@ window.addEventListener('load', function() {
         try { sessionStorage.setItem(STORAGE_KEY, val); } catch (e) {}
     }
 
-    function bindMonthPicker() {
-        var bulanNs = document.getElementById('bulan_ns_lap');
-        if (!bulanNs) return;
-        if (bulanNs.value) saveMonthChoice(bulanNs.value);
-        var lastValue = bulanNs.value || '';
-        bulanNs.addEventListener('change', function() {
-            var val = bulanNs.value || '';
-            if (!val || val === lastValue) return;
-            lastValue = val;
-            saveMonthChoice(val);
-            var parsed = parseMonthValue(val);
-            if (parsed) {
-                window.location.href = urlCariBase + '/' + parsed.year + '/' + parsed.month;
-            }
+    function hasDataTable() {
+        return !!(window.jQuery && (jQuery.fn.dataTable || jQuery.fn.DataTable));
+    }
+
+    function ensureBulanNsValue() {
+        var el = document.getElementById('bulan_ns_lap');
+        if (!el) return '';
+        var val = (el.value || '').trim();
+        if (!/^\d{4}-\d{2}$/.test(val)) {
+            val = serverBulanNs || '';
+            el.value = val;
+        }
+        return val;
+    }
+
+    function readLapColWidths() {
+        var root = document.getElementById('lap-jurnal-kas-table-wrap');
+        if (!root || !window.getComputedStyle) {
+            return ['52px', '130px', '110px', '220px', '150px', '150px'];
+        }
+        var cs = window.getComputedStyle(root);
+        return [
+            cs.getPropertyValue('--lap-jk-col-no').trim() || '52px',
+            cs.getPropertyValue('--lap-jk-col-tanggal').trim() || '130px',
+            cs.getPropertyValue('--lap-jk-col-bukti').trim() || '110px',
+            cs.getPropertyValue('--lap-jk-col-keterangan').trim() || '220px',
+            cs.getPropertyValue('--lap-jk-col-debet').trim() || '150px',
+            cs.getPropertyValue('--lap-jk-col-kredit').trim() || '150px'
+        ];
+    }
+
+    var lapColWidths = null;
+
+    function getLapScrollBody() {
+        var $table = getLapMainTable();
+        var $wrap = $table.closest('.dataTables_wrapper');
+        var $body = $wrap.find('.dataTables_scrollBody');
+        return $body.length ? $body : $wrap.find('.dataTables_scroll').find('.dataTables_scrollBody');
+    }
+
+    function bindLapSummaryScrollSync() {
+        var $scrollBody = getLapScrollBody();
+        var $summaryScroll = jQuery('#lap-jk-summary-scroll');
+        if (!$scrollBody.length || !$summaryScroll.length) {
+            return;
+        }
+        $scrollBody.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
+            $summaryScroll.scrollLeft($scrollBody.scrollLeft());
+        });
+        $summaryScroll.off('scroll.lapJkSync').on('scroll.lapJkSync', function() {
+            $scrollBody.scrollLeft($summaryScroll.scrollLeft());
         });
     }
 
-    bindMonthPicker();
-});
+    function fmtLapAmount(value) {
+        var num = parseFloat(value);
+        if (isNaN(num)) {
+            num = 0;
+        }
+        var parts = num.toFixed(2).split('.');
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return parts.join(',');
+    }
+
+    function updateLapSummaryTotals(dt) {
+        if (!dt) return;
+        var totalDebet = 0;
+        var totalKredit = 0;
+
+        dt.rows({ search: 'applied' }).every(function() {
+            var node = this.node();
+            if (!node) return;
+            var $row = jQuery(node);
+            totalDebet += parseFloat($row.attr('data-debet') || 0) || 0;
+            totalKredit += parseFloat($row.attr('data-kredit') || 0) || 0;
+        });
+
+        var saldoAkhir = totalDebet - totalKredit;
+        var seimbangVal = saldoAkhir >= 0 ? totalDebet : saldoAkhir;
+
+        jQuery('#lap-jk-summary-total-debet').text(fmtLapAmount(totalDebet));
+        jQuery('#lap-jk-summary-total-kredit').text(fmtLapAmount(totalKredit));
+        jQuery('#lap-jk-summary-saldo-akhir').text(fmtLapAmount(saldoAkhir));
+        jQuery('#lap-jk-summary-seimbang-debet').text(fmtLapAmount(seimbangVal));
+        jQuery('#lap-jk-summary-seimbang-kredit').text(fmtLapAmount(seimbangVal));
+    }
+
+    function syncLapJurnalKasTableWidths(dt) {
+        lapColWidths = readLapColWidths();
+        var $mainTable = getLapMainTable();
+        var $summaryTable = jQuery('.lap-jk-summary-table');
+        if (!$mainTable.length) return;
+
+        if (dt && dt.columns) {
+            dt.columns.adjust();
+        }
+        var $scrollBody = getLapScrollBody();
+        var $innerTable = $scrollBody.length ? $scrollBody.find('table').first() : $mainTable;
+        var tableWidth = Math.max(
+            ($innerTable[0] && $innerTable[0].scrollWidth) || 0,
+            $mainTable[0].scrollWidth,
+            $mainTable.outerWidth()
+        );
+        $mainTable.find('colgroup col').each(function(i) {
+            if (lapColWidths[i]) jQuery(this).css('width', lapColWidths[i]);
+        });
+        $summaryTable.find('colgroup col').each(function(i) {
+            if (lapColWidths[i]) jQuery(this).css('width', lapColWidths[i]);
+        });
+        $summaryTable.css('width', tableWidth + 'px');
+        bindLapSummaryScrollSync();
+    }
+
+    function lapDtReflow() {
+        if (!lapDt) return;
+        syncLapJurnalKasTableWidths(lapDt);
+        updateLapSummaryTotals(lapDt);
+    }
+
+    function getLapMainTable() {
+        var $table = jQuery('#lap-jurnal-kas-table-wrap .lap-jk-dt-responsive > table#lapJurnalKasMainTable');
+        if ($table.length) {
+            return $table.first();
+        }
+        return jQuery('#lapJurnalKasMainTable').first();
+    }
+
+    function restoreLapTableDom() {
+        var $table = getLapMainTable();
+        if (!$table.length) return;
+
+        var $responsive = jQuery('#lap-jurnal-kas-table-wrap .lap-jk-dt-responsive');
+        var $wrapper = $table.closest('.dataTables_wrapper');
+
+        if ($wrapper.length) {
+            if ($responsive.length) {
+                $responsive.empty().append($table);
+            } else {
+                $table.insertBefore($wrapper);
+            }
+            $wrapper.remove();
+        }
+
+        jQuery('#lap-jurnal-kas-table-wrap .dataTables_scroll, #lap-jurnal-kas-table-wrap .DTFC_Cloned').remove();
+    }
+
+    function destroyLapJurnalKasDatatable() {
+        if (!hasDataTable()) {
+            lapDt = null;
+            restoreLapTableDom();
+            return;
+        }
+
+        if (lapDt) {
+            try {
+                lapDt.off('search.dt draw.dt order.dt column-visibility.dt page.dt length.dt');
+                lapDt.clear();
+                lapDt.destroy(false);
+            } catch (e1) {}
+            lapDt = null;
+        }
+
+        jQuery('#lap-jurnal-kas-table-wrap table').each(function() {
+            if (jQuery.fn.DataTable.isDataTable(this)) {
+                try {
+                    jQuery(this).DataTable().clear().destroy(false);
+                } catch (e2) {}
+            }
+        });
+
+        restoreLapTableDom();
+    }
+
+    function setLapTableBodyHtml(html) {
+        var $table = getLapMainTable();
+        if (!$table.length) return;
+
+        var $tbody = $table.children('tbody');
+        if (!$tbody.length) {
+            $table.append('<tbody id="lap-jk-tbody"></tbody>');
+            $tbody = $table.children('tbody');
+        }
+        $tbody.attr('id', 'lap-jk-tbody').html(html || '');
+    }
+
+    function initLapJurnalKasDatatable() {
+        if (!hasDataTable()) return null;
+
+        var $table = getLapMainTable();
+        if (!$table.length) return null;
+
+        if (jQuery.fn.DataTable.isDataTable($table[0])) {
+            lapDt = $table.DataTable();
+            return lapDt;
+        }
+
+        var scrollH = 'calc(100vh - 320px)';
+        var root = document.getElementById('lap-jurnal-kas-table-wrap');
+        if (root && window.getComputedStyle) {
+            var vh = window.getComputedStyle(root).getPropertyValue('--lap-jk-viewport-h').trim();
+            if (vh) scrollH = vh;
+        }
+
+        lapDt = $table.DataTable({
+            paging: true,
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, 500], [10, 25, 50, 100, 500]],
+            searching: true,
+            ordering: true,
+            order: [[0, 'asc']],
+            orderClasses: false,
+            autoWidth: true,
+            scrollX: true,
+            scrollY: scrollH,
+            scrollCollapse: true,
+            info: true,
+            dom: 'lfrtip',
+            language: {
+                lengthMenu: 'Tampilkan _MENU_ record',
+                search: 'Cari:',
+                searchPlaceholder: 'Ketik kata kunci...',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ record',
+                infoEmpty: 'Menampilkan 0 sampai 0 dari 0 record',
+                infoFiltered: '(difilter dari _MAX_ total record)',
+                zeroRecords: 'Tidak ada data yang cocok',
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: 'Next',
+                    previous: 'Prev'
+                }
+            },
+            columnDefs: [
+                { targets: 0, orderable: true, className: 'text-center' },
+                { targets: 1, orderable: true },
+                { targets: 2, orderable: true },
+                { targets: 3, orderable: true },
+                { targets: 4, orderable: true, className: 'text-right' },
+                { targets: 5, orderable: true, className: 'text-right' }
+            ],
+            drawCallback: function() {
+                syncLapJurnalKasTableWidths(this.api());
+                updateLapSummaryTotals(this.api());
+            },
+            initComplete: function() {
+                syncLapJurnalKasTableWidths(this.api());
+                updateLapSummaryTotals(this.api());
+                bindLapSummaryScrollSync();
+            }
+        });
+
+        lapDt.on('search.dt draw.dt order.dt column-visibility.dt page.dt length.dt', function() {
+            setTimeout(lapDtReflow, 0);
+        });
+
+        return lapDt;
+    }
+
+    function updateLapJurnalKasHeader(res) {
+        if (res.bulan_label) {
+            jQuery('#lap-jk-bulan-label').text(res.bulan_label);
+        }
+        if (res.bulan_ns_value) {
+            serverBulanNs = res.bulan_ns_value;
+            var el = document.getElementById('bulan_ns_lap');
+            if (el && el.value !== res.bulan_ns_value) {
+                el.value = res.bulan_ns_value;
+            }
+        }
+        var $excelBtn = jQuery('#btn-lap-jurnal-kas-excel');
+        if ($excelBtn.length) {
+            if (res.is_published && res.url_lap_jurnal_kas_excel) {
+                $excelBtn.attr('href', res.url_lap_jurnal_kas_excel).removeClass('d-none');
+            } else {
+                $excelBtn.addClass('d-none');
+            }
+        }
+        if (typeof res.not_published_html === 'string') {
+            jQuery('#lap-jk-alert-wrap').html(res.not_published_html);
+        }
+        if (typeof res.summary_html === 'string') {
+            jQuery('#lap-jk-summary-wrap').html(res.summary_html);
+        }
+    }
+
+    function refreshLapJurnalKasDatatable(force) {
+        if (lapRefreshing) return;
+        if (!hasDataTable()) return;
+
+        var val = ensureBulanNsValue();
+        if (!val) return;
+        if (!force && val === serverBulanNs) return;
+
+        lapRefreshing = true;
+        saveMonthChoice(val);
+        jQuery('#lap-jurnal-kas-table-wrap').addClass('lap-jk-loading');
+        jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', true);
+
+        jQuery.ajax({
+            url: urlAjaxRefresh,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan_ns: val },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Gagal',
+                        text: (res && res.message) ? res.message : 'Gagal memuat data Laporan Buku Kas.'
+                    });
+                }
+                return;
+            }
+
+            updateLapJurnalKasHeader(res);
+            destroyLapJurnalKasDatatable();
+            setLapTableBodyHtml(res.tbody_html || '');
+            initLapJurnalKasDatatable();
+
+            var parsed = parseMonthValue(res.bulan_ns_value || val);
+            if (parsed && window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', urlCariBase + '/' + parsed.year + '/' + parsed.month);
+            }
+        }).fail(function(xhr) {
+            var msg = 'Tidak dapat memuat data Laporan Buku Kas.';
+            if (xhr && xhr.responseText && xhr.responseText.indexOf('<') === 0) {
+                msg = 'Sesi login habis atau server mengembalikan halaman HTML. Silakan login ulang.';
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
+            }
+        }).always(function() {
+            lapRefreshing = false;
+            jQuery('#lap-jurnal-kas-table-wrap').removeClass('lap-jk-loading');
+            jQuery('#btn-cari-lap-jurnal-kas').prop('disabled', false);
+        });
+    }
+
+    function scheduleMonthRefresh(force) {
+        clearTimeout(lapMonthDebounce);
+        lapMonthDebounce = setTimeout(function() {
+            refreshLapJurnalKasDatatable(!!force);
+        }, force ? 0 : 300);
+    }
+
+    function bindMonthPicker() {
+        var $bulanNs = jQuery('#bulan_ns_lap');
+        if (!$bulanNs.length) return;
+
+        if ($bulanNs.val()) saveMonthChoice($bulanNs.val());
+
+        $bulanNs.off('.lapJkMonth').on('change.lapJkMonth input.lapJkMonth', function() {
+            var val = (this.value || '').trim();
+            if (!/^\d{4}-\d{2}$/.test(val)) return;
+            scheduleMonthRefresh(false);
+        });
+    }
+
+    function bindCariButton() {
+        jQuery('#btn-cari-lap-jurnal-kas').off('click.lapJk').on('click.lapJk', function(e) {
+            e.preventDefault();
+            scheduleMonthRefresh(true);
+        });
+    }
+
+    function bindResizeHandlers() {
+        jQuery(window).off('resize.lapJurnalKasDt orientationchange.lapJurnalKasDt')
+            .on('resize.lapJurnalKasDt orientationchange.lapJurnalKasDt', function() {
+                setTimeout(lapDtReflow, 100);
+            });
+
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function() {
+                setTimeout(lapDtReflow, 100);
+            });
+        }
+
+        if (window.ResizeObserver) {
+            var lapWrapEl = document.getElementById('lap-jurnal-kas-table-wrap');
+            if (lapWrapEl) {
+                new ResizeObserver(function() { lapDtReflow(); }).observe(lapWrapEl);
+            }
+        }
+    }
+
+    function bootLapJurnalKas() {
+        if (!hasDataTable()) {
+            setTimeout(bootLapJurnalKas, 80);
+            return;
+        }
+        if (lapBooted) return;
+        lapBooted = true;
+
+        bindMonthPicker();
+        bindCariButton();
+        bindResizeHandlers();
+
+        try {
+            initLapJurnalKasDatatable();
+        } catch (err) {
+            console.error('Lap Jurnal Kas DataTable init error:', err);
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        bootLapJurnalKas();
+    } else {
+        window.addEventListener('load', bootLapJurnalKas);
+    }
+})();
 </script>
