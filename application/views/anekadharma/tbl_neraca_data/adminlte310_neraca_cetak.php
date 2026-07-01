@@ -274,18 +274,19 @@ $boldLabels = array(
 	'PASIVA',
 	'Aktiva Lancar',
 	'Aktiva Tetap',
-	'Aktiva tetap tidak berwujud',
 	'Aktiva Lain-Lain',
 	'Utang Jangka Panjang',
 	'Modal dan Laba ditahan',
-	'TOTAL Aktiva tetap bersih',
+	'Total Aktiva Tetap Bersih',
+	'Total aktiva tetap bersih',
 	'TOTAL AKTIVA',
 	'TOTAL PASIVA',
 );
 
 $highlightAktivaLabels = array(
 	'Total Aktiva Lancar',
-	'TOTAL Aktiva tetap bersih',
+	'Total Aktiva Tetap Bersih',
+	'Total aktiva tetap bersih',
 	'TOTAL AKTIVA',
 );
 

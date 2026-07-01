@@ -103,46 +103,33 @@ function tbl_neraca_data_compute_cetak_excel_rows($data)
 	$val = function ($field) use ($data) {
 		return tbl_neraca_cetak_field_value($data, $field);
 	};
-	$add_aktiva_lancar = function ($field) use ($val, &$TOTAL_AKIVA_LANCAR) {
+	$val_amount = function ($field) use ($val) {
 		$amount = $val($field);
-		if ($amount !== null) {
-			$TOTAL_AKIVA_LANCAR += $amount;
-		}
+		return $amount !== null ? $amount : 0.0;
+	};
+	$add_aktiva_lancar = function ($field) use ($val_amount, &$TOTAL_AKIVA_LANCAR) {
+		$amount = $val_amount($field);
+		$TOTAL_AKIVA_LANCAR += $amount;
 		return $amount;
 	};
-	$add_utang_lancar = function ($field) use ($val, &$TOTAL_Utang_Lancar) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$TOTAL_Utang_Lancar += $amount;
-		}
+	$add_utang_lancar = function ($field) use ($val_amount, &$TOTAL_Utang_Lancar) {
+		$amount = $val_amount($field);
+		$TOTAL_Utang_Lancar += $amount;
 		return $amount;
 	};
-	$add_aktiva_tetap = function ($field) use ($val, &$Total_Aktiva_Tetap_Bersih) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$Total_Aktiva_Tetap_Bersih += $amount;
-		}
+	$add_utang_jp = function ($field) use ($val_amount, &$TOTAL_Utang_Jangka_Panjang) {
+		$amount = $val_amount($field);
+		$TOTAL_Utang_Jangka_Panjang += $amount;
 		return $amount;
 	};
-	$add_utang_jp = function ($field) use ($val, &$TOTAL_Utang_Jangka_Panjang) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$TOTAL_Utang_Jangka_Panjang += $amount;
-		}
+	$add_aktiva_lain = function ($field) use ($val_amount, &$Aktiva_Lain_Lain) {
+		$amount = $val_amount($field);
+		$Aktiva_Lain_Lain += $amount;
 		return $amount;
 	};
-	$add_aktiva_lain = function ($field) use ($val, &$Aktiva_Lain_Lain) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$Aktiva_Lain_Lain += $amount;
-		}
-		return $amount;
-	};
-	$add_modal = function ($field) use ($val, &$TOTAL_Modal_dan_Laba_ditahan) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$TOTAL_Modal_dan_Laba_ditahan += $amount;
-		}
+	$add_modal = function ($field) use ($val_amount, &$TOTAL_Modal_dan_Laba_ditahan) {
+		$amount = $val_amount($field);
+		$TOTAL_Modal_dan_Laba_ditahan += $amount;
 		return $amount;
 	};
 	$push = function ($type, $aktivaLabel = '', $aktivaAmount = null, $pasivaLabel = '', $pasivaAmount = null, $bold = false, $extra = array()) use (&$rows) {
@@ -160,13 +147,19 @@ function tbl_neraca_data_compute_cetak_excel_rows($data)
 		$rows[] = $row;
 	};
 
+	$TOTAL_Aktiva_Tetap_Berwujud_Bersih = 0.0;
+	$add_berwujud = function ($field) use ($val_amount, &$TOTAL_Aktiva_Tetap_Berwujud_Bersih, &$Total_Aktiva_Tetap_Bersih) {
+		$amount = $val_amount($field);
+		$TOTAL_Aktiva_Tetap_Berwujud_Bersih += $amount;
+		$Total_Aktiva_Tetap_Bersih += $amount;
+		return $amount;
+	};
+
 	$TOTAL_Aktiva_Tetap_Tidak_Berwujud = 0.0;
-	$add_atb_subgroup = function ($field) use ($val, &$TOTAL_Aktiva_Tetap_Tidak_Berwujud, &$Total_Aktiva_Tetap_Bersih) {
-		$amount = $val($field);
-		if ($amount !== null) {
-			$TOTAL_Aktiva_Tetap_Tidak_Berwujud += $amount;
-			$Total_Aktiva_Tetap_Bersih += $amount;
-		}
+	$add_tidak_berwujud = function ($field) use ($val_amount, &$TOTAL_Aktiva_Tetap_Tidak_Berwujud, &$Total_Aktiva_Tetap_Bersih) {
+		$amount = $val_amount($field);
+		$TOTAL_Aktiva_Tetap_Tidak_Berwujud += $amount;
+		$Total_Aktiva_Tetap_Bersih += $amount;
 		return $amount;
 	};
 
@@ -181,11 +174,13 @@ function tbl_neraca_data_compute_cetak_excel_rows($data)
 	$push('data', 'Total Aktiva Lancar', $TOTAL_AKIVA_LANCAR, 'Utang Jangka Panjang', '', true);
 	$push('blank');
 	$push('subsection', 'Aktiva Tetap', '', '', '');
-	$push('data', 'Aktiva Tetap Berwujud', $add_aktiva_tetap('aktiva_tetap_berwujud'), 'Utang Afiliasi', $add_utang_jp('utang_afiliasi'));
+	$push('data', 'Aktiva Tetap Berwujud', $add_berwujud('aktiva_tetap_berwujud'), 'Utang Afiliasi', $add_utang_jp('utang_afiliasi'));
+	$push('data', 'Akumulasi Depresiasi ATB', $add_berwujud('akumulasi_depresiasi_atb'), '', null);
+	$push('data', 'Total Aktiva Tetap Bersih', $TOTAL_Aktiva_Tetap_Berwujud_Bersih, '', null, true);
 	$push('subsection', 'Aktiva tetap tidak berwujud', '', '', '');
-	$push('data', 'Aktiva tetap tidak berwujud', $add_atb_subgroup('aktiva_tetap'), '', null);
-	$push('data', 'Akumulasi depresiasi ATB', $add_atb_subgroup('akumulasi_depresiasi_atb'), '', null);
-	$push('data', 'TOTAL Aktiva tetap bersih', $TOTAL_Aktiva_Tetap_Tidak_Berwujud, 'Total Utang', $TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang, true, array('indent_mid' => true));
+	$push('data', 'Aktiva tetap tidak berwujud', $add_tidak_berwujud('aktiva_tetap'), '', null);
+	$push('data', 'Akumulasi Depresiasi ATTB', $add_tidak_berwujud('akumulasi_depresiasi_attb'), '', null);
+	$push('data', 'Total aktiva tetap bersih', $TOTAL_Aktiva_Tetap_Tidak_Berwujud, 'Total Utang', $TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang, true, array('indent_mid' => true));
 	$push('blank');
 	$push('section', 'Aktiva Lain-Lain', '', 'Modal dan Laba ditahan', '');
 	$push('data', 'Piutang Non Usaha Pihak Ketiga', $add_aktiva_lain('piutang_non_usaha_pihak_ketiga'), 'Modal Dasar dan Penyertaan', $add_modal('modal_dasar_dan_penyertaan'));
