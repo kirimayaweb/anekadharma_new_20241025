@@ -52,36 +52,115 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- //sweetalert -->
 
+  <style>
+    /* Top-nav only: tanpa sidebar kiri */
+    body.layout-top-nav .main-sidebar,
+    body.layout-top-nav .control-sidebar {
+      display: none !important;
+    }
 
+    body.layout-top-nav .content-wrapper,
+    body.layout-top-nav .main-footer {
+      margin-left: 0 !important;
+    }
 
+    body.layout-top-nav .main-header {
+      margin-left: 0 !important;
+    }
 
+    body.layout-top-nav .main-header .navbar-nav .nav-item.nav-publikasi-wrap {
+      margin-right: 10px;
+      align-self: center;
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 40px;
+      min-width: 40px;
+      padding: 8px 18px;
+      margin: 6px 0;
+      font-weight: 600;
+      line-height: 1.2;
+      color: #fff !important;
+      background: linear-gradient(145deg, #1a8cff 0%, #0066ff 55%, #0050d4 100%);
+      border: 2px solid #7ec8ff;
+      border-radius: 999px;
+      box-shadow: 0 2px 10px rgba(0, 102, 255, 0.5);
+      transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, transform 0.2s ease;
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi i {
+      color: #fff;
+      font-size: 1.1rem;
+      transition: color 0.28s ease, transform 0.28s ease, filter 0.28s ease;
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi span {
+      color: #fff;
+      transition: color 0.28s ease;
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:hover,
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:focus {
+      color: #fff !important;
+      background: linear-gradient(145deg, #33a0ff 0%, #0088ff 50%, #0066ff 100%);
+      border-color: #ffd54f;
+      box-shadow:
+        0 0 0 3px rgba(255, 213, 79, 0.45),
+        0 4px 18px rgba(0, 120, 255, 0.65);
+      transform: translateY(-1px) scale(1.03);
+      outline: none;
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:hover i,
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:focus i {
+      color: #ffd700;
+      filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.85));
+      transform: scale(1.12);
+    }
+
+    @media (max-width: 575.98px) {
+      body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi {
+        padding: 8px 12px;
+      }
+    }
+  </style>
 </head>
 
 
 
 
-<body class="hold-transition sidebar-collapse layout-top-nav">
+<body class="hold-transition layout-top-nav">
   <div class="wrapper">
 
     <!-- Navbar -->
-    <!-- <nav class="main-header navbar navbar-expand-md navbar-light navbar-white"> -->
     <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-      <div class="container">
-        <!-- <a href="#" class="navbar-brand">
-          <img src="<?php //echo base_url() 
-                    ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-          <span class="brand-text font-weight-light">ANEKA DHARMA</span>
-        </a> -->
+      <div class="container-fluid px-3">
 
         <button class="navbar-toggler order-1" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse order-3" id="navbarCollapse">
-          <!-- Left navbar links -->
-          <ul class="navbar-nav">
-            <li class="nav-item">
-              <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
+          <ul class="navbar-nav flex-wrap">
+            <?php
+            $this->load->helper('cms');
+            $publikasi_url = function_exists('cms_public_url')
+              ? cms_public_url()
+              : rtrim(base_url(), '/') . '/publikasi';
+            ?>
+            <li class="nav-item nav-publikasi-wrap">
+              <a href="<?php echo htmlspecialchars($publikasi_url, ENT_QUOTES, 'UTF-8'); ?>"
+                class="nav-link nav-publikasi"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Buka halaman Publikasi di tab baru">
+                <i class="fas fa-newspaper" aria-hidden="true"></i>
+                <span class="d-none d-sm-inline">Publikasi</span>
+              </a>
             </li>
 
             <li class="nav-item d-none d-sm-inline-block">
@@ -203,92 +282,11 @@ scratch. This page gets rid of all links and provides the needed markup only.
     </nav>
     <!-- /.navbar -->
 
-    <!-- Main Sidebar Container -->
-    <aside class="main-sidebar sidebar-dark-primary elevation-4">
-      <!-- Brand Logo -->
-      <a href="#" class="brand-link">
-        <img src="<?php echo base_url() ?>assets/AdminLTE310/dist/img/AdminLTELogo.png" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
-        <span class="brand-text font-weight-light">ANEKA DHARMA</span>
-      </a>
-
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <!-- Sidebar user (optional) -->
-        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-          <div class="image">
-            <img src="<?php echo base_url() ?>assets/AdminLTE310/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
-          </div>
-          <div class="info">
-            <a href="#" class="d-block">
-              <?php
-
-              $sess_id_user_level_active = $this->session->userdata('sess_id_user_level');
-
-              $this->db->where('id_user_level', $sess_id_user_level_active);
-              $get_tbl_user_level = $this->db->get('tbl_user_level');
-              $data_get_tbl_user_level = $get_tbl_user_level->row_array();
-
-              print_r($data_get_tbl_user_level['nama_level']);
-
-              ?>
-            </a>
-          </div>
-        </div>
-
-        <!-- SidebarSearch Form -->
-        <div class="form-inline">
-          <div class="input-group" data-widget="sidebar-search">
-            <input class="form-control form-control-sidebar" type="search" placeholder="Search" aria-label="Search">
-            <div class="input-group-append">
-              <button class="btn btn-sidebar">
-                <i class="fas fa-search fa-fw"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sidebar Menu -->
-        <nav class="mt-2">
-          <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
-            <!-- Add icons to the links using the .nav-icon class
-               with font-awesome or any other icon font library -->
-
-
-            <li class="nav-item menu-open">
-              <a href="<?php echo base_url() ?>index.php/Anekadharmamasuk/logout" class="nav-link active">
-                <i class="nav-icon fas fa-copy"></i>
-                <p>
-                  LOGOUT
-                  <i class="fas fa-angle-left right"></i>
-                  <span class="badge badge-info right">6</span>
-                </p>
-              </a>
-
-            </li>
-
-
-
-          </ul>
-        </nav>
-        <!-- /.sidebar-menu -->
-      </div>
-      <!-- /.sidebar -->
-    </aside>
-
-
-
-
     <?php
     echo $contents;
     ?>
 
     <!-- /.content-wrapper -->
-
-    <!-- Control Sidebar -->
-    <aside class="control-sidebar control-sidebar-dark">
-      <!-- Control sidebar content goes here -->
-    </aside>
-    <!-- /.control-sidebar -->
 
     <!-- Main Footer -->
     <footer class="main-footer">
