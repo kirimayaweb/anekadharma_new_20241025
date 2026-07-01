@@ -9,6 +9,7 @@ class Kontak extends REST_Controller {
 
     function __construct($config = 'rest') {
         parent::__construct($config);
+        is_login();
         $this->load->database();
     }
 

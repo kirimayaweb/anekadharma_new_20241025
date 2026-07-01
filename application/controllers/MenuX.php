@@ -10,6 +10,7 @@ class Menu extends CI_Controller
     function __construct()
     {
         parent::__construct();
+        is_login();
         $this->load->model('Menu_model');
         $this->load->library('form_validation');
     }

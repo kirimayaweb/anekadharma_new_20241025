@@ -8,6 +8,7 @@ class Create_password_hash extends CI_Controller
 	   function __construct()
     {
         parent::__construct();
+        is_login();
 		$this->load->helper('url');  
 		$this->load->library('form_validation');
 		$this->load->model(array('General_login'));          

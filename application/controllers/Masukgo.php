@@ -69,8 +69,8 @@ class Masukgo extends CI_Controller
                 );
                 $this->session->set_userdata($sess);
                
-                print_r($this->session->set_userdata($sess));
-                die;    
+                // print_r($this->session->set_userdata($sess));
+                // die;    
 
                 $get_client = $this->get_client_ip();
                 $get_client_browser = $this->get_client_browser();
@@ -85,11 +85,25 @@ class Masukgo extends CI_Controller
                     redirect('Dashboard');
                 } elseif ($this->session->userdata('sess_id_user_level') == '2') { //manager
                     redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '6') { //kasir
+                    redirect('Dashboard');
                 } elseif ($this->session->userdata('sess_id_user_level') == '7') { //kasir
                     redirect('Dashboard');
                 } elseif ($this->session->userdata('sess_id_user_level') == '3') { //sales
                     redirect('Dashboard');
                 } elseif ($this->session->userdata('sess_id_user_level') == '4') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '444') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '555') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '666') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '777') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '888') { //customer
+                    redirect('Dashboard');
+                } elseif ($this->session->userdata('sess_id_user_level') == '999') { //customer
                     redirect('Dashboard');
                 } else {
                     // header("location:" . base_url());

@@ -64,6 +64,75 @@ class Userlevel extends CI_Controller
         }
     }
 
+    public function akses_keuangan($id_user_level = null)
+    {
+        $id_user_level = (int) $id_user_level;
+        $level = $this->db->get_where('tbl_user_level', array('id_user_level' => $id_user_level))->row_array();
+        if (!$level) {
+            $this->session->set_flashdata('message', 'Level user tidak ditemukan.');
+            redirect(site_url('userlevel'));
+        }
+
+        $status = hak_akses_keuangan_level_status($this, $id_user_level);
+        $groups = array();
+        foreach (hak_akses_keuangan_main_menu_ids() as $parent_id) {
+            $parent = $this->db->get_where('menu', array('id' => $parent_id))->row_array();
+            $items = array();
+            foreach (hak_akses_keuangan_submenu_rows($this) as $sub) {
+                if ((int) $sub->is_parent !== (int) $parent_id) {
+                    continue;
+                }
+                $items[] = array(
+                    'id' => $sub->id,
+                    'name' => $sub->name,
+                    'link' => $sub->link,
+                    'granted' => hak_akses_keuangan_has_level_grant($this, $id_user_level, $sub->id),
+                );
+            }
+            $groups[] = array(
+                'parent_id' => $parent_id,
+                'parent_name' => $parent ? $parent['name'] : ('Menu #' . $parent_id),
+                'items' => $items,
+            );
+        }
+
+        $data = array(
+            'level' => $level,
+            'status' => $status,
+            'groups' => $groups,
+            'is_keuangan_level' => hak_akses_is_keuangan_level($id_user_level),
+        );
+        $this->template->load('template', 'userlevel/akses_keuangan', $data);
+    }
+
+    public function grant_keuangan_action($id_user_level = null)
+    {
+        $id_user_level = (int) $id_user_level;
+        $granted = hak_akses_keuangan_grant_level($this, $id_user_level);
+        $synced = hak_akses_keuangan_sync_all_users_by_level($this, $id_user_level);
+        $this->session->set_flashdata(
+            'message',
+            'Paket Keuangan diberikan: ' . $granted . ' menu level, ' . $synced . ' sinkron ke user.'
+        );
+        redirect(site_url('userlevel/akses_keuangan/' . $id_user_level));
+    }
+
+    public function revoke_keuangan_action($id_user_level = null)
+    {
+        $id_user_level = (int) $id_user_level;
+        $removed = hak_akses_keuangan_revoke_level($this, $id_user_level);
+        $this->session->set_flashdata('message', 'Paket Keuangan dicabut: ' . $removed . ' hak akses level.');
+        redirect(site_url('userlevel/akses_keuangan/' . $id_user_level));
+    }
+
+    public function sync_keuangan_users_action($id_user_level = null)
+    {
+        $id_user_level = (int) $id_user_level;
+        $synced = hak_akses_keuangan_sync_all_users_by_level($this, $id_user_level);
+        $this->session->set_flashdata('message', 'Sinkron paket keuangan ke user: ' . $synced . ' menu.');
+        redirect(site_url('userlevel/akses_keuangan/' . $id_user_level));
+    }
+
     public function create()
     {
         $data = array(
