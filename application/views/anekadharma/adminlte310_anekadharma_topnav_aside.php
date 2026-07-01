@@ -86,20 +86,25 @@ scratch. This page gets rid of all links and provides the needed markup only.
       line-height: 1.2;
       color: #fff !important;
       background: linear-gradient(145deg, #1a8cff 0%, #0066ff 55%, #0050d4 100%);
-      border: 2px solid #7ec8ff;
+      border: 1px solid rgba(255, 235, 100, 0.95);
       border-radius: 999px;
-      box-shadow: 0 2px 10px rgba(0, 102, 255, 0.5);
+      box-shadow:
+        0 0 0 1px #ffeb3b,
+        0 0 10px rgba(255, 214, 0, 0.35),
+        0 2px 10px rgba(0, 102, 255, 0.45);
       transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, transform 0.2s ease;
     }
 
     body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi i {
-      color: #fff;
+      color: #ffd700;
       font-size: 1.1rem;
+      filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.75));
       transition: color 0.28s ease, transform 0.28s ease, filter 0.28s ease;
     }
 
     body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi span {
-      color: #fff;
+      color: #fff !important;
+      font-weight: 600;
       transition: color 0.28s ease;
     }
 
@@ -107,19 +112,26 @@ scratch. This page gets rid of all links and provides the needed markup only.
     body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:focus {
       color: #fff !important;
       background: linear-gradient(145deg, #33a0ff 0%, #0088ff 50%, #0066ff 100%);
-      border-color: #ffd54f;
+      border-color: #fff59d;
       box-shadow:
-        0 0 0 3px rgba(255, 213, 79, 0.45),
-        0 4px 18px rgba(0, 120, 255, 0.65);
+        0 0 0 1px #ffee58,
+        0 0 0 2px rgba(255, 235, 59, 0.55),
+        0 0 14px rgba(255, 214, 0, 0.55),
+        0 4px 18px rgba(0, 120, 255, 0.6);
       transform: translateY(-1px) scale(1.03);
       outline: none;
     }
 
     body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:hover i,
     body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:focus i {
-      color: #ffd700;
-      filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.85));
-      transform: scale(1.12);
+      color: #ffec80;
+      filter: drop-shadow(0 0 6px rgba(255, 223, 64, 1)) drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+      transform: scale(1.1);
+    }
+
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:hover span,
+    body.layout-top-nav .main-header .navbar-nav .nav-link.nav-publikasi:focus span {
+      color: #fff !important;
     }
 
     @media (max-width: 575.98px) {
