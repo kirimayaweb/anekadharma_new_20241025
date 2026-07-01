@@ -7239,9 +7239,225 @@ function persediaan_generate_recalculate_tambah_beli_row($CI, $row, $tambah_juml
 	);
 }
 
+/**
+ * Daftar baris persediaan bulan target dengan kode SPOP yang sama (spop valid).
+ */
+function persediaan_generate_recalculate_list_persediaan_by_spop($spop, $map)
+{
+	if (empty($map) || !persediaan_recalculate_spop_valid($spop)) {
+		return array();
+	}
+
+	$spop_key = persediaan_recalculate_spop_match_value($spop);
+	if ($spop_key === '' || empty($map['by_spop_valid'][$spop_key]) || !is_array($map['by_spop_valid'][$spop_key])) {
+		return array();
+	}
+
+	return array_values($map['by_spop_valid'][$spop_key]);
+}
+
+/**
+ * Jumlahkan field numerik dari beberapa baris persediaan (SPOP sama).
+ */
+function persediaan_generate_recalculate_sum_field_persediaan_rows($rows, $field)
+{
+	$CI = function_exists('get_instance') ? get_instance() : null;
+	if ($CI) {
+		$CI->load->helper('persediaan_display');
+	}
+
+	$sum = 0;
+	if (!is_array($rows)) {
+		return 0;
+	}
+
+	foreach ($rows as $row) {
+		$sum += max(0, (int) floor(persediaan_parse_angka(isset($row->{$field}) ? $row->{$field} : 0)));
+	}
+
+	return max(0, (int) $sum);
+}
+
+/**
+ * Update beli, total_10, tuj, nilai_persediaan pada keeper SPOP (rumus user: beli/total_10 += jumlah pembelian).
+ */
+function persediaan_generate_recalculate_set_beli_total_spop_keeper($CI, $keeper, $beli_baru, $total_10_baru)
+{
+	$CI->load->helper('persediaan_display');
+
+	if (!$keeper || empty($keeper->id)) {
+		return array();
+	}
+
+	$beli_baru = max(0, (int) floor($beli_baru));
+	$total_10_baru = max(0, (int) floor($total_10_baru));
+	$hpp = persediaan_parse_angka(isset($keeper->hpp) ? $keeper->hpp : 0);
+	$nilai = (int) floor($total_10_baru * $hpp);
+
+	$beli_t = (string) $beli_baru;
+	$total_t = (string) $total_10_baru;
+	$nilai_t = (string) $nilai;
+
+	$upd = array(
+		'beli' => $beli_t,
+		'total_10' => $total_t,
+		'nilai_persediaan' => $nilai_t,
+		'tuj' => $total_t,
+	);
+	persediaan_row_apply_asal_generate_flag($upd, false, $CI);
+
+	$CI->db->where('id', (int) $keeper->id);
+	$CI->db->update('persediaan', $upd);
+
+	return array(
+		'beli_baru' => $beli_t,
+		'total_10' => $total_t,
+		'nilai_persediaan' => $nilai_t,
+	);
+}
+
+/**
+ * Proses pembelian per grup SPOP: jumlahkan semua record pembelian (field jumlah),
+ * gabung beli & total_10 persediaan SPOP sama, lalu update keeper.
+ */
+function persediaan_generate_recalculate_proses_pembelian_spop_group($CI, $ctx, $queue_item, &$map)
+{
+	$CI->load->helper('persediaan_display');
+
+	$tabel = isset($queue_item['tabel']) ? $queue_item['tabel'] : 'tbl_pembelian';
+	$id = (int) (isset($queue_item['id']) ? $queue_item['id'] : 0);
+	$spop = isset($queue_item['spop']) ? $queue_item['spop'] : '';
+	$jumlah_total = max(0, (int) floor(persediaan_parse_angka(isset($queue_item['jumlah_total']) ? $queue_item['jumlah_total'] : 0)));
+	$record_count = max(0, (int) (isset($queue_item['record_count']) ? $queue_item['record_count'] : 0));
+
+	$row = $CI->db->where('id', $id)->limit(1)->get($tabel)->row();
+	if (!$row) {
+		return array(
+			'fase' => 'pembelian',
+			'aksi' => 'SKIP',
+			'tabel' => $tabel,
+			'id_pembelian' => $id,
+			'spop' => $spop,
+			'namabarang' => isset($queue_item['uraian']) ? $queue_item['uraian'] : '',
+			'keterangan' => 'Record pembelian perwakilan SPOP tidak ditemukan',
+		);
+	}
+
+	if ($jumlah_total <= 0) {
+		return array(
+			'fase' => 'pembelian',
+			'aksi' => 'SKIP',
+			'tabel' => $tabel,
+			'id_pembelian' => $id,
+			'spop' => $spop,
+			'namabarang' => isset($row->uraian) ? $row->uraian : '',
+			'jumlah_pembelian' => '0',
+			'record_pembelian_spop' => (string) $record_count,
+			'keterangan' => 'Lewati: total jumlah pembelian SPOP ' . $spop . ' = 0',
+		);
+	}
+
+	$nama = isset($row->uraian) ? $row->uraian : '';
+	$satuan = isset($row->satuan) ? $row->satuan : '';
+	$harga = isset($row->harga_satuan) ? $row->harga_satuan : '';
+
+	$pers_rows = persediaan_generate_recalculate_list_persediaan_by_spop($spop, $map);
+	if (empty($pers_rows)) {
+		$created = persediaan_recalculate_insert_persediaan_from_pembelian($CI, $ctx, $row, $tabel, $map);
+		if (empty($created['ok'])) {
+			return array(
+				'fase' => 'pembelian',
+				'aksi' => 'GAGAL',
+				'tabel' => $tabel,
+				'id_pembelian' => $id,
+				'spop' => $spop,
+				'namabarang' => $nama,
+				'jumlah_pembelian' => (string) $jumlah_total,
+				'record_pembelian_spop' => (string) $record_count,
+				'keterangan' => isset($created['alasan']) ? $created['alasan'] : 'Gagal insert persediaan dari pembelian (grup SPOP)',
+			);
+		}
+
+		$row_baru = $CI->db->where('id', (int) $created['id_persediaan'])->limit(1)->get('persediaan')->row();
+		if ($row_baru) {
+			persediaan_recalculate_map_add_row($map, $row_baru);
+		}
+		$pers_rows = persediaan_generate_recalculate_list_persediaan_by_spop($spop, $map);
+	}
+
+	if (empty($pers_rows)) {
+		return array(
+			'fase' => 'pembelian',
+			'aksi' => 'GAGAL',
+			'tabel' => $tabel,
+			'id_pembelian' => $id,
+			'spop' => $spop,
+			'namabarang' => $nama,
+			'keterangan' => 'Persediaan SPOP ' . $spop . ' tidak ditemukan setelah insert',
+		);
+	}
+
+	foreach ($pers_rows as $idx => $pr) {
+		$fresh = $CI->db->where('id', (int) $pr->id)->limit(1)->get('persediaan')->row();
+		if ($fresh) {
+			$pers_rows[$idx] = $fresh;
+		}
+	}
+
+	$sum_beli_pers = persediaan_generate_recalculate_sum_field_persediaan_rows($pers_rows, 'beli');
+	$sum_total_10_pers = persediaan_generate_recalculate_sum_field_persediaan_rows($pers_rows, 'total_10');
+	$beli_baru = $sum_beli_pers + $jumlah_total;
+	$total_10_baru = $sum_total_10_pers + $jumlah_total;
+
+	$keeper = persediaan_duplikat_spop_pick_keeper($pers_rows, $CI);
+	if (!$keeper) {
+		$keeper = $pers_rows[0];
+	}
+
+	$upd = persediaan_generate_recalculate_set_beli_total_spop_keeper($CI, $keeper, $beli_baru, $total_10_baru);
+
+	$row_keeper = $CI->db->where('id', (int) $keeper->id)->limit(1)->get('persediaan')->row();
+	if ($row_keeper) {
+		persediaan_recalculate_map_add_row($map, $row_keeper);
+	}
+
+	$total_10_tampil = isset($upd['total_10']) ? $upd['total_10'] : (string) $total_10_baru;
+	$keterangan_check = '';
+
+	$cnt_pers_spop = count($pers_rows);
+	$keterangan = 'Grup SPOP ' . $spop . ': ' . $record_count . ' record pembelian (jumlah=' . $jumlah_total . ')'
+		. ', ' . $cnt_pers_spop . ' baris persediaan SPOP sama'
+		. ' | beli = sum(beli persediaan) ' . $sum_beli_pers . ' + sum(jumlah pembelian) ' . $jumlah_total . ' = ' . $beli_baru
+		. ' | total_10 = sum(total_10 persediaan) ' . $sum_total_10_pers . ' + sum(jumlah pembelian) ' . $jumlah_total . ' = ' . $total_10_baru
+		. ' | tuj=' . (isset($upd['total_10']) ? $upd['total_10'] : $total_10_baru);
+
+	return array(
+		'fase' => 'pembelian',
+		'aksi' => 'UPDATE_BELI',
+		'tabel' => $tabel,
+		'id_pembelian' => $id,
+		'id_persediaan' => (int) $keeper->id,
+		'namabarang' => $nama,
+		'satuan' => $satuan,
+		'hpp' => $harga,
+		'spop' => $spop,
+		'jumlah_pembelian' => (string) $jumlah_total,
+		'record_pembelian_spop' => (string) $record_count,
+		'record_persediaan_spop' => (string) $cnt_pers_spop,
+		'beli_lama' => (string) $sum_beli_pers,
+		'beli_baru' => isset($upd['beli_baru']) ? $upd['beli_baru'] : (string) $beli_baru,
+		'total_10_lama' => (string) $sum_total_10_pers,
+		'total_10' => $total_10_tampil,
+		'keterangan_check' => $keterangan_check,
+		'keterangan' => $keterangan,
+	);
+}
+
 function persediaan_generate_recalculate_build_pembelian_queue($CI, $ctx)
 {
+	$CI->load->helper('persediaan_display');
 	$queue = array();
+	$by_spop = array();
 
 	foreach (array('tbl_pembelian', 'tbl_pembelian_jasa') as $tbl) {
 		if (!$CI->db->table_exists($tbl)) {
@@ -7262,16 +7478,56 @@ function persediaan_generate_recalculate_build_pembelian_queue($CI, $ctx)
 		)->result();
 
 		foreach ($list as $row) {
+			$jumlah = max(0, (int) floor(persediaan_parse_angka(isset($row->jumlah) ? $row->jumlah : 0)));
+			$spop = isset($row->spop) ? $row->spop : '';
+
+			if (persediaan_recalculate_spop_valid($spop)) {
+				$spop_key = persediaan_recalculate_spop_match_value($spop);
+				if ($spop_key === '') {
+					continue;
+				}
+
+				if (!isset($by_spop[$spop_key])) {
+					$by_spop[$spop_key] = array(
+						'group_spop' => true,
+						'tabel' => $tbl,
+						'id' => (int) $row->id,
+						'uraian' => isset($row->uraian) ? $row->uraian : '',
+						'satuan' => isset($row->satuan) ? $row->satuan : '',
+						'harga_satuan' => isset($row->harga_satuan) ? $row->harga_satuan : '',
+						'spop' => $spop,
+						'spop_key' => $spop_key,
+						'jumlah_total' => 0,
+						'record_count' => 0,
+						'id_pembelian_list' => array(),
+					);
+				}
+
+				$by_spop[$spop_key]['jumlah_total'] += $jumlah;
+				$by_spop[$spop_key]['record_count']++;
+				$by_spop[$spop_key]['id_pembelian_list'][] = (int) $row->id;
+
+				continue;
+			}
+
 			$queue[] = array(
+				'group_spop' => false,
 				'tabel' => $tbl,
 				'id' => (int) $row->id,
 				'uraian' => isset($row->uraian) ? $row->uraian : '',
 				'satuan' => isset($row->satuan) ? $row->satuan : '',
 				'harga_satuan' => isset($row->harga_satuan) ? $row->harga_satuan : '',
 				'jumlah' => isset($row->jumlah) ? $row->jumlah : 0,
-				'spop' => isset($row->spop) ? $row->spop : '',
+				'spop' => $spop,
 			);
 		}
+	}
+
+	foreach ($by_spop as $group) {
+		if ((int) $group['record_count'] <= 0) {
+			continue;
+		}
+		$queue[] = $group;
 	}
 
 	usort($queue, function ($a, $b) {
@@ -7281,6 +7537,14 @@ function persediaan_generate_recalculate_build_pembelian_queue($CI, $ctx)
 		if ($c !== 0) {
 			return $c;
 		}
+
+		$sa = isset($a['spop_key']) ? $a['spop_key'] : (isset($a['spop']) ? $a['spop'] : '');
+		$sb = isset($b['spop_key']) ? $b['spop_key'] : (isset($b['spop']) ? $b['spop'] : '');
+		$c2 = strcasecmp((string) $sa, (string) $sb);
+		if ($c2 !== 0) {
+			return $c2;
+		}
+
 		return ((int) $a['id']) - ((int) $b['id']);
 	});
 
@@ -7290,6 +7554,11 @@ function persediaan_generate_recalculate_build_pembelian_queue($CI, $ctx)
 function persediaan_generate_recalculate_proses_pembelian_row($CI, $ctx, $queue_item, &$map)
 {
 	$CI->load->helper('persediaan_display');
+
+	if (!empty($queue_item['group_spop'])) {
+		return persediaan_generate_recalculate_proses_pembelian_spop_group($CI, $ctx, $queue_item, $map);
+	}
+
 	$tabel = $queue_item['tabel'];
 	$id = (int) $queue_item['id'];
 
@@ -7901,7 +8170,7 @@ function persediaan_generate_recalculate_kandidat_penjualan_persediaan($map, $na
 }
 
 /**
- * Reset & hitung ulang kolom beli persediaan bulan target dari pembelian (filter spop ketat).
+ * Reset & hitung ulang kolom beli persediaan bulan target dari pembelian (grup SPOP + per baris).
  */
 function persediaan_generate_recalculate_reapply_pembelian_bulan($CI, $ctx)
 {
@@ -7910,15 +8179,70 @@ function persediaan_generate_recalculate_reapply_pembelian_bulan($CI, $ctx)
 	$tanggal_beli = isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $ctx['tanggal_beli'];
 	$reset_info = persediaan_recalculate_reset_beli_persediaan_bulan($CI, $tanggal_beli);
 
+	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$queue = persediaan_generate_recalculate_build_pembelian_queue($CI, $ctx);
+
+	$updated = 0;
+	$with_beli = 0;
+	$processed_pers_ids = array();
+
+	foreach ($queue as $queue_item) {
+		if (!empty($queue_item['group_spop'])) {
+			$spop = isset($queue_item['spop']) ? $queue_item['spop'] : '';
+			$jumlah_total = max(0, (int) floor(persediaan_parse_angka(isset($queue_item['jumlah_total']) ? $queue_item['jumlah_total'] : 0)));
+			if ($jumlah_total <= 0) {
+				continue;
+			}
+
+			$pers_rows = persediaan_generate_recalculate_list_persediaan_by_spop($spop, $map);
+			if (empty($pers_rows)) {
+				continue;
+			}
+
+			foreach ($pers_rows as $idx => $pr) {
+				$fresh = $CI->db->where('id', (int) $pr->id)->limit(1)->get('persediaan')->row();
+				if ($fresh) {
+					$pers_rows[$idx] = $fresh;
+				}
+			}
+
+			$sum_beli_pers = persediaan_generate_recalculate_sum_field_persediaan_rows($pers_rows, 'beli');
+			$sum_total_10_pers = persediaan_generate_recalculate_sum_field_persediaan_rows($pers_rows, 'total_10');
+			$beli_baru = $sum_beli_pers + $jumlah_total;
+			$total_10_baru = $sum_total_10_pers + $jumlah_total;
+
+			$keeper = persediaan_duplikat_spop_pick_keeper($pers_rows, $CI);
+			if (!$keeper) {
+				$keeper = $pers_rows[0];
+			}
+
+			persediaan_generate_recalculate_set_beli_total_spop_keeper($CI, $keeper, $beli_baru, $total_10_baru);
+			$row_keeper = $CI->db->where('id', (int) $keeper->id)->limit(1)->get('persediaan')->row();
+			if ($row_keeper) {
+				persediaan_recalculate_map_add_row($map, $row_keeper);
+			}
+
+			foreach ($pers_rows as $pr) {
+				$processed_pers_ids[(int) $pr->id] = true;
+			}
+			$updated++;
+			if ($beli_baru > 0) {
+				$with_beli++;
+			}
+			continue;
+		}
+	}
+
 	$rows = $CI->db->query(
 		"SELECT * FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
 		array($tanggal_beli)
 	)->result();
 
-	$updated = 0;
-	$with_beli = 0;
-
 	foreach ($rows as $row) {
+		if (!empty($processed_pers_ids[(int) $row->id])) {
+			continue;
+		}
+
 		$beli = persediaan_recalculate_hitung_beli_row_by_kategori(
 			$CI,
 			$row,
