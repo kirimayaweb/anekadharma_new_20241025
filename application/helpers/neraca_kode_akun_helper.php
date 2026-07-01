@@ -44,6 +44,27 @@ function neraca_get_field_label($field_neraca)
     return ucwords(str_replace('_', ' ', $field_neraca));
 }
 
+/**
+ * HTML kolom keterangan neraca: teks label + tombol Setting Kode Akun (inline).
+ */
+function neraca_render_label_keterangan($field_neraca, $label_text = null)
+{
+    $field_neraca = trim((string) $field_neraca);
+    $canonical_label = neraca_get_field_label($field_neraca);
+    $display_label = ($label_text !== null && $label_text !== '')
+        ? (string) $label_text
+        : $canonical_label;
+    $btn_label = 'Setting Kode Akun ' . $canonical_label;
+
+    return '<div class="neraca-label-wrap">'
+        . '<span class="neraca-label-text">' . htmlspecialchars($display_label, ENT_QUOTES, 'UTF-8') . '</span>'
+        . '<span class="neraca-label-setting">'
+        . '<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" data-field-neraca="'
+        . htmlspecialchars($field_neraca, ENT_QUOTES, 'UTF-8') . '">'
+        . '<i class="fa fa-cog"></i> ' . htmlspecialchars($btn_label, ENT_QUOTES, 'UTF-8')
+        . '</button></span></div>';
+}
+
 function neraca_field_fallback_groups()
 {
     return array(

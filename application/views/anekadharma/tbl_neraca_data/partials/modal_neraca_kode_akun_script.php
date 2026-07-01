@@ -278,6 +278,17 @@
 			return;
 		}
 
+		if (field && !$settingBtn.length) {
+			var $existingBtn = $labelTh.find('.neraca-label-wrap .btn-neraca-get-kode-akun-form[data-field-neraca="' + field + '"]');
+			if ($existingBtn.length) {
+				$labelTh.addClass('neraca-label-layout-done');
+				if (field) {
+					$labelTh.attr('data-field-neraca', field);
+				}
+				return;
+			}
+		}
+
 		var labelText = (field && neracaFieldLabels[field])
 			? neracaFieldLabels[field]
 			: $.trim($labelTh.find('.neraca-label-text').first().text());
@@ -366,6 +377,8 @@
 	function restructureNeracaFieldForms() {
 		ensureNeracaFieldLayout();
 	}
+
+	window.restructureNeracaFieldForms = restructureNeracaFieldForms;
 
 	function updateNominalColor($form, systemTotal) {
 		if (!$form || !$form.length) {
