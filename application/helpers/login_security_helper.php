@@ -377,3 +377,27 @@ function login_mfa_generate_otp()
 
     return (string) random_int($min, $max);
 }
+
+/**
+ * Level user yang diizinkan redirect ke Dashboard setelah login sukses.
+ */
+function login_dashboard_allowed_level_ids()
+{
+    $levels = array('1', '2', '3', '4', '6', '7', '9', '99', '444', '555', '777', '999');
+
+    if (function_exists('hak_akses_keuangan_level_ids')) {
+        foreach (hak_akses_keuangan_level_ids() as $level_id) {
+            $levels[] = (string) $level_id;
+        }
+    } else {
+        $levels[] = '666';
+        $levels[] = '888';
+    }
+
+    return array_values(array_unique($levels));
+}
+
+function login_can_redirect_dashboard($user_level)
+{
+    return in_array((string) $user_level, login_dashboard_allowed_level_ids(), true);
+}

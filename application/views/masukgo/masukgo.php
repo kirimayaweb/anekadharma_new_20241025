@@ -26,21 +26,18 @@
         </div>
         <div class="login-box-body">
             <?php
-            $status_login = $this->session->userdata('status_login');
-            if (empty($status_login)) {
-                $message = "Silahkan login untuk masuk ke aplikasi";
-            } else {
-                $message = $status_login;
-            }
+            $this->load->helper('login_security');
+            $message = login_flash_message('Silahkan login untuk masuk ke aplikasi');
             ?>
-            <p class="login-box-msg"><?php echo $message; ?></p>
-            <?php echo form_open('Masuk/cheklogin'); ?>
+            <p class="login-box-msg"><?php echo html_escape($message); ?></p>
+            <?php echo form_open('Anekadharmamasuk/cheklogin'); ?>
+            <?php echo login_csrf_field(); ?>
             <div class="form-group has-feedback">
-                <input type="text" class="form-control" name="email" placeholder="Email">
+                <input type="email" class="form-control" name="email" placeholder="Email" maxlength="190" autocomplete="username" required>
                 <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
             </div>
             <div class="form-group has-feedback">
-                <input type="password" class="form-control" name="password" placeholder="Password">
+                <input type="password" class="form-control" name="password" placeholder="Password" maxlength="128" autocomplete="current-password" required>
                 <span class="glyphicon glyphicon-lock form-control-feedback"></span>
             </div>
             <div class="row">
@@ -48,7 +45,7 @@
                     <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Masuk</button>
                 </div>
                 <div class="col-xs-6">
-                    <?php echo anchor('Masuk/forgotpassword', '<i class="fa fa-eye-slash" aria-hidden="true"></i> Lupa Password', array('class' => 'btn btn-primary btn-block btn-flat')); ?>
+                    <?php echo anchor('Anekadharmamasuk/forgotpassword', '<i class="fa fa-eye-slash" aria-hidden="true"></i> Lupa Password', array('class' => 'btn btn-primary btn-block btn-flat')); ?>
                 </div>
             </div>
             </form>

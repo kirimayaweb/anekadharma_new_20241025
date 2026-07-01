@@ -7,6 +7,9 @@
 
                     <div class="box-header">
                         <h3 class="box-title">KELOLA HAK AKSES UNTUK LEVEL :  <b><?php echo $level['nama_level'] ?></b></h3>
+                        <div class="box-tools pull-right">
+                            <?php echo anchor(site_url('userlevel/akses_keuangan/' . $this->uri->segment(3)), '<i class="fa fa-money"></i> Paket Keuangan', 'class="btn btn-success btn-sm"'); ?>
+                        </div>
                     </div>
 
                     <div class="box-body">

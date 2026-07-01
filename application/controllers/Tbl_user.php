@@ -14,7 +14,7 @@ class Tbl_user extends CI_Controller
     function __construct()
     {
         parent::__construct();
-        // is_login();
+        is_login();
         $this->load->model(array('Tbl_user_model', 'Sys_tingkat_model', 'Menu_model', 'Tbl_hak_akses_model'));
         // $this->load->model(array('Tbl_user_model','Trans_cetak_model', 'Tbl_stok_barang_detail_model', 'Trans_cetakinput_detail_model', 'Tbl_produk_model', 'Tbl_produk_mapel_referensi_model', 'General_login'));
         $this->load->library('form_validation');
@@ -201,6 +201,10 @@ class Tbl_user extends CI_Controller
                 // die;
 
                 $this->Tbl_user_model->insert($data);
+                $new_user_id = $this->db->insert_id();
+                if ($new_user_id && hak_akses_is_keuangan_level($this->input->post('id_user_level', TRUE))) {
+                    hak_akses_keuangan_sync_user($this, $new_user_id);
+                }
                 $this->session->set_flashdata('message', 'Create Record Success 2');
 
 
@@ -357,6 +361,9 @@ class Tbl_user extends CI_Controller
 
 
             $this->Tbl_user_model->update($this->input->post('id_users', TRUE), $data);
+            if (hak_akses_is_keuangan_level($this->input->post('id_user_level', TRUE))) {
+                hak_akses_keuangan_sync_user($this, $this->input->post('id_users', TRUE));
+            }
             $this->session->set_flashdata('message', 'Update Record Success');
             redirect(site_url('tbl_user'));
         }

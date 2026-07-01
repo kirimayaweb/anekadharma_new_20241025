@@ -16,13 +16,26 @@ class Dashboard extends CI_Controller
 
     public function index()
     {
+        $laporan_status = $this->uri->segment(2);
 
+        if (!isset($_SESSION['thn_selected']) || !isset($_SESSION['semester_selected'])) {
+            $date_sekarang = date('Y-m-d H:i:s');
+            $variabel_date_awal_selected = date('Y-m-d', strtotime($date_sekarang));
+            $tahun_selected = (int) date('Y', strtotime($variabel_date_awal_selected));
+            $data_month = (int) date('m', strtotime($variabel_date_awal_selected));
 
+            if ($data_month < 3) {
+                $semester_selected = 2;
+                $tahun_selected = (int) date('Y', strtotime('-1 year', strtotime($variabel_date_awal_selected)));
+            } elseif ($data_month > 8) {
+                $semester_selected = 2;
+            } else {
+                $semester_selected = 1;
+            }
 
-        $_SESSION['thn_selected'] = $tahun_selected;
-        $_SESSION['semester_selected'] = $semester_selected;
-        // $_SESSION['listcover_selected'] = $listcover_selected;
-
+            $_SESSION['thn_selected'] = $tahun_selected;
+            $_SESSION['semester_selected'] = $semester_selected;
+        }
 
         if ($laporan_status) {
             $status_laporan = $laporan_status;

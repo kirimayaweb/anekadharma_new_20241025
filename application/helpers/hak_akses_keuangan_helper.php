@@ -25,14 +25,7 @@ function hak_akses_is_keuangan_level($id_user_level)
  */
 function hak_akses_admin_level_ids()
 {
-    $ci =& get_instance();
-    $ci->config->load('cms', true);
-    $levels = $ci->config->item('cms_default_admin_levels', 'cms');
-    if ($levels === null || $levels === false || !is_array($levels) || empty($levels)) {
-        $levels = array(1, 2, 99);
-    }
-
-    return array_map('intval', $levels);
+    return array(1, 2, 99);
 }
 
 function hak_akses_is_admin_level($id_user_level)

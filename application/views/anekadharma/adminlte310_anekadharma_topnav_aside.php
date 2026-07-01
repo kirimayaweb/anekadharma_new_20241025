@@ -89,6 +89,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
             </li>
 
             <?php
+            $this->load->helper('hak_akses_keuangan');
+
             $id_user_active = $this->session->userdata('sess_iduser');
             if ($id_user_active === null || $id_user_active === '') {
               $id_user_active = $this->session->userdata('id_users');
@@ -97,32 +99,56 @@ scratch. This page gets rid of all links and provides the needed markup only.
             if ($id_user_level_active === null || $id_user_level_active === '') {
               $id_user_level_active = $this->session->userdata('id_user_level');
             }
+            $id_user_level_int = (int) $id_user_level_active;
+            $is_admin_topnav = in_array($id_user_level_int, array(1, 2, 99), true);
 
-            $sql_menu = "select * from menu where is_active='1' and is_parent=0";
+            $sql_menu = "select * from menu where is_active='1' and is_parent=0 order by id asc";
             $main_menu = $this->db->query($sql_menu)->result();
 
-
-
             foreach ($main_menu as $menu) {
+              $topnav_submenus = array();
 
-              // Hak menu: admin lihat semua submenu; user lain via tbl_hak_akses
-              $topnav_submenus = hak_akses_topnav_submenu_rows(
-                $this,
-                $menu->id,
-                $id_user_active,
-                $id_user_level_active
-              );
+              if ($is_admin_topnav) {
+                $this->db->where('is_parent', (int) $menu->id);
+                $this->db->where('is_active', '1');
+                $this->db->order_by('id', 'ASC');
+                $topnav_submenus = $this->db->get('menu')->result();
+              } elseif (function_exists('hak_akses_topnav_submenu_rows')) {
+                $topnav_submenus = hak_akses_topnav_submenu_rows(
+                  $this,
+                  $menu->id,
+                  $id_user_active,
+                  $id_user_level_active
+                );
+              } else {
+                $this->db->where('main_menu', (int) $menu->id);
+                $this->db->group_start();
+                $this->db->where('id_user', (int) $id_user_active);
+                $this->db->or_group_start();
+                $this->db->where('id_user', 0);
+                $this->db->where('id_user_level', $id_user_level_int);
+                $this->db->group_end();
+                $this->db->group_end();
+                $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+                foreach ($list_menu_hak_akses->result() as $menu_list) {
+                  $this->db->where('id', (int) $menu_list->id_menu);
+                  $this->db->where('is_active', '1');
+                  $detail = $this->db->get('menu')->row();
+                  if ($detail) {
+                    $topnav_submenus[] = $detail;
+                  }
+                }
+              }
 
               if (!empty($topnav_submenus)) {
-
-                // detail MAIN menu
-                $this->db->where('id', $menu->id);
-                $MAIN_menu = $this->db->get('menu')->row_array();
+                $MAIN_menu = array(
+                  'name' => $menu->name,
+                );
 
             ?>
 
                 <li class="nav-item dropdown">
-                  <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle"><?php echo $MAIN_menu['name']; ?></a>
+                  <a id="dropdownSubMenu1" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" class="nav-link dropdown-toggle"><?php echo htmlspecialchars($MAIN_menu['name'], ENT_QUOTES, 'UTF-8'); ?></a>
 
                   <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
 
@@ -131,10 +157,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
                       $detail_menu = is_array($detail_menu_row)
                         ? $detail_menu_row
                         : (array) $detail_menu_row;
+                      if (empty($detail_menu['link'])) {
+                        continue;
+                      }
                     ?>
 
                       <li>
-                        <a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo $detail_menu['name']; ?>
+                        <a tabindex="-1" href="<?php echo base_url() ?>index.php<?php echo $detail_menu['link']; ?>" class="dropdown-item"><?php echo htmlspecialchars($detail_menu['name'], ENT_QUOTES, 'UTF-8'); ?>
                         </a>
                       </li>
 
