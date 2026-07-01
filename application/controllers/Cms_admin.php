@@ -62,7 +62,7 @@ class Cms_admin extends CI_Controller
             'total_sliders' => count($this->Cms_slider_model->get_all()),
             'total_gallery' => count($this->Cms_gallery_model->get_all()),
             'recent_posts' => array_slice($this->Cms_post_model->get_all(), 0, 5),
-            'public_url' => site_url('publikasi'),
+            'public_url' => cms_public_url(),
         );
 
         $this->admin_layout('adminlte310_cms_dashboard', $data);
