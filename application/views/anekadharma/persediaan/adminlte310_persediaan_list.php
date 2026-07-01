@@ -1078,6 +1078,23 @@
         text-align: right !important;
         font-variant-numeric: tabular-nums;
     }
+    .persediaan-tab-dt-wrap .dtfc-fixed-left,
+    .persediaan-tab-dt-wrap .DTFC_LeftWrapper table.dataTable tbody td,
+    .persediaan-tab-dt-wrap .DTFC_LeftWrapper table.dataTable thead th,
+    .persediaan-tab-dt-wrap .DTFC_LeftWrapper table.dataTable tfoot th {
+        background: #fff;
+    }
+    .persediaan-tab-dt-wrap .dtfc-fixed-left-head,
+    .persediaan-tab-dt-wrap .DTFC_LeftHeadWrapper table.dataTable thead th,
+    .persediaan-tab-dt-wrap .DTFC_LeftFootWrapper table.dataTable tfoot th {
+        background: #f8f9fa !important;
+        z-index: 4;
+    }
+    .persediaan-tab-dt-wrap .dtfc-fixed-left,
+    .persediaan-tab-dt-wrap .DTFC_LeftWrapper {
+        z-index: 3;
+        box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+    }
     .compare-dt-wrap {
         margin-bottom: 0.5rem;
     }
@@ -2434,7 +2451,9 @@ window.addEventListener('load', function() {
     function adjustAllPersediaanDataTableAreas() {
         adjustGenRecalcScrollAreas();
         adjustRekapScrollArea();
-        if (typeof dtPersediaanStore !== 'undefined') {
+        if (typeof adjustPersediaanTabDataTables === 'function') {
+            adjustPersediaanTabDataTables();
+        } else if (typeof dtPersediaanStore !== 'undefined') {
             Object.keys(dtPersediaanStore).forEach(function(sel) {
                 applyScrollYToDataTable(dtPersediaanStore[sel], $(sel));
             });
@@ -3318,6 +3337,28 @@ window.addEventListener('load', function() {
     });
 
     var dtPersediaanStore = {};
+    var dtPersediaanFcStore = {};
+
+    function relayoutPersediaanTabFixedColumns(dt) {
+        if (!dt) {
+            return;
+        }
+        try {
+            if (dt.fixedColumns && typeof dt.fixedColumns === 'function') {
+                var fcApi = dt.fixedColumns();
+                if (fcApi && typeof fcApi.relayout === 'function') {
+                    fcApi.relayout();
+                    return;
+                }
+            }
+            var settings = dt.settings ? dt.settings()[0] : null;
+            if (settings && settings._oFixedColumns && typeof settings._oFixedColumns.fnRedrawLayout === 'function') {
+                settings._oFixedColumns.fnRedrawLayout();
+            }
+        } catch (eFc) {
+            /* abaikan */
+        }
+    }
 
     function initPersediaanTabDataTable(selector) {
         var $sel = $(selector);
@@ -3327,15 +3368,24 @@ window.addEventListener('load', function() {
         if ($.fn.DataTable.isDataTable(selector)) {
             $sel.DataTable().destroy();
         }
+        dtPersediaanFcStore[selector] = null;
         var moneyCols = [];
         try {
             moneyCols = JSON.parse($sel.attr('data-money-cols') || '[]');
         } catch (eMoney) {
             moneyCols = [];
         }
+        var orderCol = parseInt($sel.attr('data-order-col') || '2', 10);
+        if (isNaN(orderCol) || orderCol < 0) {
+            orderCol = 2;
+        }
+        var fixedLeft = parseInt($sel.attr('data-fixed-left') || '8', 10);
+        if (isNaN(fixedLeft) || fixedLeft < 0) {
+            fixedLeft = 8;
+        }
         var columnDefs = [
             { targets: 0, orderable: false },
-            { targets: 3, type: 'string' }
+            { targets: orderCol, type: 'string' }
         ];
         if (moneyCols.length) {
             columnDefs.push({
@@ -3343,13 +3393,13 @@ window.addEventListener('load', function() {
                 className: 'text-right persediaan-col-money'
             });
         }
-        var dt = $sel.DataTable({
+        var dtOpts = {
             scrollY: getDataTableScrollY($sel),
             scrollX: true,
             scrollCollapse: true,
             pageLength: 25,
             lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
-            order: [[3, 'asc']],
+            order: [[orderCol, 'asc']],
             columnDefs: columnDefs,
             language: {
                 lengthMenu: 'Tampilkan _MENU_ baris',
@@ -3358,9 +3408,23 @@ window.addEventListener('load', function() {
                 infoFiltered: '(difilter dari _MAX_ total baris)',
                 zeroRecords: 'Tidak ada data persediaan untuk bulan ini'
             }
-        });
+        };
+        var dt = $sel.DataTable(dtOpts);
+        if (fixedLeft > 0 && $.fn.dataTable && $.fn.dataTable.FixedColumns) {
+            try {
+                dtPersediaanFcStore[selector] = new $.fn.dataTable.FixedColumns(dt, {
+                    leftColumns: fixedLeft
+                });
+            } catch (eInitFc) {
+                console.warn('FixedColumns persediaan:', eInitFc);
+            }
+        }
         dtPersediaanStore[selector] = dt;
         applyScrollYToDataTable(dt, $sel);
+        setTimeout(function() {
+            dt.columns.adjust();
+            relayoutPersediaanTabFixedColumns(dt);
+        }, 100);
         return dt;
     }
 
@@ -3368,6 +3432,10 @@ window.addEventListener('load', function() {
         Object.keys(dtPersediaanStore).forEach(function(sel) {
             var dt = dtPersediaanStore[sel];
             applyScrollYToDataTable(dt, $(sel));
+            if (dt && dt.columns) {
+                dt.columns.adjust();
+            }
+            relayoutPersediaanTabFixedColumns(dt);
         });
     }
 

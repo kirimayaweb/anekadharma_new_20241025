@@ -8,6 +8,9 @@ $table_id = isset($table_id) ? (string) $table_id : 'table-persediaan';
 $bulan_tampil = isset($bulan_tampil) ? (string) $bulan_tampil : date('Y-m');
 $tab_mode = isset($tab_mode) ? (string) $tab_mode : 'barang';
 $show_keluar_columns = persediaan_tab_data_show_keluar_columns($tab_mode);
+$nama_barang_header = persediaan_tab_data_nama_barang_header($tab_mode);
+$fixed_left_columns = persediaan_tab_data_fixed_left_columns();
+$nama_col_index = 2;
 
 $persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10();
 $money_col_indexes = persediaan_tab_data_money_column_indexes();
@@ -19,13 +22,12 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 }
 ?>
 <div class="persediaan-tab-dt-wrap">
-<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>">
+<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
 	<thead>
 		<tr>
 			<th width="50px">No</th>
 			<th>Tanggal</th>
-			<th>Kategori</th>
-			<th>Namabarang</th>
+			<th><?php echo htmlspecialchars($nama_barang_header, ENT_QUOTES, 'UTF-8'); ?></th>
 			<th>Satuan</th>
 			<th class="text-right persediaan-col-money">Hpp</th>
 			<th>Sa</th>
@@ -61,7 +63,6 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 			<tr>
 				<td><?php echo ++$start ?></td>
 				<td><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></td>
-				<td><?php echo isset($persediaan->kategori) ? htmlspecialchars($persediaan->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
 				<td><?php echo $persediaan->namabarang ?></td>
 				<td><?php echo $persediaan->satuan ?></td>
 				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_hpp_row($persediaan); ?></td>

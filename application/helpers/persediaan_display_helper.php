@@ -362,7 +362,7 @@ function persediaan_list_fields_tgl_keluar_sampai_total_10($CI = null)
 
 function persediaan_list_prefix_column_count()
 {
-	return 10;
+	return 9;
 }
 
 /**
@@ -516,7 +516,7 @@ function persediaan_format_rupiah_tampil($value, $always_show = false)
 
 function persediaan_list_col_index_hpp($CI = null)
 {
-	return 5;
+	return 4;
 }
 
 function persediaan_tab_data_show_keluar_columns($tab_mode = 'barang')
@@ -524,22 +524,81 @@ function persediaan_tab_data_show_keluar_columns($tab_mode = 'barang')
 	return strtolower(trim((string) $tab_mode)) !== 'jasa';
 }
 
-function persediaan_tab_data_export_headers($CI = null, $show_keluar_columns = true)
+function persediaan_tab_data_nama_barang_header($tab_mode = 'barang')
 {
-	$headers = persediaan_export_headers($CI);
-	if (!$show_keluar_columns) {
-		$headers = array_slice($headers, 0, -3);
+	return strtolower(trim((string) $tab_mode)) === 'jasa' ? 'Nama Jasa' : 'Namabarang';
+}
+
+/**
+ * Header kolom awal tab Data Barang/Jasa (tanpa kategori).
+ */
+function persediaan_tab_data_prefix_headers($tab_mode = 'barang')
+{
+	return array(
+		'No',
+		'Tanggal',
+		persediaan_tab_data_nama_barang_header($tab_mode),
+		'Satuan',
+		'Hpp',
+		'Sa',
+		'Spop',
+		'Beli',
+		'Tuj',
+	);
+}
+
+function persediaan_tab_data_export_headers($CI = null, $show_keluar_columns = true, $tab_mode = 'barang')
+{
+	$headers = persediaan_tab_data_prefix_headers($tab_mode);
+
+	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
+		$headers[] = persediaan_field_label($field);
+		if (persediaan_field_has_nominal_column($field)) {
+			$headers[] = persediaan_field_nominal_header_label($field);
+		}
 	}
+
+	$headers[] = 'Nilai Persediaan';
+	if ($show_keluar_columns) {
+		$headers[] = 'Terjual';
+		$headers[] = 'Jumlah Pecah Satuan';
+		$headers[] = 'Bahan Produksi';
+	}
+
 	return $headers;
 }
 
-function persediaan_tab_data_export_column_types($CI = null, $show_keluar_columns = true)
+function persediaan_tab_data_export_column_types($CI = null, $show_keluar_columns = true, $tab_mode = 'barang')
 {
-	$types = persediaan_export_column_types($CI);
-	if (!$show_keluar_columns) {
-		$types = array_slice($types, 0, -3);
+	$types = array('number', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number');
+
+	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
+		if ($field === 'tgl_keluar') {
+			$types[] = 'text';
+		} else {
+			$types[] = 'number';
+			if (persediaan_field_has_nominal_column($field)) {
+				$types[] = 'number';
+			}
+		}
 	}
+
+	$types[] = 'number';
+	if ($show_keluar_columns) {
+		$types[] = 'number';
+		$types[] = 'number';
+		$types[] = 'number';
+	}
+
 	return $types;
+}
+
+/**
+ * Jumlah kolom kiri yang di-freeze saat scroll horizontal (No + Tanggal s/d Beli).
+ */
+function persediaan_tab_data_fixed_left_columns()
+{
+	return 8;
 }
 
 /**
@@ -1148,7 +1207,6 @@ function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = 
 	$cells = array(
 		$no,
 		persediaan_format_bulan_tahun($row, $bulan_filter),
-		isset($row->kategori) ? $row->kategori : '',
 		isset($row->namabarang) ? $row->namabarang : '',
 		isset($row->satuan) ? $row->satuan : '',
 		persediaan_tampil_hpp_row($row),
@@ -1232,11 +1290,11 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$styleLeft = 7;
 	$styleFooter = 5;
 
-	$headers = persediaan_tab_data_export_headers($CI, $show_keluar_columns);
-	$col_types = persediaan_tab_data_export_column_types($CI, $show_keluar_columns);
+	$headers = persediaan_tab_data_export_headers($CI, $show_keluar_columns, $filter_kategori);
+	$col_types = persediaan_tab_data_export_column_types($CI, $show_keluar_columns, $filter_kategori);
 	$col_count = count($headers);
 
-	$widths = array(5, 10, 10, 28, 8, 10, 8, 8, 8, 8);
+	$widths = array(5, 10, 28, 8, 10, 8, 8, 8, 8);
 	while (count($widths) < $col_count) {
 		$widths[] = 11;
 	}
