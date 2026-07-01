@@ -383,8 +383,11 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            "scrollY": 250,
-            "scrollX": true
+            "scrollY": 900,
+            "scrollX": true,
+            "scrollCollapse": true,
+            "pageLength": 25,
+            "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
     });
 

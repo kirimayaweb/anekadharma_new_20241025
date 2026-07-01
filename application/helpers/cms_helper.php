@@ -20,6 +20,24 @@ function cms_upload_url($filename = '')
     return $url . ltrim(str_replace('\\', '/', (string) $filename), '/');
 }
 
+/**
+ * URL halaman publikasi tanpa index.php (modul internal tetap pakai site_url).
+ *
+ * @param string $uri Path setelah /publikasi/ — kosong = beranda
+ */
+function cms_public_url($uri = '')
+{
+    $uri = trim((string) $uri, '/');
+    if (strpos($uri, 'publikasi/') === 0) {
+        $uri = substr($uri, strlen('publikasi/'));
+    } elseif ($uri === 'publikasi') {
+        $uri = '';
+    }
+
+    $base = rtrim(base_url(), '/') . '/publikasi';
+    return $uri === '' ? $base : $base . '/' . $uri;
+}
+
 function cms_is_installed()
 {
     $ci = get_instance();

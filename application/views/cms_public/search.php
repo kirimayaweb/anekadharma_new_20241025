@@ -16,7 +16,7 @@
                         <article class="cms-card-post">
                             <div class="cms-card-body">
                                 <span class="cms-badge"><?php echo htmlspecialchars(cms_post_type_label($post->post_type), ENT_QUOTES, 'UTF-8'); ?></span>
-                                <h2 class="cms-card-title h5"><a href="<?php echo site_url('publikasi/berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h2>
+                                <h2 class="cms-card-title h5"><a href="<?php echo cms_public_url('berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h2>
                                 <p class="cms-card-excerpt"><?php echo htmlspecialchars(cms_excerpt($post->excerpt ? $post->excerpt : $post->content), ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                         </article>

@@ -90,6 +90,46 @@
 				background-color: #3CBC8D;
 				color: white;
 			}
+
+			form.neraca-kode-akun-form {
+				display: inline-flex;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 4px;
+				max-width: 100%;
+			}
+
+			form.neraca-kode-akun-form input[type="tel"],
+			form.neraca-kode-akun-form input[type="text"] {
+				width: auto !important;
+				flex: 1 1 90px;
+				min-width: 70px;
+				max-width: 50%;
+				padding: 4px 8px !important;
+				height: auto !important;
+				margin: 2px 0 !important;
+			}
+
+			form.neraca-kode-akun-form .btn-neraca-get-kode-akun-form {
+				flex: 0 0 auto;
+				font-size: 0.72rem;
+				padding: 2px 6px;
+				line-height: 1.4;
+			}
+
+			.neraca-nominal-match {
+				color: #28a745 !important;
+				font-weight: bold !important;
+			}
+
+			.neraca-nominal-mismatch {
+				color: #f9032f !important;
+				font-weight: bold !important;
+			}
+
+			.neraca-calc-display {
+				font-weight: bold;
+			}
 		</style>
 
 	</head>
@@ -114,6 +154,7 @@
 	?>
 
 	<?php $this->load->view('anekadharma/tbl_neraca_data/partials/neraca_publish_bar'); ?>
+	<?php $this->load->helper('neraca_kode_akun'); ?>
 
 	<div class="card-header">
 
@@ -306,41 +347,10 @@
 												// echo "Tidak ada record";
 											}
 
-											// GET debet per kode akun di penerimaan kas
-
-
-											$Kode_akun = "11101";
-											// BULANAN
-											// $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca' AND Month(`tanggal`)='$bulan_transaksi' AND `kode_akun`='$Kode_akun'";
-
-											// TAHUNAN
-											$sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='11101'";
-											$GET_DATA_record_11101 = $this->db->query($sql);
-
-											if ($GET_DATA_record_11101->num_rows() > 0) {
-												// echo "Ada debet_11101";
-												// print_r($GET_DATA_record_11101->row());
-												$GET_debet_11101 = $GET_DATA_record_11101->row()->debet_11101;
-												// echo $GET_debet_11101;
-											} else {
-												$GET_debet_11101 = 0;
-												// echo "Tidak ada debet_11101";
-											}
-
-
-											// GET debet pengeluaran kas
-											$sql = "SELECT sum(`kredit`) as kredit_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
-											$GET_DATA_record_kredit_11101 = $this->db->query($sql);
-
-											if ($GET_DATA_record_kredit_11101->num_rows() > 0) {
-												// echo "Ada debet_11101";
-												// print_r($GET_DATA_record_11101->row());
-												$GET_kredit_11101 = $GET_DATA_record_kredit_11101->row()->kredit_11101;
-												// echo $GET_kredit_11101;
-											} else {
-												$GET_kredit_11101 = 0;
-												// echo "Tidak ada debet_11101";
-											}
+											// GET debet per kode akun dari setting neraca
+											$jurnal_kas_kas = neraca_calc_jurnal_kas($this, 'kas', $tahun_neraca, $bulan_transaksi);
+											$GET_debet_11101 = $jurnal_kas_kas['debet'];
+											$GET_kredit_11101 = $jurnal_kas_kas['kredit'];
 
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_TOTAL_KAS = $GET_kas + $GET_debet_11101 - $GET_kredit_11101;
@@ -366,14 +376,15 @@
 											// echo "<br/>";
 											// $data_1=number_format($Data_titik_ke_koma, 2, ',', '.');
 											?>
-											<form action="<?php echo $action . '/kas'; ?>" method="post">
+											<form action="<?php echo $action . '/kas'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="kas">
 												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php // echo number_format($Data_titik_ke_koma, 2, ',', '.'); 
 																																															// echo str_replace('.', ',', $data_tbl_neraca_data->kas);
 
 																																															echo number_format($data_tbl_neraca_data->kas, 2, ',', '.');
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->kas;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 
@@ -418,17 +429,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_usaha'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_utang_usaha = 0;
-											$TOTAL_KREDIT_utang_usaha = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_utang_usaha = $TOTAL_DEBET_utang_usaha + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_utang_usaha = $TOTAL_KREDIT_utang_usaha + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_utang_usaha = neraca_calc_jurnal_kas($this, 'utang_usaha', $tahun_neraca, $bulan_transaksi, 'utang_usaha');
+											$TOTAL_DEBET_utang_usaha = $jurnal_kas_utang_usaha['debet'];
+											$TOTAL_KREDIT_utang_usaha = $jurnal_kas_utang_usaha['kredit'];
 
 
 											$GET_utang_usaha = $GET_utang_usaha + $TOTAL_DEBET_utang_usaha - $TOTAL_KREDIT_utang_usaha;
@@ -444,7 +447,7 @@
 											<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="utang_usaha" id="utang_usaha" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
 																																																																?>" ; /> -->
 
-											<form action="<?php echo $action . '/utang_usaha'; ?>" method="post">
+											<form action="<?php echo $action . '/utang_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="utang_usaha">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->utang_usaha; 
 																																																																	?>" width: 50px; /> -->
@@ -458,7 +461,8 @@
 																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -510,25 +514,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='BANK'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_BANK = 0;
-											$TOTAL_KREDIT_BANK = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_BANK = $TOTAL_DEBET_BANK + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_BANK = $TOTAL_KREDIT_BANK + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_BANK;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_BANK;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_bank = neraca_calc_jurnal_kas($this, 'bank', $tahun_neraca, $bulan_transaksi, 'BANK');
+											$TOTAL_DEBET_BANK = $jurnal_kas_bank['debet'];
+											$TOTAL_KREDIT_BANK = $jurnal_kas_bank['kredit'];
 											// die;
 
 
@@ -579,7 +567,7 @@
 
 										</div>
 										<div class="sm-4">
-											<form action="<?php echo $action . '/bank'; ?>" method="post">
+											<form action="<?php echo $action . '/bank'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="bank">
 												<!-- 
 											<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->bank;
 																																																															?>" width: 50px; /> -->
@@ -593,7 +581,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 
 										</div>
@@ -637,17 +626,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_usaha'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_utang_pajak = 0;
-											$TOTAL_KREDIT_utang_pajak = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_utang_pajak = $TOTAL_DEBET_utang_pajak + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_utang_pajak = $TOTAL_KREDIT_utang_pajak + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_utang_pajak = neraca_calc_jurnal_kas($this, 'utang_pajak', $tahun_neraca, $bulan_transaksi, 'utang_usaha');
+											$TOTAL_DEBET_utang_pajak = $jurnal_kas_utang_pajak['debet'];
+											$TOTAL_KREDIT_utang_pajak = $jurnal_kas_utang_pajak['kredit'];
 
 
 											$GET_utang_pajak = $GET_utang_pajak + $TOTAL_DEBET_utang_pajak - $TOTAL_KREDIT_utang_pajak;
@@ -661,7 +642,7 @@
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/utang_pajak'; ?>" method="post">
+											<form action="<?php echo $action . '/utang_pajak'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="utang_pajak">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_pajak;
 																																																																?>" width: 50px; /> -->
@@ -674,7 +655,8 @@
 																																															$TOTAL_UTANG_LANCAR = $TOTAL_UTANG_LANCAR + $data_tbl_neraca_data->utang_pajak;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -721,25 +703,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGUSAHA'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_PIUTANGUSAHA = 0;
-											$TOTAL_KREDIT_PIUTANGUSAHA = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_PIUTANGUSAHA = $TOTAL_DEBET_PIUTANGUSAHA + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_PIUTANGUSAHA = $TOTAL_KREDIT_PIUTANGUSAHA + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_piutang_usaha = neraca_calc_jurnal_kas($this, 'piutang_usaha', $tahun_neraca, $bulan_transaksi, 'PIUTANGUSAHA');
+											$TOTAL_DEBET_PIUTANGUSAHA = $jurnal_kas_piutang_usaha['debet'];
+											$TOTAL_KREDIT_PIUTANGUSAHA = $jurnal_kas_piutang_usaha['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_TOTAL_piutang_usaha = $GET_piutang_usaha + $TOTAL_DEBET_PIUTANGUSAHA - $TOTAL_KREDIT_PIUTANGUSAHA;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -752,7 +718,7 @@
 										</div>
 										<div class="sm-4">
 
-											<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post">
+											<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_usaha">
 												<!-- 													
 												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:black;" value="<?php //echo $data_tbl_neraca_data->piutang_usaha;
 																																																																?>" width: 50px; /> -->
@@ -765,7 +731,8 @@
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 
 										</div>
@@ -809,17 +776,9 @@
 
 												// LOOPING sys_kode filter group: bank
 
-												$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_lain_lain'";
-												// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-												$TOTAL_DEBET_utang_lain_lain = 0;
-												$TOTAL_KREDIT_utang_lain_lain = 0;
-												foreach ($this->db->query($sql)->result() as $list_data) {
-
-													$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-													$TOTAL_DEBET_utang_lain_lain = $TOTAL_DEBET_utang_lain_lain + $this->db->query($sql)->row()->debet;
-													$TOTAL_KREDIT_utang_lain_lain = $TOTAL_KREDIT_utang_lain_lain + $this->db->query($sql)->row()->kredit;
-												}
+												$jurnal_kas_utang_lain_lain = neraca_calc_jurnal_kas($this, 'utang_lain_lain', $tahun_neraca, $bulan_transaksi, 'utang_lain_lain');
+												$TOTAL_DEBET_utang_lain_lain = $jurnal_kas_utang_lain_lain['debet'];
+												$TOTAL_KREDIT_utang_lain_lain = $jurnal_kas_utang_lain_lain['kredit'];
 
 
 												$GET_utang_lain_lain = $GET_utang_lain_lain + $TOTAL_DEBET_utang_lain_lain - $TOTAL_KREDIT_utang_lain_lain;
@@ -832,7 +791,7 @@
 											<div class="sm-4">
 
 
-												<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post">
+												<form action="<?php echo $action . '/utang_lain_lain'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="utang_lain_lain">
 
 													<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_lain_lain; 
 																																																																	?>" width: 50px; /> -->
@@ -847,7 +806,8 @@
 
 
 
-													<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																		<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 												</form>
 											</div>
 										</div>
@@ -899,25 +859,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGUSAHA'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_PIUTANGNONUSAHA = 0;
-											$TOTAL_KREDIT_PIUTANGNONUSAHA = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_PIUTANGNONUSAHA = $TOTAL_DEBET_PIUTANGNONUSAHA + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_PIUTANGNONUSAHA = $TOTAL_KREDIT_PIUTANGNONUSAHA + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_piutang_non_usaha = neraca_calc_jurnal_kas($this, 'piutang_non_usaha', $tahun_neraca, $bulan_transaksi, 'PIUTANGUSAHA');
+											$TOTAL_DEBET_PIUTANGNONUSAHA = $jurnal_kas_piutang_non_usaha['debet'];
+											$TOTAL_KREDIT_PIUTANGNONUSAHA = $jurnal_kas_piutang_non_usaha['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_TOTAL_piutang_non_usaha = $GET_piutang_non_usaha + $TOTAL_DEBET_PIUTANGNONUSAHA - $TOTAL_KREDIT_PIUTANGNONUSAHA;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -929,7 +873,7 @@
 
 										</div>
 										<div class="sm-4">
-											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post">
+											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha">
 												<!-- 													
 												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
 																																																															?>" width: 60px; /> -->
@@ -944,7 +888,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -972,7 +917,7 @@
 											<div class="sm-12">
 
 
-												<!-- <form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post"> -->
+												<!-- <form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha"> -->
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha;
 																																																																?>" width: 50px; /> -->
@@ -985,7 +930,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
 
 
-												<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												<!-- 																					<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 												</form> -->
 											</div>
 										</div>
@@ -1039,25 +985,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PERSEDIAAN'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_persediaan = 0;
-											$TOTAL_KREDIT_persediaan = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_persediaan = $TOTAL_DEBET_persediaan + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_persediaan = $TOTAL_KREDIT_persediaan + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_persediaan = neraca_calc_jurnal_kas($this, 'persediaan', $tahun_neraca, $bulan_transaksi, 'PERSEDIAAN');
+											$TOTAL_DEBET_persediaan = $jurnal_kas_persediaan['debet'];
+											$TOTAL_KREDIT_persediaan = $jurnal_kas_persediaan['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_persediaan = $GET_piutang_non_usaha + $TOTAL_DEBET_persediaan - $TOTAL_KREDIT_persediaan;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -1076,7 +1006,7 @@
 																																																																?>" ; /> -->
 
 
-											<form action="<?php echo $action . '/persediaan'; ?>" method="post">
+											<form action="<?php echo $action . '/persediaan'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="persediaan">
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->persediaan;
 																																																																?>" width: 50px; /> -->
 
@@ -1089,7 +1019,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -1154,25 +1085,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='uang_muka_pajak'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_uang_muka_pajak = 0;
-											$TOTAL_KREDIT_uang_muka_pajak = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_uang_muka_pajak = $TOTAL_DEBET_uang_muka_pajak + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_uang_muka_pajak = $TOTAL_KREDIT_uang_muka_pajak + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_uang_muka_pajak = neraca_calc_jurnal_kas($this, 'uang_muka_pajak', $tahun_neraca, $bulan_transaksi, 'uang_muka_pajak');
+											$TOTAL_DEBET_uang_muka_pajak = $jurnal_kas_uang_muka_pajak['debet'];
+											$TOTAL_KREDIT_uang_muka_pajak = $jurnal_kas_uang_muka_pajak['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_uang_muka_pajak = $GET_piutang_non_usaha + $TOTAL_DEBET_uang_muka_pajak - $TOTAL_KREDIT_uang_muka_pajak;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -1196,7 +1111,7 @@
 
 
 
-											<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post">
+											<form action="<?php echo $action . '/uang_muka_pajak'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="uang_muka_pajak">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->uang_muka_pajak; 
 																																																																?>" width: 50px; /> -->
@@ -1209,7 +1124,8 @@
 																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->uang_muka_pajak;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -1331,7 +1247,8 @@
 																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
  -->
 
-									<!-- <button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
+									<!-- 																					<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
 									<!-- </form> -->
 
 
@@ -1394,25 +1311,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='aktiva_tetap_berwujud'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_uang_muka_pajak = 0;
-											$TOTAL_KREDIT_uang_muka_pajak = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_aktiva_tetap_berwujud = $TOTAL_DEBET_aktiva_tetap_berwujud + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_aktiva_tetap_berwujud = $TOTAL_KREDIT_aktiva_tetap_berwujud + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_aktiva_tetap_berwujud = neraca_calc_jurnal_kas($this, 'aktiva_tetap_berwujud', $tahun_neraca, $bulan_transaksi, 'aktiva_tetap_berwujud');
+											$TOTAL_DEBET_aktiva_tetap_berwujud = $jurnal_kas_aktiva_tetap_berwujud['debet'];
+											$TOTAL_KREDIT_aktiva_tetap_berwujud = $jurnal_kas_aktiva_tetap_berwujud['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_aktiva_tetap_berwujud = $GET_aktiva_tetap_berwujud + $TOTAL_DEBET_aktiva_tetap_berwujud - $TOTAL_KREDIT_aktiva_tetap_berwujud;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -1432,7 +1333,7 @@
 																																																																					?>" ; /> -->
 
 
-											<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post">
+											<form action="<?php echo $action . '/aktiva_tetap_berwujud'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="aktiva_tetap_berwujud">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud;
 																																																																?>" width: 50px; /> -->
@@ -1447,7 +1348,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 
 										</div>
@@ -1488,17 +1390,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='utang_afiliasi'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_utang_afiliasi = 0;
-											$TOTAL_KREDIT_utang_afiliasi = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_utang_afiliasi = $TOTAL_DEBET_utang_afiliasi + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_utang_afiliasi = $TOTAL_KREDIT_utang_afiliasi + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_utang_afiliasi = neraca_calc_jurnal_kas($this, 'utang_afiliasi', $tahun_neraca, $bulan_transaksi, 'utang_afiliasi');
+											$TOTAL_DEBET_utang_afiliasi = $jurnal_kas_utang_afiliasi['debet'];
+											$TOTAL_KREDIT_utang_afiliasi = $jurnal_kas_utang_afiliasi['kredit'];
 
 
 											$GET_utang_afiliasi = $GET_utang_afiliasi + $TOTAL_DEBET_utang_afiliasi - $TOTAL_KREDIT_utang_afiliasi;
@@ -1514,7 +1408,7 @@
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post">
+											<form action="<?php echo $action . '/utang_afiliasi'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="utang_afiliasi">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->utang_afiliasi;
 																																																																?>" width: 50px; /> -->
@@ -1527,7 +1421,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -1577,25 +1472,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='akumulasi_depresiasi_atb'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_akumulasi_depresiasi_atb = 0;
-											$TOTAL_KREDIT_akumulasi_depresiasi_atb = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_akumulasi_depresiasi_atb = $TOTAL_DEBET_akumulasi_depresiasi_atb + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_akumulasi_depresiasi_atb = $TOTAL_KREDIT_akumulasi_depresiasi_atb + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_akumulasi = neraca_calc_jurnal_kas($this, 'akumulasi_depresiasi_atb', $tahun_neraca, $bulan_transaksi, 'akumulasi_depresiasi_atb');
+											$TOTAL_DEBET_akumulasi_depresiasi_atb = $jurnal_kas_akumulasi['debet'];
+											$TOTAL_KREDIT_akumulasi_depresiasi_atb = $jurnal_kas_akumulasi['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_akumulasi_depresiasi_atb = $GET_akumulasi_depresiasi_atb + $TOTAL_DEBET_akumulasi_depresiasi_atb - $TOTAL_KREDIT_akumulasi_depresiasi_atb;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -1619,7 +1498,7 @@
 
 
 
-											<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post">
+											<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="akumulasi_depresiasi_atb">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
 																																																																?>" width: 50px; /> -->
@@ -1633,7 +1512,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -1827,25 +1707,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGNONUSAHAPIHAKKETIGA'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = 0;
-											$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = $TOTAL_DEBET_piutang_non_usaha_pihak_ketiga + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = $TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_piutang_pihak_ketiga = neraca_calc_jurnal_kas($this, 'piutang_non_usaha_pihak_ketiga', $tahun_neraca, $bulan_transaksi, 'PIUTANGNONUSAHAPIHAKKETIGA');
+											$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = $jurnal_kas_piutang_pihak_ketiga['debet'];
+											$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = $jurnal_kas_piutang_pihak_ketiga['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_piutang_non_usaha_pihak_ketiga = $GET_piutang_non_usaha_pihak_ketiga + $TOTAL_DEBET_piutang_non_usaha_pihak_ketiga - $TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -1866,7 +1730,7 @@
 																																																																																												?>" ; /> -->
 
 
-											<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post">
+											<form action="<?php echo $action . '/piutang_non_usaha_pihak_ketiga'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha_pihak_ketiga">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_pihak_ketiga; 
 																																																																?>" width: 50px; /> -->
@@ -1881,7 +1745,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -1925,17 +1790,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='modal_dasar_dan_penyertaan'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_modal_dasar_dan_penyertaan = 0;
-											$TOTAL_KREDIT_modal_dasar_dan_penyertaan = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_modal_dasar_dan_penyertaan = $TOTAL_DEBET_modal_dasar_dan_penyertaan + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_modal_dasar_dan_penyertaan = $TOTAL_KREDIT_modal_dasar_dan_penyertaan + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_modal = neraca_calc_jurnal_kas($this, 'modal_dasar_dan_penyertaan', $tahun_neraca, $bulan_transaksi, 'modal_dasar_dan_penyertaan');
+											$TOTAL_DEBET_modal_dasar_dan_penyertaan = $jurnal_kas_modal['debet'];
+											$TOTAL_KREDIT_modal_dasar_dan_penyertaan = $jurnal_kas_modal['kredit'];
 
 
 											$GET_modal_dasar_dan_penyertaan = $GET_modal_dasar_dan_penyertaan + $TOTAL_DEBET_modal_dasar_dan_penyertaan - $TOTAL_KREDIT_modal_dasar_dan_penyertaan;
@@ -1951,7 +1808,7 @@
 
 
 
-											<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post">
+											<form action="<?php echo $action . '/modal_dasar_dan_penyertaan'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="modal_dasar_dan_penyertaan">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->modal_dasar_dan_penyertaan; 
 																																																																?>" width: 50px; /> -->
@@ -1965,7 +1822,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2016,25 +1874,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='PIUTANGNONUSAHARADIO'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_PIUTANGNONUSAHARADIO = 0;
-											$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_PIUTANGNONUSAHARADIO = $TOTAL_DEBET_PIUTANGNONUSAHARADIO + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = $TOTAL_KREDIT_PIUTANGNONUSAHARADIO + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_piutang_radio = neraca_calc_jurnal_kas($this, 'piutang_non_usaha_radio', $tahun_neraca, $bulan_transaksi, 'PIUTANGNONUSAHARADIO');
+											$TOTAL_DEBET_PIUTANGNONUSAHARADIO = $jurnal_kas_piutang_radio['debet'];
+											$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = $jurnal_kas_piutang_radio['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_PIUTANGNONUSAHARADIO = $GET_PIUTANGNONUSAHARADIO + $TOTAL_DEBET_PIUTANGNONUSAHARADIO - $TOTAL_KREDIT_PIUTANGNONUSAHARADIO;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -2054,7 +1896,7 @@
 																																																																												?>"> -->
 
 
-											<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post">
+											<form action="<?php echo $action . '/piutang_non_usaha_radio'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha_radio">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha_radio; 
 																																																																?>" width: 50px; /> -->
@@ -2068,7 +1910,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 
 										</div>
@@ -2112,17 +1955,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='cadangan_umum'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_cadangan_umum = 0;
-											$TOTAL_KREDIT_cadangan_umum = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_cadangan_umum = $TOTAL_DEBET_cadangan_umum + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_cadangan_umum = $TOTAL_KREDIT_cadangan_umum + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_cadangan = neraca_calc_jurnal_kas($this, 'cadangan_umum', $tahun_neraca, $bulan_transaksi, 'cadangan_umum');
+											$TOTAL_DEBET_cadangan_umum = $jurnal_kas_cadangan['debet'];
+											$TOTAL_KREDIT_cadangan_umum = $jurnal_kas_cadangan['kredit'];
 
 
 											$GET_cadangan_umum = $GET_cadangan_umum + $TOTAL_DEBET_cadangan_umum - $TOTAL_KREDIT_cadangan_umum;
@@ -2137,7 +1972,7 @@
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post">
+											<form action="<?php echo $action . '/cadangan_umum'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="cadangan_umum">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->cadangan_umum; 
 																																																																?>" width: 50px; /> -->
@@ -2150,7 +1985,8 @@
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->cadangan_umum;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2200,25 +2036,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_taman_gedung_kesenian_gabusan'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = 0;
-											$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = $TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = $TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_ljpj_taman = neraca_calc_jurnal_kas($this, 'ljpj_taman_gedung_kesenian_gabusan', $tahun_neraca, $bulan_transaksi, 'ljpj_taman_gedung_kesenian_gabusan');
+											$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = $jurnal_kas_ljpj_taman['debet'];
+											$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = $jurnal_kas_ljpj_taman['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_ljpj_taman_gedung_kesenian_gabusan = $GET_ljpj_taman_gedung_kesenian_gabusan + $TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan - $TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -2236,7 +2056,7 @@
 																																																																																						?>">
 													-->
 
-											<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_taman_gedung_kesenian_gabusan'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_taman_gedung_kesenian_gabusan">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan; 
 																																																																?>" width: 50px; /> -->
@@ -2250,7 +2070,8 @@
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2292,17 +2113,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_bumd_pad'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_laba_bumd_pad = 0;
-											$TOTAL_KREDIT_laba_bumd_pad = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_laba_bumd_pad = $TOTAL_DEBET_laba_bumd_pad + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_laba_bumd_pad = $TOTAL_KREDIT_laba_bumd_pad + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_laba_bumd = neraca_calc_jurnal_kas($this, 'laba_bumd_pad', $tahun_neraca, $bulan_transaksi, 'laba_bumd_pad');
+											$TOTAL_DEBET_laba_bumd_pad = $jurnal_kas_laba_bumd['debet'];
+											$TOTAL_KREDIT_laba_bumd_pad = $jurnal_kas_laba_bumd['kredit'];
 
 
 											$GET_laba_bumd_pad = $GET_laba_bumd_pad + $TOTAL_DEBET_laba_bumd_pad - $TOTAL_KREDIT_laba_bumd_pad;
@@ -2317,7 +2130,7 @@
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post">
+											<form action="<?php echo $action . '/laba_bumd_pad'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="laba_bumd_pad">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_bumd_pad; 
 																																																																?>" width: 50px; /> -->
@@ -2331,7 +2144,8 @@
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_bumd_pad;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2377,25 +2191,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kompleks_gedung_kesenian'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = 0;
-											$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-												// echo $list_data->kode_akun;
-												// echo "<br/>";
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = $TOTAL_DEBET_ljpj_kompleks_gedung_kesenian + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = $TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian + $this->db->query($sql)->row()->kredit;
-												// echo $list_data->Kode_akun;
-												// echo "<br/>";
-												// echo $TOTAL_DEBET_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo $TOTAL_KREDIT_PIUTANGUSAHA;
-												// echo "<br/>";
-												// echo "<br/>";
-											}
+											$jurnal_kas_ljpj_kompleks = neraca_calc_jurnal_kas($this, 'ljpj_kompleks_gedung_kesenian', $tahun_neraca, $bulan_transaksi, 'ljpj_kompleks_gedung_kesenian');
+											$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = $jurnal_kas_ljpj_kompleks['debet'];
+											$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = $jurnal_kas_ljpj_kompleks['kredit'];
 											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
 											$GET_ljpj_kompleks_gedung_kesenian = $GET_ljpj_kompleks_gedung_kesenian + $TOTAL_DEBET_ljpj_kompleks_gedung_kesenian - $TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian;
 											// echo "TOTAL Kas: " . $GET_kas ;
@@ -2410,7 +2208,7 @@
 										</div>
 										<div class="sm-4">
 
-											<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kompleks_gedung_kesenian">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian; 
 																																																																?>" width: 50px; /> -->
@@ -2424,7 +2222,8 @@
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kompleks_gedung_kesenian;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2492,17 +2291,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_radio'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_radio = 0;
-											$TOTAL_KREDIT_ljpj_radio = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_radio = $TOTAL_DEBET_ljpj_radio + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_radio = $TOTAL_KREDIT_ljpj_radio + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_ljpj_radio = neraca_calc_jurnal_kas($this, 'ljpj_radio', $tahun_neraca, $bulan_transaksi, 'ljpj_radio');
+											$TOTAL_DEBET_ljpj_radio = $jurnal_kas_ljpj_radio['debet'];
+											$TOTAL_KREDIT_ljpj_radio = $jurnal_kas_ljpj_radio['kredit'];
 
 
 											$GET_ljpj_radio = $GET_ljpj_radio + $TOTAL_DEBET_ljpj_radio - $TOTAL_KREDIT_ljpj_radio;
@@ -2516,7 +2307,7 @@
 										</div>
 										<div class="sm-4">
 
-											<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_radio">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_radio; 
 																																																																?>" width: 50px; /> -->
@@ -2530,7 +2321,8 @@
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2572,17 +2364,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_rugi_tahun_lalu'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_laba_rugi_tahun_lalu = 0;
-											$TOTAL_KREDIT_laba_rugi_tahun_lalu = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_laba_rugi_tahun_lalu = $TOTAL_DEBET_laba_rugi_tahun_lalu + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_laba_rugi_tahun_lalu = $TOTAL_KREDIT_laba_rugi_tahun_lalu + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_lrl = neraca_calc_jurnal_kas($this, 'laba_rugi_tahun_lalu', $tahun_neraca, $bulan_transaksi, 'laba_rugi_tahun_lalu');
+											$TOTAL_DEBET_laba_rugi_tahun_lalu = $jurnal_kas_lrl['debet'];
+											$TOTAL_KREDIT_laba_rugi_tahun_lalu = $jurnal_kas_lrl['kredit'];
 
 
 											$GET_laba_rugi_tahun_lalu = $GET_laba_rugi_tahun_lalu + $TOTAL_DEBET_laba_rugi_tahun_lalu - $TOTAL_KREDIT_laba_rugi_tahun_lalu;
@@ -2598,7 +2382,7 @@
 
 
 
-											<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post">
+											<form action="<?php echo $action . '/laba_rugi_tahun_lalu'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="laba_rugi_tahun_lalu">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_lalu; 
 																																																																?>" width: 50px; /> -->
@@ -2610,7 +2394,8 @@
 																																															$TOTAL_MODAL_DAN_LABA_DITAHAN = $TOTAL_MODAL_DAN_LABA_DITAHAN + $data_tbl_neraca_data->laba_rugi_tahun_lalu;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2659,17 +2444,9 @@
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_operasi_apotek_dharma_usaha'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
-											$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_ljpj_apotek = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_operasi_apotek_dharma_usaha', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_operasi_apotek_dharma_usaha');
+											$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $jurnal_kas_ljpj_apotek['debet'];
+											$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = $jurnal_kas_ljpj_apotek['kredit'];
 
 
 											$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha - $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha;
@@ -2684,7 +2461,7 @@ echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.')
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_kerjasama_operasi_apotek_dharma_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kerjasama_operasi_apotek_dharma_usaha">
 
 
 
@@ -2699,7 +2476,8 @@ echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.')
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_kerjasama_operasi_apotek_dharma_usaha;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2742,17 +2520,9 @@ echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.')
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='laba_rugi_tahun_berjalan'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_laba_rugi_tahun_berjalan = 0;
-											$TOTAL_KREDIT_laba_rugi_tahun_berjalan = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_laba_rugi_tahun_berjalan = $TOTAL_DEBET_laba_rugi_tahun_berjalan + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_laba_rugi_tahun_berjalan = $TOTAL_KREDIT_laba_rugi_tahun_berjalan + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_lrb = neraca_calc_jurnal_kas($this, 'laba_rugi_tahun_berjalan', $tahun_neraca, $bulan_transaksi, 'laba_rugi_tahun_berjalan');
+											$TOTAL_DEBET_laba_rugi_tahun_berjalan = $jurnal_kas_lrb['debet'];
+											$TOTAL_KREDIT_laba_rugi_tahun_berjalan = $jurnal_kas_lrb['kredit'];
 
 
 											$GET_laba_rugi_tahun_berjalan = $GET_laba_rugi_tahun_berjalan + $TOTAL_DEBET_laba_rugi_tahun_berjalan - $TOTAL_KREDIT_laba_rugi_tahun_berjalan;
@@ -2769,7 +2539,7 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 
 
-											<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post">
+											<form action="<?php echo $action . '/laba_rugi_tahun_berjalan'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="laba_rugi_tahun_berjalan">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->laba_rugi_tahun_berjalan; 
 																																																																?>" width: 50px; />
@@ -2784,7 +2554,8 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2835,17 +2606,9 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_peternakan'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_peternakan = 0;
-											$TOTAL_KREDIT_ljpj_peternakan = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_peternakan = $TOTAL_DEBET_ljpj_peternakan + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_peternakan = $TOTAL_KREDIT_ljpj_peternakan + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_ljpj_peternakan = neraca_calc_jurnal_kas($this, 'ljpj_peternakan', $tahun_neraca, $bulan_transaksi, 'ljpj_peternakan');
+											$TOTAL_DEBET_ljpj_peternakan = $jurnal_kas_ljpj_peternakan['debet'];
+											$TOTAL_KREDIT_ljpj_peternakan = $jurnal_kas_ljpj_peternakan['kredit'];
 
 
 											$GET_ljpj_peternakan = $GET_ljpj_peternakan + $TOTAL_DEBET_ljpj_peternakan - $TOTAL_KREDIT_ljpj_peternakan;
@@ -2861,7 +2624,7 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_peternakan'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_peternakan">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_peternakan; 
 																																																																?>" width: 50px; /> -->
@@ -2875,7 +2638,8 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + $data_tbl_neraca_data->ljpj_peternakan;
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -2935,17 +2699,9 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_adwm'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_kerjasama_adwm = 0;
-											$TOTAL_KREDIT_ljpj_kerjasama_adwm = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_kerjasama_adwm = $TOTAL_DEBET_ljpj_kerjasama_adwm + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_kerjasama_adwm = $TOTAL_KREDIT_ljpj_kerjasama_adwm + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_ljpj_adwm = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_adwm', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_adwm');
+											$TOTAL_DEBET_ljpj_kerjasama_adwm = $jurnal_kas_ljpj_adwm['debet'];
+											$TOTAL_KREDIT_ljpj_kerjasama_adwm = $jurnal_kas_ljpj_adwm['kredit'];
 
 
 											$GET_ljpj_kerjasama_adwm = $GET_ljpj_kerjasama_adwm + $TOTAL_DEBET_ljpj_kerjasama_adwm - $TOTAL_KREDIT_ljpj_kerjasama_adwm;
@@ -2959,7 +2715,7 @@ echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
 										</div>
 										<div class="sm-4">
 
-											<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kerjasama_adwm">
 
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_adwm; 
@@ -2975,7 +2731,8 @@ echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -3036,17 +2793,9 @@ echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
 
 											// LOOPING sys_kode filter group: bank
 
-											$sql = "SELECT * FROM `sys_kode_akun` WHERE `group`='ljpj_kerjasama_pdu_cabean_panggungharjo'";
-											// $GET_kode_akun_group_BANK = $this->db->query($sql)->result();
-
-											$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
-											$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
-											foreach ($this->db->query($sql)->result() as $list_data) {
-
-												$sql = "SELECT sum(`debet`) as debet,sum(`kredit`) as kredit FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$list_data->kode_akun'";
-												$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo + $this->db->query($sql)->row()->debet;
-												$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo + $this->db->query($sql)->row()->kredit;
-											}
+											$jurnal_kas_ljpj_pdu = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_pdu_cabean_panggungharjo', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_pdu_cabean_panggungharjo');
+											$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = $jurnal_kas_ljpj_pdu['debet'];
+											$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = $jurnal_kas_ljpj_pdu['kredit'];
 
 
 											$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_ljpj_kerjasama_pdu_cabean_panggungharjo + $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo - $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo;
@@ -3062,7 +2811,7 @@ echo number_format($GET_ljpj_kerjasama_pdu_cabean_panggungharjo, 2, ',', '.');
 										<div class="sm-4">
 
 
-											<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post">
+											<form action="<?php echo $action . '/ljpj_kerjasama_pdu_cabean_panggungharjo'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kerjasama_pdu_cabean_panggungharjo">
 
 												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharjo; 
 																																																																?>" width: 50px; />
@@ -3077,7 +2826,8 @@ echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharj
 																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
 
 
-												<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
 											</form>
 										</div>
 									</div>
@@ -3949,3 +3699,5 @@ function terbilang($nilai)
 
 	}
 </script>
+
+<?php $this->load->view('anekadharma/tbl_neraca_data/partials/modal_neraca_kode_akun'); ?>

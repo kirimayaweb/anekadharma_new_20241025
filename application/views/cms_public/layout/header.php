@@ -26,12 +26,12 @@
 <?php
 $cms_uri = trim(uri_string(), '/');
 $cms_nav_items = array(
-    array('key' => 'home', 'label' => 'Beranda', 'icon' => 'bi-house-door-fill', 'url' => site_url('publikasi')),
-    array('key' => 'profil', 'label' => 'Profil', 'icon' => 'bi-building', 'url' => site_url('publikasi/profil')),
-    array('key' => 'berita', 'label' => 'Berita', 'icon' => 'bi-newspaper', 'url' => site_url('publikasi/berita')),
-    array('key' => 'informasi', 'label' => 'Informasi', 'icon' => 'bi-info-circle-fill', 'url' => site_url('publikasi/informasi')),
-    array('key' => 'galeri', 'label' => 'Galeri', 'icon' => 'bi-images', 'url' => site_url('publikasi/galeri')),
-    array('key' => 'media', 'label' => 'Video & Sosial', 'icon' => 'bi-play-btn-fill', 'url' => site_url('publikasi/media-sosial')),
+    array('key' => 'home', 'label' => 'Beranda', 'icon' => 'bi-house-door-fill', 'url' => cms_public_url()),
+    array('key' => 'profil', 'label' => 'Profil', 'icon' => 'bi-building', 'url' => cms_public_url('profil')),
+    array('key' => 'berita', 'label' => 'Berita', 'icon' => 'bi-newspaper', 'url' => cms_public_url('berita')),
+    array('key' => 'informasi', 'label' => 'Informasi', 'icon' => 'bi-info-circle-fill', 'url' => cms_public_url('informasi')),
+    array('key' => 'galeri', 'label' => 'Galeri', 'icon' => 'bi-images', 'url' => cms_public_url('galeri')),
+    array('key' => 'media', 'label' => 'Video & Sosial', 'icon' => 'bi-play-btn-fill', 'url' => cms_public_url('media-sosial')),
 );
 if (!function_exists('cms_nav_is_active')) {
     function cms_nav_is_active($key, $uri)
@@ -63,7 +63,7 @@ $cms_tagline = isset($settings['site_tagline']) ? $settings['site_tagline'] : 'P
 <nav class="cms-navbar navbar navbar-expand-lg fixed-top">
     <div class="cms-navbar-accent" aria-hidden="true"></div>
     <div class="container">
-        <a class="navbar-brand cms-brand" href="<?php echo site_url('publikasi'); ?>">
+        <a class="navbar-brand cms-brand" href="<?php echo cms_public_url(); ?>">
             <span class="cms-brand-icon"><i class="bi bi-stars"></i></span>
             <span class="cms-brand-text">
                 <span class="cms-brand-name"><?php echo htmlspecialchars(isset($settings['company_name']) ? $settings['company_name'] : 'Informasi', ENT_QUOTES, 'UTF-8'); ?></span>
@@ -87,7 +87,7 @@ $cms_tagline = isset($settings['site_tagline']) ? $settings['site_tagline'] : 'P
                     </li>
                 <?php endforeach; ?>
                 <li class="nav-item ms-lg-2">
-                    <form class="cms-search-form" action="<?php echo site_url('publikasi/cari'); ?>" method="get" role="search">
+                    <form class="cms-search-form" action="<?php echo cms_public_url('cari'); ?>" method="get" role="search">
                         <div class="cms-search-wrap">
                             <i class="bi bi-search cms-search-icon" aria-hidden="true"></i>
                             <input type="search" name="q" class="form-control cms-search-input" placeholder="Cari informasi..." aria-label="Cari informasi">

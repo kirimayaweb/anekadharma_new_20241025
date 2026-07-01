@@ -1,0 +1,197 @@
+<?php
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
+function neraca_field_labels()
+{
+    return array(
+        'kas' => 'Kas',
+        'bank' => 'Bank',
+        'piutang_usaha' => 'Piutang Usaha',
+        'persediaan' => 'Persediaan',
+        'uang_muka_pajak' => 'Uang Muka Pajak',
+        'aktiva_tetap_berwujud' => 'Aktiva Tetap Berwujud',
+        'akumulasi_depresiasi_atb' => 'Akumulasi Depresiasi ATB',
+        'piutang_non_usaha_pihak_ketiga' => 'Piutang Non Usaha Pihak Ketiga',
+        'piutang_non_usaha_radio' => 'Piutang Non Usaha Radio',
+        'piutang_non_usaha' => 'Piutang Non Usaha',
+        'utang_usaha' => 'Utang Usaha',
+        'utang_pajak' => 'Utang Pajak',
+        'utang_lain_lain' => 'Utang Lain-lain',
+        'utang_afiliasi' => 'Utang Afiliasi',
+        'modal_dasar_dan_penyertaan' => 'Modal Dasar dan Penyertaan',
+        'cadangan_umum' => 'Cadangan Umum',
+        'laba_bumd_pad' => 'Laba BUMD PAD',
+        'ljpj_taman_gedung_kesenian_gabusan' => 'LJPJ Taman Gedung Kesenian Gabusan',
+        'ljpj_kompleks_gedung_kesenian' => 'LJPJ Kompleks Gedung Kesenian',
+        'ljpj_radio' => 'LJPJ Radio',
+        'laba_rugi_tahun_lalu' => 'Laba Rugi Tahun Lalu',
+        'ljpj_kerjasama_operasi_apotek_dharma_usaha' => 'LJPJ Kerjasama Operasi Apotek Dharma Usaha',
+        'laba_rugi_tahun_berjalan' => 'Laba Rugi Tahun Berjalan',
+        'ljpj_peternakan' => 'LJPJ Peternakan',
+        'ljpj_kerjasama_adwm' => 'LJPJ Kerjasama ADWM',
+        'ljpj_kerjasama_pdu_cabean_panggungharjo' => 'LJPJ Kerjasama PDU Cabean Panggung Harjo',
+    );
+}
+
+function neraca_get_field_label($field_neraca)
+{
+    $labels = neraca_field_labels();
+    if (isset($labels[$field_neraca])) {
+        return $labels[$field_neraca];
+    }
+    return ucwords(str_replace('_', ' ', $field_neraca));
+}
+
+function neraca_field_fallback_groups()
+{
+    return array(
+        'kas' => null,
+        'bank' => 'BANK',
+        'utang_usaha' => 'utang_usaha',
+        'utang_pajak' => 'utang_usaha',
+        'piutang_usaha' => 'PIUTANGUSAHA',
+        'utang_lain_lain' => 'utang_lain_lain',
+        'piutang_non_usaha' => 'PIUTANGUSAHA',
+        'persediaan' => 'PERSEDIAAN',
+        'uang_muka_pajak' => 'uang_muka_pajak',
+        'aktiva_tetap_berwujud' => 'aktiva_tetap_berwujud',
+        'utang_afiliasi' => 'utang_afiliasi',
+        'akumulasi_depresiasi_atb' => 'akumulasi_depresiasi_atb',
+        'piutang_non_usaha_pihak_ketiga' => 'PIUTANGNONUSAHAPIHAKKETIGA',
+        'modal_dasar_dan_penyertaan' => 'modal_dasar_dan_penyertaan',
+        'piutang_non_usaha_radio' => 'PIUTANGNONUSAHARADIO',
+        'cadangan_umum' => 'cadangan_umum',
+        'ljpj_taman_gedung_kesenian_gabusan' => 'ljpj_taman_gedung_kesenian_gabusan',
+        'laba_bumd_pad' => 'laba_bumd_pad',
+        'ljpj_kompleks_gedung_kesenian' => 'ljpj_kompleks_gedung_kesenian',
+        'ljpj_radio' => 'ljpj_radio',
+        'laba_rugi_tahun_lalu' => 'laba_rugi_tahun_lalu',
+        'ljpj_kerjasama_operasi_apotek_dharma_usaha' => 'ljpj_kerjasama_operasi_apotek_dharma_usaha',
+        'laba_rugi_tahun_berjalan' => 'laba_rugi_tahun_berjalan',
+        'ljpj_peternakan' => 'ljpj_peternakan',
+        'ljpj_kerjasama_adwm' => 'ljpj_kerjasama_adwm',
+        'ljpj_kerjasama_pdu_cabean_panggungharjo' => 'ljpj_kerjasama_pdu_cabean_panggungharjo',
+    );
+}
+
+function neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group = null)
+{
+    $CI->load->model('Sys_setting_neraca_kode_akun_model');
+    $kodes = $CI->Sys_setting_neraca_kode_akun_model->get_kode_akun_by_field($field_neraca);
+
+    if (!empty($kodes)) {
+        return $kodes;
+    }
+
+    if ($field_neraca === 'kas') {
+        return array('11101');
+    }
+
+    if ($fallback_group === null) {
+        $groups = neraca_field_fallback_groups();
+        $fallback_group = isset($groups[$field_neraca]) ? $groups[$field_neraca] : null;
+    }
+
+    if ($fallback_group) {
+        $rows = $CI->db->where('group', $fallback_group)->order_by('kode_akun', 'ASC')->get('sys_kode_akun')->result();
+        $kodes = array();
+        foreach ($rows as $row) {
+            $kodes[] = $row->kode_akun;
+        }
+        return $kodes;
+    }
+
+    return array();
+}
+
+function neraca_calc_jurnal_kas($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+{
+    return neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group);
+}
+
+function neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+{
+    $CI->load->helper('neraca_saldo_list');
+    $kode_list = neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group);
+
+    $month = (int) $bulan_transaksi;
+    if ($month < 1 || $month > 12) {
+        $month = 12;
+    }
+    $year = (int) $tahun_neraca;
+    if ($year < 2000) {
+        $year = (int) date('Y');
+    }
+
+    $ns_data = neraca_saldo_compute_list_data($CI, $month, $year);
+    $rows_by_kode = array();
+    foreach ($ns_data['rows'] as $row) {
+        $rows_by_kode[(string) $row['kode_akun']] = $row;
+    }
+
+    $total_debet = 0;
+    $total_kredit = 0;
+    foreach ($kode_list as $kode_akun) {
+        $key = (string) $kode_akun;
+        if (!isset($rows_by_kode[$key])) {
+            continue;
+        }
+        $total_debet += (float) $rows_by_kode[$key]['ns_debet_raw'];
+        $total_kredit += (float) $rows_by_kode[$key]['ns_kredit_raw'];
+    }
+
+    return array(
+        'debet' => $total_debet,
+        'kredit' => $total_kredit,
+    );
+}
+
+function neraca_is_pasiva_field($field_neraca)
+{
+    $pasiva_fields = array(
+        'utang_usaha', 'utang_pajak', 'utang_lain_lain', 'utang_afiliasi',
+        'modal_dasar_dan_penyertaan', 'cadangan_umum', 'laba_bumd_pad',
+        'ljpj_taman_gedung_kesenian_gabusan', 'ljpj_kompleks_gedung_kesenian',
+        'ljpj_radio', 'laba_rugi_tahun_lalu', 'ljpj_kerjasama_operasi_apotek_dharma_usaha',
+        'laba_rugi_tahun_berjalan', 'ljpj_peternakan', 'ljpj_kerjasama_adwm',
+        'ljpj_kerjasama_pdu_cabean_panggungharjo',
+    );
+    return in_array($field_neraca, $pasiva_fields, true);
+}
+
+function neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+{
+    $groups = neraca_field_fallback_groups();
+    if ($fallback_group === null && isset($groups[$field_neraca])) {
+        $fallback_group = $groups[$field_neraca];
+    }
+
+    $saldo = neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group);
+
+    if (neraca_is_pasiva_field($field_neraca)) {
+        return (float) $saldo['kredit'] - (float) $saldo['debet'];
+    }
+
+    return (float) $saldo['debet'] - (float) $saldo['kredit'];
+}
+
+function neraca_compute_all_system_totals($CI, $tahun_neraca, $bulan_transaksi = 0)
+{
+    $totals = array();
+    foreach (array_keys(neraca_field_labels()) as $field_neraca) {
+        $totals[$field_neraca] = neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_transaksi);
+    }
+    return $totals;
+}
+
+function neraca_nominal_match_class($system_total, $manual_total)
+{
+    $system = round((float) $system_total, 2);
+    $manual = round((float) $manual_total, 2);
+    if (abs($system - $manual) < 0.01) {
+        return 'neraca-nominal-match';
+    }
+    return 'neraca-nominal-mismatch';
+}

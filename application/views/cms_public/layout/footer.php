@@ -19,12 +19,12 @@
             <div class="col-lg-4">
                 <h5 class="cms-footer-title">Navigasi</h5>
                 <ul class="cms-footer-links list-unstyled">
-                    <li><a href="<?php echo site_url('publikasi'); ?>">Beranda</a></li>
-                    <li><a href="<?php echo site_url('publikasi/profil'); ?>">Company Profile</a></li>
-                    <li><a href="<?php echo site_url('publikasi/berita'); ?>">Berita</a></li>
-                    <li><a href="<?php echo site_url('publikasi/informasi'); ?>">Informasi Umum</a></li>
-                    <li><a href="<?php echo site_url('publikasi/galeri'); ?>">Galeri</a></li>
-                    <li><a href="<?php echo site_url('publikasi/media-sosial'); ?>">Video & Sosial</a></li>
+                    <li><a href="<?php echo cms_public_url(); ?>">Beranda</a></li>
+                    <li><a href="<?php echo cms_public_url('profil'); ?>">Company Profile</a></li>
+                    <li><a href="<?php echo cms_public_url('berita'); ?>">Berita</a></li>
+                    <li><a href="<?php echo cms_public_url('informasi'); ?>">Informasi Umum</a></li>
+                    <li><a href="<?php echo cms_public_url('galeri'); ?>">Galeri</a></li>
+                    <li><a href="<?php echo cms_public_url('media-sosial'); ?>">Video & Sosial</a></li>
                 </ul>
             </div>
             <div class="col-lg-4">

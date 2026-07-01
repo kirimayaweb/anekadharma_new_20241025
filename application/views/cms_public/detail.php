@@ -62,7 +62,7 @@
                         <h5 class="fw-bold mb-3">Terkait</h5>
                         <?php foreach ($related_posts as $rel): ?>
                             <div class="mb-3 pb-3 border-bottom">
-                                <a href="<?php echo site_url('publikasi/berita/' . $rel->slug); ?>" class="fw-semibold text-decoration-none text-dark"><?php echo htmlspecialchars($rel->title, ENT_QUOTES, 'UTF-8'); ?></a>
+                                <a href="<?php echo cms_public_url('berita/' . $rel->slug); ?>" class="fw-semibold text-decoration-none text-dark"><?php echo htmlspecialchars($rel->title, ENT_QUOTES, 'UTF-8'); ?></a>
                                 <div class="small text-muted"><?php echo cms_format_date($rel->published_at); ?></div>
                             </div>
                         <?php endforeach; ?>

@@ -9,7 +9,7 @@ class Tbl_neraca_data extends CI_Controller
 	{
 		parent::__construct();
 		is_login();
-		$this->load->model(array('Tbl_neraca_data_model', 'Tbl_accounting_detail_model'));
+		$this->load->model(array('Tbl_neraca_data_model', 'Tbl_accounting_detail_model', 'Sys_setting_neraca_kode_akun_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
@@ -549,7 +549,7 @@ class Tbl_neraca_data extends CI_Controller
 				'bulan_transaksi' => 0,
 			);
 		}
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+		$this->_load_neraca_form_view($data);
 	}
 
 
@@ -610,7 +610,7 @@ class Tbl_neraca_data extends CI_Controller
 				'bulan_transaksi' => $bulan_transaksi,
 			);
 		}
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+		$this->_load_neraca_form_view($data);
 	}
 
 
@@ -716,7 +716,7 @@ class Tbl_neraca_data extends CI_Controller
 			}
 		}
 
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+		$this->_load_neraca_form_view($data);
 	}
 
 	public function publish_neraca($Get_tahun = null, $Get_bulan = null)
@@ -1029,7 +1029,7 @@ class Tbl_neraca_data extends CI_Controller
 		// print_r($data);
 		// die;
 
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+		$this->_load_neraca_form_view($data);
 	}
 
 	public function create_action_neraca($uuid_data_neraca = null)
@@ -1219,33 +1219,198 @@ class Tbl_neraca_data extends CI_Controller
 			$Get_bulan = 0;
 			$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$Get_tahun' And `bulan_transaksi`='$Get_bulan' ";
 			$data_detail = $this->db->query($sql)->row();
-			// $Get_bulan=0;
 		}
 
+		if (!$data_detail) {
+			show_error('Data neraca tidak ditemukan.', 404);
+			return;
+		}
 
-		// 2.a. PERSIAPAN LIBRARY
-		$this->load->library('PdfGenerator');
+		$format = strtolower(trim((string) $this->input->get('format')));
+		if ($format === 'excel') {
+			$this->load->helper('tbl_neraca_data_cetak');
+			if (!function_exists('tbl_neraca_data_export_excel_cetak_output')) {
+				show_error('Helper cetak Excel neraca tidak ditemukan.', 500);
+				return;
+			}
+			tbl_neraca_data_export_excel_cetak_output($this, $Get_tahun, $Get_bulan, $data_detail);
+			return;
+		}
 
-		// 2.b. PERSIAPAN DATA
 		$data = array(
-			// 'button' => 'Simpan',
-			// 'action' => site_url('Tbl_neraca_data/create_action_neraca'),
-			// 'id' => set_value('id'),
 			'data_tbl_neraca_data' => $data_detail,
 			'tahun_neraca' => $data_detail->tahun_transaksi,
 			'bulan_neraca' => $data_detail->bulan_transaksi,
 		);
 
-
-		// 2.C. MENAMPILKAN FILE DATA
-		// $data = array_merge($data);
+		$this->load->library('PdfGenerator');
 		$html = $this->load->view('anekadharma/tbl_neraca_data/adminlte310_neraca_cetak.php', $data, true);
-
-		// 2.d. CONVERT TAMPILAN FILE DATA MENJADI FILE PDF
 		$this->pdf->loadHtml($html);
+		$this->pdf->setPaper('A4', 'landscape');
 		$this->pdf->render();
+		$this->pdf->stream('CETAK_NERACA.pdf', array('Attachment' => 0));
+	}
 
-		$this->pdf->stream("CETAK_NERACA.pdf", array("Attachment" => 0));
+	public function neraca_cetak_excel($Get_tahun = null, $Get_bulan = null)
+	{
+		$url = 'Tbl_neraca_data/neraca_cetak/' . $Get_tahun;
+		if ($Get_bulan !== null && $Get_bulan !== '') {
+			$url .= '/' . $Get_bulan;
+		}
+		redirect(site_url($url . '?format=excel'));
+	}
+
+	private function _load_neraca_form_view($data)
+	{
+		$this->load->helper('neraca_kode_akun');
+		if (!isset($data['neraca_field_labels'])) {
+			$data['neraca_field_labels'] = neraca_field_labels();
+		}
+		$tahun_neraca = isset($data['tahun_neraca']) ? (int) $data['tahun_neraca'] : (int) date('Y');
+		$bulan_transaksi = isset($data['bulan_transaksi']) ? (int) $data['bulan_transaksi'] : 0;
+		$data['neraca_system_totals'] = neraca_compute_all_system_totals($this, $tahun_neraca, $bulan_transaksi);
+		$data['neraca_tahun_neraca'] = $tahun_neraca;
+		$data['neraca_bulan_transaksi'] = $bulan_transaksi;
+		$this->template->set('page_footer_scripts', $this->load->view(
+			'anekadharma/tbl_neraca_data/partials/modal_neraca_kode_akun_script',
+			$data,
+			TRUE
+		));
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_neraca_data/adminlte310_neraca_form', $data);
+	}
+
+	public function ajax_neraca_setting_kode_akun($field_neraca = null)
+	{
+		$this->load->helper('neraca_kode_akun');
+		header('Content-Type: application/json; charset=utf-8');
+
+		$field_neraca = trim((string) $field_neraca);
+		if ($field_neraca === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Field neraca tidak valid.'));
+			return;
+		}
+
+		$selected_rows = $this->Sys_setting_neraca_kode_akun_model->get_by_field($field_neraca);
+		$selected_kodes = array();
+		foreach ($selected_rows as $row) {
+			$selected_kodes[] = (string) $row->kode_akun;
+		}
+
+		$all = $this->db->order_by('kode_akun', 'ASC')->get('sys_kode_akun')->result();
+		$available = array();
+		$terpilih = array();
+
+		foreach ($all as $akun) {
+			$item = array(
+				'kode_akun' => $akun->kode_akun,
+				'nama_akun' => $akun->nama_akun,
+			);
+			if (in_array((string) $akun->kode_akun, $selected_kodes, true)) {
+				$terpilih[] = $item;
+			} else {
+				$available[] = $item;
+			}
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'field_neraca' => $field_neraca,
+			'label_neraca' => neraca_get_field_label($field_neraca),
+			'available' => $available,
+			'terpilih' => $terpilih,
+		));
+	}
+
+	public function ajax_neraca_setting_kode_akun_pilih()
+	{
+		$this->load->helper('neraca_kode_akun');
+		header('Content-Type: application/json; charset=utf-8');
+
+		$field_neraca = trim((string) $this->input->post('field_neraca'));
+		$kode_akun = trim((string) $this->input->post('kode_akun'));
+
+		if ($field_neraca === '' || $kode_akun === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Field neraca dan kode akun wajib diisi.'));
+			return;
+		}
+
+		$row_akun = $this->db->where('kode_akun', $kode_akun)->get('sys_kode_akun')->row();
+		if (!$row_akun) {
+			echo json_encode(array('ok' => false, 'message' => 'Kode akun tidak ditemukan di sys_kode_akun.'));
+			return;
+		}
+
+		if ($this->Sys_setting_neraca_kode_akun_model->exists($field_neraca, $kode_akun)) {
+			echo json_encode(array('ok' => false, 'message' => 'Kode akun sudah dipilih untuk pos ini.'));
+			return;
+		}
+
+		$inserted = $this->Sys_setting_neraca_kode_akun_model->insert(array(
+			'field_neraca' => $field_neraca,
+			'label_neraca' => neraca_get_field_label($field_neraca),
+			'kode_akun' => $kode_akun,
+		));
+
+		if (!$inserted) {
+			echo json_encode(array('ok' => false, 'message' => 'Gagal menyimpan setting kode akun.'));
+			return;
+		}
+
+		echo json_encode(array('ok' => true, 'message' => 'Kode akun berhasil dipilih.'));
+	}
+
+	public function ajax_neraca_setting_kode_akun_hapus()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$field_neraca = trim((string) $this->input->post('field_neraca'));
+		$kode_akun = trim((string) $this->input->post('kode_akun'));
+
+		if ($field_neraca === '' || $kode_akun === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Field neraca dan kode akun wajib diisi.'));
+			return;
+		}
+
+		if (!$this->Sys_setting_neraca_kode_akun_model->exists($field_neraca, $kode_akun)) {
+			echo json_encode(array('ok' => false, 'message' => 'Kode akun tidak ditemukan pada setting pos ini.'));
+			return;
+		}
+
+		$deleted = $this->Sys_setting_neraca_kode_akun_model->delete_by_field_and_kode($field_neraca, $kode_akun);
+		if (!$deleted) {
+			echo json_encode(array('ok' => false, 'message' => 'Gagal menghapus setting kode akun.'));
+			return;
+		}
+
+		echo json_encode(array('ok' => true, 'message' => 'Kode akun berhasil dihapus.'));
+	}
+
+	public function ajax_neraca_calc_nominal($field_neraca = null)
+	{
+		$this->load->helper('neraca_kode_akun');
+		header('Content-Type: application/json; charset=utf-8');
+
+		$field_neraca = trim((string) $field_neraca);
+		$tahun = (int) $this->input->get('tahun');
+		$bulan = (int) $this->input->get('bulan');
+
+		if ($field_neraca === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Field neraca tidak valid.'));
+			return;
+		}
+		if ($tahun < 2000) {
+			$tahun = (int) date('Y');
+		}
+
+		$system_total = neraca_calc_system_nominal($this, $field_neraca, $tahun, $bulan);
+
+		echo json_encode(array(
+			'ok' => true,
+			'field_neraca' => $field_neraca,
+			'label_neraca' => neraca_get_field_label($field_neraca),
+			'system_total' => $system_total,
+			'system_total_formatted' => number_format($system_total, 2, ',', '.'),
+		));
 	}
 }
 

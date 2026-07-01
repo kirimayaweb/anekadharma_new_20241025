@@ -9,7 +9,7 @@ if (!empty($latest_news)) {
     foreach (array_slice($latest_news, 0, 6) as $p) {
         $hero_ticker_items[] = array(
             'type' => 'berita', 'icon' => 'bi bi-newspaper', 'label' => 'Berita',
-            'text' => $p->title, 'url' => site_url('publikasi/berita/' . $p->slug),
+            'text' => $p->title, 'url' => cms_public_url('berita/' . $p->slug),
         );
     }
 }
@@ -17,7 +17,7 @@ if (!empty($info_posts)) {
     foreach (array_slice($info_posts, 0, 4) as $p) {
         $hero_ticker_items[] = array(
             'type' => 'informasi', 'icon' => 'bi bi-info-circle', 'label' => 'Info',
-            'text' => $p->title, 'url' => site_url('publikasi/berita/' . $p->slug),
+            'text' => $p->title, 'url' => cms_public_url('berita/' . $p->slug),
         );
     }
 }
@@ -25,14 +25,14 @@ if (!empty($services)) {
     foreach (array_slice($services, 0, 4) as $s) {
         $hero_ticker_items[] = array(
             'type' => 'produk', 'icon' => 'bi bi-box-seam', 'label' => 'Layanan',
-            'text' => $s->title, 'url' => site_url('publikasi#galeri'),
+            'text' => $s->title, 'url' => cms_public_url() . '#galeri',
         );
     }
 }
 if (empty($hero_ticker_items)) {
     $hero_ticker_items[] = array(
         'type' => 'info', 'icon' => 'bi bi-stars', 'label' => 'Aneka Dharma',
-        'text' => 'ATK · Fotokopi · Percetakan · Jasa', 'url' => site_url('publikasi'),
+        'text' => 'ATK · Fotokopi · Percetakan · Jasa', 'url' => cms_public_url(),
     );
 }
 
@@ -84,7 +84,7 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                                             <p class="cms-hero-text cms-hero-text-reveal"><?php echo htmlspecialchars($slide->subtitle, ENT_QUOTES, 'UTF-8'); ?></p>
                                         <?php endif; ?>
                                         <div class="cms-hero-actions cms-hero-actions-reveal">
-                                            <a href="<?php echo site_url('publikasi/berita'); ?>" class="btn btn-cms-primary btn-lg rounded-pill px-4 me-2 mb-2">
+                                            <a href="<?php echo cms_public_url('berita'); ?>" class="btn btn-cms-primary btn-lg rounded-pill px-4 me-2 mb-2">
                                                 <i class="bi bi-newspaper me-1"></i> Lihat Berita & Harga
                                             </a>
                                             <?php if ($slide->link_url): ?>
@@ -162,7 +162,7 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
             <h1 class="cms-hero-title"><?php echo htmlspecialchars($company_name, ENT_QUOTES, 'UTF-8'); ?></h1>
             <p class="cms-hero-rotate-line mb-2">Spesialis <span class="cms-hero-word-rotate" data-words='<?php echo htmlspecialchars(json_encode($hero_rotate_words, JSON_UNESCAPED_UNICODE), ENT_QUOTES, "UTF-8"); ?>'><span class="cms-hero-word-inner"><?php echo htmlspecialchars($hero_rotate_words[0], ENT_QUOTES, 'UTF-8'); ?></span></span></p>
             <p class="cms-hero-text"><?php echo htmlspecialchars($tagline, ENT_QUOTES, 'UTF-8'); ?></p>
-            <a href="<?php echo site_url('publikasi/profil'); ?>" class="btn btn-light btn-lg rounded-pill px-4 fw-bold">Kenali Kami</a>
+            <a href="<?php echo cms_public_url('profil'); ?>" class="btn btn-light btn-lg rounded-pill px-4 fw-bold">Kenali Kami</a>
         </div>
     </div>
     <div class="cms-hero-overlay-bottom">
@@ -213,9 +213,9 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                         <img src="<?php echo htmlspecialchars(cms_featured_image_url($p->featured_image), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8'); ?>">
                         <div class="cms-card-body">
                             <span class="cms-badge">Profil</span>
-                            <h3 class="cms-card-title"><a href="<?php echo site_url('publikasi/berita/' . $p->slug); ?>"><?php echo htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
+                            <h3 class="cms-card-title"><a href="<?php echo cms_public_url('berita/' . $p->slug); ?>"><?php echo htmlspecialchars($p->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
                             <p class="cms-card-excerpt"><?php echo htmlspecialchars(cms_excerpt($p->excerpt ? $p->excerpt : $p->content, 140), ENT_QUOTES, 'UTF-8'); ?></p>
-                            <a class="cms-link-more" href="<?php echo site_url('publikasi/profil'); ?>">Lihat profil lengkap <i class="bi bi-arrow-right"></i></a>
+                            <a class="cms-link-more" href="<?php echo cms_public_url('profil'); ?>">Lihat profil lengkap <i class="bi bi-arrow-right"></i></a>
                         </div>
                     </div>
                 <?php endif; ?>
@@ -259,7 +259,7 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                 <h2 class="cms-section-title mb-1">Video & Media Sosial</h2>
                 <p class="cms-section-sub mb-0">Konten menarik — mudah dibagikan ke WhatsApp, Instagram, TikTok & Facebook</p>
             </div>
-            <a href="<?php echo site_url('publikasi/media-sosial'); ?>" class="cms-link-more">Semua video <i class="bi bi-arrow-right"></i></a>
+            <a href="<?php echo cms_public_url('media-sosial'); ?>" class="cms-link-more">Semua video <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php foreach (array_slice($media_embeds, 0, 6) as $i => $media): ?>
@@ -280,18 +280,18 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                 <h2 class="cms-section-title mb-1">Sorotan Utama</h2>
                 <p class="cms-section-sub mb-0">Konten pilihan yang wajib Anda baca</p>
             </div>
-            <a href="<?php echo site_url('publikasi/berita'); ?>" class="cms-link-more">Semua berita <i class="bi bi-arrow-right"></i></a>
+            <a href="<?php echo cms_public_url('berita'); ?>" class="cms-link-more">Semua berita <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php foreach ($featured_posts as $i => $post): ?>
                 <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="<?php echo min($i * 80, 240); ?>">
                     <article class="cms-card-post">
-                        <a href="<?php echo site_url('publikasi/berita/' . $post->slug); ?>">
+                        <a href="<?php echo cms_public_url('berita/' . $post->slug); ?>">
                             <img src="<?php echo htmlspecialchars(cms_featured_image_url($post->featured_image), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?>">
                         </a>
                         <div class="cms-card-body">
                             <span class="cms-badge"><?php echo htmlspecialchars(cms_post_type_label($post->post_type), ENT_QUOTES, 'UTF-8'); ?></span>
-                            <h3 class="cms-card-title"><a href="<?php echo site_url('publikasi/berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
+                            <h3 class="cms-card-title"><a href="<?php echo cms_public_url('berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
                             <div class="cms-card-meta"><i class="bi bi-calendar3 me-1"></i><?php echo cms_format_date($post->published_at); ?></div>
                             <p class="cms-card-excerpt"><?php echo htmlspecialchars(cms_excerpt($post->excerpt ? $post->excerpt : $post->content), ENT_QUOTES, 'UTF-8'); ?></p>
                         </div>
@@ -310,7 +310,7 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                 <h2 class="cms-section-title mb-1">Berita Terbaru</h2>
                 <p class="cms-section-sub mb-0">Update dan kabar terkini dari kami</p>
             </div>
-            <a href="<?php echo site_url('publikasi/berita'); ?>" class="cms-link-more">Lihat semua <i class="bi bi-arrow-right"></i></a>
+            <a href="<?php echo cms_public_url('berita'); ?>" class="cms-link-more">Lihat semua <i class="bi bi-arrow-right"></i></a>
         </div>
         <div class="row g-4">
             <?php if (empty($latest_news)): ?>
@@ -319,11 +319,11 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
                 <?php foreach ($latest_news as $i => $post): ?>
                     <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="<?php echo min($i * 60, 180); ?>">
                         <article class="cms-card-post">
-                            <a href="<?php echo site_url('publikasi/berita/' . $post->slug); ?>">
+                            <a href="<?php echo cms_public_url('berita/' . $post->slug); ?>">
                                 <img src="<?php echo htmlspecialchars(cms_featured_image_url($post->featured_image), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?>">
                             </a>
                             <div class="cms-card-body">
-                                <h3 class="cms-card-title"><a href="<?php echo site_url('publikasi/berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
+                                <h3 class="cms-card-title"><a href="<?php echo cms_public_url('berita/' . $post->slug); ?>"><?php echo htmlspecialchars($post->title, ENT_QUOTES, 'UTF-8'); ?></a></h3>
                                 <div class="cms-card-meta"><?php echo cms_format_date($post->published_at); ?></div>
                             </div>
                         </article>
@@ -363,7 +363,7 @@ $hero_float_cards = array_slice($hero_ticker_items, 0, 4);
             <?php endforeach; ?>
         </div>
         <div class="text-center mt-4">
-            <a href="<?php echo site_url('publikasi/galeri'); ?>" class="btn btn-cms-primary rounded-pill px-4">Jelajahi Galeri</a>
+            <a href="<?php echo cms_public_url('galeri'); ?>" class="btn btn-cms-primary rounded-pill px-4">Jelajahi Galeri</a>
         </div>
     </div>
 </section>

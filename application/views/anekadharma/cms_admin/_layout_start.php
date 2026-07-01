@@ -9,7 +9,7 @@
                     <?php if (!empty($public_url)): ?>
                         <a href="<?php echo htmlspecialchars($public_url, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa fa-external-link"></i> Lihat Halaman Publik</a>
                     <?php else: ?>
-                        <a href="<?php echo site_url('publikasi'); ?>" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa fa-external-link"></i> Lihat Halaman Publik</a>
+                        <a href="<?php echo cms_public_url(); ?>" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa fa-external-link"></i> Lihat Halaman Publik</a>
                     <?php endif; ?>
                 </div>
             </div>
