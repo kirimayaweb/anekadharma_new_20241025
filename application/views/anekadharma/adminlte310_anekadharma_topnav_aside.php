@@ -90,6 +90,9 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
             <?php
             $id_user_active = $this->session->userdata('sess_iduser');
+            if ($id_user_active === null || $id_user_active === '') {
+              $id_user_active = $this->session->userdata('id_users');
+            }
             $id_user_level_active = $this->session->userdata('sess_id_user_level');
             if ($id_user_level_active === null || $id_user_level_active === '') {
               $id_user_level_active = $this->session->userdata('id_user_level');
@@ -102,15 +105,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
             foreach ($main_menu as $menu) {
 
-              // Hak menu: per user ATAU per level (id_user = 0)
-              $list_menu_hak_akses = hak_akses_menu_query_for_user(
+              // Hak menu: admin lihat semua submenu; user lain via tbl_hak_akses
+              $topnav_submenus = hak_akses_topnav_submenu_rows(
                 $this,
                 $menu->id,
                 $id_user_active,
                 $id_user_level_active
               );
 
-              if ($list_menu_hak_akses->num_rows() > 0) {
+              if (!empty($topnav_submenus)) {
 
                 // detail MAIN menu
                 $this->db->where('id', $menu->id);
@@ -124,11 +127,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
                   <ul aria-labelledby="dropdownSubMenu2" class="dropdown-menu border-0 shadow">
 
                     <?php
-                    foreach ($list_menu_hak_akses->result() as $menu_list) {
-
-                      // detail menu
-                      $this->db->where('id', $menu_list->id_menu);
-                      $detail_menu = $this->db->get('menu')->row_array();
+                    foreach ($topnav_submenus as $detail_menu_row) {
+                      $detail_menu = is_array($detail_menu_row)
+                        ? $detail_menu_row
+                        : (array) $detail_menu_row;
                     ?>
 
                       <li>
