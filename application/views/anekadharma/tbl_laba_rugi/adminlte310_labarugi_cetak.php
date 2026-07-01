@@ -1,15 +1,28 @@
 <head>
 	<style>
+		@page {
+			margin: 10mm;
+		}
+
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: Arial, Helvetica, sans-serif;
+			font-size: 11pt;
+		}
+
 		#customers {
 			font-family: Arial, Helvetica, sans-serif;
 			border-collapse: collapse;
 			width: 100%;
+			table-layout: fixed;
 		}
 
 		#customers td,
 		#customers th {
 			border: 0px solid #ddd;
-			padding: 3px;
+			padding: 5px 4px;
+			font-size: 11pt;
 		}
 
 		#customers tr:nth-child(even) {
@@ -21,11 +34,102 @@
 		}
 
 		#customers th {
-			padding-top: 1px;
-			padding-bottom: 1px;
-			/* text-align: left; */
+			padding-top: 3px;
+			padding-bottom: 3px;
 			background-color: white;
 			color: black;
+			font-weight: normal;
+		}
+
+		#customers .judul th {
+			font-size: 14pt;
+			font-weight: bold;
+		}
+
+		/* Border tabel disembunyikan */
+		#customers tr.row-box th,
+		#customers tr.row-box-full th {
+			border: none !important;
+		}
+
+		#customers .col-label {
+			text-align: left;
+			padding-left: 8px;
+			width: 72%;
+		}
+
+		#customers .col-label.indent {
+			padding-left: 32px;
+		}
+
+		#customers .col-rp {
+			text-align: left;
+			width: 8%;
+			white-space: nowrap;
+		}
+
+		#customers .col-nominal {
+			text-align: right;
+			padding-right: 8px;
+			width: 20%;
+			white-space: nowrap;
+		}
+
+		#customers .col-label.label-bold {
+			font-weight: bold;
+		}
+
+		/* Highlight kolom Rp. + nominal pada baris penting */
+		#customers tr.row-highlight-nominal th.col-rp,
+		#customers tr.row-highlight-nominal th.col-nominal {
+			border-left: none !important;
+			border-right: none !important;
+			border-top: 1px solid black !important;
+			border-bottom: 3px double black !important;
+		}
+
+		/* Baris PAJAK: tanpa garis atas, garis bawah tunggal */
+		#customers tr.row-highlight-pajak th.col-rp,
+		#customers tr.row-highlight-pajak th.col-nominal {
+			border-left: none !important;
+			border-right: none !important;
+			border-top: none !important;
+			border-bottom: 1px solid black !important;
+		}
+
+		#customers .judul-row th {
+			text-align: center;
+			font-size: 14pt;
+			font-weight: bold;
+			border: none;
+		}
+
+		#ttd-footer {
+			width: 100%;
+			border-collapse: collapse;
+			table-layout: fixed;
+			margin-top: 8px;
+		}
+
+		#ttd-footer th {
+			border: none;
+			font-weight: normal;
+			font-size: 11pt;
+			padding: 4px 0;
+		}
+
+		#ttd-footer .ttd-spacer-left {
+			width: 32%;
+		}
+
+		#ttd-footer .ttd-spacer-mid {
+			width: 18%;
+		}
+
+		#ttd-footer .ttd-col-right {
+			width: 50%;
+			text-align: center;
+			white-space: nowrap;
 		}
 	</style>
 </head>
@@ -45,33 +149,24 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 
 
-	<table id="customers">
+	<table id="customers" width="100%">
+		<colgroup>
+			<col style="width:72%">
+			<col style="width:8%">
+			<col style="width:20%">
+		</colgroup>
 
-
-
-
-		<!-- BARIS KE 1 -->
-		<tr>
-			<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-				<strong>PERUMDA ANEKA DHARMA KABUPATEN BANTUL</strong>
-			</th>
+		<!-- HEADER -->
+		<tr class="judul-row">
+			<th colspan="3"><strong>PERUMDA ANEKA DHARMA KABUPATEN BANTUL</strong></th>
 		</tr>
-
-		<tr>
-			<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-				<strong>LAPORAN LABA - RUGI</strong>
-			</th>
+		<tr class="judul-row">
+			<th colspan="3"><strong>LAPORAN LABA - RUGI</strong></th>
 		</tr>
-
-		<tr>
-			<th style="border: 1px solid black;  border-top:none;border-bottom:none;border-right:none;border-left:none;  border-collapse: collapse; font-size:1vw;text-align:center; width: 1000px;" colspan="1000">
-				<!-- <strong>Per Tanggal 31 Juli 2024</strong> -->
-
+		<tr class="judul-row">
+			<th colspan="3">
 				<strong>Per
 					<?php
-					// echo  date('d F Y'); 
-					//echo  date('d F Y'); 
-					// echo $tahun_neraca;
 					function bulan_teks($angka_bulan)
 					{
 						if ($angka_bulan == 1) {
@@ -109,560 +204,238 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 					} else {
 						echo " Tahun " . $tahun_laba_rugi;
 					}
-
-
-					?>
-				</strong>
-
-			</th>
-		</tr>
-
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">PENJUALAN</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 200px;" colspan="200"><?php
-																																// echo $data_tbl_laba_rugi->penjualan 
-																																echo number_format($data_tbl_laba_rugi->penjualan, 2, ',', '.');
-																																?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">BEBAN POKOK PENJUALAN</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->beban_pokok_penjualan 
-																							echo number_format($data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400">LABA RUGI BRUTO</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black; border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200"><?php
-																																													// echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan); 
-																																													echo number_format($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.');
-																																													?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<!-- buat jarak dengan baris atasnya -->
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black; border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">BEBAN OPERASIONAL</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-			<th style="font-size:0.550em; text-align:right;border-top:none;border-bottom:none;  width: 200px;" colspan="200"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Operasional Promosi</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->beban_operasional_promosi 
-																							echo number_format($data_tbl_laba_rugi->beban_operasional_promosi, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Perjalanan Dinas</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->beban_perjalanan_dinas 
-																							echo number_format($data_tbl_laba_rugi->beban_perjalanan_dinas, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Transportasi</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->beban_transportasi; 
-																							echo number_format($data_tbl_laba_rugi->beban_transportasi, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Pemeliharaan</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->beban_pemeliharaan; 
-																							echo number_format($data_tbl_laba_rugi->beban_pemeliharaan, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Total Beban Operaisonal umum</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-																							// echo $data_tbl_laba_rugi->total_beban_operasional_umum; 
-																							echo number_format($data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.');
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 400px;" colspan="400">Total Beban Operasional</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																													// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum); 
-
-																																													echo number_format($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.');
-
-																																													?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400">Laba / Rugi Operasional</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																													// echo str_replace('.', ',', ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum));
-
-
-																																													echo number_format(($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum), 2, ',', '.');
-																																													$GET_Labar_rugi_operasional = ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum);
-																																													?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-		<!-- Garis double : bprder-top : 1px -->
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Pendapatan Bunga Bank</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																																						// echo $data_tbl_laba_rugi->pendapatan_bunga_bank; 
-
-																																																						echo number_format($data_tbl_laba_rugi->pendapatan_bunga_bank, 2, ',', '.');
-
-																																																						?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Pendapatan Rupa-Rupa</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-																																																						// echo $data_tbl_laba_rugi->pendapatan_rupa_rupa; 
-																																																						echo number_format($data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
-																																																						?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325"><strong>Total Pendapatan Lain-lain</strong></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																																						// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank - $data_tbl_laba_rugi->pendapatan_rupa_rupa);
-
-																																																						echo number_format($data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
-
-																																																						$GET_Total_Pendapatan_Lain_Lain = $data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa;
-																																																						?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<!-- Garis double : bprder-top : 1px -->
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Pendapatan Bunga Bank</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																																						// echo $data_tbl_laba_rugi->beban_bunga_dan_adm_bank; 
-
-																																																						echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank, 2, ',', '.');
-
-																																																						?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Beban Rupa-Rupa</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																																						// echo $data_tbl_laba_rugi->beban_rupa_rupa; 
-
-																																																						echo number_format($data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
-																																																						?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325"><strong>Total beban Lain-Lain</strong></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"><?php
-
-																																													// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa);
-
-																																													echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
-																																													$GET_Total_beban_lain_lain = $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa;
-																																													?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<!-- Garis double : bprder-top : 1px -->
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">LABA RUGI SEBELUM PAJAK</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-
-																							// echo str_replace('.', ',', $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain);
-
-																							echo number_format($GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain, 2, ',', '.');
-
-																							$GET_Laba_rugi_sebelum_pajak = $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain;
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">PAJAK</th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200"><?php
-
-																							// echo $data_tbl_laba_rugi->pajak; 
-
-
-																							echo number_format($data_tbl_laba_rugi->pajak, 2, ',', '.');
-
-																							?></th>
-			<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 400px;" colspan="400">LABA RUGI SETELAH PAJAK</th>
-
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 10px;" colspan="10"></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20">Rp.</th>
-			<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 200px;" colspan="200"><?php
-
-																																																		// echo str_replace('.', ',', $GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak); 
-
-																																																echo number_format($GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak, 2, ',', '.');
-
-																																																		?></th>
-			<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
-
-		</tr>
-
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th> -->
-			<th style="font-size:0.550em; text-align:center; width: 240px;" colspan="240">Bantul,
-				<strong>
-					<?php
-
-					if ($bulan_laba_rugi > 0) {
-						echo " Bulan " . bulan_teks($bulan_laba_rugi) . " Tahun " . $tahun_laba_rugi;
-					} else {
-						echo " Tahun " . $tahun_laba_rugi;
-					}
-
-
 					?>
 				</strong>
 			</th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th> -->
-
 		</tr>
 
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th> -->
-			<th style="font-size:0.550em; text-align:center; width: 240px;" colspan="240">Perusahaan Umum Daerah Aneka Dharma</th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th> -->
-
+		<!-- Kotak pembatas atas data -->
+		<tr class="row-box-full">
+			<th colspan="3">&nbsp;</th>
 		</tr>
 
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th> -->
-			<th style="font-size:0.550em; text-align:center; width: 240px;" colspan="240">Kabupaten Bantul</th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th> -->
-
+		<tr class="row-box">
+			<th class="col-label label-bold">PENJUALAN</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->penjualan, 2, ',', '.'); ?></th>
 		</tr>
 
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th> -->
-			<th style="font-size:0.550em; text-align:center; width: 240px;" colspan="240">Direktur</th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th> -->
-
+		<tr class="row-box">
+			<th class="col-label label-bold">BEBAN POKOK PENJUALAN</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.'); ?></th>
 		</tr>
 
-		<br />
-		<br />
-
-
-
-		<tr>
-
-			<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400"></th>
-
-			<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th> -->
-			<th style="font-size:0.550em; text-align:center; width: 240px;" colspan="240">Yuli Budi Sasangka,ST</th>
-			<!-- <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th> -->
-
+		<tr class="row-box row-highlight-nominal">
+			<th class="col-label label-bold">LABA RUGI BRUTO</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.'); ?></th>
 		</tr>
 
+		<tr class="row-box">
+			<th class="col-label">&nbsp;</th>
+			<th class="col-rp"></th>
+			<th class="col-nominal"></th>
+		</tr>
 
+		<tr class="row-box">
+			<th class="col-label label-bold">BEBAN OPERASIONAL</th>
+			<th class="col-rp"></th>
+			<th class="col-nominal"></th>
+		</tr>
 
+		<tr class="row-box">
+			<th class="col-label indent">Beban Operasional Promosi</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_operasional_promosi, 2, ',', '.'); ?></th>
+		</tr>
 
+		<tr class="row-box">
+			<th class="col-label indent">Beban Perjalanan Dinas</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_perjalanan_dinas, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Beban Transportasi</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_transportasi, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Beban Pemeliharaan</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_pemeliharaan, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Total Beban Operaisonal umum</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box row-highlight-nominal">
+			<th class="col-label">Total Beban Operasional</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php
+				echo number_format(
+					$data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum,
+					2, ',', '.'
+				);
+			?></th>
+		</tr>
+
+		<tr class="row-box row-highlight-nominal">
+			<th class="col-label label-bold">Laba / Rugi Operasional</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php
+				echo number_format(
+					($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum),
+					2, ',', '.'
+				);
+				$GET_Labar_rugi_operasional = ($data_tbl_laba_rugi->penjualan - $data_tbl_laba_rugi->beban_pokok_penjualan) - ($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi + $data_tbl_laba_rugi->beban_operasional_karyawan + $data_tbl_laba_rugi->beban_operasional_promosi + $data_tbl_laba_rugi->beban_perjalanan_dinas + $data_tbl_laba_rugi->beban_transportasi + $data_tbl_laba_rugi->beban_pemeliharaan + $data_tbl_laba_rugi->total_beban_operasional_umum);
+			?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label">&nbsp;</th>
+			<th class="col-rp"></th>
+			<th class="col-nominal"></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Pendapatan Bunga Bank</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->pendapatan_bunga_bank, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Pendapatan Rupa-Rupa</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box row-highlight-nominal">
+			<th class="col-label indent label-bold">Total Pendapatan Lain-lain</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php
+				echo number_format($data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
+				$GET_Total_Pendapatan_Lain_Lain = $data_tbl_laba_rugi->pendapatan_bunga_bank + $data_tbl_laba_rugi->pendapatan_rupa_rupa;
+			?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label">&nbsp;</th>
+			<th class="col-rp"></th>
+			<th class="col-nominal"></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Pendapatan Bunga Bank</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label indent">Beban Rupa-Rupa</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box row-highlight-nominal">
+			<th class="col-label indent label-bold">Total beban Lain-Lain</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php
+				echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
+				$GET_Total_beban_lain_lain = $data_tbl_laba_rugi->beban_bunga_dan_adm_bank + $data_tbl_laba_rugi->beban_rupa_rupa;
+			?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label">&nbsp;</th>
+			<th class="col-rp"></th>
+			<th class="col-nominal"></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label label-bold">LABA RUGI SEBELUM PAJAK</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php
+				echo number_format($GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain, 2, ',', '.');
+				$GET_Laba_rugi_sebelum_pajak = $GET_Labar_rugi_operasional + $GET_Total_Pendapatan_Lain_Lain - $GET_Total_beban_lain_lain;
+			?></th>
+		</tr>
+
+		<tr class="row-box row-highlight-pajak">
+			<th class="col-label label-bold">PAJAK</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($data_tbl_laba_rugi->pajak, 2, ',', '.'); ?></th>
+		</tr>
+
+		<tr class="row-box">
+			<th class="col-label label-bold">LABA RUGI SETELAH PAJAK</th>
+			<th class="col-rp">Rp.</th>
+			<th class="col-nominal"><?php echo number_format($GET_Laba_rugi_sebelum_pajak - $data_tbl_laba_rugi->pajak, 2, ',', '.'); ?></th>
+		</tr>
+
+		<!-- Kotak pembatas bawah data -->
+		<tr class="row-box-full">
+			<th colspan="3">&nbsp;</th>
+		</tr>
 
 	</table>
 
+	<!-- Tanda tangan - tabel terpisah, 3 kolom, teks di kolom kanan -->
+	<?php
+	$ttd_tanggal = 'Bantul, ';
+	if ($bulan_laba_rugi > 0) {
+		$ttd_tanggal .= 'Bulan ' . bulan_teks($bulan_laba_rugi) . ' Tahun ' . $tahun_laba_rugi;
+	} else {
+		$ttd_tanggal .= 'Tahun ' . $tahun_laba_rugi;
+	}
+	?>
+	<table id="ttd-footer" width="100%">
+		<colgroup>
+			<col style="width:32%">
+			<col style="width:18%">
+			<col style="width:50%">
+		</colgroup>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right"><?php echo $ttd_tanggal; ?></th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right">Perusahaan Umum Daerah Aneka Dharma</th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right">Kabupaten Bantul</th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right">Direktur</th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right"><br><br></th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right"><br><br></th>
+		</tr>
+		<tr>
+			<th class="ttd-spacer-left"></th>
+			<th class="ttd-spacer-mid"></th>
+			<th class="ttd-col-right">Yuli Budi Sasangka,ST</th>
+		</tr>
+	</table>
 
 </body>
 
