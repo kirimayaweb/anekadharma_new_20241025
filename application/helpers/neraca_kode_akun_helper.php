@@ -60,7 +60,7 @@ function neraca_render_label_keterangan($field_neraca, $label_text = null)
         . '<span class="neraca-label-text">' . htmlspecialchars($display_label, ENT_QUOTES, 'UTF-8') . '</span>'
         . '<span class="neraca-label-setting">'
         . '<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" data-field-neraca="'
-        . htmlspecialchars($field_neraca, ENT_QUOTES, 'UTF-8') . '">'
+        . htmlspecialchars($field_neraca, ENT_QUOTES, 'UTF-8') . '" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);">'
         . '<i class="fa fa-cog"></i> ' . htmlspecialchars($btn_label, ENT_QUOTES, 'UTF-8')
         . '</button></span></div>';
 }

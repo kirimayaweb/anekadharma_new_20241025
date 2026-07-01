@@ -3,9 +3,18 @@
 		z-index: 20050 !important;
 	}
 
+	#modalNeracaKodeAkun.show {
+		display: block !important;
+	}
+
 	#modalNeracaKodeAkun .modal-dialog {
 		max-width: 96vw;
 		width: 1400px;
+		z-index: 20051 !important;
+	}
+
+	#modalNeracaKodeAkun .modal-content {
+		z-index: 20052 !important;
 	}
 
 	#modalNeracaKodeAkun .table-section-title {
@@ -55,6 +64,17 @@
 	.neraca-kode-akun-backdrop {
 		z-index: 20040 !important;
 	}
+
+	body.neraca-kode-akun-modal-open {
+		overflow: hidden;
+	}
+
+	#neracaKodeAkunLoading {
+		display: none;
+		padding: 24px;
+		text-align: center;
+		font-weight: 600;
+	}
 </style>
 
 <div class="modal fade" id="modalNeracaKodeAkun" tabindex="-1" role="dialog" aria-labelledby="modalNeracaKodeAkunLabel" aria-hidden="true">
@@ -73,8 +93,9 @@
 			</div>
 			<div class="modal-body">
 				<input type="hidden" id="neracaKodeAkunFieldName" value="">
+				<div id="neracaKodeAkunLoading">Memuat data kode akun...</div>
 
-				<div class="row neraca-kode-akun-dt-row">
+				<div class="row neraca-kode-akun-dt-row" id="neracaKodeAkunTablesWrap">
 					<div class="col-lg-6 col-md-12 neraca-kode-akun-dt-col mb-3 mb-lg-0">
 						<div class="table-section-title">Daftar Kode Akun (sys_kode_akun)</div>
 						<div class="neraca-dt-scroll-wrap">

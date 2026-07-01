@@ -90,6 +90,10 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
             <?php
             $id_user_active = $this->session->userdata('sess_iduser');
+            $id_user_level_active = $this->session->userdata('sess_id_user_level');
+            if ($id_user_level_active === null || $id_user_level_active === '') {
+              $id_user_level_active = $this->session->userdata('id_user_level');
+            }
 
             $sql_menu = "select * from menu where is_active='1' and is_parent=0";
             $main_menu = $this->db->query($sql_menu)->result();
@@ -98,12 +102,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
             foreach ($main_menu as $menu) {
 
-              //  cek di tbl_hak_akses : adakah main_menu = menu->id ?
-              // jika ada : tampilkan main menu dan looping sub_menu yang ditampilkan
-
-              $this->db->where('main_menu', $menu->id);
-              $this->db->where('id_user',  $id_user_active);
-              $list_menu_hak_akses = $this->db->get('tbl_hak_akses');
+              // Hak menu: per user ATAU per level (id_user = 0)
+              $list_menu_hak_akses = hak_akses_menu_query_for_user(
+                $this,
+                $menu->id,
+                $id_user_active,
+                $id_user_level_active
+              );
 
               if ($list_menu_hak_akses->num_rows() > 0) {
 
@@ -297,6 +302,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-buttons/js/buttons.bootstrap4.min.js"></script>
+  <?php if (!empty($page_footer_scripts)) { echo $page_footer_scripts; } ?>
   <!-- <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/jszip/jszip.min.js"></script> -->
 
   <!-- PDF PRINT -->
@@ -415,6 +421,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
     $('#tgl_akhir').datetimepicker({
       format: 'D-M-YYYY'
     });
+    $('#rekap_tgl_awal').datetimepicker({
+      format: 'D-M-YYYY'
+    });
+    $('#rekap_tgl_akhir').datetimepicker({
+      format: 'D-M-YYYY'
+    });
     $('#tgl_po').datetimepicker({
       format: 'D-M-YYYY'
     });
@@ -444,7 +456,13 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 
     $('#tgl_jual').datetimepicker({
-      format: 'D-M-YYYY'
+      format: 'DD-MM-YYYY',
+      useCurrent: false
+    });
+    $('#dt_tgl_jual, #dt_tgl_jual_penjualan').datetimepicker({
+      format: 'DD-MM-YYYY',
+      useCurrent: false,
+      allowInputToggle: true
     });
     //   //Date and time picker
     $('#reservationdatetime').datetimepicker({
@@ -526,29 +544,24 @@ scratch. This page gets rid of all links and provides the needed markup only.
     // } );
 
     $(document).ready(function() {
-      var table = $('#tglSPOPFreeze').DataTable({
-        scrollX: true,
-        scrollY: "700px",
-        scrollCollapse: true,
-        paging: true,
-        // columnDefs: [
-        //     { orderable: false, targets: 0 },
-        //      { orderable: false, targets: -1 }
-        //  ],
-        //  ordering: [[ 1, 'asc' ]],
-        // colReorder: {
-        //     fixedColumnsLeft: 1,
-        //      fixedColumnsRight: 1
-        // }
-      });
+      if ($('#tglSPOPFreeze').length && $.fn.DataTable) {
+        var table = $('#tglSPOPFreeze').DataTable({
+          scrollX: true,
+          scrollY: "700px",
+          scrollCollapse: true,
+          paging: true,
+        });
 
-      new $.fn.dataTable.FixedColumns(table, {
-        leftColumns: 3,
-        // rightColumns: 1
-      });
+        if ($.fn.dataTable && $.fn.dataTable.FixedColumns) {
+          new $.fn.dataTable.FixedColumns(table, {
+            leftColumns: 3,
+          });
+        }
+      }
     });
 
     $(document).ready(function() {
+      if (!$('#tglSPOPFreeze1').length || !$.fn.DataTable) return;
       var table = $('#tglSPOPFreeze1').DataTable({
         scrollX: true,
         scrollY: "400px",
@@ -565,13 +578,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
         // }
       });
 
-      new $.fn.dataTable.FixedColumns(table, {
-        leftColumns: 3,
-        // rightColumns: 1
-      });
+      if ($.fn.dataTable && $.fn.dataTable.FixedColumns) {
+        new $.fn.dataTable.FixedColumns(table, {
+          leftColumns: 3,
+        });
+      }
     });
 
     $(document).ready(function() {
+      if (!$('#tglSPOPFreeze2').length || !$.fn.DataTable) return;
       var table = $('#tglSPOPFreeze2').DataTable({
         scrollX: true,
         scrollY: "400px",
@@ -588,13 +603,15 @@ scratch. This page gets rid of all links and provides the needed markup only.
         // }
       });
 
-      new $.fn.dataTable.FixedColumns(table, {
-        leftColumns: 3,
-        // rightColumns: 1
-      });
+      if ($.fn.dataTable && $.fn.dataTable.FixedColumns) {
+        new $.fn.dataTable.FixedColumns(table, {
+          leftColumns: 3,
+        });
+      }
     });
 
     $(document).ready(function() {
+      if (!$('#exampleFreeze').length || !$.fn.DataTable) return;
       var table = $('#exampleFreeze').DataTable({
         scrollX: true,
         scrollY: "400px",

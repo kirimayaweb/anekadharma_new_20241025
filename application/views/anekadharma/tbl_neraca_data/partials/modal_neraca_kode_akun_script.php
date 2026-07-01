@@ -31,7 +31,39 @@
 	var neracaTahun = <?php echo json_encode(isset($neraca_tahun_neraca) ? (int) $neraca_tahun_neraca : (int) date('Y')); ?>;
 	var neracaBulan = <?php echo json_encode(isset($neraca_bulan_transaksi) ? (int) $neraca_bulan_transaksi : 0); ?>;
 	var currentField = '';
-	var neracaKodeAkunInitialized = false;
+	var neracaKodeAkunEventsBound = false;
+
+	function mountNeracaModalToBody() {
+		var $modal = $('#modalNeracaKodeAkun');
+		if ($modal.length && !$modal.parent().is('body')) {
+			$modal.appendTo(document.body);
+		}
+	}
+
+	function showNeracaKodeAkunModalManual(modalEl) {
+		var $modal = $(modalEl);
+		$('.neraca-kode-akun-backdrop').remove();
+		$modal.css({
+			display: 'block',
+			zIndex: 20050,
+			paddingRight: ''
+		});
+		$modal.addClass('show');
+		$modal.attr('aria-modal', 'true').removeAttr('aria-hidden');
+		$('body').addClass('modal-open neraca-kode-akun-modal-open');
+		$('<div class="modal-backdrop fade show neraca-kode-akun-backdrop"></div>')
+			.css('z-index', 20040)
+			.appendTo(document.body);
+	}
+
+	function hideNeracaKodeAkunModalManual(modalEl) {
+		var $modal = $(modalEl);
+		$modal.removeClass('show');
+		$modal.css('display', 'none');
+		$modal.attr('aria-hidden', 'true').removeAttr('aria-modal');
+		$('body').removeClass('modal-open neraca-kode-akun-modal-open');
+		$('.neraca-kode-akun-backdrop').remove();
+	}
 
 	function escapeHtml(value) {
 		return String(value || '')
@@ -329,6 +361,9 @@
 	function ensureNeracaFieldLayout() {
 		$('#customers.neraca-form-table th.neraca-col-input, #customers.neraca-form-table th[colspan="195"]').each(function() {
 			var $th = $(this);
+			if ($th.hasClass('neraca-layout-done') && $th.find('.neraca-field-block').length) {
+				return;
+			}
 			var $form = $th.find('form.neraca-kode-akun-form').first();
 			if (!$form.length) {
 				return;
@@ -439,9 +474,20 @@
 		});
 	}
 
+	function setNeracaKodeAkunLoading(isLoading) {
+		if (isLoading) {
+			$('#neracaKodeAkunLoading').show();
+			$('#neracaKodeAkunTablesWrap').hide();
+		} else {
+			$('#neracaKodeAkunLoading').hide();
+			$('#neracaKodeAkunTablesWrap').show();
+		}
+	}
+
 	function loadNeracaKodeAkun(fieldName) {
 		currentField = fieldName;
 		$('#neracaKodeAkunFieldName').val(fieldName);
+		setNeracaKodeAkunLoading(true);
 
 		$.getJSON(neracaKodeAkunUrls.list + '/' + encodeURIComponent(fieldName), {
 			tahun: neracaTahun,
@@ -450,6 +496,7 @@
 			.done(function(res) {
 				if (!res || !res.ok) {
 					alert((res && res.message) ? res.message : 'Gagal memuat data kode akun.');
+					setNeracaKodeAkunLoading(false);
 					return;
 				}
 				var fieldLabel = res.label_neraca || fieldName;
@@ -457,8 +504,10 @@
 				$('#neracaKodeAkunModalTitle').text('Setting Kode Akun ' + fieldLabel);
 				$('#neracaKodeAkunPeriodInfo').text(res.periode_label || ('Neraca saldo tahun ' + neracaTahun));
 				renderTables(res);
+				setNeracaKodeAkunLoading(false);
 			})
 			.fail(function(xhr) {
+				setNeracaKodeAkunLoading(false);
 				alert('Gagal memuat data kode akun. (' + xhr.status + ')');
 			});
 	}
@@ -471,43 +520,47 @@
 
 		destroyDataTables();
 
-		if ($.fn.modal) {
-			$('#modalNeracaKodeAkun').modal('hide');
-		} else {
-			modalEl.classList.remove('show');
-			modalEl.style.display = 'none';
-			modalEl.setAttribute('aria-hidden', 'true');
-			document.body.classList.remove('modal-open');
-			$('.neraca-kode-akun-backdrop').remove();
-		}
+		try {
+			if ($.fn.modal) {
+				$('#modalNeracaKodeAkun').modal('hide');
+			}
+		} catch (e) {}
+
+		hideNeracaKodeAkunModalManual(modalEl);
 	}
 
 	function showNeracaKodeAkunModal() {
 		var modalEl = document.getElementById('modalNeracaKodeAkun');
 		if (!modalEl) {
-			alert('Modal setting kode akun tidak ditemukan.');
+			alert('Modal setting kode akun tidak ditemukan. Silakan deploy ulang file modal neraca.');
 			return;
 		}
 
+		mountNeracaModalToBody();
 		destroyDataTables();
 
-		if ($.fn.modal) {
-			$('#modalNeracaKodeAkun').modal({
-				backdrop: 'static',
-				keyboard: true,
-				show: true
-			});
-			return;
-		}
+		try {
+			if ($.fn.modal) {
+				$('#modalNeracaKodeAkun').modal({
+					backdrop: 'static',
+					keyboard: true,
+					show: true
+				});
+				setTimeout(function() {
+					var $modal = $('#modalNeracaKodeAkun');
+					if (!$modal.hasClass('show') || $modal.css('display') === 'none') {
+						showNeracaKodeAkunModalManual(modalEl);
+					} else {
+						$modal.css('z-index', 20050);
+						$('.modal-backdrop').last().addClass('neraca-kode-akun-backdrop').css('z-index', 20040);
+						$('body').addClass('neraca-kode-akun-modal-open');
+					}
+				}, 80);
+				return;
+			}
+		} catch (e) {}
 
-		modalEl.style.display = 'block';
-		modalEl.classList.add('show');
-		modalEl.setAttribute('aria-modal', 'true');
-		modalEl.removeAttribute('aria-hidden');
-		document.body.classList.add('modal-open');
-		if (!$('.neraca-kode-akun-backdrop').length) {
-			$('<div class="modal-backdrop fade show neraca-kode-akun-backdrop"></div>').appendTo(document.body);
-		}
+		showNeracaKodeAkunModalManual(modalEl);
 	}
 
 	function openNeracaKodeAkunModal(fieldName, fieldLabel) {
@@ -521,6 +574,9 @@
 	window.neracaOpenSettingKodeAkun = function(btn) {
 		var $btn = $(btn);
 		var fieldName = ($btn.attr('data-field-neraca') || '').trim();
+		if (!fieldName) {
+			fieldName = ($btn.closest('th[data-field-neraca]').attr('data-field-neraca') || '').trim();
+		}
 		var $form = $btn.closest('form.neraca-kode-akun-form');
 		if (!$form.length) {
 			$form = $btn.closest('tr').find('form.neraca-kode-akun-form').first();
@@ -558,31 +614,23 @@
 		});
 	}
 
-	function initNeracaKodeAkunModal() {
-		restructureNeracaFieldForms();
-		updateSettingButtonLabels();
-		setupNeracaNominalInputs();
-		refreshAllNominalColors();
-
-		if (neracaKodeAkunInitialized) {
+	function bindNeracaKodeAkunEvents() {
+		if (neracaKodeAkunEventsBound) {
 			return;
 		}
-		if (!$('#modalNeracaKodeAkun').length) {
-			return;
-		}
-
-		neracaKodeAkunInitialized = true;
-
-		$(document).on('input change', 'form.neraca-kode-akun-form input[name="input_box"]', function() {
-			var $form = $(this).closest('form.neraca-kode-akun-form');
-			var field = $form.attr('data-field-neraca') || '';
-			updateNominalColor($form, neracaSystemTotals[field]);
-		});
+		neracaKodeAkunEventsBound = true;
 
 		$(document).on('click', '.btn-neraca-get-kode-akun-form', function(e) {
 			e.preventDefault();
 			e.stopPropagation();
 			window.neracaOpenSettingKodeAkun(this);
+			return false;
+		});
+
+		$(document).on('input change', 'form.neraca-kode-akun-form input[name="input_box"]', function() {
+			var $form = $(this).closest('form.neraca-kode-akun-form');
+			var field = $form.attr('data-field-neraca') || '';
+			updateNominalColor($form, neracaSystemTotals[field]);
 		});
 
 		$(document).on('click', '.btn-neraca-pilih-kode', function(e) {
@@ -626,11 +674,28 @@
 			hideNeracaKodeAkunModal();
 		});
 
-		$('#modalNeracaKodeAkun').on('hidden.bs.modal', function() {
+		$(document).on('hidden.bs.modal', '#modalNeracaKodeAkun', function() {
 			destroyDataTables();
 		});
 	}
 
-	$(initNeracaKodeAkunModal);
+	function initNeracaKodeAkunModal() {
+		mountNeracaModalToBody();
+		bindNeracaKodeAkunEvents();
+		restructureNeracaFieldForms();
+		updateSettingButtonLabels();
+		setupNeracaNominalInputs();
+		refreshAllNominalColors();
+	}
+
+	window.initNeracaKodeAkunModal = initNeracaKodeAkunModal;
+
+	$(function() {
+		initNeracaKodeAkunModal();
+	});
+
+	$(window).on('load', function() {
+		initNeracaKodeAkunModal();
+	});
 })(window.jQuery);
 </script>
