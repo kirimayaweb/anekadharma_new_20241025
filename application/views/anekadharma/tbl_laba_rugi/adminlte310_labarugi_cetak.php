@@ -131,6 +131,11 @@
 			text-align: center;
 			white-space: nowrap;
 		}
+
+		#ttd-footer .ttd-direktur-nama {
+			font-weight: bold;
+			text-decoration: underline;
+		}
 	</style>
 </head>
 
@@ -142,6 +147,52 @@ $Aktiva_Lain_Lain = 0;
 $TOTAL_Utang_Lancar = 0;
 $TOTAL_Utang_Jangka_Panjang = 0;
 $TOTAL_Modal_dan_Laba_ditahan = 0;
+
+function bulan_teks($angka_bulan)
+{
+	if ($angka_bulan == 1) {
+		$bulan_teks = "Januari";
+	} elseif ($angka_bulan == 2) {
+		$bulan_teks = "Februari";
+	} elseif ($angka_bulan == 3) {
+		$bulan_teks = "Maret";
+	} elseif ($angka_bulan == 4) {
+		$bulan_teks = "April";
+	} elseif ($angka_bulan == 5) {
+		$bulan_teks = "Mei";
+	} elseif ($angka_bulan == 6) {
+		$bulan_teks = "Juni";
+	} elseif ($angka_bulan == 7) {
+		$bulan_teks = "Juli";
+	} elseif ($angka_bulan == 8) {
+		$bulan_teks = "Agustus";
+	} elseif ($angka_bulan == 9) {
+		$bulan_teks = "September";
+	} elseif ($angka_bulan == 10) {
+		$bulan_teks = "Oktober";
+	} elseif ($angka_bulan == 11) {
+		$bulan_teks = "November";
+	} elseif ($angka_bulan == 12) {
+		$bulan_teks = "Desember";
+	} else {
+		$bulan_teks = "";
+	}
+	return $bulan_teks;
+}
+
+function periode_labarugi_teks($bulan, $tahun)
+{
+	$tahun = (int) $tahun;
+	if ($bulan > 0) {
+		$bulan = (int) $bulan;
+		$nama_bulan = strtoupper(bulan_teks($bulan));
+		$hari_akhir = (int) date('t', mktime(0, 0, 0, $bulan, 1, $tahun));
+		return 'PERIODE 1 ' . $nama_bulan . ' s/d ' . $hari_akhir . ' ' . $nama_bulan . ' ' . $tahun;
+	}
+	return 'PERIODE 1 JANUARI s/d 31 DESEMBER ' . $tahun;
+}
+
+$teks_periode_labarugi = periode_labarugi_teks($bulan_laba_rugi, $tahun_laba_rugi);
 
 ?>
 
@@ -165,47 +216,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 		</tr>
 		<tr class="judul-row">
 			<th colspan="3">
-				<strong>Per
-					<?php
-					function bulan_teks($angka_bulan)
-					{
-						if ($angka_bulan == 1) {
-							$bulan_teks = "Januari";
-						} elseif ($angka_bulan == 2) {
-							$bulan_teks = "Februari";
-						} elseif ($angka_bulan == 3) {
-							$bulan_teks = "Maret";
-						} elseif ($angka_bulan == 4) {
-							$bulan_teks = "April";
-						} elseif ($angka_bulan == 5) {
-							$bulan_teks = "Mei";
-						} elseif ($angka_bulan == 6) {
-							$bulan_teks = "Juni";
-						} elseif ($angka_bulan == 7) {
-							$bulan_teks = "Juli";
-						} elseif ($angka_bulan == 8) {
-							$bulan_teks = "Agustus";
-						} elseif ($angka_bulan == 9) {
-							$bulan_teks = "September";
-						} elseif ($angka_bulan == 10) {
-							$bulan_teks = "Oktober";
-						} elseif ($angka_bulan == 11) {
-							$bulan_teks = "November";
-						} elseif ($angka_bulan == 12) {
-							$bulan_teks = "Desember";
-						} else {
-							$bulan_teks = "";
-						}
-						return $bulan_teks;
-					}
-
-					if ($bulan_laba_rugi > 0) {
-						echo " Bulan " . bulan_teks($bulan_laba_rugi) . " Tahun " . $tahun_laba_rugi;
-					} else {
-						echo " Tahun " . $tahun_laba_rugi;
-					}
-					?>
-				</strong>
+				<strong><?php echo $teks_periode_labarugi; ?></strong>
 			</th>
 		</tr>
 
@@ -433,7 +444,7 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 		<tr>
 			<th class="ttd-spacer-left"></th>
 			<th class="ttd-spacer-mid"></th>
-			<th class="ttd-col-right">Yuli Budi Sasangka,ST</th>
+			<th class="ttd-col-right ttd-direktur-nama">Yuli Budi Sasangka,ST</th>
 		</tr>
 	</table>
 
