@@ -341,9 +341,11 @@ $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
                                         <div class="col-md-8">
                                             <small class="text-muted d-block" id="info-btn-produk-baru">
                                                 <?php if ($jumlah_bahan_count < 1) { ?>
-                                                    Tambahkan minimal 1 bahan pada tabel di atas untuk mengaktifkan tombol simpan.
+                                                    Tambahkan minimal 1 bahan melalui tombol Input Bahan untuk mengaktifkan tombol simpan.
                                                 <?php } elseif (empty($id_persediaan_barang)) { ?>
                                                     Simpan bahan terlebih dahulu agar data produk dapat disimpan.
+                                                <?php } elseif (empty($nama_barang)) { ?>
+                                                    Isi nama produk terlebih dahulu.
                                                 <?php } else { ?>
                                                     Lengkapi semua isian produk di atas untuk menyimpan data produk.
                                                 <?php } ?>
@@ -1144,12 +1146,27 @@ window.addEventListener('load', function() {
         }
         tglTransaksiTerakhirValid = $(this).val();
         syncBulanDariTglProduk(true);
+        refreshTombolProdukBaru();
     });
     if ($('#uuid_unit_produk').length && $.fn.select2) {
         $('#uuid_unit_produk').select2({ width: '100%' });
     }
 
+    function tglProdukValid() {
+        return !!parseMomentTglProduk($('#tgl_transaksi_produk').val());
+    }
+
+    function namaProdukTerisi() {
+        return getNilaiFieldProduk($('#nama_barang_produk')) !== '';
+    }
+
     function fieldProdukBaruTerisi() {
+        if (!tglProdukValid()) {
+            return false;
+        }
+        if (!namaProdukTerisi()) {
+            return false;
+        }
         var ok = true;
         $('#form-produk-baru .field-produk-baru[required]').each(function() {
             var val = $(this).val();
@@ -1171,9 +1188,13 @@ window.addEventListener('load', function() {
         }
         var $info = $('#info-btn-produk-baru');
         if (jumlahBahanMin < 1) {
-            $info.text('Tambahkan minimal 1 bahan pada tabel di bawah untuk mengaktifkan tombol simpan.');
+            $info.text('Tambahkan minimal 1 bahan melalui tombol Input Bahan untuk mengaktifkan tombol simpan.');
         } else if (idPersediaanProduk <= 0) {
             $info.text('Simpan bahan terlebih dahulu agar data produk dapat disimpan.');
+        } else if (!tglProdukValid()) {
+            $info.text('Pilih tanggal produksi pada datepicker terlebih dahulu.');
+        } else if (!namaProdukTerisi()) {
+            $info.text('Isi nama produk terlebih dahulu.');
         } else if (!fieldProdukBaruTerisi()) {
             $info.text('Lengkapi semua isian untuk menyimpan data produk.');
         } else {
@@ -1187,6 +1208,23 @@ window.addEventListener('load', function() {
     });
 
     $('#form-produk-baru').on('submit', function(e) {
+        if (jumlahBahanMin < 1) {
+            e.preventDefault();
+            alert('Tambahkan minimal 1 bahan melalui tombol Input Bahan sebelum menyimpan.');
+            return false;
+        }
+        if (!namaProdukTerisi()) {
+            e.preventDefault();
+            alert('Nama produk wajib diisi.');
+            $('#nama_barang_produk').focus();
+            return false;
+        }
+        if (!tglProdukValid()) {
+            e.preventDefault();
+            alert('Tanggal produksi wajib dipilih pada datepicker.');
+            $('#tgl_transaksi_produk').focus();
+            return false;
+        }
         if (modeUpdateProduksi && bulanProduksiTerkunci) {
             var mSubmit = parseMomentTglProduk($('#tgl_transaksi_produk').val());
             if (mSubmit && !validasiBulanTglProdukUpdate(mSubmit)) {

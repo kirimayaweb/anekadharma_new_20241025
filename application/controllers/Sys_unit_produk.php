@@ -513,7 +513,10 @@ class Sys_unit_produk extends CI_Controller
                 // 'hpp' => $this->input->post('harga_satuan', TRUE),
                 // 'sa' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
                 'tanggal_beli' => $tanggal_beli,
-                'spop' => 'produksi_' . date('Ymd', strtotime($date_tgl_produksi)),
+                'spop' => $this->_generate_spop_produksi(
+                    $date_tgl_produksi,
+                    $this->_ambil_post_draft_produk_field('draft_nama_barang', 'nama_barang')
+                ),
                 // 'total_10' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah_produksi', TRUE)),
             );
             $id_persediaan_barang = $this->Persediaan_model->insert_produk_baru($data);
@@ -827,12 +830,41 @@ class Sys_unit_produk extends CI_Controller
             return;
         }
 
-        $tgl_input = $this->input->post('tgl_transaksi', TRUE);
+        $bulan_kembali = $this->_resolve_bulan_dari_input_produksi(
+            $this->input->post('tgl_transaksi', TRUE),
+            $this->input->post('bulan_produksi', TRUE)
+        );
+        $url_form_kembali = site_url('Sys_unit_produk/create_produksi/' . $id_persediaan_barang . '?bulan=' . urlencode($bulan_kembali));
+
+        $nama_barang_input = trim((string) $this->input->post('nama_barang', TRUE));
+        if ($nama_barang_input === '') {
+            $this->session->set_flashdata('message', 'Nama produk wajib diisi sebelum menyimpan.');
+            redirect($url_form_kembali);
+            return;
+        }
+
+        $tgl_input = trim((string) $this->input->post('tgl_transaksi', TRUE));
+        if ($tgl_input === '') {
+            $this->session->set_flashdata('message', 'Tanggal produksi wajib dipilih sebelum menyimpan.');
+            redirect($url_form_kembali);
+            return;
+        }
+
+        $row_persediaan_cek = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+        $bahan_list = $row_persediaan_cek
+            ? $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($row_persediaan_cek->uuid_persediaan)
+            : array();
+        if (count($bahan_list) < 1) {
+            $this->session->set_flashdata('message', 'Tambahkan minimal 1 bahan melalui tombol Input Bahan sebelum menyimpan produk.');
+            redirect($url_form_kembali);
+            return;
+        }
+
         $date_tgl_produksi = $this->_tanggal_produksi_dari_input($tgl_input);
         $tanggal_beli = $this->_tanggal_beli_bulan_dari_transaksi($tgl_input);
 
         $row_barang = $this->_resolve_uuid_barang_produksi(
-            $this->input->post('nama_barang', TRUE),
+            $nama_barang_input,
             $this->input->post('satuan', TRUE)
         );
 
@@ -855,7 +887,7 @@ class Sys_unit_produk extends CI_Controller
         // // $Jumlah_nominal = $this->input->post('jumlah_produksi', TRUE) * $this->input->post('harga_satuan', TRUE);
 
 
-        $SPOP_Produksi = $this->_generate_spop_produksi($date_tgl_produksi);
+        $SPOP_Produksi = $this->_generate_spop_produksi($date_tgl_produksi, $Get_nama_barang);
 
         $Get_satuan = $this->input->post('satuan', TRUE);
         $Get_harga_satuan = $this->_parse_jumlah_angka($this->input->post('harga_satuan', TRUE));
@@ -1652,16 +1684,38 @@ class Sys_unit_produk extends CI_Controller
         return $id;
     }
 
-    private function _generate_spop_produksi($date_tgl_produksi)
+    private function _prefix_nama_barang_spop($nama_barang)
     {
-        $kode_tgl_produksi = date('Ymd', strtotime($date_tgl_produksi));
-        $waktu_tgl_produksi = date('Hi', strtotime($date_tgl_produksi));
-        $spop_produksi = 'PRODUKSI_' . $kode_tgl_produksi . $waktu_tgl_produksi;
+        $nama_barang = trim((string) $nama_barang);
+        if ($nama_barang === '') {
+            return 'BARAN';
+        }
+        if (function_exists('mb_substr')) {
+            $prefix = mb_substr($nama_barang, 0, 5, 'UTF-8');
+        } else {
+            $prefix = substr($nama_barang, 0, 5);
+        }
+
+        return preg_replace('/\s+/', '', $prefix);
+    }
+
+    private function _generate_spop_produksi($date_tgl_produksi, $nama_barang = '')
+    {
+        $nama_kode = $this->_prefix_nama_barang_spop($nama_barang);
+        $kode_waktu = date('YmdHi', strtotime($date_tgl_produksi));
+        $spop_produksi = 'PRODUK_' . $nama_kode . '_' . $kode_waktu;
 
         $this->db->where('spop', $spop_produksi);
         $jumlah_spop = $this->db->count_all_results('persediaan');
         if ($jumlah_spop > 0) {
-            $spop_produksi = 'PRODUKSI_' . $kode_tgl_produksi . '_' . ($jumlah_spop + 1);
+            $counter = 1;
+            do {
+                $spop_candidate = 'PRODUK_' . $nama_kode . '_' . $kode_waktu . '_' . $counter;
+                $this->db->where('spop', $spop_candidate);
+                $exists = $this->db->count_all_results('persediaan') > 0;
+                $counter++;
+            } while ($exists);
+            $spop_produksi = $spop_candidate;
         }
 
         return $spop_produksi;
