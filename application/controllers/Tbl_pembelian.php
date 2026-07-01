@@ -103,11 +103,12 @@ class Tbl_pembelian extends CI_Controller
 
 		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
 
-		// $start = 0;
+		$start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
+			'start' => $start,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}
@@ -157,10 +158,12 @@ class Tbl_pembelian extends CI_Controller
 
 		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
 
+		$start = 0;
 		$data = array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
+			'start' => $start,
 		);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}

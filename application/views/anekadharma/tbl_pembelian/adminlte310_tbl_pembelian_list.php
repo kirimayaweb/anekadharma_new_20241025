@@ -157,6 +157,7 @@
                                 <?php
                                 $compare_spop = 0;
                                 $compare_uuid_spop = 0;
+                                $start = isset($start) ? $start : 0;
                                 $Total_per_SPOP = 0;
                                 $TOTAL_LUNAS = 0;
                                 $TOTAL_HUTANG = 0;
