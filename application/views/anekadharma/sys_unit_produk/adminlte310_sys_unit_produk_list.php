@@ -44,6 +44,11 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
                                     ? $url_create_produksi . '?bulan=' . urlencode($bulan_tampil)
                                     : site_url('Sys_unit_produk/create_produksi?bulan=' . urlencode($bulan_tampil));
                                 echo anchor($url_create_produksi_bulan, 'Input Produksi', 'class="btn btn-danger" id="btn-input-produksi"');
+                                $url_create_produksi_tanpa_bahan_bulan = isset($url_create_produksi_tanpa_bahan)
+                                    ? $url_create_produksi_tanpa_bahan . '?bulan=' . urlencode($bulan_tampil)
+                                    : site_url('Sys_unit_produk/create_produksi_tanpa_bahan?bulan=' . urlencode($bulan_tampil));
+                                echo ' ';
+                                echo anchor($url_create_produksi_tanpa_bahan_bulan, 'Input Produksi Tanpa Bahan', 'class="btn btn-input-produksi-tanpa-bahan" id="btn-input-produksi-tanpa-bahan"');
                                 ?>
                             </div>
                             <div class="col-auto d-flex align-items-center flex-wrap">
@@ -376,6 +381,20 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
         font-weight: 700;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
     }
+    .btn-input-produksi-tanpa-bahan {
+        background-color: #00e676 !important;
+        color: #0d47a1 !important;
+        border: 2px solid #ffeb3b !important;
+        box-shadow: 0 0 8px rgba(255, 235, 59, 0.85);
+        font-weight: 700;
+    }
+    .btn-input-produksi-tanpa-bahan:hover,
+    .btn-input-produksi-tanpa-bahan:focus {
+        background-color: #00c853 !important;
+        color: #0a3d91 !important;
+        border-color: #fff176 !important;
+        box-shadow: 0 0 12px rgba(255, 235, 59, 1);
+    }
 </style>
 
 <script>
@@ -387,12 +406,15 @@ window.addEventListener('load', function() {
     var $ = window.jQuery;
     var urlAjaxListByBulan = <?php echo json_encode($url_ajax_list_by_bulan); ?>;
     var urlCreateProduksiBase = <?php echo json_encode(isset($url_create_produksi) ? $url_create_produksi : site_url('Sys_unit_produk/create_produksi')); ?>;
+    var urlCreateProduksiTanpaBahanBase = <?php echo json_encode(isset($url_create_produksi_tanpa_bahan) ? $url_create_produksi_tanpa_bahan : site_url('Sys_unit_produk/create_produksi_tanpa_bahan')); ?>;
     var bulanProduksiAktif = <?php echo json_encode($bulan_tampil); ?>;
     var dtProduksi = null;
 
     function updateLinkInputProduksi(bulanYm) {
         var href = urlCreateProduksiBase + (urlCreateProduksiBase.indexOf('?') >= 0 ? '&' : '?') + 'bulan=' + encodeURIComponent(bulanYm);
         $('#btn-input-produksi').attr('href', href);
+        var hrefTanpaBahan = urlCreateProduksiTanpaBahanBase + (urlCreateProduksiTanpaBahanBase.indexOf('?') >= 0 ? '&' : '?') + 'bulan=' + encodeURIComponent(bulanYm);
+        $('#btn-input-produksi-tanpa-bahan').attr('href', hrefTanpaBahan);
     }
 
     function escapeHtml(text) {

@@ -34,6 +34,7 @@ class Sys_unit_produk extends CI_Controller
             'bulan_produksi_selected' => $bulan_selected,
             'url_ajax_list_by_bulan' => site_url('Sys_unit_produk/ajax_list_by_bulan'),
             'url_create_produksi' => site_url('Sys_unit_produk/create_produksi'),
+            'url_create_produksi_tanpa_bahan' => site_url('Sys_unit_produk/create_produksi_tanpa_bahan'),
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_list', $data);
     }
@@ -710,6 +711,110 @@ class Sys_unit_produk extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
     }
 
+    public function create_produksi_tanpa_bahan($id_persediaan_barang = null)
+    {
+        // print_r("create_produksi");
+        // print_r("<br/>");
+        if ($id_persediaan_barang) {
+            // print_r("Sudah Ada");
+            // print_r("<br/>");
+            // print_r($id_persediaan_barang);
+
+            $data_barang_selected = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+
+
+            $get_data_produk_unit = $this->Sys_unit_produk_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+            $get_result_data_bahan_produk_unit = $this->Sys_unit_produk_bahan_model->get_by_uuid_persediaan($data_barang_selected->uuid_persediaan);
+
+
+            // print_r($data_barang_selected);
+
+            $data = array(
+                'data_bahan_produk_unit' => $get_result_data_bahan_produk_unit,
+                'button' => 'Simpan Produk',
+                'button_data_produk' => 'Update Produk',
+                'action' => site_url('sys_unit_produk/create_action_produksi/' . $id_persediaan_barang),
+                'action_simpan_bahan' => site_url('sys_unit_produk/create_action_produksi_input_bahan/' . $id_persediaan_barang),
+                'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/action_simpan_nama_produk_baru/'),
+
+                'id' => set_value('id'),
+
+                'id_persediaan_barang' => $id_persediaan_barang,
+                'uuid_barang' => $data_barang_selected->uuid_barang,
+                'kode_barang' => $data_barang_selected->kode_barang,
+                'nama_barang' => $data_barang_selected->namabarang,
+                'satuan' => $data_barang_selected->satuan,
+                'harga_satuan' => $data_barang_selected->hpp,
+
+                'uuid_unit' => $get_data_produk_unit ? $get_data_produk_unit->uuid_unit : set_value('uuid_unit'),
+                // 'kode_unit' => set_value('kode_unit'),
+                'nama_unit' => $get_data_produk_unit ? $get_data_produk_unit->nama_unit : set_value('nama_unit'),
+                'tgl_transaksi' => $get_data_produk_unit ? $get_data_produk_unit->tgl_transaksi : $data_barang_selected->tanggal,
+                'jumlah_produksi' => $get_data_produk_unit ? $get_data_produk_unit->jumlah_produksi : $data_barang_selected->sa,
+                'keterangan' => $get_data_produk_unit ? $get_data_produk_unit->keterangan : set_value('keterangan'),
+                'tanggal_beli_bulan' => $this->_tanggal_beli_bulan_dari_transaksi(
+                    !empty($data_barang_selected->tanggal_beli) ? $data_barang_selected->tanggal_beli : $data_barang_selected->tanggal
+                ),
+            );
+
+            // print_r($data);
+
+            // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
+
+            // $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
+        } else {
+            // print_r("Baru");
+            // print_r("<br/>");
+            // print_r($this->input->post('nama_barang', TRUE));
+            // die;
+
+
+
+            $data = array(
+                'button' => 'Simpan Produk',
+                'button_data_produk' => 'Update Produk',
+                'action' => site_url('sys_unit_produk/create_action_produksi/'),
+                'action_simpan_bahan' => site_url('sys_unit_produk/create_action_produksi_input_bahan/'),
+                'action_simpan_nama_produk_baru' => site_url('sys_unit_produk/action_simpan_nama_produk_baru/'),
+
+                'id' => set_value('id'),
+                'tanggal_beli_bulan' => $this->_tanggal_beli_bulan_dari_transaksi($this->input->post('tgl_transaksi', TRUE)),
+
+                'id_persediaan_barang' => set_value('id_persediaan_barang'),
+                'uuid_barang' => set_value('uuid_barang'),
+                'kode_barang' => set_value('kode_barang'),
+                'nama_barang' => $this->input->post('nama_barang', TRUE),
+                'satuan' => set_value('satuan'),
+                'harga_satuan' => set_value('harga_satuan'),
+
+                'uuid_unit' => set_value('uuid_unit'),
+                'kode_unit' => set_value('kode_unit'),
+                'nama_unit' =>  set_value('nama_unit'),
+                'tgl_transaksi' => set_value('tgl_transaksi'),
+                'jumlah_produksi' => set_value('jumlah_produksi'),
+                'keterangan' => set_value('keterangan'),
+            );
+
+
+            // print_r($data);
+
+            // $this->load->view('sys_unit_produk/sys_unit_produk_form', $data);
+
+
+        }
+        $data = array_merge($data, $this->_produksi_bulan_view_data($this->input->get('bulan', TRUE)));
+        $data = $this->_apply_produksi_draft_ke_form_data($data);
+        $data = $this->_sync_bulan_produksi_dari_tgl_form($data);
+        $data = $this->_enrich_produksi_form_data($data);
+        $data['mode_update_produksi'] = false;
+        $data['bulan_produksi_terkunci'] = '';
+        $data['bulan_produksi_terkunci_label'] = '';
+        $data['tgl_transaksi_awal'] = '';
+        $data['mode_produksi_tanpa_bahan'] = true;
+        $data['action_simpan_produk_form'] = site_url('Sys_unit_produk/action_simpan_produksi_tanpa_bahan');
+        $data['label_btn_produk'] = 'Simpan';
+        $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru_tanpa_bahan', $data);
+    }
     public function update_produksi($id_persediaan_barang = null)
     {
         $bulan_produksi_terkunci = '';
@@ -819,6 +924,117 @@ class Sys_unit_produk extends CI_Controller
             : '';
         $data['tgl_transaksi_awal'] = $tgl_transaksi_awal;
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_form_baru', $data);
+    }
+
+    public function action_simpan_produksi_tanpa_bahan()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+
+        $kosong = array();
+        $tgl_input = trim((string) $this->input->post('tgl_transaksi', TRUE));
+        $uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
+        $nama_barang_input = trim((string) $this->input->post('nama_barang', TRUE));
+        $satuan = trim((string) $this->input->post('satuan', TRUE));
+        $jumlah_produksi = $this->_parse_jumlah_angka($this->input->post('jumlah_produksi', TRUE));
+        $harga_satuan = $this->_parse_jumlah_angka($this->input->post('harga_satuan', TRUE));
+
+        if ($tgl_input === '') {
+            $kosong[] = 'Tanggal produksi';
+        }
+        if ($uuid_unit === '') {
+            $kosong[] = 'Unit';
+        }
+        if ($nama_barang_input === '') {
+            $kosong[] = 'Nama produk';
+        }
+        if ($satuan === '') {
+            $kosong[] = 'Satuan';
+        }
+        if ($jumlah_produksi <= 0) {
+            $kosong[] = 'Jumlah produksi';
+        }
+        if ($harga_satuan <= 0) {
+            $kosong[] = 'Harga satuan';
+        }
+
+        if (!empty($kosong)) {
+            echo json_encode(array(
+                'ok' => false,
+                'message' => 'Data belum lengkap. Harap isi: ' . implode(', ', $kosong) . '.',
+                'fields' => $kosong,
+            ));
+            return;
+        }
+
+        $data_unit = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit);
+        if (!$data_unit) {
+            echo json_encode(array(
+                'ok' => false,
+                'message' => 'Unit tidak ditemukan. Pilih unit yang valid.',
+            ));
+            return;
+        }
+
+        $date_tgl_produksi = $this->_tanggal_produksi_dari_input($tgl_input);
+        if (!$date_tgl_produksi) {
+            echo json_encode(array(
+                'ok' => false,
+                'message' => 'Format tanggal produksi tidak valid.',
+            ));
+            return;
+        }
+
+        $tanggal_beli = $this->_tanggal_beli_bulan_dari_transaksi($tgl_input);
+        $row_barang = $this->_resolve_uuid_barang_produksi($nama_barang_input, $satuan);
+        $spop_produksi = $this->_generate_spop_produksi($date_tgl_produksi, $row_barang->nama_barang);
+        $jumlah_nominal = $harga_satuan * $jumlah_produksi;
+
+        $data_persediaan = array(
+            'tanggal' => $date_tgl_produksi,
+            'uuid_barang' => $row_barang->uuid_barang,
+            'namabarang' => $row_barang->nama_barang,
+            'kode_barang' => $row_barang->kode_barang,
+            'kode' => $row_barang->kode_barang,
+            'tanggal_beli' => $tanggal_beli,
+            'satuan' => $satuan,
+            'hpp' => (string) $harga_satuan,
+            'sa' => (string) $jumlah_produksi,
+            'beli' => '0',
+            'spop' => $spop_produksi,
+            'total_10' => (string) $jumlah_produksi,
+            'nilai_persediaan' => (string) $jumlah_nominal,
+        );
+        if ($this->db->field_exists('tuj', 'persediaan')) {
+            $data_persediaan['tuj'] = (string) $jumlah_produksi;
+        }
+
+        $id_persediaan_barang = $this->Persediaan_model->insert_produk_baru($data_persediaan);
+        $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+
+        $data_produk = array(
+            'uuid_persediaan' => $row_persediaan ? $row_persediaan->uuid_persediaan : '',
+            'uuid_unit' => $data_unit->uuid_unit,
+            'kode_unit' => $data_unit->kode_unit,
+            'nama_unit' => $data_unit->nama_unit,
+            'tgl_transaksi' => $date_tgl_produksi,
+            'uuid_produk' => $row_barang->uuid_barang,
+            'kode_barang' => $row_barang->kode_barang,
+            'nama_barang' => $row_barang->nama_barang,
+            'jumlah_produksi' => (string) $jumlah_produksi,
+            'satuan' => $satuan,
+            'harga_satuan' => (string) $harga_satuan,
+            'keterangan' => $this->input->post('keterangan', TRUE),
+        );
+        $this->Sys_unit_produk_model->insert($data_produk);
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => 'Data produksi tanpa bahan berhasil tersimpan.',
+        ));
     }
 
     public function action_simpan_nama_produk_baru($Get_id_persediaan_barang = null)
