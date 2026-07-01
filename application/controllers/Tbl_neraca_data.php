@@ -1285,10 +1285,21 @@ class Tbl_neraca_data extends CI_Controller
 		header('Content-Type: application/json; charset=utf-8');
 
 		$field_neraca = trim((string) $field_neraca);
+		$tahun = (int) $this->input->get('tahun');
+		$bulan = (int) $this->input->get('bulan');
+
 		if ($field_neraca === '') {
 			echo json_encode(array('ok' => false, 'message' => 'Field neraca tidak valid.'));
 			return;
 		}
+		if ($tahun < 2000) {
+			$tahun = (int) date('Y');
+		}
+
+		$saldo_map = neraca_get_neraca_saldo_map($this, $tahun, $bulan);
+		$rows_by_kode = $saldo_map['rows_by_kode'];
+		$tahun = (int) $saldo_map['year'];
+		$bulan = (int) $saldo_map['month'];
 
 		$selected_rows = $this->Sys_setting_neraca_kode_akun_model->get_by_field($field_neraca);
 		$selected_kodes = array();
@@ -1299,6 +1310,7 @@ class Tbl_neraca_data extends CI_Controller
 		$all = $this->db->order_by('kode_akun', 'ASC')->get('sys_kode_akun')->result();
 		$available = array();
 		$terpilih = array();
+		$total_terpilih = 0.0;
 
 		foreach ($all as $akun) {
 			$item = array(
@@ -1306,18 +1318,30 @@ class Tbl_neraca_data extends CI_Controller
 				'nama_akun' => $akun->nama_akun,
 			);
 			if (in_array((string) $akun->kode_akun, $selected_kodes, true)) {
+				$nominal = neraca_kode_akun_nominal_saldo($this, $akun->kode_akun, $field_neraca, $tahun, $bulan, $rows_by_kode);
+				$item['nominal'] = $nominal;
+				$item['nominal_formatted'] = number_format($nominal, 2, ',', '.');
+				$total_terpilih += $nominal;
 				$terpilih[] = $item;
 			} else {
 				$available[] = $item;
 			}
 		}
 
+		$bulan_nama = array('', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember');
+		$label_bulan = isset($bulan_nama[$bulan]) ? $bulan_nama[$bulan] : (string) $bulan;
+
 		echo json_encode(array(
 			'ok' => true,
 			'field_neraca' => $field_neraca,
 			'label_neraca' => neraca_get_field_label($field_neraca),
+			'tahun' => $tahun,
+			'bulan' => $bulan,
+			'periode_label' => 'Neraca saldo periode ' . $label_bulan . ' ' . $tahun,
 			'available' => $available,
 			'terpilih' => $terpilih,
+			'total_terpilih' => $total_terpilih,
+			'total_terpilih_formatted' => number_format($total_terpilih, 2, ',', '.'),
 		));
 	}
 

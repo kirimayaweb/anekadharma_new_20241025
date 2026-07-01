@@ -195,3 +195,51 @@ function neraca_nominal_match_class($system_total, $manual_total)
     }
     return 'neraca-nominal-mismatch';
 }
+
+function neraca_get_neraca_saldo_map($CI, $tahun_neraca, $bulan_transaksi = 0)
+{
+    $CI->load->helper('neraca_saldo_list');
+
+    $month = (int) $bulan_transaksi;
+    if ($month < 1 || $month > 12) {
+        $month = 12;
+    }
+    $year = (int) $tahun_neraca;
+    if ($year < 2000) {
+        $year = (int) date('Y');
+    }
+
+    $ns_data = neraca_saldo_compute_list_data($CI, $month, $year);
+    $rows_by_kode = array();
+    foreach ($ns_data['rows'] as $row) {
+        $rows_by_kode[(string) $row['kode_akun']] = $row;
+    }
+
+    return array(
+        'year' => $year,
+        'month' => $month,
+        'rows_by_kode' => $rows_by_kode,
+    );
+}
+
+function neraca_kode_akun_nominal_saldo($CI, $kode_akun, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $rows_by_kode = null)
+{
+    if ($rows_by_kode === null) {
+        $saldo_map = neraca_get_neraca_saldo_map($CI, $tahun_neraca, $bulan_transaksi);
+        $rows_by_kode = $saldo_map['rows_by_kode'];
+    }
+
+    $key = (string) $kode_akun;
+    if (!isset($rows_by_kode[$key])) {
+        return 0.0;
+    }
+
+    $debet = (float) $rows_by_kode[$key]['ns_debet_raw'];
+    $kredit = (float) $rows_by_kode[$key]['ns_kredit_raw'];
+
+    if (neraca_is_pasiva_field($field_neraca)) {
+        return (float) $kredit - (float) $debet;
+    }
+
+    return (float) $debet - (float) $kredit;
+}
