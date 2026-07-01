@@ -178,7 +178,21 @@ class Tbl_pembelian extends CI_Controller
 
 	private function _get_pembelian_between($date_awal, $date_akhir)
 	{
-		$sql = "SELECT * FROM `tbl_pembelian` WHERE `tgl_po` between '$date_awal' and '$date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+		if ($this->db->field_exists('kategori', 'persediaan')) {
+			$kategori_sql = "(SELECT p.kategori FROM persediaan p WHERE
+				(COALESCE(tbl_pembelian.id_persediaan_barang, 0) > 0 AND p.id = tbl_pembelian.id_persediaan_barang)
+				OR (COALESCE(tbl_pembelian.id_persediaan_barang, 0) = 0 AND TRIM(COALESCE(tbl_pembelian.uuid_persediaan, '')) <> '' AND p.uuid_persediaan = tbl_pembelian.uuid_persediaan)
+				OR (COALESCE(tbl_pembelian.id_persediaan_barang, 0) = 0 AND TRIM(COALESCE(tbl_pembelian.uuid_persediaan, '')) = '' AND TRIM(COALESCE(tbl_pembelian.uuid_barang, '')) <> '' AND p.uuid_barang = tbl_pembelian.uuid_barang)
+				ORDER BY CASE WHEN p.id = tbl_pembelian.id_persediaan_barang THEN 0 ELSE 1 END, p.id DESC
+				LIMIT 1) AS kategori";
+		} else {
+			$kategori_sql = "'' AS kategori";
+		}
+
+		$sql = "SELECT tbl_pembelian.*, {$kategori_sql}
+			FROM `tbl_pembelian`
+			WHERE `tgl_po` BETWEEN '$date_awal' AND '$date_akhir'
+			ORDER BY `tgl_po`, `spop`, `id`";
 		return $this->db->query($sql)->result();
 	}
 

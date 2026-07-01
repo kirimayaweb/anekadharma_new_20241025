@@ -139,6 +139,7 @@
                                     <th style="text-align:center" width="10px">No</th>
                                     <th style="text-align:center">Tgl Po</th>
                                     <th style="text-align:center">Spop</th>
+                                    <th style="text-align:center">Kategori</th>
                                     <th style="text-align:center">No. faktur/ kwitansi</th>
                                     <th style="text-align:center">Supplier</th>
                                     <th style="text-align:center">Kode Barang</th>
@@ -197,6 +198,7 @@
 
                                             </td>
                                             <td><?php echo $compare_spop; ?></td>
+                                            <td></td>
                                             <td></td>
                                             <!-- <td></td> -->
                                             <!-- <td></td> -->
@@ -287,6 +289,7 @@
                                                 ?>
                                             </td>
                                             <td><?php echo $list_data->spop; ?></td>
+                                            <td align="left"><?php echo isset($list_data->kategori) ? htmlspecialchars($list_data->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
 
 
@@ -331,6 +334,8 @@
 
                                                 ?>
                                             </td>
+
+                                            <td align="left"><?php echo isset($list_data->kategori) ? htmlspecialchars($list_data->kategori, ENT_QUOTES, 'UTF-8') : ''; ?></td>
 
                                             <td align="center"><?php echo $list_data->nmrfakturkwitansi; ?></td>
 
@@ -433,6 +438,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
                                     <td style="background-color:yellow;" align="right">
                                         <?php
                                         // echo "<font color='red'><strong>" . nominal($Total_per_SPOP) . "</strong></font>";
@@ -495,8 +501,7 @@
                                 <tr>
                                     <th></th>
                                     <th></th>
-                                    <!-- <th></th> -->
-                                    <!-- <th></th> -->
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
@@ -519,8 +524,7 @@
                                 <tr>
                                     <th></th>
                                     <th></th>
-                                    <!-- <th></th> -->
-                                    <!-- <th></th> -->
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
