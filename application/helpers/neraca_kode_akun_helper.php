@@ -65,6 +65,41 @@ function neraca_render_label_keterangan($field_neraca, $label_text = null)
         . '</button></span></div>';
 }
 
+function neraca_system_total_value($field_neraca, $system_totals)
+{
+    $field_neraca = trim((string) $field_neraca);
+    if (!is_array($system_totals) || $field_neraca === '') {
+        return 0.0;
+    }
+    return isset($system_totals[$field_neraca]) ? (float) $system_totals[$field_neraca] : 0.0;
+}
+
+function neraca_render_calc_legacy($field_neraca, $system_totals)
+{
+    $total = neraca_system_total_value($field_neraca, $system_totals);
+    return '<div class="neraca-calc-legacy" style="display:none;">'
+        . htmlspecialchars((string) $total, ENT_QUOTES, 'UTF-8')
+        . '</div>';
+}
+
+function neraca_field_input_value($data_row, $field_neraca)
+{
+    $field_neraca = trim((string) $field_neraca);
+    if (!is_object($data_row) || $field_neraca === '' || !isset($data_row->$field_neraca)) {
+        return '0,00';
+    }
+    return number_format((float) $data_row->$field_neraca, 2, ',', '.');
+}
+
+function neraca_prepare_form_row_defaults()
+{
+    $row = new stdClass();
+    foreach (array_keys(neraca_field_labels()) as $field_neraca) {
+        $row->$field_neraca = 0;
+    }
+    return $row;
+}
+
 function neraca_field_fallback_groups()
 {
     return array(
@@ -97,10 +132,17 @@ function neraca_field_fallback_groups()
     );
 }
 
-function neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group = null)
+function neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group = null, $settings_by_field = null)
 {
-    $CI->load->model('Sys_setting_neraca_kode_akun_model');
-    $kodes = $CI->Sys_setting_neraca_kode_akun_model->get_kode_akun_by_field($field_neraca);
+    $field_neraca = trim((string) $field_neraca);
+    $kodes = array();
+
+    if (is_array($settings_by_field) && isset($settings_by_field[$field_neraca])) {
+        $kodes = $settings_by_field[$field_neraca];
+    } else {
+        $CI->load->model('Sys_setting_neraca_kode_akun_model');
+        $kodes = $CI->Sys_setting_neraca_kode_akun_model->get_kode_akun_by_field($field_neraca);
+    }
 
     if (!empty($kodes)) {
         return $kodes;
@@ -127,29 +169,56 @@ function neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group = null)
     return array();
 }
 
-function neraca_calc_jurnal_kas($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+function neraca_preload_field_kode_lists($CI)
 {
-    return neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group);
+    $map = array();
+    if (!$CI->db->table_exists('sys_setting_neraca_kode_akun')) {
+        return $map;
+    }
+
+    $rows = $CI->db
+        ->select('field_neraca, kode_akun')
+        ->order_by('field_neraca', 'ASC')
+        ->order_by('kode_akun', 'ASC')
+        ->get('sys_setting_neraca_kode_akun')
+        ->result();
+
+    foreach ($rows as $row) {
+        $field = (string) $row->field_neraca;
+        if (!isset($map[$field])) {
+            $map[$field] = array();
+        }
+        $map[$field][] = $row->kode_akun;
+    }
+
+    return $map;
 }
 
-function neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+function neraca_calc_jurnal_kas($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null, $rows_by_kode = null, $settings_by_field = null)
 {
-    $CI->load->helper('neraca_saldo_list');
-    $kode_list = neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group);
+    return neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group, $rows_by_kode, $settings_by_field);
+}
 
-    $month = (int) $bulan_transaksi;
-    if ($month < 1 || $month > 12) {
-        $month = 12;
-    }
-    $year = (int) $tahun_neraca;
-    if ($year < 2000) {
-        $year = (int) date('Y');
-    }
+function neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null, $rows_by_kode = null, $settings_by_field = null)
+{
+    $kode_list = neraca_get_kode_akun_list($CI, $field_neraca, $fallback_group, $settings_by_field);
 
-    $ns_data = neraca_saldo_compute_list_data($CI, $month, $year);
-    $rows_by_kode = array();
-    foreach ($ns_data['rows'] as $row) {
-        $rows_by_kode[(string) $row['kode_akun']] = $row;
+    if ($rows_by_kode === null) {
+        $CI->load->helper('neraca_saldo_list');
+        $month = (int) $bulan_transaksi;
+        if ($month < 1 || $month > 12) {
+            $month = 12;
+        }
+        $year = (int) $tahun_neraca;
+        if ($year < 2000) {
+            $year = (int) date('Y');
+        }
+
+        $ns_data = neraca_saldo_compute_list_data($CI, $month, $year);
+        $rows_by_kode = array();
+        foreach ($ns_data['rows'] as $row) {
+            $rows_by_kode[(string) $row['kode_akun']] = $row;
+        }
     }
 
     $total_debet = 0;
@@ -182,14 +251,14 @@ function neraca_is_pasiva_field($field_neraca)
     return in_array($field_neraca, $pasiva_fields, true);
 }
 
-function neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null)
+function neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_transaksi = 0, $fallback_group = null, $rows_by_kode = null, $settings_by_field = null)
 {
     $groups = neraca_field_fallback_groups();
     if ($fallback_group === null && isset($groups[$field_neraca])) {
         $fallback_group = $groups[$field_neraca];
     }
 
-    $saldo = neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group);
+    $saldo = neraca_calc_from_neraca_saldo($CI, $field_neraca, $tahun_neraca, $bulan_transaksi, $fallback_group, $rows_by_kode, $settings_by_field);
 
     if (neraca_is_pasiva_field($field_neraca)) {
         return (float) $saldo['kredit'] - (float) $saldo['debet'];
@@ -200,10 +269,23 @@ function neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_tr
 
 function neraca_compute_all_system_totals($CI, $tahun_neraca, $bulan_transaksi = 0)
 {
+    $saldo_map = neraca_get_neraca_saldo_map($CI, $tahun_neraca, $bulan_transaksi);
+    $rows_by_kode = $saldo_map['rows_by_kode'];
+    $settings_by_field = neraca_preload_field_kode_lists($CI);
+
     $totals = array();
     foreach (array_keys(neraca_field_labels()) as $field_neraca) {
-        $totals[$field_neraca] = neraca_calc_system_nominal($CI, $field_neraca, $tahun_neraca, $bulan_transaksi);
+        $totals[$field_neraca] = neraca_calc_system_nominal(
+            $CI,
+            $field_neraca,
+            $saldo_map['year'],
+            $saldo_map['month'],
+            null,
+            $rows_by_kode,
+            $settings_by_field
+        );
     }
+
     return $totals;
 }
 

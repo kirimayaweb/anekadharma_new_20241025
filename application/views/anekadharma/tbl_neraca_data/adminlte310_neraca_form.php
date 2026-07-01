@@ -578,25 +578,10 @@
 								<th class="neraca-col-label" style="font-size:0.550em;border:1px solid black;border-top:none;border-bottom:none;border-right:none;border-left:none;border-collapse:collapse;text-align:left;" colspan="250"><?php echo neraca_render_label_keterangan('kas'); ?></th>
 								<th class="neraca-col-rp" style="font-size:0.550em;border:1px solid black;border-top:none;border-bottom:none;border-right:none;border-left:none;border-collapse:collapse;" colspan="25">Rp.</th>
 								<th class="neraca-col-input" style="font-size:0.550em;border:1px solid black;border-top:none;border-bottom:none;border-right:none;border-left:none;border-collapse:collapse;" colspan="195">
-									<div class="neraca-calc-legacy" style="display:none;">
-										<?php
-										$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-										$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-										if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-											$GET_kas = $GET_tbl_neraca_data_RECORD->row()->kas;
-										} else {
-											$GET_kas = 0;
-										}
-										$jurnal_kas_kas = neraca_calc_jurnal_kas($this, 'kas', $tahun_neraca, $bulan_transaksi);
-										$GET_debet_11101 = $jurnal_kas_kas['debet'];
-										$GET_kredit_11101 = $jurnal_kas_kas['kredit'];
-										$GET_TOTAL_KAS = $GET_kas + $GET_debet_11101 - $GET_kredit_11101;
-										echo $GET_TOTAL_KAS;
-										?>
-									</div>
+									<?php echo neraca_render_calc_legacy('kas', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?>
 									<form action="<?php echo $action . '/kas'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="kas">
 										<input type="tel" name="input_box" id="input_box_kas" onchange="setTwoNumberDecimal" value="<?php
-										echo number_format($data_tbl_neraca_data->kas, 2, ',', '.');
+										echo neraca_field_input_value($data_tbl_neraca_data, 'kas');
 										$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->kas;
 										?>" />
 										<button type="submit" class="btn btn-success btn-xs">Simpan</button>
@@ -618,38 +603,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_utang_usaha = $GET_tbl_neraca_data_RECORD->row()->utang_usaha;
-											} else {
-												$GET_utang_usaha = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_utang_usaha = neraca_calc_jurnal_kas($this, 'utang_usaha', $tahun_neraca, $bulan_transaksi, 'utang_usaha');
-											$TOTAL_DEBET_utang_usaha = $jurnal_kas_utang_usaha['debet'];
-											$TOTAL_KREDIT_utang_usaha = $jurnal_kas_utang_usaha['kredit'];
-
-
-											$GET_utang_usaha = $GET_utang_usaha + $TOTAL_DEBET_utang_usaha - $TOTAL_KREDIT_utang_usaha;
-
-											echo  $GET_utang_usaha;
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('utang_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -704,77 +658,7 @@
 																																																		?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" /> -->
 
 									<div class="row">
-										<div class="sm-4" align="left" style="color:#f9032f;text-align:left;">
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_bank = $GET_tbl_neraca_data_RECORD->row()->bank;
-											} else {
-												$GET_bank = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_bank = neraca_calc_jurnal_kas($this, 'bank', $tahun_neraca, $bulan_transaksi, 'BANK');
-											$TOTAL_DEBET_BANK = $jurnal_kas_bank['debet'];
-											$TOTAL_KREDIT_BANK = $jurnal_kas_bank['kredit'];
-											// die;
-
-
-
-											// $Kode_akun = "11101";
-											// // BULANAN
-											// // $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca' AND Month(`tanggal`)='$bulan_transaksi' AND `kode_akun`='$Kode_akun'";
-
-											// // TAHUNAN
-											// $sql = "SELECT sum(`debet`) as debet_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
-											// $GET_DATA_record_11101 = $this->db->query($sql);
-
-											// if ($GET_DATA_record_11101->num_rows() > 0) {
-											// 	// echo "Ada debet_11101";
-											// 	// print_r($GET_DATA_record_11101->row());
-											// 	$GET_debet_11101 = $GET_DATA_record_11101->row()->debet_11101;
-											// 	// echo $GET_debet_11101;
-											// } else {
-											// 	$GET_debet_11101 = 0;
-											// 	// echo "Tidak ada debet_11101";
-											// }
-
-
-											// // GET debet pengeluaran kas
-											// $sql = "SELECT sum(`kredit`) as kredit_11101 FROM `jurnal_kas` WHERE year(`tanggal`)='$tahun_neraca'  AND `kode_akun`='$Kode_akun'";
-											// $GET_DATA_record_kredit_11101 = $this->db->query($sql);
-
-											// if ($GET_DATA_record_kredit_11101->num_rows() > 0) {
-											// 	// echo "Ada debet_11101";
-											// 	// print_r($GET_DATA_record_11101->row());
-											// 	$GET_kredit_11101 = $GET_DATA_record_kredit_11101->row()->kredit_11101;
-											// 	// echo $GET_kredit_11101;
-											// } else {
-											// 	$GET_kredit_11101 = 0;
-											// 	// echo "Tidak ada debet_11101";
-											// }
-
-											// bank : 11105 s/d 11111  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											// echo $TOTAL_DEBET_BANK;
-
-											$TOTAL_BANK = $GET_bank + $TOTAL_DEBET_BANK - $TOTAL_KREDIT_BANK;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo $TOTAL_BANK;
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('bank', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 											<form action="<?php echo $action . '/bank'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="bank">
 												<!-- 
@@ -815,39 +699,7 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_utang_pajak = $GET_tbl_neraca_data_RECORD->row()->utang_pajak;
-											} else {
-												$GET_utang_pajak = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_utang_pajak = neraca_calc_jurnal_kas($this, 'utang_pajak', $tahun_neraca, $bulan_transaksi, 'utang_usaha');
-											$TOTAL_DEBET_utang_pajak = $jurnal_kas_utang_pajak['debet'];
-											$TOTAL_KREDIT_utang_pajak = $jurnal_kas_utang_pajak['kredit'];
-
-
-											$GET_utang_pajak = $GET_utang_pajak + $TOTAL_DEBET_utang_pajak - $TOTAL_KREDIT_utang_pajak;
-
-											// echo  $GET_utang_pajak;
-											echo number_format($GET_utang_pajak, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('utang_pajak', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -891,40 +743,7 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_piutang_usaha = $GET_tbl_neraca_data_RECORD->row()->piutang_usaha;
-											} else {
-												$GET_piutang_usaha = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_piutang_usaha = neraca_calc_jurnal_kas($this, 'piutang_usaha', $tahun_neraca, $bulan_transaksi, 'PIUTANGUSAHA');
-											$TOTAL_DEBET_PIUTANGUSAHA = $jurnal_kas_piutang_usaha['debet'];
-											$TOTAL_KREDIT_PIUTANGUSAHA = $jurnal_kas_piutang_usaha['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_TOTAL_piutang_usaha = $GET_piutang_usaha + $TOTAL_DEBET_PIUTANGUSAHA - $TOTAL_KREDIT_PIUTANGUSAHA;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_TOTAL_piutang_usaha;
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 											<form action="<?php echo $action . '/piutang_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_usaha">
@@ -965,38 +784,7 @@
 
 
 										<div class="row" align="left" style="color:#f9032f;text-align:left;">
-											<div class="sm-6">
-
-												<?php
-
-												// GET debet dari saldo akhir tahun sebelumnya
-												$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-												$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-												if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-													$GET_utang_lain_lain = $GET_tbl_neraca_data_RECORD->row()->utang_lain_lain;
-												} else {
-													$GET_utang_lain_lain = 0;
-												}
-
-												// GET debet per kode akun di penerimaan kas
-
-
-												// LOOPING sys_kode filter group: bank
-
-												$jurnal_kas_utang_lain_lain = neraca_calc_jurnal_kas($this, 'utang_lain_lain', $tahun_neraca, $bulan_transaksi, 'utang_lain_lain');
-												$TOTAL_DEBET_utang_lain_lain = $jurnal_kas_utang_lain_lain['debet'];
-												$TOTAL_KREDIT_utang_lain_lain = $jurnal_kas_utang_lain_lain['kredit'];
-
-
-												$GET_utang_lain_lain = $GET_utang_lain_lain + $TOTAL_DEBET_utang_lain_lain - $TOTAL_KREDIT_utang_lain_lain;
-
-												echo $GET_utang_lain_lain;
-
-												?>
-
-											</div>
+											<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('utang_lain_lain', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 											<div class="sm-4">
 
 
@@ -1047,40 +835,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_piutang_non_usaha = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha;
-											} else {
-												$GET_piutang_non_usaha = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_piutang_non_usaha = neraca_calc_jurnal_kas($this, 'piutang_non_usaha', $tahun_neraca, $bulan_transaksi, 'PIUTANGUSAHA');
-											$TOTAL_DEBET_PIUTANGNONUSAHA = $jurnal_kas_piutang_non_usaha['debet'];
-											$TOTAL_KREDIT_PIUTANGNONUSAHA = $jurnal_kas_piutang_non_usaha['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_TOTAL_piutang_non_usaha = $GET_piutang_non_usaha + $TOTAL_DEBET_PIUTANGNONUSAHA - $TOTAL_KREDIT_PIUTANGNONUSAHA;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo $GET_TOTAL_piutang_non_usaha;
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_non_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha">
 												<!-- 													
@@ -1173,40 +928,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_persediaan = $GET_tbl_neraca_data_RECORD->row()->persediaan;
-											} else {
-												$GET_persediaan = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_persediaan = neraca_calc_jurnal_kas($this, 'persediaan', $tahun_neraca, $bulan_transaksi, 'PERSEDIAAN');
-											$TOTAL_DEBET_persediaan = $jurnal_kas_persediaan['debet'];
-											$TOTAL_KREDIT_persediaan = $jurnal_kas_persediaan['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_persediaan = $GET_piutang_non_usaha + $TOTAL_DEBET_persediaan - $TOTAL_KREDIT_persediaan;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											echo  $GET_persediaan;
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('persediaan', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1273,43 +995,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_uang_muka_pajak = $GET_tbl_neraca_data_RECORD->row()->uang_muka_pajak;
-											} else {
-												$GET_uang_muka_pajak = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_uang_muka_pajak = neraca_calc_jurnal_kas($this, 'uang_muka_pajak', $tahun_neraca, $bulan_transaksi, 'uang_muka_pajak');
-											$TOTAL_DEBET_uang_muka_pajak = $jurnal_kas_uang_muka_pajak['debet'];
-											$TOTAL_KREDIT_uang_muka_pajak = $jurnal_kas_uang_muka_pajak['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_uang_muka_pajak = $GET_piutang_non_usaha + $TOTAL_DEBET_uang_muka_pajak - $TOTAL_KREDIT_uang_muka_pajak;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo $GET_uang_muka_pajak;
-
-
-											echo number_format($GET_uang_muka_pajak, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('uang_muka_pajak', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1499,41 +1185,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_aktiva_tetap_berwujud = $GET_tbl_neraca_data_RECORD->row()->aktiva_tetap_berwujud;
-											} else {
-												$GET_aktiva_tetap_berwujud = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_aktiva_tetap_berwujud = neraca_calc_jurnal_kas($this, 'aktiva_tetap_berwujud', $tahun_neraca, $bulan_transaksi, 'aktiva_tetap_berwujud');
-											$TOTAL_DEBET_aktiva_tetap_berwujud = $jurnal_kas_aktiva_tetap_berwujud['debet'];
-											$TOTAL_KREDIT_aktiva_tetap_berwujud = $jurnal_kas_aktiva_tetap_berwujud['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_aktiva_tetap_berwujud = $GET_aktiva_tetap_berwujud + $TOTAL_DEBET_aktiva_tetap_berwujud - $TOTAL_KREDIT_aktiva_tetap_berwujud;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_aktiva_tetap_berwujud;
-											echo number_format($GET_aktiva_tetap_berwujud, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('aktiva_tetap_berwujud', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1579,41 +1231,7 @@
 								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_utang_afiliasi = $GET_tbl_neraca_data_RECORD->row()->utang_afiliasi;
-											} else {
-												$GET_utang_afiliasi = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_utang_afiliasi = neraca_calc_jurnal_kas($this, 'utang_afiliasi', $tahun_neraca, $bulan_transaksi, 'utang_afiliasi');
-											$TOTAL_DEBET_utang_afiliasi = $jurnal_kas_utang_afiliasi['debet'];
-											$TOTAL_KREDIT_utang_afiliasi = $jurnal_kas_utang_afiliasi['kredit'];
-
-
-											$GET_utang_afiliasi = $GET_utang_afiliasi + $TOTAL_DEBET_utang_afiliasi - $TOTAL_KREDIT_utang_afiliasi;
-
-											// echo  $GET_utang_afiliasi;
-
-											echo number_format($GET_utang_afiliasi, 2, ',', '.');
-
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('utang_afiliasi', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1660,43 +1278,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_akumulasi_depresiasi_atb = $GET_tbl_neraca_data_RECORD->row()->akumulasi_depresiasi_atb;
-											} else {
-												$GET_akumulasi_depresiasi_atb = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_akumulasi = neraca_calc_jurnal_kas($this, 'akumulasi_depresiasi_atb', $tahun_neraca, $bulan_transaksi, 'akumulasi_depresiasi_atb');
-											$TOTAL_DEBET_akumulasi_depresiasi_atb = $jurnal_kas_akumulasi['debet'];
-											$TOTAL_KREDIT_akumulasi_depresiasi_atb = $jurnal_kas_akumulasi['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_akumulasi_depresiasi_atb = $GET_akumulasi_depresiasi_atb + $TOTAL_DEBET_akumulasi_depresiasi_atb - $TOTAL_KREDIT_akumulasi_depresiasi_atb;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_akumulasi_depresiasi_atb;
-
-											echo number_format($GET_akumulasi_depresiasi_atb, 2, ',', '.');
-
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('akumulasi_depresiasi_atb', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1895,41 +1477,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_piutang_non_usaha_pihak_ketiga = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha_pihak_ketiga;
-											} else {
-												$GET_piutang_non_usaha_pihak_ketiga = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_piutang_pihak_ketiga = neraca_calc_jurnal_kas($this, 'piutang_non_usaha_pihak_ketiga', $tahun_neraca, $bulan_transaksi, 'PIUTANGNONUSAHAPIHAKKETIGA');
-											$TOTAL_DEBET_piutang_non_usaha_pihak_ketiga = $jurnal_kas_piutang_pihak_ketiga['debet'];
-											$TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga = $jurnal_kas_piutang_pihak_ketiga['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_piutang_non_usaha_pihak_ketiga = $GET_piutang_non_usaha_pihak_ketiga + $TOTAL_DEBET_piutang_non_usaha_pihak_ketiga - $TOTAL_KREDIT_piutang_non_usaha_pihak_ketiga;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_piutang_non_usaha_pihak_ketiga;
-											echo number_format($GET_piutang_non_usaha_pihak_ketiga, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_non_usaha_pihak_ketiga', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -1979,40 +1527,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_modal_dasar_dan_penyertaan = $GET_tbl_neraca_data_RECORD->row()->modal_dasar_dan_penyertaan;
-											} else {
-												$GET_modal_dasar_dan_penyertaan = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_modal = neraca_calc_jurnal_kas($this, 'modal_dasar_dan_penyertaan', $tahun_neraca, $bulan_transaksi, 'modal_dasar_dan_penyertaan');
-											$TOTAL_DEBET_modal_dasar_dan_penyertaan = $jurnal_kas_modal['debet'];
-											$TOTAL_KREDIT_modal_dasar_dan_penyertaan = $jurnal_kas_modal['kredit'];
-
-
-											$GET_modal_dasar_dan_penyertaan = $GET_modal_dasar_dan_penyertaan + $TOTAL_DEBET_modal_dasar_dan_penyertaan - $TOTAL_KREDIT_modal_dasar_dan_penyertaan;
-
-											// echo  $GET_modal_dasar_dan_penyertaan;
-
-											echo number_format($GET_modal_dasar_dan_penyertaan, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('modal_dasar_dan_penyertaan', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2062,42 +1577,7 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_PIUTANGNONUSAHARADIO = $GET_tbl_neraca_data_RECORD->row()->piutang_non_usaha_radio;
-											} else {
-												$GET_PIUTANGNONUSAHARADIO = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_piutang_radio = neraca_calc_jurnal_kas($this, 'piutang_non_usaha_radio', $tahun_neraca, $bulan_transaksi, 'PIUTANGNONUSAHARADIO');
-											$TOTAL_DEBET_PIUTANGNONUSAHARADIO = $jurnal_kas_piutang_radio['debet'];
-											$TOTAL_KREDIT_PIUTANGNONUSAHARADIO = $jurnal_kas_piutang_radio['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_PIUTANGNONUSAHARADIO = $GET_PIUTANGNONUSAHARADIO + $TOTAL_DEBET_PIUTANGNONUSAHARADIO - $TOTAL_KREDIT_PIUTANGNONUSAHARADIO;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_PIUTANGNONUSAHARADIO;
-
-											echo number_format($GET_PIUTANGNONUSAHARADIO, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_non_usaha_radio', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 											<!-- 
@@ -2144,40 +1624,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_cadangan_umum = $GET_tbl_neraca_data_RECORD->row()->cadangan_umum;
-											} else {
-												$GET_cadangan_umum = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_cadangan = neraca_calc_jurnal_kas($this, 'cadangan_umum', $tahun_neraca, $bulan_transaksi, 'cadangan_umum');
-											$TOTAL_DEBET_cadangan_umum = $jurnal_kas_cadangan['debet'];
-											$TOTAL_KREDIT_cadangan_umum = $jurnal_kas_cadangan['kredit'];
-
-
-											$GET_cadangan_umum = $GET_cadangan_umum + $TOTAL_DEBET_cadangan_umum - $TOTAL_KREDIT_cadangan_umum;
-
-											// echo  $GET_cadangan_umum;
-
-											echo number_format($GET_cadangan_umum, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('cadangan_umum', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2224,41 +1671,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_ljpj_taman_gedung_kesenian_gabusan = $GET_tbl_neraca_data_RECORD->row()->ljpj_taman_gedung_kesenian_gabusan;
-											} else {
-												$GET_ljpj_taman_gedung_kesenian_gabusan = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_taman = neraca_calc_jurnal_kas($this, 'ljpj_taman_gedung_kesenian_gabusan', $tahun_neraca, $bulan_transaksi, 'ljpj_taman_gedung_kesenian_gabusan');
-											$TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan = $jurnal_kas_ljpj_taman['debet'];
-											$TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan = $jurnal_kas_ljpj_taman['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_ljpj_taman_gedung_kesenian_gabusan = $GET_ljpj_taman_gedung_kesenian_gabusan + $TOTAL_DEBET_ljpj_taman_gedung_kesenian_gabusan - $TOTAL_KREDIT_ljpj_taman_gedung_kesenian_gabusan;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_ljpj_taman_gedung_kesenian_gabusan;
-
-											echo number_format($GET_ljpj_taman_gedung_kesenian_gabusan, 2, ',', '.');
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_taman_gedung_kesenian_gabusan', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 											<!-- 
 														<input type="text" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="ljpj_taman_gedung_kesenian_gabusan" id="ljpj_taman_gedung_kesenian_gabusan" placeholder="ljpj taman gedung kesenian gabusan" value="<?php //echo $data_tbl_neraca_data->ljpj_taman_gedung_kesenian_gabusan;
@@ -2302,40 +1715,7 @@
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_laba_bumd_pad = $GET_tbl_neraca_data_RECORD->row()->laba_bumd_pad;
-											} else {
-												$GET_laba_bumd_pad = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_laba_bumd = neraca_calc_jurnal_kas($this, 'laba_bumd_pad', $tahun_neraca, $bulan_transaksi, 'laba_bumd_pad');
-											$TOTAL_DEBET_laba_bumd_pad = $jurnal_kas_laba_bumd['debet'];
-											$TOTAL_KREDIT_laba_bumd_pad = $jurnal_kas_laba_bumd['kredit'];
-
-
-											$GET_laba_bumd_pad = $GET_laba_bumd_pad + $TOTAL_DEBET_laba_bumd_pad - $TOTAL_KREDIT_laba_bumd_pad;
-
-											// echo  $GET_laba_bumd_pad;
-
-											echo number_format($GET_laba_bumd_pad, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('laba_bumd_pad', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2379,42 +1759,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-												// echo "Ada record";
-												$GET_ljpj_kompleks_gedung_kesenian = $GET_tbl_neraca_data_RECORD->row()->ljpj_kompleks_gedung_kesenian;
-											} else {
-												$GET_ljpj_kompleks_gedung_kesenian = 0;
-												// echo "Tidak ada record";
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_kompleks = neraca_calc_jurnal_kas($this, 'ljpj_kompleks_gedung_kesenian', $tahun_neraca, $bulan_transaksi, 'ljpj_kompleks_gedung_kesenian');
-											$TOTAL_DEBET_ljpj_kompleks_gedung_kesenian = $jurnal_kas_ljpj_kompleks['debet'];
-											$TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian = $jurnal_kas_ljpj_kompleks['kredit'];
-											// 1. kas : 11101  ( debet dari saldo akhir tahun sebelumnya + debet per kode akun di penerimaan kas - debet pengeluaran kas ).
-											$GET_ljpj_kompleks_gedung_kesenian = $GET_ljpj_kompleks_gedung_kesenian + $TOTAL_DEBET_ljpj_kompleks_gedung_kesenian - $TOTAL_KREDIT_ljpj_kompleks_gedung_kesenian;
-											// echo "TOTAL Kas: " . $GET_kas ;
-											// echo "TOTAL Kas: " . $GET_debet_11101;
-											// echo "TOTAL Kas: " . $GET_kredit_11101;
-											// echo  $GET_ljpj_kompleks_gedung_kesenian;
-
-											echo number_format($GET_ljpj_kompleks_gedung_kesenian, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_kompleks_gedung_kesenian', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 											<form action="<?php echo $action . '/ljpj_kompleks_gedung_kesenian'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kompleks_gedung_kesenian">
@@ -2480,40 +1825,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_ljpj_radio = $GET_tbl_neraca_data_RECORD->row()->ljpj_radio;
-											} else {
-												$GET_ljpj_radio = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_radio = neraca_calc_jurnal_kas($this, 'ljpj_radio', $tahun_neraca, $bulan_transaksi, 'ljpj_radio');
-											$TOTAL_DEBET_ljpj_radio = $jurnal_kas_ljpj_radio['debet'];
-											$TOTAL_KREDIT_ljpj_radio = $jurnal_kas_ljpj_radio['kredit'];
-
-
-											$GET_ljpj_radio = $GET_ljpj_radio + $TOTAL_DEBET_ljpj_radio - $TOTAL_KREDIT_ljpj_radio;
-
-											// echo  $GET_ljpj_radio;
-
-											echo number_format($GET_ljpj_radio, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_radio', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 											<form action="<?php echo $action . '/ljpj_radio'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_radio">
@@ -2553,40 +1865,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_laba_rugi_tahun_lalu = $GET_tbl_neraca_data_RECORD->row()->laba_rugi_tahun_lalu;
-											} else {
-												$GET_laba_rugi_tahun_lalu = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_lrl = neraca_calc_jurnal_kas($this, 'laba_rugi_tahun_lalu', $tahun_neraca, $bulan_transaksi, 'laba_rugi_tahun_lalu');
-											$TOTAL_DEBET_laba_rugi_tahun_lalu = $jurnal_kas_lrl['debet'];
-											$TOTAL_KREDIT_laba_rugi_tahun_lalu = $jurnal_kas_lrl['kredit'];
-
-
-											$GET_laba_rugi_tahun_lalu = $GET_laba_rugi_tahun_lalu + $TOTAL_DEBET_laba_rugi_tahun_lalu - $TOTAL_KREDIT_laba_rugi_tahun_lalu;
-
-											// echo  $GET_laba_rugi_tahun_lalu;
-
-											echo number_format($GET_laba_rugi_tahun_lalu, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('laba_rugi_tahun_lalu', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2633,40 +1912,7 @@
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_operasi_apotek_dharma_usaha;
-											} else {
-												$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_apotek = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_operasi_apotek_dharma_usaha', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_operasi_apotek_dharma_usaha');
-											$TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $jurnal_kas_ljpj_apotek['debet'];
-											$TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha = $jurnal_kas_ljpj_apotek['kredit'];
-
-
-											$GET_ljpj_kerjasama_operasi_apotek_dharma_usaha = $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha + $TOTAL_DEBET_ljpj_kerjasama_operasi_apotek_dharma_usaha - $TOTAL_KREDIT_ljpj_kerjasama_operasi_apotek_dharma_usaha;
-
-											// echo $GET_ljpj_kerjasama_operasi_apotek_dharma_usaha;
-
-echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_kerjasama_operasi_apotek_dharma_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2709,40 +1955,7 @@ echo number_format($GET_ljpj_kerjasama_operasi_apotek_dharma_usaha, 2, ',', '.')
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_laba_rugi_tahun_berjalan = $GET_tbl_neraca_data_RECORD->row()->laba_rugi_tahun_berjalan;
-											} else {
-												$GET_laba_rugi_tahun_berjalan = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_lrb = neraca_calc_jurnal_kas($this, 'laba_rugi_tahun_berjalan', $tahun_neraca, $bulan_transaksi, 'laba_rugi_tahun_berjalan');
-											$TOTAL_DEBET_laba_rugi_tahun_berjalan = $jurnal_kas_lrb['debet'];
-											$TOTAL_KREDIT_laba_rugi_tahun_berjalan = $jurnal_kas_lrb['kredit'];
-
-
-											$GET_laba_rugi_tahun_berjalan = $GET_laba_rugi_tahun_berjalan + $TOTAL_DEBET_laba_rugi_tahun_berjalan - $TOTAL_KREDIT_laba_rugi_tahun_berjalan;
-
-											// echo  $GET_laba_rugi_tahun_berjalan;
-
-echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('laba_rugi_tahun_berjalan', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2795,41 +2008,7 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_ljpj_peternakan = $GET_tbl_neraca_data_RECORD->row()->ljpj_peternakan;
-											} else {
-												$GET_ljpj_peternakan = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_peternakan = neraca_calc_jurnal_kas($this, 'ljpj_peternakan', $tahun_neraca, $bulan_transaksi, 'ljpj_peternakan');
-											$TOTAL_DEBET_ljpj_peternakan = $jurnal_kas_ljpj_peternakan['debet'];
-											$TOTAL_KREDIT_ljpj_peternakan = $jurnal_kas_ljpj_peternakan['kredit'];
-
-
-											$GET_ljpj_peternakan = $GET_ljpj_peternakan + $TOTAL_DEBET_ljpj_peternakan - $TOTAL_KREDIT_ljpj_peternakan;
-
-											// echo  $GET_ljpj_peternakan;
-
-											echo number_format($GET_ljpj_peternakan, 2, ',', '.');
-
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_peternakan', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 
@@ -2888,40 +2067,7 @@ echo number_format($GET_laba_rugi_tahun_berjalan, 2, ',', '.');
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_ljpj_kerjasama_adwm = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_adwm;
-											} else {
-												$GET_ljpj_kerjasama_adwm = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_adwm = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_adwm', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_adwm');
-											$TOTAL_DEBET_ljpj_kerjasama_adwm = $jurnal_kas_ljpj_adwm['debet'];
-											$TOTAL_KREDIT_ljpj_kerjasama_adwm = $jurnal_kas_ljpj_adwm['kredit'];
-
-
-											$GET_ljpj_kerjasama_adwm = $GET_ljpj_kerjasama_adwm + $TOTAL_DEBET_ljpj_kerjasama_adwm - $TOTAL_KREDIT_ljpj_kerjasama_adwm;
-
-											// echo  $GET_ljpj_kerjasama_adwm;
-
-echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_kerjasama_adwm', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 											<form action="<?php echo $action . '/ljpj_kerjasama_adwm'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="ljpj_kerjasama_adwm">
@@ -2982,41 +2128,7 @@ echo number_format($GET_ljpj_kerjasama_adwm, 2, ',', '.');
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="sm-4">
-
-											<?php
-
-											// GET debet dari saldo akhir tahun sebelumnya
-											$sql = "SELECT * FROM `tbl_neraca_data` WHERE `tahun_transaksi`='$tahun_neraca' And `bulan_transaksi`='$bulan_transaksi' ";
-											$GET_tbl_neraca_data_RECORD = $this->db->query($sql);
-
-											if ($GET_tbl_neraca_data_RECORD->num_rows() > 0) {
-
-												$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_tbl_neraca_data_RECORD->row()->ljpj_kerjasama_pdu_cabean_panggungharjo;
-											} else {
-												$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
-											}
-
-											// GET debet per kode akun di penerimaan kas
-
-
-											// LOOPING sys_kode filter group: bank
-
-											$jurnal_kas_ljpj_pdu = neraca_calc_jurnal_kas($this, 'ljpj_kerjasama_pdu_cabean_panggungharjo', $tahun_neraca, $bulan_transaksi, 'ljpj_kerjasama_pdu_cabean_panggungharjo');
-											$TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo = $jurnal_kas_ljpj_pdu['debet'];
-											$TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo = $jurnal_kas_ljpj_pdu['kredit'];
-
-
-											$GET_ljpj_kerjasama_pdu_cabean_panggungharjo = $GET_ljpj_kerjasama_pdu_cabean_panggungharjo + $TOTAL_DEBET_ljpj_kerjasama_pdu_cabean_panggungharjo - $TOTAL_KREDIT_ljpj_kerjasama_pdu_cabean_panggungharjo;
-
-											// echo  $GET_ljpj_kerjasama_pdu_cabean_panggungharjo;
-
-echo number_format($GET_ljpj_kerjasama_pdu_cabean_panggungharjo, 2, ',', '.');
-
-
-											?>
-
-										</div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('ljpj_kerjasama_pdu_cabean_panggungharjo', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
 
 

@@ -42,19 +42,23 @@ class Sys_setting_neraca_kode_akun_model extends CI_Model
             return;
         }
 
-        if ($this->db->where('field_neraca', 'kas')->count_all_results($this->table) === 0) {
-            $this->insert(array(
-                'field_neraca' => 'kas',
-                'label_neraca' => 'Kas',
-                'kode_akun' => '11101',
-            ));
+        static $seed_checked = false;
+        if ($seed_checked) {
+            return;
+        }
+        $seed_checked = true;
+
+        if ((int) $this->db->count_all($this->table) > 0) {
+            return;
         }
 
-        foreach ($this->_default_seed_map() as $field_neraca => $config) {
-            if ($this->db->where('field_neraca', $field_neraca)->count_all_results($this->table) > 0) {
-                continue;
-            }
+        $this->insert(array(
+            'field_neraca' => 'kas',
+            'label_neraca' => 'Kas',
+            'kode_akun' => '11101',
+        ));
 
+        foreach ($this->_default_seed_map() as $field_neraca => $config) {
             $rows = $this->db
                 ->where('group', $config['group'])
                 ->order_by('kode_akun', 'ASC')

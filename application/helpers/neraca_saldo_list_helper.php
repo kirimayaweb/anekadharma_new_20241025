@@ -102,8 +102,16 @@ function neraca_saldo_aggregate_buku_besar_totals($CI, $month, $year)
 	return $totals;
 }
 
-function neraca_saldo_get_jurnal_penyesuaian_totals($CI, $month, $year, $kode_akun)
+function neraca_saldo_get_jurnal_penyesuaian_totals($CI, $month, $year, $kode_akun, $jp_totals_by_kode = null)
 {
+	if (is_array($jp_totals_by_kode)) {
+		$key = (string) (int) $kode_akun;
+		if (isset($jp_totals_by_kode[$key])) {
+			return $jp_totals_by_kode[$key];
+		}
+		return array('debet' => 0.0, 'kredit' => 0.0);
+	}
+
 	$sql_jp = 'SELECT sum(`debet`) as debet, sum(`kredit`) as kredit FROM `jurnal_penyesuaian`'
 		. ' WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ? AND `kode_akun` = ? GROUP BY `kode_akun`';
 	$jurnal_penyesuaian_data = $CI->db->query($sql_jp, array((int) $month, (int) $year, (int) $kode_akun));
@@ -116,6 +124,26 @@ function neraca_saldo_get_jurnal_penyesuaian_totals($CI, $month, $year, $kode_ak
 	}
 
 	return array('debet' => 0.0, 'kredit' => 0.0);
+}
+
+function neraca_saldo_get_all_jurnal_penyesuaian_totals($CI, $month, $year)
+{
+	$sql_jp = 'SELECT `kode_akun`, SUM(`debet`) AS debet, SUM(`kredit`) AS kredit'
+		. ' FROM `jurnal_penyesuaian`'
+		. ' WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ?'
+		. ' GROUP BY `kode_akun`';
+	$rows = $CI->db->query($sql_jp, array((int) $month, (int) $year))->result();
+
+	$totals = array();
+	foreach ($rows as $row) {
+		$key = (string) (int) $row->kode_akun;
+		$totals[$key] = array(
+			'debet' => (float) $row->debet,
+			'kredit' => (float) $row->kredit,
+		);
+	}
+
+	return $totals;
 }
 
 function neraca_saldo_get_neraca_saldo_row($CI, $month, $year, $kode_akun)
@@ -144,6 +172,7 @@ function neraca_saldo_compute_list_data($CI, $month, $year)
 	$CI->load->model('Sys_kode_akun_model');
 	$akun_list = $CI->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC();
 	$bb_totals = neraca_saldo_aggregate_buku_besar_totals($CI, $month, $year);
+	$jp_totals_by_kode = neraca_saldo_get_all_jurnal_penyesuaian_totals($CI, $month, $year);
 	$rows = array();
 	$no = 0;
 
@@ -154,7 +183,7 @@ function neraca_saldo_compute_list_data($CI, $month, $year)
 		$bb_debet = isset($bb_totals[$kode_key]) ? (float) $bb_totals[$kode_key]['debet'] : 0;
 		$bb_kredit = isset($bb_totals[$kode_key]) ? (float) $bb_totals[$kode_key]['kredit'] : 0;
 
-		$jp_totals = neraca_saldo_get_jurnal_penyesuaian_totals($CI, $month, $year, $kode_akun);
+		$jp_totals = neraca_saldo_get_jurnal_penyesuaian_totals($CI, $month, $year, $kode_akun, $jp_totals_by_kode);
 		$jp_debet = (float) $jp_totals['debet'];
 		$jp_kredit = (float) $jp_totals['kredit'];
 

@@ -1268,6 +1268,11 @@ class Tbl_neraca_data extends CI_Controller
 		}
 		$tahun_neraca = isset($data['tahun_neraca']) ? (int) $data['tahun_neraca'] : (int) date('Y');
 		$bulan_transaksi = isset($data['bulan_transaksi']) ? (int) $data['bulan_transaksi'] : 0;
+
+		if (!isset($data['data_tbl_neraca_data']) || !is_object($data['data_tbl_neraca_data'])) {
+			$data['data_tbl_neraca_data'] = neraca_prepare_form_row_defaults();
+		}
+
 		$data['neraca_system_totals'] = neraca_compute_all_system_totals($this, $tahun_neraca, $bulan_transaksi);
 		$data['neraca_tahun_neraca'] = $tahun_neraca;
 		$data['neraca_bulan_transaksi'] = $bulan_transaksi;
