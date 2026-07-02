@@ -1,4 +1,4 @@
-<div class="content-wrapper">
+﻿<div class="content-wrapper">
 
 
     <div class="content-header">
@@ -58,6 +58,52 @@
         }
         $excel_export_ids_str = implode(',', $excel_export_ids);
 
+        if (!isset($Tbl_penjualan_data_belum_bayar)) {
+            $Tbl_penjualan_data_belum_bayar = array();
+        }
+        if (!isset($Tbl_penjualan_data_terbayar)) {
+            $Tbl_penjualan_data_terbayar = array();
+        }
+        if (!isset($penjualan_count_belum_bayar)) {
+            $penjualan_count_belum_bayar = count($Tbl_penjualan_data_belum_bayar);
+        }
+        if (!isset($penjualan_count_terbayar)) {
+            $penjualan_count_terbayar = count($Tbl_penjualan_data_terbayar);
+        }
+        if (!isset($penjualan_active_tab) || $penjualan_active_tab === '') {
+            $penjualan_active_tab = 'tab-penjualan-semua';
+        }
+
+        $penjualan_tabs_list = array(
+            array(
+                'tab_id' => 'tab-penjualan-semua',
+                'link_id' => 'tab-penjualan-semua-link',
+                'label' => 'Penjualan',
+                'table_id' => 'tglSPOPFreeze',
+                'data' => $Tbl_penjualan_data,
+                'count' => count($Tbl_penjualan_data),
+                'badge_class' => 'badge-secondary',
+            ),
+            array(
+                'tab_id' => 'tab-penjualan-belum-bayar',
+                'link_id' => 'tab-penjualan-belum-bayar-link',
+                'label' => 'Belum Terbayar ( P )',
+                'table_id' => 'tglSPOPFreeze1',
+                'data' => $Tbl_penjualan_data_belum_bayar,
+                'count' => (int) $penjualan_count_belum_bayar,
+                'badge_class' => 'badge-danger',
+            ),
+            array(
+                'tab_id' => 'tab-penjualan-terbayar',
+                'link_id' => 'tab-penjualan-terbayar-link',
+                'label' => 'Terbayarkan / Proses',
+                'table_id' => 'tglSPOPFreeze2',
+                'data' => $Tbl_penjualan_data_terbayar,
+                'count' => (int) $penjualan_count_terbayar,
+                'badge_class' => 'badge-success',
+            ),
+        );
+
         ?>
 
 
@@ -90,6 +136,7 @@
                                 ?>
 
                                 <form id="form-cari-penjualan" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <input type="hidden" name="penjualan_active_tab" id="penjualan_active_tab_input" value="<?php echo htmlspecialchars($penjualan_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
                                     <div class="row">
 
                                         <div class="col-md-4" text-align="right">
@@ -163,545 +210,88 @@
 
                     <div class="card-body">
 
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th rowspan="2" style="text-align:center" width="10px">No</th>
-                                    <!-- <th style="text-align:center" width="100px">Action</th> -->
-                                    <th rowspan="2">Tgl Jual</th>
-                                    <th rowspan="2">nmrkirim</th>
-                                    <th rowspan="2">nmrpesan</th>
-
-                                    <th rowspan="2">Konsumen</th>
-                                    <th rowspan="2">Kode</th>
-                                    <th rowspan="2">Nama Barang</th>
-                                    <th rowspan="2">Unit</th>
-                                    <th rowspan="2">Satuan</th>
-                                    <th rowspan="2">Harga Satuan</th>
-                                    <th rowspan="2">Jumlah</th>
-                                    <th rowspan="2">Total <br> harga</th>
-
-                                    <!-- Colspan -->
-                                    <th colspan="2" style="text-align:center" width="50px">Debit</th>
-                                    <th colspan="2" style="text-align:center" width="50px">Kredit</th>
-                                </tr>
-                                <tr>
-                                    <th width="25px">UM PPH PSL 22</th>
-                                    <th>Piutang</th>
-                                    <th width="25px">Penjualan DPP</th>
-                                    <th>Utang PPN</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php
-                                $compare_tgl_jual = 0;
-                                $compare_nmr_pesan = 0;
-                                $compare_nmr_kirim = 0;
-                                $compare_uuid_penjualan = 0;
-
-                                $Total_Jumlah_per_nmrkirim = 0;
-                                $Total_UMPPHPSL22_per_nmrkirim = 0;
-                                $Total_piutang_per_nmrkirim = 0;
-                                $Total_penjualandpp_per_nmrkirim = 0;
-                                $Total_utangppn_per_nmrkirim = 0;
-
-                                $TOTAL_ALL_JUMLAH = 0;
-                                $TOTAL_ALL_UMPPHPSL22 = 0;
-                                $TOTAL_ALL_piutang = 0;
-                                $TOTAL_ALL_penjualandpp = 0;
-                                $TOTAL_ALL_utangppn = 0;
-                                $start = 0;
-                                foreach ($Tbl_penjualan_data as $list_data) {
-
-                                    $GET_tgl_jual = date("d-m-Y", strtotime($list_data->tgl_jual));
-
-                                    if (($start >= 1) and (($compare_nmr_kirim <> $list_data->nmrkirim)  or ($compare_tgl_jual <> $list_data->tgl_jual))) {
-                                        // Buat 1 baris untuk total dan background = KUNING
-
-                                ?>
-
-
-                                        <!-- // Buat 1 baris untuk total dan background = KUNING -->
-                                        <tr class="row-penjualan-subtotal">
-                                            <!-- BARIS TOTAL -->
-                                            <td><?php echo ++$start; ?></td>
-                                            <td style="background-color:yellow;" align="right"><?php
-                                                                                                // echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                                                                // echo $GET_tgl_jual;
-
-                                                                                                echo "<font color='red'><strong>TOTAL</strong></font>"
-
-                                                                                                ?>
-                                            </td>
-
-                                            <!-- Kolom Nomor Kirim -->
-                                            <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_kirim . "</strong></font>"; ?></td>
-
-                                            <!-- kolom Nomor pesan -->
-                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  
-                                                                                                ?></td>
-
-                                            <td></td>
-                                            <td></td>
-                                            <td>
-                                                <?php //echo $list_data->nama_barang; 
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php //echo $list_data->unit; 
-                                                ?>
-                                            </td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-
-
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                //echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>";
-                                                echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"
-                                                ?>
-                                            </td>
-                                            <?php
-                                            // nmrkirim baru , me NOL kan total nmrkirim
-                                            $Total_Jumlah_per_nmrkirim = 0;
-                                            $Total_UMPPHPSL22_per_nmrkirim = 0;
-                                            $Total_piutang_per_nmrkirim = 0;
-                                            $Total_penjualandpp_per_nmrkirim = 0;
-                                            $Total_utangppn_per_nmrkirim = 0;
-                                            ?>
-                                            <!-- END OF BARIS TOTAL -->
-                                        </tr>
-
-                                        <!-- Tgl Jual & nmrpesan baru -->
-
-                                        <tr class="row-penjualan-data" data-penjualan-id="<?php echo (int) $list_data->id; ?>">
-
-                                            <td><?php echo ++$start; ?></td>
-                                            <td>
-                                                <?php
-                                                echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                // echo $GET_tgl_jual;
-
-                                                echo "<br/>";
-
-                                                $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
-
-
-
-
-                                                ?>
-                                            </td>
-
-                                            <!-- Kolom Nomor Kirim -->
-                                            <td>
-                                                <?php
-                                                echo $list_data->nmrkirim;
-
-                                                echo "<br/>";
-
-                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
-
-                                                // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
-
-                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
-
-
-                                                ?>
-                                            </td>
-
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->nmrpesan;
-                                                echo "<br/>";
-
-                                                // echo anchor(site_url('tbl_penjualan/update_penjualan/' . $list_data->uuid_penjualan_proses), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah</i>', 'class="btn btn-warning btn-xs"  ');
-                                                // echo "";
-                                                // HAPUS
-                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
-                                                ?>
-                                            </td>
-
-                                            <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
-
-
-                                            <td align="left"><?php echo $list_data->kode_barang; ?></td>
-                                            <td align="left"><?php echo $list_data->nama_barang; ?></td>
-                                            <td align="left"><?php echo $list_data->unit; ?></td>
-                                            <td align="left"><?php echo $list_data->satuan; ?></td>
-                                            <td align="right">
-                                                <?php
-                                                // echo number_to_amount('123,456,789,012', 2, 'de_DE'); // Returns 123,46 billion
-                                                // echo "<br/>";
-                                                // echo nominal($list_data->harga_satuan); 
-                                                echo number_format($list_data->harga_satuan, 2, ',', '.');
-
-                                                ?>
-
-                                            </td>
-
-
-                                            <td align="right">
-                                                <?php
-
-                                                $jumlah_per_nmrkirim = $list_data->jumlah * $list_data->harga_satuan;
-
-                                                // echo nominal($jumlah_per_nmrkirim);
-                                                echo nominal($list_data->jumlah);
-
-                                                $Total_Jumlah_per_nmrkirim = $Total_Jumlah_per_nmrkirim + $jumlah_per_nmrkirim;
-                                                $TOTAL_ALL_JUMLAH = $TOTAL_ALL_JUMLAH + $jumlah_per_nmrkirim;
-
-                                                // umpphpsl22
-                                                $x_var_umpphpsl22 = 1.351351;
-                                                $umpphpsl22_per_nmrkirim = ($jumlah_per_nmrkirim * $x_var_umpphpsl22) / 100;
-                                                $Total_UMPPHPSL22_per_nmrkirim = $Total_UMPPHPSL22_per_nmrkirim + $umpphpsl22_per_nmrkirim;
-                                                $TOTAL_ALL_UMPPHPSL22 = $TOTAL_ALL_UMPPHPSL22 + $umpphpsl22_per_nmrkirim;
-
-                                                $x_piutang_percentage = 11.261261;
-                                                $piutang_per_nmrkirim = ($jumlah_per_nmrkirim - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
-                                                $Total_piutang_per_nmrkirim = $Total_piutang_per_nmrkirim + $piutang_per_nmrkirim;
-                                                $TOTAL_ALL_piutang = $TOTAL_ALL_piutang + $piutang_per_nmrkirim;
-
-                                                $x_penjualandpp_percentage = 90.090090;
-                                                $penjualandpp_per_nmrkirim = ($jumlah_per_nmrkirim * $x_penjualandpp_percentage) / 100;
-                                                $Total_penjualandpp_per_nmrkirim = $Total_penjualandpp_per_nmrkirim + $penjualandpp_per_nmrkirim;
-                                                $TOTAL_ALL_penjualandpp = $TOTAL_ALL_penjualandpp + $penjualandpp_per_nmrkirim;
-
-
-                                                $x_utangppn_percentage = 9.909910;
-                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * $x_utangppn_percentage) / 100;
-                                                $Total_utangppn_per_nmrkirim = $Total_utangppn_per_nmrkirim + $utangppn_per_nmrkirim;
-                                                $TOTAL_ALL_utangppn = $TOTAL_ALL_utangppn + $utangppn_per_nmrkirim;
-
-                                                ?>
-
-                                            </td>
-
-                                            <td align="right"> <?php echo nominal($jumlah_per_nmrkirim); ?> </td>
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($umpphpsl22_per_nmrkirim); 
-                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($piutang_per_nmrkirim);
-                                                echo number_format($piutang_per_nmrkirim, 2, ',', '.');
-                                                ?></td>
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($penjualandpp_per_nmrkirim);
-                                                echo number_format($penjualandpp_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($utangppn_per_nmrkirim);
-                                                echo number_format($utangppn_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-
-
-
-                                            <!-- END OF Tgl Jual & nmrpesan baru -->
-
-                                        </tr>
-
-
-                                    <?php
-
-                                        $compare_nmr_pesan = $list_data->nmrpesan;
-                                        $compare_nmr_kirim = $list_data->nmrkirim;
-                                        $compare_tgl_jual = $list_data->tgl_jual;
-                                    } else {
-                                    ?>
-
-                                        <tr class="row-penjualan-data" data-penjualan-id="<?php echo (int) $list_data->id; ?>">
-
-                                            <td><?php echo ++$start; ?></td>
-                                            <td>
-                                                <?php
-                                                echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                // echo $GET_tgl_jual;
-
-                                                echo "<br/>";
-
-                                                $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
-
-
-
-
-
-                                                ?>
-                                            </td>
-
-                                            <td>
-                                                <?php
-                                                echo $list_data->nmrkirim;
-                                                echo "<br/>";
-
-                                                echo anchor(site_url('Tbl_penjualan/cetak_penjualan_per_uuid_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak </i>', 'class="btn btn-success btn-xs"  target="_blank"');
-
-                                                // echo anchor(site_url('Tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan . '/' . $date_tgl_jual . '/' . $list_data->nmrkirim), '<i class="fa fa-pencil-square-o" aria-hidden="true">Tambah </i>', 'class="btn btn-danger btn-xs"  target="_blank"');
-
-                                                // echo "<br/>";
-
-                                                echo anchor(site_url('tbl_penjualan/kasir_penjualan/' . $list_data->uuid_penjualan), '<i class="fa fa-pencil-square-o" aria-hidden="true">Ubah Data</i>', 'class="btn btn-warning btn-xs"  ');
-                                                // echo "";
-                                                //    HAPUS
-                                                // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id), 'Hapus', 'onclick="javasciprt: return confirm(\'Anda Yakin Akan Menghapus Data Penjualan ini ?\')" ');
-                                                ?>
-                                            </td>
-                                            <td align="left">
-                                                <?php
-                                                echo $list_data->nmrpesan;
-                                                ?>
-                                            </td>
-
-                                            <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
-
-
-                                            <td align="left"><?php echo $list_data->kode_barang; ?></td>
-                                            <td align="left"><?php echo $list_data->nama_barang; ?></td>
-                                            <td align="left"><?php echo $list_data->unit; ?></td>
-                                            <td align="left"><?php echo $list_data->satuan; ?></td>
-                                            <td align="right">
-                                                <?php
-                                                // echo number_to_amount('123,456,789,012', 2, 'de_DE'); // Returns 123,46 billion
-                                                // echo "<br/>";
-                                                // echo nominal($list_data->harga_satuan); 
-                                                echo number_format($list_data->harga_satuan, 2, ',', '.');
-                                                ?>
-                                            </td>
-
-
-                                            <td align="right">
-                                                <?php
-
-                                                $jumlah_per_nmrkirim = $list_data->jumlah * $list_data->harga_satuan;
-
-                                                // echo nominal($jumlah_per_nmrkirim);
-                                                echo nominal($list_data->jumlah);
-
-                                                $Total_Jumlah_per_nmrkirim = $Total_Jumlah_per_nmrkirim + $jumlah_per_nmrkirim;
-                                                $TOTAL_ALL_JUMLAH = $TOTAL_ALL_JUMLAH + $jumlah_per_nmrkirim;
-
-                                                // umpphpsl22
-                                                $x_var_umpphpsl22 = 1.351351;
-                                                $umpphpsl22_per_nmrkirim = ($jumlah_per_nmrkirim * $x_var_umpphpsl22) / 100;
-                                                $Total_UMPPHPSL22_per_nmrkirim = $Total_UMPPHPSL22_per_nmrkirim + $umpphpsl22_per_nmrkirim;
-                                                $TOTAL_ALL_UMPPHPSL22 = $TOTAL_ALL_UMPPHPSL22 + $umpphpsl22_per_nmrkirim;
-
-                                                $x_piutang_percentage = 11.261261;
-                                                $piutang_per_nmrkirim = ($jumlah_per_nmrkirim - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
-                                                $Total_piutang_per_nmrkirim = $Total_piutang_per_nmrkirim + $piutang_per_nmrkirim;
-                                                $TOTAL_ALL_piutang = $TOTAL_ALL_piutang + $piutang_per_nmrkirim;
-
-                                                $x_penjualandpp_percentage = 90.090090;
-                                                $penjualandpp_per_nmrkirim = ($jumlah_per_nmrkirim * $x_penjualandpp_percentage) / 100;
-                                                $Total_penjualandpp_per_nmrkirim = $Total_penjualandpp_per_nmrkirim + $penjualandpp_per_nmrkirim;
-                                                $TOTAL_ALL_penjualandpp = $TOTAL_ALL_penjualandpp + $penjualandpp_per_nmrkirim;
-
-
-                                                $x_utangppn_percentage = 9.909910;
-                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * $x_utangppn_percentage) / 100;
-                                                $Total_utangppn_per_nmrkirim = $Total_utangppn_per_nmrkirim + $utangppn_per_nmrkirim;
-                                                $TOTAL_ALL_utangppn = $TOTAL_ALL_utangppn + $utangppn_per_nmrkirim;
-
-                                                ?>
-
-                                            </td>
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($jumlah_per_nmrkirim); 
-                                                echo number_format($jumlah_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($umpphpsl22_per_nmrkirim); 
-                                                echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($piutang_per_nmrkirim);
-                                                echo number_format($piutang_per_nmrkirim, 2, ',', '.');
-                                                ?></td>
-
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($penjualandpp_per_nmrkirim);
-                                                echo number_format($penjualandpp_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-                                            <td align="right">
-                                                <?php
-                                                // echo nominal($utangppn_per_nmrkirim);
-                                                echo number_format($utangppn_per_nmrkirim, 2, ',', '.');
-                                                ?>
-                                            </td>
-
-
-
-                                        </tr>
-
-                                    <?php
-
-                                        $compare_nmr_pesan = $list_data->nmrpesan;
-                                        $compare_nmr_kirim = $list_data->nmrkirim;
-                                        $compare_tgl_jual = $list_data->tgl_jual;
-                                    }
-                                    ?>
-
-
-
-                                    <!-- ================================ -->
-
-
-
-                                <?php
-
-                                    // $compare_nmr_kirim = $list_data->nmrkirim;
-                                    // $compare_tgl_jual = $list_data->tgl_jual;
-                                    // $compare_uuid_penjualan = $list_data->uuid_penjualan;
-                                }
-                                ?>
-
-
-
-
-
-                                <!-- TOTAL nmrkirim AKHIR -->
-                                <tr class="row-penjualan-subtotal">
-                                    <td><?php echo ++$start; ?></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-
-                                    <td style="background-color:yellow; text-align: right" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </td>
-                                    <td style="background-color:yellow; text-align: right" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </td>
-                                    <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        //  echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </td>
-                                    <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </td>
-                                    <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
-                                    </td>
-
-
-
-                                </tr>
-                            </tbody>
-
-                            <tfoot>
-
-                                <tr>
-                                    <th>No</th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th style="text-align:right">TOTAL</th>
-                                    <th style="text-align:right" align="right">
-                                        <?php
-                                        // echo nominal($TOTAL_ALL_JUMLAH); 
-                                        echo number_format($TOTAL_ALL_JUMLAH, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:right" align="right">
-                                        <?php
-                                        // echo nominal($TOTAL_ALL_UMPPHPSL22); 
-                                        echo number_format($TOTAL_ALL_UMPPHPSL22, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:right" align="right">
-                                        <?php
-                                        // echo nominal($TOTAL_ALL_piutang); 
-                                        echo number_format($TOTAL_ALL_piutang, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:right" align="right">
-                                        <?php
-                                        // echo nominal($TOTAL_ALL_penjualandpp); 
-                                        echo number_format($TOTAL_ALL_penjualandpp, 2, ',', '.');
-                                        ?>
-                                    </th>
-                                    <th style="text-align:right" align="right">
-                                        <?php
-                                        // echo nominal($TOTAL_ALL_utangppn); 
-                                        echo number_format($TOTAL_ALL_utangppn, 2, ',', '.');
-                                        ?>
-                                    </th>
-
-                                </tr>
-
-                            </tfoot>
-
-                        </table>
+                        <style>
+                            .col-tgl-jual-penjualan {
+                                white-space: nowrap;
+                                vertical-align: top;
+                            }
+                            .penjualan-badge-bayar-p {
+                                display: block;
+                                font-size: 1.45rem;
+                                font-weight: 800;
+                                color: #dc3545;
+                                line-height: 1.05;
+                                margin-top: 0.15rem;
+                                letter-spacing: 0.02em;
+                            }
+                            .penjualan-badge-bayar-l {
+                                display: block;
+                                font-size: 1.2rem;
+                                font-weight: 600;
+                                color: #20a070;
+                                line-height: 1.05;
+                                margin-top: 0.15rem;
+                                opacity: 0.92;
+                            }
+                            #penjualan-proses-bayar-tabs {
+                                border-bottom: 1px solid #dee2e6;
+                            }
+                            #penjualan-proses-bayar-tabs .nav-link {
+                                color: #212529;
+                                font-style: italic;
+                                font-weight: 500;
+                                background: #f8f9fa;
+                                border: 1px solid #52b788;
+                                border-bottom: none;
+                                margin-right: 0.35rem;
+                                margin-bottom: -1px;
+                                border-radius: 0.4rem 0.4rem 0 0;
+                                transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+                            }
+                            #penjualan-proses-bayar-tabs .nav-link:hover:not(.active) {
+                                background: #eef9f1;
+                                color: #1a1a1a;
+                            }
+                            #penjualan-proses-bayar-tabs .nav-link.active {
+                                color: #fff !important;
+                                font-style: normal;
+                                font-weight: 700;
+                                background: linear-gradient(180deg, #2b7cff 0%, #0056d6 100%) !important;
+                                border: 2px solid #ffc107 !important;
+                                box-shadow: 0 0 10px rgba(255, 193, 7, 0.85), 0 2px 8px rgba(0, 86, 214, 0.35);
+                            }
+                            #penjualan-proses-bayar-tabs .nav-link.active .badge-count {
+                                background: rgba(255, 255, 255, 0.28);
+                                color: #fff;
+                            }
+                            #penjualan-proses-bayar-tabs .badge-count {
+                                font-size: 0.72rem;
+                                margin-left: 0.25rem;
+                            }
+                        </style>
+
+                        <ul class="nav nav-tabs" id="penjualan-proses-bayar-tabs" role="tablist">
+                            <?php foreach ($penjualan_tabs_list as $tab_cfg) :
+                                $tab_nav_active = ($penjualan_active_tab === $tab_cfg['tab_id']) ? ' active' : '';
+                            ?>
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo $tab_nav_active; ?>" id="<?php echo htmlspecialchars($tab_cfg['link_id'], ENT_QUOTES, 'UTF-8'); ?>" data-toggle="tab" href="#<?php echo htmlspecialchars($tab_cfg['tab_id'], ENT_QUOTES, 'UTF-8'); ?>" role="tab" data-table-id="<?php echo htmlspecialchars($tab_cfg['table_id'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($tab_cfg['label'], ENT_QUOTES, 'UTF-8'); ?> <span class="badge <?php echo htmlspecialchars($tab_cfg['badge_class'], ENT_QUOTES, 'UTF-8'); ?> badge-count"><?php echo (int) $tab_cfg['count']; ?></span></a>
+                            </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="tab-content pt-3" id="penjualan-proses-bayar-tabs-content">
+                            <?php
+                            foreach ($penjualan_tabs_list as $tab_cfg) :
+                                $Tbl_penjualan_tab_data = $tab_cfg['data'];
+                                $penjualan_table_id = $tab_cfg['table_id'];
+                                $tab_active_class = ($penjualan_active_tab === $tab_cfg['tab_id']) ? ' show active' : '';
+                            ?>
+                            <div class="tab-pane fade<?php echo $tab_active_class; ?>" id="<?php echo htmlspecialchars($tab_cfg['tab_id'], ENT_QUOTES, 'UTF-8'); ?>" role="tabpanel">
+                                <?php include __DIR__ . '/_adminlte310_tbl_penjualan_list_table_fragment.php'; ?>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
@@ -768,8 +358,30 @@
 
 
 <script>
+    function getActivePenjualanTableId() {
+        var activePane = document.querySelector('#penjualan-proses-bayar-tabs-content .tab-pane.active');
+        if (activePane) {
+            var tableEl = activePane.querySelector('table.penjualan-list-table');
+            if (tableEl && tableEl.id) {
+                return tableEl.id;
+            }
+        }
+        var activeTab = document.querySelector('#penjualan-proses-bayar-tabs .nav-link.active');
+        if (activeTab) {
+            var tableId = activeTab.getAttribute('data-table-id');
+            if (tableId) {
+                return tableId;
+            }
+        }
+        return 'tglSPOPFreeze';
+    }
+
     function isDataTablePenjualanAktif() {
-        return !!(window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze'));
+        if (!window.jQuery || !jQuery.fn.DataTable) {
+            return false;
+        }
+        var tableId = getActivePenjualanTableId();
+        return jQuery.fn.DataTable.isDataTable('#' + tableId);
     }
 
     function ambilIdDariBarisPenjualan(tr) {
@@ -793,7 +405,8 @@
             return ids;
         }
 
-        var table = jQuery('#tglSPOPFreeze').DataTable();
+        var tableId = getActivePenjualanTableId();
+        var table = jQuery('#' + tableId).DataTable();
         var nodes = table.rows({ search: 'applied', order: 'applied', page: 'all' }).nodes();
         for (var i = 0; i < nodes.length; i++) {
             var tr = nodes[i];
@@ -817,7 +430,8 @@
 
     function kumpulkanIdPenjualanDariDomUrutanTabel() {
         var ids = [];
-        var tbody = document.querySelector('#tglSPOPFreeze tbody');
+        var tableId = getActivePenjualanTableId();
+        var tbody = document.querySelector('#' + tableId + ' tbody');
         if (!tbody) {
             return ids;
         }
@@ -882,6 +496,138 @@
 
 (function() {
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
+    var FILTER_STORAGE_KEY = 'anekadharma_tbl_penjualan_list_state';
+    var filterRestoreAttempted = false;
+    var skipFilterRestore = <?php echo (isset($skip_filter_restore) && $skip_filter_restore) ? 'true' : 'false'; ?>;
+
+    function parseTanggalInputKey(val) {
+        if (!val) {
+            return null;
+        }
+        var parts = String(val).trim().split(/[-/.]/);
+        if (parts.length !== 3) {
+            return null;
+        }
+        var d = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        var y = parseInt(parts[2], 10);
+        if (isNaN(d) || isNaN(m) || isNaN(y) || d <= 0 || m <= 0) {
+            return null;
+        }
+        if (y < 100) {
+            y += 2000;
+        }
+        return (y * 10000) + (m * 100) + d;
+    }
+
+    function tanggalInputSama(a, b) {
+        var keyA = parseTanggalInputKey(a);
+        var keyB = parseTanggalInputKey(b);
+        return keyA !== null && keyB !== null && keyA === keyB;
+    }
+
+    function getActiveTabIdFromDom() {
+        var activeTab = document.querySelector('#penjualan-proses-bayar-tabs .nav-link.active');
+        if (activeTab) {
+            var href = activeTab.getAttribute('href') || '';
+            if (href.charAt(0) === '#') {
+                return href.substring(1);
+            }
+        }
+        var tabInput = document.getElementById('penjualan_active_tab_input');
+        return tabInput && tabInput.value ? tabInput.value : 'tab-penjualan-semua';
+    }
+
+    function setPenjualanActiveTabInput(tabId) {
+        var tabInput = document.getElementById('penjualan_active_tab_input');
+        if (tabInput && tabId) {
+            tabInput.value = tabId;
+        }
+    }
+
+    function savePenjualanListState(awal, akhir, activeTab) {
+        if (!window.sessionStorage) {
+            return;
+        }
+        var tgl = getTanggalFilterPenjualan();
+        var tabId = activeTab || getActiveTabIdFromDom();
+        var tglAwal = awal || tgl.awal;
+        var tglAkhir = akhir || tgl.akhir;
+        if (!tglAwal || !tglAkhir) {
+            return;
+        }
+        try {
+            sessionStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+                tgl_awal: tglAwal,
+                tgl_akhir: tglAkhir,
+                active_tab: tabId
+            }));
+        } catch (eStorage) {}
+    }
+
+    function loadPenjualanListState() {
+        if (!window.sessionStorage) {
+            return null;
+        }
+        try {
+            var raw = sessionStorage.getItem(FILTER_STORAGE_KEY);
+            if (!raw) {
+                return null;
+            }
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.tgl_awal && parsed.tgl_akhir) {
+                return parsed;
+            }
+        } catch (eParse) {}
+        return null;
+    }
+
+    function restorePenjualanListStateDariSession() {
+        if (filterRestoreAttempted || skipFilterRestore) {
+            return;
+        }
+        filterRestoreAttempted = true;
+
+        var stored = loadPenjualanListState();
+        if (!stored) {
+            return;
+        }
+
+        var inpAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
+        var inpAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
+        var form = document.getElementById('form-cari-penjualan');
+        if (!inpAwal || !inpAkhir || !form) {
+            return;
+        }
+
+        var tanggalBerbeda = !tanggalInputSama(inpAwal.value, stored.tgl_awal)
+            || !tanggalInputSama(inpAkhir.value, stored.tgl_akhir);
+
+        if (tanggalBerbeda) {
+            inpAwal.value = stored.tgl_awal;
+            inpAkhir.value = stored.tgl_akhir;
+            if (stored.active_tab) {
+                setPenjualanActiveTabInput(stored.active_tab);
+            }
+            form.submit();
+            return;
+        }
+
+        if (stored.active_tab) {
+            setPenjualanActiveTabInput(stored.active_tab);
+            restorePenjualanActiveTab(stored.active_tab);
+        }
+    }
+
+    function restorePenjualanActiveTab(tabId) {
+        if (!window.jQuery || !tabId) {
+            return;
+        }
+        var link = document.querySelector('#penjualan-proses-bayar-tabs a[href="#' + tabId + '"]');
+        if (link && !link.classList.contains('active')) {
+            jQuery(link).tab('show');
+        }
+    }
 
     function getTanggalFilterPenjualan() {
         var tglAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
@@ -987,6 +733,7 @@
             }
             var tgl = getTanggalFilterPenjualan();
             if (tgl.awal && tgl.akhir) {
+                savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
                 form.submit();
             }
         }, 400);
@@ -1000,25 +747,81 @@
         form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
             el.addEventListener('change', function() {
                 updateRekapModalLinks();
+                var tgl = getTanggalFilterPenjualan();
+                if (tgl.awal && tgl.akhir) {
+                    savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
+                }
                 submitCariPenjualanOtomatis();
             });
         });
         if (window.jQuery) {
             jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', function() {
                 updateRekapModalLinks();
+                var tgl = getTanggalFilterPenjualan();
+                if (tgl.awal && tgl.akhir) {
+                    savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
+                }
                 submitCariPenjualanOtomatis();
             });
         }
+        var tglInit = getTanggalFilterPenjualan();
+        if (tglInit.awal && tglInit.akhir) {
+            savePenjualanListState(tglInit.awal, tglInit.akhir, getActiveTabIdFromDom());
+        }
+        restorePenjualanListStateDariSession();
         updateRekapModalLinks();
+    }
+
+    function sesuaikanDataTablePenjualanAktif() {
+        if (!window.jQuery || !jQuery.fn.DataTable) {
+            return;
+        }
+        var tableId = getActivePenjualanTableId();
+        if (!jQuery.fn.DataTable.isDataTable('#' + tableId)) {
+            return;
+        }
+        var table = jQuery('#' + tableId).DataTable();
+        table.columns.adjust();
+        if (table.fixedColumns && typeof table.fixedColumns === 'function') {
+            try {
+                table.fixedColumns().relayout();
+            } catch (ignoreFc) {}
+        }
+        table.draw(false);
+    }
+
+    function initPenjualanProsesBayarTabs() {
+        if (!window.jQuery) {
+            return;
+        }
+        jQuery('#penjualan-proses-bayar-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+            var href = e.target.getAttribute('href') || '';
+            var tabId = href.charAt(0) === '#' ? href.substring(1) : href;
+            setPenjualanActiveTabInput(tabId);
+            savePenjualanListState(null, null, tabId);
+            setTimeout(sesuaikanDataTablePenjualanAktif, 80);
+        });
+    }
+
+    var formCariPenjualan = document.getElementById('form-cari-penjualan');
+    if (formCariPenjualan) {
+        formCariPenjualan.addEventListener('submit', function() {
+            var tgl = getTanggalFilterPenjualan();
+            if (tgl.awal && tgl.akhir) {
+                savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
+            }
+        });
     }
 
     if (document.readyState === 'complete') {
         initAutoCariPenjualan();
         initLinkInputPenjualanBaru();
+        initPenjualanProsesBayarTabs();
     } else {
         window.addEventListener('load', function() {
             initAutoCariPenjualan();
             initLinkInputPenjualanBaru();
+            initPenjualanProsesBayarTabs();
         });
     }
 })();

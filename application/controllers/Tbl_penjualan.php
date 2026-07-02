@@ -135,6 +135,20 @@ class Tbl_penjualan extends CI_Controller
 	/**
 	 * @return array [sql_awal, sql_akhir, tampil_awal, tampil_akhir]
 	 */
+	private function _get_penjualan_active_tab()
+	{
+		$allowed = array('tab-penjualan-semua', 'tab-penjualan-belum-bayar', 'tab-penjualan-terbayar');
+		$tab = trim((string) $this->input->get_post('penjualan_active_tab', TRUE));
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = trim((string) $this->session->userdata('filter_tbl_penjualan_active_tab'));
+		}
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = 'tab-penjualan-semua';
+		}
+		$this->session->set_userdata('filter_tbl_penjualan_active_tab', $tab);
+		return $tab;
+	}
+
 	private function _resolve_penjualan_filter_dates()
 	{
 		$tgl_awal_in = $this->input->get_post('tgl_awal', TRUE);
@@ -223,6 +237,34 @@ class Tbl_penjualan extends CI_Controller
 		return array_values($options);
 	}
 
+	private function _filter_penjualan_proses_bayar($rows, $filter = 'all')
+	{
+		if (!is_array($rows)) {
+			return array();
+		}
+
+		if ($filter === 'belum_bayar') {
+			return array_values(array_filter($rows, function ($row) {
+				$proses = strtolower(trim((string) (isset($row->proses_bayar) ? $row->proses_bayar : '')));
+				return $proses === 'belum_bayar' || $proses === '';
+			}));
+		}
+
+		if ($filter === 'terbayar') {
+			return array_values(array_filter($rows, function ($row) {
+				$proses = strtolower(trim((string) (isset($row->proses_bayar) ? $row->proses_bayar : '')));
+				return $proses !== 'belum_bayar' && $proses !== '';
+			}));
+		}
+
+		return $rows;
+	}
+
+	private function _count_penjualan_proses_bayar($rows, $filter = 'all')
+	{
+		return count($this->_filter_penjualan_proses_bayar($rows, $filter));
+	}
+
 	private function _get_penjualan_between($date_awal, $date_akhir, $order_field = null)
 	{
 		$this->db->where('tgl_jual >=', $date_awal);
@@ -251,15 +293,22 @@ class Tbl_penjualan extends CI_Controller
 
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $Tbl_penjualan_data);
+		$penjualan_active_tab = $this->_get_penjualan_active_tab();
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan_data,
+			'Tbl_penjualan_data_belum_bayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'Tbl_penjualan_data_terbayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'penjualan_count_belum_bayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'penjualan_count_terbayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'penjualan_active_tab' => $penjualan_active_tab,
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
 			// 'start' => $start,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
+			'skip_filter_restore' => false,
 		);
 
 
@@ -276,22 +325,28 @@ class Tbl_penjualan extends CI_Controller
 		penjualan_set_list_bulan_context($this, $tgl_awal_raw, $tgl_akhir_raw);
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, $Tbl_penjualan_data);
+		$penjualan_active_tab = $this->_get_penjualan_active_tab();
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan_data,
+			'Tbl_penjualan_data_belum_bayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'Tbl_penjualan_data_terbayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'penjualan_count_belum_bayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'penjualan_count_terbayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'penjualan_active_tab' => $penjualan_active_tab,
 			// 'q' => $q,
 			// 'pagination' => $this->pagination->create_links(),
 			// 'total_rows' => $config['total_rows'],
 			// 'start' => $start,
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
+			'skip_filter_restore' => true,
 		);
 
 
 		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list', $data);
 	}
-
 
 	public function RekapPenjualanPerBarang()
 	{
