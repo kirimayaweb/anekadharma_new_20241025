@@ -415,21 +415,22 @@
                                 }
                                 ?>
 
+                                <?php if (!empty($Tbl_pembelian_data)) { ?>
                                 <!-- TOTAL SPOP AKHIR -->
                                 <tr class="row-pembelian-subtotal">
                                     <td><?php echo ++$start ?></td>
                                     <td>
                                         <?php
                                         // if ($x_button == 1) {
-                                        //     echo anchor(site_url('tbl_pembelian/update_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
+                                        //     echo anchor(site_url('tbl_pembelian/update_per_spop/' . $compare_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH</i>', 'class="btn btn-warning btn-xs"');
 
-                                        //     echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $list_data->spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
+                                        //     echo anchor(site_url('tbl_pembelian/delete_per_spop/' . $compare_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
                                         // }
                                         ?>
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td><?php echo $list_data->spop; ?></td>
+                                    <td><?php echo $compare_spop; ?></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -448,13 +449,13 @@
                                     <td>
                                         <?php
                                         // if ($list_spop_status_lu == "U") {
-                                        //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                        //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
                                         // }
 
 
-                                        $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($list_data->uuid_spop);
+                                        $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($compare_uuid_spop);
 
-                                        $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($list_data->uuid_spop)->total_pengajuan;
+                                        $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($compare_uuid_spop)->total_pengajuan;
 
                                         if ($result_pengajuan_by_uuid_spop) {
                                             $startx = 0;
@@ -484,7 +485,7 @@
                                             }
 
                                             // }else{
-                                            //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
+                                            //     echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $compare_uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
                                             // }
 
                                         }
@@ -495,6 +496,7 @@
                                     <td></td>
                                     <td></td>
                                 </tr>
+                                <?php } ?>
                             </tbody>
 
                             <tfoot>

@@ -1594,8 +1594,8 @@ class Tbl_pembelian extends CI_Controller
 
 		$get_data_kode_akun = $this->Sys_kode_akun_model->get_by_uuid_kode_akun($this->input->post('uuid_kode_akun', TRUE));
 
-		// PENJUALAN
-		$sql = "select * from `tbl_penjualan` where  `uuid_konsumen`='$uuid_konsumen' and (`proses_bayar`='proses' or `proses_bayar`='belum_bayar' )";
+		// PENJUALAN - hanya proses record yang sudah dipilih (klik Pilih Bayar)
+		$sql = "select * from `tbl_penjualan` where `uuid_konsumen`='$uuid_konsumen' and `proses_bayar`='proses'";
 
 		foreach ($this->db->query($sql)->result() as $list_data) {
 
@@ -1639,12 +1639,7 @@ class Tbl_pembelian extends CI_Controller
 
 			);
 
-			print_r($data);
-			print_r("<br/>");
-			print_r("<br/>");
-
 			$this->Tbl_penjualan_pembayaran_model->insert($data);
-
 
 			// Refresh / update data tbl_penjualan = update proses_bayar=bayar ,tgl-input, tgl_bayar dan nomor bukti bayar
 			$data = array(
@@ -1658,39 +1653,12 @@ class Tbl_pembelian extends CI_Controller
 		}
 		// END OF PENJUALAN
 
-		print_r("proses");
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
-		// die;
-
-		// PENJUALAN ACCOUNTING
-
-
-		print_r($uuid_konsumen);
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
-
-
-		$start = 0;
-		$sql = "select * from `tbl_penjualan_accounting` where  `uuid_konsumen`='$uuid_konsumen' and (`proses_bayar`='proses' or `proses_bayar`='belum_bayar' )";
-
-		print_r($this->db->query($sql)->result());
-		print_r("<br/>");
-		print_r("<br/>");
-		print_r("<br/>");
+		// PENJUALAN ACCOUNTING - hanya proses record yang sudah dipilih
+		$sql = "select * from `tbl_penjualan_accounting` where `uuid_konsumen`='$uuid_konsumen' and `proses_bayar`='proses'";
 
 		foreach ($this->db->query($sql)->result() as $list_data) {
 
-			echo ++$start;
-			print_r("<br/>");
-			print_r($list_data->id);
-			print_r("<br/>");
-
-			// print_r($list_data);
-			// die;
-			// Copy record dari tbl_penjualan ke tbl_penjualan_bayar
+			// Copy record dari tbl_penjualan_accounting ke tbl_penjualan_accounting_pembayaran
 			$data = array(
 				'tgl_input' => date("Y-m-d H:i:s"),
 				'tgl_bayar' => date("Y-m-d H:i:s", strtotime($this->input->post('tanggal_bayar_input', TRUE))),
@@ -1728,14 +1696,9 @@ class Tbl_pembelian extends CI_Controller
 
 			);
 
-			print_r($data);
-			print_r("<br/>");
-			print_r("<br/>");
-
 			$this->Tbl_penjualan_accounting_pembayaran_model->insert($data);
 
-
-			// Refresh / update data tbl_penjualan = update proses_bayar=bayar ,tgl-input, tgl_bayar dan nomor bukti bayar
+			// Refresh / update data tbl_penjualan_accounting = update proses_bayar=bayar ,tgl-input, tgl_bayar dan nomor bukti bayar
 			$data = array(
 				'proses_bayar' => "bayar",
 				'tgl_bayar_input' => date("Y-m-d H:i:s"),
@@ -1743,26 +1706,9 @@ class Tbl_pembelian extends CI_Controller
 				'nmr_bukti_bayar' => $this->input->post('nomor_bayar_input_per_transaksi', TRUE),
 			);
 
-			print_r($data);
-			print_r("<br/>");
-			print_r("<br/>");
-
-
-
 			$this->Tbl_penjualan_accounting_model->update($list_data->id, $data);
-
-			print_r("Accounting selesai");
-			print_r("<br/>");
-			print_r("<br/>");
-			print_r("<br/>");
 		}
 		// END OF PENJUALAN ACCOUNTING
-
-		print_r("proses");
-		// die;
-
-		// $sql = "UPDATE `tbl_penjualan` SET `proses_bayar`='bayar',`tgl_bayar_input`='',`proses_bayar`='bayar' WHERE `uuid_konsumen`='$uuid_konsumen' and `proses_bayar`='proses' ";
-		// $this->db->query($sql);
 
 		redirect(site_url('tbl_pembelian/tagihan_per_uuid_konsumen/' . $uuid_konsumen));
 	}
