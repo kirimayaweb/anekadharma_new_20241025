@@ -69,11 +69,7 @@
                                     $sql = "SELECT uuid_konsumen, SUM(tbl_penjualan_pembayaran.nominal_bayar) as nominal_bayar FROM tbl_penjualan_pembayaran WHERE tbl_penjualan_pembayaran.uuid_konsumen='$uuid_konsumen_proses' GROUP BY tbl_penjualan_pembayaran.uuid_konsumen";
 
                                     $Data_konsumen_pembayaran = $this->db->query($sql)->row();
-
-
-
-
-
+                                    $nominal_bayar_pembayaran = ($Data_konsumen_pembayaran) ? $Data_konsumen_pembayaran->nominal_bayar : 0;
 
                                     // CEK PENJUALAN ACCOUNTING
                                     $GET_KONSUMEN = $list_data->uuid_konsumen;
@@ -89,7 +85,8 @@
                                                         FROM  tbl_penjualan_accounting  tbl_penjualan_accounting_a
                                                         WHERE uuid_konsumen = '$GET_KONSUMEN' ";
 
-                                        $Data_konsumen_tagihan_accounting = $this->db->query($sql)->row()->total_belanja_accounting;
+                                        $row_tagihan_accounting = $this->db->query($sql)->row();
+                                        $Data_konsumen_tagihan_accounting = ($row_tagihan_accounting) ? $row_tagihan_accounting->total_belanja_accounting : 0;
 
                                         // echo $Data_konsumen_tagihan_accounting;
                                     } else {
@@ -107,19 +104,14 @@
                                     $sql = "SELECT uuid_konsumen, SUM(tbl_penjualan_accounting_pembayaran.nominal_bayar) as nominal_bayar FROM tbl_penjualan_accounting_pembayaran WHERE tbl_penjualan_accounting_pembayaran.uuid_konsumen='$uuid_konsumen_proses' GROUP BY tbl_penjualan_accounting_pembayaran.uuid_konsumen";
 
                                     $Data_konsumen_pembayaran_accounting = $this->db->query($sql)->row();
-
-                                    // TERBAYAR
-                                    // $Total_terbayar_accounting = $Data_konsumen_pembayaran_accounting->nominal_bayar;
+                                    $nominal_bayar_accounting = ($Data_konsumen_pembayaran_accounting) ? $Data_konsumen_pembayaran_accounting->nominal_bayar : 0;
 
                                     // END OF PEMBAYARAN ACCOUNTING
 
-
-
                                     // TERBAYAR
-                                    $Total_terbayar = $Data_konsumen_pembayaran->nominal_bayar + $Data_konsumen_pembayaran_accounting->nominal_bayar;
+                                    $Total_terbayar = $nominal_bayar_pembayaran + $nominal_bayar_accounting;
 
-
-                                    $x_kekurangan = ($list_data->total_belanja + $Data_konsumen_tagihan_accounting) - ($Data_konsumen_pembayaran->nominal_bayar + $Data_konsumen_pembayaran_accounting->nominal_bayar);
+                                    $x_kekurangan = ($list_data->total_belanja + $Data_konsumen_tagihan_accounting) - ($nominal_bayar_pembayaran + $nominal_bayar_accounting);
                                 ?>
                                     <tr>
                                         <td><?php echo ++$start ?></td>
