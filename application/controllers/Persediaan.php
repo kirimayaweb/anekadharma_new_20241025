@@ -572,6 +572,9 @@ class Persediaan extends CI_Controller
 			'url_rekap_sync_step' => site_url('Persediaan/ajax_rekap_sync_step'),
 			'url_rekap_excel' => site_url('Persediaan/excel_rekap'),
 			'url_tambah_persediaan' => site_url('Persediaan/ajax_tambah_persediaan'),
+			'url_get_persediaan_jasa' => site_url('Persediaan/ajax_get_persediaan_jasa'),
+			'url_update_persediaan_jasa' => site_url('Persediaan/ajax_update_persediaan_jasa'),
+			'url_hapus_persediaan_jasa' => site_url('Persediaan/ajax_hapus_persediaan_jasa'),
 			'url_cek_generate_persediaan' => site_url('Persediaan/ajax_cek_generate_persediaan_bulan'),
 			'url_analisa_generate_persediaan' => site_url('Persediaan/ajax_analisa_generate_persediaan_bulan'),
 			'url_generate_persediaan_base' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN'),
@@ -580,6 +583,8 @@ class Persediaan extends CI_Controller
 			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
 			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
+			'url_gen_recalc_summary_tables' => site_url('Persediaan/ajax_gen_recalc_summary_tables'),
+			'url_excel_gen_recalc_summary' => site_url('Persediaan/excel_gen_recalc_summary'),
 			'url_excel_gen_recalc' => site_url('Persediaan/excel_gen_recalc'),
 			'url_excel_rekonsiliasi_transaksi' => site_url('Persediaan/excel_rekonsiliasi_transaksi'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
@@ -1024,6 +1029,182 @@ class Persediaan extends CI_Controller
 			'id' => (int) $id_persediaan,
 			'bulan' => $bulan,
 			'tanggal_beli' => $tanggal_beli,
+		));
+	}
+
+	/**
+	 * AJAX: ambil satu record persediaan jasa untuk form ubah.
+	 */
+	public function ajax_get_persediaan_jasa()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			$id = (int) $this->input->get('id', TRUE);
+		}
+		if ($id <= 0) {
+			echo json_encode(array('ok' => false, 'message' => 'ID persediaan tidak valid.'));
+			return;
+		}
+
+		$row = $this->Persediaan_model->get_by_id($id);
+		if (!$row) {
+			echo json_encode(array('ok' => false, 'message' => 'Data persediaan tidak ditemukan.'));
+			return;
+		}
+
+		if (!persediaan_row_is_kategori_jasa($row)) {
+			echo json_encode(array('ok' => false, 'message' => 'Record bukan kategori jasa.'));
+			return;
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'data' => array(
+				'id' => (int) $row->id,
+				'namabarang' => isset($row->namabarang) ? $row->namabarang : '',
+				'satuan' => isset($row->satuan) ? $row->satuan : '',
+				'hpp' => isset($row->hpp) ? $row->hpp : '',
+				'sa' => isset($row->sa) ? $row->sa : '',
+				'spop' => isset($row->spop) ? $row->spop : '',
+				'beli' => isset($row->beli) ? $row->beli : '',
+				'tuj' => isset($row->tuj) ? $row->tuj : '',
+				'total_10' => isset($row->total_10) ? $row->total_10 : '',
+				'nilai_persediaan' => isset($row->nilai_persediaan) ? $row->nilai_persediaan : '',
+				'tanggal_beli' => isset($row->tanggal_beli) ? $row->tanggal_beli : '',
+			),
+		));
+	}
+
+	/**
+	 * AJAX: ubah record persediaan jasa (field terbatas).
+	 */
+	public function ajax_update_persediaan_jasa()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			echo json_encode(array('ok' => false, 'message' => 'ID persediaan tidak valid.'));
+			return;
+		}
+
+		$row = $this->Persediaan_model->get_by_id($id);
+		if (!$row) {
+			echo json_encode(array('ok' => false, 'message' => 'Data persediaan tidak ditemukan.'));
+			return;
+		}
+
+		if (!persediaan_row_is_kategori_jasa($row)) {
+			echo json_encode(array('ok' => false, 'message' => 'Record bukan kategori jasa.'));
+			return;
+		}
+
+		$namabarang = pembelian_normalize_nama_barang($this->input->post('namabarang', TRUE));
+		$satuan = trim((string) $this->input->post('satuan', TRUE));
+		if ($namabarang === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Nama jasa wajib diisi.'));
+			return;
+		}
+		if ($satuan === '') {
+			echo json_encode(array('ok' => false, 'message' => 'Satuan wajib diisi.'));
+			return;
+		}
+
+		$fields_num = array('hpp', 'sa', 'beli', 'tuj', 'total_10', 'nilai_persediaan');
+		$update = array(
+			'namabarang' => $namabarang,
+			'satuan' => $satuan,
+			'spop' => trim((string) $this->input->post('spop', TRUE)),
+		);
+
+		foreach ($fields_num as $field) {
+			$raw = trim((string) $this->input->post($field, TRUE));
+			if ($raw === '' || $raw === '-') {
+				$update[$field] = '0';
+				continue;
+			}
+			if (in_array($field, array('hpp', 'nilai_persediaan'), true)) {
+				$clean = preg_replace('/[^0-9]/', '', str_replace('.', '', $raw));
+				$update[$field] = $clean !== '' ? $clean : '0';
+			} else {
+				$val = (int) floor(persediaan_parse_angka($raw));
+				$update[$field] = (string) max(0, $val);
+			}
+		}
+
+		if ($this->db->field_exists('kategori', 'persediaan')) {
+			$update['kategori'] = 'jasa';
+		}
+
+		$this->db->where('id', $id);
+		if (!$this->db->update('persediaan', $update)) {
+			echo json_encode(array('ok' => false, 'message' => 'Gagal mengubah data persediaan.'));
+			return;
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'success' => true,
+			'message' => 'Data jasa berhasil diubah.',
+			'id' => $id,
+			'namabarang' => $namabarang,
+		));
+	}
+
+	/**
+	 * AJAX: hapus record persediaan jasa.
+	 */
+	public function ajax_hapus_persediaan_jasa()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper('pembelian_persediaan');
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			echo json_encode(array('ok' => false, 'message' => 'ID persediaan tidak valid.'));
+			return;
+		}
+
+		$row = $this->Persediaan_model->get_by_id($id);
+		if (!$row) {
+			echo json_encode(array('ok' => false, 'message' => 'Data persediaan tidak ditemukan.'));
+			return;
+		}
+
+		if (!persediaan_row_is_kategori_jasa($row)) {
+			echo json_encode(array('ok' => false, 'message' => 'Record bukan kategori jasa.'));
+			return;
+		}
+
+		if (!$this->Persediaan_model->delete($id)) {
+			echo json_encode(array('ok' => false, 'message' => 'Gagal menghapus data persediaan.'));
+			return;
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'success' => true,
+			'message' => 'Data jasa berhasil dihapus.',
+			'id' => $id,
 		));
 	}
 
@@ -1675,6 +1856,62 @@ class Persediaan extends CI_Controller
 		} catch (Throwable $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		}
+	}
+
+	/**
+	 * AJAX: muat 6 tabel ringkasan hasil generate (persediaan bulan lalu, pembelian, produksi, pecah, penjualan).
+	 */
+	public function ajax_gen_recalc_summary_tables()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Ringkasan generate'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$result = persediaan_gen_recalc_summary_tables_load($this, $bulan);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * Export Excel tabel ringkasan generate (persediaan_bulan_lalu|pembelian_barang|...|penjualan).
+	 */
+	public function excel_gen_recalc_summary()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel ringkasan generate')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(persediaan_gen_recalc_summary_jenis_definitions());
+		if ($jenis === '' || !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export tidak valid.', 400);
+			return;
+		}
+
+		$namaFile = 'Ringkasan_Generate_' . $bulan . '_' . $jenis . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_gen_recalc_summary_export_excel_output($this, $bulan, $jenis);
+		exit();
 	}
 
 	/**

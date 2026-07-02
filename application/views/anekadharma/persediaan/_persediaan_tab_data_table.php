@@ -7,6 +7,7 @@ $Persediaan_rows = isset($Persediaan_rows) && is_array($Persediaan_rows) ? $Pers
 $table_id = isset($table_id) ? (string) $table_id : 'table-persediaan';
 $bulan_tampil = isset($bulan_tampil) ? (string) $bulan_tampil : date('Y-m');
 $tab_mode = isset($tab_mode) ? (string) $tab_mode : 'barang';
+$is_jasa_tab = (strtolower(trim($tab_mode)) === 'jasa');
 $show_keluar_columns = persediaan_tab_data_show_keluar_columns($tab_mode);
 $nama_barang_header = persediaan_tab_data_nama_barang_header($tab_mode);
 $fixed_left_columns = persediaan_tab_data_fixed_left_columns();
@@ -22,7 +23,7 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 }
 ?>
 <div class="persediaan-tab-dt-wrap">
-<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
+<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
 	<thead>
 		<tr>
 			<th width="50px">No</th>
@@ -62,7 +63,21 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 		?>
 			<tr>
 				<td><?php echo ++$start ?></td>
-				<td><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></td>
+				<td class="<?php echo $is_jasa_tab ? 'persediaan-jasa-col-tanggal' : ''; ?>">
+					<div class="persediaan-tanggal-text"><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></div>
+					<?php if ($is_jasa_tab) {
+						$jasa_nama = isset($persediaan->namabarang) ? (string) $persediaan->namabarang : '';
+					?>
+					<div class="persediaan-jasa-row-aksi mt-1">
+						<button type="button" class="btn btn-warning btn-xs btn-ubah-persediaan-jasa-row" data-id="<?php echo (int) $persediaan->id; ?>" data-namabarang="<?php echo htmlspecialchars($jasa_nama, ENT_QUOTES, 'UTF-8'); ?>" title="Ubah data jasa">
+							<i class="fas fa-edit"></i> Ubah
+						</button>
+						<button type="button" class="btn btn-danger btn-xs btn-hapus-persediaan-jasa-row" data-id="<?php echo (int) $persediaan->id; ?>" data-namabarang="<?php echo htmlspecialchars($jasa_nama, ENT_QUOTES, 'UTF-8'); ?>" title="Hapus data jasa">
+							<i class="fas fa-trash"></i> Hapus
+						</button>
+					</div>
+					<?php } ?>
+				</td>
 				<td><?php echo $persediaan->namabarang ?></td>
 				<td><?php echo $persediaan->satuan ?></td>
 				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_hpp_row($persediaan); ?></td>
