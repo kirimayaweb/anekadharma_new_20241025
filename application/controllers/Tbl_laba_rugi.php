@@ -12,7 +12,7 @@ class Tbl_laba_rugi extends CI_Controller
         // $this->load->model('Tbl_laba_rugi_model');
         // $this->load->library('form_validation');
 
-        $this->load->model(array('Tbl_laba_rugi_model', 'Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model'));
+        $this->load->model(array('Tbl_laba_rugi_model', 'Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Tbl_laba_rugi_detail_model', 'Sys_labarugi_keterangan_model', 'Sys_labarugi_kode_akun_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->library('Pdf');
@@ -207,7 +207,396 @@ class Tbl_laba_rugi extends CI_Controller
             }
         }
 
+        $data['list_unit'] = $this->db->order_by('nama_unit', 'ASC')->get('sys_unit')->result();
+
+        $this->load->helper('laba_rugi_detail');
+        labarugi_detail_ensure_table($this);
+        $uuid_laba_rugi = '';
+        if (isset($data['data_tbl_laba_rugi']) && !empty($data['data_tbl_laba_rugi']->uuid_data_laba_rugi)) {
+            $uuid_laba_rugi = $data['data_tbl_laba_rugi']->uuid_data_laba_rugi;
+        } elseif (isset($data['uuid_data_laba_rugi']) && $data['uuid_data_laba_rugi'] !== '') {
+            $uuid_laba_rugi = $data['uuid_data_laba_rugi'];
+        }
+        $data['uuid_data_laba_rugi'] = $uuid_laba_rugi;
+        $data['labarugi_detail_maps'] = array(
+            'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
+            'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
+        );
+
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_laba_rugi/adminlte310_labarugi_form', $data);
+    }
+
+    public function save_labarugi_detail()
+    {
+        $this->load->helper('laba_rugi_detail');
+        labarugi_detail_ensure_table($this);
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $tahun = (int) $this->input->post('tahun');
+        $bulan = (int) $this->input->post('bulan');
+        $jenis_tab = trim((string) $this->input->post('jenis_tab'));
+        $nama_laba_rugi = trim((string) $this->input->post('nama_laba_rugi'));
+        $unit = trim((string) $this->input->post('unit'));
+        $nominal_raw = (string) $this->input->post('nominal', FALSE);
+        $keterangan_data = trim((string) $this->input->post('keterangan_data'));
+
+        if ($tahun < 2000 || $bulan < 1 || $bulan > 12) {
+            echo json_encode(array('ok' => false, 'message' => 'Periode tidak valid.'));
+            return;
+        }
+
+        if (!in_array($jenis_tab, array('rinci', 'sederhana'), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Jenis tab tidak valid.'));
+            return;
+        }
+
+        $this->load->helper('laba_rugi_keterangan');
+        $allowed_keys = labarugi_keterangan_allowed_keys($this, $jenis_tab);
+        if (!in_array($nama_laba_rugi, $allowed_keys, true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Keterangan tidak valid.'));
+            return;
+        }
+
+        $nominal = labarugi_detail_parse_nominal($nominal_raw);
+        if ($nominal === null) {
+            echo json_encode(array('ok' => false, 'message' => 'Nominal tidak valid.'));
+            return;
+        }
+
+        if ($unit === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Unit wajib diisi untuk tab per unit.'));
+            return;
+        }
+
+        $uuid_laba_rugi = labarugi_detail_resolve_parent_uuid($this, $tahun, $bulan);
+        if ($uuid_laba_rugi === null || $uuid_laba_rugi === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Gagal menyiapkan UUID laba rugi.'));
+            return;
+        }
+
+        $id = $this->Tbl_laba_rugi_detail_model->upsert(array(
+            'tanggal' => labarugi_detail_tanggal_periode($tahun, $bulan),
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'nama_laba_rugi' => $nama_laba_rugi,
+            'unit' => $unit,
+            'nominal' => $nominal,
+            'nominal_update' => $nominal,
+            'auto_sistem' => null,
+            'keterangan_data' => ($keterangan_data !== '') ? $keterangan_data : null,
+            'jenis_tab' => $jenis_tab,
+            'tahun_transaksi' => $tahun,
+            'bulan_transaksi' => $bulan,
+        ));
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => 'Data berhasil disimpan.',
+            'id' => $id,
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'nominal_formatted' => labarugi_detail_format_nominal($nominal),
+        ));
+    }
+
+    public function list_labarugi_keterangan($jenis_tab = 'rinci')
+    {
+        $this->load->helper('laba_rugi_keterangan');
+        header('Content-Type: application/json; charset=utf-8');
+
+        $jenis_tab = trim((string) $jenis_tab);
+        if (!in_array($jenis_tab, labarugi_keterangan_labarugi_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status laba rugi tidak valid.', 'data' => array()));
+            return;
+        }
+
+        $rows = $this->Sys_labarugi_keterangan_model->get_by_tab($jenis_tab);
+        $data = array();
+        foreach ($rows as $row) {
+            $data[] = array(
+                'id' => (int) $row->id,
+                'uuid_nama_keterangan' => $row->uuid_nama_keterangan,
+                'nama_keterangan' => $row->nama_keterangan,
+                'status_keterangan' => $row->status_keterangan,
+                'status_labarugi' => $row->status_labarugi,
+                'nama_group' => isset($row->nama_group) ? $row->nama_group : null,
+                'keterangan' => $row->keterangan,
+                'urutan' => (int) $row->urutan,
+            );
+        }
+
+        echo json_encode(array(
+            'ok' => true,
+            'data' => $data,
+            'group_options' => labarugi_keterangan_group_options($this, $jenis_tab),
+        ));
+    }
+
+    public function save_labarugi_keterangan()
+    {
+        $this->load->helper('laba_rugi_keterangan');
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $id = (int) $this->input->post('id');
+        $uuid = trim((string) $this->input->post('uuid_nama_keterangan'));
+        $nama = trim((string) $this->input->post('nama_keterangan'));
+        $status_keterangan = trim((string) $this->input->post('status_keterangan'));
+        $status_labarugi = trim((string) $this->input->post('status_labarugi'));
+        $nama_group = trim((string) $this->input->post('nama_group'));
+        $keterangan = trim((string) $this->input->post('keterangan'));
+
+        if ($nama === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Nama keterangan wajib diisi.'));
+            return;
+        }
+
+        if (!in_array($status_keterangan, labarugi_keterangan_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status keterangan tidak valid.'));
+            return;
+        }
+
+        if (!in_array($status_labarugi, labarugi_keterangan_labarugi_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status laba rugi tidak valid.'));
+            return;
+        }
+
+        $result = $this->Sys_labarugi_keterangan_model->save_row(array(
+            'id' => $id,
+            'uuid_nama_keterangan' => $uuid,
+            'nama_keterangan' => $nama,
+            'status_keterangan' => $status_keterangan,
+            'status_labarugi' => $status_labarugi,
+            'nama_group' => $nama_group,
+            'keterangan' => $keterangan,
+        ));
+
+        echo json_encode($result);
+    }
+
+    public function ajax_labarugi_setting_kode_akun($uuid_nama_keterangan = null)
+    {
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        $uuid_nama_keterangan = trim((string) $uuid_nama_keterangan);
+        $status_labarugi = trim((string) $this->input->get('jenis_tab'));
+        $nama_keterangan = trim((string) $this->input->get('nama_keterangan'));
+        $tahun = (int) $this->input->get('tahun');
+        $bulan = (int) $this->input->get('bulan');
+        if ($tahun < 2000) { $tahun = (int) date('Y'); }
+        if ($bulan < 1 || $bulan > 12) { $bulan = (int) date('m'); }
+
+        if ($uuid_nama_keterangan === '') {
+            echo json_encode(array('ok' => false, 'message' => 'UUID keterangan tidak valid.'));
+            return;
+        }
+
+        if (!in_array($status_labarugi, labarugi_keterangan_labarugi_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status laba rugi tidak valid.'));
+            return;
+        }
+
+        $selected_kodes = labarugi_kode_akun_selected_kodes($this, $uuid_nama_keterangan, $status_labarugi);
+        $selected_flip = array_flip($selected_kodes);
+        $all = $this->db->select('kode_akun, nama_akun')->order_by('kode_akun', 'ASC')->get('sys_kode_akun')->result();
+
+        $rows_by_kode = array();
+        if (!empty($selected_kodes)) {
+            $this->load->helper('neraca_kode_akun');
+            $saldo_map = neraca_get_neraca_saldo_map($this, $tahun, $bulan);
+            $rows_by_kode = $saldo_map['rows_by_kode'];
+        }
+
+        $available = array();
+        $terpilih = array();
+
+        foreach ($all as $akun) {
+            $kode_str = (string) $akun->kode_akun;
+            $item = array(
+                'kode_akun' => $akun->kode_akun,
+                'nama_akun' => $akun->nama_akun,
+            );
+            if (isset($selected_flip[$kode_str])) {
+                $nominal_ns = labarugi_kode_akun_neraca_saldo_nominal($this, $akun->kode_akun, $tahun, $bulan, $rows_by_kode);
+                $item['nominal_ns'] = $nominal_ns;
+                $item['nominal_ns_formatted'] = labarugi_kode_akun_format_nominal($nominal_ns);
+                $terpilih[] = $item;
+            } else {
+                $available[] = $item;
+            }
+        }
+
+        if ($nama_keterangan === '') {
+            $ket_row = $this->db->get_where('sys_labarugi_keterangan', array(
+                'uuid_nama_keterangan' => $uuid_nama_keterangan,
+                'status_labarugi' => $status_labarugi,
+            ))->row();
+            if ($ket_row) {
+                $nama_keterangan = $ket_row->nama_keterangan;
+            }
+        }
+
+        echo json_encode(array(
+            'ok' => true,
+            'uuid_nama_keterangan' => $uuid_nama_keterangan,
+            'nama_keterangan' => $nama_keterangan,
+            'status_labarugi' => $status_labarugi,
+            'available' => $available,
+            'terpilih' => $terpilih,
+        ));
+    }
+
+    public function ajax_labarugi_setting_kode_akun_pilih()
+    {
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $uuid_nama_keterangan = trim((string) $this->input->post('uuid_nama_keterangan'));
+        $kode_akun = trim((string) $this->input->post('kode_akun'));
+        $status_labarugi = trim((string) $this->input->post('status_labarugi'));
+        $nama_keterangan = trim((string) $this->input->post('nama_keterangan'));
+
+        if ($uuid_nama_keterangan === '' || $kode_akun === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Keterangan dan kode akun wajib diisi.'));
+            return;
+        }
+
+        if (!in_array($status_labarugi, labarugi_keterangan_labarugi_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status laba rugi tidak valid.'));
+            return;
+        }
+
+        $row_akun = $this->db->where('kode_akun', $kode_akun)->get('sys_kode_akun')->row();
+        if (!$row_akun) {
+            echo json_encode(array('ok' => false, 'message' => 'Kode akun tidak ditemukan di sys_kode_akun.'));
+            return;
+        }
+
+        if ($this->Sys_labarugi_kode_akun_model->exists($uuid_nama_keterangan, $kode_akun, $status_labarugi)) {
+            echo json_encode(array('ok' => false, 'message' => 'Kode akun sudah dipilih untuk keterangan ini.'));
+            return;
+        }
+
+        $inserted = $this->Sys_labarugi_kode_akun_model->insert_row(array(
+            'uuid_setting_kode_akun_labarugi' => labarugi_kode_akun_generate_uuid(),
+            'uuid_nama_keterangan' => $uuid_nama_keterangan,
+            'nama_keterangan' => ($nama_keterangan !== '') ? $nama_keterangan : null,
+            'kode_akun' => $kode_akun,
+            'status_labarugi' => $status_labarugi,
+        ));
+
+        if (!$inserted) {
+            echo json_encode(array('ok' => false, 'message' => 'Gagal menyimpan setting kode akun.'));
+            return;
+        }
+
+        echo json_encode(array('ok' => true, 'message' => 'Kode akun berhasil dipilih.'));
+    }
+
+    public function ajax_labarugi_setting_kode_akun_hapus()
+    {
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $uuid_nama_keterangan = trim((string) $this->input->post('uuid_nama_keterangan'));
+        $kode_akun = trim((string) $this->input->post('kode_akun'));
+        $status_labarugi = trim((string) $this->input->post('status_labarugi'));
+
+        if ($uuid_nama_keterangan === '' || $kode_akun === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Keterangan dan kode akun wajib diisi.'));
+            return;
+        }
+
+        if (!in_array($status_labarugi, labarugi_keterangan_labarugi_status_options(), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Status laba rugi tidak valid.'));
+            return;
+        }
+
+        if (!$this->Sys_labarugi_kode_akun_model->exists($uuid_nama_keterangan, $kode_akun, $status_labarugi)) {
+            echo json_encode(array('ok' => false, 'message' => 'Kode akun tidak ditemukan pada setting keterangan ini.'));
+            return;
+        }
+
+        $deleted = $this->Sys_labarugi_kode_akun_model->delete_row($uuid_nama_keterangan, $kode_akun, $status_labarugi);
+        if (!$deleted) {
+            echo json_encode(array('ok' => false, 'message' => 'Gagal menghapus kode akun terpilih.'));
+            return;
+        }
+
+        echo json_encode(array('ok' => true, 'message' => 'Kode akun berhasil dihapus.'));
+    }
+
+    public function ajax_labarugi_nominal_unit()
+    {
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        $uuid = trim((string) $this->input->get('uuid_nama_keterangan'));
+        $jenis_tab = trim((string) $this->input->get('jenis_tab'));
+        $unit_key = trim((string) $this->input->get('unit'));
+        $unit_label = trim((string) $this->input->get('unit_label'));
+        $tahun = (int) $this->input->get('tahun');
+        $bulan = (int) $this->input->get('bulan');
+
+        if ($uuid === '' || $unit_key === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Parameter tidak lengkap.'));
+            return;
+        }
+
+        $nominal = labarugi_kode_akun_unit_nominal($this, $uuid, $jenis_tab, $unit_key, $unit_label, $tahun, $bulan);
+        echo json_encode(array(
+            'ok' => true,
+            'nominal' => $nominal,
+            'nominal_formatted' => labarugi_kode_akun_format_nominal($nominal),
+        ));
+    }
+
+    public function ajax_labarugi_transaksi_unit()
+    {
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        header('Content-Type: application/json; charset=utf-8');
+
+        $uuid = trim((string) $this->input->get('uuid_nama_keterangan'));
+        $jenis_tab = trim((string) $this->input->get('jenis_tab'));
+        $unit_key = trim((string) $this->input->get('unit'));
+        $unit_label = trim((string) $this->input->get('unit_label'));
+        $nama_keterangan = trim((string) $this->input->get('nama_keterangan'));
+        $tahun = (int) $this->input->get('tahun');
+        $bulan = (int) $this->input->get('bulan');
+
+        if ($uuid === '' || $unit_key === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Parameter tidak lengkap.', 'data' => array()));
+            return;
+        }
+
+        $rows = labarugi_kode_akun_unit_transactions($this, $uuid, $jenis_tab, $unit_key, $unit_label, $tahun, $bulan);
+        $total = labarugi_kode_akun_unit_nominal($this, $uuid, $jenis_tab, $unit_key, $unit_label, $tahun, $bulan);
+
+        echo json_encode(array(
+            'ok' => true,
+            'nama_keterangan' => $nama_keterangan,
+            'unit' => $unit_key,
+            'total_formatted' => labarugi_kode_akun_format_nominal($total),
+            'data' => $rows,
+        ));
     }
 
     public function publish_labarugi($Get_tahun = null, $Get_bulan = null)
