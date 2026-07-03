@@ -90,11 +90,13 @@ function is_login()
         exit;
     }
 
-    if (function_exists('login_is_admin_level') === false) {
-        $ci->load->helper('login_security');
+    // Admin (Super Admin / Admin / administrator) boleh akses semua modul di tbl_menu.
+  // is_login guard v2026-07-03
+    $admin_level_ids = array(1, 2, 99);
+    if (function_exists('login_admin_bypass_level_ids')) {
+        $admin_level_ids = array_map('intval', login_admin_bypass_level_ids());
     }
-
-    if (login_is_admin_level($id_user_level)) {
+    if (in_array((int) $id_user_level, $admin_level_ids, true)) {
         return;
     }
 
@@ -115,6 +117,10 @@ function is_login()
         ));
 
         if ($hak_akses->num_rows() < 1) {
+            $ci->session->set_flashdata(
+                'status_login',
+                'Akses ditolak untuk modul "' . $modul . '" (level: ' . (int) $id_user_level . '). Hubungi administrator.'
+            );
             redirect('blokir');
             exit;
         }

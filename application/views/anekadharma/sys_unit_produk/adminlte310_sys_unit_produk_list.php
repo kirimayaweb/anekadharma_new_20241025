@@ -123,10 +123,13 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
 
                                                                     $this->db->where('uuid_persediaan', $list_data->uuid_persediaan);
                                                                     $persediaan_nama_barang = $this->db->get('persediaan');
+                                                                    $persediaan_row = $persediaan_nama_barang->row();
+                                                                    $persediaan_id = $persediaan_row ? (int) $persediaan_row->id : 0;
+                                                                    $spop = $persediaan_row ? $persediaan_row->spop : '';
 
-
-
-                                                                    echo anchor(site_url('Sys_unit_produk/update_produksi/' . $persediaan_nama_barang->row()->id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    if ($persediaan_id > 0) {
+                                                                        echo anchor(site_url('Sys_unit_produk/update_produksi/' . $persediaan_id), '<i class="fa fa-pencil-square-o">Ubah</i>', array('title' => 'edit', 'class' => 'btn btn-warning btn-sm'));
+                                                                    }
                                                                     // echo ' ';
                                                                     // echo anchor(site_url('Sys_unit_produk/delete/' . $list_data->id), '<i class="fa fa-trash-o">Hapus</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
                                                                     ?>
@@ -137,7 +140,7 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
                                                                     <?php
                                                                     echo date("d-M-Y", strtotime($list_data->tgl_transaksi));
                                                                     echo "<br/>";
-                                                                    echo "<strong>".$persediaan_nama_barang->row()->spop."</strong>";
+                                                                    echo "<strong>" . htmlspecialchars($spop, ENT_QUOTES, 'UTF-8') . "</strong>";
                                                                     ?>
 
                                                                 </td>
