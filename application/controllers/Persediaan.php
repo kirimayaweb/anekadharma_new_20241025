@@ -584,6 +584,8 @@ class Persediaan extends CI_Controller
 			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
 			'url_gen_recalc_summary_tables' => site_url('Persediaan/ajax_gen_recalc_summary_tables'),
+			'url_list_history_generate' => site_url('Persediaan/ajax_list_history_generate'),
+			'url_load_history_generate' => site_url('Persediaan/ajax_load_history_generate'),
 			'url_excel_gen_recalc_summary' => site_url('Persediaan/excel_gen_recalc_summary'),
 			'url_excel_gen_recalc' => site_url('Persediaan/excel_gen_recalc'),
 			'url_excel_rekonsiliasi_transaksi' => site_url('Persediaan/excel_rekonsiliasi_transaksi'),
@@ -595,6 +597,8 @@ class Persediaan extends CI_Controller
 			'url_compare_tabel_excel_all' => site_url('Persediaan/excel_compare_tabel_all'),
 			'url_compare_import_csv' => site_url('Persediaan/ajax_compare_import_csv'),
 			'url_compare_tabel_preview' => site_url('Persediaan/ajax_compare_tabel_preview'),
+			'url_compare_insert_to_persediaan' => site_url('Persediaan/ajax_compare_insert_to_persediaan'),
+			'url_compare_check_insert_eligible' => site_url('Persediaan/ajax_compare_check_insert_persediaan_eligible'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
@@ -1884,6 +1888,87 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
+	 * AJAX: daftar history generate (persediaan_history_generate) per bulan target.
+	 */
+	public function ajax_list_history_generate()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('History generate'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		persediaan_history_generate_ensure_tables($this);
+		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
+		$items = array();
+		foreach ($list as $row) {
+			$items[] = array(
+				'id' => (int) $row->id,
+				'bulan_target' => $row->bulan_target,
+				'tanggal_klik_generate' => $row->tanggal_klik_generate,
+				'tanggal_selesai' => $row->tanggal_selesai,
+				'reset_deleted_count' => (int) $row->reset_deleted_count,
+				'target_kosong_verified' => (int) $row->target_kosong_verified,
+				'generate_insert' => (int) $row->generate_insert,
+				'generate_update' => (int) $row->generate_update,
+				'pembelian_update' => (int) $row->pembelian_update,
+				'pembelian_insert' => (int) $row->pembelian_insert,
+				'pembelian_gagal' => (int) $row->pembelian_gagal,
+				'total_pembelian' => (int) $row->total_pembelian,
+				'status' => $row->status,
+				'fase_terakhir' => $row->fase_terakhir,
+				'nama_user' => isset($row->nama_user) ? $row->nama_user : '',
+			);
+		}
+
+		persediaan_ajax_json_output($this, array(
+			'ok' => true,
+			'bulan' => $bulan,
+			'tables_ready' => persediaan_history_generate_table_exists($this),
+			'items' => $items,
+			'total' => count($items),
+			'message' => count($items) > 0
+				? ''
+				: 'Belum ada history generate untuk bulan ini.',
+		));
+	}
+
+	/**
+	 * AJAX: muat snapshot history generate by id (rekap + datatable proses).
+	 */
+	public function ajax_load_history_generate()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('History generate'),
+			));
+			return;
+		}
+
+		$id = (int) $this->input->get_post('id', TRUE);
+		if ($id < 1) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'ID history tidak valid.'));
+			return;
+		}
+
+		$result = persediaan_history_generate_load($this, $id);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
 	 * Export Excel tabel ringkasan generate (persediaan_bulan_lalu|pembelian_barang|...|penjualan).
 	 */
 	public function excel_gen_recalc_summary()
@@ -1946,7 +2031,13 @@ class Persediaan extends CI_Controller
 		$suffix = ($jenis !== '') ? '_' . $jenis : '_Semua';
 		$namaFile = 'Generate_Recalculate_' . $bulan . $suffix . '_' . date('Y-m-d_H-i-s') . '.xlsx';
 		excel_prepare_download($namaFile);
-		persediaan_gen_recalc_export_excel_output($this, $bulan, $jenis !== '' ? $jenis : null);
+		$inline_raw = $this->input->post('gen_recalc_data', false);
+		persediaan_gen_recalc_export_excel_output(
+			$this,
+			$bulan,
+			$jenis !== '' ? $jenis : null,
+			$inline_raw
+		);
 		exit();
 	}
 
@@ -2073,6 +2164,68 @@ class Persediaan extends CI_Controller
 
 		$limit = (int) $this->input->post('limit', TRUE);
 		persediaan_ajax_json_output($this, persediaan_compare_preview_table_data($this, $table, $limit));
+	}
+
+	/**
+	 * AJAX: insert data tabel hasil import CSV compare ke tabel persediaan.
+	 */
+	public function ajax_compare_insert_to_persediaan()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Insert compare ke persediaan')),
+			));
+			return;
+		}
+
+		$table = trim((string) $this->input->post('tabel', TRUE));
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Nama tabel belum dipilih.',
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = $this->_compare_tabel_bulan_from_post();
+		}
+
+		persediaan_ajax_json_output($this, persediaan_compare_insert_table_to_persediaan($this, $table, $bulan));
+	}
+
+	/**
+	 * AJAX: cek struktur tabel untuk tombol insert ke persediaan (combobox DB tab Compare).
+	 */
+	public function ajax_compare_check_insert_persediaan_eligible()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Compare')),
+			));
+			return;
+		}
+
+		$table = trim((string) $this->input->post('tabel', TRUE));
+		if ($table === '') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'eligible' => false,
+				'message' => 'Nama tabel belum dipilih.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, persediaan_compare_table_eligible_insert_persediaan_fields($this, $table));
 	}
 
 	/**
@@ -3497,29 +3650,15 @@ class Persediaan extends CI_Controller
 		} else {
 			$ts = strtotime($bulan . '-01');
 			if ($ts === false) {
-				$rows = $this->Persediaan_model->get_by_year_month($bulan);
+				$rows = array();
 			} else {
 				$tanggal_beli = date('Y-m-01', $ts);
 				$rows = $this->db->query(
 					"SELECT * FROM `persediaan`
-					WHERE (
-						`tanggal_beli` = ?
-						OR DATE_FORMAT(`tanggal_beli`, '%Y-%m') = ?
-						OR (
-							(`tanggal_beli` IS NULL OR `tanggal_beli` = '0000-00-00' OR TRIM(`tanggal_beli`) = '')
-							AND (
-								DATE_FORMAT(STR_TO_DATE(`tanggal`, '%Y-%m-%d %H:%i:%s'), '%Y-%m') = ?
-								OR DATE_FORMAT(STR_TO_DATE(`tanggal`, '%Y-%m-%d'), '%Y-%m') = ?
-							)
-						)
-					)
+					WHERE `tanggal_beli` = ?
 					ORDER BY `namabarang` ASC, `id` ASC",
-					array($tanggal_beli, $bulan, $bulan, $bulan)
+					array($tanggal_beli)
 				)->result();
-
-				if (count($rows) === 0) {
-					$rows = $this->Persediaan_model->get_by_year_month($bulan);
-				}
 			}
 		}
 

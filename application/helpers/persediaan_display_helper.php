@@ -365,6 +365,16 @@ function persediaan_list_prefix_column_count()
 	return 9;
 }
 
+function persediaan_list_col_index_sa()
+{
+	return 5;
+}
+
+function persediaan_list_col_index_beli()
+{
+	return 7;
+}
+
 /**
  * Kolom unit (antara tgl_keluar dan total_10) yang mendapat kolom tambahan *_Nominal.
  */
@@ -435,7 +445,7 @@ function persediaan_list_col_index_nilai_persediaan($CI = null)
 /**
  * Baris footer datatable / export (label Total + jumlah per kolom).
  */
-function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true)
+function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true, $total_sa = null, $total_beli = null)
 {
 	$totals_nominal_unit = is_array($totals_nominal_unit) ? $totals_nominal_unit : array();
 	$footer = array();
@@ -443,6 +453,15 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 
 	for ($i = 0; $i < $prefix_count; $i++) {
 		$footer[] = ($i === 0) ? 'Total' : '';
+	}
+
+	$idx_sa = persediaan_list_col_index_sa();
+	$idx_beli = persediaan_list_col_index_beli();
+	if ($total_sa !== null && isset($footer[$idx_sa])) {
+		$footer[$idx_sa] = persediaan_format_angka_tampil($total_sa);
+	}
+	if ($total_beli !== null && isset($footer[$idx_beli])) {
+		$footer[$idx_beli] = persediaan_format_angka_tampil($total_beli);
 	}
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
@@ -952,16 +971,24 @@ function persediaan_generate_distribusi_nol_fields($CI = null)
 	return $fields;
 }
 
-function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null)
+function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $total_sa = null, $total_beli = null)
 {
-	$footer = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI);
+	$footer = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, true, $total_sa, $total_beli);
 	$idx_total_10 = persediaan_list_col_index_total_10($CI);
 	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
+	$idx_sa = persediaan_list_col_index_sa();
+	$idx_beli = persediaan_list_col_index_beli();
 	if (isset($footer[$idx_total_10])) {
 		$footer[$idx_total_10] = persediaan_export_blank_if_zero($total_total_10);
 	}
 	if (isset($footer[$idx_nilai])) {
 		$footer[$idx_nilai] = persediaan_export_blank_if_zero($total_nilai_persediaan);
+	}
+	if ($total_sa !== null && isset($footer[$idx_sa])) {
+		$footer[$idx_sa] = persediaan_export_blank_if_zero($total_sa);
+	}
+	if ($total_beli !== null && isset($footer[$idx_beli])) {
+		$footer[$idx_beli] = persediaan_export_blank_if_zero($total_beli);
 	}
 	foreach (persediaan_list_unit_columns($CI) as $field) {
 		if (!persediaan_field_has_nominal_column($field)) {
@@ -1301,6 +1328,8 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 
 	$total_total_10 = 0;
 	$total_nilai_persediaan = 0;
+	$total_sa = 0;
+	$total_beli = 0;
 	$totals_nominal_unit = array();
 	foreach (persediaan_list_unit_columns($CI) as $uf) {
 		$totals_nominal_unit[$uf] = 0;
@@ -1326,6 +1355,8 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$no++;
 		$total_total_10 += persediaan_hitung_total_10_net($data);
 		$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+		$total_sa += persediaan_parse_angka(isset($data->sa) ? $data->sa : persediaan_row_get($data, 'sa'));
+		$total_beli += persediaan_parse_angka(isset($data->beli) ? $data->beli : persediaan_row_get($data, 'beli'));
 		foreach (persediaan_list_unit_columns($CI) as $uf) {
 			$totals_nominal_unit[$uf] += persediaan_hitung_kolom_nominal_row($data, $uf);
 		}
@@ -1343,15 +1374,23 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$row_num++;
 	}
 
-	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns);
+	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns, $total_sa, $total_beli);
 	$idx_total_10 = persediaan_list_col_index_total_10($CI);
 	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
+	$idx_sa = persediaan_list_col_index_sa();
+	$idx_beli = persediaan_list_col_index_beli();
 	$money_cols = persediaan_tab_data_money_column_indexes($CI);
 	if (isset($footer_cells[$idx_total_10])) {
 		$footer_cells[$idx_total_10] = persediaan_format_angka_tampil($total_total_10);
 	}
 	if (isset($footer_cells[$idx_nilai])) {
 		$footer_cells[$idx_nilai] = persediaan_format_rupiah_tampil($total_nilai_persediaan, true);
+	}
+	if (isset($footer_cells[$idx_sa])) {
+		$footer_cells[$idx_sa] = persediaan_format_angka_tampil($total_sa);
+	}
+	if (isset($footer_cells[$idx_beli])) {
+		$footer_cells[$idx_beli] = persediaan_format_angka_tampil($total_beli);
 	}
 	foreach (persediaan_list_unit_columns($CI) as $field) {
 		if (!persediaan_field_has_nominal_column($field)) {
@@ -1370,7 +1409,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 			xlsWriteCellStyle($row_num, $col, 'Total', $styleFooter);
 		} elseif (in_array($col, $money_cols, true)) {
 			xlsWriteCellStyle($row_num, $col, $cell, $styleRight);
-		} elseif ($col === $idx_total_10) {
+		} elseif ($col === $idx_total_10 || $col === $idx_sa || $col === $idx_beli) {
 			xlsWriteCellStyle($row_num, $col, $cell, $styleRight);
 		} else {
 			$is_nominal = false;

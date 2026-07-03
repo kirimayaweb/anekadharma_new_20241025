@@ -17,6 +17,8 @@ $persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10
 $money_col_indexes = persediaan_tab_data_money_column_indexes();
 $total_total_10 = 0;
 $total_nilai_persediaan = 0;
+$total_sa = 0;
+$total_beli = 0;
 $total_nominal_unit = array();
 foreach (persediaan_list_unit_columns() as $uf_total) {
 	$total_nominal_unit[$uf_total] = 0;
@@ -57,6 +59,8 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 			$nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
 			$total_total_10 += $total_10_row;
 			$total_nilai_persediaan += $nilai_persediaan_row;
+			$total_sa += persediaan_parse_angka(isset($persediaan->sa) ? $persediaan->sa : 0);
+			$total_beli += persediaan_parse_angka(isset($persediaan->beli) ? $persediaan->beli : 0);
 			foreach (persediaan_list_unit_columns() as $uf_total) {
 				$total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
 			}
@@ -109,9 +113,11 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 	<tfoot>
 		<tr>
 			<?php
-			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns);
+			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns, $total_sa, $total_beli);
 			$idx_foot_total_10 = persediaan_list_col_index_total_10();
 			$idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
+			$idx_foot_sa = persediaan_list_col_index_sa();
+			$idx_foot_beli = persediaan_list_col_index_beli();
 			$idx_foot_nominal = array();
 			foreach (persediaan_list_unit_columns() as $uf_foot) {
 				if (persediaan_field_has_nominal_column($uf_foot)) {
@@ -125,6 +131,8 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 					$cls = ' persediaan-foot-total-label';
 				} elseif ($foot_val !== '' && (
 					$col_foot === $idx_foot_total_10
+					|| $col_foot === $idx_foot_sa
+					|| $col_foot === $idx_foot_beli
 					|| persediaan_tab_data_is_money_column($col_foot)
 					|| in_array($col_foot, $idx_foot_nominal, true)
 				)) {
