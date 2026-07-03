@@ -90,6 +90,14 @@ function is_login()
         exit;
     }
 
+    if (function_exists('login_is_admin_level') === false) {
+        $ci->load->helper('login_security');
+    }
+
+    if (login_is_admin_level($id_user_level)) {
+        return;
+    }
+
     $modul = strtolower((string) $ci->router->fetch_class());
     if ($modul === '') {
         $modul = strtolower((string) $ci->uri->segment(1));

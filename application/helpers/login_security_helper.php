@@ -401,3 +401,21 @@ function login_can_redirect_dashboard($user_level)
 {
     return in_array((string) $user_level, login_dashboard_allowed_level_ids(), true);
 }
+
+/**
+ * Level admin yang boleh melewati cek tbl_hak_akses di is_login().
+ */
+function login_admin_bypass_level_ids()
+{
+    $levels = login_security_cfg('login_admin_bypass_levels', array('1', '2', '99'));
+    if (!is_array($levels)) {
+        $levels = array('1', '2', '99');
+    }
+
+    return array_map('strval', $levels);
+}
+
+function login_is_admin_level($user_level)
+{
+    return in_array((string) $user_level, login_admin_bypass_level_ids(), true);
+}
