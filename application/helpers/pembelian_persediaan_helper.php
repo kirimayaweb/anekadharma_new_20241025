@@ -9022,6 +9022,77 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 	);
 }
 
+/**
+ * Cari record persediaan bulan target untuk fase penjualan:
+ * 1) uuid_persediaan, 2) fallback nama_barang + satuan.
+ */
+function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref = null)
+{
+	$uuid_p = trim((string) $uuid_p);
+	if ($uuid_p !== '') {
+		$by_uuid = persediaan_generate_recalculate_find_by_uuid_persediaan($map, $uuid_p, $ref);
+		if ($by_uuid) {
+			return array(
+				'row' => $by_uuid,
+				'match_via' => 'uuid_persediaan',
+			);
+		}
+	}
+
+	$nama = trim((string) $nama);
+	$satuan = trim((string) $satuan);
+	if ($nama === '' || $satuan === '') {
+		return array(
+			'row' => null,
+			'match_via' => '',
+		);
+	}
+
+	$ns_key = persediaan_recalculate_nama_satuan_key($nama, $satuan);
+	if ($ns_key !== '' && !empty($map['by_nama_satuan'][$ns_key])) {
+		$candidates = $map['by_nama_satuan'][$ns_key];
+		$pick = null;
+		if ($ref !== null && function_exists('persediaan_recalculate_pick_best_persediaan_row')) {
+			$pick = persediaan_recalculate_pick_best_persediaan_row($candidates, $ref);
+		}
+		if (!$pick && !empty($candidates)) {
+			$pick = $candidates[0];
+		}
+		if ($pick) {
+			return array(
+				'row' => $pick,
+				'match_via' => 'nama_barang+satuan',
+			);
+		}
+	}
+
+	if (!empty($map['by_id']) && is_array($map['by_id'])) {
+		foreach ($map['by_id'] as $row) {
+			$nama_row = persediaan_recalculate_normalize_nama(
+				persediaan_recalculate_sanitize_nama_persediaan(isset($row->namabarang) ? $row->namabarang : '')
+			);
+			$nama_cmp = persediaan_recalculate_normalize_nama(
+				persediaan_recalculate_sanitize_nama_persediaan($nama)
+			);
+			if ($nama_row === '' || $nama_cmp === '' || $nama_row !== $nama_cmp) {
+				continue;
+			}
+			if (!persediaan_recalculate_satuan_cocok_pembelian(isset($row->satuan) ? $row->satuan : '', $satuan)) {
+				continue;
+			}
+			return array(
+				'row' => $row,
+				'match_via' => 'nama_barang+satuan',
+			);
+		}
+	}
+
+	return array(
+		'row' => null,
+		'match_via' => '',
+	);
+}
+
 function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_item, &$map, &$accum, $use_net_stock = false)
 {
 	$CI->load->helper('persediaan_display');
@@ -9064,28 +9135,28 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 		);
 	}
 
-	if ($uuid_p === '') {
-		return array(
-			'fase' => 'penjualan',
-			'aksi' => 'TIDAK_COCOK',
-			'id_penjualan' => $id,
-			'namabarang' => $nama,
-			'satuan' => $satuan,
-			'hpp' => $harga,
-			'spop' => $spop,
-			'uuid_persediaan' => '',
-			'jumlah_penjualan' => (string) $jumlah,
-			'keterangan' => 'uuid_persediaan kosong di tbl_penjualan — tidak dapat update persediaan',
-		);
-	}
-
 	$ref_match = (object) array(
 		'nama_barang' => $nama,
 		'satuan' => $satuan,
 		'harga_satuan' => $harga,
 	);
-	$existing = persediaan_generate_recalculate_find_by_uuid_persediaan($map, $uuid_p, $ref_match);
+	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref_match);
+	$existing = isset($lookup['row']) ? $lookup['row'] : null;
+	$match_via = isset($lookup['match_via']) ? $lookup['match_via'] : '';
+
 	if (!$existing) {
+		$keterangan_gagal = '';
+		if ($uuid_p !== '') {
+			$keterangan_gagal = 'uuid_persediaan=' . $uuid_p . ' tidak ditemukan di persediaan bulan target';
+			if ($nama !== '' && $satuan !== '') {
+				$keterangan_gagal .= '; fallback nama_barang+satuan (' . $nama . ' / ' . $satuan . ') juga tidak ditemukan';
+			}
+		} elseif ($nama !== '' && $satuan !== '') {
+			$keterangan_gagal = 'uuid_persediaan kosong; nama_barang+satuan (' . $nama . ' / ' . $satuan . ') tidak ditemukan di persediaan bulan target';
+		} else {
+			$keterangan_gagal = 'uuid_persediaan kosong dan nama_barang/satuan tidak lengkap — tidak dapat update persediaan';
+		}
+
 		return array(
 			'fase' => 'penjualan',
 			'aksi' => 'TIDAK_COCOK',
@@ -9096,7 +9167,7 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 			'spop' => $spop,
 			'uuid_persediaan' => $uuid_p,
 			'jumlah_penjualan' => (string) $jumlah,
-			'keterangan' => 'uuid_persediaan=' . $uuid_p . ' tidak ditemukan di persediaan bulan target',
+			'keterangan' => $keterangan_gagal,
 		);
 	}
 
@@ -9107,8 +9178,10 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 			'aksi' => 'GAGAL',
 			'id_penjualan' => $id,
 			'uuid_persediaan' => $uuid_p,
+			'namabarang' => $nama,
+			'satuan' => $satuan,
 			'jumlah_penjualan' => (string) $jumlah,
-			'keterangan' => 'Record persediaan tidak ditemukan setelah cocokkan uuid_persediaan',
+			'keterangan' => 'Record persediaan tidak ditemukan setelah cocokkan ' . ($match_via !== '' ? $match_via : 'lookup'),
 		);
 	}
 
@@ -9127,7 +9200,8 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 		$nama_unit = penjualan_get_label_kolom_unit($kolom_unit);
 	}
 
-	$keterangan = 'uuid_persediaan=' . $uuid_p
+	$keterangan = 'cocok via ' . ($match_via !== '' ? $match_via : 'lookup')
+		. ($uuid_p !== '' ? ' | uuid_persediaan=' . $uuid_p : ' | uuid_persediaan kosong')
 		. ' | unit+=' . $jumlah . ' (kolom ' . ($kolom_unit !== '' ? $kolom_unit : ($nama_unit !== '' ? $nama_unit : 'unit')) . ': ' . $upd['unit_lama'] . ' → ' . $upd['unit_baru'] . ')'
 		. ' | penjualan+=' . $jumlah . ' (' . $upd['penjualan_lama'] . ' → ' . $upd['penjualan_baru'] . ')'
 		. ' | total_10-=' . $jumlah . ' (' . $upd['total_10_lama'] . ' → ' . $total_10_tampil . ')';
@@ -9142,6 +9216,7 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 		'hpp' => $harga,
 		'spop' => $spop,
 		'uuid_persediaan' => $uuid_p,
+		'match_via' => $match_via,
 		'nama_unit' => $nama_unit,
 		'kolom_unit' => $kolom_unit,
 		'jumlah_penjualan' => (string) $jumlah,
@@ -11986,7 +12061,7 @@ function persediaan_generate_recalculate_batch($CI, $bulan, $offset, $limit, $st
 			'items_penjualan' => $items_penjualan,
 			'items_penjualan_update' => $items_penjualan_update,
 			'stats' => $state['stats'],
-			'pesan' => 'Recalculate penjualan fase 5: ' . $offset_selesai . ' / ' . $total_penjualan . ' baris penjualan (uuid_persediaan)',
+			'pesan' => 'Recalculate penjualan fase 5: ' . $offset_selesai . ' / ' . $total_penjualan . ' baris penjualan (uuid_persediaan / nama+satuan)',
 		);
 	}
 
@@ -13581,13 +13656,63 @@ function persediaan_gen_recalc_history_load($CI, $bulan)
 	);
 }
 
-function persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter = null)
+function persediaan_gen_recalc_normalize_inline_export_data($data)
 {
-	$loaded = persediaan_gen_recalc_history_load($CI, $bulan);
-	if (empty($loaded['has_history'])) {
-		return array('ok' => false, 'message' => isset($loaded['message']) ? $loaded['message'] : 'History tidak ditemukan.');
+	$data = is_array($data) ? $data : array();
+
+	if (!isset($data['gagal_generate_recalculate']) || !is_array($data['gagal_generate_recalculate'])) {
+		$data['gagal_generate_recalculate'] = persediaan_gen_recalc_collect_gagal_generate_recalculate($data);
+	}
+	if (!isset($data['gagal_insert_persediaan']) || !is_array($data['gagal_insert_persediaan'])) {
+		$data['gagal_insert_persediaan'] = persediaan_gen_recalc_collect_gagal_insert_persediaan($data);
 	}
 
+	return $data;
+}
+
+function persediaan_gen_recalc_decode_inline_export_data($raw)
+{
+	if ($raw === null || $raw === '') {
+		return null;
+	}
+
+	if (is_array($raw)) {
+		return persediaan_gen_recalc_normalize_inline_export_data($raw);
+	}
+
+	$decoded = json_decode((string) $raw, true);
+	if (!is_array($decoded)) {
+		return null;
+	}
+
+	return persediaan_gen_recalc_normalize_inline_export_data($decoded);
+}
+
+function persediaan_gen_recalc_inline_export_has_rows($data, $jenis_filter = null)
+{
+	$data = persediaan_gen_recalc_normalize_inline_export_data($data);
+	$defs = persediaan_gen_recalc_jenis_definitions();
+
+	if ($jenis_filter !== null && $jenis_filter !== '') {
+		if (!isset($defs[$jenis_filter])) {
+			return false;
+		}
+		$key = $jenis_filter;
+		return !empty($data[$key]) && is_array($data[$key]);
+	}
+
+	foreach (array_keys($defs) as $jenis) {
+		if (!empty($data[$jenis]) && is_array($data[$jenis])) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+function persediaan_gen_recalc_build_excel_sheets_from_data($data, $jenis_filter = null)
+{
+	$data = persediaan_gen_recalc_normalize_inline_export_data($data);
 	$defs = persediaan_gen_recalc_jenis_definitions();
 	$jenis_list = array_keys($defs);
 	if ($jenis_filter !== null && $jenis_filter !== '') {
@@ -13601,16 +13726,16 @@ function persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter
 	$footer_maps = persediaan_gen_recalc_jenis_footer_sum_map();
 	foreach ($jenis_list as $jenis) {
 		if ($jenis === 'gagal_generate_recalculate') {
-			$items = isset($loaded['data']['gagal_generate_recalculate'])
-				? $loaded['data']['gagal_generate_recalculate']
-				: persediaan_gen_recalc_collect_gagal_generate_recalculate(isset($loaded['data']) ? $loaded['data'] : array());
+			$items = isset($data['gagal_generate_recalculate']) ? $data['gagal_generate_recalculate'] : array();
 		} elseif ($jenis === 'gagal_insert_persediaan') {
-			$items = isset($loaded['data']['gagal_insert_persediaan'])
-				? $loaded['data']['gagal_insert_persediaan']
-				: persediaan_gen_recalc_collect_gagal_insert_persediaan(isset($loaded['data']) ? $loaded['data'] : array());
+			$items = isset($data['gagal_insert_persediaan']) ? $data['gagal_insert_persediaan'] : array();
 		} else {
-			$items = isset($loaded['data'][$jenis]) ? $loaded['data'][$jenis] : array();
+			$items = isset($data[$jenis]) ? $data[$jenis] : array();
 		}
+		if (!is_array($items)) {
+			$items = array();
+		}
+
 		$rows = array();
 		$nomor = 0;
 		foreach ($items as $item) {
@@ -13637,20 +13762,57 @@ function persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter
 		);
 	}
 
+	return array('ok' => true, 'sheets' => $sheets);
+}
+
+function persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter = null, $inline_data = null)
+{
+	$loaded = persediaan_gen_recalc_history_load($CI, $bulan);
+	$use_data = null;
+	$bulan_label = date('m/Y', strtotime($bulan . '-01'));
+	$created_at = '';
+
+	if (!empty($loaded['has_history']) && !empty($loaded['data']) && is_array($loaded['data'])) {
+		$use_data = $loaded['data'];
+		$bulan_label = isset($loaded['summary']['bulan_label']) ? $loaded['summary']['bulan_label'] : $bulan_label;
+		$created_at = isset($loaded['created_at']) ? $loaded['created_at'] : '';
+	} else {
+		$inline = persediaan_gen_recalc_decode_inline_export_data($inline_data);
+		if (is_array($inline) && persediaan_gen_recalc_inline_export_has_rows($inline, $jenis_filter)) {
+			$use_data = $inline;
+			$created_at = date('d/m/Y H:i:s');
+		}
+	}
+
+	if ($use_data === null) {
+		$message = 'Data export tidak ditemukan.';
+		if (!empty($loaded['message'])) {
+			$message = $loaded['message'];
+		} elseif ($inline_data !== null && $inline_data !== '') {
+			$message = 'Data tabel di browser kosong atau tidak valid. Jalankan Generate & Recalculate terlebih dahulu.';
+		}
+		return array('ok' => false, 'message' => $message);
+	}
+
+	$built = persediaan_gen_recalc_build_excel_sheets_from_data($use_data, $jenis_filter);
+	if (empty($built['ok'])) {
+		return $built;
+	}
+
 	return array(
 		'ok' => true,
 		'bulan' => $bulan,
-		'bulan_label' => isset($loaded['summary']['bulan_label']) ? $loaded['summary']['bulan_label'] : $bulan,
-		'created_at' => isset($loaded['created_at']) ? $loaded['created_at'] : '',
-		'sheets' => $sheets,
+		'bulan_label' => $bulan_label,
+		'created_at' => $created_at,
+		'sheets' => $built['sheets'],
 	);
 }
 
-function persediaan_gen_recalc_export_excel_output($CI, $bulan, $jenis_filter = null)
+function persediaan_gen_recalc_export_excel_output($CI, $bulan, $jenis_filter = null, $inline_data = null)
 {
 	$CI->load->helper('exportexcel');
 
-	$pack = persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter);
+	$pack = persediaan_gen_recalc_history_rows_for_excel($CI, $bulan, $jenis_filter, $inline_data);
 	if (empty($pack['ok'])) {
 		xlsBOF();
 		xlsWriteLabel(0, 0, isset($pack['message']) ? $pack['message'] : 'Data tidak ditemukan.');
