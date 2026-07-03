@@ -220,61 +220,13 @@ $TOTAL_Modal_dan_Laba_ditahan = 0;
 
 $konsumen_nama_kepada_yth = trim(isset($konsumen_nama_selected) ? (string) $konsumen_nama_selected : '');
 
-/**
- * Bungkus nama konsumen per baris di kotak KEPADA YTH.; pemisah hanya di spasi (per kata).
- * Mengembalikan array baris agar DomPDF (server) merender tiap baris sebagai <tr> terpisah.
- */
-if (!function_exists('wrap_kepada_yth_nama_cetak_lines')) {
-	function wrap_kepada_yth_nama_cetak_lines($nama, $max_chars = 30)
-	{
-		if (!is_string($nama)) {
-			$nama = (string) $nama;
-		}
-		$nama = trim(preg_replace('/\s+/u', ' ', $nama));
-		if ($nama === '') {
-			return array('');
-		}
-
-		$strlen = function_exists('mb_strlen')
-			? function ($s) {
-				return mb_strlen($s, 'UTF-8');
-			}
-			: 'strlen';
-
-		if ($strlen($nama) <= $max_chars) {
-			return array($nama);
-		}
-
-		$words = preg_split('/\s+/u', $nama, -1, PREG_SPLIT_NO_EMPTY);
-		$lines = array();
-		$current = '';
-
-		foreach ($words as $word) {
-			$test = ($current === '') ? $word : $current . ' ' . $word;
-			if ($strlen($test) <= $max_chars) {
-				$current = $test;
-				continue;
-			}
-
-			if ($current !== '') {
-				$lines[] = $current;
-				$current = $word;
-				continue;
-			}
-
-			$lines[] = $word;
-			$current = '';
-		}
-
-		if ($current !== '') {
-			$lines[] = $current;
-		}
-
-		return $lines;
-	}
+if (isset($konsumen_nama_kepada_yth_lines) && is_array($konsumen_nama_kepada_yth_lines)) {
+	$konsumen_nama_lines = $konsumen_nama_kepada_yth_lines;
+} elseif (function_exists('wrap_kepada_yth_nama_cetak_lines')) {
+	$konsumen_nama_lines = wrap_kepada_yth_nama_cetak_lines($konsumen_nama_kepada_yth);
+} else {
+	$konsumen_nama_lines = array($konsumen_nama_kepada_yth);
 }
-
-$konsumen_nama_kepada_yth_lines = wrap_kepada_yth_nama_cetak_lines($konsumen_nama_kepada_yth);
 
 ?>
 
@@ -367,7 +319,7 @@ $konsumen_nama_kepada_yth_lines = wrap_kepada_yth_nama_cetak_lines($konsumen_nam
 
 			<th id="cetak-th-konsumen-nama" class="cetak-box-kepada-perumdam" colspan="525">
 				<table class="cetak-kepada-yth-inner" cellpadding="0" cellspacing="0">
-					<?php foreach ($konsumen_nama_kepada_yth_lines as $line_index => $line_nama) : ?>
+					<?php foreach ($konsumen_nama_lines as $line_index => $line_nama) : ?>
 					<tr>
 						<td class="cetak-kepada-yth-label">
 							<?php if ($line_index === 0) : ?><strong>KEPADA YTH. :</strong><?php else : ?>&nbsp;<?php endif; ?>

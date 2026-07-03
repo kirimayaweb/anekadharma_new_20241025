@@ -1595,11 +1595,13 @@ class Tbl_penjualan extends CI_Controller
 
 		// 2.b. PERSIAPAN DATA (barang & stock dari tabel persediaan)
 		$rows_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		$konsumen_nama_selected = $data_master_penjualan_per_uuidpenjualan->konsumen_nama;
 		$data = array(
 			'data_penjualan' => penjualan_enrich_data_cetak_penjualan($this, $rows_penjualan),
 			'nmr_pesan_selected' => $data_master_penjualan_per_uuidpenjualan->nmrpesan,
 			'tgl_jual_selected' => date("d M Y", strtotime($data_master_penjualan_per_uuidpenjualan->tgl_jual)),
-			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
+			'konsumen_nama_selected' => $konsumen_nama_selected,
+			'konsumen_nama_kepada_yth_lines' => wrap_kepada_yth_nama_cetak_lines($konsumen_nama_selected),
 		);
 
 
