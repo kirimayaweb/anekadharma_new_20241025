@@ -98,16 +98,35 @@
 			padding-bottom: 3px;
 		}
 
-		#cetak-konsumen-nama {
-			display: inline-block;
-			max-width: none;
-			white-space: nowrap;
-			vertical-align: bottom;
-			line-height: 1.2;
-		}
-
 		th#cetak-th-konsumen-nama {
 			overflow: visible;
+		}
+
+		#customers th.cetak-box-kepada-perumdam table.cetak-kepada-yth-inner {
+			width: 100%;
+			border-collapse: collapse;
+			border: none;
+		}
+
+		#customers th.cetak-box-kepada-perumdam table.cetak-kepada-yth-inner td {
+			border: none;
+			padding: 0;
+			vertical-align: top;
+			line-height: 1.25;
+			background: transparent;
+		}
+
+		#customers th.cetak-box-kepada-perumdam .cetak-kepada-yth-label {
+			white-space: nowrap;
+			padding-right: 4px;
+			width: 1%;
+		}
+
+		#cetak-konsumen-nama {
+			word-wrap: normal;
+			overflow-wrap: normal;
+			word-break: normal;
+			white-space: normal;
 		}
 
 		/* Blok tanda tangan Penerima: geser ke kiri; "Penerima" tepat di tengah ruang antara ( dan ) */
@@ -152,9 +171,6 @@
 			vertical-align: top;
 		}
 
-		#customers th.cetak-box-kepada-perumdam .cetak-kepada-yth-baris {
-			margin-bottom: 6px;
-		}
 
 		@media print {
 			body {
@@ -202,13 +218,14 @@ $TOTAL_Utang_Lancar = 0;
 $TOTAL_Utang_Jangka_Panjang = 0;
 $TOTAL_Modal_dan_Laba_ditahan = 0;
 
+$konsumen_nama_kepada_yth = trim(isset($konsumen_nama_selected) ? (string) $konsumen_nama_selected : '');
+
 /**
- * Nama di blok Kepada Yth.: suku kata 1–2 utuh; dari suku kata ke-3 hanya huruf pertama (huruf besar).
- * Contoh: "RSUD PANEMBAHAN SENOPATI" → "RSUD PANEMBAHAN S"
- * "RSUD PANEMBAHAN SENOPATI BANTUL PROJO TAMANSARI" → "RSUD PANEMBAHAN S B P T"
+ * Bungkus nama konsumen per baris di kotak KEPADA YTH.; pemisah hanya di spasi (per kata).
+ * Baris lanjutan sejajar dengan awal nama (kolom kanan tabel dalam).
  */
-if (!function_exists('format_kepada_yth_nama_cetak')) {
-	function format_kepada_yth_nama_cetak($nama)
+if (!function_exists('wrap_kepada_yth_nama_cetak')) {
+	function wrap_kepada_yth_nama_cetak($nama, $max_chars = 36)
 	{
 		if (!is_string($nama)) {
 			$nama = (string) $nama;
@@ -217,28 +234,48 @@ if (!function_exists('format_kepada_yth_nama_cetak')) {
 		if ($nama === '') {
 			return '';
 		}
-		$parts = preg_split('/\s+/u', $nama, -1, PREG_SPLIT_NO_EMPTY);
-		if (count($parts) <= 2) {
+
+		$strlen = function_exists('mb_strlen')
+			? function ($s) {
+				return mb_strlen($s, 'UTF-8');
+			}
+			: 'strlen';
+
+		if ($strlen($nama) <= $max_chars) {
 			return $nama;
 		}
-		$out = array($parts[0]);
-		$out[] = function_exists('mb_strtoupper') ? mb_strtoupper($parts[1], 'UTF-8') : strtoupper($parts[1]);
-		$n = count($parts);
-		for ($i = 2; $i < $n; $i++) {
-			$w = $parts[$i];
-			if ($w === '') {
+
+		$words = preg_split('/\s+/u', $nama, -1, PREG_SPLIT_NO_EMPTY);
+		$lines = array();
+		$current = '';
+
+		foreach ($words as $word) {
+			$test = ($current === '') ? $word : $current . ' ' . $word;
+			if ($strlen($test) <= $max_chars) {
+				$current = $test;
 				continue;
 			}
-			$first = function_exists('mb_substr') ? mb_substr($w, 0, 1, 'UTF-8') : substr($w, 0, 1);
-			if ($first !== '') {
-				$out[] = function_exists('mb_strtoupper') ? mb_strtoupper($first, 'UTF-8') : strtoupper($first);
+
+			if ($current !== '') {
+				$lines[] = $current;
+				$current = $word;
+				continue;
 			}
+
+			// Satu kata lebih panjang dari batas baris: tetap tampil utuh di baris sendiri.
+			$lines[] = $word;
+			$current = '';
 		}
-		return implode(' ', $out);
+
+		if ($current !== '') {
+			$lines[] = $current;
+		}
+
+		return implode("\n", $lines);
 	}
 }
 
-$konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_selected) ? $konsumen_nama_selected : '');
+$konsumen_nama_kepada_yth_wrapped = wrap_kepada_yth_nama_cetak($konsumen_nama_kepada_yth);
 
 ?>
 
@@ -330,9 +367,12 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 			<th style="font-size: 0.75em; text-align: left; border: none; border-collapse: collapse;" colspan="575">&nbsp;</th>
 
 			<th id="cetak-th-konsumen-nama" class="cetak-box-kepada-perumdam" colspan="525">
-				<div class="cetak-kepada-yth-baris">
-					<strong>KEPADA YTH. </strong><span id="cetak-konsumen-nama"><?php echo " : " . $konsumen_nama_kepada_yth; ?></span>
-				</div>
+				<table class="cetak-kepada-yth-inner" cellpadding="0" cellspacing="0">
+					<tr>
+						<td class="cetak-kepada-yth-label"><strong>KEPADA YTH. :</strong></td>
+						<td id="cetak-konsumen-nama"><?php echo nl2br(htmlspecialchars($konsumen_nama_kepada_yth_wrapped, ENT_QUOTES, 'UTF-8')); ?></td>
+					</tr>
+				</table>
 				<!-- <strong>PERUMDAM TIRTA<br> -->
 				<!-- PROJOTAMANSARI</strong> -->
 			</th>
