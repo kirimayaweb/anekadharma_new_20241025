@@ -488,39 +488,8 @@
 
 
         <?php
-        // echo $date_awal; 
-        // echo "<br/>";
-
-        $Get_month_from_date = $month_selected;
-        $Get_year_Tahun_ini = $year_selected;
-        $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
-
-
-
-
-        if (date("Y", strtotime($date_awal)) < 2020) {
-            $Get_date_awal = date("d-m-Y");
-        } else {
-            $Get_date_awal = date("d-m-Y", strtotime($date_awal));
-        }
-
-        // echo $Get_date_awal;
-        // echo "<br/>";
-        // echo "<br/>";
-
-
-        // echo $date_akhir; 
-        // echo "<br/>";
-
-        if (date("Y", strtotime($date_akhir)) < 2020) {
-            $Get_date_akhir = date("d-m-Y");
-        } else {
-            $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
-        }
-
-        // echo $Get_date_akhir;
-        // echo "<br/>";
-        // echo "<br/>";
+        $Get_month_from_date = isset($month_selected) ? $month_selected : date('m');
+        $Get_year_Tahun_ini = isset($year_selected) ? $year_selected : date('Y');
 
         function bulan_teks($angka_bulan)
         {
