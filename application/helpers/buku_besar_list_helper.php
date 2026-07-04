@@ -45,6 +45,139 @@ function buku_besar_parse_bulan_ns($bulan_ns, $fallback_month = null, $fallback_
 	);
 }
 
+function buku_besar_detail_defaults()
+{
+	return array(
+		'barang_keterangan' => '',
+		'spop' => '',
+		'unit' => '',
+		'konsumen' => '',
+		'harga_satuan' => 0.0,
+		'jumlah' => 0.0,
+		'total_harga' => 0.0,
+		'harga_satuan_display' => '',
+		'jumlah_display' => '',
+		'total_harga_display' => '',
+	);
+}
+
+function buku_besar_pack_detail_row($detail)
+{
+	$out = buku_besar_detail_defaults();
+	if (!is_array($detail)) {
+		return $out;
+	}
+	foreach (array('barang_keterangan', 'spop', 'unit', 'konsumen') as $key) {
+		if (isset($detail[$key])) {
+			$out[$key] = trim((string) $detail[$key]);
+		}
+	}
+	$harga_satuan = isset($detail['harga_satuan']) ? (float) $detail['harga_satuan'] : 0.0;
+	$jumlah = isset($detail['jumlah']) ? (float) $detail['jumlah'] : 0.0;
+	$total_harga = isset($detail['total_harga']) ? (float) $detail['total_harga'] : ($harga_satuan * $jumlah);
+	$out['harga_satuan'] = $harga_satuan;
+	$out['jumlah'] = $jumlah;
+	$out['total_harga'] = $total_harga;
+	$out['harga_satuan_display'] = ($harga_satuan != 0.0) ? buku_besar_format_rupiah($harga_satuan, true) : '';
+	$out['jumlah_display'] = ($jumlah != 0.0) ? buku_besar_format_rupiah($jumlah, true) : '';
+	$out['total_harga_display'] = ($total_harga != 0.0) ? buku_besar_format_rupiah($total_harga, true) : '';
+	return $out;
+}
+
+function buku_besar_fetch_source_detail($CI, $table, $id)
+{
+	$id = (int) $id;
+	if ($id <= 0 || !buku_besar_is_valid_table_name($table) || !$CI->db->table_exists($table)) {
+		return buku_besar_detail_defaults();
+	}
+
+	$row = $CI->db->get_where($table, array('id' => $id))->row();
+	if (!$row) {
+		return buku_besar_detail_defaults();
+	}
+
+	if ($table === 'tbl_penjualan') {
+		$hs = (float) (isset($row->harga_satuan) ? $row->harga_satuan : 0);
+		$jml = (float) (isset($row->jumlah) ? $row->jumlah : 0);
+		return buku_besar_pack_detail_row(array(
+			'barang_keterangan' => isset($row->nama_barang) ? $row->nama_barang : '',
+			'spop' => isset($row->spop) ? $row->spop : '',
+			'unit' => isset($row->kode_pl) ? $row->kode_pl : '',
+			'konsumen' => isset($row->konsumen_nama) ? $row->konsumen_nama : '',
+			'harga_satuan' => $hs,
+			'jumlah' => $jml,
+		));
+	}
+
+	if ($table === 'tbl_pembelian') {
+		$hs = (float) (isset($row->harga_satuan) ? $row->harga_satuan : 0);
+		$jml = (float) (isset($row->jumlah) ? $row->jumlah : 0);
+		$total = (float) (isset($row->harga_total) ? $row->harga_total : ($hs * $jml));
+		return buku_besar_pack_detail_row(array(
+			'barang_keterangan' => isset($row->uraian) ? $row->uraian : '',
+			'spop' => isset($row->spop) ? $row->spop : '',
+			'unit' => isset($row->kode_pl) ? $row->kode_pl : '',
+			'konsumen' => isset($row->konsumen) ? $row->konsumen : (isset($row->supplier_nama) ? $row->supplier_nama : ''),
+			'harga_satuan' => $hs,
+			'jumlah' => $jml,
+			'total_harga' => $total,
+		));
+	}
+
+	if ($table === 'jurnal_kas') {
+		$nominal = max(
+			(float) (isset($row->debet) ? $row->debet : 0),
+			(float) (isset($row->kredit) ? $row->kredit : 0)
+		);
+		return buku_besar_pack_detail_row(array(
+			'barang_keterangan' => isset($row->keterangan) ? $row->keterangan : (isset($row->bukti) ? $row->bukti : ''),
+			'spop' => '',
+			'unit' => isset($row->pl) ? $row->pl : (isset($row->kode_unit) ? $row->kode_unit : ''),
+			'konsumen' => '',
+			'total_harga' => $nominal,
+		));
+	}
+
+	return buku_besar_detail_defaults();
+}
+
+function buku_besar_is_valid_table_name($table)
+{
+	return (bool) preg_match('/^[a-zA-Z0-9_]+$/', (string) $table);
+}
+
+function buku_besar_detail_from_raw_row($CI, $raw_row, $source_key)
+{
+	if (isset($raw_row['detail']) && is_array($raw_row['detail'])) {
+		return buku_besar_pack_detail_row($raw_row['detail']);
+	}
+
+	$id_source = isset($raw_row['id_source']) ? (int) $raw_row['id_source'] : 0;
+	$tbl_source = isset($raw_row['tbl_source_name']) ? trim((string) $raw_row['tbl_source_name']) : '';
+	if ($id_source > 0 && $tbl_source !== '') {
+		return buku_besar_fetch_source_detail($CI, $tbl_source, $id_source);
+	}
+
+	$packed = array(
+		'barang_keterangan' => isset($raw_row['barang_keterangan']) ? $raw_row['barang_keterangan'] : '',
+		'spop' => isset($raw_row['spop']) ? $raw_row['spop'] : '',
+		'unit' => isset($raw_row['unit']) ? $raw_row['unit'] : '',
+		'konsumen' => isset($raw_row['konsumen']) ? $raw_row['konsumen'] : '',
+		'harga_satuan' => isset($raw_row['harga_satuan']) ? $raw_row['harga_satuan'] : 0,
+		'jumlah' => isset($raw_row['jumlah']) ? $raw_row['jumlah'] : 0,
+		'total_harga' => isset($raw_row['total_harga']) ? $raw_row['total_harga'] : 0,
+	);
+
+	if ($packed['barang_keterangan'] === '' && isset($raw_row['keterangan'])) {
+		$packed['barang_keterangan'] = $raw_row['keterangan'];
+	}
+	if ($packed['unit'] === '' && isset($raw_row['pl'])) {
+		$packed['unit'] = $raw_row['pl'];
+	}
+
+	return buku_besar_pack_detail_row($packed);
+}
+
 function buku_besar_get_data_source_registry()
 {
 	return array(
@@ -139,7 +272,7 @@ function buku_besar_normalize_row($CI, $row, $source_key, &$nama_akun_cache = nu
 		$tanggal = '';
 	}
 
-	return array(
+	return array_merge(array(
 		'source_key' => $source_key,
 		'sort_kode_akun' => $kode_akun,
 		'sort_tanggal' => $tanggal,
@@ -151,19 +284,34 @@ function buku_besar_normalize_row($CI, $row, $source_key, &$nama_akun_cache = nu
 		'nama_akun' => $nama_akun,
 		'debet' => $debet,
 		'kredit' => $kredit,
-	);
+	), buku_besar_detail_from_raw_row($CI, $row, $source_key));
 }
 
 function buku_besar_collect_rows_from_buku_besar_source($CI, $source_key, $buku_besar_source, $month, $year)
 {
-	$sql = 'SELECT `id`, `tanggal`, `pl`, `kode`, `kode_akun`, `nama_akun`, `debet`, `kredit`'
-		. ' FROM `buku_besar`'
+	$sql = 'SELECT * FROM `buku_besar`'
 		. ' WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ? AND `source` = ?'
 		. ' ORDER BY `id` ASC';
 
 	$rows_db = $CI->db->query($sql, array((int) $month, (int) $year, $buku_besar_source))->result();
 	$rows = array();
 	foreach ((array) $rows_db as $row) {
+		$id_source = isset($row->id_source) ? (int) $row->id_source : 0;
+		$tbl_source = isset($row->tbl_source_name) ? trim((string) $row->tbl_source_name) : '';
+		$detail = buku_besar_detail_defaults();
+		if ($id_source > 0 && $tbl_source !== '') {
+			$detail = buku_besar_fetch_source_detail($CI, $tbl_source, $id_source);
+		} else {
+			$total = isset($row->source_nominal) ? (float) $row->source_nominal : 0;
+			$detail = buku_besar_pack_detail_row(array(
+				'barang_keterangan' => isset($row->keterangan) ? $row->keterangan : '',
+				'spop' => isset($row->spop) ? $row->spop : '',
+				'unit' => isset($row->nama_unit) ? $row->nama_unit : (isset($row->pl) ? $row->pl : ''),
+				'konsumen' => isset($row->konsumen_nama) ? $row->konsumen_nama : '',
+				'total_harga' => $total,
+			));
+		}
+
 		$rows[] = array(
 			'sort_id' => isset($row->id) ? (int) $row->id : 0,
 			'tanggal' => isset($row->tanggal) ? $row->tanggal : '',
@@ -174,6 +322,9 @@ function buku_besar_collect_rows_from_buku_besar_source($CI, $source_key, $buku_
 			'debet' => isset($row->debet) ? $row->debet : 0,
 			'kredit' => isset($row->kredit) ? $row->kredit : 0,
 			'source_key' => $source_key,
+			'id_source' => $id_source,
+			'tbl_source_name' => $tbl_source,
+			'detail' => $detail,
 		);
 	}
 	return $rows;
@@ -224,6 +375,14 @@ function buku_besar_collect_rows_from_tbl_pembelian($CI, $month, $year)
 			}
 		}
 
+		$detail = buku_besar_pack_detail_row(array(
+			'barang_keterangan' => isset($group->nama_barang_list) ? $group->nama_barang_list : '',
+			'spop' => isset($group->spop) ? $group->spop : '',
+			'unit' => isset($group->kode_pl) ? $group->kode_pl : (isset($group->unit_konsumen) ? $group->unit_konsumen : ''),
+			'konsumen' => isset($group->supplier_nama) ? $group->supplier_nama : '',
+			'total_harga' => $nominal,
+		));
+
 		$rows[] = array(
 			'sort_id' => ++$sort_id,
 			'tanggal' => isset($group->tanggal) ? $group->tanggal : '',
@@ -234,6 +393,7 @@ function buku_besar_collect_rows_from_tbl_pembelian($CI, $month, $year)
 			'debet' => $nominal,
 			'kredit' => 0,
 			'source_key' => 'pembelian',
+			'detail' => $detail,
 		);
 
 		$rows[] = array(
@@ -246,6 +406,7 @@ function buku_besar_collect_rows_from_tbl_pembelian($CI, $month, $year)
 			'debet' => 0,
 			'kredit' => $kredit,
 			'source_key' => 'pembelian',
+			'detail' => $detail,
 		);
 	}
 
@@ -260,8 +421,8 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 	$month_end = date('Y-m-t 23:59:59', strtotime($month_start));
 
 	$sql = 'SELECT `id`, `tgl_jual` AS `tanggal`, `kode_pl` AS `pl`, `kode_bb` AS `kode`,'
-		. ' TRIM(`kode_akun`) AS `kode_akun`, `nmrkirim`,'
-		. ' (`jumlah` * `harga_satuan`) AS `nominal`'
+		. ' TRIM(`kode_akun`) AS `kode_akun`, `nmrkirim`, `nama_barang`, `konsumen_nama`,'
+		. ' `harga_satuan`, `jumlah`, (`jumlah` * `harga_satuan`) AS `nominal`'
 		. ' FROM `tbl_penjualan`'
 		. ' WHERE `tgl_jual` >= ? AND `tgl_jual` <= ?'
 		. ' AND TRIM(COALESCE(`kode_akun`, \'\')) <> \'\''
@@ -282,9 +443,17 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 		$nmrkirim = isset($row->nmrkirim) ? trim((string) $row->nmrkirim) : '';
 		$x_penjualandpp_percentage = 90.090090;
 		$penjualandpp = ($nominal * $x_penjualandpp_percentage) / 100;
+		$detail = buku_besar_pack_detail_row(array(
+			'barang_keterangan' => isset($row->nama_barang) ? $row->nama_barang : '',
+			'spop' => isset($row->spop) ? $row->spop : '',
+			'unit' => isset($row->pl) ? $row->pl : '',
+			'konsumen' => isset($row->konsumen_nama) ? $row->konsumen_nama : '',
+			'harga_satuan' => isset($row->harga_satuan) ? $row->harga_satuan : 0,
+			'jumlah' => isset($row->jumlah) ? $row->jumlah : 0,
+		));
 
 		$rows[] = array(
-			'sort_id' => ++$sort_id,
+			'sort_id' => isset($row->id) ? (int) $row->id : ++$sort_id,
 			'tanggal' => isset($row->tanggal) ? $row->tanggal : '',
 			'pl' => isset($row->pl) ? $row->pl : '',
 			'kode' => isset($row->kode) ? $row->kode : '',
@@ -293,6 +462,7 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 			'debet' => 0,
 			'kredit' => $penjualandpp,
 			'source_key' => 'penjualan',
+			'detail' => $detail,
 		);
 
 		if ($nmrkirim === '') {
@@ -320,6 +490,11 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 		$utangppn = ($nominal * $x_utangppn_percentage) / 100;
 
 		if ($piutang > 0) {
+			$group_detail = buku_besar_pack_detail_row(array(
+				'barang_keterangan' => 'Piutang — ' . (isset($group['kode']) ? $group['kode'] : ''),
+				'unit' => isset($group['pl']) ? $group['pl'] : '',
+				'total_harga' => $nominal,
+			));
 			$rows[] = array(
 				'sort_id' => ++$sort_id,
 				'tanggal' => $group['tanggal'],
@@ -330,9 +505,15 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 				'debet' => $piutang,
 				'kredit' => 0,
 				'source_key' => 'penjualan',
+				'detail' => $group_detail,
 			);
 		}
 		if ($utangppn > 0) {
+			$group_detail = buku_besar_pack_detail_row(array(
+				'barang_keterangan' => 'Utang PPN — ' . (isset($group['kode']) ? $group['kode'] : ''),
+				'unit' => isset($group['pl']) ? $group['pl'] : '',
+				'total_harga' => $nominal,
+			));
 			$rows[] = array(
 				'sort_id' => ++$sort_id,
 				'tanggal' => $group['tanggal'],
@@ -343,6 +524,7 @@ function buku_besar_collect_rows_from_tbl_penjualan($CI, $month, $year)
 				'debet' => 0,
 				'kredit' => $utangppn,
 				'source_key' => 'penjualan',
+				'detail' => $group_detail,
 			);
 		}
 	}
@@ -356,7 +538,7 @@ function buku_besar_collect_rows_from_jurnal_kas($CI, $month, $year)
 	$year = (int) $year;
 	$kas_kode = '11101';
 
-	$sql = 'SELECT `id`, `tanggal`, `bukti`, `pl`, `kode_unit`, `kode_rekening`, `kode_akun`, `debet`, `kredit`'
+	$sql = 'SELECT `id`, `tanggal`, `bukti`, `keterangan`, `pl`, `kode_unit`, `kode_rekening`, `kode_akun`, `debet`, `kredit`'
 		. ' FROM `jurnal_kas`'
 		. ' WHERE MONTH(`tanggal`) = ? AND YEAR(`tanggal`) = ?'
 		. ' AND TRIM(COALESCE(`kode_akun`, \'\')) <> \'\''
@@ -395,9 +577,17 @@ function buku_besar_collect_rows_from_jurnal_kas($CI, $month, $year)
 			$kode = trim((string) $row->bukti);
 		}
 
-		$make_row = function ($kode_akun_row, $debet_val, $kredit_val) use (&$rows, &$sort_id, $tanggal, $pl, $kode, $CI, &$nama_akun_cache) {
+		$make_row = function ($kode_akun_row, $debet_val, $kredit_val) use (&$rows, &$sort_id, $tanggal, $pl, $kode, $row, $CI, &$nama_akun_cache) {
+			$nominal = max((float) $debet_val, (float) $kredit_val);
+			$detail = buku_besar_pack_detail_row(array(
+				'barang_keterangan' => isset($row->keterangan) ? $row->keterangan : (isset($row->bukti) ? $row->bukti : ''),
+				'spop' => '',
+				'unit' => $pl,
+				'konsumen' => '',
+				'total_harga' => $nominal,
+			));
 			$rows[] = array(
-				'sort_id' => ++$sort_id,
+				'sort_id' => isset($row->id) ? (int) $row->id : ++$sort_id,
 				'tanggal' => $tanggal,
 				'pl' => $pl,
 				'kode' => $kode,
@@ -406,6 +596,7 @@ function buku_besar_collect_rows_from_jurnal_kas($CI, $month, $year)
 				'debet' => (float) $debet_val,
 				'kredit' => (float) $kredit_val,
 				'source_key' => 'jurnal_kas',
+				'detail' => $detail,
 			);
 		};
 
@@ -596,6 +787,31 @@ function buku_besar_resolve_kode_akun_filter($CI, $uuid_kode_akun)
 	);
 }
 
+function buku_besar_row_detail_for_display($row)
+{
+	$packed = buku_besar_pack_detail_row(array(
+		'barang_keterangan' => isset($row['barang_keterangan']) ? $row['barang_keterangan'] : '',
+		'spop' => isset($row['spop']) ? $row['spop'] : '',
+		'unit' => isset($row['unit']) ? $row['unit'] : '',
+		'konsumen' => isset($row['konsumen']) ? $row['konsumen'] : '',
+		'harga_satuan' => isset($row['harga_satuan']) ? $row['harga_satuan'] : 0,
+		'jumlah' => isset($row['jumlah']) ? $row['jumlah'] : 0,
+		'total_harga' => isset($row['total_harga']) ? $row['total_harga'] : 0,
+	));
+	return array(
+		'barang_keterangan' => $packed['barang_keterangan'],
+		'spop' => $packed['spop'],
+		'unit' => $packed['unit'],
+		'konsumen' => $packed['konsumen'],
+		'harga_satuan' => $packed['harga_satuan'],
+		'jumlah' => $packed['jumlah'],
+		'total_harga' => $packed['total_harga'],
+		'harga_satuan_display' => $packed['harga_satuan_display'],
+		'jumlah_display' => $packed['jumlah_display'],
+		'total_harga_display' => $packed['total_harga_display'],
+	);
+}
+
 function buku_besar_build_grouped_display_rows($merged_rows)
 {
 	$rows = array();
@@ -612,7 +828,7 @@ function buku_besar_build_grouped_display_rows($merged_rows)
 		if ($current_kode === null) {
 			return;
 		}
-		$rows[] = array(
+		$rows[] = array_merge(array(
 			'row_type' => 'subtotal',
 			'no' => '',
 			'sort_no' => $group_last_no + 0.5,
@@ -627,7 +843,7 @@ function buku_besar_build_grouped_display_rows($merged_rows)
 			'kredit' => $group_kredit,
 			'debet_display' => buku_besar_format_rupiah($group_debet, true),
 			'kredit_display' => buku_besar_format_rupiah($group_kredit, true),
-		);
+		), buku_besar_row_detail_for_display(array()));
 	};
 
 	foreach ((array) $merged_rows as $row) {
@@ -658,7 +874,7 @@ function buku_besar_build_grouped_display_rows($merged_rows)
 		$group_last_no = $no;
 
 		$source_key = isset($row['source_key']) ? trim((string) $row['source_key']) : '';
-		$rows[] = array(
+		$rows[] = array_merge(array(
 			'row_type' => 'data',
 			'no' => $no,
 			'source_key' => $source_key,
@@ -670,7 +886,7 @@ function buku_besar_build_grouped_display_rows($merged_rows)
 			'kredit' => $kredit,
 			'debet_display' => buku_besar_format_rupiah($debet),
 			'kredit_display' => buku_besar_format_rupiah($kredit),
-		);
+		), buku_besar_row_detail_for_display($row));
 	}
 
 	$flush_group();

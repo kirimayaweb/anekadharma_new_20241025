@@ -1,8 +1,9 @@
 <?php
 $this->load->helper('buku_besar_list');
 
-$tab_data_active = (!isset($active_tab) || $active_tab !== 'compare');
+$tab_data_active = (!isset($active_tab) || ($active_tab !== 'compare' && $active_tab !== 'setting'));
 $tab_compare_active = (isset($active_tab) && $active_tab === 'compare');
+$tab_setting_ska_active = (isset($active_tab) && $active_tab === 'setting');
 
 if (!isset($nama_bulan_id) || !is_array($nama_bulan_id)) {
     $nama_bulan_id = array(
@@ -59,6 +60,7 @@ $url_ajax_list = isset($url_ajax_list) ? $url_ajax_list : site_url('Buku_besar/a
 $url_modal_jurnal_pembelian = isset($url_modal_jurnal_pembelian) ? $url_modal_jurnal_pembelian : site_url('Tbl_pembelian/ajax_bb_modal_jurnal_pembelian');
 $url_modal_jurnal_penjualan = isset($url_modal_jurnal_penjualan) ? $url_modal_jurnal_penjualan : site_url('Tbl_penjualan/ajax_bb_modal_jurnal_penjualan');
 $url_excel = isset($url_buku_besar_excel) ? $url_buku_besar_excel : site_url('Buku_besar/excel_list');
+$url_bb_recalculate = isset($url_bb_recalculate) ? $url_bb_recalculate : site_url('Buku_besar/ajax_recalculate_penjualan');
 $url_form_action = isset($action) ? $action : site_url('Buku_besar/cari_kode_akun');
 $url_compare_run = isset($url_compare_run) ? $url_compare_run : site_url('Buku_besar/ajax_compare_buku_besar_manual_online');
 $url_compare_excel = isset($url_compare_excel) ? $url_compare_excel : site_url('Buku_besar/excel_compare_buku_besar_manual_online');
@@ -96,7 +98,7 @@ $compare_sections = array(
                 <div class="card card-primary">
                     <div class="card-header bb-card-header-compact py-2">
                         <form id="form-cari-buku-besar" action="<?php echo htmlspecialchars($url_form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
-                            <input type="hidden" name="active_tab" id="active_tab_input" value="<?php echo $tab_compare_active ? 'compare' : 'data'; ?>">
+                            <input type="hidden" name="active_tab" id="active_tab_input" value="<?php echo $tab_compare_active ? 'compare' : ($tab_setting_ska_active ? 'setting' : 'data'); ?>">
                             <div class="bb-header-row d-flex align-items-center flex-nowrap w-100">
                                 <div class="bb-header-left flex-grow-1 d-flex align-items-center min-width-0">
                                     <strong class="bb-header-title-text">BUKU BESAR</strong>
@@ -128,6 +130,9 @@ $compare_sections = array(
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link<?php echo $tab_compare_active ? ' active' : ''; ?>" id="tab-compare-bb" data-toggle="pill" href="#panel-compare-bb" role="tab">Compare Data Manual - Online</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo $tab_setting_ska_active ? ' active' : ''; ?>" id="tab-bb-setting-ska" data-toggle="pill" href="#panel-bb-setting-ska" role="tab">Setting Kode Akun Unit</a>
                             </li>
                         </ul>
 
@@ -187,11 +192,16 @@ $compare_sections = array(
                                         <input type="text" id="bb_filter_teks" class="form-control form-control-sm" placeholder="Kode / nama akun (aktif jika Semua)" value="<?php echo htmlspecialchars($bb_filter_teks, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($bb_filter_kode !== 'semua' && $bb_filter_kode !== '') ? ' disabled' : ''; ?>>
                                     </div>
                                     </div>
-                                    <div class="bb-filter-excel-wrap mb-2">
-                                        <label class="small mb-1 d-block invisible">Excel</label>
-                                        <button type="button" class="btn btn-success btn-sm" id="btn-buku-besar-excel">
-                                            <i class="fa fa-file-excel-o"></i> Cetak ke Excel
-                                        </button>
+                                    <div class="bb-filter-excel-wrap mb-2 d-flex align-items-end">
+                                        <label class="small mb-1 d-block invisible">Aksi</label>
+                                        <div class="d-flex flex-nowrap">
+                                            <button type="button" class="btn btn-warning btn-sm mr-2" id="btn-bb-recalculate" title="Recalculate penjualan ke buku_besar berdasarkan sys_unit_kode_akun">
+                                                <i class="fa fa-refresh"></i> Recalculate Data
+                                            </button>
+                                            <button type="button" class="btn btn-success btn-sm" id="btn-buku-besar-excel">
+                                                <i class="fa fa-file-excel-o"></i> Cetak ke Excel
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -205,6 +215,13 @@ $compare_sections = array(
                                                 <col class="bb-col-kode">
                                                 <col class="bb-col-kode-akun">
                                                 <col class="bb-col-nama-akun">
+                                                <col class="bb-col-barang">
+                                                <col class="bb-col-spop">
+                                                <col class="bb-col-unit">
+                                                <col class="bb-col-konsumen">
+                                                <col class="bb-col-harga">
+                                                <col class="bb-col-jumlah">
+                                                <col class="bb-col-total-harga">
                                                 <col class="bb-col-debet">
                                                 <col class="bb-col-kredit">
                                             </colgroup>
@@ -215,6 +232,13 @@ $compare_sections = array(
                                                     <th>Kode</th>
                                                     <th>Kode Akun</th>
                                                     <th>Nama Akun</th>
+                                                    <th>Barang / Keterangan</th>
+                                                    <th>SPOP</th>
+                                                    <th>Unit</th>
+                                                    <th>Konsumen</th>
+                                                    <th class="text-right">Harga Satuan</th>
+                                                    <th class="text-right">Jumlah</th>
+                                                    <th class="text-right">Harga Satuan × Jumlah</th>
                                                     <th class="text-right">Debet</th>
                                                     <th class="text-right">Kredit</th>
                                                 </tr>
@@ -238,6 +262,16 @@ $compare_sections = array(
                                                         : (isset($list_data['nama_akun']) ? $list_data['nama_akun'] : '');
                                                     $debet_order = isset($list_data['debet']) ? (float) $list_data['debet'] : 0;
                                                     $kredit_order = isset($list_data['kredit']) ? (float) $list_data['kredit'] : 0;
+                                                    $barang_keterangan = isset($list_data['barang_keterangan']) ? $list_data['barang_keterangan'] : '';
+                                                    $spop_val = isset($list_data['spop']) ? $list_data['spop'] : '';
+                                                    $unit_val = isset($list_data['unit']) ? $list_data['unit'] : '';
+                                                    $konsumen_val = isset($list_data['konsumen']) ? $list_data['konsumen'] : '';
+                                                    $harga_satuan_display = isset($list_data['harga_satuan_display']) ? $list_data['harga_satuan_display'] : '';
+                                                    $jumlah_display = isset($list_data['jumlah_display']) ? $list_data['jumlah_display'] : '';
+                                                    $total_harga_display = isset($list_data['total_harga_display']) ? $list_data['total_harga_display'] : '';
+                                                    $harga_satuan_order = isset($list_data['harga_satuan']) ? (float) $list_data['harga_satuan'] : 0;
+                                                    $jumlah_order = isset($list_data['jumlah']) ? (float) $list_data['jumlah'] : 0;
+                                                    $total_harga_order = isset($list_data['total_harga']) ? (float) $list_data['total_harga'] : 0;
                                                 ?>
                                                 <tr class="<?php echo $tr_class; ?>">
                                                     <td class="text-center" data-order="<?php echo htmlspecialchars((string) $no_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : (int) $list_data['no']; ?></td>
@@ -245,6 +279,13 @@ $compare_sections = array(
                                                     <td data-order="<?php echo htmlspecialchars((string) $kode_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($list_data['kode'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                     <td data-order="<?php echo htmlspecialchars((string) $kode_akun_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($list_data['kode_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                     <td data-order="<?php echo htmlspecialchars((string) $nama_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '<strong>' . htmlspecialchars($list_data['nama_akun'], ENT_QUOTES, 'UTF-8') . '</strong>' : htmlspecialchars($list_data['nama_akun'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $barang_keterangan, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($barang_keterangan, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $spop_val, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($spop_val, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $unit_val, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($unit_val, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td data-order="<?php echo htmlspecialchars((string) $konsumen_val, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($konsumen_val, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td class="text-right" data-order="<?php echo htmlspecialchars((string) $harga_satuan_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($harga_satuan_display, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td class="text-right" data-order="<?php echo htmlspecialchars((string) $jumlah_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($jumlah_display, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    <td class="text-right" data-order="<?php echo htmlspecialchars((string) $total_harga_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $is_subtotal ? '' : htmlspecialchars($total_harga_display, ENT_QUOTES, 'UTF-8'); ?></td>
                                                     <td class="text-right" data-order="<?php echo htmlspecialchars((string) $debet_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($list_data['debet_display'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                     <td class="text-right" data-order="<?php echo htmlspecialchars((string) $kredit_order, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($list_data['kredit_display'], ENT_QUOTES, 'UTF-8'); ?></td>
                                                 </tr>
@@ -259,12 +300,19 @@ $compare_sections = array(
                                             <col class="bb-col-kode">
                                             <col class="bb-col-kode-akun">
                                             <col class="bb-col-nama-akun">
+                                            <col class="bb-col-barang">
+                                            <col class="bb-col-spop">
+                                            <col class="bb-col-unit">
+                                            <col class="bb-col-konsumen">
+                                            <col class="bb-col-harga">
+                                            <col class="bb-col-jumlah">
+                                            <col class="bb-col-total-harga">
                                             <col class="bb-col-debet">
                                             <col class="bb-col-kredit">
                                         </colgroup>
                                         <tfoot>
                                             <tr class="bb-row-grand-total">
-                                                <th colspan="5" class="text-right">GRAND TOTAL</th>
+                                                <th colspan="12" class="text-right">GRAND TOTAL</th>
                                                 <th class="text-right bb-total-debet"><?php echo buku_besar_format_rupiah($total_debet, true); ?></th>
                                                 <th class="text-right bb-total-kredit"><?php echo buku_besar_format_rupiah($total_kredit, true); ?></th>
                                             </tr>
@@ -470,6 +518,8 @@ $compare_sections = array(
                                     </div>
                                 </div>
                             </div>
+
+                            <?php $this->load->view('anekadharma/buku_besar/partials/tab_setting_kode_akun_unit'); ?>
                         </div>
                     </div>
                 </div>
@@ -482,6 +532,10 @@ $compare_sections = array(
     .nav-tabs.buku-besar-tabs { border-bottom: 2px solid #007bff; margin-bottom: 0; }
     .nav-tabs.buku-besar-tabs .nav-link { border: 2px solid #007bff; border-bottom: none; color: #666; margin-right: 4px; border-radius: 4px 4px 0 0; background: #fff; }
     .nav-tabs.buku-besar-tabs .nav-link.active { background: #007bff; color: #fff; font-weight: bold; }
+    .nav-tabs.bb-ska-table-tabs { border-bottom: 2px solid #ffc107; margin-bottom: 0; }
+    .nav-tabs.bb-ska-table-tabs .nav-link { border: 1px solid #ffc107; border-bottom: none; color: #666; margin-right: 3px; border-radius: 4px 4px 0 0; font-size: 13px; }
+    .nav-tabs.bb-ska-table-tabs .nav-link.active { background: #ffc107; color: #212529; font-weight: bold; }
+    .bb-ska-toolbar { padding: 10px 12px; background: #fffbf0; border: 1px solid #ffc107; border-radius: 6px; }
     .buku-besar-tab1-toolbar { padding: 10px 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; }
     .bb-source-stats-box {
         border: 1px solid #b8daff; border-radius: 8px; background: linear-gradient(180deg, #f8fbff, #fff);
@@ -527,21 +581,28 @@ $compare_sections = array(
     .bb-filter-kode-wrap { width: 280px; max-width: 100%; }
     .bb-filter-teks-wrap { width: 260px; max-width: 100%; }
     .bb-dt-wrap { border: 2px solid #007bff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,123,255,.12); padding: 8px; background: #fff; }
-    .bb-table-scroll { max-height: 480px; overflow-y: auto; overflow-x: hidden; border: 1px solid #dee2e6; border-bottom: none; border-radius: 4px 4px 0 0; scrollbar-gutter: stable; }
-    .bb-footer-table { border-top: none !important; border-radius: 0 0 4px 4px; margin-top: 0 !important; }
+    .bb-table-scroll { max-height: 480px; overflow-y: auto; overflow-x: auto; border: 1px solid #dee2e6; border-bottom: none; border-radius: 4px 4px 0 0; scrollbar-gutter: stable; }
+    .bb-footer-table { border-top: none !important; border-radius: 0 0 4px 4px; margin-top: 0 !important; min-width: 2200px; }
     .bb-footer-table tfoot th {
         background: #fff3cd !important; font-weight: 700;
         border-color: #ffc107 !important; padding: 12px;
         font-variant-numeric: tabular-nums; font-size: 15px;
     }
-    .bb-main-dt { width: 100%; table-layout: fixed; border-collapse: collapse; margin-bottom: 0 !important; font-size: 15px; }
-    .bb-main-dt col.bb-col-no { width: 6%; }
-    .bb-main-dt col.bb-col-sumber { width: 11%; }
-    .bb-main-dt col.bb-col-kode { width: 12%; }
-    .bb-main-dt col.bb-col-kode-akun { width: 12%; }
-    .bb-main-dt col.bb-col-nama-akun { width: 29%; }
+    .bb-main-dt { width: 100%; min-width: 2200px; table-layout: fixed; border-collapse: collapse; margin-bottom: 0 !important; font-size: 14px; }
+    .bb-main-dt col.bb-col-no { width: 48px; }
+    .bb-main-dt col.bb-col-sumber { width: 110px; }
+    .bb-main-dt col.bb-col-kode { width: 90px; }
+    .bb-main-dt col.bb-col-kode-akun { width: 90px; }
+    .bb-main-dt col.bb-col-nama-akun { width: 180px; }
+    .bb-main-dt col.bb-col-barang { width: 220px; }
+    .bb-main-dt col.bb-col-spop { width: 100px; }
+    .bb-main-dt col.bb-col-unit { width: 80px; }
+    .bb-main-dt col.bb-col-konsumen { width: 160px; }
+    .bb-main-dt col.bb-col-harga,
+    .bb-main-dt col.bb-col-jumlah,
+    .bb-main-dt col.bb-col-total-harga,
     .bb-main-dt col.bb-col-debet,
-    .bb-main-dt col.bb-col-kredit { width: 15%; }
+    .bb-main-dt col.bb-col-kredit { width: 120px; }
     .bb-source-badge {
         display: inline-flex; align-items: center; gap: 4px;
         font-size: 13px; font-weight: 700; line-height: 1.3;
@@ -651,6 +712,7 @@ $compare_sections = array(
     var urlModalJurnalPembelian = <?php echo json_encode($url_modal_jurnal_pembelian); ?>;
     var urlModalJurnalPenjualan = <?php echo json_encode($url_modal_jurnal_penjualan); ?>;
     var urlExcel = <?php echo json_encode($url_excel); ?>;
+    var urlBbRecalculate = <?php echo json_encode($url_bb_recalculate); ?>;
     var urlCari = <?php echo json_encode($url_cari); ?>;
     var urlFormAction = <?php echo json_encode($url_form_action); ?>;
     var urlRun = <?php echo json_encode($url_compare_run); ?>;
@@ -742,7 +804,12 @@ $compare_sections = array(
         try {
             localStorage.setItem(LS_BULAN_NS, jQuery('#bulan_ns').val() || '');
             var activeTab = document.querySelector('#buku-besar-tabs .nav-link.active');
-            localStorage.setItem(LS_ACTIVE_TAB, (activeTab && activeTab.id === 'tab-compare-bb') ? 'compare' : 'data');
+            var tabVal = 'data';
+            if (activeTab) {
+                if (activeTab.id === 'tab-compare-bb') tabVal = 'compare';
+                else if (activeTab.id === 'tab-bb-setting-ska') tabVal = 'setting';
+            }
+            localStorage.setItem(LS_ACTIVE_TAB, tabVal);
             localStorage.setItem(LS_FILTER_KODE, jQuery('#bb_filter_kode').val() || 'semua');
             localStorage.setItem(LS_FILTER_TEKS, jQuery('#bb_filter_teks').val() || '');
         } catch (eLs) {}
@@ -775,6 +842,9 @@ $compare_sections = array(
             if (lsTab === 'compare') {
                 jQuery('#tab-compare-bb').tab('show');
                 document.getElementById('active_tab_input').value = 'compare';
+            } else if (lsTab === 'setting') {
+                jQuery('#tab-bb-setting-ska').tab('show');
+                document.getElementById('active_tab_input').value = 'setting';
             } else if (lsTab === 'data') {
                 jQuery('#tab-bb-data').tab('show');
                 document.getElementById('active_tab_input').value = 'data';
@@ -792,7 +862,12 @@ $compare_sections = array(
 
     function updateActiveTabInput() {
         var activeTab = document.querySelector('#buku-besar-tabs .nav-link.active');
-        document.getElementById('active_tab_input').value = (activeTab && activeTab.id === 'tab-compare-bb') ? 'compare' : 'data';
+        var tabVal = 'data';
+        if (activeTab) {
+            if (activeTab.id === 'tab-compare-bb') tabVal = 'compare';
+            else if (activeTab.id === 'tab-bb-setting-ska') tabVal = 'setting';
+        }
+        document.getElementById('active_tab_input').value = tabVal;
     }
 
     function bbSourceBadgeHtml(sourceKey, sourceLabel) {
@@ -834,12 +909,26 @@ $compare_sections = array(
                 : bbAttrOrder(it.nama_akun || '');
             var debetOrder = bbAttrOrder(it.debet != null ? it.debet : 0);
             var kreditOrder = bbAttrOrder(it.kredit != null ? it.kredit : 0);
+            var barangOrder = isSubtotal ? '' : bbAttrOrder(it.barang_keterangan || '');
+            var spopOrder = isSubtotal ? '' : bbAttrOrder(it.spop || '');
+            var unitOrder = isSubtotal ? '' : bbAttrOrder(it.unit || '');
+            var konsumenOrder = isSubtotal ? '' : bbAttrOrder(it.konsumen || '');
+            var hargaOrder = isSubtotal ? '' : bbAttrOrder(it.harga_satuan != null ? it.harga_satuan : 0);
+            var jumlahOrder = isSubtotal ? '' : bbAttrOrder(it.jumlah != null ? it.jumlah : 0);
+            var totalHargaOrder = isSubtotal ? '' : bbAttrOrder(it.total_harga != null ? it.total_harga : 0);
             html += '<tr' + trClass + '>'
                 + '<td class="text-center" data-order="' + bbEscapeHtml(noOrder) + '">' + noCell + '</td>'
                 + '<td class="bb-col-sumber-cell" data-order="' + bbEscapeHtml(sourceOrder) + '">' + sourceCell + '</td>'
                 + '<td data-order="' + bbEscapeHtml(kodeValOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.kode || '')) + '</td>'
                 + '<td data-order="' + bbEscapeHtml(kodeAkunOrder) + '">' + kodeCell + '</td>'
                 + '<td data-order="' + bbEscapeHtml(namaOrder) + '">' + namaCell + '</td>'
+                + '<td data-order="' + bbEscapeHtml(barangOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.barang_keterangan || '')) + '</td>'
+                + '<td data-order="' + bbEscapeHtml(spopOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.spop || '')) + '</td>'
+                + '<td data-order="' + bbEscapeHtml(unitOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.unit || '')) + '</td>'
+                + '<td data-order="' + bbEscapeHtml(konsumenOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.konsumen || '')) + '</td>'
+                + '<td class="text-right" data-order="' + bbEscapeHtml(hargaOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.harga_satuan_display || '')) + '</td>'
+                + '<td class="text-right" data-order="' + bbEscapeHtml(jumlahOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.jumlah_display || '')) + '</td>'
+                + '<td class="text-right" data-order="' + bbEscapeHtml(totalHargaOrder) + '">' + (isSubtotal ? '' : bbEscapeHtml(it.total_harga_display || '')) + '</td>'
                 + '<td class="text-right" data-order="' + bbEscapeHtml(debetOrder) + '">' + bbEscapeHtml(it.debet_display || '') + '</td>'
                 + '<td class="text-right" data-order="' + bbEscapeHtml(kreditOrder) + '">' + bbEscapeHtml(it.kredit_display || '') + '</td>'
                 + '</tr>';
@@ -877,12 +966,16 @@ $compare_sections = array(
             info: true,
             autoWidth: false,
             columnDefs: [
-                { targets: 0, width: '6%', className: 'text-center' },
-                { targets: 1, width: '11%', className: 'bb-col-sumber-cell text-center' },
-                { targets: 2, width: '12%' },
-                { targets: 3, width: '12%' },
-                { targets: 4, width: '29%' },
-                { targets: [5, 6], width: '15%', className: 'text-right', type: 'num' }
+                { targets: 0, width: '48px', className: 'text-center' },
+                { targets: 1, width: '110px', className: 'bb-col-sumber-cell text-center' },
+                { targets: 2, width: '90px' },
+                { targets: 3, width: '90px' },
+                { targets: 4, width: '180px' },
+                { targets: 5, width: '220px' },
+                { targets: 6, width: '100px' },
+                { targets: 7, width: '80px' },
+                { targets: 8, width: '160px' },
+                { targets: [9, 10, 11, 12, 13], width: '120px', className: 'text-right', type: 'num' }
             ],
             language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' },
             drawCallback: function() {
@@ -1101,6 +1194,49 @@ $compare_sections = array(
             submitCariBukuBesarForm();
         });
 
+        jQuery('#btn-bb-recalculate').on('click', function() {
+            var bulanNs = jQuery('#bulan_ns').val() || '';
+            if (!/^\d{4}-\d{2}$/.test(bulanNs)) {
+                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan terlebih dahulu.' });
+                return;
+            }
+            var doRecalc = function() {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({ title: 'Recalculate...', html: 'Memproses penjualan ke buku_besar', allowOutsideClick: false, didOpen: function() { Swal.showLoading(); } });
+                }
+                jQuery.ajax({
+                    url: urlBbRecalculate,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: { bulan_ns: bulanNs }
+                }).done(function(res) {
+                    if (typeof Swal !== 'undefined') Swal.close();
+                    if (!res || !res.ok) {
+                        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal', text: (res && res.message) ? res.message : 'Recalculate gagal.' });
+                        return;
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'success', title: 'Recalculate Selesai', text: res.message || 'Data berhasil diproses.' });
+                    }
+                    loadBukuBesarData();
+                }).fail(function() {
+                    if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
+                });
+            };
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Recalculate Data Penjualan?',
+                    html: 'Proses semua record <strong>tbl_penjualan</strong> bulan terpilih berdasarkan <strong>sys_unit_kode_akun</strong>.<br>Nilai = (harga_satuan × jumlah) × pengali.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Recalculate',
+                    cancelButtonText: 'Batal'
+                }).then(function(r) { if (r.isConfirmed) doRecalc(); });
+            } else if (window.confirm('Recalculate data penjualan?')) {
+                doRecalc();
+            }
+        });
+
         jQuery('#btn-buku-besar-excel').on('click', function() {
             var f = jQuery('<form method="post" target="_blank"></form>');
             f.attr('action', urlExcel);
@@ -1118,7 +1254,19 @@ $compare_sections = array(
             if (jQuery(e.target).attr('id') === 'tab-bb-data') {
                 jQuery('#tab-bb-data').trigger('shown.bbLoad');
             }
+            if (jQuery(e.target).attr('id') === 'tab-bb-setting-ska' && typeof window.bbUnitSkaBoot === 'function') {
+                window.bbUnitSkaBoot();
+            }
         });
+
+        if (typeof window.bbUnitSkaBoot === 'function') {
+            if (jQuery('#tab-bb-setting-ska').hasClass('active')) {
+                window.bbUnitSkaBoot();
+            }
+            jQuery('#tab-bb-setting-ska').on('shown.bs.tab', function() {
+                window.bbUnitSkaBoot();
+            });
+        }
 
         var lastResult = null, dtMap = {}, tablesLoaded = false, csvBusy = false, csvLast = null;
         var tabelImportState = null, tabelImportBusy = false;

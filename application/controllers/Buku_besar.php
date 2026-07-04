@@ -38,8 +38,10 @@ class Buku_besar extends CI_Controller
         $bb_filter_teks = isset($data['bb_filter_teks']) ? $data['bb_filter_teks'] : '';
         $list = buku_besar_compute_list_data($this, $month, $year, $uuid, $bb_filter_kode, $bb_filter_teks);
 
+        $posted_tab = trim((string) $this->input->post('active_tab', TRUE));
+        $active_tab = in_array($posted_tab, array('compare', 'setting'), true) ? $posted_tab : 'data';
         $data = $this->_buku_besar_view_data(array_merge($list, array(
-            'active_tab' => trim((string) $this->input->post('active_tab', TRUE)) === 'compare' ? 'compare' : 'data',
+            'active_tab' => $active_tab,
         )));
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/buku_besar/adminlte310_buku_besar_list', $data);
@@ -146,11 +148,34 @@ class Buku_besar extends CI_Controller
         $data['url_compare_tabel_import'] = site_url('Buku_besar/ajax_compare_import_table_to_buku_besar');
         $data['url_compare_detail_excel'] = site_url('Buku_besar/excel_compare_tabel_detail_buku_besar');
         $data['url_compare_section_excel'] = site_url('Buku_besar/excel_compare_section_buku_besar');
+        $data['url_bb_recalculate'] = site_url('Buku_besar/ajax_recalculate_penjualan');
+        $data['url_setting_kode_akun_panel'] = site_url('Buku_besar/ajax_setting_kode_akun_panel');
+
+        $this->load->helper('buku_besar_recalculate');
+        $data = array_merge($data, bb_setting_kode_akun_panel_data($this));
 
         $sql = "SELECT * FROM sys_kode_akun ORDER BY kode_akun ASC";
         $data['list_kode_akun'] = $this->db->query($sql)->result();
 
         return $data;
+    }
+
+    public function ajax_setting_kode_akun_panel()
+    {
+        $this->load->helper(array('buku_besar_recalculate', 'pembelian_persediaan'));
+        $data = bb_setting_kode_akun_panel_data($this);
+        $html = $this->load->view('anekadharma/buku_besar/partials/setting_kode_akun_unit_panel', $data, true);
+        persediaan_ajax_json_output($this, array(
+            'ok' => true,
+            'html' => $html,
+        ));
+    }
+
+    public function ajax_recalculate_penjualan()
+    {
+        $this->load->helper(array('buku_besar_recalculate', 'buku_besar_list', 'pembelian_persediaan'));
+        $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
+        persediaan_ajax_json_output($this, bb_recalc_penjualan($this, $parsed['month'], $parsed['year']));
     }
 
     private function _compare_buku_besar_bulan_from_post()
