@@ -166,6 +166,40 @@ function labarugi_keterangan_seed_defaults($CI)
             'date_update' => $now,
         ));
     }
+
+    labarugi_keterangan_seed_utama($CI);
+}
+
+function labarugi_keterangan_seed_utama($CI)
+{
+    labarugi_keterangan_ensure_table($CI);
+    labarugi_keterangan_ensure_columns($CI);
+    $CI->load->helper('laba_rugi_detail');
+
+    $table = labarugi_keterangan_table_name();
+    $now = date('Y-m-d H:i:s');
+    $urutan = 1;
+
+    foreach (labarugi_detail_keterangan_rinci() as $row) {
+        $exists = $CI->db->get_where($table, array(
+            'uuid_nama_keterangan' => $row['key'],
+            'status_labarugi' => 'utama',
+        ))->row();
+        if ($exists) {
+            continue;
+        }
+        $CI->db->insert($table, array(
+            'uuid_nama_keterangan' => $row['key'],
+            'nama_keterangan' => $row['label'],
+            'status_keterangan' => 'keterangan',
+            'status_labarugi' => 'utama',
+            'nama_group' => labarugi_keterangan_seed_group_for_key($row['key']),
+            'keterangan' => null,
+            'urutan' => $urutan++,
+            'date_input' => $now,
+            'date_update' => $now,
+        ));
+    }
 }
 
 function labarugi_keterangan_seed_group_for_key($key)

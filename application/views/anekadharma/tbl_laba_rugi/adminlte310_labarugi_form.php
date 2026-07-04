@@ -709,6 +709,27 @@
 					font-weight: 600;
 				}
 
+				.labarugi-ka-tables-wrap {
+					position: relative;
+					min-height: 220px;
+				}
+
+				.labarugi-ka-loading-overlay {
+					display: none;
+					position: absolute;
+					inset: 0;
+					z-index: 12;
+					background: rgba(255, 255, 255, 0.82);
+					align-items: center;
+					justify-content: center;
+					font-weight: 600;
+					color: #0d47a1;
+				}
+
+				.labarugi-ka-loading-overlay.is-active {
+					display: flex;
+				}
+
 				.labarugi-kode-akun-modal .modal-header {
 					background: linear-gradient(135deg, #0d47a1, #1565c0);
 					color: #fff;
@@ -739,6 +760,26 @@
 				.labarugi-ka-table thead th {
 					background: #f1f8f4;
 					font-size: 0.82rem;
+				}
+
+				.labarugi-utama-field-cell.labarugi-grid-cell-match {
+					background: #d4edda !important;
+				}
+
+				.labarugi-utama-field-cell.labarugi-grid-cell-mismatch {
+					background: #fff3cd !important;
+				}
+
+				.labarugi-utama-input-group {
+					display: flex;
+					flex-direction: column;
+					align-items: flex-end;
+					gap: 4px;
+				}
+
+				.labarugi-utama-input-group .labarugi-grid-input {
+					width: 100%;
+					max-width: 220px;
 				}
 
 				.labarugi-grid-ns-nominal {
@@ -1039,7 +1080,7 @@
 
 			function labarugiGridRefreshMatch(group) {
 				if (!group) { return; }
-				var cell = group.closest('.labarugi-grid-cell');
+				var cell = group.closest('.labarugi-grid-cell') || group.closest('.labarugi-utama-field-cell');
 				var nominalBtn = group.querySelector('.labarugi-grid-ns-nominal');
 				var input = group.querySelector('.labarugi-grid-input');
 				if (!cell || !nominalBtn || !input) { return; }
@@ -1052,7 +1093,7 @@
 				cell.classList.toggle('labarugi-grid-cell-match', isMatch);
 				if (isMatch) {
 					cell.classList.remove('labarugi-grid-cell-mismatch');
-				} else if (cell.classList.contains('labarugi-unit-col-published')) {
+				} else if (cell.classList.contains('labarugi-unit-col-published') || cell.classList.contains('labarugi-utama-field-cell')) {
 					cell.classList.add('labarugi-grid-cell-mismatch');
 				} else {
 					cell.classList.remove('labarugi-grid-cell-mismatch');
@@ -1103,6 +1144,10 @@
 				formData.append('keterangan_data', group.getAttribute('data-nama-label'));
 				formData.append('status_sync_auto', isChecked ? '1' : '0');
 				formData.append('auto_sistem', String(autoNominal));
+				if (group.getAttribute('data-jenis-tab') === 'utama') {
+					formData.append('field_key', group.getAttribute('data-field-key') || group.getAttribute('data-nama-laba-rugi'));
+					formData.append('record_id', group.getAttribute('data-record-id') || '0');
+				}
 
 				if (syncLabel) { syncLabel.classList.add('is-loading'); }
 				if (syncCb) { syncCb.disabled = true; }
@@ -1284,6 +1329,10 @@
 					formData.append('unit', group.getAttribute('data-unit'));
 					formData.append('nominal', input.value);
 					formData.append('keterangan_data', group.getAttribute('data-nama-label'));
+					if (group.getAttribute('data-jenis-tab') === 'utama') {
+						formData.append('field_key', group.getAttribute('data-field-key') || group.getAttribute('data-nama-laba-rugi'));
+						formData.append('record_id', group.getAttribute('data-record-id') || '0');
+					}
 
 					btn.disabled = true;
 					if (status) {
@@ -1304,6 +1353,9 @@
 							}
 							if (data.uuid_laba_rugi) {
 								group.setAttribute('data-uuid', data.uuid_laba_rugi);
+							}
+							if (data.record_id) {
+								group.setAttribute('data-record-id', data.record_id);
 							}
 							if (status) {
 								status.textContent = 'Tersimpan';

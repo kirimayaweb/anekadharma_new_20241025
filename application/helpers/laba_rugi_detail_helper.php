@@ -113,9 +113,13 @@ function labarugi_detail_keterangan_sederhana()
 
 function labarugi_detail_keterangan_by_tab($jenis_tab)
 {
-    return ($jenis_tab === 'sederhana')
-        ? labarugi_detail_keterangan_sederhana()
-        : labarugi_detail_keterangan_rinci();
+    if ($jenis_tab === 'sederhana') {
+        return labarugi_detail_keterangan_sederhana();
+    }
+    if ($jenis_tab === 'utama') {
+        return labarugi_detail_keterangan_rinci();
+    }
+    return labarugi_detail_keterangan_rinci();
 }
 
 function labarugi_detail_parse_nominal($raw)

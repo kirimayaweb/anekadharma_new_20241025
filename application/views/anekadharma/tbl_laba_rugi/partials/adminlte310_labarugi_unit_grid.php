@@ -121,7 +121,8 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                             }
                             $sync_auto = labarugi_detail_row_sync_auto($saved);
                             $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
-                            $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
+                            $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($this, $ket_kodes, $unit_key, $unit_label);
+                            $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $effective_kodes, $unit_key, $unit_label, true);
                             $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                             $val = '';
                             if ($sync_auto === 1) {
@@ -157,6 +158,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                             data-tahun="<?php echo (int) $tahun_neraca; ?>"
                                             data-bulan="<?php echo (int) $bulan_transaksi; ?>"
                                             data-nominal="<?php echo htmlspecialchars((string) $ns_nominal, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-view-mode="unit"
                                             title="Klik lihat rincian transaksi per unit"><?php echo htmlspecialchars($ns_formatted, ENT_QUOTES, 'UTF-8'); ?></button>
                                         <label class="labarugi-grid-sync-auto-check" title="Centang: salin nilai sistem ke input teks (tersimpan)">
                                             <input type="checkbox"

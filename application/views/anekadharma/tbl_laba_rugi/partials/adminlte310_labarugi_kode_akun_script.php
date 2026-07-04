@@ -20,92 +20,134 @@
         var dtSel = null;
         var dtTrx = null;
         var kaDtReady = false;
+        var kaLoadSeq = 0;
+        var kaDtLang = {
+            search: 'Cari:',
+            lengthMenu: 'Tampilkan _MENU_ baris',
+            info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ data',
+            paginate: { previous: 'Sebelum', next: 'Berikut' },
+            processing: 'Memproses...',
+            zeroRecords: 'Data tidak ditemukan'
+        };
 
         function escHtml(v) {
             return String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
         function setKaLoading(on) {
+            var $overlay = $('#labarugiKaLoading');
             if (on) {
-                $('#labarugiKaLoading').show();
-                $('#labarugiKaTablesWrap').hide();
+                $overlay.addClass('is-active').attr('aria-hidden', 'false');
             } else {
-                $('#labarugiKaLoading').hide();
-                $('#labarugiKaTablesWrap').show();
+                $overlay.removeClass('is-active').attr('aria-hidden', 'true');
             }
         }
 
-        function initKaDataTablesOnce() {
-            if (kaDtReady) { return; }
-            dtAvail = $('#tblLabarugiKodeAkunAvailable').DataTable({
+        function pilihBtnHtml(kode) {
+            return '<button type="button" class="btn btn-success btn-xs btn-labarugi-ka-pilih" data-kode="' + escHtml(kode) + '">Pilih</button>';
+        }
+
+        function hapusBtnHtml(kode) {
+            return '<button type="button" class="btn btn-danger btn-xs btn-labarugi-ka-hapus" data-kode="' + escHtml(kode) + '">Hapus</button>';
+        }
+
+        function kaDtOptions(zeroRecords) {
+            return {
                 pageLength: 15,
+                lengthMenu: [[10, 15, 25, 50], [10, 15, 25, 50]],
+                order: [[0, 'asc']],
                 deferRender: true,
+                processing: true,
                 searching: true,
                 ordering: true,
                 info: true,
                 autoWidth: false,
-                language: {
-                    search: 'Cari:',
-                    lengthMenu: 'Tampilkan _MENU_ baris',
-                    info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ data',
-                    paginate: { previous: 'Sebelum', next: 'Berikut' },
-                    zeroRecords: 'Semua kode akun sudah dipilih.'
-                }
-            });
-            dtSel = $('#tblLabarugiKodeAkunSelected').DataTable({
-                pageLength: 15,
-                deferRender: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: false,
-                columnDefs: [{ targets: 1, className: 'text-right' }],
-                language: {
-                    search: 'Cari:',
-                    lengthMenu: 'Tampilkan _MENU_ baris',
-                    info: 'Menampilkan _START_ s/d _END_ dari _TOTAL_ data',
-                    paginate: { previous: 'Sebelum', next: 'Berikut' },
-                    zeroRecords: 'Belum ada kode akun terpilih.'
-                }
-            });
+                dom: 'frtip',
+                retrieve: true,
+                columnDefs: [{ targets: 2, orderable: false, searchable: false, className: 'text-center' }],
+                language: $.extend({}, kaDtLang, { zeroRecords: zeroRecords || 'Data tidak ditemukan' })
+            };
+        }
+
+        function ensureKaTables() {
+            if (kaDtReady) {
+                return;
+            }
+            dtSel = $('#tblLabarugiKodeAkunSelected').DataTable(kaDtOptions('Belum ada kode akun terpilih.'));
+            dtAvail = $('#tblLabarugiKodeAkunAvailable').DataTable(kaDtOptions('Semua kode akun sudah dipilih.'));
             kaDtReady = true;
         }
 
-        function renderKaTables(payload) {
-            var availHtml = '';
-            var selHtml = '';
-            (payload.available || []).forEach(function(row) {
-                availHtml += '<tr><td>' + escHtml(row.nama_akun) + '</td>' +
-                    '<td class="text-center"><button type="button" class="btn btn-success btn-xs btn-labarugi-ka-pilih" data-kode="' + escHtml(row.kode_akun) + '">Pilih</button></td></tr>';
+        function fillKaTable(dt, rows, mode) {
+            dt.clear();
+            (rows || []).forEach(function(row) {
+                var btn = mode === 'pilih' ? pilihBtnHtml(row.kode_akun) : hapusBtnHtml(row.kode_akun);
+                dt.row.add([row.kode_akun || '', row.nama_akun || '', btn]);
             });
-            (payload.terpilih || []).forEach(function(row) {
-                selHtml += '<tr><td>' + escHtml(row.kode_akun) + '</td>' +
-                    '<td class="text-right">' + escHtml(row.nominal_ns_formatted || '0,00') + '</td>' +
-                    '<td class="text-center"><button type="button" class="btn btn-danger btn-xs btn-labarugi-ka-hapus" data-kode="' + escHtml(row.kode_akun) + '">Hapus</button></td></tr>';
-            });
-
-            if (kaDtReady) {
-                dtAvail.destroy();
-                dtSel.destroy();
-                kaDtReady = false;
-                dtAvail = null;
-                dtSel = null;
-            }
-
-            $('#tblLabarugiKodeAkunAvailable tbody').html(availHtml);
-            $('#tblLabarugiKodeAkunSelected tbody').html(selHtml);
-            initKaDataTablesOnce();
+            dt.draw(false);
         }
 
-        function refreshGridNominals() {
-            if (typeof window.labarugiRefreshGridMatch === 'function') {
-                $('.labarugi-grid-ns-nominal').each(function() {
+        function renderKaTables(payload) {
+            ensureKaTables();
+            fillKaTable(dtSel, payload.terpilih || [], 'hapus');
+            fillKaTable(dtAvail, payload.available || [], 'pilih');
+        }
+
+        function removeRowByKode(dt, kode) {
+            dt.rows(function(idx, data) {
+                return String(data[0]) === String(kode);
+            }).remove();
+            dt.draw(false);
+        }
+
+        function moveRowToSelected(row) {
+            if (!row || !row.kode_akun || !kaDtReady) {
+                return;
+            }
+            removeRowByKode(dtAvail, row.kode_akun);
+            dtSel.row.add([row.kode_akun, row.nama_akun || '', hapusBtnHtml(row.kode_akun)]).draw(false);
+        }
+
+        function moveRowToAvailable(row) {
+            if (!row || !row.kode_akun || !kaDtReady) {
+                return;
+            }
+            removeRowByKode(dtSel, row.kode_akun);
+            dtAvail.row.add([row.kode_akun, row.nama_akun || '', pilihBtnHtml(row.kode_akun)]).draw(false);
+        }
+
+        function getSelectedRowData(kode) {
+            if (!kaDtReady) {
+                return null;
+            }
+            var found = null;
+            dtSel.rows().every(function() {
+                var data = this.data();
+                if (String(data[0]) === String(kode)) {
+                    found = { kode_akun: data[0], nama_akun: data[1] };
+                    return false;
+                }
+            });
+            return found;
+        }
+
+        function refreshGridNominals(ketKey) {
+            if (typeof window.labarugiRefreshGridMatch !== 'function') {
+                return;
+            }
+            window.setTimeout(function() {
+                $('.labarugi-grid-ns-nominal, .labarugi-ns-nominal-utama').each(function() {
                     var $el = $(this);
+                    if (ketKey && ($el.attr('data-ket-key') || '') !== ketKey) {
+                        return;
+                    }
+                    var viewMode = $el.attr('data-view-mode') || 'unit';
                     $.getJSON(labarugiKaUrls.nominal, {
                         uuid_nama_keterangan: $el.attr('data-ket-key'),
-                        jenis_tab: $el.attr('data-jenis-tab'),
-                        unit: $el.attr('data-unit'),
-                        unit_label: $el.attr('data-unit-label'),
+                        jenis_tab: $el.attr('data-jenis-tab') || (viewMode === 'utama' ? 'utama' : 'rinci'),
+                        view_mode: viewMode,
+                        unit: $el.attr('data-unit') || '',
+                        unit_label: $el.attr('data-unit-label') || '',
                         tahun: $el.attr('data-tahun'),
                         bulan: $el.attr('data-bulan')
                     }).done(function(res) {
@@ -113,34 +155,47 @@
                             $el.text(res.nominal_formatted || '0,00');
                             $el.attr('data-nominal', res.nominal || 0);
                             var $group = $el.closest('.labarugi-grid-input-group');
-                            if ($group.length) { window.labarugiRefreshGridMatch($group[0]); }
+                            if ($group.length) {
+                                window.labarugiRefreshGridMatch($group[0]);
+                            }
                         }
                     });
                 });
-            }
+            }, 0);
         }
 
-        function loadKodeAkun() {
-            if (!currentKa.uuid) { return $.Deferred().reject().promise(); }
+        function loadKodeAkun(forceReload) {
+            if (!currentKa.uuid) {
+                return $.Deferred().reject().promise();
+            }
+
+            var seq = ++kaLoadSeq;
+            ensureKaTables();
             setKaLoading(true);
+
             return $.getJSON(labarugiKaUrls.list + '/' + encodeURIComponent(currentKa.uuid), {
                 jenis_tab: currentKa.jenisTab,
-                nama_keterangan: currentKa.namaKeterangan,
-                tahun: currentKa.tahun,
-                bulan: currentKa.bulan
+                nama_keterangan: currentKa.namaKeterangan
             }).done(function(res) {
+                if (seq !== kaLoadSeq) {
+                    return;
+                }
                 if (!res || !res.ok) {
                     Swal.fire({ icon: 'error', title: 'Gagal', text: (res && res.message) ? res.message : 'Gagal memuat data kode akun.' });
-                    setKaLoading(false);
                     return;
                 }
                 var label = res.nama_keterangan || currentKa.namaKeterangan || currentKa.uuid;
                 $('#labarugiKaModalKetLabel, #labarugiKaSelectedKetLabel').text(label);
                 renderKaTables(res);
-                setKaLoading(false);
             }).fail(function(xhr) {
-                setKaLoading(false);
+                if (seq !== kaLoadSeq) {
+                    return;
+                }
                 Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal memuat data kode akun. (' + xhr.status + ')' });
+            }).always(function() {
+                if (seq === kaLoadSeq) {
+                    setKaLoading(false);
+                }
             });
         }
 
@@ -157,8 +212,9 @@
             }
 
             $('#labarugiKaModalKetLabel, #labarugiKaSelectedKetLabel').text(namaKeterangan);
+            ensureKaTables();
             $modal.modal('show');
-            loadKodeAkun();
+            loadKodeAkun(true);
         }
 
         $(document).on('click', '.labarugi-btn-setting-kode-akun', function(e) {
@@ -166,6 +222,9 @@
             e.stopPropagation();
             var $btn = $(this);
             var $wrap = $btn.closest('.labarugi-unit-grid-wrap');
+            if (!$wrap.length) {
+                $wrap = $btn.closest('.labarugi-utama-wrap');
+            }
             openKaModal(
                 ($btn.attr('data-ket-key') || '').trim(),
                 ($btn.attr('data-jenis-tab') || 'rinci').trim(),
@@ -178,6 +237,8 @@
         $(document).on('click', '.btn-labarugi-ka-pilih', function(e) {
             e.preventDefault();
             var kode = $(this).data('kode');
+            var $btn = $(this);
+            $btn.prop('disabled', true);
             $.post(labarugiKaUrls.pilih, {
                 uuid_nama_keterangan: currentKa.uuid,
                 kode_akun: kode,
@@ -188,14 +249,23 @@
                     Swal.fire({ icon: 'error', title: 'Gagal', text: (res && res.message) ? res.message : 'Gagal memilih kode akun.' });
                     return;
                 }
-                loadKodeAkun();
-                refreshGridNominals();
+                if (res.row) {
+                    moveRowToSelected(res.row);
+                } else {
+                    loadKodeAkun(true);
+                }
+                refreshGridNominals(currentKa.uuid);
+            }).always(function() {
+                $btn.prop('disabled', false);
             });
         });
 
         $(document).on('click', '.btn-labarugi-ka-hapus', function(e) {
             e.preventDefault();
             var kode = $(this).data('kode');
+            var rowData = getSelectedRowData(kode);
+            var $btn = $(this);
+            $btn.prop('disabled', true);
             $.post(labarugiKaUrls.hapus, {
                 uuid_nama_keterangan: currentKa.uuid,
                 kode_akun: kode,
@@ -205,29 +275,45 @@
                     Swal.fire({ icon: 'error', title: 'Gagal', text: (res && res.message) ? res.message : 'Gagal menghapus kode akun.' });
                     return;
                 }
-                loadKodeAkun();
-                refreshGridNominals();
+                if (rowData) {
+                    moveRowToAvailable(rowData);
+                } else {
+                    loadKodeAkun(true);
+                }
+                refreshGridNominals(currentKa.uuid);
+            }).always(function() {
+                $btn.prop('disabled', false);
             });
         });
 
         function loadTransaksiModal($el) {
+            var viewMode = ($el.attr('data-view-mode') || 'unit').trim();
             var params = {
                 uuid_nama_keterangan: $el.attr('data-ket-key'),
                 jenis_tab: $el.attr('data-jenis-tab'),
-                unit: $el.attr('data-unit'),
-                unit_label: $el.attr('data-unit-label'),
+                view_mode: viewMode,
+                unit: $el.attr('data-unit') || '',
+                unit_label: $el.attr('data-unit-label') || '',
                 nama_keterangan: $el.attr('data-ket-label'),
                 tahun: $el.attr('data-tahun'),
                 bulan: $el.attr('data-bulan')
             };
             $('#labarugiTrxKetLabel').text(params.nama_keterangan || '-');
-            $('#labarugiTrxUnitLabel').text(params.unit || '-');
+            if (viewMode === 'utama') {
+                $('#labarugiTrxUnitWrap').hide();
+                $('#labarugiTrxUnitLabel').text('');
+            } else {
+                $('#labarugiTrxUnitWrap').show();
+                $('#labarugiTrxUnitLabel').text(params.unit || '-');
+            }
+            $('#labarugiTrxInfo').hide().text('');
             $('#labarugiTrxLoading').show();
             $('#labarugiTrxTableWrap').hide();
 
             $.getJSON(labarugiKaUrls.transaksi, params).done(function(res) {
                 var html = '';
-                (res.data || []).forEach(function(row) {
+                var rows = (res && res.data) ? res.data : [];
+                rows.forEach(function(row) {
                     html += '<tr>' +
                         '<td>' + escHtml(row.tanggal) + '</td>' +
                         '<td>' + escHtml(row.pl) + '</td>' +
@@ -238,11 +324,20 @@
                         '<td class="text-right">' + escHtml(row.kredit_formatted) + '</td>' +
                         '<td>' + escHtml(row.source_key) + '</td></tr>';
                 });
+
                 if (dtTrx && $.fn.DataTable.isDataTable('#tblLabarugiTransaksiUnit')) {
                     dtTrx.destroy();
                     dtTrx = null;
                 }
-                $('#tblLabarugiTransaksiUnit tbody').html(html || '<tr><td colspan="8" class="text-center text-muted">Tidak ada transaksi.</td></tr>');
+
+                if (rows.length === 0) {
+                    var infoMsg = (res && res.empty_message) ? res.empty_message : 'Tidak ada transaksi untuk kode akun terpilih.';
+                    $('#labarugiTrxInfo').text(infoMsg).show();
+                    $('#tblLabarugiTransaksiUnit tbody').html('<tr><td colspan="8" class="text-center text-muted">Tidak ada data transaksi.</td></tr>');
+                } else {
+                    $('#tblLabarugiTransaksiUnit tbody').html(html);
+                }
+
                 dtTrx = $('#tblLabarugiTransaksiUnit').DataTable({
                     pageLength: 15,
                     deferRender: true,
@@ -259,7 +354,7 @@
             });
         }
 
-        $(document).on('click', '.labarugi-grid-ns-nominal', function(e) {
+        $(document).on('click', '.labarugi-grid-ns-nominal, .labarugi-ns-nominal-utama', function(e) {
             e.preventDefault();
             var $el = $(this);
             var $modal = $('#modalLabarugiTransaksiUnit');
@@ -268,16 +363,6 @@
             }
             $modal.modal('show');
             loadTransaksiModal($el);
-        });
-
-        $('#modalLabarugiKodeAkun').on('hidden.bs.modal', function() {
-            if (kaDtReady && dtAvail && dtSel) {
-                dtAvail.destroy();
-                dtSel.destroy();
-                kaDtReady = false;
-                dtAvail = null;
-                dtSel = null;
-            }
         });
     }
 

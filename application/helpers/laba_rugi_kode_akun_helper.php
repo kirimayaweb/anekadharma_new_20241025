@@ -74,6 +74,50 @@ function labarugi_kode_akun_selected_map_by_tab($CI, $status_labarugi)
     return $map;
 }
 
+function labarugi_kode_akun_setting_list_payload($CI, $uuid_nama_keterangan, $status_labarugi, $nama_keterangan = '')
+{
+    labarugi_kode_akun_ensure_table($CI);
+
+    $table_ka = labarugi_kode_akun_table_name();
+    $sql = 'SELECT ska.kode_akun, ska.nama_akun, (lka.kode_akun IS NOT NULL) AS is_selected'
+        . ' FROM sys_kode_akun ska'
+        . ' LEFT JOIN `' . $table_ka . '` lka ON lka.kode_akun = ska.kode_akun'
+        . ' AND lka.uuid_nama_keterangan = ? AND lka.status_labarugi = ?'
+        . ' ORDER BY ska.kode_akun ASC';
+
+    $rows = $CI->db->query($sql, array($uuid_nama_keterangan, $status_labarugi))->result();
+
+    $available = array();
+    $terpilih = array();
+    foreach ($rows as $row) {
+        $item = array(
+            'kode_akun' => $row->kode_akun,
+            'nama_akun' => isset($row->nama_akun) ? $row->nama_akun : '',
+        );
+        if (!empty($row->is_selected)) {
+            $terpilih[] = $item;
+        } else {
+            $available[] = $item;
+        }
+    }
+
+    if ($nama_keterangan === '') {
+        $ket_row = $CI->db->select('nama_keterangan')->get_where('sys_labarugi_keterangan', array(
+            'uuid_nama_keterangan' => $uuid_nama_keterangan,
+            'status_labarugi' => $status_labarugi,
+        ))->row();
+        if ($ket_row) {
+            $nama_keterangan = $ket_row->nama_keterangan;
+        }
+    }
+
+    return array(
+        'nama_keterangan' => $nama_keterangan,
+        'available' => $available,
+        'terpilih' => $terpilih,
+    );
+}
+
 function labarugi_kode_akun_format_nominal($value)
 {
     return number_format((float) $value, 2, ',', '.');
@@ -100,6 +144,94 @@ function labarugi_kode_akun_unit_matches($pl, $unit_key, $unit_label = '')
     return false;
 }
 
+function labarugi_kode_akun_unit_table_name()
+{
+    return 'sys_unit_kode_akun';
+}
+
+function labarugi_kode_akun_unit_map_rows($CI, $unit_key, $unit_label = '')
+{
+    if (!$CI->db->table_exists(labarugi_kode_akun_unit_table_name())) {
+        return array();
+    }
+
+    $unit_key_u = strtoupper(trim((string) $unit_key));
+    $unit_label_u = strtoupper(trim((string) $unit_label));
+    if ($unit_key_u === '' && $unit_label_u === '') {
+        return array();
+    }
+
+    $rows = $CI->db->get(labarugi_kode_akun_unit_table_name())->result();
+    $out = array();
+    foreach ($rows as $row) {
+        $kode_unit_u = strtoupper(trim((string) (isset($row->kode_unit) ? $row->kode_unit : '')));
+        $nama_unit_u = strtoupper(trim((string) (isset($row->nama_unit) ? $row->nama_unit : '')));
+        $matched = false;
+
+        if ($unit_key_u !== '') {
+            if ($kode_unit_u === $unit_key_u || $nama_unit_u === $unit_key_u) {
+                $matched = true;
+            } elseif ($kode_unit_u !== '' && (strpos($kode_unit_u, $unit_key_u) !== false || strpos($unit_key_u, $kode_unit_u) !== false)) {
+                $matched = true;
+            }
+        }
+
+        if (!$matched && $unit_label_u !== '') {
+            if ($nama_unit_u === $unit_label_u || $kode_unit_u === $unit_label_u) {
+                $matched = true;
+            } elseif ($nama_unit_u !== '' && (strpos($nama_unit_u, $unit_label_u) !== false || strpos($unit_label_u, $nama_unit_u) !== false)) {
+                $matched = true;
+            }
+        }
+
+        if ($matched) {
+            $out[] = $row;
+        }
+    }
+
+    return $out;
+}
+
+function labarugi_kode_akun_resolve_unit_kodes($CI, $selected_kodes, $unit_key, $unit_label = '')
+{
+    if (empty($selected_kodes)) {
+        return array();
+    }
+
+    $unit_rows = labarugi_kode_akun_unit_map_rows($CI, $unit_key, $unit_label);
+    if (empty($unit_rows)) {
+        return array();
+    }
+
+    $allowed = array();
+    foreach ($unit_rows as $row) {
+        $kode = trim((string) $row->kode_akun);
+        if ($kode !== '') {
+            $allowed[$kode] = true;
+        }
+    }
+
+    $out = array();
+    foreach ($selected_kodes as $kode) {
+        $kode = (string) $kode;
+        if (isset($allowed[$kode])) {
+            $out[] = $kode;
+        }
+    }
+
+    return array_values(array_unique($out));
+}
+
+function labarugi_kode_akun_empty_message($code)
+{
+    $map = array(
+        'NO_LABARUGI_KODE_AKUN' => 'Belum ada Setting Kode Akun untuk keterangan ini. Silakan klik tombol "Setting Kode Akun" pada baris keterangan.',
+        'NO_UNIT_KODE_AKUN' => 'Belum ada mapping kode akun untuk unit ini di menu Setting Kode Akun Unit (sys_unit_kode_akun). Silakan cek setting kode akun unit.',
+        'NO_TRANSACTION' => 'Tidak ada transaksi jurnal untuk kode akun terpilih pada periode ini.',
+    );
+    return isset($map[$code]) ? $map[$code] : 'Data tidak ditemukan.';
+}
+
 function labarugi_kode_akun_merged_rows($CI, $tahun, $bulan)
 {
     static $cache = array();
@@ -113,6 +245,18 @@ function labarugi_kode_akun_merged_rows($CI, $tahun, $bulan)
     return $cache[$key];
 }
 
+function labarugi_kode_akun_buku_besar_nominal($CI, $kode_akun, $tahun, $bulan, $merged_rows = null)
+{
+    $kode_akun = trim((string) $kode_akun);
+    if ($kode_akun === '') {
+        return 0.0;
+    }
+    if ($merged_rows === null) {
+        $merged_rows = labarugi_kode_akun_merged_rows($CI, $tahun, $bulan);
+    }
+    return labarugi_kode_akun_unit_nominal_from_data($merged_rows, array($kode_akun), '', '', false);
+}
+
 function labarugi_kode_akun_neraca_saldo_nominal($CI, $kode_akun, $tahun, $bulan, $rows_by_kode = null)
 {
     $CI->load->helper('neraca_kode_akun');
@@ -123,7 +267,7 @@ function labarugi_kode_akun_neraca_saldo_nominal($CI, $kode_akun, $tahun, $bulan
     return neraca_kode_akun_nominal_saldo($CI, $kode_akun, 'kas', $tahun, $bulan, $rows_by_kode);
 }
 
-function labarugi_kode_akun_unit_nominal_from_data($merged_rows, $kodes, $unit_key, $unit_label = '')
+function labarugi_kode_akun_unit_nominal_from_data($merged_rows, $kodes, $unit_key, $unit_label = '', $filter_by_unit = true)
 {
     if (empty($kodes) || empty($merged_rows)) {
         return 0.0;
@@ -135,7 +279,7 @@ function labarugi_kode_akun_unit_nominal_from_data($merged_rows, $kodes, $unit_k
         if (!isset($kode_flip[(string) $row['kode_akun']])) {
             continue;
         }
-        if (!labarugi_kode_akun_unit_matches($row['pl'], $unit_key, $unit_label)) {
+        if ($filter_by_unit && !labarugi_kode_akun_unit_matches($row['pl'], $unit_key, $unit_label)) {
             continue;
         }
         $debet += (float) $row['debet'];
@@ -144,45 +288,100 @@ function labarugi_kode_akun_unit_nominal_from_data($merged_rows, $kodes, $unit_k
     return $debet - $kredit;
 }
 
-function labarugi_kode_akun_unit_nominal($CI, $uuid_nama_keterangan, $status_labarugi, $unit_key, $unit_label, $tahun, $bulan)
+function labarugi_kode_akun_transactions_payload($CI, $uuid_nama_keterangan, $status_labarugi, $tahun, $bulan, $unit_key = '', $unit_label = '', $view_mode = 'unit')
 {
-    $kodes = labarugi_kode_akun_selected_kodes($CI, $uuid_nama_keterangan, $status_labarugi);
-    return labarugi_kode_akun_unit_nominal_from_data(
-        labarugi_kode_akun_merged_rows($CI, $tahun, $bulan),
-        $kodes,
-        $unit_key,
-        $unit_label
-    );
-}
-
-function labarugi_kode_akun_unit_transactions($CI, $uuid_nama_keterangan, $status_labarugi, $unit_key, $unit_label, $tahun, $bulan)
-{
-    $kodes = labarugi_kode_akun_selected_kodes($CI, $uuid_nama_keterangan, $status_labarugi);
-    if (empty($kodes)) {
-        return array();
+    $selected_kodes = labarugi_kode_akun_selected_kodes($CI, $uuid_nama_keterangan, $status_labarugi);
+    if (empty($selected_kodes)) {
+        return array(
+            'rows' => array(),
+            'total' => 0.0,
+            'empty_code' => 'NO_LABARUGI_KODE_AKUN',
+            'empty_message' => labarugi_kode_akun_empty_message('NO_LABARUGI_KODE_AKUN'),
+        );
     }
 
-    $out = array();
+    if ($view_mode === 'utama') {
+        $effective_kodes = $selected_kodes;
+        $filter_by_unit = false;
+    } else {
+        $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($CI, $selected_kodes, $unit_key, $unit_label);
+        $filter_by_unit = true;
+        if (empty($effective_kodes)) {
+            return array(
+                'rows' => array(),
+                'total' => 0.0,
+                'empty_code' => 'NO_UNIT_KODE_AKUN',
+                'empty_message' => labarugi_kode_akun_empty_message('NO_UNIT_KODE_AKUN'),
+            );
+        }
+    }
+
+    $rows = array();
+    $total = 0.0;
     foreach (labarugi_kode_akun_merged_rows($CI, $tahun, $bulan) as $row) {
-        if (!in_array((string) $row['kode_akun'], $kodes, true)) {
+        if (!in_array((string) $row['kode_akun'], $effective_kodes, true)) {
             continue;
         }
-        if (!labarugi_kode_akun_unit_matches($row['pl'], $unit_key, $unit_label)) {
+        if ($filter_by_unit && !labarugi_kode_akun_unit_matches($row['pl'], $unit_key, $unit_label)) {
             continue;
         }
-        $out[] = array(
+        $debet = (float) (isset($row['debet']) ? $row['debet'] : 0);
+        $kredit = (float) (isset($row['kredit']) ? $row['kredit'] : 0);
+        $total += ($debet - $kredit);
+        $rows[] = array(
             'tanggal' => isset($row['tanggal']) ? $row['tanggal'] : '',
             'pl' => isset($row['pl']) ? $row['pl'] : '',
             'kode' => isset($row['kode']) ? $row['kode'] : '',
             'kode_akun' => isset($row['kode_akun']) ? $row['kode_akun'] : '',
             'nama_akun' => isset($row['nama_akun']) ? $row['nama_akun'] : '',
-            'debet' => (float) (isset($row['debet']) ? $row['debet'] : 0),
-            'kredit' => (float) (isset($row['kredit']) ? $row['kredit'] : 0),
-            'debet_formatted' => labarugi_kode_akun_format_nominal(isset($row['debet']) ? $row['debet'] : 0),
-            'kredit_formatted' => labarugi_kode_akun_format_nominal(isset($row['kredit']) ? $row['kredit'] : 0),
+            'debet' => $debet,
+            'kredit' => $kredit,
+            'debet_formatted' => labarugi_kode_akun_format_nominal($debet),
+            'kredit_formatted' => labarugi_kode_akun_format_nominal($kredit),
             'source_key' => isset($row['source_key']) ? $row['source_key'] : '',
         );
     }
 
-    return $out;
+    if (empty($rows)) {
+        return array(
+            'rows' => array(),
+            'total' => 0.0,
+            'empty_code' => 'NO_TRANSACTION',
+            'empty_message' => labarugi_kode_akun_empty_message('NO_TRANSACTION'),
+        );
+    }
+
+    return array(
+        'rows' => $rows,
+        'total' => $total,
+        'empty_code' => '',
+        'empty_message' => '',
+        'effective_kodes' => $effective_kodes,
+    );
+}
+
+function labarugi_kode_akun_unit_nominal($CI, $uuid_nama_keterangan, $status_labarugi, $unit_key, $unit_label, $tahun, $bulan, $view_mode = 'unit')
+{
+    $kodes = labarugi_kode_akun_selected_kodes($CI, $uuid_nama_keterangan, $status_labarugi);
+    if ($view_mode === 'utama') {
+        $effective_kodes = $kodes;
+        $filter_by_unit = false;
+    } else {
+        $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($CI, $kodes, $unit_key, $unit_label);
+        $filter_by_unit = true;
+    }
+
+    return labarugi_kode_akun_unit_nominal_from_data(
+        labarugi_kode_akun_merged_rows($CI, $tahun, $bulan),
+        $effective_kodes,
+        $unit_key,
+        $unit_label,
+        $filter_by_unit
+    );
+}
+
+function labarugi_kode_akun_unit_transactions($CI, $uuid_nama_keterangan, $status_labarugi, $unit_key, $unit_label, $tahun, $bulan, $view_mode = 'unit')
+{
+    $payload = labarugi_kode_akun_transactions_payload($CI, $uuid_nama_keterangan, $status_labarugi, $tahun, $bulan, $unit_key, $unit_label, $view_mode);
+    return isset($payload['rows']) ? $payload['rows'] : array();
 }

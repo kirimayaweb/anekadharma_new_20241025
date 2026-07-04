@@ -24,6 +24,23 @@ if ($labarugi_view_mode === 'rinci') {
 }
 $labarugi_readonly = ($labarugi_view_mode !== 'utama');
 $list_unit = isset($list_unit) ? $list_unit : array();
+$labarugi_utama_ctx = array();
+if ($labarugi_view_mode === 'utama') {
+    include_once APPPATH . 'views/anekadharma/tbl_laba_rugi/partials/adminlte310_labarugi_utama_field.php';
+    $labarugi_utama_ctx = array(
+        'data_tbl_laba_rugi' => $data_tbl_laba_rugi,
+        'action' => isset($action) ? $action : '',
+        'labarugi_utama_ka_map' => isset($labarugi_utama_ka_map) ? $labarugi_utama_ka_map : array(),
+        'labarugi_utama_bb_rows' => isset($labarugi_utama_bb_rows) ? $labarugi_utama_bb_rows : array(),
+        'labarugi_utama_sync_map' => isset($labarugi_utama_sync_map) ? $labarugi_utama_sync_map : array(),
+        'labarugi_utama_save_url' => isset($labarugi_utama_save_url) ? $labarugi_utama_save_url : '',
+        'labarugi_utama_sync_url' => isset($labarugi_utama_sync_url) ? $labarugi_utama_sync_url : '',
+        'labarugi_utama_record_id' => isset($labarugi_utama_record_id) ? (int) $labarugi_utama_record_id : 0,
+        'uuid_data_laba_rugi' => isset($uuid_data_laba_rugi) ? $uuid_data_laba_rugi : '',
+        'tahun_neraca' => isset($tahun_neraca) ? $tahun_neraca : 0,
+        'bulan_transaksi' => isset($bulan_transaksi) ? $bulan_transaksi : 0,
+    );
+}
 ?>
 		<div class="card-header labarugi-panel-<?php echo htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UTF-8'); ?>">
 
@@ -117,59 +134,14 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 								</form>
 								<!-- //Untuk setting form pertama agar form kedua/penjualan bisa terbaca di controller -->
 
+								<div class="labarugi-utama-wrap"
+									data-tahun="<?php echo (int) $tahun_neraca; ?>"
+									data-bulan="<?php echo (int) $bulan_transaksi; ?>"
+									data-jenis-tab="utama">
 
+								<?php labarugi_utama_render_editable_row('penjualan', 'PENJUALAN', 0, $labarugi_utama_ctx); ?>
 
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">PENJUALAN</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/penjualan'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->penjualan);
-																																														// echo "<br/>";  
-																																														echo number_format($data_tbl_laba_rugi->penjualan, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">BEBAN POKOK PENJUALAN</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_pokok_penjualan'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pokok_penjualan); 
-																																														echo number_format($data_tbl_laba_rugi->beban_pokok_penjualan, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
+								<?php labarugi_utama_render_editable_row('beban_pokok_penjualan', 'BEBAN POKOK PENJUALAN', 0, $labarugi_utama_ctx); ?>
 
 
 
@@ -233,200 +205,19 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 
 
 
-								<tr>
+								<?php labarugi_utama_render_editable_row('beban_depresiasi_dan_amortisasi', 'Beban Depresiasi dan Amortisasi', 1, $labarugi_utama_ctx); ?>
 
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Depresiasi dan Amortisasi</th>
+								<?php labarugi_utama_render_editable_row('beban_operasional_karyawan', 'Beban Operasional Karyawan', 1, $labarugi_utama_ctx); ?>
 
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
+								<?php labarugi_utama_render_editable_row('beban_operasional_promosi', 'Beban Operasional Promosi', 1, $labarugi_utama_ctx); ?>
 
-										<form action="<?php echo $action . '/beban_depresiasi_dan_amortisasi'; ?>" method="post">
+								<?php labarugi_utama_render_editable_row('beban_perjalanan_dinas', 'Beban Perjalanan Dinas', 1, $labarugi_utama_ctx); ?>
 
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi); 
-																																														echo number_format($data_tbl_laba_rugi->beban_depresiasi_dan_amortisasi, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+								<?php labarugi_utama_render_editable_row('beban_transportasi', 'Beban Transportasi', 1, $labarugi_utama_ctx); ?>
 
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
+								<?php labarugi_utama_render_editable_row('beban_pemeliharaan', 'Beban Pemeliharaan', 1, $labarugi_utama_ctx); ?>
 
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Operasional Karyawan</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_operasional_karyawan'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_karyawan); 
-																																														echo number_format($data_tbl_laba_rugi->beban_operasional_karyawan, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Operasional Promosi</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_operasional_promosi'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_operasional_promosi); 
-																																														echo number_format($data_tbl_laba_rugi->beban_operasional_promosi, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Perjalanan Dinas</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_perjalanan_dinas'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_perjalanan_dinas); 
-																																														echo number_format($data_tbl_laba_rugi->beban_perjalanan_dinas, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Transportasi</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_transportasi'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_transportasi); 
-																																														echo number_format($data_tbl_laba_rugi->beban_transportasi, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Beban Pemeliharaan</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-
-										<form action="<?php echo $action . '/beban_pemeliharaan'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_pemeliharaan); 
-																																														echo number_format($data_tbl_laba_rugi->beban_pemeliharaan, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; width: 325px;" colspan="325">Total Beban Operaisonal umum</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-
-										<form action="<?php echo $action . '/total_beban_operasional_umum'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->total_beban_operasional_umum); 
-																																														echo number_format($data_tbl_laba_rugi->total_beban_operasional_umum, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-
+								<?php labarugi_utama_render_editable_row('total_beban_operasional_umum', 'Total Beban Operaisonal umum', 1, $labarugi_utama_ctx); ?>
 
 								<tr>
 
@@ -501,60 +292,9 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 
 
 
-								<tr>
+								<?php labarugi_utama_render_editable_row('pendapatan_bunga_bank', 'Pendapatan Bunga Bank', 1, $labarugi_utama_ctx); ?>
 
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Pendapatan Bunga Bank</th>
-
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/pendapatan_bunga_bank'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_bunga_bank); 
-
-																																														echo number_format(($data_tbl_laba_rugi->pendapatan_bunga_bank), 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Pendapatan Rupa-Rupa</th>
-
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/pendapatan_rupa_rupa'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->pendapatan_rupa_rupa); 
-																																														echo number_format($data_tbl_laba_rugi->pendapatan_rupa_rupa, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-								</tr>
+								<?php labarugi_utama_render_editable_row('pendapatan_rupa_rupa', 'Pendapatan Rupa-Rupa', 1, $labarugi_utama_ctx); ?>
 
 
 
@@ -603,57 +343,9 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 
 
 
-								<tr>
+								<?php labarugi_utama_render_editable_row('beban_bunga_dan_adm_bank', 'Beban Bunga dan ADM Bank', 1, $labarugi_utama_ctx); ?>
 
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Beban Bunga dan ADM Bank</th>
-
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_bunga_dan_adm_bank'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_bunga_dan_adm_bank); 
-																																														echo number_format($data_tbl_laba_rugi->beban_bunga_dan_adm_bank, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-								</tr>
-
-
-
-
-
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left;border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 75px;" colspan="75"></th>
-									<th style="font-size: 0.550em;text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 325px;" colspan="325">Beban Rupa-Rupa</th>
-
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/beban_rupa_rupa'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->beban_rupa_rupa); 
-																																														echo number_format($data_tbl_laba_rugi->beban_rupa_rupa, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse;width: 20px;" colspan="20"></th>
-
-								</tr>
+								<?php labarugi_utama_render_editable_row('beban_rupa_rupa', 'Beban Rupa-Rupa', 1, $labarugi_utama_ctx); ?>
 
 
 
@@ -738,28 +430,7 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 
 
 
-								<tr>
-
-									<th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">PAJAK</th>
-
-									<th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
-									<th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-
-										<form action="<?php echo $action . '/pajak'; ?>" method="post">
-
-											<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																														// echo str_replace('.', ',', $data_tbl_laba_rugi->pajak); /
-																																														echo number_format($data_tbl_laba_rugi->pajak, 2, ',', '.');
-																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-											<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-										</form>
-
-									</th>
-									<th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
-
-								</tr>
+								<?php labarugi_utama_render_editable_row('pajak', 'PAJAK', 0, $labarugi_utama_ctx); ?>
 
 
 
@@ -788,6 +459,8 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 									<th style="font-size:0.550em; text-align:left; border: 1px solid black;  border-top:none;border-bottom: none;border-left: none;border-right: none; border-collapse: collapse; width: 20px;" colspan="20"></th>
 
 								</tr>
+
+								</div>
 
 								<?php } ?>
 
