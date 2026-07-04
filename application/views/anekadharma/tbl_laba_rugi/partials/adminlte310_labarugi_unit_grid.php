@@ -21,6 +21,7 @@ $bb_merged_rows = labarugi_kode_akun_merged_rows($this, $tahun_neraca, $bulan_tr
 $ka_selected_map = labarugi_kode_akun_selected_map_by_tab($this, $jenis_tab);
 $uuid_laba_rugi = isset($uuid_data_laba_rugi) ? $uuid_data_laba_rugi : '';
 $save_url = site_url('Tbl_laba_rugi/save_labarugi_detail');
+$sync_auto_url = site_url('Tbl_laba_rugi/save_labarugi_detail_sync_auto');
 $publish_url = site_url('Tbl_laba_rugi/save_labarugi_unit_publish');
 $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UTF-8');
 ?>
@@ -50,7 +51,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
             <i class="fa fa-th"></i>
             Input Laba Rugi Per Unit — <?php echo ($jenis_tab === 'sederhana') ? 'Sederhana' : 'Rinci'; ?>
         </h5>
-        <p class="text-muted small mb-0">Isi nominal per unit. Centang <strong>Publish</strong> di header unit untuk mempublikasikan kolom unit (hijau). Kolom tanpa centang = tidak publish (merah). Sel kuning = nilai input berbeda dari sistem.</p>
+        <p class="text-muted small mb-0">Isi nominal per unit. Centang <strong>Publish</strong> di header unit untuk mempublikasikan kolom unit (hijau). Centang <strong>sync</strong> di kanan nilai sistem untuk salin otomatis ke input. Sel <strong>hijau cerah</strong> = input sama dengan sistem. Sel kuning = input berbeda dari sistem.</p>
     </div>
 
     <p class="labarugi-unit-grid-scroll-hint"><i class="fa fa-arrows-h"></i> Scroll horizontal atas atau bawah untuk melihat unit lainnya — kolom Keterangan tetap diam</p>
@@ -118,39 +119,52 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                             if (isset($detail_map[$ket_key][$unit_key])) {
                                 $saved = $detail_map[$ket_key][$unit_key];
                             }
+                            $sync_auto = labarugi_detail_row_sync_auto($saved);
+                            $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
+                            $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
+                            $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                             $val = '';
-                            if ($saved && $saved->nominal_update !== null) {
+                            if ($sync_auto === 1) {
+                                $val = $ns_formatted;
+                            } elseif ($saved && $saved->nominal_update !== null) {
                                 $val = labarugi_detail_format_nominal($saved->nominal_update);
                             } elseif ($saved && $saved->nominal !== null) {
                                 $val = labarugi_detail_format_nominal($saved->nominal);
                             }
                             $input_id = $grid_id . '_' . $ket_key . '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $unit_key);
-                            $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
-                            $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
-                            $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                         ?>
                             <td class="labarugi-grid-cell <?php echo $unit_col_class; ?>"
                                 data-unit-key="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
                                 <div class="labarugi-grid-input-group"
                                     data-save-url="<?php echo htmlspecialchars($save_url, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-sync-auto-url="<?php echo htmlspecialchars($sync_auto_url, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-tahun="<?php echo (int) $tahun_neraca; ?>"
                                     data-bulan="<?php echo (int) $bulan_transaksi; ?>"
                                     data-jenis-tab="<?php echo htmlspecialchars($jenis_tab, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-nama-laba-rugi="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-nama-label="<?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-unit="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <button type="button"
-                                        class="labarugi-grid-ns-nominal btn btn-link p-0"
-                                        data-ket-key="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-ket-label="<?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-jenis-tab="<?php echo htmlspecialchars($jenis_tab, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-unit="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-unit-label="<?php echo htmlspecialchars($unit_label, ENT_QUOTES, 'UTF-8'); ?>"
-                                        data-tahun="<?php echo (int) $tahun_neraca; ?>"
-                                        data-bulan="<?php echo (int) $bulan_transaksi; ?>"
-                                        data-nominal="<?php echo htmlspecialchars((string) $ns_nominal, ENT_QUOTES, 'UTF-8'); ?>"
-                                        title="Klik lihat rincian transaksi per unit"><?php echo htmlspecialchars($ns_formatted, ENT_QUOTES, 'UTF-8'); ?></button>
+                                    data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-sync-auto="<?php echo $sync_auto === 1 ? '1' : '0'; ?>">
+                                    <div class="labarugi-grid-auto-row">
+                                        <button type="button"
+                                            class="labarugi-grid-ns-nominal btn btn-link p-0"
+                                            data-ket-key="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-ket-label="<?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-jenis-tab="<?php echo htmlspecialchars($jenis_tab, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-unit="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-unit-label="<?php echo htmlspecialchars($unit_label, ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-tahun="<?php echo (int) $tahun_neraca; ?>"
+                                            data-bulan="<?php echo (int) $bulan_transaksi; ?>"
+                                            data-nominal="<?php echo htmlspecialchars((string) $ns_nominal, ENT_QUOTES, 'UTF-8'); ?>"
+                                            title="Klik lihat rincian transaksi per unit"><?php echo htmlspecialchars($ns_formatted, ENT_QUOTES, 'UTF-8'); ?></button>
+                                        <label class="labarugi-grid-sync-auto-check" title="Centang: salin nilai sistem ke input teks (tersimpan)">
+                                            <input type="checkbox"
+                                                class="labarugi-grid-sync-auto-cb"
+                                                <?php echo $sync_auto === 1 ? 'checked' : ''; ?>>
+                                            <span class="labarugi-grid-sync-auto-label"><i class="fa fa-refresh"></i></span>
+                                        </label>
+                                    </div>
                                     <input type="tel"
                                         class="labarugi-grid-input form-control form-control-sm"
                                         id="<?php echo $input_id; ?>"

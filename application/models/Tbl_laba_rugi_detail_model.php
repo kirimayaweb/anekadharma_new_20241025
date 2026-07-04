@@ -60,6 +60,9 @@ class Tbl_laba_rugi_detail_model extends CI_Model
             if (array_key_exists('auto_sistem', $data)) {
                 $update['auto_sistem'] = $data['auto_sistem'];
             }
+            if (array_key_exists('status_sync_auto', $data)) {
+                $update['status_sync_auto'] = (int) $data['status_sync_auto'] === 1 ? 1 : 0;
+            }
             if (array_key_exists('keterangan_data', $data)) {
                 $update['keterangan_data'] = $data['keterangan_data'];
             }
@@ -76,6 +79,7 @@ class Tbl_laba_rugi_detail_model extends CI_Model
             'nominal' => $data['nominal'],
             'nominal_update' => $data['nominal_update'],
             'auto_sistem' => isset($data['auto_sistem']) ? $data['auto_sistem'] : null,
+            'status_sync_auto' => isset($data['status_sync_auto']) ? ((int) $data['status_sync_auto'] === 1 ? 1 : 0) : 0,
             'keterangan_data' => isset($data['keterangan_data']) ? $data['keterangan_data'] : null,
             'jenis_tab' => $data['jenis_tab'],
             'tahun_transaksi' => (int) $data['tahun_transaksi'],

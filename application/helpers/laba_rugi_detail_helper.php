@@ -10,6 +10,7 @@ function labarugi_detail_ensure_table($CI)
 {
     $table = labarugi_detail_table_name();
     if ($CI->db->table_exists($table)) {
+        labarugi_detail_ensure_columns($CI);
         return true;
     }
 
@@ -22,6 +23,7 @@ function labarugi_detail_ensure_table($CI)
         `nominal` double(15,2) DEFAULT NULL,
         `nominal_update` double(15,2) DEFAULT NULL,
         `auto_sistem` double(15,2) DEFAULT NULL,
+        `status_sync_auto` tinyint(1) NOT NULL DEFAULT 0,
         `keterangan_data` text DEFAULT NULL,
         `jenis_tab` varchar(20) NOT NULL DEFAULT 'rinci',
         `tahun_transaksi` int(4) NOT NULL,
@@ -33,7 +35,50 @@ function labarugi_detail_ensure_table($CI)
         KEY `idx_labarugi_periode` (`tahun_transaksi`, `bulan_transaksi`, `jenis_tab`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 
-    return (bool) $CI->db->query($sql);
+    $created = (bool) $CI->db->query($sql);
+    if ($created) {
+        labarugi_detail_ensure_columns($CI);
+    }
+    return $created;
+}
+
+function labarugi_detail_clear_field_cache($CI, $table)
+{
+    if (isset($CI->db->data_cache['field_names'][$table])) {
+        unset($CI->db->data_cache['field_names'][$table]);
+    }
+}
+
+function labarugi_detail_ensure_columns($CI)
+{
+    static $done = false;
+    if ($done) {
+        return true;
+    }
+
+    $table = labarugi_detail_table_name();
+    if (!$CI->db->table_exists($table)) {
+        return false;
+    }
+
+    labarugi_detail_clear_field_cache($CI, $table);
+
+    if (!$CI->db->field_exists('status_sync_auto', $table)) {
+        $after = $CI->db->field_exists('auto_sistem', $table) ? 'auto_sistem' : 'nominal_update';
+        $CI->db->query("ALTER TABLE `" . $table . "` ADD `status_sync_auto` tinyint(1) NOT NULL DEFAULT 0 AFTER `" . $after . "`");
+        labarugi_detail_clear_field_cache($CI, $table);
+    }
+
+    $done = true;
+    return true;
+}
+
+function labarugi_detail_row_sync_auto($row)
+{
+    if (!$row || !isset($row->status_sync_auto)) {
+        return 0;
+    }
+    return (int) $row->status_sync_auto === 1 ? 1 : 0;
 }
 
 function labarugi_detail_keterangan_rinci()

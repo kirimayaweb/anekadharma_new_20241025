@@ -593,6 +593,23 @@
 					background: #ffeb3b !important;
 				}
 
+				.labarugi-grid-cell.labarugi-grid-cell-match {
+					background: linear-gradient(135deg, #b9f6ca 0%, #69f0ae 55%, #00e676 100%) !important;
+					box-shadow: inset 0 0 0 1px rgba(0, 200, 83, 0.45);
+				}
+
+				.labarugi-unit-grid-table tbody tr:nth-child(even) td.labarugi-grid-cell.labarugi-grid-cell-match {
+					background: linear-gradient(135deg, #a7ffcb 0%, #64ffda 50%, #1de9b6 100%) !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:hover td.labarugi-grid-cell.labarugi-grid-cell-match {
+					background: linear-gradient(135deg, #ccff90 0%, #76ff03 45%, #00e676 100%) !important;
+				}
+
+				.labarugi-grid-cell.labarugi-grid-cell-match.labarugi-grid-cell-mismatch {
+					background: linear-gradient(135deg, #b9f6ca 0%, #69f0ae 55%, #00e676 100%) !important;
+				}
+
 				.labarugi-grid-cell.labarugi-unit-col-published .labarugi-grid-input,
 				.labarugi-grid-cell.labarugi-unit-col-unpublished .labarugi-grid-input {
 					background: #fff !important;
@@ -726,15 +743,60 @@
 
 				.labarugi-grid-ns-nominal {
 					display: block;
-					width: 100%;
+					flex: 1 1 auto;
+					min-width: 0;
 					text-align: right;
 					color: #dc3545 !important;
 					font-weight: 700;
 					font-size: 0.72rem;
 					line-height: 1.2;
-					margin-bottom: 4px;
+					margin-bottom: 0;
 					text-decoration: none !important;
 					cursor: pointer;
+				}
+
+				.labarugi-grid-auto-row {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+					gap: 6px;
+					width: 100%;
+					margin-bottom: 4px;
+				}
+
+				.labarugi-grid-sync-auto-check {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					flex: 0 0 auto;
+					margin: 0;
+					padding: 2px 4px;
+					border-radius: 6px;
+					border: 1px solid #81c784;
+					background: #f1f8e9;
+					cursor: pointer;
+				}
+
+				.labarugi-grid-sync-auto-check:hover {
+					background: #e8f5e9;
+					border-color: #43a047;
+				}
+
+				.labarugi-grid-sync-auto-cb {
+					margin: 0 4px 0 0;
+					cursor: pointer;
+					transform: scale(1.15);
+				}
+
+				.labarugi-grid-sync-auto-label {
+					font-size: 0.72rem;
+					color: #2e7d32;
+					line-height: 1;
+				}
+
+				.labarugi-grid-sync-auto-check.is-loading {
+					opacity: 0.65;
+					pointer-events: none;
 				}
 
 				.labarugi-grid-ns-nominal:hover {
@@ -884,6 +946,7 @@
 		$labarugi_tab_storage_key = 'labarugi_form_active_tab_' . (int) $tahun_neraca . '_' . (int) $bulan_transaksi;
 		$labarugi_partial = APPPATH . 'views/anekadharma/tbl_laba_rugi/partials/adminlte310_labarugi_form_panel.php';
 		?>
+		<!-- labarugi-form-deploy: v2-per-unit-tabs -->
 
 		<div class="labarugi-tabs-shell" id="labarugiTabsShell" data-storage-key="<?php echo htmlspecialchars($labarugi_tab_storage_key, ENT_QUOTES, 'UTF-8'); ?>">
 			<ul class="labarugi-tab-nav" role="tablist">
@@ -987,11 +1050,103 @@
 				var inVal = labarugiGridParseNominal(input.value);
 				var isMatch = Math.abs(nsVal - inVal) < 0.01;
 				cell.classList.toggle('labarugi-grid-cell-match', isMatch);
-				if (cell.classList.contains('labarugi-unit-col-published')) {
-					cell.classList.toggle('labarugi-grid-cell-mismatch', !isMatch);
+				if (isMatch) {
+					cell.classList.remove('labarugi-grid-cell-mismatch');
+				} else if (cell.classList.contains('labarugi-unit-col-published')) {
+					cell.classList.add('labarugi-grid-cell-mismatch');
 				} else {
 					cell.classList.remove('labarugi-grid-cell-mismatch');
 				}
+			}
+
+			function labarugiGridFormatNominal(num) {
+				var n = parseFloat(num);
+				if (isNaN(n)) { n = 0; }
+				var parts = n.toFixed(2).split('.');
+				parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+				return parts[0] + ',' + parts[1];
+			}
+
+			function labarugiGridGetAutoNominal(group) {
+				var nominalBtn = group.querySelector('.labarugi-grid-ns-nominal');
+				if (!nominalBtn) { return 0; }
+				var nsVal = parseFloat(nominalBtn.getAttribute('data-nominal') || '0');
+				if (isNaN(nsVal)) {
+					nsVal = labarugiGridParseNominal(nominalBtn.textContent);
+				}
+				return nsVal;
+			}
+
+			function labarugiGridApplyAutoToInput(group, formattedValue) {
+				var input = group.querySelector('.labarugi-grid-input');
+				if (!input) { return; }
+				if (typeof formattedValue === 'string' && formattedValue !== '') {
+					input.value = formattedValue;
+				} else {
+					input.value = labarugiGridFormatNominal(labarugiGridGetAutoNominal(group));
+				}
+				labarugiGridToggleSave(group);
+				labarugiGridRefreshMatch(group);
+			}
+
+			function labarugiGridSaveSyncAuto(group, isChecked, syncCb, syncLabel) {
+				var syncUrl = group.getAttribute('data-sync-auto-url');
+				if (!syncUrl) { return Promise.resolve(false); }
+
+				var autoNominal = labarugiGridGetAutoNominal(group);
+				var formData = new FormData();
+				formData.append('tahun', group.getAttribute('data-tahun'));
+				formData.append('bulan', group.getAttribute('data-bulan'));
+				formData.append('jenis_tab', group.getAttribute('data-jenis-tab'));
+				formData.append('nama_laba_rugi', group.getAttribute('data-nama-laba-rugi'));
+				formData.append('unit', group.getAttribute('data-unit'));
+				formData.append('keterangan_data', group.getAttribute('data-nama-label'));
+				formData.append('status_sync_auto', isChecked ? '1' : '0');
+				formData.append('auto_sistem', String(autoNominal));
+
+				if (syncLabel) { syncLabel.classList.add('is-loading'); }
+				if (syncCb) { syncCb.disabled = true; }
+
+				return fetch(syncUrl, {
+					method: 'POST',
+					body: formData,
+					credentials: 'same-origin'
+				})
+				.then(function(res) { return res.json(); })
+				.then(function(data) {
+					if (syncLabel) { syncLabel.classList.remove('is-loading'); }
+					if (syncCb) { syncCb.disabled = false; }
+					if (data && data.ok) {
+						group.setAttribute('data-sync-auto', isChecked ? '1' : '0');
+						if (data.uuid_laba_rugi) {
+							group.setAttribute('data-uuid', data.uuid_laba_rugi);
+						}
+						if (isChecked && data.nominal_formatted) {
+							labarugiGridApplyAutoToInput(group, data.nominal_formatted);
+						} else {
+							labarugiGridRefreshMatch(group);
+						}
+						return true;
+					}
+					if (syncCb) { syncCb.checked = !isChecked; }
+					group.setAttribute('data-sync-auto', syncCb && syncCb.checked ? '1' : '0');
+					if (typeof Swal !== 'undefined') {
+						Swal.fire({ icon: 'error', title: 'Gagal', text: (data && data.message) ? data.message : 'Gagal menyimpan status sync otomatis.' });
+					}
+					return false;
+				})
+				.catch(function() {
+					if (syncLabel) { syncLabel.classList.remove('is-loading'); }
+					if (syncCb) {
+						syncCb.disabled = false;
+						syncCb.checked = !isChecked;
+					}
+					group.setAttribute('data-sync-auto', syncCb && syncCb.checked ? '1' : '0');
+					if (typeof Swal !== 'undefined') {
+						Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan koneksi.' });
+					}
+					return false;
+				});
 			}
 
 			function labarugiEscSelector(val) {
@@ -1100,6 +1255,22 @@
 						status.className = 'labarugi-grid-status';
 					}
 				});
+
+				var syncCb = group.querySelector('.labarugi-grid-sync-auto-cb');
+				var syncLabel = group.querySelector('.labarugi-grid-sync-auto-check');
+				if (syncCb) {
+					syncCb.addEventListener('change', function() {
+						var isChecked = syncCb.checked;
+						if (isChecked) {
+							labarugiGridApplyAutoToInput(group);
+						}
+						labarugiGridSaveSyncAuto(group, isChecked, syncCb, syncLabel);
+					});
+				}
+
+				if (group.getAttribute('data-sync-auto') === '1') {
+					labarugiGridApplyAutoToInput(group);
+				}
 
 				btn.addEventListener('click', function() {
 					if (btn.disabled) { return; }

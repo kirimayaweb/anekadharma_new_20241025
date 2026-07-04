@@ -234,6 +234,71 @@ class Tbl_laba_rugi extends CI_Controller
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_laba_rugi/adminlte310_labarugi_form', $data);
     }
 
+    /**
+     * Cek file deploy tab Laba Rugi per unit (admin/superadmin).
+     * URL: Tbl_laba_rugi/labarugi_deploy_check
+     */
+    public function labarugi_deploy_check()
+    {
+        $this->load->helper('dashboard');
+        $level = dashboard_session_user_level($this);
+        if (!in_array($level, array(1, 2, 9, 99), true)) {
+            show_error('Akses ditolak.', 403);
+            return;
+        }
+
+        header('Content-Type: text/plain; charset=utf-8');
+
+        $required_files = array(
+            'form_view' => APPPATH . 'views/anekadharma/tbl_laba_rugi/adminlte310_labarugi_form.php',
+            'form_panel' => APPPATH . 'views/anekadharma/tbl_laba_rugi/partials/adminlte310_labarugi_form_panel.php',
+            'unit_grid' => APPPATH . 'views/anekadharma/tbl_laba_rugi/partials/adminlte310_labarugi_unit_grid.php',
+            'detail_helper' => APPPATH . 'helpers/laba_rugi_detail_helper.php',
+            'publish_helper' => APPPATH . 'helpers/laba_rugi_unit_publish_helper.php',
+            'detail_model' => APPPATH . 'models/Tbl_laba_rugi_detail_model.php',
+            'publish_model' => APPPATH . 'models/Sys_labarugi_unit_publish_model.php',
+        );
+
+        echo "LABA RUGI PER UNIT DEPLOY CHECK\n";
+        echo "version: v2-per-unit-tabs\n";
+        echo "git_head: " . $this->labarugi_deploy_git_head() . "\n\n";
+
+        foreach ($required_files as $label => $path) {
+            $exists = file_exists($path);
+            echo strtoupper($label) . ': ' . ($exists ? 'OK' : 'MISSING') . "\n";
+            echo "  path: " . $path . "\n";
+            if ($exists && $label === 'form_view') {
+                $content = @file_get_contents($path);
+                $has_tabs = ($content !== false && strpos($content, 'labarugi-tabs-shell') !== false);
+                echo "  has_tabs: " . ($has_tabs ? 'YES' : 'NO (PULL BRANCH main)') . "\n";
+            }
+        }
+
+        echo "\nJika has_tabs=NO atau file MISSING, jalankan di server:\n";
+        echo "  git fetch origin\n";
+        echo "  git checkout main\n";
+        echo "  git pull origin main\n";
+        echo "  (lalu clear OPcache / restart PHP jika perlu)\n";
+    }
+
+    private function labarugi_deploy_git_head()
+    {
+        $head_file = FCPATH . '.git/HEAD';
+        if (!is_readable($head_file)) {
+            return 'unknown';
+        }
+        $head = trim((string) file_get_contents($head_file));
+        if (strpos($head, 'ref:') === 0) {
+            $ref = trim(substr($head, 5));
+            $ref_file = FCPATH . '.git/' . $ref;
+            if (is_readable($ref_file)) {
+                return $ref . ' @ ' . substr(trim((string) file_get_contents($ref_file)), 0, 7);
+            }
+            return $ref;
+        }
+        return substr($head, 0, 7);
+    }
+
     public function save_labarugi_detail()
     {
         $this->load->helper('laba_rugi_detail');
@@ -307,6 +372,98 @@ class Tbl_laba_rugi extends CI_Controller
             'id' => $id,
             'uuid_laba_rugi' => $uuid_laba_rugi,
             'nominal_formatted' => labarugi_detail_format_nominal($nominal),
+        ));
+    }
+
+    public function save_labarugi_detail_sync_auto()
+    {
+        $this->load->helper('laba_rugi_detail');
+        labarugi_detail_ensure_table($this);
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $tahun = (int) $this->input->post('tahun');
+        $bulan = (int) $this->input->post('bulan');
+        $jenis_tab = trim((string) $this->input->post('jenis_tab'));
+        $nama_laba_rugi = trim((string) $this->input->post('nama_laba_rugi'));
+        $unit = trim((string) $this->input->post('unit'));
+        $status_sync_auto = (int) $this->input->post('status_sync_auto') === 1 ? 1 : 0;
+        $auto_sistem_raw = (string) $this->input->post('auto_sistem', FALSE);
+        $keterangan_data = trim((string) $this->input->post('keterangan_data'));
+
+        if ($tahun < 2000 || $bulan < 1 || $bulan > 12) {
+            echo json_encode(array('ok' => false, 'message' => 'Periode tidak valid.'));
+            return;
+        }
+
+        if (!in_array($jenis_tab, array('rinci', 'sederhana'), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Jenis tab tidak valid.'));
+            return;
+        }
+
+        $this->load->helper('laba_rugi_keterangan');
+        $allowed_keys = labarugi_keterangan_allowed_keys($this, $jenis_tab);
+        if (!in_array($nama_laba_rugi, $allowed_keys, true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Keterangan tidak valid.'));
+            return;
+        }
+
+        if ($unit === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Unit wajib diisi untuk tab per unit.'));
+            return;
+        }
+
+        $auto_sistem = labarugi_detail_parse_nominal($auto_sistem_raw);
+        if ($auto_sistem === null) {
+            $auto_sistem = 0.0;
+        }
+
+        $uuid_laba_rugi = labarugi_detail_resolve_parent_uuid($this, $tahun, $bulan);
+        if ($uuid_laba_rugi === null || $uuid_laba_rugi === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Gagal menyiapkan UUID laba rugi.'));
+            return;
+        }
+
+        $existing = $this->Tbl_laba_rugi_detail_model->find_existing($uuid_laba_rugi, $nama_laba_rugi, $unit, $jenis_tab);
+        $nominal_update = ($existing && $existing->nominal_update !== null) ? (float) $existing->nominal_update : null;
+        if ($nominal_update === null && $existing && $existing->nominal !== null) {
+            $nominal_update = (float) $existing->nominal;
+        }
+        if ($nominal_update === null) {
+            $nominal_update = 0.0;
+        }
+
+        if ($status_sync_auto === 1) {
+            $nominal_update = $auto_sistem;
+        }
+
+        $id = $this->Tbl_laba_rugi_detail_model->upsert(array(
+            'tanggal' => labarugi_detail_tanggal_periode($tahun, $bulan),
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'nama_laba_rugi' => $nama_laba_rugi,
+            'unit' => $unit,
+            'nominal' => $nominal_update,
+            'nominal_update' => $nominal_update,
+            'auto_sistem' => $auto_sistem,
+            'status_sync_auto' => $status_sync_auto,
+            'keterangan_data' => ($keterangan_data !== '') ? $keterangan_data : null,
+            'jenis_tab' => $jenis_tab,
+            'tahun_transaksi' => $tahun,
+            'bulan_transaksi' => $bulan,
+        ));
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => $status_sync_auto === 1 ? 'Nilai otomatis disalin ke input.' : 'Status sync otomatis disimpan.',
+            'id' => $id,
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'status_sync_auto' => $status_sync_auto,
+            'nominal_formatted' => labarugi_detail_format_nominal($nominal_update),
+            'auto_sistem_formatted' => labarugi_detail_format_nominal($auto_sistem),
         ));
     }
 
