@@ -2767,6 +2767,9 @@ class Tbl_penjualan extends CI_Controller
 		$Buku_besar_DATA_baris = $this->_enrich_jurnal_penjualan2_baris_rows($Buku_besar_DATA_baris, $Get_month_selected, $Get_YEAR_selected);
 		$jurnal_penjualan_per_unit_data = $this->_get_jurnal_penjualan2_per_unit_data_by_units($Get_month_selected, $Get_YEAR_selected);
 
+		$Get_date_awal = sprintf('%04d-%02d-01 00:00:00', (int) $Get_YEAR_selected, (int) $Get_month_selected);
+		$Get_date_akhir = date('Y-m-t 23:59:59', strtotime($Get_date_awal));
+
 		$data = array(
 			'Buku_besar_DATA_data' => $Buku_besar_DATA,
 			'Buku_besar_DATA_baris' => $Buku_besar_DATA_baris,
@@ -2774,6 +2777,8 @@ class Tbl_penjualan extends CI_Controller
 			'month_selected' => $Get_month_selected,
 			'year_selected' => $Get_YEAR_selected,
 			'bulan_ns_selected' => $Get_bulan_ns,
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list__jurnal_penjualan', $data);

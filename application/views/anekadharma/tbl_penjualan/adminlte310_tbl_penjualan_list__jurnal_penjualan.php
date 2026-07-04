@@ -455,12 +455,16 @@
         // echo $date_awal; 
         // echo "<br/>";
 
-        $Get_month_from_date = $month_selected;
-        $Get_year_Tahun_ini = $year_selected;
+        $Get_month_from_date = isset($month_selected) ? $month_selected : date("m");
+        $Get_year_Tahun_ini = isset($year_selected) ? $year_selected : date("Y");
         $Get_year_Setahun_lalu = date("Y", strtotime('-1 year'));
 
-
-
+        if (!isset($date_awal) || empty($date_awal)) {
+            $date_awal = sprintf('%04d-%02d-01 00:00:00', (int) $Get_year_Tahun_ini, (int) $Get_month_from_date);
+        }
+        if (!isset($date_akhir) || empty($date_akhir)) {
+            $date_akhir = date('Y-m-t 23:59:59', strtotime($date_awal));
+        }
 
         if (date("Y", strtotime($date_awal)) < 2020) {
             $Get_date_awal = date("d-m-Y");
