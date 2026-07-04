@@ -784,7 +784,7 @@
                                     <div class="gen-recalc-dt-block mb-3">
                                         <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
                                         <table id="tbl-gen-sum-pembelian-spop-multi" class="table table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt">
-                                            <thead><tr><th>No</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
                                             <tbody></tbody>
                                             <tfoot><tr></tr></tfoot>
                                         </table>
@@ -798,7 +798,7 @@
                                     <div class="gen-recalc-dt-block mb-3">
                                         <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
                                         <table id="tbl-gen-sum-pembelian-spop-single" class="table table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt">
-                                            <thead><tr><th>No</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
                                             <tbody></tbody>
                                             <tfoot><tr></tr></tfoot>
                                         </table>
@@ -860,9 +860,138 @@
                                         <div class="gen-recalc-table-scroll gen-recalc-summary-scroll" style="min-height:200px;max-height:480px;">
                                         <table id="tbl-gen-recalc-gagal" class="table table-sm table-bordered table-striped gen-recalc-dt mb-0">
                                             <thead><tr>
-                                                <th>No</th><th>Fase</th><th>Aksi</th><th>Tabel</th><th>ID Sumber</th><th>ID Target</th>
+                                                <th>No</th><th>Action</th><th>Fase</th><th>Aksi</th><th>Tabel</th><th>ID Sumber</th><th>ID Target</th>
                                                 <th>Nama</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Jumlah</th><th>Keterangan</th>
                                             </tr></thead>
+                                            <tbody></tbody>
+                                            <tfoot><tr></tr></tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="modal-gagal-cek-persediaan" tabindex="-1" role="dialog" aria-labelledby="modalGagalCekPersediaanLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl" role="document" style="max-width:96%;">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-info text-white py-2">
+                                            <h5 class="modal-title" id="modalGagalCekPersediaanLabel">
+                                                <i class="fas fa-clipboard-check"></i> Cek ke Persediaan
+                                            </h5>
+                                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Tutup">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body pb-2">
+                                            <div id="gagal-cek-persediaan-alert" class="mb-2"></div>
+                                            <p class="text-muted small mb-2" id="gagal-cek-persediaan-meta">Memuat data...</p>
+                                            <div id="gagal-cek-persediaan-loading" class="text-center py-4 text-muted d-none">
+                                                <i class="fas fa-spinner fa-spin"></i> Memuat preview persediaan...
+                                            </div>
+                                            <div id="gagal-cek-persediaan-view">
+                                                <div class="gagal-cek-persediaan-dt-wrap">
+                                                    <table id="tbl-gagal-cek-persediaan-fields" class="table table-sm table-bordered table-striped mb-0" style="width:100%;font-size:12px;">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th style="width:48px">No</th>
+                                                                <th style="width:180px">Field</th>
+                                                                <th>Nilai</th>
+                                                                <th style="width:88px">Aksi</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="gagal-cek-persediaan-tbody"></tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                            <div id="gagal-cek-persediaan-edit" class="d-none">
+                                                <form id="form-gagal-cek-persediaan-edit" class="gagal-cek-persediaan-edit-form"></form>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-2">
+                                            <button type="button" class="btn btn-success btn-sm d-none" id="btn-gagal-cek-persediaan-simpan">
+                                                <i class="fas fa-save"></i> Simpan ke Tabel Persediaan
+                                            </button>
+                                            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-outline card-info mt-3 d-none" id="gen-recalc-extra-wrap">
+                                <div class="card-header py-2 bg-info">
+                                    <h3 class="card-title text-white mb-0">Rekap Pembelian SPOP &amp; Penjualan ke Persediaan</h3>
+                                </div>
+                                <div class="card-body p-2">
+                                    <h6 class="d-flex align-items-center flex-wrap px-1">
+                                        <span>8. Pembelian — SPOP Lebih dari 1 Record <span id="gen-count-pembelian-spop-multi" class="badge badge-dark">0</span></span>
+                                        <span class="text-muted small ml-2" id="gen-label-pembelian-spop-multi"></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pembelian_spop_multi_status"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
+                                        <table id="tbl-gen-recalc-pembelian-spop-multi" class="table table-sm table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt mb-0">
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
+                                            <tbody></tbody>
+                                            <tfoot><tr></tr></tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="d-flex align-items-center flex-wrap px-1">
+                                        <span>9. Pembelian — SPOP 1 Record Saja <span id="gen-count-pembelian-spop-single" class="badge badge-secondary">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="pembelian_spop_single_status"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
+                                        <table id="tbl-gen-recalc-pembelian-spop-single" class="table table-sm table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt mb-0">
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Pembelian</th><th>Uraian</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>SPOP</th><th>Tgl PO</th><th>Jumlah Record SPOP</th><th>Keterangan</th></tr></thead>
+                                            <tbody></tbody>
+                                            <tfoot><tr></tr></tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="d-flex align-items-center flex-wrap px-1">
+                                        <span>10. Penjualan — Berhasil Update ke Persediaan <span id="gen-count-penjualan-berhasil" class="badge badge-success">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="penjualan_berhasil"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
+                                        <table id="tbl-gen-recalc-penjualan-berhasil" class="table table-sm table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt mb-0">
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Penjualan</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>UUID</th><th>Unit</th><th>Jumlah</th><th>Tgl Jual</th><th>ID Persediaan</th><th>Penjualan Lama</th><th>Penjualan Baru</th><th>Total_10</th><th>Keterangan</th></tr></thead>
+                                            <tbody></tbody>
+                                            <tfoot><tr></tr></tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="d-flex align-items-center flex-wrap px-1">
+                                        <span>11. Penjualan — Tidak Bisa Update ke Persediaan <span id="gen-count-penjualan-gagal" class="badge badge-danger">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="penjualan_gagal"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <div class="gen-recalc-dt-block mb-3">
+                                        <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
+                                        <table id="tbl-gen-recalc-penjualan-gagal" class="table table-sm table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt mb-0">
+                                            <thead><tr><th>No</th><th>Status Persediaan</th><th>ID Penjualan</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>UUID</th><th>Unit</th><th>Jumlah</th><th>Tgl Jual</th><th>Aksi Proses</th><th>Keterangan</th></tr></thead>
+                                            <tbody></tbody>
+                                            <tfoot><tr></tr></tfoot>
+                                        </table>
+                                        </div>
+                                    </div>
+
+                                    <h6 class="d-flex align-items-center flex-wrap px-1">
+                                        <span>12. Penjualan — UUID Tidak Ada di Pembelian &amp; Persediaan <span id="gen-count-penjualan-uuid-orphan" class="badge badge-warning">0</span></span>
+                                        <button type="button" class="btn btn-xs btn-outline-primary btn-gen-recalc-excel ml-2 mb-1" data-jenis="penjualan_uuid_orphan"><i class="fas fa-file-excel"></i> Excel</button>
+                                    </h6>
+                                    <p class="text-muted small px-1 mb-2">
+                                        Semua record <strong>tbl_penjualan</strong> bulan target yang <strong>uuid_persediaan</strong>-nya tidak ditemukan di
+                                        <strong>tbl_pembelian</strong>/<strong>tbl_pembelian_jasa</strong> maupun tabel <strong>persediaan</strong>
+                                        (termasuk uuid kosong).
+                                    </p>
+                                    <div class="gen-recalc-dt-block mb-0">
+                                        <div class="gen-recalc-table-scroll gen-recalc-summary-scroll">
+                                        <table id="tbl-gen-recalc-penjualan-uuid-orphan" class="table table-sm table-bordered table-striped gen-recalc-dt gen-recalc-summary-dt mb-0">
+                                            <thead><tr><th>No</th><th>Status Referensi</th><th>ID Penjualan</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>UUID</th><th>Unit</th><th>Jumlah</th><th>Tgl Jual</th><th>Ada di Pembelian</th><th>Ada di Persediaan</th><th>Keterangan</th></tr></thead>
                                             <tbody></tbody>
                                             <tfoot><tr></tr></tfoot>
                                         </table>
@@ -1748,6 +1877,39 @@
         border-color: #c62828;
         color: #fff;
     }
+    .btn-gagal-cek-persediaan {
+        white-space: nowrap;
+        font-size: 11px;
+        padding: 2px 8px;
+    }
+    #modal-gagal-cek-persediaan .gagal-cek-persediaan-dt-wrap {
+        max-height: 58vh;
+        overflow: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    #modal-gagal-cek-persediaan .gagal-cek-persediaan-edit-form .form-group {
+        margin-bottom: 8px;
+    }
+    #modal-gagal-cek-persediaan .gagal-cek-persediaan-edit-form label {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
+    #modal-gagal-cek-persediaan .gagal-cek-persediaan-edit-form .form-control {
+        font-size: 12px;
+        height: calc(1.5em + 0.5rem + 2px);
+        padding: 0.2rem 0.45rem;
+    }
+    #tbl-gagal-cek-persediaan-fields td.gagal-cek-field-name {
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        background: #f8f9fa;
+    }
+    #tbl-gagal-cek-persediaan-fields td.gagal-cek-field-val {
+        word-break: break-word;
+        font-size: 12px;
+    }
 </style>
 
 <script>
@@ -1768,6 +1930,10 @@ window.addEventListener('load', function() {
     var urlGenerateRecalculateBatch = <?php echo json_encode(isset($url_generate_recalculate_batch) ? $url_generate_recalculate_batch : site_url('Persediaan/ajax_generate_recalculate_batch')); ?>;
     var urlLoadGenRecalcHistory = <?php echo json_encode(isset($url_load_gen_recalc_history) ? $url_load_gen_recalc_history : site_url('Persediaan/ajax_load_gen_recalc_history')); ?>;
     var urlGenRecalcSummaryTables = <?php echo json_encode(isset($url_gen_recalc_summary_tables) ? $url_gen_recalc_summary_tables : site_url('Persediaan/ajax_gen_recalc_summary_tables')); ?>;
+    var urlGenRecalcExtraTables = <?php echo json_encode(isset($url_gen_recalc_extra_tables) ? $url_gen_recalc_extra_tables : site_url('Persediaan/ajax_gen_recalc_extra_tables')); ?>;
+    var urlGenRecalcGagalPreviewPersediaan = <?php echo json_encode(isset($url_gen_recalc_gagal_preview_persediaan) ? $url_gen_recalc_gagal_preview_persediaan : site_url('Persediaan/ajax_gen_recalc_gagal_preview_persediaan')); ?>;
+    var urlGenRecalcGagalSavePersediaan = <?php echo json_encode(isset($url_gen_recalc_gagal_save_persediaan) ? $url_gen_recalc_gagal_save_persediaan : site_url('Persediaan/ajax_gen_recalc_gagal_save_persediaan')); ?>;
+    var urlGenRecalcSyncGagalSnapshot = <?php echo json_encode(isset($url_gen_recalc_sync_gagal_snapshot) ? $url_gen_recalc_sync_gagal_snapshot : site_url('Persediaan/ajax_gen_recalc_sync_gagal_snapshot')); ?>;
     var urlListHistoryGenerate = <?php echo json_encode(isset($url_list_history_generate) ? $url_list_history_generate : site_url('Persediaan/ajax_list_history_generate')); ?>;
     var urlLoadHistoryGenerate = <?php echo json_encode(isset($url_load_history_generate) ? $url_load_history_generate : site_url('Persediaan/ajax_load_history_generate')); ?>;
     var urlExcelGenRecalcSummary = <?php echo json_encode(isset($url_excel_gen_recalc_summary) ? $url_excel_gen_recalc_summary : site_url('Persediaan/excel_gen_recalc_summary')); ?>;
@@ -2533,13 +2699,30 @@ window.addEventListener('load', function() {
             pecah_satuan: [],
             pecah_satuan_update: [],
             gagal_generate_recalculate: [],
-            gagal_insert_persediaan: []
+            gagal_insert_persediaan: [],
+            pembelian_spop_multi: [],
+            pembelian_spop_single: [],
+            penjualan_berhasil: [],
+            penjualan_gagal: [],
+            penjualan_uuid_orphan: []
         };
     }
+
+    var genRecalcExtraMeta = {
+        pembelian_spop_multi_totals: {},
+        pembelian_spop_single_totals: {},
+        pembelian_spop_multi_grup_count: 0,
+        penjualan_berhasil_totals: {},
+        penjualan_gagal_totals: {},
+        penjualan_uuid_orphan_totals: {},
+        penjualan_uuid_orphan_count: 0
+    };
+    var genRecalcExtraLoadTimer = null;
 
     function rebuildGagalInsertPersediaanData() {
         ensureGenRecalcDataShape();
 
+        var prevGagalIns = (genRecalcData.gagal_insert_persediaan || []).slice();
         var out = [];
         var insertFail = { GAGAL: 1 };
         var produksiFail = { GAGAL: 1, TIDAK_COCOK: 1 };
@@ -2585,8 +2768,8 @@ window.addEventListener('load', function() {
             }
         });
 
-        genRecalcData.gagal_insert_persediaan = out;
-        return out;
+        genRecalcData.gagal_insert_persediaan = out.length > 0 ? out : (prevGagalIns.length > 0 ? prevGagalIns : out);
+        return genRecalcData.gagal_insert_persediaan;
     }
 
     function toggleGenRecalcGagalPersediaanWrap() {
@@ -2622,9 +2805,177 @@ window.addEventListener('load', function() {
         }
     }
 
+    function mergeExtraResultTablesIntoGenRecalcData(payload) {
+        if (!payload || typeof payload !== 'object') {
+            return;
+        }
+        ensureGenRecalcDataShape();
+        ['pembelian_spop_multi', 'pembelian_spop_single', 'penjualan_berhasil', 'penjualan_gagal', 'penjualan_uuid_orphan'].forEach(function(k) {
+            if (payload[k] && Array.isArray(payload[k])) {
+                genRecalcData[k] = payload[k];
+            }
+        });
+        if (payload.pembelian_spop_multi_totals) {
+            genRecalcExtraMeta.pembelian_spop_multi_totals = payload.pembelian_spop_multi_totals;
+        }
+        if (payload.pembelian_spop_single_totals) {
+            genRecalcExtraMeta.pembelian_spop_single_totals = payload.pembelian_spop_single_totals;
+        }
+        if (payload.pembelian_spop_multi_grup_count !== undefined) {
+            genRecalcExtraMeta.pembelian_spop_multi_grup_count = parseInt(payload.pembelian_spop_multi_grup_count, 10) || 0;
+        }
+        if (payload.penjualan_berhasil_totals) {
+            genRecalcExtraMeta.penjualan_berhasil_totals = payload.penjualan_berhasil_totals;
+        }
+        if (payload.penjualan_gagal_totals) {
+            genRecalcExtraMeta.penjualan_gagal_totals = payload.penjualan_gagal_totals;
+        }
+        if (payload.penjualan_uuid_orphan_totals) {
+            genRecalcExtraMeta.penjualan_uuid_orphan_totals = payload.penjualan_uuid_orphan_totals;
+        }
+        if (payload.penjualan_uuid_orphan_count !== undefined) {
+            genRecalcExtraMeta.penjualan_uuid_orphan_count = parseInt(payload.penjualan_uuid_orphan_count, 10) || 0;
+        }
+    }
+
+    function toggleGenRecalcExtraWrap() {
+        ensureGenRecalcDataShape();
+        var nMulti = genRecalcExtraMeta.pembelian_spop_multi_grup_count || 0;
+        var nSingle = (genRecalcData.pembelian_spop_single || []).length;
+        var nOk = (genRecalcData.penjualan_berhasil || []).length;
+        var nFail = (genRecalcData.penjualan_gagal || []).length;
+        var nOrphan = genRecalcExtraMeta.penjualan_uuid_orphan_count || (genRecalcData.penjualan_uuid_orphan || []).length;
+        var has = nMulti > 0 || nSingle > 0 || nOk > 0 || nFail > 0 || nOrphan > 0
+            || (genRecalcData.pembelian_spop_multi || []).length > 0;
+        if (has) {
+            $('#gen-recalc-extra-wrap').removeClass('d-none');
+        } else {
+            $('#gen-recalc-extra-wrap').addClass('d-none');
+        }
+    }
+
+    function destroyAllGenRecalcExtraTables() {
+        GEN_RECALC_EXTRA_TABLES.forEach(destroyGenRecalcSummaryTable);
+    }
+
+    function renderGenRecalcExtraTables() {
+        ensureGenRecalcDataShape();
+        var psm = genRecalcData.pembelian_spop_multi || [];
+        var pss = genRecalcData.pembelian_spop_single || [];
+        var pjOk = genRecalcData.penjualan_berhasil || [];
+        var pjFail = genRecalcData.penjualan_gagal || [];
+        var pjOrphan = genRecalcData.penjualan_uuid_orphan || [];
+
+        var spopMultiGrup = genRecalcExtraMeta.pembelian_spop_multi_grup_count || 0;
+        var spopMultiDetailCount = 0;
+        psm.forEach(function(r) {
+            if (!r || r.row_type === 'subtotal') {
+                return;
+            }
+            spopMultiDetailCount++;
+        });
+        if (!spopMultiGrup) {
+            var grupSet = {};
+            psm.forEach(function(r) {
+                if (!r || r.row_type === 'subtotal') {
+                    return;
+                }
+                if (r.record_grup) {
+                    grupSet[r.record_grup] = 1;
+                }
+            });
+            spopMultiGrup = Object.keys(grupSet).length;
+        }
+
+        $('#gen-count-pembelian-spop-multi').text(spopMultiGrup);
+        $('#gen-count-pembelian-spop-single').text(pss.length);
+        $('#gen-count-penjualan-berhasil').text(pjOk.length);
+        $('#gen-count-penjualan-gagal').text(pjFail.length);
+        $('#gen-count-penjualan-uuid-orphan').text(
+            genRecalcExtraMeta.penjualan_uuid_orphan_count || pjOrphan.length
+        );
+        $('#gen-label-pembelian-spop-multi').text(
+            spopMultiGrup > 0
+                ? '(' + spopMultiDetailCount + ' baris detail + ' + spopMultiGrup + ' baris subtotal SPOP)'
+                : ''
+        );
+        toggleGenRecalcExtraWrap();
+
+        var spopKeys = GEN_RECALC_PEMBELIAN_SPOP_KEYS;
+        var psmTotals = resolveGenRecalcSummaryTotals(psm, spopKeys, genRecalcExtraMeta.pembelian_spop_multi_totals, inferGenRecalcSumKeysFromObjectKeys(spopKeys, psm));
+        var pssTotals = resolveGenRecalcSummaryTotals(pss, spopKeys, genRecalcExtraMeta.pembelian_spop_single_totals, inferGenRecalcSumKeysFromObjectKeys(spopKeys, pss));
+        var pjOkKeys = GEN_RECALC_PENJUALAN_OK_KEYS;
+        var pjFailKeys = GEN_RECALC_PENJUALAN_FAIL_KEYS;
+        var pjOrphanKeys = GEN_RECALC_PENJUALAN_ORPHAN_KEYS;
+        var pjOkTotals = resolveGenRecalcSummaryTotals(pjOk, pjOkKeys, genRecalcExtraMeta.penjualan_berhasil_totals, inferGenRecalcSumKeysFromObjectKeys(pjOkKeys, pjOk));
+        var pjFailTotals = resolveGenRecalcSummaryTotals(pjFail, pjFailKeys, genRecalcExtraMeta.penjualan_gagal_totals, inferGenRecalcSumKeysFromObjectKeys(pjFailKeys, pjFail));
+        var pjOrphanTotals = resolveGenRecalcSummaryTotals(pjOrphan, pjOrphanKeys, genRecalcExtraMeta.penjualan_uuid_orphan_totals, inferGenRecalcSumKeysFromObjectKeys(pjOrphanKeys, pjOrphan));
+
+        upsertGenRecalcSummaryTable('#tbl-gen-recalc-pembelian-spop-multi', psm.map(function(r) {
+            return genRecalcSummaryRowPack(r, spopKeys);
+        }), 7, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-recalc-pembelian-spop-multi', spopKeys, psm, psmTotals), true, spopKeys.length);
+        upsertGenRecalcSummaryTable('#tbl-gen-recalc-pembelian-spop-single', pss.map(function(r) {
+            return genRecalcSummaryRowPack(r, spopKeys);
+        }), 2, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-recalc-pembelian-spop-single', spopKeys, pss, pssTotals), true, spopKeys.length);
+        upsertGenRecalcSummaryTable('#tbl-gen-recalc-penjualan-berhasil', pjOk.map(function(r) {
+            return genRecalcSummaryRowPack(r, pjOkKeys);
+        }), 2, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-recalc-penjualan-berhasil', pjOkKeys, pjOk, pjOkTotals), true, pjOkKeys.length);
+        upsertGenRecalcSummaryTable('#tbl-gen-recalc-penjualan-gagal', pjFail.map(function(r) {
+            return genRecalcSummaryRowPack(r, pjFailKeys);
+        }), 2, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-recalc-penjualan-gagal', pjFailKeys, pjFail, pjFailTotals), true, pjFailKeys.length);
+        upsertGenRecalcSummaryTable('#tbl-gen-recalc-penjualan-uuid-orphan', pjOrphan.map(function(r) {
+            return genRecalcSummaryRowPack(r, pjOrphanKeys);
+        }), 2, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-recalc-penjualan-uuid-orphan', pjOrphanKeys, pjOrphan, pjOrphanTotals), true, pjOrphanKeys.length);
+    }
+
+    function scheduleLoadGenRecalcExtraTablesFromServer(bulanKey) {
+        if (!bulanKey || !userCanGeneratePersediaan || !urlGenRecalcExtraTables) {
+            return;
+        }
+        if (genRecalcExtraLoadTimer) {
+            clearTimeout(genRecalcExtraLoadTimer);
+        }
+        genRecalcExtraLoadTimer = setTimeout(function() {
+            loadGenRecalcExtraTablesFromServer(bulanKey);
+        }, 350);
+    }
+
+    function loadGenRecalcExtraTablesFromServer(bulanKey) {
+        if (!bulanKey || !userCanGeneratePersediaan || !urlGenRecalcExtraTables) {
+            return;
+        }
+        ensureGenRecalcDataShape();
+        var fd = new FormData();
+        fd.append('bulan', bulanKey);
+        fd.append('items_pembelian', JSON.stringify(genRecalcData.pembelian || []));
+        fd.append('items_pembelian_update', JSON.stringify(genRecalcData.pembelian_update || []));
+        fd.append('items_pembelian_baru', JSON.stringify(genRecalcData.pembelian_baru || []));
+        fd.append('items_penjualan', JSON.stringify(genRecalcData.penjualan || []));
+        fd.append('items_penjualan_update', JSON.stringify(genRecalcData.penjualan_update || []));
+        fetch(urlGenRecalcExtraTables, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(res) {
+            if (res && res.ok) {
+                mergeExtraResultTablesIntoGenRecalcData(res);
+                renderGenRecalcExtraTables();
+                saveGenRecalcResultToStorage(bulanKey);
+                setTimeout(adjustGenRecalcDataTables, 120);
+            }
+        })
+        .catch(function(err) {
+            console.warn('GenRecalc extra tables:', err);
+        });
+    }
+
     function rebuildGagalGenerateRecalculateData() {
         ensureGenRecalcDataShape();
 
+        var prevGagal = (genRecalcData.gagal_generate_recalculate || []).slice();
         var out = [];
         var verifikasiGagal = { BEDA: 1, TIDAK_ADA_TARGET: 1, TARGET_EKSTRA: 1 };
         var phaseFail = { GAGAL: 1, TIDAK_COCOK: 1 };
@@ -2684,8 +3035,8 @@ window.addEventListener('load', function() {
             }
         });
 
-        genRecalcData.gagal_generate_recalculate = out;
-        return out;
+        genRecalcData.gagal_generate_recalculate = out.length > 0 ? out : (prevGagal.length > 0 ? prevGagal : out);
+        return genRecalcData.gagal_generate_recalculate;
     }
 
     function toggleGenRecalcGagalWrap() {
@@ -2696,12 +3047,383 @@ window.addEventListener('load', function() {
             $('#gen-recalc-gagal-intro').html(
                 'Ditemukan <strong class="text-danger">' + n + '</strong> record gagal. '
                 + 'Untuk pembelian: biasanya gagal karena <em>uraian/satuan kosong</em>, '
-                + '<em>sudah ada di persediaan</em> (tidak di-insert ulang), atau <em>error database</em> saat insert.'
+                + '<em>sudah ada di persediaan</em> (tidak di-insert ulang), atau <em>error database</em> saat insert. '
+                + 'Gunakan tombol <strong>Cek</strong> untuk memeriksa dan menyimpan manual ke tabel persediaan.'
             );
         } else {
             $('#gen-recalc-gagal-wrap').addClass('d-none');
         }
     }
+
+    var gagalCekPersediaanState = {
+        meta: null,
+        fields: null,
+        bulan: '',
+        editMode: false,
+        dt: null
+    };
+
+    function resetGagalCekPersediaanModal() {
+        gagalCekPersediaanState.meta = null;
+        gagalCekPersediaanState.fields = null;
+        gagalCekPersediaanState.bulan = '';
+        gagalCekPersediaanState.editMode = false;
+        $('#gagal-cek-persediaan-alert').empty();
+        $('#gagal-cek-persediaan-meta').text('Memuat data...');
+        $('#gagal-cek-persediaan-loading').addClass('d-none');
+        $('#gagal-cek-persediaan-view').removeClass('d-none');
+        $('#gagal-cek-persediaan-edit').addClass('d-none');
+        $('#btn-gagal-cek-persediaan-simpan').addClass('d-none').prop('disabled', false);
+        $('#form-gagal-cek-persediaan-edit').empty();
+        if (gagalCekPersediaanState.dt && $.fn.DataTable.isDataTable('#tbl-gagal-cek-persediaan-fields')) {
+            gagalCekPersediaanState.dt.destroy();
+            gagalCekPersediaanState.dt = null;
+        }
+        $('#gagal-cek-persediaan-tbody').empty();
+    }
+
+    function renderGagalCekPersediaanAlert(tanggalCheck, bulanLabel) {
+        var $box = $('#gagal-cek-persediaan-alert');
+        $box.empty();
+        if (!tanggalCheck) {
+            return;
+        }
+        var cls = tanggalCheck.ok ? 'alert-success' : 'alert-warning';
+        var icon = tanggalCheck.ok ? 'fa-check-circle' : 'fa-exclamation-triangle';
+        $box.html(
+            '<div class="alert ' + cls + ' py-2 mb-0 small">'
+            + '<i class="fas ' + icon + '"></i> '
+            + escapeHtmlGen(tanggalCheck.message || '')
+            + ' — bulan target: <strong>' + escapeHtmlGen(bulanLabel || '') + '</strong>'
+            + '</div>'
+        );
+    }
+
+    function renderGagalCekPersediaanViewTable(rows) {
+        if (gagalCekPersediaanState.dt && $.fn.DataTable.isDataTable('#tbl-gagal-cek-persediaan-fields')) {
+            gagalCekPersediaanState.dt.destroy();
+            gagalCekPersediaanState.dt = null;
+        }
+
+        var dtRows = (rows || []).map(function(r) {
+            var isId = String(r.field || '').toLowerCase() === 'id';
+            var aksi = isId
+                ? '<button type="button" class="btn btn-xs btn-warning btn-gagal-cek-ubah" title="Ubah semua field"><i class="fas fa-edit"></i> Ubah</button>'
+                : '';
+            return [
+                r.no,
+                '<span class="gagal-cek-field-name">' + escapeHtmlGen(r.field) + '</span>',
+                '<span class="gagal-cek-field-val">' + escapeHtmlGen(r.nilai) + '</span>',
+                aksi
+            ];
+        });
+
+        if ($.fn.DataTable) {
+            gagalCekPersediaanState.dt = $('#tbl-gagal-cek-persediaan-fields').DataTable({
+                data: dtRows,
+                paging: false,
+                searching: true,
+                ordering: false,
+                info: false,
+                autoWidth: false,
+                language: genRecalcDtLang,
+                columnDefs: [
+                    { targets: 0, className: 'text-center', width: '48px' },
+                    { targets: 1, className: 'gagal-cek-field-name' },
+                    { targets: 2, className: 'gagal-cek-field-val' },
+                    { targets: 3, className: 'text-center', orderable: false, width: '88px' }
+                ]
+            });
+        } else {
+            var html = '';
+            (rows || []).forEach(function(r) {
+                var isId = String(r.field || '').toLowerCase() === 'id';
+                var aksi = isId
+                    ? '<button type="button" class="btn btn-xs btn-warning btn-gagal-cek-ubah"><i class="fas fa-edit"></i> Ubah</button>'
+                    : '';
+                html += '<tr><td class="text-center">' + escapeHtmlGen(r.no) + '</td>'
+                    + '<td class="gagal-cek-field-name">' + escapeHtmlGen(r.field) + '</td>'
+                    + '<td class="gagal-cek-field-val">' + escapeHtmlGen(r.nilai) + '</td>'
+                    + '<td class="text-center">' + aksi + '</td></tr>';
+            });
+            $('#gagal-cek-persediaan-tbody').html(html);
+        }
+    }
+
+    function enterGagalCekPersediaanEditMode() {
+        if (!gagalCekPersediaanState.fields) {
+            return;
+        }
+        gagalCekPersediaanState.editMode = true;
+        $('#gagal-cek-persediaan-view').addClass('d-none');
+        $('#gagal-cek-persediaan-edit').removeClass('d-none');
+
+        var html = '';
+        Object.keys(gagalCekPersediaanState.fields).forEach(function(key) {
+            var val = gagalCekPersediaanState.fields[key];
+            if (val === null || val === undefined) {
+                val = '';
+            }
+            html += '<div class="form-group col-md-6">'
+                + '<label>' + escapeHtmlGen(key) + '</label>'
+                + '<input type="text" class="form-control form-control-sm gagal-cek-field-input" data-field="' + escapeHtmlGen(key) + '" value="' + escapeHtmlGen(val) + '">'
+                + '</div>';
+        });
+        $('#form-gagal-cek-persediaan-edit').html('<div class="row">' + html + '</div>');
+
+        var tanggalCheck = persediaanGenRecalcValidateTanggalClient(
+            gagalCekPersediaanState.fields.tanggal_beli || '',
+            gagalCekPersediaanState.bulan
+        );
+        renderGagalCekPersediaanAlert(tanggalCheck, gagalCekPersediaanState.bulanLabel || gagalCekPersediaanState.bulan);
+        $('#btn-gagal-cek-persediaan-simpan')
+            .removeClass('d-none')
+            .prop('disabled', !tanggalCheck.ok);
+    }
+
+    function persediaanGenRecalcValidateTanggalClient(tanggalBeli, bulanKey) {
+        if (!bulanKey || !/^\d{4}-\d{2}$/.test(bulanKey)) {
+            return { ok: false, message: 'Bulan target tidak valid.' };
+        }
+        var tb = String(tanggalBeli || '').trim();
+        if (!tb) {
+            return { ok: false, message: 'tanggal_beli wajib diisi.' };
+        }
+        var ts = Date.parse(tb.replace(' ', 'T'));
+        if (isNaN(ts)) {
+            ts = Date.parse(tb);
+        }
+        if (isNaN(ts)) {
+            return { ok: false, message: 'Format tanggal_beli tidak valid.' };
+        }
+        var d = new Date(ts);
+        var ym = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        if (ym !== bulanKey) {
+            var parts = bulanKey.split('-');
+            return {
+                ok: false,
+                message: 'tanggal_beli harus pada bulan ' + parts[1] + '/' + parts[0]
+                    + ' (saat ini: ' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear() + ')'
+            };
+        }
+        return { ok: true, message: 'Tanggal sesuai bulan target.' };
+    }
+
+    function collectGagalCekPersediaanFieldsFromForm() {
+        var out = {};
+        if (!gagalCekPersediaanState.fields) {
+            return out;
+        }
+        Object.keys(gagalCekPersediaanState.fields).forEach(function(key) {
+            out[key] = gagalCekPersediaanState.fields[key];
+        });
+        $('#form-gagal-cek-persediaan-edit .gagal-cek-field-input').each(function() {
+            var key = $(this).attr('data-field');
+            if (key) {
+                out[key] = $(this).val();
+            }
+        });
+        return out;
+    }
+
+    function openGagalCekPersediaanModal(gagalIdx) {
+        var item = (genRecalcData.gagal_generate_recalculate || [])[gagalIdx];
+        if (!item) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Data gagal tidak ditemukan.' });
+            return;
+        }
+        var bulanKey = getBulanTargetGenerate();
+        if (!bulanKey) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan target Generate & Recalculate terlebih dahulu.' });
+            return;
+        }
+
+        resetGagalCekPersediaanModal();
+        gagalCekPersediaanState.bulan = bulanKey;
+        $('#modalGagalCekPersediaanLabel').html(
+            '<i class="fas fa-clipboard-check"></i> Cek ke Persediaan — '
+            + escapeHtmlGen(item.namabarang || item.id_sumber || ('Baris ' + (gagalIdx + 1)))
+        );
+        $('#modal-gagal-cek-persediaan').modal('show');
+        $('#gagal-cek-persediaan-loading').removeClass('d-none');
+        $('#gagal-cek-persediaan-meta').html(
+            'Fase: <strong>' + escapeHtmlGen(item.fase || '') + '</strong>, '
+            + 'ID Sumber: <strong>' + escapeHtmlGen(item.id_sumber || '') + '</strong>, '
+            + 'Bulan target: <strong>' + escapeHtmlGen(bulanKey) + '</strong>'
+        );
+
+        var fd = new FormData();
+        fd.append('bulan', bulanKey);
+        fd.append('fase', item.fase || '');
+        fd.append('aksi', item.aksi || '');
+        fd.append('tabel', item.tabel || '');
+        fd.append('id_sumber', item.id_sumber || '');
+        fd.append('id_target', item.id_target || '');
+        fd.append('namabarang', item.namabarang || '');
+        fd.append('satuan', item.satuan || '');
+        fd.append('hpp', item.hpp || '');
+        fd.append('spop', item.spop || '');
+        fd.append('jumlah', item.jumlah || '');
+        fd.append('keterangan', item.keterangan || '');
+
+        fetch(urlGenRecalcGagalPreviewPersediaan, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                $('#gagal-cek-persediaan-loading').addClass('d-none');
+                if (!data || !data.ok) {
+                    $('#gagal-cek-persediaan-alert').html(
+                        '<div class="alert alert-danger py-2 mb-0">' + escapeHtmlGen((data && data.message) ? data.message : 'Gagal memuat preview.') + '</div>'
+                    );
+                    return;
+                }
+                gagalCekPersediaanState.fields = data.fields || {};
+                gagalCekPersediaanState.meta = data.meta || {};
+                gagalCekPersediaanState.bulanLabel = data.bulan_label || bulanKey;
+                renderGagalCekPersediaanAlert(data.tanggal_check, data.bulan_label);
+                renderGagalCekPersediaanViewTable(data.rows || []);
+            })
+            .catch(function() {
+                $('#gagal-cek-persediaan-loading').addClass('d-none');
+                $('#gagal-cek-persediaan-alert').html(
+                    '<div class="alert alert-danger py-2 mb-0">Terjadi kesalahan koneksi saat memuat preview.</div>'
+                );
+            });
+    }
+
+    function removeGagalRowAfterManualInsert(meta) {
+        if (!meta) {
+            return;
+        }
+        var fase = String(meta.fase || '').toLowerCase();
+        var idSumber = String(meta.id_sumber || '');
+        var failActs = { GAGAL: 1, TIDAK_COCOK: 1, MASALAH: 1, BEDA: 1, TIDAK_ADA_TARGET: 1, TARGET_EKSTRA: 1 };
+
+        function matchId(it) {
+            var id = String(it.id_pembelian || it.id_penjualan || it.id_produksi_bahan || it.id_unit_produk || it.id_pecah_satuan || it.id_sumber || it.id || '');
+            return id === idSumber || (idSumber.indexOf(',') >= 0 && idSumber.split(',').indexOf(id) >= 0);
+        }
+
+        function filterPhase(arr, statusField) {
+            return (arr || []).filter(function(it) {
+                var st = String(it[statusField] || it.aksi || '').toUpperCase();
+                if (!failActs[st]) {
+                    return true;
+                }
+                return !matchId(it);
+            });
+        }
+
+        if (fase === 'generate' || fase === 'generate_verifikasi') {
+            genRecalcData.generate_masalah = filterPhase(genRecalcData.generate_masalah, 'status');
+            genRecalcData.generate_verifikasi = filterPhase(genRecalcData.generate_verifikasi, 'status');
+        } else if (genRecalcData[fase]) {
+            genRecalcData[fase] = filterPhase(genRecalcData[fase], 'aksi');
+        }
+
+        rebuildGagalGenerateRecalculateData();
+        renderGenRecalcDataTables();
+        saveGenRecalcResultToStorage(getBulanTargetGenerate());
+    }
+
+    function saveGagalCekPersediaanManual() {
+        if (!gagalCekPersediaanState.fields || !gagalCekPersediaanState.bulan) {
+            return;
+        }
+        var fields = collectGagalCekPersediaanFieldsFromForm();
+        var tanggalCheck = persediaanGenRecalcValidateTanggalClient(fields.tanggal_beli || '', gagalCekPersediaanState.bulan);
+        if (!tanggalCheck.ok) {
+            Swal.fire({ icon: 'warning', title: 'Tanggal tidak sesuai', text: tanggalCheck.message });
+            return;
+        }
+
+        var namaBarang = fields.namabarang || (gagalCekPersediaanState.meta && gagalCekPersediaanState.meta.id_sumber) || '';
+        Swal.fire({
+            icon: 'question',
+            title: 'Konfirmasi',
+            html: 'Anda yakin akan menyimpan ke persediaan?<br/><br/>'
+                + '<strong>' + escapeHtmlGen(namaBarang) + '</strong><br/>'
+                + '<span class="text-muted small">Bulan target: ' + escapeHtmlGen(gagalCekPersediaanState.bulanLabel || gagalCekPersediaanState.bulan) + '</span>',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, simpan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#28a745'
+        }).then(function(confirmRes) {
+            if (!confirmRes || !confirmRes.isConfirmed) {
+                return;
+            }
+            executeGagalCekPersediaanSave(fields);
+        });
+    }
+
+    function executeGagalCekPersediaanSave(fields) {
+        var $btn = $('#btn-gagal-cek-persediaan-simpan');
+        $btn.prop('disabled', true);
+        var fd = new FormData();
+        fd.append('bulan', gagalCekPersediaanState.bulan);
+        fd.append('fields', JSON.stringify(fields));
+        fd.append('meta', JSON.stringify(gagalCekPersediaanState.meta || {}));
+
+        fetch(urlGenRecalcGagalSavePersediaan, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                $btn.prop('disabled', false);
+                if (!data || !data.ok) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: (data && data.message) ? data.message : 'Gagal menyimpan ke persediaan.'
+                    });
+                    return;
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: data.message || 'Data berhasil disimpan ke tabel persediaan.',
+                    timer: 2500,
+                    showConfirmButton: true
+                });
+                removeGagalRowAfterManualInsert(gagalCekPersediaanState.meta);
+                $('#modal-gagal-cek-persediaan').modal('hide');
+                refreshPersediaanAfterCompareInsert();
+                loadGenRecalcSummaryTablesFromServer(getBulanTargetGenerate());
+            })
+            .catch(function() {
+                $btn.prop('disabled', false);
+                Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan koneksi.' });
+            });
+    }
+
+    $(document).on('click', '.btn-gagal-cek-persediaan', function(e) {
+        e.preventDefault();
+        var idx = parseInt($(this).attr('data-gagal-idx'), 10);
+        if (isNaN(idx)) {
+            return;
+        }
+        openGagalCekPersediaanModal(idx);
+    });
+
+    $(document).on('click', '.btn-gagal-cek-ubah', function(e) {
+        e.preventDefault();
+        enterGagalCekPersediaanEditMode();
+    });
+
+    $(document).on('input change', '#form-gagal-cek-persediaan-edit .gagal-cek-field-input', function() {
+        if (!gagalCekPersediaanState.editMode) {
+            return;
+        }
+        var fields = collectGagalCekPersediaanFieldsFromForm();
+        var tanggalCheck = persediaanGenRecalcValidateTanggalClient(fields.tanggal_beli || '', gagalCekPersediaanState.bulan);
+        renderGagalCekPersediaanAlert(tanggalCheck, gagalCekPersediaanState.bulanLabel || gagalCekPersediaanState.bulan);
+        $('#btn-gagal-cek-persediaan-simpan').prop('disabled', !tanggalCheck.ok);
+    });
+
+    $('#btn-gagal-cek-persediaan-simpan').on('click', function() {
+        saveGagalCekPersediaanManual();
+    });
+
+    $('#modal-gagal-cek-persediaan').on('hidden.bs.modal', function() {
+        resetGagalCekPersediaanModal();
+    });
 
     function ensureGenRecalcDataShape() {
         if (!genRecalcData || typeof genRecalcData !== 'object') {
@@ -2743,6 +3465,17 @@ window.addEventListener('load', function() {
         '#tbl-gen-recalc-gagal',
         '#tbl-gen-recalc-gagal-persediaan'
     ];
+    var GEN_RECALC_EXTRA_TABLES = [
+        '#tbl-gen-recalc-pembelian-spop-multi',
+        '#tbl-gen-recalc-pembelian-spop-single',
+        '#tbl-gen-recalc-penjualan-berhasil',
+        '#tbl-gen-recalc-penjualan-gagal',
+        '#tbl-gen-recalc-penjualan-uuid-orphan'
+    ];
+    var GEN_RECALC_PEMBELIAN_SPOP_KEYS = ['no', 'status_persediaan', 'id_pembelian', 'uraian', 'satuan', 'harga_satuan', 'jumlah', 'spop', 'tgl_po', 'record_grup', 'keterangan_baris'];
+    var GEN_RECALC_PENJUALAN_OK_KEYS = ['no', 'status_persediaan', 'id_penjualan', 'nama_barang', 'satuan', 'harga_satuan', 'spop', 'uuid_persediaan', 'unit', 'jumlah', 'tgl_jual', 'id_persediaan', 'penjualan_lama', 'penjualan_baru', 'total_10', 'keterangan'];
+    var GEN_RECALC_PENJUALAN_FAIL_KEYS = ['no', 'status_persediaan', 'id_penjualan', 'nama_barang', 'satuan', 'harga_satuan', 'spop', 'uuid_persediaan', 'unit', 'jumlah', 'tgl_jual', 'aksi_proses', 'keterangan'];
+    var GEN_RECALC_PENJUALAN_ORPHAN_KEYS = ['no', 'status_referensi', 'id_penjualan', 'nama_barang', 'satuan', 'harga_satuan', 'spop', 'uuid_persediaan', 'unit', 'jumlah', 'tgl_jual', 'ada_di_pembelian', 'ada_di_persediaan', 'keterangan'];
     var genRecalcDtLang = {
         emptyTable: 'Belum ada data',
         info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
@@ -2759,6 +3492,74 @@ window.addEventListener('load', function() {
         return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function htmlGenRecalcPembelianSummaryLine(s) {
+        s = s || {};
+        var dbRows = parseInt(s.pembelian_db_rows, 10);
+        if (isNaN(dbRows) || dbRows <= 0) {
+            dbRows = parseInt(s.total_pembelian, 10) || 0;
+        }
+        var queueItems = parseInt(s.total_pembelian, 10) || 0;
+        var merged = parseInt(s.pembelian_merged_rows, 10) || 0;
+        var skipped = parseInt(s.pembelian_skipped_jumlah_nol, 10) || 0;
+        var html = 'Pembelian tbl_pembelian: <strong>' + dbRows + '</strong> record (jumlah &gt; 0)';
+        if (merged > 0) {
+            html += ' → diproses <strong>' + queueItems + '</strong> batch (gabung SPOP+uraian: ' + merged + ' record dijumlahkan)';
+        } else if (queueItems !== dbRows) {
+            html += ' → diproses <strong>' + queueItems + '</strong> batch';
+        } else {
+            html += ' → diproses <strong>' + queueItems + '</strong> batch (per record)';
+        }
+        if (skipped > 0) {
+            html += ', lewati jumlah 0: <strong>' + skipped + '</strong>';
+        }
+        html += '<br/><span class="text-muted small">Jika halaman list pembelian menampilkan lebih banyak baris (mis. 169), itu termasuk <strong>baris subtotal SPOP</strong> (background kuning) — bukan record database tambahan.</span>';
+        html += '<br/>Update beli ke persediaan: <strong>' + (s.pembelian_update || 0) + '</strong>, '
+            + 'Insert baru: <strong>' + (s.pembelian_insert || 0) + '</strong>';
+        if (s.pembelian_gagal) {
+            html += ', Gagal: <strong class="text-danger">' + s.pembelian_gagal + '</strong>';
+        }
+        return html;
+    }
+
+    function peekGenRecalcStoragePayload(bulanKey) {
+        if (!bulanKey) {
+            return null;
+        }
+        try {
+            var raw = sessionStorage.getItem(genRecalcStoragePrefix + bulanKey);
+            if (!raw) {
+                return null;
+            }
+            var parsed = JSON.parse(raw);
+            return (parsed && parsed.data) ? parsed : null;
+        } catch (ePeek) {
+            return null;
+        }
+    }
+
+    function countGenRecalcGagalRows(data) {
+        data = data || {};
+        return (data.gagal_generate_recalculate || []).length;
+    }
+
+    function syncGenRecalcGagalSnapshotToServer(bulanKey) {
+        if (!bulanKey || !urlGenRecalcSyncGagalSnapshot || !userCanGeneratePersediaan) {
+            return;
+        }
+        rebuildGagalGenerateRecalculateData();
+        rebuildGagalInsertPersediaanData();
+        var gagal = genRecalcData.gagal_generate_recalculate || [];
+        var gagalIns = genRecalcData.gagal_insert_persediaan || [];
+        if (!gagal.length && !gagalIns.length) {
+            return;
+        }
+        var fd = new FormData();
+        fd.append('bulan', bulanKey);
+        fd.append('gagal_generate_recalculate', JSON.stringify(gagal));
+        fd.append('gagal_insert_persediaan', JSON.stringify(gagalIns));
+        fetch(urlGenRecalcSyncGagalSnapshot, { method: 'POST', body: fd, credentials: 'same-origin' }).catch(function() {});
+    }
+
     function saveGenRecalcResultToStorage(bulanKey) {
         if (!bulanKey) return;
         try {
@@ -2768,6 +3569,7 @@ window.addEventListener('load', function() {
                 data: genRecalcData,
                 savedAt: Date.now()
             }));
+            syncGenRecalcGagalSnapshotToServer(bulanKey);
         } catch (eSave) {}
     }
 
@@ -2785,6 +3587,9 @@ window.addEventListener('load', function() {
             }
             destroyAllGenRecalcDataTables();
             renderGenRecalcDataTables();
+            if ((genRecalcData.pembelian || []).length > 0 || (genRecalcData.penjualan || []).length > 0) {
+                scheduleLoadGenRecalcExtraTablesFromServer(bulanKey);
+            }
             if (genRecalcData.generate_verifikasi && genRecalcData.generate_verifikasi.length > 0) {
                 $('#gen-recalc-phase-lanjut').addClass('d-none');
                 $('#gen-recalc-summary-wrap').addClass('d-none');
@@ -2797,7 +3602,9 @@ window.addEventListener('load', function() {
                 || genRecalcData.penjualan.length > 0
                 || genRecalcData.produksi.length > 0
                 || genRecalcData.generate_update.length > 0
-                || genRecalcData.generate_insert.length > 0;
+                || genRecalcData.generate_insert.length > 0
+                || (genRecalcData.gagal_generate_recalculate || []).length > 0
+                || (genRecalcData.gagal_insert_persediaan || []).length > 0;
         } catch (eRestore) {
             return false;
         }
@@ -2820,6 +3627,8 @@ window.addEventListener('load', function() {
 
     function applyGenRecalcHistoryResponse(res) {
         if (!res || !res.data) return false;
+        var serverGagal = (res.data.gagal_generate_recalculate || []).slice();
+        var serverGagalIns = (res.data.gagal_insert_persediaan || []).slice();
         genRecalcData = {
             persediaan_all: res.data.persediaan_all || [],
             generate_update: res.data.generate_update || [],
@@ -2842,6 +3651,12 @@ window.addEventListener('load', function() {
         };
         rebuildGagalGenerateRecalculateData();
         rebuildGagalInsertPersediaanData();
+        if ((genRecalcData.gagal_generate_recalculate || []).length < serverGagal.length) {
+            genRecalcData.gagal_generate_recalculate = serverGagal;
+        }
+        if ((genRecalcData.gagal_insert_persediaan || []).length < serverGagalIns.length) {
+            genRecalcData.gagal_insert_persediaan = serverGagalIns;
+        }
         genRecalcSummaryHtml = res.summary_html || '';
         var infoProses = '';
         if (res.created_at) {
@@ -2875,7 +3690,21 @@ window.addEventListener('load', function() {
             dataType: 'json',
             data: { bulan: bulanKey }
         }).done(function(res) {
+            var storagePayload = peekGenRecalcStoragePayload(bulanKey);
+            var storageGagalCount = storagePayload ? countGenRecalcGagalRows(storagePayload.data) : 0;
+            var serverGagalCount = (res && res.data && res.data.gagal_generate_recalculate)
+                ? res.data.gagal_generate_recalculate.length : 0;
+
             if (res && res.ok && res.has_history) {
+                if (storageGagalCount > serverGagalCount) {
+                    restoreGenRecalcResultFromStorage(bulanKey);
+                    if (res.summary_html && !genRecalcSummaryHtml) {
+                        genRecalcSummaryHtml = res.summary_html;
+                        $('#gen-recalc-summary').html(res.summary_html);
+                        saveGenRecalcResultToStorage(bulanKey);
+                    }
+                    return;
+                }
                 applyGenRecalcHistoryResponse(res);
                 return;
             }
@@ -3112,8 +3941,14 @@ window.addEventListener('load', function() {
             return { gagal_insert_persediaan: genRecalcData.gagal_insert_persediaan || [] };
         }
 
+        var jenisDataMap = {
+            pembelian_spop_multi_status: 'pembelian_spop_multi',
+            pembelian_spop_single_status: 'pembelian_spop_single'
+        };
+        var dataKey = jenisDataMap[jenis] || jenis;
+
         var payload = {};
-        payload[jenis] = genRecalcData[jenis] || [];
+        payload[jenis] = genRecalcData[dataKey] || [];
         return payload;
     }
 
@@ -3126,7 +3961,15 @@ window.addEventListener('load', function() {
                 return Array.isArray(payload[k]) && payload[k].length > 0;
             });
         }
-        return Array.isArray(payload[jenis]) && payload[jenis].length > 0;
+        var jenisDataMap = {
+            pembelian_spop_multi_status: 'pembelian_spop_multi',
+            pembelian_spop_single_status: 'pembelian_spop_single'
+        };
+        var dataKey = jenisDataMap[jenis] || jenis;
+        if (Array.isArray(payload[jenis]) && payload[jenis].length > 0) {
+            return true;
+        }
+        return Array.isArray(genRecalcData[dataKey]) && genRecalcData[dataKey].length > 0;
     }
 
     function exportGenRecalcExcel(jenis) {
@@ -3227,6 +4070,7 @@ window.addEventListener('load', function() {
         $('#gen-count-produksi-update').text(genRecalcData.produksi_update.length);
         $('#gen-count-pecah-satuan').text(genRecalcData.pecah_satuan.length);
         $('#gen-count-pecah-satuan-update').text(genRecalcData.pecah_satuan_update.length);
+        toggleGenRecalcExtraWrap();
     }
 
     function parseGenRecalcAngkaSum(val) {
@@ -3623,8 +4467,10 @@ window.addEventListener('load', function() {
         rebuildGagalGenerateRecalculateData();
         rebuildGagalInsertPersediaanData();
         var rowsGagal = (genRecalcData.gagal_generate_recalculate || []).map(function(it, i) {
+            var btnCek = '<button type="button" class="btn btn-xs btn-info btn-gagal-cek-persediaan" data-gagal-idx="' + i + '" title="Cek ke persediaan">'
+                + '<i class="fas fa-search"></i> Cek</button>';
             return [
-                i + 1, it.fase || '', it.aksi || '', it.tabel || '', it.id_sumber || '', it.id_target || '',
+                i + 1, btnCek, it.fase || '', it.aksi || '', it.tabel || '', it.id_sumber || '', it.id_target || '',
                 it.namabarang || '', it.satuan || '', it.hpp || '', it.spop || '', it.jumlah || '', it.keterangan || ''
             ];
         });
@@ -3827,6 +4673,7 @@ window.addEventListener('load', function() {
 
     function destroyAllGenRecalcDataTables() {
         GEN_RECALC_TABLE_SELECTORS.forEach(destroyGenRecalcDataTable);
+        destroyAllGenRecalcExtraTables();
         restoreAllGenRecalcTableShells();
     }
 
@@ -3959,8 +4806,9 @@ window.addEventListener('load', function() {
         upsertGenRecalcDataTable('#tbl-gen-recalc-produksi-update', rows.produksi_update, 3);
         upsertGenRecalcDataTable('#tbl-gen-recalc-pecah-satuan', rows.pecah_satuan, 5);
         upsertGenRecalcDataTable('#tbl-gen-recalc-pecah-satuan-update', rows.pecah_satuan_update, 3);
-        upsertGenRecalcDataTable('#tbl-gen-recalc-gagal', rows.gagal_generate_recalculate, 11);
+        upsertGenRecalcDataTable('#tbl-gen-recalc-gagal', rows.gagal_generate_recalculate, 12);
         upsertGenRecalcDataTable('#tbl-gen-recalc-gagal-persediaan', rows.gagal_insert_persediaan, 11);
+        renderGenRecalcExtraTables();
         setTimeout(adjustGenRecalcDataTables, 150);
     }
 
@@ -4513,7 +5361,7 @@ window.addEventListener('load', function() {
         }
 
         var pembelianSemuaKeys = ['no', 'uraian', 'satuan', 'harga_satuan', 'jumlah', 'spop', 'tgl_po'];
-        var pembelianSpopKeys = ['no', 'id_pembelian', 'uraian', 'satuan', 'harga_satuan', 'jumlah', 'spop', 'tgl_po', 'record_grup', 'keterangan_baris'];
+        var pembelianSpopKeys = ['no', 'status_persediaan', 'id_pembelian', 'uraian', 'satuan', 'harga_satuan', 'jumlah', 'spop', 'tgl_po', 'record_grup', 'keterangan_baris'];
         var pembelianUpdateKeys = ['no', 'aksi', 'id_pembelian', 'id_persediaan', 'namabarang', 'satuan', 'hpp', 'spop', 'jumlah_pembelian', 'record_grup', 'beli_lama', 'beli_baru', 'total_10', 'keterangan'];
         var pembelianBaruKeys = ['no', 'aksi', 'id_pembelian', 'id_persediaan', 'namabarang', 'satuan', 'hpp', 'spop', 'jumlah_pembelian', 'record_grup', 'beli_baru', 'total_10', 'keterangan'];
         var pembelianUpdateSumKeys = inferGenRecalcSumKeysFromObjectKeys(pembelianUpdateKeys, pu);
@@ -4553,10 +5401,10 @@ window.addEventListener('load', function() {
         }), 1, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-sum-persediaan-tidak-masuk', persKeys, ptm, ptmTotals), true, persKeys.length, persHeaders);
         upsertGenRecalcSummaryTable('#tbl-gen-sum-pembelian-spop-multi', psm.map(function(r) {
             return genRecalcSummaryRowPack(r, pembelianSpopKeys);
-        }), 6, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-sum-pembelian-spop-multi', pembelianSpopKeys, psm, psmTotals), true, pembelianSpopKeys.length);
+        }), 7, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-sum-pembelian-spop-multi', pembelianSpopKeys, psm, psmTotals), true, pembelianSpopKeys.length);
         upsertGenRecalcSummaryTable('#tbl-gen-sum-pembelian-spop-single', pss.map(function(r) {
             return genRecalcSummaryRowPack(r, pembelianSpopKeys);
-        }), 1, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-sum-pembelian-spop-single', pembelianSpopKeys, pss, pssTotals), true, pembelianSpopKeys.length);
+        }), 2, buildGenRecalcSummaryFooterCellsMerged('#tbl-gen-sum-pembelian-spop-single', pembelianSpopKeys, pss, pssTotals), true, pembelianSpopKeys.length);
 
         setTimeout(adjustGenRecalcDataTables, 120);
     }
@@ -4645,6 +5493,8 @@ window.addEventListener('load', function() {
             + '<p class="small text-muted mb-0">' + escapeHtmlGen(data.pesan || '') + '</p>';
     }
 
+    var GEN_RECALC_BATCH_LIMIT = 250;
+
     function destroyGenRecalcDataTables() {
         destroyAllGenRecalcDataTables();
     }
@@ -4662,7 +5512,7 @@ window.addEventListener('load', function() {
         var fd = new FormData();
         fd.append('bulan', bulanKey);
         fd.append('offset', offset);
-        fd.append('limit', 30);
+        fd.append('limit', GEN_RECALC_BATCH_LIMIT);
         if (runner.isStart) {
             fd.append('start', '1');
         }
@@ -4715,6 +5565,12 @@ window.addEventListener('load', function() {
             if (data.items_produksi_update && data.items_produksi_update.length) {
                 genRecalcData.produksi_update = genRecalcData.produksi_update.concat(data.items_produksi_update);
             }
+            if (data.items_pecah_satuan && data.items_pecah_satuan.length) {
+                genRecalcData.pecah_satuan = genRecalcData.pecah_satuan.concat(data.items_pecah_satuan);
+            }
+            if (data.items_pecah_satuan_update && data.items_pecah_satuan_update.length) {
+                genRecalcData.pecah_satuan_update = genRecalcData.pecah_satuan_update.concat(data.items_pecah_satuan_update);
+            }
             if (data.items_generate_verifikasi && data.items_generate_verifikasi.length) {
                 genRecalcData.generate_verifikasi = data.items_generate_verifikasi;
             }
@@ -4730,30 +5586,31 @@ window.addEventListener('load', function() {
             if (data.phase === 'penjualan' || (genRecalcData.penjualan || []).length > 0 || (genRecalcData.penjualan_update || []).length > 0) {
                 $('#gen-recalc-phase-penjualan').removeClass('d-none');
             }
-            if (data.items_pecah_satuan && data.items_pecah_satuan.length) {
-                genRecalcData.pecah_satuan = genRecalcData.pecah_satuan.concat(data.items_pecah_satuan);
-            }
-            if (data.items_pecah_satuan_update && data.items_pecah_satuan_update.length) {
-                genRecalcData.pecah_satuan_update = genRecalcData.pecah_satuan_update.concat(data.items_pecah_satuan_update);
-            }
 
-            try {
-                renderGenRecalcDataTables();
-                saveGenRecalcResultToStorage(bulanKey);
-                adjustGenRecalcDataTables();
-            } catch (eRender) {
-                console.error('GenRecalc render:', eRender);
+            var shouldRenderTables = !!data.done || !!data.phase_changed;
+            if (shouldRenderTables) {
+                try {
+                    renderGenRecalcDataTables();
+                    saveGenRecalcResultToStorage(bulanKey);
+                    adjustGenRecalcDataTables();
+                } catch (eRender) {
+                    console.error('GenRecalc render:', eRender);
+                }
             }
             if (Swal.isVisible()) {
                 Swal.update({ html: htmlGenRecalcProgress(data) });
             }
 
             if (!data.done) {
-                runner.offset = data.offset_selesai || 0;
+                if (data.phase_changed) {
+                    runner.offset = 0;
+                } else {
+                    runner.offset = data.offset_selesai || 0;
+                }
                 runner.isStart = false;
                 setTimeout(function() {
                     runGenerateRecalculateBatch(bulanKey, runner.offset, runner);
-                }, 60);
+                }, 0);
                 return;
             }
 
@@ -4809,10 +5666,7 @@ window.addEventListener('load', function() {
                     + '(sumber: ' + escapeHtmlGen(s.bulan_sumber_label || '') + ')<br/>'
                     + 'Generate — Insert: <strong>' + (s.generate_insert || 0) + '</strong>, Update: <strong>' + (s.generate_update || 0) + '</strong>, '
                     + 'Lewati: <strong>' + (s.generate_skip || 0) + '</strong><br/>'
-                    + 'Pembelian (tbl_pembelian) diproses: <strong>' + (s.total_pembelian || 0) + '</strong> — '
-                    + 'Update beli: <strong>' + (s.pembelian_update || 0) + '</strong>, '
-                    + 'Record baru: <strong>' + (s.pembelian_insert || 0) + '</strong>'
-                    + (s.pembelian_gagal ? ', Gagal: <strong class="text-danger">' + s.pembelian_gagal + '</strong>' : '')
+                    + htmlGenRecalcPembelianSummaryLine(s)
                     + (s.pembelian_gagal ? ' — <em>lihat tabel <strong>Gagal Generate atau Recalculate</strong> di paling bawah</em>' : '')
                     + '<br/><em class="text-muted">Fase penjualan, produksi, dan pecah satuan belum dijalankan. Lihat 6 tabel rekap di bawah.</em>';
             } else {
@@ -4826,10 +5680,7 @@ window.addEventListener('load', function() {
                     + 'Bulan target: <strong>' + escapeHtmlGen(s.bulan_label || bulanKey) + '</strong> '
                     + '(sumber: ' + escapeHtmlGen(s.bulan_sumber_label || '') + ')<br/>'
                     + 'Generate — Insert: <strong>' + (s.generate_insert || 0) + '</strong>, Update: <strong>' + (s.generate_update || 0) + '</strong><br/>'
-                    + 'Pembelian diproses: <strong>' + (s.total_pembelian || 0) + '</strong> — '
-                    + 'Update beli: <strong>' + (s.pembelian_update || 0) + '</strong>, '
-                    + 'Record baru: <strong>' + (s.pembelian_insert || 0) + '</strong>'
-                    + (s.pembelian_gagal ? ', Gagal: <strong>' + s.pembelian_gagal + '</strong>' : '')
+                    + htmlGenRecalcPembelianSummaryLine(s)
                     + '<br/>Produk jadi (sys_unit_produk) diproses: <strong>' + (s.total_unit_produk || 0) + '</strong> — '
                     + 'Update SA: <strong>' + (s.unit_produk_update || 0) + '</strong>, '
                     + 'Insert baru: <strong>' + (s.unit_produk_insert || 0) + '</strong>'
@@ -4842,6 +5693,9 @@ window.addEventListener('load', function() {
                     + 'Update penjualan: <strong>' + (s.penjualan_update || 0) + '</strong>'
                     + (s.penjualan_tidak_cocok ? ', Tidak cocok: <strong>' + s.penjualan_tidak_cocok + '</strong>' : '')
                     + (s.penjualan_gagal ? ', Gagal: <strong>' + s.penjualan_gagal + '</strong>' : '')
+                    + ((s.penjualan_uuid_orphan_count || 0) > 0
+                        ? '<br/>UUID penjualan tanpa referensi pembelian/persediaan: <strong class="text-warning">' + s.penjualan_uuid_orphan_count + '</strong> record — lihat tabel <em>12. Penjualan — UUID Tidak Ada di Pembelian &amp; Persediaan</em>'
+                        : '')
                     + '<br/>Pecah satuan diproses: <strong>' + (s.total_pecah_satuan || 0) + '</strong> — '
                     + 'Update pecah: <strong>' + (s.pecah_update || 0) + '</strong>'
                     + (s.pecah_tidak_cocok ? ', Tidak cocok: <strong>' + s.pecah_tidak_cocok + '</strong>' : '')
@@ -4851,11 +5705,21 @@ window.addEventListener('load', function() {
             }
             $('#gen-recalc-summary').html(summaryHtml);
             genRecalcSummaryHtml = summaryHtml;
-            renderGenRecalcDataTables();
+            if (typeof loadGenRecalcHistoryFromServer === 'function') {
+                loadGenRecalcHistoryFromServer(bulanKey);
+            } else {
+                renderGenRecalcDataTables();
+            }
             saveGenRecalcResultToStorage(bulanKey);
             setStatusGeneratePersediaan('success', summaryHtml);
 
             if (!isGenerateOnly) {
+                if (data.extra_result_tables) {
+                    mergeExtraResultTablesIntoGenRecalcData(data.extra_result_tables);
+                    renderGenRecalcExtraTables();
+                } else {
+                    loadGenRecalcExtraTablesFromServer(bulanKey);
+                }
                 if (data.summary_tables && data.summary_tables.ok) {
                     renderGenRecalcSummaryTables(data.summary_tables);
                 } else {
@@ -7081,9 +7945,6 @@ window.addEventListener('load', function() {
 
     if (userCanGeneratePersediaan) {
         setTimeout(function() {
-            if ($('#panel-generate-persediaan').hasClass('active') || $('#panel-generate-persediaan').hasClass('show')) {
-                return;
-            }
             var bulanKey = getBulanTargetGenerate();
             loadGenRecalcHistoryFromServer(bulanKey);
             loadGenRecalcSummaryTablesFromServer(bulanKey);
