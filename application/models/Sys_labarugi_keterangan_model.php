@@ -107,4 +107,53 @@ class Sys_labarugi_keterangan_model extends CI_Model
             'id' => (int) $this->db->insert_id(),
         );
     }
+
+    function move_urutan_up($id)
+    {
+        $id = (int) $id;
+        if ($id < 1) {
+            return array('ok' => false, 'message' => 'ID tidak valid.');
+        }
+
+        $row = $this->get_by_id($id);
+        if (!$row) {
+            return array('ok' => false, 'message' => 'Data tidak ditemukan.');
+        }
+
+        $rows = $this->get_by_tab($row->status_labarugi);
+        if (count($rows) < 2) {
+            return array('ok' => false, 'message' => 'Urutan tidak dapat diubah.');
+        }
+
+        $idx = -1;
+        foreach ($rows as $i => $item) {
+            if ((int) $item->id === $id) {
+                $idx = (int) $i;
+                break;
+            }
+        }
+
+        if ($idx < 1) {
+            return array('ok' => false, 'message' => 'Baris sudah berada paling atas.');
+        }
+
+        $swap = $rows[$idx - 1];
+        $rows[$idx - 1] = $rows[$idx];
+        $rows[$idx] = $swap;
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($rows as $i => $item) {
+            $this->db->where($this->id, (int) $item->id);
+            $this->db->update($this->table, array(
+                'urutan' => $i + 1,
+                'date_update' => $now,
+            ));
+        }
+
+        return array(
+            'ok' => true,
+            'message' => 'Urutan berhasil dinaikkan.',
+            'id' => $id,
+        );
+    }
 }

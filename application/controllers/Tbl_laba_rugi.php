@@ -12,7 +12,7 @@ class Tbl_laba_rugi extends CI_Controller
         // $this->load->model('Tbl_laba_rugi_model');
         // $this->load->library('form_validation');
 
-        $this->load->model(array('Tbl_laba_rugi_model', 'Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Tbl_laba_rugi_detail_model', 'Sys_labarugi_keterangan_model', 'Sys_labarugi_kode_akun_model'));
+        $this->load->model(array('Tbl_laba_rugi_model', 'Tbl_pembelian_model', 'Tbl_penjualan_model', 'Tbl_pembelian_pengajuan_bayar_model', 'User_model', 'Sys_bank_model', 'Tbl_laba_rugi_detail_model', 'Sys_labarugi_keterangan_model', 'Sys_labarugi_kode_akun_model', 'Sys_labarugi_unit_publish_model'));
         $this->load->library('form_validation');
         $this->load->library('datatables');
         $this->load->library('Pdf');
@@ -211,16 +211,24 @@ class Tbl_laba_rugi extends CI_Controller
 
         $this->load->helper('laba_rugi_detail');
         labarugi_detail_ensure_table($this);
+        $this->load->helper('laba_rugi_unit_publish');
+        labarugi_unit_publish_ensure_table($this);
         $uuid_laba_rugi = '';
         if (isset($data['data_tbl_laba_rugi']) && !empty($data['data_tbl_laba_rugi']->uuid_data_laba_rugi)) {
             $uuid_laba_rugi = $data['data_tbl_laba_rugi']->uuid_data_laba_rugi;
         } elseif (isset($data['uuid_data_laba_rugi']) && $data['uuid_data_laba_rugi'] !== '') {
             $uuid_laba_rugi = $data['uuid_data_laba_rugi'];
+        } elseif ($Get_bulan && (int) $Get_bulan > 0) {
+            $uuid_laba_rugi = labarugi_unit_publish_resolve_uuid($this, '', $Get_tahun, $Get_bulan);
         }
         $data['uuid_data_laba_rugi'] = $uuid_laba_rugi;
         $data['labarugi_detail_maps'] = array(
             'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
             'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
+        );
+        $data['labarugi_unit_publish_maps'] = array(
+            'rinci' => labarugi_unit_publish_load_map($this, $uuid_laba_rugi, 'rinci', $Get_tahun, $Get_bulan),
+            'sederhana' => labarugi_unit_publish_load_map($this, $uuid_laba_rugi, 'sederhana', $Get_tahun, $Get_bulan),
         );
 
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_laba_rugi/adminlte310_labarugi_form', $data);
@@ -302,6 +310,120 @@ class Tbl_laba_rugi extends CI_Controller
         ));
     }
 
+    public function save_labarugi_unit_publish()
+    {
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_unit_publish'));
+        labarugi_unit_publish_ensure_table($this);
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $tahun = (int) $this->input->post('tahun');
+        $bulan = (int) $this->input->post('bulan');
+        $jenis_tab = trim((string) $this->input->post('jenis_tab'));
+        $unit = trim((string) $this->input->post('unit'));
+        $is_publish = (int) $this->input->post('is_publish');
+        if ($this->input->post('status_publish_unit') !== null && $this->input->post('status_publish_unit') !== '') {
+            $is_publish = (int) $this->input->post('status_publish_unit');
+        }
+        $status_publish_unit = ($is_publish === 1) ? 1 : 0;
+
+        if ($tahun < 2000 || $bulan < 1 || $bulan > 12) {
+            echo json_encode(array('ok' => false, 'message' => 'Periode tidak valid.'));
+            return;
+        }
+
+        if (!in_array($jenis_tab, array('rinci', 'sederhana'), true)) {
+            echo json_encode(array('ok' => false, 'message' => 'Jenis tab tidak valid.'));
+            return;
+        }
+
+        if ($unit === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Unit wajib diisi.'));
+            return;
+        }
+
+        $uuid_laba_rugi = labarugi_detail_resolve_parent_uuid($this, $tahun, $bulan);
+        if ($uuid_laba_rugi === null || $uuid_laba_rugi === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Gagal menyiapkan UUID laba rugi.'));
+            return;
+        }
+
+        $id = $this->Sys_labarugi_unit_publish_model->set_publish(array(
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'unit' => $unit,
+            'jenis_tab' => $jenis_tab,
+            'tahun_transaksi' => $tahun,
+            'bulan_transaksi' => $bulan,
+            'status_publish_unit' => $status_publish_unit,
+            'is_publish' => ($status_publish_unit === 1),
+        ));
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => ($status_publish_unit === 1) ? 'Unit berhasil dipublish.' : 'Publish unit dibatalkan.',
+            'id' => $id,
+            'uuid_laba_rugi' => $uuid_laba_rugi,
+            'status_publish_unit' => $status_publish_unit,
+            'is_publish' => $status_publish_unit,
+        ));
+    }
+
+    public function labarugi_print_unit($Get_tahun = null, $Get_bulan = null, $jenis_tab = 'rinci')
+    {
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'dashboard_laporan_publish'));
+
+        $Get_tahun = (int) $Get_tahun;
+        $Get_bulan = (int) $Get_bulan;
+        $jenis_tab = trim((string) $jenis_tab);
+        if (!in_array($jenis_tab, array('rinci', 'sederhana'), true)) {
+            $jenis_tab = 'rinci';
+        }
+
+        if ($Get_bulan > 0) {
+            dashboard_laporan_require_published_or_deny($this, 'laba_rugi', $Get_tahun, $Get_bulan);
+        }
+
+        $data_detail = $this->db->get_where('tbl_laba_rugi', array(
+            'tahun_transaksi' => $Get_tahun,
+            'bulan_transaksi' => $Get_bulan,
+        ))->row();
+
+        if (!$data_detail) {
+            show_error('Data laba rugi periode ini belum tersedia.', 404);
+            return;
+        }
+
+        $uuid_laba_rugi = $data_detail->uuid_data_laba_rugi;
+        $list_unit = $this->db->order_by('nama_unit', 'ASC')->get('sys_unit')->result();
+        $publish_map = labarugi_unit_publish_load_map($this, $uuid_laba_rugi, $jenis_tab, $Get_tahun, $Get_bulan);
+        $published_units = labarugi_unit_publish_published_units($list_unit, $publish_map);
+
+        if (empty($published_units)) {
+            show_error('Belum ada unit yang dipublish (centang) untuk dicetak.', 404);
+            return;
+        }
+
+        $this->load->library('PdfGenerator');
+        $data = array(
+            'tahun_laba_rugi' => $Get_tahun,
+            'bulan_laba_rugi' => $Get_bulan,
+            'jenis_tab' => $jenis_tab,
+            'published_units' => $published_units,
+            'keterangan_rows' => labarugi_keterangan_rows_by_tab($this, $jenis_tab),
+            'detail_map' => labarugi_detail_load_map($this, $uuid_laba_rugi, $jenis_tab),
+        );
+
+        $html = $this->load->view('anekadharma/tbl_laba_rugi/adminlte310_labarugi_cetak_unit.php', $data, true);
+        $this->pdf->loadHtml($html);
+        $this->pdf->render();
+        $suffix = ($jenis_tab === 'sederhana') ? 'SEDERHANA' : 'RINCI';
+        $this->pdf->stream('CETAK_LABA_RUGI_PER_UNIT_' . $suffix . '.pdf', array('Attachment' => 0));
+    }
+
     public function list_labarugi_keterangan($jenis_tab = 'rinci')
     {
         $this->load->helper('laba_rugi_keterangan');
@@ -378,6 +500,21 @@ class Tbl_laba_rugi extends CI_Controller
             'keterangan' => $keterangan,
         ));
 
+        echo json_encode($result);
+    }
+
+    public function move_up_labarugi_keterangan()
+    {
+        $this->load->helper('laba_rugi_keterangan');
+        header('Content-Type: application/json; charset=utf-8');
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $id = (int) $this->input->post('id');
+        $result = $this->Sys_labarugi_keterangan_model->move_urutan_up($id);
         echo json_encode($result);
     }
 

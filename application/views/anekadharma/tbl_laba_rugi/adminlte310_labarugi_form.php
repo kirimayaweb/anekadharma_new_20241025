@@ -294,6 +294,55 @@
 				}
 
 				.labarugi-ket-col-id { min-width: 46px; width: 46px; }
+				.labarugi-ket-col-urutan { min-width: 88px; width: 88px; text-align: center; }
+				.labarugi-ket-urutan-cell {
+					text-align: center;
+					vertical-align: middle !important;
+					white-space: nowrap;
+				}
+				.labarugi-ket-urutan-num {
+					display: inline-block;
+					min-width: 22px;
+					font-weight: 700;
+					color: #1a5f3f;
+					margin-right: 4px;
+					vertical-align: middle;
+				}
+				.labarugi-ket-btn-urutan-up {
+					display: inline-flex;
+					align-items: center;
+					justify-content: center;
+					width: 34px;
+					height: 34px;
+					padding: 0;
+					border-radius: 8px;
+					border: 2px solid #ffb300;
+					background: linear-gradient(180deg, #ffe082 0%, #ffc107 45%, #ffb300 100%);
+					color: #5d4037;
+					box-shadow: 0 2px 6px rgba(255, 179, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+					vertical-align: middle;
+					transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+				}
+				.labarugi-ket-btn-urutan-up .fa {
+					font-size: 17px;
+					font-weight: 700;
+					line-height: 1;
+					text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+				}
+				.labarugi-ket-btn-urutan-up:hover:not(:disabled),
+				.labarugi-ket-btn-urutan-up:focus:not(:disabled) {
+					background: linear-gradient(180deg, #ffecb3 0%, #ffd54f 50%, #ffc107 100%);
+					border-color: #ff8f00;
+					color: #3e2723;
+					transform: translateY(-1px);
+					box-shadow: 0 4px 10px rgba(255, 193, 7, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+					outline: none;
+				}
+				.labarugi-ket-btn-urutan-up:disabled {
+					opacity: 0.35;
+					cursor: not-allowed;
+					box-shadow: none;
+				}
 				.labarugi-ket-col-uuid { min-width: 120px; }
 				.labarugi-ket-col-nama { min-width: 150px; }
 				.labarugi-ket-col-group { min-width: 140px; }
@@ -347,6 +396,36 @@
 					margin-bottom: 12px;
 					padding-bottom: 10px;
 					border-bottom: 1px dashed rgba(57, 255, 136, 0.4);
+				}
+
+				.labarugi-unit-grid-scroll-shell {
+					width: 100%;
+					max-width: 100%;
+				}
+
+				.labarugi-unit-grid-scroll-top {
+					display: block;
+					width: 100%;
+					max-width: 100%;
+					overflow-x: auto;
+					overflow-y: hidden;
+					-webkit-overflow-scrolling: touch;
+					border: 1px solid #dce8e0;
+					border-bottom: none;
+					border-radius: 10px 10px 0 0;
+					background: #f7fbf8;
+					height: 16px;
+					margin-bottom: 0;
+				}
+
+				.labarugi-unit-grid-scroll-top-inner {
+					height: 1px;
+					pointer-events: none;
+				}
+
+				.labarugi-unit-grid-scroll-main.labarugi-unit-grid-scroll {
+					border-radius: 0 0 10px 10px;
+					border-top: none;
 				}
 
 				.labarugi-unit-grid-scroll {
@@ -416,10 +495,108 @@
 					display: block;
 					font-size: 0.68rem;
 					font-weight: 500;
-					opacity: 0.85;
-					max-width: 120px;
+					opacity: 0.95;
+					max-width: 110px;
 					overflow: hidden;
 					text-overflow: ellipsis;
+				}
+
+				.labarugi-grid-unit-head {
+					display: flex;
+					align-items: flex-start;
+					justify-content: space-between;
+					gap: 6px;
+					width: 100%;
+				}
+
+				.labarugi-grid-unit-head-text {
+					flex: 1 1 auto;
+					min-width: 0;
+					text-align: left;
+				}
+
+				.labarugi-unit-publish-check {
+					flex: 0 0 auto;
+					display: flex;
+					flex-direction: column;
+					align-items: center;
+					justify-content: center;
+					gap: 2px;
+					margin: 0;
+					padding: 4px 5px;
+					border-radius: 6px;
+					background: rgba(255, 255, 255, 0.14);
+					border: 1px solid rgba(255, 255, 255, 0.35);
+					cursor: pointer;
+					user-select: none;
+				}
+
+				.labarugi-unit-publish-check input[type="checkbox"] {
+					width: 16px;
+					height: 16px;
+					margin: 0;
+					cursor: pointer;
+				}
+
+				.labarugi-unit-publish-label {
+					font-size: 0.58rem;
+					font-weight: 700;
+					line-height: 1;
+					color: #fff;
+					text-transform: uppercase;
+					letter-spacing: 0.04em;
+				}
+
+				.labarugi-grid-col-unit.labarugi-unit-col-published {
+					background: linear-gradient(180deg, #1b5e20 0%, #2e7d32 100%) !important;
+					color: #fff;
+				}
+
+				.labarugi-grid-col-unit.labarugi-unit-col-unpublished {
+					background: linear-gradient(180deg, #b71c1c 0%, #c62828 100%) !important;
+					color: #fff;
+				}
+
+				.labarugi-grid-cell.labarugi-unit-col-published {
+					background: #c8e6c9 !important;
+				}
+
+				.labarugi-grid-cell.labarugi-unit-col-unpublished {
+					background: #ffcdd2 !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:nth-child(even) td.labarugi-grid-cell.labarugi-unit-col-published {
+					background: #a5d6a7 !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:nth-child(even) td.labarugi-grid-cell.labarugi-unit-col-unpublished {
+					background: #ef9a9a !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:hover td.labarugi-grid-cell.labarugi-unit-col-published {
+					background: #b9dfbb !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:hover td.labarugi-grid-cell.labarugi-unit-col-unpublished {
+					background: #e57373 !important;
+				}
+
+				.labarugi-grid-cell.labarugi-unit-col-published.labarugi-grid-cell-mismatch {
+					background: #fff176 !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:nth-child(even) td.labarugi-grid-cell.labarugi-unit-col-published.labarugi-grid-cell-mismatch {
+					background: #ffee58 !important;
+				}
+
+				.labarugi-unit-grid-table tbody tr:hover td.labarugi-grid-cell.labarugi-unit-col-published.labarugi-grid-cell-mismatch {
+					background: #ffeb3b !important;
+				}
+
+				.labarugi-grid-cell.labarugi-unit-col-published .labarugi-grid-input,
+				.labarugi-grid-cell.labarugi-unit-col-unpublished .labarugi-grid-input {
+					background: #fff !important;
+					border-color: #90a4ae !important;
 				}
 
 				.labarugi-unit-grid-table tbody td {
@@ -610,25 +787,8 @@
 				}
 
 				.labarugi-grid-col-unit {
-					min-width: 160px;
-					width: 160px;
-				}
-
-				.labarugi-grid-cell.labarugi-grid-cell-match {
-					background: #d4edda !important;
-				}
-
-				.labarugi-grid-cell.labarugi-grid-cell-match .labarugi-grid-input {
-					background: #e8f5e9 !important;
-					border-color: #a5d6a7 !important;
-				}
-
-				.labarugi-unit-grid-table tbody tr:nth-child(even) td.labarugi-grid-cell.labarugi-grid-cell-match {
-					background: #c8e6c9 !important;
-				}
-
-				.labarugi-unit-grid-table tbody tr:hover td.labarugi-grid-cell.labarugi-grid-cell-match {
-					background: #b9dfbb !important;
+					min-width: 180px;
+					width: 180px;
 				}
 
 				.labarugi-grid-input-group {
@@ -785,6 +945,9 @@
 				if (found && persist !== false) {
 					try { localStorage.setItem(storageKey, tabId); } catch (e) {}
 				}
+				if (typeof window.labarugiRefreshDualScroll === 'function') {
+					setTimeout(window.labarugiRefreshDualScroll, 60);
+				}
 			}
 
 			buttons.forEach(function(btn) {
@@ -822,11 +985,89 @@
 					nsVal = labarugiGridParseNominal(nominalBtn.textContent);
 				}
 				var inVal = labarugiGridParseNominal(input.value);
-				if (Math.abs(nsVal - inVal) < 0.01) {
-					cell.classList.add('labarugi-grid-cell-match');
+				var isMatch = Math.abs(nsVal - inVal) < 0.01;
+				cell.classList.toggle('labarugi-grid-cell-match', isMatch);
+				if (cell.classList.contains('labarugi-unit-col-published')) {
+					cell.classList.toggle('labarugi-grid-cell-mismatch', !isMatch);
 				} else {
-					cell.classList.remove('labarugi-grid-cell-match');
+					cell.classList.remove('labarugi-grid-cell-mismatch');
 				}
+			}
+
+			function labarugiEscSelector(val) {
+				var str = String(val || '');
+				if (window.CSS && typeof CSS.escape === 'function') {
+					return CSS.escape(str);
+				}
+				return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+			}
+
+			function labarugiApplyUnitColumnState(table, unitKey, isPublished) {
+				if (!table || !unitKey) { return; }
+				var pubClass = 'labarugi-unit-col-published';
+				var unpubClass = 'labarugi-unit-col-unpublished';
+				var sel = '[data-unit-key="' + labarugiEscSelector(unitKey) + '"]';
+				table.querySelectorAll(sel).forEach(function(el) {
+					el.classList.toggle(pubClass, isPublished);
+					el.classList.toggle(unpubClass, !isPublished);
+				});
+				table.querySelectorAll('.labarugi-grid-cell' + sel + ' .labarugi-grid-input-group').forEach(function(group) {
+					labarugiGridRefreshMatch(group);
+				});
+			}
+
+			function labarugiInitUnitPublish() {
+				document.querySelectorAll('.labarugi-unit-grid-wrap').forEach(function(wrap) {
+					var table = wrap.querySelector('.labarugi-unit-grid-table');
+					if (!table) { return; }
+
+					wrap.querySelectorAll('.labarugi-unit-publish-cb').forEach(function(cb) {
+						var unitKey = cb.getAttribute('data-unit') || '';
+						labarugiApplyUnitColumnState(table, unitKey, cb.checked);
+
+						cb.addEventListener('change', function() {
+							var isPublished = cb.checked;
+							labarugiApplyUnitColumnState(table, unitKey, isPublished);
+
+							var publishUrl = wrap.getAttribute('data-publish-url');
+							if (!publishUrl) { return; }
+
+							var formData = new FormData();
+							formData.append('tahun', wrap.getAttribute('data-tahun') || '');
+							formData.append('bulan', wrap.getAttribute('data-bulan') || '');
+							formData.append('jenis_tab', wrap.getAttribute('data-jenis-tab') || '');
+							formData.append('unit', unitKey);
+							formData.append('status_publish_unit', isPublished ? '1' : '0');
+							formData.append('is_publish', isPublished ? '1' : '0');
+
+							cb.disabled = true;
+							fetch(publishUrl, {
+								method: 'POST',
+								body: formData,
+								credentials: 'same-origin'
+							})
+							.then(function(res) { return res.json(); })
+							.then(function(data) {
+								cb.disabled = false;
+								if (!data || !data.ok) {
+									cb.checked = !isPublished;
+									labarugiApplyUnitColumnState(table, unitKey, cb.checked);
+									if (typeof Swal !== 'undefined') {
+										Swal.fire({ icon: 'error', title: 'Gagal', text: (data && data.message) ? data.message : 'Gagal menyimpan status publish unit.' });
+									}
+								}
+							})
+							.catch(function() {
+								cb.disabled = false;
+								cb.checked = !isPublished;
+								labarugiApplyUnitColumnState(table, unitKey, cb.checked);
+								if (typeof Swal !== 'undefined') {
+									Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan koneksi.' });
+								}
+							});
+						});
+					});
+				});
 			}
 
 			window.labarugiRefreshGridMatch = labarugiGridRefreshMatch;
@@ -916,6 +1157,56 @@
 					});
 				});
 			});
+
+			labarugiInitUnitPublish();
+
+			function labarugiInitDualHorizontalScroll() {
+				document.querySelectorAll('.labarugi-unit-grid-scroll-shell').forEach(function(shell) {
+					if (shell.getAttribute('data-dual-scroll-ready') === '1') { return; }
+					var top = shell.querySelector('.labarugi-unit-grid-scroll-top');
+					var main = shell.querySelector('.labarugi-unit-grid-scroll-main');
+					var topInner = shell.querySelector('.labarugi-unit-grid-scroll-top-inner');
+					var table = shell.querySelector('.labarugi-unit-grid-table');
+					if (!top || !main || !topInner || !table) { return; }
+
+					var syncing = false;
+
+					function syncWidth() {
+						topInner.style.width = table.scrollWidth + 'px';
+					}
+
+					function syncFrom(source, target) {
+						if (syncing) { return; }
+						syncing = true;
+						target.scrollLeft = source.scrollLeft;
+						syncing = false;
+					}
+
+					top.addEventListener('scroll', function() { syncFrom(top, main); });
+					main.addEventListener('scroll', function() { syncFrom(main, top); });
+
+					shell._labarugiSyncWidth = syncWidth;
+					shell.setAttribute('data-dual-scroll-ready', '1');
+					syncWidth();
+				});
+			}
+
+			window.labarugiRefreshDualScroll = function() {
+				document.querySelectorAll('.labarugi-unit-grid-scroll-shell').forEach(function(shell) {
+					if (shell._labarugiSyncWidth) {
+						shell._labarugiSyncWidth();
+					}
+				});
+			};
+
+			labarugiInitDualHorizontalScroll();
+			window.addEventListener('resize', function() {
+				if (typeof window.labarugiRefreshDualScroll === 'function') {
+					window.labarugiRefreshDualScroll();
+				}
+			});
+			setTimeout(window.labarugiRefreshDualScroll, 200);
+			setTimeout(window.labarugiRefreshDualScroll, 800);
 		})();
 		</script>
 
@@ -976,16 +1267,24 @@
 					return Math.max(360, Math.floor(window.innerHeight * 0.58)) + 'px';
 				}
 
-				function buildRowHtml(row) {
+				function buildRowHtml(row, rowNo, isFirst) {
 					var isNew = !row.id;
 					var idVal = isNew ? '' : row.id;
-					var idDisplay = isNew ? '—' : row.id;
+					var noDisplay = rowNo || 1;
+					var urutanVal = row.urutan ? parseInt(row.urutan, 10) : noDisplay;
 					var btnLabel = isNew ? 'Simpan' : 'Update';
 					var btnClass = isNew ? 'btn-success' : 'btn-primary';
 					var groupVal = row.nama_group || '';
+					var upDisabled = (isFirst || isNew) ? ' disabled' : '';
 
-					return '<tr data-id="' + escHtml(idVal) + '">' +
-						'<td class="text-center">' + escHtml(idDisplay) + '</td>' +
+					return '<tr data-id="' + escHtml(idVal) + '" data-urutan="' + escHtml(urutanVal) + '">' +
+						'<td class="text-center">' + escHtml(noDisplay) + '</td>' +
+						'<td class="labarugi-ket-urutan-cell">' +
+							'<span class="labarugi-ket-urutan-num">' + escHtml(urutanVal) + '</span>' +
+							'<button type="button" class="btn labarugi-ket-btn-urutan-up btn-ket-urutan-up" title="Naikkan urutan tampil"' + upDisabled + '>' +
+								'<i class="fa fa-arrow-up" aria-hidden="true"></i>' +
+							'</button>' +
+						'</td>' +
 						'<td><input type="text" class="form-control form-control-sm labarugi-ket-row-input ket-uuid" value="' + escHtml(row.uuid_nama_keterangan || '') + '" placeholder="Auto jika kosong"></td>' +
 						'<td><input type="text" class="form-control form-control-sm labarugi-ket-row-input ket-nama" value="' + escHtml(row.nama_keterangan || '') + '"></td>' +
 						'<td><select class="form-control form-control-sm labarugi-ket-row-select ket-group">' + buildSelectOptions(groupOptions, groupVal, true) + '</select></td>' +
@@ -1009,7 +1308,7 @@
 						pageLength: 15,
 						lengthChange: true,
 						searching: true,
-						ordering: true,
+						ordering: false,
 						info: true,
 						autoWidth: false,
 						deferRender: true,
@@ -1017,10 +1316,10 @@
 						scrollY: ketScrollHeight(),
 						scrollCollapse: false,
 						dom: '<"labarugi-ket-dt-top"lf>rt<"labarugi-ket-dt-bottom"ip>',
-						order: [[0, 'asc']],
 						columnDefs: [
-							{ targets: 0, className: 'text-center' },
-							{ targets: 7, orderable: false, className: 'text-center' }
+							{ targets: 0, className: 'text-center', orderable: false },
+							{ targets: 1, className: 'text-center labarugi-ket-urutan-cell', orderable: false },
+							{ targets: 8, orderable: false, className: 'text-center' }
 						],
 						language: {
 							search: 'Cari:',
@@ -1036,9 +1335,9 @@
 				function renderRows(rows) {
 					destroyDataTable();
 					tbodyEl.innerHTML = '';
-					(rows || []).forEach(function(row) {
+					(rows || []).forEach(function(row, idx) {
 						if (row.nama_group) { mergeGroupOptions([row.nama_group]); }
-						tbodyEl.insertAdjacentHTML('beforeend', buildRowHtml(row));
+						tbodyEl.insertAdjacentHTML('beforeend', buildRowHtml(row, idx + 1, idx === 0));
 					});
 					initDataTable();
 				}
@@ -1066,6 +1365,38 @@
 						status_labarugi: tr.querySelector('.ket-status-labarugi') ? tr.querySelector('.ket-status-labarugi').value : '',
 						keterangan: tr.querySelector('.ket-keterangan') ? tr.querySelector('.ket-keterangan').value : ''
 					};
+				}
+
+				function moveRowUp(tr, btn) {
+					var rowId = tr.getAttribute('data-id') || '';
+					if (!rowId || !cfg.moveUpUrl) {
+						return;
+					}
+
+					btn.disabled = true;
+					var formData = new FormData();
+					formData.append('id', rowId);
+
+					fetch(cfg.moveUpUrl, { method: 'POST', body: formData, credentials: 'same-origin' })
+						.then(function(res) { return res.json(); })
+						.then(function(data) {
+							btn.disabled = false;
+							if (data && data.ok) {
+								loadRows().catch(function(err) {
+									Swal.fire({ icon: 'error', title: 'Gagal', text: err.message || 'Gagal memuat ulang urutan.' });
+								});
+							} else {
+								Swal.fire({
+									icon: 'warning',
+									title: 'Perhatian',
+									text: (data && data.message) ? data.message : 'Urutan tidak dapat diubah.'
+								});
+							}
+						})
+						.catch(function() {
+							btn.disabled = false;
+							Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan koneksi.' });
+						});
 				}
 
 				function saveRow(tr, btn) {
@@ -1130,18 +1461,28 @@
 							nama_group: '',
 							status_keterangan: 'keterangan',
 							status_labarugi: currentJenisTab,
-							keterangan: ''
+							keterangan: '',
+							urutan: 0
 						};
 						if (ketDataTable) {
 							ketDataTable.destroy();
 							ketDataTable = null;
 						}
-						tbodyEl.insertAdjacentHTML('afterbegin', buildRowHtml(newRow));
+						tbodyEl.insertAdjacentHTML('afterbegin', buildRowHtml(newRow, 1, true));
 						initDataTable();
 					});
 				}
 
 				tbodyEl.addEventListener('click', function(e) {
+					var btnUp = e.target.closest('.btn-ket-urutan-up');
+					if (btnUp) {
+						var trUp = btnUp.closest('tr');
+						if (trUp) {
+							moveRowUp(trUp, btnUp);
+						}
+						return;
+					}
+
 					var btn = e.target.closest('.btn-ket-save');
 					if (!btn) { return; }
 					var tr = btn.closest('tr');

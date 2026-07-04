@@ -94,6 +94,7 @@ $list_unit = isset($list_unit) ? $list_unit : array();
 										'labarugi_tab_key' => $labarugi_tab_key,
 										'list_unit' => $list_unit,
 										'labarugi_detail_maps' => isset($labarugi_detail_maps) ? $labarugi_detail_maps : array(),
+										'labarugi_unit_publish_maps' => isset($labarugi_unit_publish_maps) ? $labarugi_unit_publish_maps : array(),
 										'uuid_data_laba_rugi' => isset($uuid_data_laba_rugi) ? $uuid_data_laba_rugi : '',
 										'tahun_neraca' => $tahun_neraca,
 										'bulan_transaksi' => $bulan_transaksi,

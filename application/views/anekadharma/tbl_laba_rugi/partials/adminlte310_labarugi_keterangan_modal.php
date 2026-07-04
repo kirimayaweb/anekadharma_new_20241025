@@ -1,6 +1,7 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 $list_url = site_url('Tbl_laba_rugi/list_labarugi_keterangan');
 $save_url = site_url('Tbl_laba_rugi/save_labarugi_keterangan');
+$move_up_url = site_url('Tbl_laba_rugi/move_up_labarugi_keterangan');
 $status_keterangan_opts = array('Title', 'keterangan', 'jumlah', 'jumlah total');
 $status_labarugi_opts = array('rinci', 'sederhana', 'utama');
 $this->load->helper('laba_rugi_keterangan');
@@ -28,7 +29,8 @@ $group_opts = labarugi_keterangan_default_groups();
                         <table class="table table-bordered table-hover labarugi-ket-table" id="tblLabarugiKeterangan" style="width:100%;">
                             <thead class="thead-light">
                                 <tr>
-                                    <th class="labarugi-ket-col-id">ID</th>
+                                    <th class="labarugi-ket-col-id">No</th>
+                                    <th class="labarugi-ket-col-urutan">Urutan</th>
                                     <th class="labarugi-ket-col-uuid">UUID</th>
                                     <th class="labarugi-ket-col-nama">Nama Keterangan</th>
                                     <th class="labarugi-ket-col-group">Group</th>
@@ -54,6 +56,7 @@ $group_opts = labarugi_keterangan_default_groups();
 window.labarugiKeteranganConfig = {
     listUrlBase: <?php echo json_encode($list_url); ?>,
     saveUrl: <?php echo json_encode($save_url); ?>,
+    moveUpUrl: <?php echo json_encode($move_up_url); ?>,
     statusKeteranganOptions: <?php echo json_encode($status_keterangan_opts); ?>,
     statusLabarugiOptions: <?php echo json_encode($status_labarugi_opts); ?>,
     groupOptions: <?php echo json_encode($group_opts); ?>
