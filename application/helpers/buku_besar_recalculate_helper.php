@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-function bb_recalc_column_cache_ref()
+function &bb_recalc_column_cache_ref()
 {
     static $cache = array();
     return $cache;
@@ -365,10 +365,35 @@ function bb_recalc_penjualan($CI, $month, $year)
     );
 }
 
+function bb_ajax_json_output($CI, $data)
+{
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $flags = JSON_UNESCAPED_UNICODE;
+    if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+        $flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+    }
+
+    $json = json_encode($data, $flags);
+    if ($json === false) {
+        $json = json_encode(array(
+            'ok' => false,
+            'message' => 'Gagal encode JSON: ' . json_last_error_msg(),
+        ));
+    }
+
+    $CI->output->enable_profiler(false);
+    $CI->output->set_content_type('application/json', 'utf-8')->set_output($json);
+}
+
 function bb_setting_kode_akun_panel_data($CI)
 {
     $CI->load->model(array('Sys_unit_kode_akun_model', 'Sys_unit_model', 'Sys_kode_akun_model'));
-    return array(
+    $CI->load->helper('setting_kode_akun_source');
+    ska_source_ensure_source_field_column($CI);
+    return array_merge(array(
         'data_list' => $CI->Sys_unit_kode_akun_model->get_all(),
         'data_unit' => $CI->Sys_unit_model->get_all(),
         'data_kode_akun' => $CI->Sys_kode_akun_model->get_all_order_by_kode_akun_ASC(),
@@ -379,5 +404,5 @@ function bb_setting_kode_akun_panel_data($CI)
         'url_excel' => site_url('Setting_kode_akun/excel'),
         'url_reload_panel' => site_url('Buku_besar/ajax_setting_kode_akun_panel'),
         'embed_mode' => true,
-    );
+    ), ska_source_panel_urls());
 }

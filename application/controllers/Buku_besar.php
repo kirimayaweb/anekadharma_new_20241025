@@ -174,7 +174,7 @@ class Buku_besar extends CI_Controller
     public function ajax_recalculate_penjualan()
     {
         $this->output->enable_profiler(false);
-        $this->load->helper(array('buku_besar_recalculate', 'buku_besar_list', 'pembelian_persediaan'));
+        $this->load->helper(array('buku_besar_recalculate', 'buku_besar_list'));
 
         try {
             $parsed = buku_besar_parse_bulan_ns($this->input->post('bulan_ns', TRUE));
@@ -182,14 +182,14 @@ class Buku_besar extends CI_Controller
             if (!is_array($result)) {
                 $result = array('ok' => false, 'message' => 'Recalculate mengembalikan respons tidak valid.');
             }
-            persediaan_ajax_json_output($this, $result);
+            bb_ajax_json_output($this, $result);
         } catch (Exception $e) {
-            persediaan_ajax_json_output($this, array(
+            bb_ajax_json_output($this, array(
                 'ok' => false,
                 'message' => 'Recalculate gagal: ' . $e->getMessage(),
             ));
         } catch (Throwable $e) {
-            persediaan_ajax_json_output($this, array(
+            bb_ajax_json_output($this, array(
                 'ok' => false,
                 'message' => 'Recalculate gagal: ' . $e->getMessage(),
             ));

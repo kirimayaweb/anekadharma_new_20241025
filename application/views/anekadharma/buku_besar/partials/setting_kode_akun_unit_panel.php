@@ -11,16 +11,17 @@ if (!isset($tbl_source_options)) {
 if (!isset($url_excel)) {
     $url_excel = site_url('Setting_kode_akun/excel');
 }
+$this->load->helper('setting_kode_akun_source');
 ?>
 <div class="bb-unit-ska-embed">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 bb-unit-ska-toolbar">
         <div>
-            <h5 class="mb-0 text-primary"><strong><i class="fas fa-cogs mr-1"></i> Setting Kode Akun Unit</strong></h5>
-            <small class="text-muted">Kelola mapping kode akun per unit (<code>sys_unit_kode_akun</code>) — digunakan saat Recalculate Buku Besar</small>
+            <h5 class="mb-0 text-primary"><strong><i class="fas fa-cogs mr-1"></i> Setting Kode Akun</strong></h5>
+            <small class="text-muted">Mapping kode akun berdasarkan tabel sumber, field, dan nilai transaksi (<code>sys_unit_kode_akun</code>)</small>
         </div>
         <div class="mt-2 mt-md-0">
-            <button type="button" class="btn btn-light btn-sm shadow-sm mr-1" id="bb-unit-ska-btn-tambah">
-                <i class="fas fa-plus-circle text-success"></i> Tambah Data
+            <button type="button" class="btn btn-sm shadow-sm mr-1 bb-unit-ska-btn-tambah" id="bb-unit-ska-btn-tambah">
+                <i class="fas fa-plus-circle"></i> Tambah Data
             </button>
             <a href="<?php echo htmlspecialchars($url_excel, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success btn-sm shadow-sm" target="_blank">
                 <i class="fas fa-file-excel"></i> Export Excel
@@ -36,11 +37,12 @@ if (!isset($url_excel)) {
                         <tr>
                             <th width="50">No</th>
                             <th width="120" class="text-center">Aksi</th>
-                            <th width="160">Tabel Sumber</th>
-                            <th>Kode Unit</th>
-                            <th>Nama Unit</th>
+                            <th width="140">Tabel Sumber</th>
+                            <th width="120">Field</th>
+                            <th width="120">Kode</th>
+                            <th>Nama / Nilai Sumber</th>
                             <th>Kode Akun</th>
-                            <th width="130" class="text-center">Pengali (×)</th>
+                            <th width="110" class="text-center">Pengali (×)</th>
                             <th>Keterangan</th>
                         </tr>
                     </thead>
@@ -56,6 +58,8 @@ if (!isset($url_excel)) {
                                     data-nama-unit="<?php echo htmlspecialchars($row->nama_unit, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-kode-akun="<?php echo htmlspecialchars($row->kode_akun, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-tbl-source="<?php echo htmlspecialchars(isset($row->tbl_source) ? $row->tbl_source : 'tbl_penjualan', ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-source-field="<?php echo htmlspecialchars(isset($row->source_field) ? $row->source_field : '', ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-source-value="<?php echo htmlspecialchars($row->nama_unit, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-mutiply="<?php echo htmlspecialchars($row->mutiply_processing, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-keterangan="<?php echo htmlspecialchars($row->keterangan, ENT_QUOTES, 'UTF-8'); ?>">
                                     <i class="fas fa-edit"></i>
@@ -75,6 +79,7 @@ if (!isset($url_excel)) {
                                     <i class="fas fa-database mr-1"></i><?php echo htmlspecialchars($tbl_src); ?>
                                 </span>
                             </td>
+                            <td><code><?php echo htmlspecialchars(isset($row->source_field) ? $row->source_field : '-'); ?></code></td>
                             <td><span class="badge badge-info"><?php echo htmlspecialchars($row->kode_unit); ?></span></td>
                             <td><?php echo htmlspecialchars($row->nama_unit); ?></td>
                             <td><span class="badge badge-primary"><?php echo htmlspecialchars($row->kode_akun); ?></span></td>

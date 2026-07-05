@@ -2,14 +2,11 @@
 /**
  * Modal form sys_unit_kode_akun — tetap di DOM (tidak ikut reload panel).
  */
-if (!isset($data_unit)) {
-    $data_unit = array();
+if (!isset($tbl_source_options)) {
+    $tbl_source_options = array();
 }
 if (!isset($data_kode_akun)) {
     $data_kode_akun = array();
-}
-if (!isset($tbl_source_options)) {
-    $tbl_source_options = array();
 }
 ?>
 <div class="modal fade" id="bbUnitSkaModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
@@ -22,36 +19,14 @@ if (!isset($tbl_source_options)) {
             <form id="bbUnitSkaForm">
                 <div class="modal-body px-4 py-3">
                     <input type="hidden" name="id" id="bb_unit_ska_id" value="">
-                    <div class="form-group">
-                        <label for="bb_unit_ska_uuid_unit"><i class="fas fa-building text-primary mr-1"></i> Unit <span class="text-danger">*</span></label>
-                        <select name="uuid_unit" id="bb_unit_ska_uuid_unit" class="form-control form-control-sm bb-unit-ska-select2" required>
-                            <option value="">-- Pilih Unit --</option>
-                            <?php foreach ($data_unit as $unit): ?>
-                            <option value="<?php echo htmlspecialchars($unit->uuid_unit, ENT_QUOTES, 'UTF-8'); ?>"
-                                data-kode="<?php echo htmlspecialchars($unit->kode_unit, ENT_QUOTES, 'UTF-8'); ?>"
-                                data-nama="<?php echo htmlspecialchars($unit->nama_unit, ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php echo htmlspecialchars($unit->kode_unit . ' - ' . $unit->nama_unit); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <input type="hidden" name="uuid_unit" id="bb_unit_ska_uuid_unit" value="">
+                    <input type="hidden" name="kode_unit" id="bb_unit_ska_kode_unit" value="">
+                    <input type="hidden" name="nama_unit" id="bb_unit_ska_nama_unit" value="">
+                    <input type="hidden" name="source_value" id="bb_unit_ska_source_value_hidden" value="">
+
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="bb_unit_ska_kode_unit">Kode Unit</label>
-                                <input type="text" class="form-control form-control-sm" name="kode_unit" id="bb_unit_ska_kode_unit" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="bb_unit_ska_nama_unit">Nama Unit</label>
-                                <input type="text" class="form-control form-control-sm" name="nama_unit" id="bb_unit_ska_nama_unit" readonly>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="form-group mb-2">
                                 <label for="bb_unit_ska_tbl_source"><i class="fas fa-database text-dark mr-1"></i> Tabel Sumber <span class="text-danger">*</span></label>
                                 <select name="tbl_source" id="bb_unit_ska_tbl_source" class="form-control form-control-sm bb-unit-ska-select2" required>
                                     <option value="">-- Pilih Tabel Sumber --</option>
@@ -61,10 +36,31 @@ if (!isset($tbl_source_options)) {
                                     </option>
                                     <?php endforeach; ?>
                                 </select>
+                                <small class="text-muted">Awal setting — tentukan transaksi/proses data sumber.</small>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
+                            <div class="form-group mb-2">
+                                <label for="bb_unit_ska_source_field"><i class="fas fa-columns text-secondary mr-1"></i> Field <span class="text-danger">*</span></label>
+                                <select name="source_field" id="bb_unit_ska_source_field" class="form-control form-control-sm bb-unit-ska-select2" required disabled>
+                                    <option value="">-- Pilih field --</option>
+                                </select>
+                                <small class="text-muted">Field dari tabel sumber yang dipakai untuk mapping.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-2" id="bb_unit_ska_source_value_wrap">
+                        <label for="bb_unit_ska_source_value" id="bb_unit_ska_source_value_label"><i class="fas fa-list text-primary mr-1"></i> Nilai Sumber <span class="text-danger">*</span></label>
+                        <select id="bb_unit_ska_source_value" class="form-control form-control-sm bb-unit-ska-select2" required disabled>
+                            <option value="">-- Pilih tabel sumber &amp; field terlebih dahulu --</option>
+                        </select>
+                        <small class="text-muted" id="bb_unit_ska_source_value_hint">Data diambil dari record field terpilih.</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-2">
                                 <label for="bb_unit_ska_kode_akun"><i class="fas fa-book text-success mr-1"></i> Kode Akun <span class="text-danger">*</span></label>
                                 <select name="kode_akun" id="bb_unit_ska_kode_akun" class="form-control form-control-sm bb-unit-ska-select2" required>
                                     <option value="">-- Pilih Kode Akun --</option>
@@ -76,8 +72,6 @@ if (!isset($tbl_source_options)) {
                                 </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-2">
                                 <label for="bb_unit_ska_mutiply"><i class="fas fa-times-circle text-warning mr-1"></i> Koefisien Pengali (×) <span class="text-danger">*</span></label>
@@ -88,12 +82,11 @@ if (!isset($tbl_source_options)) {
                                 <small class="text-muted d-block mt-1">Nominal akhir = nominal asli × pengali</small>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="form-group mb-0">
-                                <label for="bb_unit_ska_keterangan">Keterangan</label>
-                                <textarea class="form-control form-control-sm" name="keterangan" id="bb_unit_ska_keterangan" rows="2"></textarea>
-                            </div>
-                        </div>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label for="bb_unit_ska_keterangan"><i class="fas fa-sticky-note text-secondary mr-1"></i> Keterangan</label>
+                        <textarea class="form-control form-control-sm" name="keterangan" id="bb_unit_ska_keterangan" rows="2" placeholder="Catatan tambahan (opsional)"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light py-2">

@@ -27,6 +27,24 @@ class Sys_unit_kode_akun_model extends CI_Model
         return $this->db->get($this->table)->row();
     }
 
+    function get_duplicate_row($uuid_unit, $kode_akun, $tbl_source, $source_field = '', $nama_unit = '', $exclude_id = null)
+    {
+        $this->db->where('kode_akun', $kode_akun);
+        $this->db->where('tbl_source', $tbl_source);
+        if ($this->db->field_exists('source_field', $this->table) && $source_field !== '') {
+            $this->db->where('source_field', $source_field);
+        }
+        if (trim((string) $uuid_unit) !== '') {
+            $this->db->where('uuid_unit', $uuid_unit);
+        } elseif ($nama_unit !== '') {
+            $this->db->where('nama_unit', $nama_unit);
+        }
+        if ($exclude_id) {
+            $this->db->where($this->id . ' !=', (int) $exclude_id);
+        }
+        return $this->db->get($this->table)->row();
+    }
+
     function get_by_uuid_unit_kode_akun($uuid_unit, $kode_akun, $exclude_id = null, $tbl_source = null)
     {
         $this->db->where('uuid_unit', $uuid_unit);

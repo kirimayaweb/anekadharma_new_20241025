@@ -132,7 +132,7 @@ $compare_sections = array(
                                 <a class="nav-link<?php echo $tab_compare_active ? ' active' : ''; ?>" id="tab-compare-bb" data-toggle="pill" href="#panel-compare-bb" role="tab">Compare Data Manual - Online</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link<?php echo $tab_setting_ska_active ? ' active' : ''; ?>" id="tab-bb-setting-ska" data-toggle="pill" href="#panel-bb-setting-ska" role="tab">Setting Kode Akun Unit</a>
+                                <a class="nav-link<?php echo $tab_setting_ska_active ? ' active' : ''; ?>" id="tab-bb-setting-ska" data-toggle="pill" href="#panel-bb-setting-ska" role="tab">Setting Kode Akun</a>
                             </li>
                         </ul>
 
@@ -942,19 +942,28 @@ $compare_sections = array(
     }
 
     function destroyBbMainDt() {
-        if (bbMainDt && jQuery.fn.DataTable) {
+        if (!window.jQuery || !jQuery.fn.DataTable) return;
+        var $t = jQuery('#table-buku-besar-data');
+        if ($t.length && jQuery.fn.DataTable.isDataTable($t[0])) {
             try {
-                bbMainDt.destroy();
+                $t.DataTable().destroy();
             } catch (eDt) {}
-            bbMainDt = null;
-            bbMainDtReady = false;
         }
+        bbMainDt = null;
+        bbMainDtReady = false;
     }
 
     function initBbMainDt() {
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery('#table-buku-besar-data').length) return;
+        var $t = jQuery('#table-buku-besar-data');
+        if (jQuery.fn.DataTable.isDataTable($t[0])) {
+            bbMainDt = $t.DataTable();
+            bbMainDtReady = true;
+            syncBbFooterTableWidth();
+            return;
+        }
         destroyBbMainDt();
-        bbMainDt = jQuery('#table-buku-besar-data').DataTable({
+        bbMainDt = $t.DataTable({
             dom: '<"bb-dt-length-bar"l>rtip',
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             pageLength: 25,
@@ -1085,6 +1094,9 @@ $compare_sections = array(
                 if (typeof Swal !== 'undefined' && res && res.message) {
                     Swal.fire({ icon: 'warning', title: 'Gagal Memuat Data', text: res.message });
                 }
+                if (jQuery('#tab-bb-data').hasClass('active')) {
+                    initBbMainDt();
+                }
                 return;
             }
             destroyBbMainDt();
@@ -1100,6 +1112,9 @@ $compare_sections = array(
         }).fail(function() {
             if (typeof Swal !== 'undefined') {
                 Swal.fire({ icon: 'error', title: 'Gagal Memuat Data', text: 'Tidak dapat menghubungi server.' });
+            }
+            if (jQuery('#tab-bb-data').hasClass('active')) {
+                initBbMainDt();
             }
         });
     }
@@ -1122,12 +1137,8 @@ $compare_sections = array(
         restoreBbLocalStorage();
         syncCompareFromBulanNs();
 
-        if (jQuery('#tab-bb-data').hasClass('active')) {
-            initBbMainDt();
-        }
-
         jQuery('#tab-bb-data').on('shown.bs.tab', function() {
-            if (!bbMainDtReady) {
+            if (!bbMainDtReady && jQuery.fn.DataTable && !jQuery.fn.DataTable.isDataTable('#table-buku-besar-data')) {
                 initBbMainDt();
             } else {
                 syncBbFooterTableWidth();
@@ -1212,15 +1223,22 @@ $compare_sections = array(
                 }).done(function(res) {
                     if (typeof Swal !== 'undefined') Swal.close();
                     if (!res || !res.ok) {
-                        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal', text: (res && res.message) ? res.message : 'Recalculate gagal.' });
+                        if (typeof Swal !== 'undefined') {
+                            bbShowSaveError('Recalculate Gagal', null, res, (res && res.message) ? res.message : 'Recalculate gagal.');
+                        }
                         return;
                     }
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({ icon: 'success', title: 'Recalculate Selesai', text: res.message || 'Data berhasil diproses.' });
                     }
                     loadBukuBesarData();
-                }).fail(function() {
-                    if (typeof Swal !== 'undefined') Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
+                }).fail(function(xhr, textStatus, errorThrown) {
+                    if (typeof Swal !== 'undefined') Swal.close();
+                    var res = null;
+                    try { res = xhr.responseJSON || JSON.parse(xhr.responseText); } catch (eJson) {}
+                    if (typeof Swal !== 'undefined') {
+                        bbShowSaveError('Recalculate Gagal', xhr, res, 'Tidak dapat menghubungi server. ' + (errorThrown || textStatus || ''));
+                    }
                 });
             };
             if (typeof Swal !== 'undefined') {
