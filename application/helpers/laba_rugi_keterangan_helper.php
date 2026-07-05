@@ -155,6 +155,139 @@ function labarugi_keterangan_master_structure()
     );
 }
 
+function labarugi_keterangan_rinci_pemeliharaan_sub_rows()
+{
+    return array(
+        array('key' => 'beban_pemeliharaan_bangunan', 'label' => 'Beban Pemeliharaan Bangunan', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent'),
+        array('key' => 'beban_pemeliharaan_kendaraan', 'label' => 'Beban Pemeliharaan Kendaraan', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent'),
+        array('key' => 'beban_pemeliharaan_peralatan', 'label' => 'Beban Pemeliharaan Peralatan', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent'),
+        array('key' => 'beban_pemeliharaan_non_kantor', 'label' => 'Beban Pemeliharaan Non Kantor', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent'),
+    );
+}
+
+function labarugi_keterangan_rinci_bok_sub_rows()
+{
+    return array(
+        array('key' => 'bok_gaji', 'label' => 'BOK - Gaji', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_lembur', 'label' => 'BOK - lembur', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_seragam', 'label' => 'BOK - Seragam', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_asuransi_tk', 'label' => 'BOK - Asuransi TK', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_pendidikan_dan_pelatihan', 'label' => 'BOK - Pendidikan dan Pelatihan', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_honor_tenaga_harian', 'label' => 'BOK - Honor Tenaga Harian', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bok_tunjangan_bonus', 'label' => 'BOK - Tunjangan &bonus', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+    );
+}
+
+function labarugi_keterangan_rinci_bok_calc_parts()
+{
+    return array(
+        'bok_gaji',
+        'bok_lembur',
+        'bok_seragam',
+        'bok_asuransi_tk',
+        'bok_pendidikan_dan_pelatihan',
+        'bok_honor_tenaga_harian',
+        'bok_tunjangan_bonus',
+    );
+}
+
+function labarugi_keterangan_rinci_bou_sub_rows()
+{
+    return array(
+        array('key' => 'bou_telephone_dan_internet', 'label' => 'BOU - Telephone dan Internet', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_listrik', 'label' => 'BOU - Listrik', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_materai_pos_paket', 'label' => 'BOU - Materai, Pos, & Paket', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_fc_cetak', 'label' => 'BOU - FC & cetak', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_atk_supplies', 'label' => 'BOU - ATK & Suplies', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_langganan_harian', 'label' => 'BOU - Langganan Harian', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_perijinan', 'label' => 'BOU - Perijinan', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_lain_lain', 'label' => 'BOU - Lain - Lain', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_sistem', 'label' => 'BOU - Sistem', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+        array('key' => 'bou_piutang_tak_tertagih', 'label' => 'BOU-Piutang Tak Tertagih', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN OPERASIONAL', 'row_style' => 'sub_indent_bok'),
+    );
+}
+
+function labarugi_keterangan_rinci_bou_calc_parts()
+{
+    return array(
+        'bou_telephone_dan_internet',
+        'bou_listrik',
+        'bou_materai_pos_paket',
+        'bou_fc_cetak',
+        'bou_atk_supplies',
+        'bou_langganan_harian',
+        'bou_perijinan',
+        'bou_lain_lain',
+        'bou_sistem',
+        'bou_piutang_tak_tertagih',
+    );
+}
+
+function labarugi_keterangan_master_structure_for_tab($jenis_tab)
+{
+    $base = labarugi_keterangan_master_structure();
+    if ($jenis_tab !== 'rinci') {
+        return $base;
+    }
+
+    $out = array();
+    foreach ($base as $def) {
+        if ($def['key'] === 'beban_pemeliharaan') {
+            $out[] = array(
+                'key' => 'grp_beban_pemeliharaan',
+                'label' => 'Beban Pemeliharaan',
+                'status_keterangan' => 'Title',
+                'nama_group' => 'BEBAN OPERASIONAL',
+            );
+            foreach (labarugi_keterangan_rinci_pemeliharaan_sub_rows() as $sub) {
+                $out[] = $sub;
+            }
+            $out[] = array(
+                'key' => 'beban_pemeliharaan',
+                'label' => 'Beban Pemeliharaan',
+                'status_keterangan' => 'jumlah total',
+                'nama_group' => 'BEBAN OPERASIONAL',
+                'row_style' => 'subtotal',
+                'is_calculated' => true,
+                'tbl_field' => 'beban_pemeliharaan',
+            );
+            continue;
+        }
+        if ($def['key'] === 'beban_operasional_karyawan') {
+            foreach (labarugi_keterangan_rinci_bok_sub_rows() as $sub) {
+                $out[] = $sub;
+            }
+            $out[] = array(
+                'key' => 'beban_operasional_karyawan',
+                'label' => 'Total Beban Operasional Karyawan',
+                'status_keterangan' => 'jumlah total',
+                'nama_group' => 'BEBAN OPERASIONAL',
+                'row_style' => 'subtotal',
+                'is_calculated' => true,
+                'tbl_field' => 'beban_operasional_karyawan',
+            );
+            continue;
+        }
+        if ($def['key'] === 'total_beban_operasional_umum') {
+            foreach (labarugi_keterangan_rinci_bou_sub_rows() as $sub) {
+                $out[] = $sub;
+            }
+            $out[] = array(
+                'key' => 'total_beban_operasional_umum',
+                'label' => 'Total Beban Operasional Umum',
+                'status_keterangan' => 'jumlah total',
+                'nama_group' => 'BEBAN OPERASIONAL',
+                'row_style' => 'subtotal',
+                'is_calculated' => true,
+                'tbl_field' => 'total_beban_operasional_umum',
+            );
+            continue;
+        }
+        $out[] = $def;
+    }
+    return $out;
+}
+
 function labarugi_keterangan_is_title_row($row)
 {
     if (is_array($row)) {
@@ -172,13 +305,169 @@ function labarugi_keterangan_is_input_row($row)
 
 function labarugi_keterangan_input_keys()
 {
+    return labarugi_keterangan_input_keys_for_tab('utama');
+}
+
+function labarugi_keterangan_input_keys_for_tab($jenis_tab)
+{
     $keys = array();
-    foreach (labarugi_keterangan_master_structure() as $row) {
-        if (labarugi_keterangan_is_input_row($row)) {
-            $keys[] = $row['key'];
+    foreach (labarugi_keterangan_master_structure_for_tab($jenis_tab) as $row) {
+        if (labarugi_keterangan_is_title_row($row)) {
+            continue;
         }
+        if (labarugi_keterangan_is_calculated_key_for_tab($row['key'], $jenis_tab)) {
+            continue;
+        }
+        $keys[] = $row['key'];
     }
     return $keys;
+}
+
+function labarugi_keterangan_calc_definitions_for_tab($jenis_tab)
+{
+    $defs = labarugi_keterangan_calc_definitions();
+    if ($jenis_tab === 'rinci') {
+        $defs['beban_pemeliharaan'] = array(
+            'type' => 'sum',
+            'parts' => array(
+                'beban_pemeliharaan_bangunan',
+                'beban_pemeliharaan_kendaraan',
+                'beban_pemeliharaan_peralatan',
+                'beban_pemeliharaan_non_kantor',
+            ),
+        );
+        $defs['beban_operasional_karyawan'] = array(
+            'type' => 'sum',
+            'parts' => labarugi_keterangan_rinci_bok_calc_parts(),
+        );
+        $defs['total_beban_operasional_umum'] = array(
+            'type' => 'sum',
+            'parts' => labarugi_keterangan_rinci_bou_calc_parts(),
+        );
+    }
+    return $defs;
+}
+
+function labarugi_keterangan_calc_order_for_tab($jenis_tab)
+{
+    $order = labarugi_keterangan_calc_order();
+    if ($jenis_tab !== 'rinci') {
+        return $order;
+    }
+    $out = array();
+    foreach ($order as $key) {
+        if ($key === 'total_beban_operasional') {
+            $out[] = 'beban_pemeliharaan';
+            $out[] = 'beban_operasional_karyawan';
+            $out[] = 'total_beban_operasional_umum';
+        }
+        $out[] = $key;
+    }
+    return $out;
+}
+
+function labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab)
+{
+    $key = (string) $key;
+    if ($jenis_tab === 'rinci' && ($key === 'beban_pemeliharaan' || $key === 'beban_operasional_karyawan' || $key === 'total_beban_operasional_umum')) {
+        return true;
+    }
+    return labarugi_keterangan_is_calculated_key($key);
+}
+
+function labarugi_keterangan_row_style_for_key($key, $jenis_tab)
+{
+    foreach (labarugi_keterangan_master_structure_for_tab($jenis_tab) as $row) {
+        if ($row['key'] === (string) $key) {
+            if (!empty($row['row_style'])) {
+                return $row['row_style'];
+            }
+            if (labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab)) {
+                return 'subtotal';
+            }
+            return 'input';
+        }
+    }
+    return labarugi_keterangan_row_style($key);
+}
+
+function labarugi_keterangan_is_deep_indent_row_key($key, $jenis_tab)
+{
+    $style = labarugi_keterangan_row_style_for_key($key, $jenis_tab);
+    return ($style === 'sub_indent' || $style === 'sub_indent_bok');
+}
+
+function labarugi_keterangan_is_bok_sub_row_key($key, $jenis_tab)
+{
+    $style = labarugi_keterangan_row_style_for_key($key, $jenis_tab);
+    return ($style === 'sub_indent_bok' || $style === 'sub_indent');
+}
+
+function labarugi_keterangan_is_muted_input_row_key($key, $jenis_tab)
+{
+    return labarugi_keterangan_is_bok_sub_row_key($key, $jenis_tab)
+        || ($jenis_tab === 'rinci' && $key === 'total_beban_operasional_umum' && labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab));
+}
+
+function labarugi_keterangan_cetak_label_classes($key, $ket_row, $jenis_tab)
+{
+    $classes = array('col-label');
+    if (labarugi_keterangan_is_title_row($ket_row)) {
+        $classes[] = 'cetak-label-title';
+        return $classes;
+    }
+    if (labarugi_keterangan_is_bok_sub_row_key($key, $jenis_tab)) {
+        $classes[] = 'cetak-label-sub-muted';
+        return $classes;
+    }
+    if (labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab)) {
+        if (labarugi_keterangan_row_style_for_key($key, $jenis_tab) === 'summary') {
+            $classes[] = 'cetak-label-summary';
+        } else {
+            $classes[] = 'cetak-label-indent';
+            $classes[] = 'label-bold';
+        }
+        return $classes;
+    }
+    if (labarugi_keterangan_is_deep_indent_row_key($key, $jenis_tab)) {
+        $classes[] = 'cetak-label-deep-indent';
+    } else {
+        $classes[] = 'cetak-label-indent';
+    }
+    $classes[] = 'label-bold';
+    return $classes;
+}
+
+function labarugi_keterangan_cetak_nominal_row_class($key)
+{
+    $key = (string) $key;
+    $double_keys = array(
+        'laba_rugi_bruto',
+        'laba_rugi_operasional',
+        'total_pendapatan_lain_lain',
+        'total_beban_lain_lain',
+    );
+    if (in_array($key, $double_keys, true)) {
+        return 'nominal-border-double';
+    }
+    if ($key === 'total_beban_operasional') {
+        return 'nominal-border-single';
+    }
+    if ($key === 'laba_rugi_setelah_pajak') {
+        return 'nominal-border-top';
+    }
+    return '';
+}
+
+function labarugi_keterangan_cetak_nominal_cell_class($key, $jenis_tab)
+{
+    $classes = array();
+    if (labarugi_keterangan_is_muted_input_row_key($key, $jenis_tab)) {
+        $classes[] = 'cetak-nominal-muted';
+    } elseif (labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab)) {
+        $classes[] = 'cetak-nominal-calc';
+    }
+    return implode(' ', $classes);
 }
 
 function labarugi_keterangan_calc_definitions()
@@ -305,7 +594,7 @@ function labarugi_keterangan_sync_master_structure($CI, $jenis_tab)
     $now = date('Y-m-d H:i:s');
     $urutan = 1;
 
-    foreach (labarugi_keterangan_master_structure() as $def) {
+    foreach (labarugi_keterangan_master_structure_for_tab($jenis_tab) as $def) {
         $existing = $CI->db->get_where($table, array(
             'uuid_nama_keterangan' => $def['key'],
             'status_labarugi' => $jenis_tab,
@@ -371,6 +660,9 @@ function labarugi_keterangan_seed_group_for_key($key)
     if ($key === 'total_beban_operasional' || $key === 'total_beban_operasional_umum') {
         return 'BEBAN OPERASIONAL';
     }
+    if (strpos($key, 'bou_') === 0) {
+        return 'BEBAN OPERASIONAL';
+    }
     if (strpos($key, 'pendapatan_') === 0) {
         return 'PENDAPATAN LAIN';
     }
@@ -387,38 +679,41 @@ function labarugi_keterangan_rows_by_tab($CI, $jenis_tab)
     labarugi_keterangan_sync_master_structure($CI, $jenis_tab);
 
     $CI->db->where('status_labarugi', $jenis_tab);
-    $CI->db->order_by('urutan', 'ASC');
-    $CI->db->order_by('id', 'ASC');
     $rows = $CI->db->get(labarugi_keterangan_table_name())->result();
 
-    $master_flip = array();
-    foreach (labarugi_keterangan_master_structure() as $def) {
-        $master_flip[$def['key']] = $def;
+    $db_map = array();
+    foreach ($rows as $row) {
+        $db_map[(string) $row->uuid_nama_keterangan] = $row;
     }
 
     $out = array();
-    foreach ($rows as $row) {
-        $key = (string) $row->uuid_nama_keterangan;
-        if (!isset($master_flip[$key])) {
-            continue;
+    foreach (labarugi_keterangan_master_structure_for_tab($jenis_tab) as $def) {
+        $key = $def['key'];
+        $label = $def['label'];
+        $status = $def['status_keterangan'];
+        $group = $def['nama_group'];
+        if (isset($db_map[$key])) {
+            $db_row = $db_map[$key];
+            if (!empty($db_row->nama_keterangan)) {
+                $label = $db_row->nama_keterangan;
+            }
+            if (!empty($db_row->status_keterangan)) {
+                $status = $db_row->status_keterangan;
+            }
+            if (!empty($db_row->nama_group)) {
+                $group = $db_row->nama_group;
+            }
         }
-        $out[] = array(
+        $item = array(
             'key' => $key,
-            'label' => $row->nama_keterangan,
-            'status_keterangan' => $row->status_keterangan,
-            'nama_group' => $row->nama_group,
+            'label' => $label,
+            'status_keterangan' => $status,
+            'nama_group' => $group,
         );
-    }
-
-    if (empty($out)) {
-        foreach (labarugi_keterangan_master_structure() as $def) {
-            $out[] = array(
-                'key' => $def['key'],
-                'label' => $def['label'],
-                'status_keterangan' => $def['status_keterangan'],
-                'nama_group' => $def['nama_group'],
-            );
+        if (!empty($def['row_style'])) {
+            $item['row_style'] = $def['row_style'];
         }
+        $out[] = $item;
     }
 
     return $out;
@@ -426,5 +721,11 @@ function labarugi_keterangan_rows_by_tab($CI, $jenis_tab)
 
 function labarugi_keterangan_allowed_keys($CI, $jenis_tab)
 {
-    return labarugi_keterangan_input_keys();
+    $keys = labarugi_keterangan_input_keys_for_tab($jenis_tab);
+    if ($jenis_tab === 'rinci') {
+        $keys[] = 'beban_pemeliharaan';
+        $keys[] = 'beban_operasional_karyawan';
+        $keys[] = 'total_beban_operasional_umum';
+    }
+    return array_values(array_unique($keys));
 }

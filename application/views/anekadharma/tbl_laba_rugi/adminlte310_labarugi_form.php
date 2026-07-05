@@ -671,6 +671,36 @@
 					font-weight: 600;
 				}
 
+				.labarugi-ket-label-deep-indent {
+					padding-left: 2.4em;
+					font-weight: 600;
+				}
+
+				.labarugi-ket-label-bok-sub,
+				.labarugi-ket-label-sub-muted {
+					padding-left: 2.4em;
+					font-size: 0.82em;
+					font-style: italic;
+					font-weight: 400 !important;
+					color: #2d4a38;
+					line-height: 1.35;
+				}
+
+				.labarugi-grid-input-row .labarugi-ket-label-bok-sub,
+				.labarugi-grid-input-row .labarugi-ket-label-sub-muted {
+					font-size: 0.78rem;
+				}
+
+				.labarugi-grid-input.labarugi-input-sub-muted,
+				.labarugi-calc-input.labarugi-input-sub-muted {
+					font-style: italic !important;
+					font-weight: 400 !important;
+				}
+
+				.labarugi-grid-calc-cell.labarugi-calc-tier-subtotal .labarugi-calc-input.labarugi-input-sub-muted {
+					font-weight: 400 !important;
+				}
+
 				.labarugi-ket-title-row,
 				.labarugi-grid-title-row td {
 					background: #eef5f0 !important;
@@ -1168,8 +1198,31 @@
 			<?php
 			$this->load->helper('laba_rugi_keterangan');
 			?>
-			var LABARUGI_CALC_DEFS = <?php echo json_encode(labarugi_keterangan_calc_definitions()); ?>;
-			var LABARUGI_CALC_ORDER = <?php echo json_encode(labarugi_keterangan_calc_order()); ?>;
+			var LABARUGI_CALC_DEFS_BY_TAB = <?php echo json_encode(array(
+				'utama' => labarugi_keterangan_calc_definitions_for_tab('utama'),
+				'rinci' => labarugi_keterangan_calc_definitions_for_tab('rinci'),
+				'sederhana' => labarugi_keterangan_calc_definitions_for_tab('sederhana'),
+			)); ?>;
+			var LABARUGI_CALC_ORDER_BY_TAB = <?php echo json_encode(array(
+				'utama' => labarugi_keterangan_calc_order_for_tab('utama'),
+				'rinci' => labarugi_keterangan_calc_order_for_tab('rinci'),
+				'sederhana' => labarugi_keterangan_calc_order_for_tab('sederhana'),
+			)); ?>;
+
+			function labarugiGetJenisTabFromScope(scope) {
+				if (!scope) { return 'utama'; }
+				return scope.getAttribute('data-jenis-tab') || 'utama';
+			}
+
+			function labarugiGetCalcDefs(scope) {
+				var tab = labarugiGetJenisTabFromScope(scope);
+				return LABARUGI_CALC_DEFS_BY_TAB[tab] || LABARUGI_CALC_DEFS_BY_TAB['utama'];
+			}
+
+			function labarugiGetCalcOrder(scope) {
+				var tab = labarugiGetJenisTabFromScope(scope);
+				return LABARUGI_CALC_ORDER_BY_TAB[tab] || LABARUGI_CALC_ORDER_BY_TAB['utama'];
+			}
 
 			function labarugiGridParseNominal(val) {
 				var str = String(val || '').trim();
@@ -1262,8 +1315,11 @@
 
 			function labarugiApplyCalcChainForUnit(table, unitSel, values) {
 				if (!table || !values) { return values; }
-				LABARUGI_CALC_ORDER.forEach(function(calcKey) {
-					var def = LABARUGI_CALC_DEFS[calcKey];
+				var wrap = table.closest('.labarugi-unit-grid-wrap');
+				var calcOrder = labarugiGetCalcOrder(wrap || table);
+				var calcDefs = labarugiGetCalcDefs(wrap || table);
+				calcOrder.forEach(function(calcKey) {
+					var def = calcDefs[calcKey];
 					if (!def) { return; }
 					var result = labarugiCalcValue(def, values);
 					values[calcKey] = result;
@@ -1296,8 +1352,10 @@
 
 			function labarugiApplyCalcChain(scope, values) {
 				if (!scope || !values) { return values; }
-				LABARUGI_CALC_ORDER.forEach(function(calcKey) {
-					var def = LABARUGI_CALC_DEFS[calcKey];
+				var calcOrder = labarugiGetCalcOrder(scope);
+				var calcDefs = labarugiGetCalcDefs(scope);
+				calcOrder.forEach(function(calcKey) {
+					var def = calcDefs[calcKey];
 					if (!def) { return; }
 					var result = labarugiCalcValue(def, values);
 					values[calcKey] = result;

@@ -96,8 +96,12 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                     $ket_key = $ket_row['key'];
                     $ket_label = $ket_row['label'];
                     $is_title = labarugi_keterangan_is_title_row($ket_row);
-                    $is_calc = labarugi_keterangan_is_calculated_key($ket_key);
-                    $is_summary = $is_calc && labarugi_keterangan_is_summary_row_key($ket_key);
+                    $is_calc = labarugi_keterangan_is_calculated_key_for_tab($ket_key, $jenis_tab);
+                    $is_deep_indent = labarugi_keterangan_is_deep_indent_row_key($ket_key, $jenis_tab);
+                    $is_bok_sub = labarugi_keterangan_is_bok_sub_row_key($ket_key, $jenis_tab);
+                    $is_muted_input = labarugi_keterangan_is_muted_input_row_key($ket_key, $jenis_tab);
+                    $input_muted_class = $is_muted_input ? ' labarugi-input-sub-muted' : '';
+                    $is_summary = $is_calc && labarugi_keterangan_row_style_for_key($ket_key, $jenis_tab) === 'summary';
                     $row_class = 'labarugi-grid-input-row';
                     if ($is_title) {
                         $row_class = 'labarugi-grid-title-row';
@@ -115,7 +119,11 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                 <strong class="<?php echo $is_summary ? 'labarugi-ket-title-text' : 'labarugi-ket-label-text labarugi-ket-label-indent'; ?>"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
                             <?php } else { ?>
                             <div class="labarugi-ket-label-row">
-                                <strong class="labarugi-ket-label-text labarugi-ket-label-indent"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <?php if ($is_bok_sub) { ?>
+                                <span class="labarugi-ket-label-text labarugi-ket-label-sub-muted labarugi-ket-label-deep-indent"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></span>
+                                <?php } else { ?>
+                                <strong class="labarugi-ket-label-text <?php echo $is_deep_indent ? 'labarugi-ket-label-deep-indent' : 'labarugi-ket-label-indent'; ?>"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <?php } ?>
                                 <button type="button"
                                     class="btn btn-xs labarugi-btn-setting-kode-akun"
                                     data-ket-key="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
@@ -185,7 +193,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                     data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-sync-auto="0">
                                     <input type="tel"
-                                        class="labarugi-grid-input labarugi-calc-input form-control form-control-sm <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?>"
+                                        class="labarugi-grid-input labarugi-calc-input form-control form-control-sm <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?><?php echo $input_muted_class; ?>"
                                         id="<?php echo $input_id; ?>"
                                         pattern="[0-9(,.)]{1,22}"
                                         maxlength="22"
@@ -246,7 +254,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                         </label>
                                     </div>
                                     <input type="tel"
-                                        class="labarugi-grid-input form-control form-control-sm"
+                                        class="labarugi-grid-input form-control form-control-sm<?php echo $input_muted_class; ?>"
                                         id="<?php echo $input_id; ?>"
                                         pattern="[0-9(,.)]{1,22}"
                                         maxlength="22"
