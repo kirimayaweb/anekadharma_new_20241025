@@ -92,12 +92,16 @@ $card_extra_class = $yellow_border ? ' dashboard-dt-yellow-border' : '';
                                         echo '<button type="button" class="btn btn-dt-publish btn-sm dashboard-dt-btn-publish"' . $publish_style . $publish_disabled . '><i class="fa fa-upload"></i> Publish</button>';
                                         echo '<button type="button" class="btn btn-dt-cancel-publish btn-sm dashboard-dt-btn-cancel-publish"' . $cancel_style . '><i class="fa fa-ban"></i> Cancel Publish</button>';
 
-                                        if ($cetak_enabled && $cetak_url !== '#') {
-                                            echo anchor(
-                                                $cetak_url,
-                                                '<i class="fa fa-print"></i> ' . htmlspecialchars($cetak_label, ENT_QUOTES, 'UTF-8'),
-                                                'class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"'
-                                            );
+                                        if ($cetak_enabled) {
+                                            if ($report_type === 'laba_rugi') {
+                                                echo dashboard_laba_rugi_cetak_buttons_html($list_data->year_process, $list_data->month_process);
+                                            } elseif ($cetak_url !== '#') {
+                                                echo anchor(
+                                                    $cetak_url,
+                                                    '<i class="fa fa-print"></i> ' . htmlspecialchars($cetak_label, ENT_QUOTES, 'UTF-8'),
+                                                    'class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"'
+                                                );
+                                            }
                                         }
                                     } else {
                                         if ($can_edit && $show_update && $update_url !== '#') {

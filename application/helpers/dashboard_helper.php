@@ -196,9 +196,36 @@ function dashboard_laba_rugi_bulan_list($CI)
 		$row->show_cetak = $row->cetak_enabled;
 		$row->update_url = site_url('Tbl_laba_rugi/labarugi_form/' . $row->year_process . '/' . $row->month_process);
 		$row->cetak_url = site_url('Tbl_laba_rugi/labarugi_print/' . $row->year_process . '/' . $row->month_process);
+		$row->cetak_url_rinci = site_url('Tbl_laba_rugi/labarugi_print_unit/' . $row->year_process . '/' . $row->month_process . '/rinci');
+		$row->cetak_url_sederhana = site_url('Tbl_laba_rugi/labarugi_print_unit/' . $row->year_process . '/' . $row->month_process . '/sederhana');
 	}
 
 	return $list;
+}
+
+function dashboard_laba_rugi_cetak_buttons_html($year, $month)
+{
+	$tahun = (int) $year;
+	$bulan = (int) $month;
+	$out = '<div class="dashboard-dt-cetak-group">';
+	$out .= anchor(
+		site_url('Tbl_laba_rugi/labarugi_print/' . $tahun . '/' . $bulan),
+		'<i class="fa fa-print"></i> Cetak Laba-Rugi',
+		'class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak dashboard-dt-btn-cetak-main" target="_blank" title="Cetak Laba Rugi Konsolidasi"'
+	);
+	$out .= anchor(
+		site_url('Tbl_laba_rugi/labarugi_print_unit/' . $tahun . '/' . $bulan . '/rinci'),
+		'<i class="fa fa-print"></i> LR Unit (Rinci)',
+		'class="btn btn-dt-cetak-rinci btn-sm dashboard-dt-btn-cetak-rinci" target="_blank" title="Cetak Laba Rugi Per Unit Rinci"'
+	);
+	$out .= anchor(
+		site_url('Tbl_laba_rugi/labarugi_print_unit/' . $tahun . '/' . $bulan . '/sederhana'),
+		'<i class="fa fa-print"></i> LR Unit (Sederhana)',
+		'class="btn btn-dt-cetak-sederhana btn-sm dashboard-dt-btn-cetak-sederhana" target="_blank" title="Cetak Laba Rugi Per Unit Sederhana"'
+	);
+	$out .= '</div>';
+
+	return $out;
 }
 
 function dashboard_neraca_bulan_list($CI)

@@ -223,8 +223,95 @@ function labarugi_keterangan_rinci_bou_calc_parts()
     );
 }
 
+function labarugi_keterangan_utama_display_structure()
+{
+    $bo = 'BEBAN OPERASIONAL';
+    return array(
+        array('key' => 'penjualan', 'label' => 'Penjualan', 'status_keterangan' => 'keterangan', 'nama_group' => 'PENJUALAN', 'tbl_field' => 'penjualan', 'row_style' => 'utama_main'),
+        array('key' => 'beban_pokok_penjualan', 'label' => 'Beban Pokok Penjualan', 'status_keterangan' => 'keterangan', 'nama_group' => 'HPP', 'tbl_field' => 'beban_pokok_penjualan', 'row_style' => 'utama_main'),
+        array('key' => 'laba_rugi_bruto', 'label' => 'Laba/ Rugi Bruto', 'status_keterangan' => 'jumlah total', 'nama_group' => 'LABA BRUTO', 'row_style' => 'utama_main', 'nominal_border' => 'double', 'is_calculated' => true),
+        array('key' => 'grp_beban_operasional', 'label' => 'Beban Operasional', 'status_keterangan' => 'Title', 'nama_group' => $bo, 'row_style' => 'utama_title'),
+        array('key' => 'beban_operasional_promosi', 'label' => 'Beban Operasional Promosi', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_operasional_promosi', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_perjalanan_dinas', 'label' => 'Beban Perjalanan Dinas', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_perjalanan_dinas', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_transportasi', 'label' => 'Beban Transportasi', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_transportasi', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_pemeliharaan', 'label' => 'Beban Pemeliharaan', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_pemeliharaan', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_depresiasi_dan_amortisasi', 'label' => 'Beban Depresiasi dan Amortisasi', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_depresiasi_dan_amortisasi', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_operasional_karyawan', 'label' => 'Total Beban Operasional Karyawan', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'beban_operasional_karyawan', 'row_style' => 'utama_indent'),
+        array('key' => 'total_beban_operasional_umum', 'label' => 'Total Beban Operasional Umum', 'status_keterangan' => 'keterangan', 'nama_group' => $bo, 'tbl_field' => 'total_beban_operasional_umum', 'row_style' => 'utama_indent'),
+        array('key' => 'total_beban_operasional', 'label' => 'Total Beban Operasional', 'status_keterangan' => 'jumlah total', 'nama_group' => $bo, 'row_style' => 'utama_section', 'nominal_border' => 'single', 'is_calculated' => true),
+        array('key' => 'laba_rugi_operasional', 'label' => 'Laba/ Rugi Operasional', 'status_keterangan' => 'jumlah total', 'nama_group' => 'LABA OPERASIONAL', 'row_style' => 'utama_main', 'nominal_border' => 'double', 'is_calculated' => true),
+        array('key' => 'pendapatan_bunga_bank', 'label' => 'Pendapatan Bunga Bank', 'status_keterangan' => 'keterangan', 'nama_group' => 'PENDAPATAN LAIN', 'tbl_field' => 'pendapatan_bunga_bank', 'row_style' => 'utama_indent'),
+        array('key' => 'pendapatan_rupa_rupa', 'label' => 'Pendapatan Rupa - Rupa', 'status_keterangan' => 'keterangan', 'nama_group' => 'PENDAPATAN LAIN', 'tbl_field' => 'pendapatan_rupa_rupa', 'row_style' => 'utama_indent'),
+        array('key' => 'total_pendapatan_lain_lain', 'label' => 'Total Pendapatan Lain - Lain', 'status_keterangan' => 'jumlah total', 'nama_group' => 'PENDAPATAN LAIN', 'row_style' => 'utama_indent', 'nominal_border' => 'double', 'label_bold' => true, 'is_calculated' => true),
+        array('key' => 'beban_bunga_dan_adm_bank', 'label' => 'Beban Bunga dan Adm Bank', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN LAIN', 'tbl_field' => 'beban_bunga_dan_adm_bank', 'row_style' => 'utama_indent'),
+        array('key' => 'beban_rupa_rupa', 'label' => 'Beban Rupa - rupa', 'status_keterangan' => 'keterangan', 'nama_group' => 'BEBAN LAIN', 'tbl_field' => 'beban_rupa_rupa', 'row_style' => 'utama_indent'),
+        array('key' => 'total_beban_lain_lain', 'label' => 'Total Beban Lain- lain', 'status_keterangan' => 'jumlah total', 'nama_group' => 'BEBAN LAIN', 'row_style' => 'utama_indent', 'nominal_border' => 'double', 'is_calculated' => true),
+        array('key' => 'laba_rugi_sebelum_pajak', 'label' => 'Laba/ Rugi Sebelum Pajak', 'status_keterangan' => 'jumlah total', 'nama_group' => 'LABA SEBELUM PAJAK', 'row_style' => 'utama_section', 'nominal_border' => 'double', 'label_bold' => true, 'is_calculated' => true),
+        array('key' => 'pajak', 'label' => 'Pajak', 'status_keterangan' => 'keterangan', 'nama_group' => 'PAJAK', 'tbl_field' => 'pajak', 'row_style' => 'utama_section', 'nominal_border' => 'double', 'label_bold' => true),
+        array('key' => 'laba_rugi_setelah_pajak', 'label' => 'Laba/ Rugi Setelah Pajak', 'status_keterangan' => 'jumlah total', 'nama_group' => 'LABA SETELAH PAJAK', 'row_style' => 'utama_section', 'nominal_border' => 'double', 'label_bold' => true, 'is_calculated' => true),
+    );
+}
+
+function labarugi_keterangan_utama_row_meta_map()
+{
+    static $map = null;
+    if ($map === null) {
+        $map = array();
+        foreach (labarugi_keterangan_utama_display_structure() as $def) {
+            $map[$def['key']] = $def;
+        }
+    }
+    return $map;
+}
+
+function labarugi_keterangan_utama_row_meta($key)
+{
+    $map = labarugi_keterangan_utama_row_meta_map();
+    return isset($map[$key]) ? $map[$key] : array();
+}
+
+function labarugi_keterangan_utama_label_classes($key)
+{
+    $meta = labarugi_keterangan_utama_row_meta($key);
+    $style = isset($meta['row_style']) ? $meta['row_style'] : 'utama_indent';
+    $classes = array('labarugi-ket-label-text', 'labarugi-utama-label-' . $style);
+    if (!empty($meta['label_bold']) || in_array($style, array('utama_main', 'utama_title', 'utama_section'), true)) {
+        $classes[] = 'labarugi-utama-label-bold';
+    }
+    return implode(' ', $classes);
+}
+
+function labarugi_keterangan_utama_nominal_border_class($key)
+{
+    $meta = labarugi_keterangan_utama_row_meta($key);
+    $border = isset($meta['nominal_border']) ? $meta['nominal_border'] : '';
+    if ($border === 'double') {
+        return 'labarugi-utama-nominal-border-double';
+    }
+    if ($border === 'single') {
+        return 'labarugi-utama-nominal-border-single';
+    }
+    return '';
+}
+
+function labarugi_keterangan_utama_row_class($key, $base_class)
+{
+    $meta = labarugi_keterangan_utama_row_meta($key);
+    $style = isset($meta['row_style']) ? $meta['row_style'] : '';
+    $out = trim($base_class . ' labarugi-utama-row-' . $style);
+    $border = labarugi_keterangan_utama_nominal_border_class($key);
+    if ($border !== '') {
+        $out .= ' ' . $border;
+    }
+    return $out;
+}
+
 function labarugi_keterangan_master_structure_for_tab($jenis_tab)
 {
+    if ($jenis_tab === 'utama') {
+        return labarugi_keterangan_utama_display_structure();
+    }
+
     $base = labarugi_keterangan_master_structure();
     if ($jenis_tab !== 'rinci') {
         return $base;
@@ -323,8 +410,67 @@ function labarugi_keterangan_input_keys_for_tab($jenis_tab)
     return $keys;
 }
 
+function labarugi_keterangan_utama_calc_definitions()
+{
+    return array(
+        'laba_rugi_bruto' => array(
+            'type' => 'subtract',
+            'parts' => array('penjualan', 'beban_pokok_penjualan'),
+        ),
+        'total_beban_operasional' => array(
+            'type' => 'sum',
+            'parts' => array(
+                'beban_operasional_promosi',
+                'beban_perjalanan_dinas',
+                'beban_transportasi',
+                'beban_pemeliharaan',
+                'beban_depresiasi_dan_amortisasi',
+                'beban_operasional_karyawan',
+                'total_beban_operasional_umum',
+            ),
+        ),
+        'laba_rugi_operasional' => array(
+            'type' => 'subtract',
+            'parts' => array('laba_rugi_bruto', 'total_beban_operasional'),
+        ),
+        'total_pendapatan_lain_lain' => array(
+            'type' => 'sum',
+            'parts' => array('pendapatan_bunga_bank', 'pendapatan_rupa_rupa'),
+        ),
+        'total_beban_lain_lain' => array(
+            'type' => 'sum',
+            'parts' => array('beban_bunga_dan_adm_bank', 'beban_rupa_rupa'),
+        ),
+        'laba_rugi_sebelum_pajak' => array(
+            'type' => 'add_sub',
+            'parts' => array('laba_rugi_operasional', 'total_pendapatan_lain_lain', 'total_beban_lain_lain'),
+        ),
+        'laba_rugi_setelah_pajak' => array(
+            'type' => 'subtract',
+            'parts' => array('laba_rugi_sebelum_pajak', 'pajak'),
+        ),
+    );
+}
+
+function labarugi_keterangan_utama_calc_order()
+{
+    return array(
+        'laba_rugi_bruto',
+        'total_beban_operasional',
+        'laba_rugi_operasional',
+        'total_pendapatan_lain_lain',
+        'total_beban_lain_lain',
+        'laba_rugi_sebelum_pajak',
+        'laba_rugi_setelah_pajak',
+    );
+}
+
 function labarugi_keterangan_calc_definitions_for_tab($jenis_tab)
 {
+    if ($jenis_tab === 'utama') {
+        return labarugi_keterangan_utama_calc_definitions();
+    }
+
     $defs = labarugi_keterangan_calc_definitions();
     if ($jenis_tab === 'rinci') {
         $defs['beban_pemeliharaan'] = array(
@@ -350,6 +496,10 @@ function labarugi_keterangan_calc_definitions_for_tab($jenis_tab)
 
 function labarugi_keterangan_calc_order_for_tab($jenis_tab)
 {
+    if ($jenis_tab === 'utama') {
+        return labarugi_keterangan_utama_calc_order();
+    }
+
     $order = labarugi_keterangan_calc_order();
     if ($jenis_tab !== 'rinci') {
         return $order;
@@ -369,6 +519,9 @@ function labarugi_keterangan_calc_order_for_tab($jenis_tab)
 function labarugi_keterangan_is_calculated_key_for_tab($key, $jenis_tab)
 {
     $key = (string) $key;
+    if ($jenis_tab === 'utama') {
+        return isset(labarugi_keterangan_utama_calc_definitions()[$key]);
+    }
     if ($jenis_tab === 'rinci' && ($key === 'beban_pemeliharaan' || $key === 'beban_operasional_karyawan' || $key === 'total_beban_operasional_umum')) {
         return true;
     }
@@ -513,6 +666,10 @@ function labarugi_keterangan_calc_definitions()
             'type' => 'add_sub',
             'parts' => array('laba_rugi_operasional', 'total_pendapatan_lain_lain', 'total_beban_lain_lain'),
         ),
+        'laba_rugi_setelah_pajak' => array(
+            'type' => 'subtract',
+            'parts' => array('laba_rugi_sebelum_pajak', 'pajak'),
+        ),
     );
 }
 
@@ -527,6 +684,7 @@ function labarugi_keterangan_calc_order()
         'total_pendapatan_lain_lain',
         'total_beban_lain_lain',
         'laba_rugi_sebelum_pajak',
+        'laba_rugi_setelah_pajak',
     );
 }
 
@@ -563,6 +721,7 @@ function labarugi_keterangan_calc_display_tier($key)
         'laba_rugi_bruto',
         'laba_rugi_operasional',
         'laba_rugi_sebelum_pajak',
+        'laba_rugi_setelah_pajak',
     );
     if (in_array($key, $major_keys, true)) {
         return 'major';

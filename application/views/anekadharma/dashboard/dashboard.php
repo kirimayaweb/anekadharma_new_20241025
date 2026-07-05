@@ -806,6 +806,30 @@
         return '';
     }
 
+    function dashboardLabaRugiCetakUrls(year, month) {
+        var base = '<?php echo site_url('Tbl_laba_rugi'); ?>';
+        return {
+            main: base + '/labarugi_print/' + year + '/' + month,
+            rinci: base + '/labarugi_print_unit/' + year + '/' + month + '/rinci',
+            sederhana: base + '/labarugi_print_unit/' + year + '/' + month + '/sederhana'
+        };
+    }
+
+    function dashboardRemoveCetakButtons($actions) {
+        $actions.find('.dashboard-dt-cetak-group').remove();
+        $actions.find('.dashboard-dt-btn-cetak, .dashboard-dt-btn-cetak-rinci, .dashboard-dt-btn-cetak-sederhana').remove();
+    }
+
+    function dashboardRenderLabaRugiCetakButtons($actions, year, month) {
+        var urls = dashboardLabaRugiCetakUrls(year, month);
+        var html = '<div class="dashboard-dt-cetak-group">' +
+            '<a href="' + urls.main + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak dashboard-dt-btn-cetak-main" target="_blank" title="Cetak Laba Rugi Konsolidasi"><i class="fa fa-print"></i> Cetak Laba-Rugi</a>' +
+            '<a href="' + urls.rinci + '" class="btn btn-dt-cetak-rinci btn-sm dashboard-dt-btn-cetak-rinci" target="_blank" title="Cetak Laba Rugi Per Unit Rinci"><i class="fa fa-print"></i> LR Unit (Rinci)</a>' +
+            '<a href="' + urls.sederhana + '" class="btn btn-dt-cetak-sederhana btn-sm dashboard-dt-btn-cetak-sederhana" target="_blank" title="Cetak Laba Rugi Per Unit Sederhana"><i class="fa fa-print"></i> LR Unit (Sederhana)</a>' +
+            '</div>';
+        $actions.append(html);
+    }
+
     function dashboardSyncPublishRowActions($table, year, month, isPublished, cetakLabel) {
         var reportType = $table.attr('data-publish-report-type') || '';
         var cetakUrl = isPublished ? dashboardLaporanCetakUrl(reportType, year, month) : '';
@@ -833,24 +857,15 @@
                 $actions.find('.dashboard-dt-btn-publish').show().prop('disabled', !hasData);
             }
 
-            var $cetak = $actions.find('.dashboard-dt-btn-cetak');
-            if (isPublished && cetakUrl) {
-                if (!$actions.find('.dashboard-dt-btn-cetak').length) {
+            dashboardRemoveCetakButtons($actions);
+            if (isPublished) {
+                if (reportType === 'laba_rugi') {
+                    dashboardRenderLabaRugiCetakButtons($actions, year, month);
+                } else if (cetakUrl) {
                     $actions.append(
                         '<a href="' + cetakUrl + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"><i class="fa fa-print"></i> ' + label + '</a>'
                     );
-                } else {
-                    var $cetak = $actions.find('.dashboard-dt-btn-cetak');
-                    if ($cetak.is('span')) {
-                        $cetak.replaceWith(
-                            '<a href="' + cetakUrl + '" class="btn btn-dt-cetak btn-sm dashboard-dt-btn-cetak" target="_blank"><i class="fa fa-print"></i> ' + label + '</a>'
-                        );
-                    } else {
-                        $cetak.attr('href', cetakUrl).show();
-                    }
                 }
-            } else {
-                $actions.find('.dashboard-dt-btn-cetak').remove();
             }
         });
     }
@@ -1148,6 +1163,38 @@
         min-width: 300px;
     }
 
+    #example_labarugi .dashboard-dt-actions-triple {
+        min-width: 360px;
+        white-space: normal;
+    }
+
+    .dashboard-dt-cetak-group {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+        margin-top: 4px;
+    }
+
+    .dashboard-dt-cetak-group .btn {
+        min-width: 0;
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    @media (min-width: 576px) {
+        .dashboard-dt-cetak-group .btn {
+            flex: 1 1 calc(50% - 4px);
+            max-width: calc(50% - 4px);
+        }
+
+        .dashboard-dt-cetak-group .dashboard-dt-btn-cetak-main {
+            flex: 1 1 100%;
+            max-width: 100%;
+        }
+    }
+
     .dashboard-dt-actions-triple .btn-dt-update,
     .dashboard-dt-actions-triple .btn-dt-publish,
     .dashboard-dt-actions-triple .btn-dt-cancel-publish,
@@ -1200,6 +1247,28 @@
 
     .btn-dt-cetak:hover {
         background: linear-gradient(135deg, #34ce57 0%, #28a745 100%);
+        color: #fff;
+    }
+
+    .btn-dt-cetak-rinci {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-cetak-rinci:hover {
+        background: linear-gradient(135deg, #1fc8e3 0%, #17a2b8 100%);
+        color: #fff;
+    }
+
+    .btn-dt-cetak-sederhana {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        color: #fff;
+    }
+
+    .btn-dt-cetak-sederhana:hover {
+        background: linear-gradient(135deg, #3395ff 0%, #007bff 100%);
         color: #fff;
     }
 

@@ -1,13 +1,19 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 
 if (!function_exists('labarugi_utama_render_title_row')) {
-    function labarugi_utama_render_title_row($label, array $ctx)
+    function labarugi_utama_render_title_row($label, array $ctx, $key = '')
     {
         $label_esc = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
+        $label_class = $key !== ''
+            ? labarugi_keterangan_utama_label_classes($key)
+            : 'labarugi-ket-title-text labarugi-utama-label-utama_title labarugi-utama-label-bold';
+        $row_class = $key !== ''
+            ? labarugi_keterangan_utama_row_class($key, 'labarugi-utama-title-row')
+            : 'labarugi-utama-title-row';
         ?>
-                                <tr class="labarugi-utama-title-row">
+                                <tr class="<?php echo htmlspecialchars($row_class, ENT_QUOTES, 'UTF-8'); ?>">
                                     <th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">
-                                        <strong class="labarugi-ket-title-text"><?php echo $label_esc; ?></strong>
+                                        <strong class="<?php echo htmlspecialchars($label_class, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $label_esc; ?></strong>
                                     </th>
                                     <th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
                                     <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20"></th>
@@ -33,24 +39,43 @@ if (!function_exists('labarugi_utama_render_calculated_row')) {
         $CI = get_instance();
         $CI->load->helper(array('laba_rugi_utama', 'laba_rugi_keterangan'));
 
-        $field_val = labarugi_utama_field_value($data_tbl_laba_rugi, $field_key, $sync_map);
+        if ($field_key === 'laba_rugi_setelah_pajak') {
+            $pajak_val = labarugi_utama_field_value($data_tbl_laba_rugi, 'pajak', $sync_map);
+            $field_val = 0.0;
+            if ($data_tbl_laba_rugi && isset($data_tbl_laba_rugi->pajak)) {
+                $field_val = (float) $data_tbl_laba_rugi->pajak;
+            }
+            if ($data_tbl_laba_rugi) {
+                $operasional = isset($data_tbl_laba_rugi->laba_rugi_operasional) ? (float) $data_tbl_laba_rugi->laba_rugi_operasional : 0;
+                $pendapatan_lain = (isset($data_tbl_laba_rugi->pendapatan_bunga_bank) ? (float) $data_tbl_laba_rugi->pendapatan_bunga_bank : 0)
+                    + (isset($data_tbl_laba_rugi->pendapatan_rupa_rupa) ? (float) $data_tbl_laba_rugi->pendapatan_rupa_rupa : 0);
+                $beban_lain = (isset($data_tbl_laba_rugi->beban_bunga_dan_adm_bank) ? (float) $data_tbl_laba_rugi->beban_bunga_dan_adm_bank : 0)
+                    + (isset($data_tbl_laba_rugi->beban_rupa_rupa) ? (float) $data_tbl_laba_rugi->beban_rupa_rupa : 0);
+                $sebelum = $operasional + $pendapatan_lain - $beban_lain;
+                $field_val = $sebelum - $pajak_val;
+            }
+        } else {
+            $field_val = labarugi_utama_field_value($data_tbl_laba_rugi, $field_key, $sync_map);
+        }
+
         $val = number_format($field_val, 2, ',', '.');
         $input_id = 'labarugiUtama_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $field_key);
         $label_esc = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         $field_esc = htmlspecialchars($field_key, ENT_QUOTES, 'UTF-8');
-        $is_summary = labarugi_keterangan_is_summary_row_key($field_key);
-        $label_class = $is_summary ? 'labarugi-ket-title-text' : 'labarugi-ket-label-text labarugi-ket-label-indent';
-        $row_class = $is_summary ? 'labarugi-utama-summary-row' : 'labarugi-utama-calc-row';
+        $label_class = labarugi_keterangan_utama_label_classes($field_key);
+        $row_class = labarugi_keterangan_utama_row_class($field_key, 'labarugi-utama-calc-row');
         $calc_tier_class = labarugi_keterangan_calc_display_tier_class($field_key);
+        $border_class = labarugi_keterangan_utama_nominal_border_class($field_key);
+        $group_classes = trim('labarugi-utama-input-group labarugi-grid-input-group labarugi-utama-field-cell labarugi-calc-input-group ' . $calc_tier_class . ' ' . $border_class);
         ?>
-                                <tr class="<?php echo $row_class; ?>">
+                                <tr class="<?php echo htmlspecialchars($row_class, ENT_QUOTES, 'UTF-8'); ?>">
                                     <th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">
-                                        <strong class="<?php echo $label_class; ?>"><?php echo $label_esc; ?></strong>
+                                        <strong class="<?php echo htmlspecialchars($label_class, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $label_esc; ?></strong>
                                     </th>
                                     <th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
                                     <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
                                     <th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-                                        <div class="labarugi-utama-input-group labarugi-grid-input-group labarugi-utama-field-cell labarugi-calc-input-group <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?>"
+                                        <div class="<?php echo htmlspecialchars($group_classes, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-is-calculated="1"
                                             data-calc-key="<?php echo $field_esc; ?>"
                                             data-save-url="<?php echo htmlspecialchars($save_url, ENT_QUOTES, 'UTF-8'); ?>"
@@ -66,7 +91,7 @@ if (!function_exists('labarugi_utama_render_calculated_row')) {
                                             data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-sync-auto="0">
                                             <input type="tel"
-                                                class="labarugi-grid-input labarugi-utama-input labarugi-calc-input form-control form-control-sm <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?>"
+                                                class="labarugi-grid-input labarugi-utama-input labarugi-calc-input form-control form-control-sm <?php echo htmlspecialchars(trim($calc_tier_class . ' ' . $border_class), ENT_QUOTES, 'UTF-8'); ?>"
                                                 id="<?php echo $input_id; ?>"
                                                 pattern="[0-9(,.)]{1,22}"
                                                 maxlength="22"
@@ -104,7 +129,7 @@ if (!function_exists('labarugi_utama_render_editable_row')) {
         $action = isset($ctx['action']) ? $ctx['action'] : '';
 
         $CI = get_instance();
-        $CI->load->helper(array('laba_rugi_utama', 'laba_rugi_detail', 'laba_rugi_kode_akun'));
+        $CI->load->helper(array('laba_rugi_utama', 'laba_rugi_detail', 'laba_rugi_kode_akun', 'laba_rugi_keterangan'));
 
         $saved = isset($sync_map[$field_key]) ? $sync_map[$field_key] : null;
         $sync_auto = labarugi_detail_row_sync_auto($saved);
@@ -118,11 +143,16 @@ if (!function_exists('labarugi_utama_render_editable_row')) {
         $input_id = 'labarugiUtama_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $field_key);
         $label_esc = htmlspecialchars($label, ENT_QUOTES, 'UTF-8');
         $field_esc = htmlspecialchars($field_key, ENT_QUOTES, 'UTF-8');
+        $label_class = labarugi_keterangan_utama_label_classes($field_key);
+        $row_class = labarugi_keterangan_utama_row_class($field_key, 'labarugi-utama-input-row');
+        $border_class = labarugi_keterangan_utama_nominal_border_class($field_key);
+        $group_classes = trim('labarugi-utama-input-group labarugi-grid-input-group labarugi-utama-field-cell ' . $border_class);
+        $input_classes = trim('labarugi-grid-input labarugi-utama-input form-control form-control-sm ' . $border_class);
         ?>
-                                <tr class="labarugi-utama-input-row">
+                                <tr class="<?php echo htmlspecialchars($row_class, ENT_QUOTES, 'UTF-8'); ?>">
                                     <th style="font-size: 0.550em;text-align:left; width: 400px;" colspan="400">
                                         <div class="labarugi-ket-label-row">
-                                            <strong class="labarugi-ket-label-text labarugi-ket-label-indent"><?php echo $label_esc; ?></strong>
+                                            <strong class="<?php echo htmlspecialchars($label_class, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $label_esc; ?></strong>
                                             <button type="button"
                                                 class="btn btn-xs labarugi-btn-setting-kode-akun"
                                                 data-ket-key="<?php echo $field_esc; ?>"
@@ -136,7 +166,7 @@ if (!function_exists('labarugi_utama_render_editable_row')) {
                                     <th style="font-size:0.550em; text-align:left; width: 10px;" colspan="10"></th>
                                     <th style="font-size:0.550em; text-align:left; width: 20px;" colspan="20">Rp.</th>
                                     <th style="font-size:0.550em; text-align:right; width: 200px;" colspan="200">
-                                        <div class="labarugi-utama-input-group labarugi-grid-input-group labarugi-utama-field-cell"
+                                        <div class="<?php echo htmlspecialchars($group_classes, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-save-url="<?php echo htmlspecialchars($save_url, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-sync-auto-url="<?php echo htmlspecialchars($sync_url, ENT_QUOTES, 'UTF-8'); ?>"
                                             data-fallback-action="<?php echo htmlspecialchars($action . '/' . $field_key, ENT_QUOTES, 'UTF-8'); ?>"
@@ -169,7 +199,7 @@ if (!function_exists('labarugi_utama_render_editable_row')) {
                                                 </label>
                                             </div>
                                             <input type="tel"
-                                                class="labarugi-grid-input labarugi-utama-input form-control form-control-sm"
+                                                class="<?php echo htmlspecialchars($input_classes, ENT_QUOTES, 'UTF-8'); ?>"
                                                 id="<?php echo $input_id; ?>"
                                                 pattern="[0-9(,.)]{1,22}"
                                                 maxlength="22"

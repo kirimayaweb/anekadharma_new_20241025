@@ -145,8 +145,8 @@ if ($labarugi_view_mode === 'utama') {
 								$labarugi_utama_structure = labarugi_keterangan_rows_by_tab($this, 'utama');
 								foreach ($labarugi_utama_structure as $ket_row) {
 									if (labarugi_keterangan_is_title_row($ket_row)) {
-										labarugi_utama_render_title_row($ket_row['label'], $labarugi_utama_ctx);
-									} elseif (labarugi_keterangan_is_calculated_key($ket_row['key'])) {
+										labarugi_utama_render_title_row($ket_row['label'], $labarugi_utama_ctx, $ket_row['key']);
+									} elseif (labarugi_keterangan_is_calculated_key_for_tab($ket_row['key'], 'utama')) {
 										labarugi_utama_render_calculated_row($ket_row['key'], $ket_row['label'], $labarugi_utama_ctx);
 									} else {
 										labarugi_utama_render_editable_row($ket_row['key'], $ket_row['label'], $labarugi_utama_ctx);
