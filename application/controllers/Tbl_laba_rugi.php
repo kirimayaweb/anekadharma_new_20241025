@@ -525,7 +525,7 @@ class Tbl_laba_rugi extends CI_Controller
             return;
         }
 
-        if (!labarugi_utama_update_field($this, $record_id, $field_key, $nominal)) {
+        if (!labarugi_utama_update_field($this, $record_id, $field_key, $nominal, $tahun, $bulan)) {
             echo json_encode(array('ok' => false, 'message' => 'Gagal menyimpan field laba rugi.'));
             return;
         }
@@ -586,20 +586,21 @@ class Tbl_laba_rugi extends CI_Controller
             return;
         }
 
-        $row = $this->db->get_where('tbl_laba_rugi', array('id' => $record_id))->row();
-        $nominal_update = ($row && isset($row->$field_key)) ? (float) $row->$field_key : 0.0;
-        if ($status_sync_auto === 1) {
-            $nominal_update = $auto_sistem;
-            if (!labarugi_utama_update_field($this, $record_id, $field_key, $nominal_update)) {
-                echo json_encode(array('ok' => false, 'message' => 'Gagal menyimpan nilai ke data cetak laba rugi.'));
-                return;
-            }
-        }
-
         $uuid_laba_rugi = labarugi_detail_resolve_parent_uuid($this, $tahun, $bulan);
         if ($uuid_laba_rugi === null || $uuid_laba_rugi === '') {
             echo json_encode(array('ok' => false, 'message' => 'Gagal menyiapkan UUID laba rugi.'));
             return;
+        }
+
+        $sync_map = labarugi_utama_sync_load_map($this, $uuid_laba_rugi);
+        $row = $this->db->get_where('tbl_laba_rugi', array('id' => $record_id))->row();
+        $nominal_update = labarugi_utama_field_value($row, $field_key, $sync_map);
+        if ($status_sync_auto === 1) {
+            $nominal_update = $auto_sistem;
+            if (!labarugi_utama_update_field($this, $record_id, $field_key, $nominal_update, $tahun, $bulan, $uuid_laba_rugi)) {
+                echo json_encode(array('ok' => false, 'message' => 'Gagal menyimpan nilai ke data cetak laba rugi.'));
+                return;
+            }
         }
 
         $unit_key = labarugi_utama_unit_key();

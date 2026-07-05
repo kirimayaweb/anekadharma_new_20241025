@@ -659,6 +659,98 @@
 					padding-top: 2px;
 				}
 
+				.labarugi-ket-title-text {
+					font-size: 0.95rem;
+					font-weight: 800;
+					color: #1b4332;
+					line-height: 1.35;
+				}
+
+				.labarugi-ket-label-indent {
+					padding-left: 1.2em;
+					font-weight: 600;
+				}
+
+				.labarugi-ket-title-row,
+				.labarugi-grid-title-row td {
+					background: #eef5f0 !important;
+				}
+
+				.labarugi-grid-title-cell {
+					text-align: center;
+					vertical-align: middle;
+				}
+
+				.labarugi-calc-input {
+					background: #fff8f8 !important;
+					color: #c62828 !important;
+					font-weight: 700 !important;
+					text-align: right !important;
+				}
+
+				/* Subtotal calc: Total Penjualan Bersih, Total HPP, Total Beban Op., Total Pendapatan/Beban Lain (1.3x) */
+				.labarugi-calc-tier-subtotal.labarugi-calc-input,
+				.labarugi-utama-input-group.labarugi-calc-tier-subtotal .labarugi-calc-input {
+					font-size: calc(1.1vw * 1.3) !important;
+					font-weight: 800 !important;
+					min-height: calc(32px * 1.3) !important;
+					padding: calc(6px * 1.3) calc(8px * 1.3) !important;
+					max-width: calc(220px * 1.3) !important;
+					width: 100% !important;
+				}
+
+				.labarugi-grid-calc-cell.labarugi-calc-tier-subtotal .labarugi-calc-input {
+					font-size: calc(0.72rem * 1.3) !important;
+					font-weight: 800 !important;
+					min-width: calc(140px * 1.3) !important;
+					min-height: calc(32px * 1.3) !important;
+					padding: calc(6px * 1.3) calc(8px * 1.3) !important;
+				}
+
+				.labarugi-grid-calc-cell.labarugi-calc-tier-subtotal .labarugi-calc-input-group {
+					min-width: calc(150px * 1.3);
+				}
+
+				/* Major calc: Laba Bruto, Laba Operasional, Laba Sebelum Pajak (1.6x) */
+				.labarugi-calc-tier-major.labarugi-calc-input,
+				.labarugi-utama-input-group.labarugi-calc-tier-major .labarugi-calc-input {
+					font-size: calc(1.1vw * 1.6) !important;
+					font-weight: 800 !important;
+					min-height: calc(32px * 1.6) !important;
+					padding: calc(6px * 1.6) calc(8px * 1.6) !important;
+					max-width: calc(220px * 1.6) !important;
+					width: 100% !important;
+				}
+
+				.labarugi-grid-calc-cell.labarugi-calc-tier-major .labarugi-calc-input {
+					font-size: calc(0.72rem * 1.6) !important;
+					font-weight: 800 !important;
+					min-width: calc(140px * 1.6) !important;
+					min-height: calc(32px * 1.6) !important;
+					padding: calc(6px * 1.6) calc(8px * 1.6) !important;
+				}
+
+				.labarugi-grid-calc-cell.labarugi-calc-tier-major .labarugi-calc-input-group {
+					min-width: calc(150px * 1.6);
+				}
+
+				.labarugi-calc-input-group {
+					display: flex;
+					flex-direction: column;
+					gap: 4px;
+					align-items: stretch;
+				}
+
+				.labarugi-ket-summary-row,
+				.labarugi-grid-summary-row td.labarugi-grid-col-ket,
+				.labarugi-utama-summary-row th {
+					background: #eef5f0 !important;
+				}
+
+				.labarugi-grid-calc-cell .labarugi-calc-input-group {
+					min-width: 150px;
+				}
+
 				.labarugi-btn-setting-kode-akun {
 					flex: 0 0 auto;
 					background: linear-gradient(135deg, #1565c0, #0d47a1) !important;
@@ -1052,6 +1144,9 @@
 				if (typeof window.labarugiRefreshDualScroll === 'function') {
 					setTimeout(window.labarugiRefreshDualScroll, 60);
 				}
+				if (typeof window.labarugiInitAutoCalc === 'function') {
+					setTimeout(window.labarugiInitAutoCalc, 120);
+				}
 			}
 
 			buttons.forEach(function(btn) {
@@ -1070,6 +1165,12 @@
 
 		<script>
 		(function() {
+			<?php
+			$this->load->helper('laba_rugi_keterangan');
+			?>
+			var LABARUGI_CALC_DEFS = <?php echo json_encode(labarugi_keterangan_calc_definitions()); ?>;
+			var LABARUGI_CALC_ORDER = <?php echo json_encode(labarugi_keterangan_calc_order()); ?>;
+
 			function labarugiGridParseNominal(val) {
 				var str = String(val || '').trim();
 				if (str === '') { return 0; }
@@ -1108,6 +1209,164 @@
 				return parts[0] + ',' + parts[1];
 			}
 
+			function labarugiGetGroupValue(group) {
+				var input = group.querySelector('.labarugi-grid-input');
+				if (!input) { return 0; }
+				return labarugiGridParseNominal(input.value);
+			}
+
+			function labarugiCalcValue(def, values) {
+				if (!def || !def.parts) { return 0; }
+				if (def.type === 'sum') {
+					var total = 0;
+					def.parts.forEach(function(key) {
+						total += values[key] || 0;
+					});
+					return total;
+				}
+				if (def.type === 'subtract') {
+					return (values[def.parts[0]] || 0) - (values[def.parts[1]] || 0);
+				}
+				if (def.type === 'add_sub') {
+					return (values[def.parts[0]] || 0) + (values[def.parts[1]] || 0) - (values[def.parts[2]] || 0);
+				}
+				return 0;
+			}
+
+			function labarugiApplyCalcToGroup(group, result) {
+				if (!group || group.getAttribute('data-is-calculated') !== '1') { return; }
+				var input = group.querySelector('.labarugi-grid-input');
+				if (!input) { return; }
+				input.value = labarugiGridFormatNominal(result);
+				var btn = group.querySelector('.labarugi-grid-btn-save');
+				if (btn) {
+					btn.disabled = false;
+				}
+				if (typeof labarugiGridToggleSave === 'function') {
+					labarugiGridToggleSave(group);
+				}
+			}
+
+			function labarugiCollectSourceValuesForUnit(table, unitSel) {
+				var values = {};
+				if (!table) { return values; }
+				table.querySelectorAll('.labarugi-grid-cell' + unitSel + ' .labarugi-grid-input-group[data-nama-laba-rugi]').forEach(function(group) {
+					if (group.getAttribute('data-is-calculated') === '1') { return; }
+					var key = group.getAttribute('data-nama-laba-rugi');
+					if (key) {
+						values[key] = labarugiGetGroupValue(group);
+					}
+				});
+				return values;
+			}
+
+			function labarugiApplyCalcChainForUnit(table, unitSel, values) {
+				if (!table || !values) { return values; }
+				LABARUGI_CALC_ORDER.forEach(function(calcKey) {
+					var def = LABARUGI_CALC_DEFS[calcKey];
+					if (!def) { return; }
+					var result = labarugiCalcValue(def, values);
+					values[calcKey] = result;
+					var groupSel = '.labarugi-grid-cell' + unitSel + ' .labarugi-grid-input-group[data-nama-laba-rugi="' + labarugiEscSelector(calcKey) + '"]';
+					labarugiApplyCalcToGroup(table.querySelector(groupSel), result);
+				});
+				return values;
+			}
+
+            function labarugiEscSelector(val) {
+                var str = String(val || '');
+                if (window.CSS && typeof CSS.escape === 'function') {
+                    return CSS.escape(str);
+                }
+                return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+            }
+
+            function labarugiCollectSourceValues(scope) {
+				var values = {};
+				if (!scope) { return values; }
+				scope.querySelectorAll('.labarugi-grid-input-group[data-nama-laba-rugi]').forEach(function(group) {
+					if (group.getAttribute('data-is-calculated') === '1') { return; }
+					var key = group.getAttribute('data-nama-laba-rugi');
+					if (key) {
+						values[key] = labarugiGetGroupValue(group);
+					}
+				});
+				return values;
+			}
+
+			function labarugiApplyCalcChain(scope, values) {
+				if (!scope || !values) { return values; }
+				LABARUGI_CALC_ORDER.forEach(function(calcKey) {
+					var def = LABARUGI_CALC_DEFS[calcKey];
+					if (!def) { return; }
+					var result = labarugiCalcValue(def, values);
+					values[calcKey] = result;
+					scope.querySelectorAll('.labarugi-grid-input-group[data-nama-laba-rugi="' + labarugiEscSelector(calcKey) + '"]').forEach(function(group) {
+						labarugiApplyCalcToGroup(group, result);
+					});
+				});
+				return values;
+			}
+
+			function labarugiFindUtamaScope(el) {
+				if (!el || !el.closest) { return null; }
+				var wrap = el.closest('.labarugi-utama-wrap');
+				if (wrap && wrap.querySelector('.labarugi-grid-input-group[data-nama-laba-rugi]')) {
+					return wrap;
+				}
+				var table = el.closest('table.customers-labarugi-table');
+				if (table && table.querySelector('.labarugi-utama-input-group, .labarugi-utama-field-cell, .labarugi-calc-input-group')) {
+					return table;
+				}
+				return wrap;
+			}
+
+			function labarugiRecalcUtama(scope) {
+				if (!scope) { return; }
+				var values = labarugiCollectSourceValues(scope);
+				labarugiApplyCalcChain(scope, values);
+			}
+
+			function labarugiRecalcUnitGrid(wrap) {
+				if (!wrap) { return; }
+				var table = wrap.querySelector('.labarugi-unit-grid-table');
+				if (!table) { return; }
+				var unitKeys = [];
+				table.querySelectorAll('thead .labarugi-grid-col-unit[data-unit-key]').forEach(function(th) {
+					unitKeys.push(th.getAttribute('data-unit-key'));
+				});
+				unitKeys.forEach(function(unitKey) {
+					var unitSel = '[data-unit-key="' + labarugiEscSelector(unitKey) + '"]';
+					var values = labarugiCollectSourceValuesForUnit(table, unitSel);
+					labarugiApplyCalcChainForUnit(table, unitSel, values);
+				});
+			}
+
+			function labarugiTriggerRecalcFromGroup(group) {
+				if (!group) { return; }
+				var utamaScope = labarugiFindUtamaScope(group);
+				var gridWrap = group.closest('.labarugi-unit-grid-wrap');
+				if (utamaScope) {
+					labarugiRecalcUtama(utamaScope);
+				} else if (gridWrap) {
+					labarugiRecalcUnitGrid(gridWrap);
+				}
+			}
+
+			function labarugiInitAutoCalc() {
+				document.querySelectorAll('.labarugi-utama-wrap').forEach(function(wrap) {
+					labarugiRecalcUtama(wrap);
+				});
+				document.querySelectorAll('table.customers-labarugi-table').forEach(function(table) {
+					if (table.querySelector('.labarugi-utama-input-group, .labarugi-calc-input-group')) {
+						labarugiRecalcUtama(table);
+					}
+				});
+				document.querySelectorAll('.labarugi-unit-grid-wrap').forEach(function(wrap) {
+					labarugiRecalcUnitGrid(wrap);
+				});
+			}
+
 			function labarugiGridGetAutoNominal(group) {
 				var nominalBtn = group.querySelector('.labarugi-grid-ns-nominal');
 				if (!nominalBtn) { return 0; }
@@ -1128,6 +1387,7 @@
 				}
 				labarugiGridToggleSave(group);
 				labarugiGridRefreshMatch(group);
+				labarugiTriggerRecalcFromGroup(group);
 			}
 
 			function labarugiGridSaveSyncAuto(group, isChecked, syncCb, syncLabel) {
@@ -1192,14 +1452,6 @@
 					}
 					return false;
 				});
-			}
-
-			function labarugiEscSelector(val) {
-				var str = String(val || '');
-				if (window.CSS && typeof CSS.escape === 'function') {
-					return CSS.escape(str);
-				}
-				return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 			}
 
 			function labarugiApplyUnitColumnState(table, unitKey, isPublished) {
@@ -1292,14 +1544,20 @@
 				labarugiGridToggleSave(group);
 				labarugiGridRefreshMatch(group);
 
-				input.addEventListener('input', function() {
+				input.addEventListener('input', onSourceInputChange);
+				input.addEventListener('keyup', onSourceInputChange);
+				input.addEventListener('change', onSourceInputChange);
+
+				function onSourceInputChange() {
+					if (group.getAttribute('data-is-calculated') === '1') { return; }
 					labarugiGridToggleSave(group);
 					labarugiGridRefreshMatch(group);
+					labarugiTriggerRecalcFromGroup(group);
 					if (status) {
 						status.textContent = '';
 						status.className = 'labarugi-grid-status';
 					}
-				});
+				}
 
 				var syncCb = group.querySelector('.labarugi-grid-sync-auto-cb');
 				var syncLabel = group.querySelector('.labarugi-grid-sync-auto-check');
@@ -1430,6 +1688,31 @@
 			});
 			setTimeout(window.labarugiRefreshDualScroll, 200);
 			setTimeout(window.labarugiRefreshDualScroll, 800);
+
+			labarugiInitAutoCalc();
+			setTimeout(labarugiInitAutoCalc, 300);
+
+			window.labarugiInitAutoCalc = labarugiInitAutoCalc;
+			window.labarugiTriggerRecalcFromGroup = labarugiTriggerRecalcFromGroup;
+
+			function labarugiOnSourceFieldChange(ev) {
+				var input = ev.target;
+				if (!input || !input.classList || !input.classList.contains('labarugi-grid-input')) { return; }
+				if (input.classList.contains('labarugi-calc-input') || input.readOnly) { return; }
+				var group = input.closest('.labarugi-grid-input-group');
+				if (!group || group.getAttribute('data-is-calculated') === '1') { return; }
+				labarugiTriggerRecalcFromGroup(group);
+			}
+
+			document.addEventListener('input', labarugiOnSourceFieldChange, true);
+			document.addEventListener('change', labarugiOnSourceFieldChange, true);
+			document.addEventListener('keyup', labarugiOnSourceFieldChange, true);
+
+			document.querySelectorAll('.labarugi-tab-btn').forEach(function(btn) {
+				btn.addEventListener('click', function() {
+					setTimeout(labarugiInitAutoCalc, 100);
+				});
+			});
 		})();
 		</script>
 

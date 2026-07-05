@@ -95,11 +95,27 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                 <?php foreach ($keterangan_rows as $ket_row) {
                     $ket_key = $ket_row['key'];
                     $ket_label = $ket_row['label'];
+                    $is_title = labarugi_keterangan_is_title_row($ket_row);
+                    $is_calc = labarugi_keterangan_is_calculated_key($ket_key);
+                    $is_summary = $is_calc && labarugi_keterangan_is_summary_row_key($ket_key);
+                    $row_class = 'labarugi-grid-input-row';
+                    if ($is_title) {
+                        $row_class = 'labarugi-grid-title-row';
+                    } elseif ($is_summary) {
+                        $row_class = 'labarugi-grid-summary-row';
+                    } elseif ($is_calc) {
+                        $row_class = 'labarugi-grid-calc-row';
+                    }
                 ?>
-                    <tr>
-                        <td class="labarugi-grid-col-ket sticky-col">
+                    <tr class="<?php echo $row_class; ?>">
+                        <td class="labarugi-grid-col-ket sticky-col<?php echo $is_title ? ' labarugi-ket-title-row' : ($is_summary ? ' labarugi-ket-summary-row' : ''); ?>">
+                            <?php if ($is_title) { ?>
+                                <strong class="labarugi-ket-title-text"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <?php } elseif ($is_calc) { ?>
+                                <strong class="<?php echo $is_summary ? 'labarugi-ket-title-text' : 'labarugi-ket-label-text labarugi-ket-label-indent'; ?>"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <?php } else { ?>
                             <div class="labarugi-ket-label-row">
-                                <strong class="labarugi-ket-label-text"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <strong class="labarugi-ket-label-text labarugi-ket-label-indent"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></strong>
                                 <button type="button"
                                     class="btn btn-xs labarugi-btn-setting-kode-akun"
                                     data-ket-key="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
@@ -109,30 +125,92 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                     <i class="fa fa-book"></i> Setting Kode Akun
                                 </button>
                             </div>
+                            <?php } ?>
                         </td>
                         <?php foreach ($list_unit as $unit_row) {
                             $unit_key = labarugi_detail_unit_key($unit_row);
                             $unit_label = isset($unit_row->nama_unit) ? $unit_row->nama_unit : $unit_key;
                             $is_published = labarugi_unit_publish_is_published($publish_map, $unit_key);
                             $unit_col_class = $is_published ? 'labarugi-unit-col-published' : 'labarugi-unit-col-unpublished';
+                            if ($is_title) {
+                        ?>
+                            <td class="labarugi-grid-cell labarugi-grid-title-cell <?php echo $unit_col_class; ?>"
+                                data-unit-key="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
+                                <span class="text-muted">&mdash;</span>
+                            </td>
+                        <?php
+                                continue;
+                            }
                             $saved = null;
                             if (isset($detail_map[$ket_key][$unit_key])) {
                                 $saved = $detail_map[$ket_key][$unit_key];
+                            }
+                            $val = '';
+                            if ($is_calc) {
+                                if ($saved && $saved->nominal_update !== null) {
+                                    $val = labarugi_detail_format_nominal($saved->nominal_update);
+                                } elseif ($saved && $saved->nominal !== null) {
+                                    $val = labarugi_detail_format_nominal($saved->nominal);
+                                }
+                            } else {
+                                $sync_auto = labarugi_detail_row_sync_auto($saved);
+                                $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
+                                $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($this, $ket_kodes, $unit_key, $unit_label);
+                                $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $effective_kodes, $unit_key, $unit_label, true);
+                                $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
+                                if ($sync_auto === 1) {
+                                    $val = $ns_formatted;
+                                } elseif ($saved && $saved->nominal_update !== null) {
+                                    $val = labarugi_detail_format_nominal($saved->nominal_update);
+                                } elseif ($saved && $saved->nominal !== null) {
+                                    $val = labarugi_detail_format_nominal($saved->nominal);
+                                }
+                            }
+                            $input_id = $grid_id . '_' . $ket_key . '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $unit_key);
+                            if ($is_calc) {
+                                $calc_tier_class = labarugi_keterangan_calc_display_tier_class($ket_key);
+                        ?>
+                            <td class="labarugi-grid-cell labarugi-grid-calc-cell <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?> <?php echo $unit_col_class; ?>"
+                                data-unit-key="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
+                                <div class="labarugi-grid-input-group labarugi-calc-input-group <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-is-calculated="1"
+                                    data-calc-key="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-save-url="<?php echo htmlspecialchars($save_url, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-tahun="<?php echo (int) $tahun_neraca; ?>"
+                                    data-bulan="<?php echo (int) $bulan_transaksi; ?>"
+                                    data-jenis-tab="<?php echo htmlspecialchars($jenis_tab, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-nama-laba-rugi="<?php echo htmlspecialchars($ket_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-nama-label="<?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-unit="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>"
+                                    data-sync-auto="0">
+                                    <input type="tel"
+                                        class="labarugi-grid-input labarugi-calc-input form-control form-control-sm <?php echo htmlspecialchars($calc_tier_class, ENT_QUOTES, 'UTF-8'); ?>"
+                                        id="<?php echo $input_id; ?>"
+                                        pattern="[0-9(,.)]{1,22}"
+                                        maxlength="22"
+                                        size="18"
+                                        placeholder="0,00"
+                                        value="<?php echo htmlspecialchars($val, ENT_QUOTES, 'UTF-8'); ?>"
+                                        readonly="readonly"
+                                        autocomplete="off" />
+                                    <button type="button"
+                                        class="btn btn-sm labarugi-grid-btn-save"
+                                        disabled
+                                        title="Simpan <?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?> — <?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <i class="fa fa-save"></i> Simpan
+                                    </button>
+                                    <span class="labarugi-grid-status"></span>
+                                </div>
+                            </td>
+                        <?php
+                                continue;
                             }
                             $sync_auto = labarugi_detail_row_sync_auto($saved);
                             $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
                             $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($this, $ket_kodes, $unit_key, $unit_label);
                             $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $effective_kodes, $unit_key, $unit_label, true);
                             $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
-                            $val = '';
-                            if ($sync_auto === 1) {
-                                $val = $ns_formatted;
-                            } elseif ($saved && $saved->nominal_update !== null) {
-                                $val = labarugi_detail_format_nominal($saved->nominal_update);
-                            } elseif ($saved && $saved->nominal !== null) {
-                                $val = labarugi_detail_format_nominal($saved->nominal);
-                            }
-                            $input_id = $grid_id . '_' . $ket_key . '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $unit_key);
                         ?>
                             <td class="labarugi-grid-cell <?php echo $unit_col_class; ?>"
                                 data-unit-key="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
