@@ -67,8 +67,8 @@ class Setting_kode_akun extends CI_Controller
             return;
         }
 
-        if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], null, $payload['tbl_source'])) {
-            $this->session->set_flashdata('message', 'Kombinasi unit, kode akun, dan tabel sumber sudah ada.');
+        if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], null, $payload['tbl_source'], $payload)) {
+            $this->session->set_flashdata('message', 'Kombinasi sumber, kode akun, dan nilai sudah ada.');
             redirect(site_url('Setting_kode_akun/create'));
             return;
         }
@@ -119,8 +119,8 @@ class Setting_kode_akun extends CI_Controller
             return;
         }
 
-        if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], $id, $payload['tbl_source'])) {
-            $this->session->set_flashdata('message', 'Kombinasi unit, kode akun, dan tabel sumber sudah ada.');
+        if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], $id, $payload['tbl_source'], $payload)) {
+            $this->session->set_flashdata('message', 'Kombinasi sumber, kode akun, dan nilai sudah ada.');
             redirect(site_url('Setting_kode_akun/update/' . $id));
             return;
         }
@@ -150,12 +150,12 @@ class Setting_kode_akun extends CI_Controller
                 return array('success' => false, 'message' => $payload['_error']);
             }
 
-            if ($payload['uuid_unit'] === '' || $payload['kode_akun'] === '' || $payload['tbl_source'] === '') {
-                return array('success' => false, 'message' => 'Unit, kode akun, dan tabel sumber wajib diisi.');
+            if ($payload['kode_akun'] === '' || $payload['tbl_source'] === '' || $payload['nama_unit'] === '') {
+                return array('success' => false, 'message' => 'Tabel sumber, nilai sumber, dan kode akun wajib diisi.');
             }
 
-            if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], null, $payload['tbl_source'])) {
-                return array('success' => false, 'message' => 'Kombinasi unit, kode akun, dan tabel sumber sudah ada.');
+            if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], null, $payload['tbl_source'], $payload)) {
+                return array('success' => false, 'message' => 'Kombinasi sumber, kode akun, dan nilai sudah ada.');
             }
 
             $this->Sys_unit_kode_akun_model->insert($payload);
@@ -181,12 +181,12 @@ class Setting_kode_akun extends CI_Controller
                 return array('success' => false, 'message' => $payload['_error']);
             }
 
-            if ($payload['uuid_unit'] === '' || $payload['kode_akun'] === '' || $payload['tbl_source'] === '') {
-                return array('success' => false, 'message' => 'Unit, kode akun, dan tabel sumber wajib diisi.');
+            if ($payload['kode_akun'] === '' || $payload['tbl_source'] === '' || $payload['nama_unit'] === '') {
+                return array('success' => false, 'message' => 'Tabel sumber, nilai sumber, dan kode akun wajib diisi.');
             }
 
-            if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], $id, $payload['tbl_source'])) {
-                return array('success' => false, 'message' => 'Kombinasi unit, kode akun, dan tabel sumber sudah ada.');
+            if ($this->_is_duplicate($payload['uuid_unit'], $payload['kode_akun'], $id, $payload['tbl_source'], $payload)) {
+                return array('success' => false, 'message' => 'Kombinasi sumber, kode akun, dan nilai sudah ada.');
             }
 
             $this->Sys_unit_kode_akun_model->update($id, $payload);
@@ -210,6 +210,26 @@ class Setting_kode_akun extends CI_Controller
             $this->Sys_unit_kode_akun_model->delete($id);
             return array('success' => true, 'message' => 'Data berhasil dihapus.');
         });
+    }
+
+    public function ajax_source_fields()
+    {
+        $this->load->helper('setting_kode_akun_source');
+        ska_source_ensure_source_field_column($this);
+        $table = trim((string) $this->input->post('tbl_source', TRUE));
+        $result = ska_source_get_table_fields($this, $table);
+        header('Content-Type: application/json');
+        echo json_encode($result);
+    }
+
+    public function ajax_source_field_values()
+    {
+        $this->load->helper('setting_kode_akun_source');
+        $table = trim((string) $this->input->post('tbl_source', TRUE));
+        $field = trim((string) $this->input->post('source_field', TRUE));
+        $result = ska_source_get_field_values($this, $table, $field);
+        header('Content-Type: application/json');
+        echo json_encode($result);
     }
 
     public function excel()
@@ -270,6 +290,7 @@ class Setting_kode_akun extends CI_Controller
             'nama_unit' => set_value('nama_unit', $row ? $row->nama_unit : ''),
             'kode_akun' => set_value('kode_akun', $row ? $row->kode_akun : ''),
             'tbl_source' => set_value('tbl_source', $row ? (isset($row->tbl_source) ? $row->tbl_source : '') : 'tbl_penjualan'),
+            'source_field' => set_value('source_field', $row ? (isset($row->source_field) ? $row->source_field : '') : ''),
             'mutiply_processing' => set_value('mutiply_processing', $row ? $row->mutiply_processing : (string) self::MUTIPLY_DEFAULT),
             'keterangan' => set_value('keterangan', $row ? $row->keterangan : ''),
             'data_unit' => $this->Sys_unit_model->get_all(),
@@ -280,16 +301,37 @@ class Setting_kode_akun extends CI_Controller
 
     private function _collect_post_data($ajax = false)
     {
+        $this->load->helper('setting_kode_akun_source');
+        ska_source_ensure_source_field_column($this);
+
         $uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
         $kode_unit = trim((string) $this->input->post('kode_unit', TRUE));
         $nama_unit = trim((string) $this->input->post('nama_unit', TRUE));
         $kode_akun = trim((string) $this->input->post('kode_akun', TRUE));
         $tbl_source = trim((string) $this->input->post('tbl_source', TRUE));
+        $source_field = trim((string) $this->input->post('source_field', TRUE));
+        $source_value = trim((string) $this->input->post('source_value', TRUE));
+
         $tbl_source_parsed = $this->_parse_tbl_source_value($tbl_source);
         if (!$tbl_source_parsed['ok']) {
             return array('_error' => $tbl_source_parsed['message']);
         }
         $tbl_source = $tbl_source_parsed['value'];
+
+        if ($source_field === '') {
+            $source_field = ska_source_default_field($tbl_source);
+        }
+        if ($source_field === '' || !ska_source_is_valid_identifier($source_field) || !$this->db->field_exists($source_field, $tbl_source)) {
+            return array('_error' => 'Field sumber wajib dipilih dan harus valid.');
+        }
+
+        if ($nama_unit === '' && $source_value !== '') {
+            $nama_unit = $source_value;
+        }
+        if ($kode_unit === '' && $source_value !== '') {
+            $kode_unit = $source_value;
+        }
+
         $mutiply_raw = trim((string) $this->input->post('mutiply_processing', TRUE));
         $mutiply_parsed = $this->_parse_mutiply_value($mutiply_raw);
         if (!$mutiply_parsed['ok']) {
@@ -309,9 +351,13 @@ class Setting_kode_akun extends CI_Controller
             }
         }
 
+        if ($nama_unit === '') {
+            return array('_error' => ska_source_value_label($tbl_source) . ' / nilai sumber wajib dipilih.');
+        }
+
         $keterangan = trim((string) $this->input->post('keterangan', TRUE));
 
-        return array(
+        $payload = array(
             'uuid_unit' => $uuid_unit,
             'kode_unit' => $kode_unit,
             'nama_unit' => $nama_unit,
@@ -320,6 +366,10 @@ class Setting_kode_akun extends CI_Controller
             'mutiply_processing' => $mutiply_processing,
             'keterangan' => $keterangan,
         );
+        if ($this->db->field_exists('source_field', 'sys_unit_kode_akun')) {
+            $payload['source_field'] = $source_field;
+        }
+        return $payload;
     }
 
     private function _parse_tbl_source_value($raw)
@@ -428,17 +478,26 @@ class Setting_kode_akun extends CI_Controller
         return true;
     }
 
-    private function _is_duplicate($uuid_unit, $kode_akun, $exclude_id = null, $tbl_source = null)
+    private function _is_duplicate($uuid_unit, $kode_akun, $exclude_id = null, $tbl_source = null, $payload = null)
     {
-        if ($uuid_unit === '' || $kode_akun === '' || $tbl_source === null || $tbl_source === '') {
+        if ($kode_akun === '' || $tbl_source === null || $tbl_source === '') {
             return false;
         }
 
-        return (bool) $this->Sys_unit_kode_akun_model->get_by_uuid_unit_kode_akun(
+        $source_field = '';
+        $nama_unit = '';
+        if (is_array($payload)) {
+            $source_field = isset($payload['source_field']) ? trim((string) $payload['source_field']) : '';
+            $nama_unit = isset($payload['nama_unit']) ? trim((string) $payload['nama_unit']) : '';
+        }
+
+        return (bool) $this->Sys_unit_kode_akun_model->get_duplicate_row(
             $uuid_unit,
             $kode_akun,
-            $exclude_id,
-            $tbl_source
+            $tbl_source,
+            $source_field,
+            $nama_unit,
+            $exclude_id
         );
     }
 
