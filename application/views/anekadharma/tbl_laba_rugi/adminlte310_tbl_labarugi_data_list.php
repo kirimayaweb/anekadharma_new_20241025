@@ -498,7 +498,13 @@
     }
 
     #example_wrapper .dataTables_scrollBody {
-        min-height: 520px;
+        min-height: auto;
+        max-height: none;
+        overflow-y: visible !important;
+    }
+
+    #example.labarugi-table-bulanan tbody tr {
+        height: auto;
     }
 
     #ExampleOnFile_wrapper .dataTables_scrollBody {
@@ -511,13 +517,11 @@
 <script>
     $(document).ready(function() {
         $('#example').DataTable({
-            scrollY: "520px",
             scrollX: false,
-            scrollCollapse: true,
             autoWidth: false,
             paging: true,
-            pageLength: 15,
-            lengthMenu: [[15, 25, 50, -1], [15, 25, 50, "Semua"]],
+            pageLength: 25,
+            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "Semua"]],
             order: [[1, 'desc'], [2, 'desc']],
             columnDefs: [
                 { orderable: false, targets: [0, 3] },
