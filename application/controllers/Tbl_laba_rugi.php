@@ -694,7 +694,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function labarugi_print_unit($Get_tahun = null, $Get_bulan = null, $jenis_tab = 'rinci')
     {
-        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'dashboard_laporan_publish'));
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'dashboard_laporan_publish'));
 
         $Get_tahun = (int) $Get_tahun;
         $Get_bulan = (int) $Get_bulan;
@@ -719,8 +719,9 @@ class Tbl_laba_rugi extends CI_Controller
 
         $uuid_laba_rugi = $data_detail->uuid_data_laba_rugi;
         $list_unit = $this->db->order_by('nama_unit', 'ASC')->get('sys_unit')->result();
+        $list_unit = labarugi_unit_merge_display_units($list_unit);
         $publish_map = labarugi_unit_publish_load_map($this, $uuid_laba_rugi, $jenis_tab, $Get_tahun, $Get_bulan);
-        $published_units = labarugi_unit_publish_published_units($list_unit, $publish_map);
+        $published_units = labarugi_unit_merge_published_units($list_unit, $publish_map);
 
         if (empty($published_units)) {
             show_error('Belum ada unit yang dipublish (centang) untuk dicetak.', 404);
@@ -840,7 +841,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function ajax_labarugi_setting_kode_akun($uuid_nama_keterangan = null)
     {
-        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan', 'laba_rugi_unit_merge'));
         header('Content-Type: application/json; charset=utf-8');
 
         $uuid_nama_keterangan = trim((string) $uuid_nama_keterangan);
@@ -871,7 +872,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function ajax_labarugi_setting_kode_akun_pilih()
     {
-        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan', 'laba_rugi_unit_merge'));
         header('Content-Type: application/json; charset=utf-8');
 
         if (strtolower($this->input->method()) !== 'post') {
@@ -930,7 +931,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function ajax_labarugi_setting_kode_akun_hapus()
     {
-        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan', 'laba_rugi_unit_merge'));
         header('Content-Type: application/json; charset=utf-8');
 
         if (strtolower($this->input->method()) !== 'post') {
@@ -968,7 +969,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function ajax_labarugi_nominal_unit()
     {
-        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan', 'laba_rugi_unit_merge'));
         header('Content-Type: application/json; charset=utf-8');
 
         $uuid = trim((string) $this->input->get('uuid_nama_keterangan'));
@@ -992,7 +993,18 @@ class Tbl_laba_rugi extends CI_Controller
                 echo json_encode(array('ok' => false, 'message' => 'Parameter unit tidak lengkap.'));
                 return;
             }
-            $nominal = labarugi_kode_akun_unit_nominal($this, $uuid, $jenis_tab, $unit_key, $unit_label, $tahun, $bulan, 'unit');
+            if (labarugi_unit_merge_is_merged_key($unit_key)) {
+                $kodes = labarugi_kode_akun_selected_kodes($this, $uuid, $jenis_tab);
+                $nominal = labarugi_unit_merge_kode_akun_nominal(
+                    $this,
+                    labarugi_kode_akun_merged_rows($this, $tahun, $bulan),
+                    $kodes,
+                    $unit_key,
+                    $unit_label
+                );
+            } else {
+                $nominal = labarugi_kode_akun_unit_nominal($this, $uuid, $jenis_tab, $unit_key, $unit_label, $tahun, $bulan, 'unit');
+            }
         }
         echo json_encode(array(
             'ok' => true,
@@ -1003,7 +1015,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function ajax_labarugi_transaksi_unit()
     {
-        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan'));
+        $this->load->helper(array('laba_rugi_kode_akun', 'laba_rugi_keterangan', 'laba_rugi_unit_merge'));
         header('Content-Type: application/json; charset=utf-8');
 
         $uuid = trim((string) $this->input->get('uuid_nama_keterangan'));
@@ -1035,7 +1047,12 @@ class Tbl_laba_rugi extends CI_Controller
             }
         }
 
-        $payload = labarugi_kode_akun_transactions_payload($this, $uuid, $jenis_tab, $tahun, $bulan, $unit_key, $unit_label, $view_mode);
+        if ($view_mode === 'utama') {
+            $jenis_tab = 'utama';
+            $payload = labarugi_kode_akun_transactions_payload($this, $uuid, $jenis_tab, $tahun, $bulan, $unit_key, $unit_label, $view_mode);
+        } else {
+            $payload = labarugi_unit_merge_transactions_payload($this, $uuid, $jenis_tab, $tahun, $bulan, $unit_key, $unit_label);
+        }
 
         echo json_encode(array(
             'ok' => true,

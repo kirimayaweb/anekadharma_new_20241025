@@ -12,8 +12,9 @@ if ($labarugi_view_mode === 'utama' || empty($list_unit)) {
     return;
 }
 
-$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_kode_akun', 'laba_rugi_unit_publish'));
+$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_kode_akun', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge'));
 $jenis_tab = ($labarugi_view_mode === 'sederhana') ? 'sederhana' : 'rinci';
+$list_unit = labarugi_unit_merge_display_units($list_unit);
 $keterangan_rows = labarugi_keterangan_rows_by_tab($this, $jenis_tab);
 $detail_map = isset($labarugi_detail_maps[$jenis_tab]) ? $labarugi_detail_maps[$jenis_tab] : array();
 $publish_map = isset($labarugi_unit_publish_maps[$jenis_tab]) ? $labarugi_unit_publish_maps[$jenis_tab] : array();
@@ -68,7 +69,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                     <?php foreach ($list_unit as $unit_row) {
                         $unit_key = labarugi_detail_unit_key($unit_row);
                         $unit_label = isset($unit_row->nama_unit) ? $unit_row->nama_unit : $unit_key;
-                        $is_published = labarugi_unit_publish_is_published($publish_map, $unit_key);
+                        $is_published = labarugi_unit_merge_is_published($publish_map, $unit_key);
                         $unit_col_class = $is_published ? 'labarugi-unit-col-published' : 'labarugi-unit-col-unpublished';
                     ?>
                         <th class="labarugi-grid-col-unit <?php echo $unit_col_class; ?>"
@@ -138,7 +139,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                         <?php foreach ($list_unit as $unit_row) {
                             $unit_key = labarugi_detail_unit_key($unit_row);
                             $unit_label = isset($unit_row->nama_unit) ? $unit_row->nama_unit : $unit_key;
-                            $is_published = labarugi_unit_publish_is_published($publish_map, $unit_key);
+                            $is_published = labarugi_unit_merge_is_published($publish_map, $unit_key);
                             $unit_col_class = $is_published ? 'labarugi-unit-col-published' : 'labarugi-unit-col-unpublished';
                             if ($is_title) {
                         ?>
@@ -149,22 +150,20 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                         <?php
                                 continue;
                             }
-                            $saved = null;
-                            if (isset($detail_map[$ket_key][$unit_key])) {
-                                $saved = $detail_map[$ket_key][$unit_key];
-                            }
+                            $saved = labarugi_unit_merge_detail_saved_row($detail_map, $ket_key, $unit_key);
                             $val = '';
                             if ($is_calc) {
                                 if ($saved && $saved->nominal_update !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal_update);
                                 } elseif ($saved && $saved->nominal !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal);
+                                } else {
+                                    $val = labarugi_detail_format_nominal(labarugi_unit_merge_detail_nominal($detail_map, $ket_key, $unit_key));
                                 }
                             } else {
-                                $sync_auto = labarugi_detail_row_sync_auto($saved);
+                                $sync_auto = labarugi_unit_merge_row_sync_auto($detail_map, $ket_key, $unit_key);
                                 $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
-                                $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($this, $ket_kodes, $unit_key, $unit_label);
-                                $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $effective_kodes, $unit_key, $unit_label, true);
+                                $ns_nominal = labarugi_unit_merge_kode_akun_nominal($this, $bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
                                 $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                                 if ($sync_auto === 1) {
                                     $val = $ns_formatted;
@@ -172,6 +171,8 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                     $val = labarugi_detail_format_nominal($saved->nominal_update);
                                 } elseif ($saved && $saved->nominal !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal);
+                                } else {
+                                    $val = labarugi_detail_format_nominal(labarugi_unit_merge_detail_nominal($detail_map, $ket_key, $unit_key));
                                 }
                             }
                             $input_id = $grid_id . '_' . $ket_key . '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $unit_key);
@@ -214,10 +215,9 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                         <?php
                                 continue;
                             }
-                            $sync_auto = labarugi_detail_row_sync_auto($saved);
+                            $sync_auto = labarugi_unit_merge_row_sync_auto($detail_map, $ket_key, $unit_key);
                             $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
-                            $effective_kodes = labarugi_kode_akun_resolve_unit_kodes($this, $ket_kodes, $unit_key, $unit_label);
-                            $ns_nominal = labarugi_kode_akun_unit_nominal_from_data($bb_merged_rows, $effective_kodes, $unit_key, $unit_label, true);
+                            $ns_nominal = labarugi_unit_merge_kode_akun_nominal($this, $bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
                             $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                         ?>
                             <td class="labarugi-grid-cell <?php echo $unit_col_class; ?>"

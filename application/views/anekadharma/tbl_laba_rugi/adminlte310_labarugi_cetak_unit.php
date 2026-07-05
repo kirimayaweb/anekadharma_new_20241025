@@ -152,7 +152,7 @@
 	</style>
 </head>
 <?php
-$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish'));
+$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge'));
 
 if (!function_exists('labarugi_cetak_unit_bulan_teks')) {
     function labarugi_cetak_unit_bulan_teks($angka_bulan) {
@@ -201,9 +201,9 @@ foreach ($published_units as $unit_row) {
     $unit_nama_cetak = strtoupper(trim($unit_label));
     $vals = array();
     foreach ($keterangan_rows as $ket_row) {
-        $vals[$ket_row['key']] = labarugi_unit_publish_detail_nominal($detail_map, $ket_row['key'], $unit_key);
+        $vals[$ket_row['key']] = labarugi_unit_merge_detail_nominal($detail_map, $ket_row['key'], $unit_key);
     }
-    $pajak = labarugi_unit_publish_detail_nominal($detail_map, 'pajak', $unit_key);
+    $pajak = labarugi_unit_merge_detail_nominal($detail_map, 'pajak', $unit_key);
     $sebelum_pajak = isset($vals['laba_rugi_sebelum_pajak']) ? $vals['laba_rugi_sebelum_pajak'] : 0;
     $setelah_pajak = $sebelum_pajak - $pajak;
     $ttd_tanggal = 'Bantul, ';
