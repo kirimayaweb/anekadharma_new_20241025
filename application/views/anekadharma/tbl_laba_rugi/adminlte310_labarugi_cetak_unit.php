@@ -200,8 +200,16 @@ foreach ($published_units as $unit_row) {
     $unit_label = isset($unit_row->nama_unit) ? $unit_row->nama_unit : $unit_key;
     $unit_nama_cetak = strtoupper(trim($unit_label));
     $vals = array();
+    $detail_maps_cetak = isset($detail_maps) ? $detail_maps : array(
+        'rinci' => ($jenis_tab === 'rinci') ? $detail_map : array(),
+        'sederhana' => ($jenis_tab === 'sederhana') ? $detail_map : array(),
+    );
     foreach ($keterangan_rows as $ket_row) {
-        $vals[$ket_row['key']] = labarugi_unit_merge_detail_nominal($detail_map, $ket_row['key'], $unit_key);
+        if (function_exists('labarugi_unit_tab_sync_detail_nominal')) {
+            $vals[$ket_row['key']] = labarugi_unit_tab_sync_detail_nominal($detail_maps_cetak, $jenis_tab, $ket_row['key'], $unit_key);
+        } else {
+            $vals[$ket_row['key']] = labarugi_unit_merge_detail_nominal($detail_map, $ket_row['key'], $unit_key);
+        }
     }
     $pajak = labarugi_unit_merge_detail_nominal($detail_map, 'pajak', $unit_key);
     $sebelum_pajak = isset($vals['laba_rugi_sebelum_pajak']) ? $vals['laba_rugi_sebelum_pajak'] : 0;

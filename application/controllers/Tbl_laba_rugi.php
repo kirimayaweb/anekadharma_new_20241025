@@ -318,7 +318,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function save_labarugi_detail()
     {
-        $this->load->helper('laba_rugi_detail');
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_unit_tab_sync'));
         labarugi_detail_ensure_table($this);
         header('Content-Type: application/json; charset=utf-8');
 
@@ -363,6 +363,11 @@ class Tbl_laba_rugi extends CI_Controller
             return;
         }
 
+        if ($jenis_tab === 'sederhana' && labarugi_unit_tab_sync_is_rinci_derived_key($nama_laba_rugi)) {
+            echo json_encode(array('ok' => false, 'message' => 'Field ini diisi otomatis dari tab RINCI.'));
+            return;
+        }
+
         $uuid_laba_rugi = labarugi_detail_resolve_parent_uuid($this, $tahun, $bulan);
         if ($uuid_laba_rugi === null || $uuid_laba_rugi === '') {
             echo json_encode(array('ok' => false, 'message' => 'Gagal menyiapkan UUID laba rugi.'));
@@ -383,18 +388,31 @@ class Tbl_laba_rugi extends CI_Controller
             'bulan_transaksi' => $bulan,
         ));
 
+        labarugi_unit_tab_sync_mirror_detail(
+            $this,
+            $uuid_laba_rugi,
+            $tahun,
+            $bulan,
+            $jenis_tab,
+            $nama_laba_rugi,
+            $unit,
+            $nominal,
+            $keterangan_data
+        );
+
         echo json_encode(array(
             'ok' => true,
             'message' => 'Data berhasil disimpan.',
             'id' => $id,
             'uuid_laba_rugi' => $uuid_laba_rugi,
             'nominal_formatted' => labarugi_detail_format_nominal($nominal),
+            'peer_synced' => labarugi_unit_tab_sync_should_mirror($nama_laba_rugi, $jenis_tab),
         ));
     }
 
     public function save_labarugi_detail_sync_auto()
     {
-        $this->load->helper('laba_rugi_detail');
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_unit_tab_sync'));
         labarugi_detail_ensure_table($this);
         header('Content-Type: application/json; charset=utf-8');
 
@@ -431,6 +449,11 @@ class Tbl_laba_rugi extends CI_Controller
 
         if ($unit === '') {
             echo json_encode(array('ok' => false, 'message' => 'Unit wajib diisi untuk tab per unit.'));
+            return;
+        }
+
+        if ($jenis_tab === 'sederhana' && labarugi_unit_tab_sync_is_rinci_derived_key($nama_laba_rugi)) {
+            echo json_encode(array('ok' => false, 'message' => 'Field ini diisi otomatis dari tab RINCI.'));
             return;
         }
 
@@ -473,6 +496,22 @@ class Tbl_laba_rugi extends CI_Controller
             'bulan_transaksi' => $bulan,
         ));
 
+        labarugi_unit_tab_sync_mirror_detail(
+            $this,
+            $uuid_laba_rugi,
+            $tahun,
+            $bulan,
+            $jenis_tab,
+            $nama_laba_rugi,
+            $unit,
+            $nominal_update,
+            $keterangan_data,
+            array(
+                'auto_sistem' => $auto_sistem,
+                'status_sync_auto' => $status_sync_auto,
+            )
+        );
+
         echo json_encode(array(
             'ok' => true,
             'message' => $status_sync_auto === 1 ? 'Nilai otomatis disalin ke input.' : 'Status sync otomatis disimpan.',
@@ -481,6 +520,7 @@ class Tbl_laba_rugi extends CI_Controller
             'status_sync_auto' => $status_sync_auto,
             'nominal_formatted' => labarugi_detail_format_nominal($nominal_update),
             'auto_sistem_formatted' => labarugi_detail_format_nominal($auto_sistem),
+            'peer_synced' => labarugi_unit_tab_sync_should_mirror($nama_laba_rugi, $jenis_tab),
         ));
     }
 
@@ -694,7 +734,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function labarugi_print_unit($Get_tahun = null, $Get_bulan = null, $jenis_tab = 'rinci')
     {
-        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'dashboard_laporan_publish'));
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'laba_rugi_unit_tab_sync', 'dashboard_laporan_publish'));
 
         $Get_tahun = (int) $Get_tahun;
         $Get_bulan = (int) $Get_bulan;
@@ -736,6 +776,10 @@ class Tbl_laba_rugi extends CI_Controller
             'published_units' => $published_units,
             'keterangan_rows' => labarugi_keterangan_rows_by_tab($this, $jenis_tab),
             'detail_map' => labarugi_detail_load_map($this, $uuid_laba_rugi, $jenis_tab),
+            'detail_maps' => array(
+                'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
+                'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
+            ),
         );
 
         $html = $this->load->view('anekadharma/tbl_laba_rugi/adminlte310_labarugi_cetak_unit.php', $data, true);

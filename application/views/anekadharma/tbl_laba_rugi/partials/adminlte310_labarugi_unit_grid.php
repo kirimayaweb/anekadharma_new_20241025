@@ -12,7 +12,7 @@ if ($labarugi_view_mode === 'utama' || empty($list_unit)) {
     return;
 }
 
-$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_kode_akun', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge'));
+$this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_kode_akun', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'laba_rugi_unit_tab_sync'));
 $jenis_tab = ($labarugi_view_mode === 'sederhana') ? 'sederhana' : 'rinci';
 $list_unit = labarugi_unit_merge_display_units($list_unit);
 $keterangan_rows = labarugi_keterangan_rows_by_tab($this, $jenis_tab);
@@ -52,7 +52,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
             <i class="fa fa-th"></i>
             Input Laba Rugi Per Unit — <?php echo ($jenis_tab === 'sederhana') ? 'Sederhana' : 'Rinci'; ?>
         </h5>
-        <p class="text-muted small mb-0">Isi nominal per unit. Centang <strong>Publish</strong> di header unit untuk mempublikasikan kolom unit (hijau). Centang <strong>sync</strong> di kanan nilai sistem untuk salin otomatis ke input. Sel <strong>hijau cerah</strong> = input sama dengan sistem. Sel kuning = input berbeda dari sistem.</p>
+        <p class="text-muted small mb-0">Isi nominal per unit. Centang <strong>Publish</strong> di header unit untuk mempublikasikan kolom unit (hijau). Centang <strong>sync</strong> di kanan nilai sistem untuk salin otomatis ke input. Sel <strong>hijau cerah</strong> = input sama dengan sistem. Sel kuning = input berbeda dari sistem. <?php if ($jenis_tab === 'sederhana') { ?><strong>Tab Sederhana</strong> otomatis menyamakan input dengan tab RINCI (kecuali sub-rincian BOK/BOU). <?php } else { ?><strong>Tab RINCI</strong> otomatis menyamakan input dengan tab Sederhana untuk keterangan yang sama. <?php } ?></p>
     </div>
 
     <p class="labarugi-unit-grid-scroll-hint"><i class="fa fa-arrows-h"></i> Scroll horizontal atas atau bawah untuk melihat unit lainnya — kolom Keterangan tetap diam</p>
@@ -102,6 +102,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                     $is_bok_sub = labarugi_keterangan_is_bok_sub_row_key($ket_key, $jenis_tab);
                     $is_muted_input = labarugi_keterangan_is_muted_input_row_key($ket_key, $jenis_tab);
                     $input_muted_class = $is_muted_input ? ' labarugi-input-sub-muted' : '';
+                    $is_rinci_derived_sederhana = ($jenis_tab === 'sederhana' && labarugi_unit_tab_sync_is_rinci_derived_key($ket_key));
                     $is_summary = $is_calc && labarugi_keterangan_row_style_for_key($ket_key, $jenis_tab) === 'summary';
                     $row_class = 'labarugi-grid-input-row';
                     if ($is_title) {
@@ -150,7 +151,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                         <?php
                                 continue;
                             }
-                            $saved = labarugi_unit_merge_detail_saved_row($detail_map, $ket_key, $unit_key);
+                            $saved = labarugi_unit_tab_sync_detail_saved_row($labarugi_detail_maps, $jenis_tab, $ket_key, $unit_key);
                             $val = '';
                             if ($is_calc) {
                                 if ($saved && $saved->nominal_update !== null) {
@@ -158,10 +159,13 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                 } elseif ($saved && $saved->nominal !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal);
                                 } else {
-                                    $val = labarugi_detail_format_nominal(labarugi_unit_merge_detail_nominal($detail_map, $ket_key, $unit_key));
+                                    $val = labarugi_detail_format_nominal(labarugi_unit_tab_sync_detail_nominal($labarugi_detail_maps, $jenis_tab, $ket_key, $unit_key));
                                 }
                             } else {
                                 $sync_auto = labarugi_unit_merge_row_sync_auto($detail_map, $ket_key, $unit_key);
+                                if ($is_rinci_derived_sederhana) {
+                                    $sync_auto = 0;
+                                }
                                 $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
                                 $ns_nominal = labarugi_unit_merge_kode_akun_nominal($this, $bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
                                 $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
@@ -172,7 +176,7 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                 } elseif ($saved && $saved->nominal !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal);
                                 } else {
-                                    $val = labarugi_detail_format_nominal(labarugi_unit_merge_detail_nominal($detail_map, $ket_key, $unit_key));
+                                    $val = labarugi_detail_format_nominal(labarugi_unit_tab_sync_detail_nominal($labarugi_detail_maps, $jenis_tab, $ket_key, $unit_key));
                                 }
                             }
                             $input_id = $grid_id . '_' . $ket_key . '_' . preg_replace('/[^a-zA-Z0-9_]/', '_', $unit_key);
@@ -216,11 +220,14 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                 continue;
                             }
                             $sync_auto = labarugi_unit_merge_row_sync_auto($detail_map, $ket_key, $unit_key);
+                            if ($is_rinci_derived_sederhana) {
+                                $sync_auto = 0;
+                            }
                             $ket_kodes = isset($ka_selected_map[$ket_key]) ? $ka_selected_map[$ket_key] : array();
                             $ns_nominal = labarugi_unit_merge_kode_akun_nominal($this, $bb_merged_rows, $ket_kodes, $unit_key, $unit_label);
                             $ns_formatted = labarugi_kode_akun_format_nominal($ns_nominal);
                         ?>
-                            <td class="labarugi-grid-cell <?php echo $unit_col_class; ?>"
+                            <td class="labarugi-grid-cell <?php echo $unit_col_class; ?><?php echo $is_rinci_derived_sederhana ? ' labarugi-grid-cell-rinci-derived' : ''; ?>"
                                 data-unit-key="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
                                 <div class="labarugi-grid-input-group"
                                     data-save-url="<?php echo htmlspecialchars($save_url, ENT_QUOTES, 'UTF-8'); ?>"
@@ -232,7 +239,9 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                     data-nama-label="<?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-unit="<?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>"
                                     data-uuid="<?php echo htmlspecialchars($uuid_laba_rugi, ENT_QUOTES, 'UTF-8'); ?>"
-                                    data-sync-auto="<?php echo $sync_auto === 1 ? '1' : '0'; ?>">
+                                    data-sync-auto="<?php echo $sync_auto === 1 ? '1' : '0'; ?>"
+                                    <?php echo $is_rinci_derived_sederhana ? ' data-rinci-derived="1"' : ''; ?>>
+                                    <?php if (!$is_rinci_derived_sederhana) { ?>
                                     <div class="labarugi-grid-auto-row">
                                         <button type="button"
                                             class="labarugi-grid-ns-nominal btn btn-link p-0"
@@ -253,19 +262,25 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                                             <span class="labarugi-grid-sync-auto-label"><i class="fa fa-refresh"></i></span>
                                         </label>
                                     </div>
+                                    <?php } else { ?>
+                                    <div class="labarugi-grid-rinci-derived-hint text-muted small mb-1" title="Nilai dihitung dari tab RINCI">
+                                        <i class="fa fa-link"></i> Dari tab RINCI
+                                    </div>
+                                    <?php } ?>
                                     <input type="tel"
-                                        class="labarugi-grid-input form-control form-control-sm<?php echo $input_muted_class; ?>"
+                                        class="labarugi-grid-input form-control form-control-sm<?php echo $input_muted_class; ?><?php echo $is_rinci_derived_sederhana ? ' labarugi-grid-input-rinci-derived' : ''; ?>"
                                         id="<?php echo $input_id; ?>"
                                         pattern="[0-9(,.)]{1,22}"
                                         maxlength="22"
                                         size="18"
                                         placeholder="0,00"
                                         value="<?php echo htmlspecialchars($val, ENT_QUOTES, 'UTF-8'); ?>"
+                                        <?php echo $is_rinci_derived_sederhana ? 'readonly="readonly" tabindex="-1"' : ''; ?>
                                         autocomplete="off" />
                                     <button type="button"
                                         class="btn btn-sm labarugi-grid-btn-save"
-                                        disabled
-                                        title="Simpan <?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?> — <?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <?php echo $is_rinci_derived_sederhana ? 'disabled' : 'disabled'; ?>
+                                        title="<?php echo $is_rinci_derived_sederhana ? 'Diisi otomatis dari tab RINCI' : ('Simpan ' . htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8') . ' — ' . htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8')); ?>">
                                         <i class="fa fa-save"></i> Simpan
                                     </button>
                                     <span class="labarugi-grid-status"></span>
