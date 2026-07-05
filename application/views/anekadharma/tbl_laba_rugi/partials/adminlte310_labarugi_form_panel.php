@@ -112,6 +112,7 @@ if ($labarugi_view_mode === 'utama') {
 										'list_unit' => $list_unit,
 										'labarugi_detail_maps' => isset($labarugi_detail_maps) ? $labarugi_detail_maps : array(),
 										'labarugi_unit_publish_maps' => isset($labarugi_unit_publish_maps) ? $labarugi_unit_publish_maps : array(),
+										'labarugi_is_published' => isset($labarugi_is_published) ? (bool) $labarugi_is_published : false,
 										'uuid_data_laba_rugi' => isset($uuid_data_laba_rugi) ? $uuid_data_laba_rugi : '',
 										'tahun_neraca' => $tahun_neraca,
 										'bulan_transaksi' => $bulan_transaksi,

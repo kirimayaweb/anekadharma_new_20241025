@@ -2210,13 +2210,30 @@
 								</div>
 							<?php } ?>
 							<?php if (!empty($labarugi_is_published)) { ?>
-								<button type="button" class="btn" style="background-color: #28a745; border-color: #28a745; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold; cursor: default;" disabled>
-									<i class="fa fa-check"></i> Sudah Publish
-								</button>
+								<form action="<?php echo site_url('Tbl_laba_rugi/publish_labarugi/' . $tahun_neraca . '/' . $bulan_transaksi); ?>" method="post" style="display: inline;">
+									<input type="hidden" name="action" value="cancel">
+									<button type="submit" class="btn labarugi-btn-cancel-publish" style="background-color: #dc3545; border-color: #dc3545; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold;">
+										<i class="fa fa-times-circle"></i> Cancel Publish
+									</button>
+								</form>
+								<div class="labarugi-print-unit-actions mt-3">
+									<a href="<?php echo site_url('Tbl_laba_rugi/labarugi_print_unit/' . (int) $tahun_neraca . '/' . (int) $bulan_transaksi . '/rinci'); ?>"
+										class="btn btn-info labarugi-btn-print-unit"
+										target="_blank"
+										title="Cetak Laba Rugi Per Unit Rinci">
+										<i class="fa fa-print"></i> Cetak Laba Rugi Per Unit (Rinci)
+									</a>
+									<a href="<?php echo site_url('Tbl_laba_rugi/labarugi_print_unit/' . (int) $tahun_neraca . '/' . (int) $bulan_transaksi . '/sederhana'); ?>"
+										class="btn btn-primary labarugi-btn-print-unit ml-2"
+										target="_blank"
+										title="Cetak Laba Rugi Per Unit Sederhana">
+										<i class="fa fa-print"></i> Cetak Laba Rugi Per Unit (Sederhana)
+									</a>
+								</div>
 							<?php } else { ?>
 								<form action="<?php echo site_url('Tbl_laba_rugi/publish_labarugi/' . $tahun_neraca . '/' . $bulan_transaksi); ?>" method="post" style="display: inline;">
 									<input type="hidden" name="action" value="publish">
-									<button type="submit" class="btn" style="background-color: #dc3545; border-color: #dc3545; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold;" <?php echo !empty($labarugi_has_record) ? '' : 'disabled'; ?>>
+									<button type="submit" class="btn labarugi-btn-publish" style="background-color: #28a745; border-color: #28a745; color: #fff; min-width: 220px; padding: 12px 24px; font-weight: bold;" <?php echo !empty($labarugi_has_record) ? '' : 'disabled'; ?>>
 										<i class="fa fa-upload"></i> Publish
 									</button>
 								</form>

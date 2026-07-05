@@ -1160,14 +1160,15 @@ class Tbl_laba_rugi extends CI_Controller
             return;
         }
 
-        if (!dashboard_laporan_has_saved_data($this, 'tbl_laba_rugi', $Get_tahun, $Get_bulan)) {
+        $action = trim((string) $this->input->post('action'));
+        $publish = ($action !== 'cancel');
+
+        if ($publish && !dashboard_laporan_has_saved_data($this, 'tbl_laba_rugi', $Get_tahun, $Get_bulan)) {
             $this->session->set_flashdata('message', 'Data laporan belum tersimpan. Simpan data terlebih dahulu.');
             redirect(site_url('Tbl_laba_rugi/labarugi_form/' . $Get_tahun . '/' . $Get_bulan));
             return;
         }
 
-        $action = trim((string) $this->input->post('action'));
-        $publish = ($action !== 'cancel');
         $result = dashboard_laporan_set_published($this, 'laba_rugi', $Get_tahun, $Get_bulan, $publish);
 
         $this->session->set_flashdata('message', $result['message']);

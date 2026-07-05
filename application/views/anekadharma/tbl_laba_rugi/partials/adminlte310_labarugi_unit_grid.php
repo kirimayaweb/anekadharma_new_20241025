@@ -4,8 +4,8 @@ if (!isset($labarugi_tab_key)) { $labarugi_tab_key = $labarugi_view_mode; }
 if (!isset($list_unit)) { $list_unit = array(); }
 if (!isset($labarugi_detail_maps)) { $labarugi_detail_maps = array(); }
 if (!isset($labarugi_unit_publish_maps)) { $labarugi_unit_publish_maps = array(); }
+if (!isset($labarugi_is_published)) { $labarugi_is_published = false; }
 if (!isset($uuid_data_laba_rugi)) { $uuid_data_laba_rugi = ''; }
-if (!isset($tahun_neraca)) { $tahun_neraca = (int) date('Y'); }
 if (!isset($bulan_transaksi)) { $bulan_transaksi = (int) date('m'); }
 
 if ($labarugi_view_mode === 'utama' || empty($list_unit)) {
@@ -38,12 +38,12 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
             data-tab-label="<?php echo ($jenis_tab === 'sederhana') ? 'Sederhana' : 'Rinci'; ?>">
             <i class="fa fa-cog"></i> Setting Keterangan
         </button>
-        <?php if (!empty($bulan_transaksi) && (int) $bulan_transaksi > 0) { ?>
+        <?php if (!empty($bulan_transaksi) && (int) $bulan_transaksi > 0 && !empty($labarugi_is_published)) { ?>
         <a href="<?php echo site_url('Tbl_laba_rugi/labarugi_print_unit/' . (int) $tahun_neraca . '/' . (int) $bulan_transaksi . '/' . $jenis_tab); ?>"
-            class="btn btn-sm btn-info"
+            class="btn btn-sm btn-info labarugi-btn-print-unit-tab"
             target="_blank"
             title="Cetak hanya unit yang dicentang Publish">
-            <i class="fa fa-print"></i> Cetak Per Unit (Publish)
+            <i class="fa fa-print"></i> Cetak Laba Rugi Per Unit (<?php echo ($jenis_tab === 'sederhana') ? 'Sederhana' : 'Rinci'; ?>)
         </a>
         <?php } ?>
     </div>
