@@ -144,6 +144,7 @@ class Tbl_neraca_data extends CI_Controller
 				'ljpj_peternakan' => $row->ljpj_peternakan,
 				'ljpj_kerjasama_adwm' => $row->ljpj_kerjasama_adwm,
 				'ljpj_kerjasama_pdu_cabean_panggungharjo' => $row->ljpj_kerjasama_pdu_cabean_panggungharjo,
+				'aset_lain_lain' => $row->aset_lain_lain,
 				'utang_usaha' => $row->utang_usaha,
 				'utang_pajak' => $row->utang_pajak,
 				'utang_lain_lain' => $row->utang_lain_lain,
@@ -190,6 +191,7 @@ class Tbl_neraca_data extends CI_Controller
 			'ljpj_peternakan' => set_value('ljpj_peternakan'),
 			'ljpj_kerjasama_adwm' => set_value('ljpj_kerjasama_adwm'),
 			'ljpj_kerjasama_pdu_cabean_panggungharjo' => set_value('ljpj_kerjasama_pdu_cabean_panggungharjo'),
+			'aset_lain_lain' => set_value('aset_lain_lain'),
 			'utang_usaha' => set_value('utang_usaha'),
 			'utang_pajak' => set_value('utang_pajak'),
 			'utang_lain_lain' => set_value('utang_lain_lain'),
@@ -234,6 +236,7 @@ class Tbl_neraca_data extends CI_Controller
 				'ljpj_peternakan' => $this->input->post('ljpj_peternakan', TRUE),
 				'ljpj_kerjasama_adwm' => $this->input->post('ljpj_kerjasama_adwm', TRUE),
 				'ljpj_kerjasama_pdu_cabean_panggungharjo' => $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE),
+				'aset_lain_lain' => $this->input->post('aset_lain_lain', TRUE),
 				'utang_usaha' => $this->input->post('utang_usaha', TRUE),
 				'utang_pajak' => $this->input->post('utang_pajak', TRUE),
 				'utang_lain_lain' => $this->input->post('utang_lain_lain', TRUE),
@@ -283,6 +286,7 @@ class Tbl_neraca_data extends CI_Controller
 				'ljpj_peternakan' => set_value('ljpj_peternakan', $row->ljpj_peternakan),
 				'ljpj_kerjasama_adwm' => set_value('ljpj_kerjasama_adwm', $row->ljpj_kerjasama_adwm),
 				'ljpj_kerjasama_pdu_cabean_panggungharjo' => set_value('ljpj_kerjasama_pdu_cabean_panggungharjo', $row->ljpj_kerjasama_pdu_cabean_panggungharjo),
+				'aset_lain_lain' => set_value('aset_lain_lain', $row->aset_lain_lain),
 				'utang_usaha' => set_value('utang_usaha', $row->utang_usaha),
 				'utang_pajak' => set_value('utang_pajak', $row->utang_pajak),
 				'utang_lain_lain' => set_value('utang_lain_lain', $row->utang_lain_lain),
@@ -331,6 +335,7 @@ class Tbl_neraca_data extends CI_Controller
 				'ljpj_peternakan' => $this->input->post('ljpj_peternakan', TRUE),
 				'ljpj_kerjasama_adwm' => $this->input->post('ljpj_kerjasama_adwm', TRUE),
 				'ljpj_kerjasama_pdu_cabean_panggungharjo' => $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE),
+				'aset_lain_lain' => $this->input->post('aset_lain_lain', TRUE),
 				'utang_usaha' => $this->input->post('utang_usaha', TRUE),
 				'utang_pajak' => $this->input->post('utang_pajak', TRUE),
 				'utang_lain_lain' => $this->input->post('utang_lain_lain', TRUE),
@@ -446,6 +451,7 @@ class Tbl_neraca_data extends CI_Controller
 		xlsWriteLabel($tablehead, $kolomhead++, "Ljpj Peternakan");
 		xlsWriteLabel($tablehead, $kolomhead++, "Ljpj Kerjasama Adwm");
 		xlsWriteLabel($tablehead, $kolomhead++, "Ljpj Kerjasama Pdu Cabean Panggungharjo");
+		xlsWriteLabel($tablehead, $kolomhead++, "Aset Lain-lain");
 		xlsWriteLabel($tablehead, $kolomhead++, "Utang Usaha");
 		xlsWriteLabel($tablehead, $kolomhead++, "Utang Pajak");
 		xlsWriteLabel($tablehead, $kolomhead++, "Utang Lain Lain");
@@ -484,6 +490,7 @@ class Tbl_neraca_data extends CI_Controller
 			xlsWriteNumber($tablebody, $kolombody++, $data->ljpj_peternakan);
 			xlsWriteNumber($tablebody, $kolombody++, $data->ljpj_kerjasama_adwm);
 			xlsWriteNumber($tablebody, $kolombody++, $data->ljpj_kerjasama_pdu_cabean_panggungharjo);
+			xlsWriteNumber($tablebody, $kolombody++, $data->aset_lain_lain);
 			xlsWriteNumber($tablebody, $kolombody++, $data->utang_usaha);
 			xlsWriteNumber($tablebody, $kolombody++, $data->utang_pajak);
 			xlsWriteNumber($tablebody, $kolombody++, $data->utang_lain_lain);
@@ -1079,6 +1086,7 @@ class Tbl_neraca_data extends CI_Controller
 			'ljpj_peternakan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_peternakan', TRUE)),
 			'ljpj_kerjasama_adwm' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_adwm', TRUE)),
 			'ljpj_kerjasama_pdu_cabean_panggungharjo' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE)),
+			'aset_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('aset_lain_lain', TRUE)),
 			'utang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('utang_usaha', TRUE)),
 			'utang_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('utang_pajak', TRUE)),
 			'utang_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('utang_lain_lain', TRUE)),
@@ -1163,6 +1171,7 @@ class Tbl_neraca_data extends CI_Controller
 			'ljpj_peternakan' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_peternakan', TRUE)),
 			'ljpj_kerjasama_adwm' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_adwm', TRUE)),
 			'ljpj_kerjasama_pdu_cabean_panggungharjo' => preg_replace("/[^0-9]/", "", $this->input->post('ljpj_kerjasama_pdu_cabean_panggungharjo', TRUE)),
+			'aset_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('aset_lain_lain', TRUE)),
 			'utang_usaha' => preg_replace("/[^0-9]/", "", $this->input->post('utang_usaha', TRUE)),
 			'utang_pajak' => preg_replace("/[^0-9]/", "", $this->input->post('utang_pajak', TRUE)),
 			'utang_lain_lain' => preg_replace("/[^0-9]/", "", $this->input->post('utang_lain_lain', TRUE)),

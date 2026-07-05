@@ -18,6 +18,24 @@ class Tbl_neraca_data_model extends CI_Model
     function __construct()
     {
         parent::__construct();
+        $this->ensure_columns();
+    }
+
+    public function ensure_columns()
+    {
+        static $done = false;
+        if ($done) {
+            return;
+        }
+        $done = true;
+
+        if (!$this->db->table_exists($this->table)) {
+            return;
+        }
+
+        if (!$this->db->field_exists('aset_lain_lain', $this->table)) {
+            $this->db->query("ALTER TABLE `{$this->table}` ADD `aset_lain_lain` DOUBLE DEFAULT 0 AFTER `ljpj_kerjasama_pdu_cabean_panggungharjo`");
+        }
     }
 
     // get all
@@ -81,6 +99,7 @@ class Tbl_neraca_data_model extends CI_Model
 	$this->db->or_like('ljpj_peternakan', $q);
 	$this->db->or_like('ljpj_kerjasama_adwm', $q);
 	$this->db->or_like('ljpj_kerjasama_pdu_cabean_panggungharjo', $q);
+	$this->db->or_like('aset_lain_lain', $q);
 	$this->db->or_like('utang_usaha', $q);
 	$this->db->or_like('utang_pajak', $q);
 	$this->db->or_like('utang_lain_lain', $q);
@@ -121,6 +140,7 @@ class Tbl_neraca_data_model extends CI_Model
 	$this->db->or_like('ljpj_peternakan', $q);
 	$this->db->or_like('ljpj_kerjasama_adwm', $q);
 	$this->db->or_like('ljpj_kerjasama_pdu_cabean_panggungharjo', $q);
+	$this->db->or_like('aset_lain_lain', $q);
 	$this->db->or_like('utang_usaha', $q);
 	$this->db->or_like('utang_pajak', $q);
 	$this->db->or_like('utang_lain_lain', $q);

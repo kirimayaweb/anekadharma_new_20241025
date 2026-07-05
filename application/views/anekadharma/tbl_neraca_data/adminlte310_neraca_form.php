@@ -2182,6 +2182,61 @@ echo number_format($data_tbl_neraca_data->ljpj_kerjasama_pdu_cabean_panggungharj
 
 								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
 
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php echo neraca_render_label_keterangan('aset_lain_lain', 'Aset Lain-lain'); ?></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('aset_lain_lain', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
+										<div class="sm-4">
+
+
+											<form action="<?php echo $action . '/aset_lain_lain'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="aset_lain_lain">
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="aset_lain_lain" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+echo number_format(isset($data_tbl_neraca_data->aset_lain_lain) ? $data_tbl_neraca_data->aset_lain_lain : 0, 2, ',', '.');
+																																															$GET_AKTIVA_LAIN_LAIN = $GET_AKTIVA_LAIN_LAIN + (isset($data_tbl_neraca_data->aset_lain_lain) ? $data_tbl_neraca_data->aset_lain_lain : 0);
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+										</div>
+									</div>
+
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label"></th>
+
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
 								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"></th>
 
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
@@ -2901,10 +2956,16 @@ function terbilang($nilai)
 			$va_ljpj_kerjasama_pdu_cabean_panggungharjo = 0;
 		}
 
+		if (!isNaN(parseInt(document.getElementById('aset_lain_lain').value.replace(/[^0-9]/g, '')))) {
+			$va_aset_lain_lain = parseInt(document.getElementById('aset_lain_lain').value.replace(/[^0-9]/g, ''));
+		} else {
+			$va_aset_lain_lain = 0;
+		}
 
 
 
-		var result_total_aktiva_lain_lain = parseInt($va_piutang_non_usaha_pihak_ketiga) + parseInt($va_piutang_non_usaha_radio) + parseInt($va_ljpj_taman_gedung_kesenian_gabusan) + parseInt($va_ljpj_kompleks_gedung_kesenian) + parseInt($va_ljpj_radio) + parseInt($va_ljpj_kerjasama_operasi_apotek_dharma_usaha) + parseInt($va_ljpj_peternakan) + parseInt($va_ljpj_kerjasama_adwm) + parseInt($va_ljpj_kerjasama_pdu_cabean_panggungharjo);
+
+		var result_total_aktiva_lain_lain = parseInt($va_piutang_non_usaha_pihak_ketiga) + parseInt($va_piutang_non_usaha_radio) + parseInt($va_ljpj_taman_gedung_kesenian_gabusan) + parseInt($va_ljpj_kompleks_gedung_kesenian) + parseInt($va_ljpj_radio) + parseInt($va_ljpj_kerjasama_operasi_apotek_dharma_usaha) + parseInt($va_ljpj_peternakan) + parseInt($va_ljpj_kerjasama_adwm) + parseInt($va_ljpj_kerjasama_pdu_cabean_panggungharjo) + parseInt($va_aset_lain_lain);
 
 		if (!isNaN(result_total_aktiva_lain_lain)) {
 			// document.getElementById('total_aktiva_lain_lain').value = result_total_aktiva_lain_lain;

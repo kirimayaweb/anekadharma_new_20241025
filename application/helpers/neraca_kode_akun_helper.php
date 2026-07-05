@@ -32,6 +32,7 @@ function neraca_field_labels()
         'ljpj_peternakan' => 'LJPJ Peternakan',
         'ljpj_kerjasama_adwm' => 'LJPJ Kerjasama ADWM',
         'ljpj_kerjasama_pdu_cabean_panggungharjo' => 'LJPJ Kerjasama PDU Cabean Panggung Harjo',
+        'aset_lain_lain' => 'Aset Lain-lain',
     );
 }
 
@@ -129,6 +130,7 @@ function neraca_field_fallback_groups()
         'ljpj_peternakan' => 'ljpj_peternakan',
         'ljpj_kerjasama_adwm' => 'ljpj_kerjasama_adwm',
         'ljpj_kerjasama_pdu_cabean_panggungharjo' => 'ljpj_kerjasama_pdu_cabean_panggungharjo',
+        'aset_lain_lain' => 'aset_lain_lain',
     );
 }
 

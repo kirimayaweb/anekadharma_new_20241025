@@ -192,6 +192,7 @@ function tbl_neraca_data_compute_cetak_excel_rows($data)
 	$push('data', 'ljpj-Peternakan', $add_aktiva_lain('ljpj_peternakan'), '', null);
 	$push('data', 'ljpj-Kerjasama ADWM', $add_aktiva_lain('ljpj_kerjasama_adwm'), '', null);
 	$push('data', 'ljpj-Kerjasama PDU Cabean Panggungharjo', $add_aktiva_lain('ljpj_kerjasama_pdu_cabean_panggungharjo'), '', null);
+	$push('data', 'Aset Lain-lain', $add_aktiva_lain('aset_lain_lain'), '', null);
 	$push('data', '', $Aktiva_Lain_Lain, '', $TOTAL_Modal_dan_Laba_ditahan, true);
 	$push('blank');
 	$push('data', 'TOTAL AKTIVA', $TOTAL_AKIVA_LANCAR + $Total_Aktiva_Tetap_Bersih + $Aktiva_Lain_Lain, 'TOTAL PASIVA', $TOTAL_Utang_Lancar + $TOTAL_Utang_Jangka_Panjang + $TOTAL_Modal_dan_Laba_ditahan, true);

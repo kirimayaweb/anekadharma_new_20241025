@@ -103,6 +103,7 @@ class Sys_setting_neraca_kode_akun_model extends CI_Model
             'ljpj_peternakan' => array('label' => 'LJPJ Peternakan', 'group' => 'ljpj_peternakan'),
             'ljpj_kerjasama_adwm' => array('label' => 'LJPJ Kerjasama ADWM', 'group' => 'ljpj_kerjasama_adwm'),
             'ljpj_kerjasama_pdu_cabean_panggungharjo' => array('label' => 'LJPJ Kerjasama PDU Cabean Panggung Harjo', 'group' => 'ljpj_kerjasama_pdu_cabean_panggungharjo'),
+            'aset_lain_lain' => array('label' => 'Aset Lain-lain', 'group' => 'aset_lain_lain'),
         );
     }
 
