@@ -146,10 +146,21 @@ function labarugi_unit_publish_published_units($list_unit, $publish_map)
 
 function labarugi_unit_publish_detail_nominal($detail_map, $ket_key, $unit_key)
 {
-    if (!isset($detail_map[$ket_key][$unit_key])) {
+    if (!isset($detail_map[$ket_key])) {
         return 0.0;
     }
-    $row = $detail_map[$ket_key][$unit_key];
+    $row = null;
+    if (isset($detail_map[$ket_key][$unit_key])) {
+        $row = $detail_map[$ket_key][$unit_key];
+    } elseif (function_exists('labarugi_unit_merge_normalize_key')) {
+        $norm = labarugi_unit_merge_normalize_key($unit_key);
+        if (isset($detail_map[$ket_key][$norm])) {
+            $row = $detail_map[$ket_key][$norm];
+        }
+    }
+    if ($row === null) {
+        return 0.0;
+    }
     if ($row->nominal_update !== null && $row->nominal_update !== '') {
         return (float) $row->nominal_update;
     }

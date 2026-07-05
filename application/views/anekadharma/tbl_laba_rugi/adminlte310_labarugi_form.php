@@ -1277,6 +1277,21 @@
 				}
 			}
 
+			function labarugiUnitTabSyncApplyDerivedPeerValues(unitKey, derivedValues) {
+				if (!unitKey || !derivedValues) { return; }
+				var sederhanaWrap = document.querySelector('.labarugi-unit-grid-wrap[data-jenis-tab="sederhana"]');
+				if (!sederhanaWrap) { return; }
+				Object.keys(derivedValues).forEach(function(ketKey) {
+					var peerGroup = sederhanaWrap.querySelector(
+						'.labarugi-grid-input-group[data-nama-laba-rugi="' + labarugiEscSelector(ketKey) + '"][data-unit="' + labarugiEscSelector(unitKey) + '"]'
+					);
+					labarugiUnitTabSyncApplyPeerValue(peerGroup, derivedValues[ketKey], { skipRecalc: false });
+				});
+				if (typeof labarugiRecalcUnitGrid === 'function') {
+					labarugiRecalcUnitGrid(sederhanaWrap);
+				}
+			}
+
 			function labarugiUnitTabSyncAfterSave(group, formattedValue) {
 				if (!group) { return; }
 				var jenisTab = group.getAttribute('data-jenis-tab');
@@ -1287,13 +1302,17 @@
 				labarugiUnitTabSyncApplyPeerValue(peerGroup, formattedValue, { fromServerSave: true });
 			}
 
-			function labarugiUnitTabSyncRinciDerivedToSederhana(rinciWrap, values) {
+			function labarugiUnitTabSyncRinciDerivedToSederhana(rinciWrap, values, unitKey) {
 				if (!rinciWrap || rinciWrap.getAttribute('data-jenis-tab') !== 'rinci') { return; }
 				var sederhanaWrap = document.querySelector('.labarugi-unit-grid-wrap[data-jenis-tab="sederhana"]');
 				if (!sederhanaWrap || !values) { return; }
 				(LABARUGI_UNIT_TAB_SYNC.rinciDerivedKeys || []).forEach(function(ketKey) {
 					if (typeof values[ketKey] === 'undefined') { return; }
-					sederhanaWrap.querySelectorAll('.labarugi-grid-input-group[data-nama-laba-rugi="' + labarugiEscSelector(ketKey) + '"]').forEach(function(peerGroup) {
+					var selector = '.labarugi-grid-input-group[data-nama-laba-rugi="' + labarugiEscSelector(ketKey) + '"]';
+					if (unitKey) {
+						selector += '[data-unit="' + labarugiEscSelector(unitKey) + '"]';
+					}
+					sederhanaWrap.querySelectorAll(selector).forEach(function(peerGroup) {
 						labarugiUnitTabSyncApplyPeerValue(peerGroup, labarugiGridFormatNominal(values[ketKey]), { skipRecalc: false });
 					});
 				});
@@ -1405,7 +1424,12 @@
 					labarugiApplyCalcToGroup(table.querySelector(groupSel), result);
 				});
 				if (wrap && wrap.getAttribute('data-jenis-tab') === 'rinci') {
-					labarugiUnitTabSyncRinciDerivedToSederhana(wrap, values);
+					var unitKey = '';
+					var unitMatch = unitSel.match(/data-unit-key="((?:\\.|[^"\\])*)"/);
+					if (unitMatch) {
+						unitKey = unitMatch[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+					}
+					labarugiUnitTabSyncRinciDerivedToSederhana(wrap, values, unitKey);
 				}
 				return values;
 			}
@@ -1766,9 +1790,11 @@
 							labarugiGridRefreshMatch(group);
 							if (data.peer_synced) {
 								labarugiUnitTabSyncAfterSave(group, data.nominal_formatted || input.value);
-							} else {
-								labarugiTriggerRecalcFromGroup(group);
 							}
+							if (data.derived_peer_values && group.getAttribute('data-unit')) {
+								labarugiUnitTabSyncApplyDerivedPeerValues(group.getAttribute('data-unit'), data.derived_peer_values);
+							}
+							labarugiTriggerRecalcFromGroup(group);
 						} else {
 							if (status) {
 								status.textContent = (data && data.message) ? data.message : 'Gagal simpan';

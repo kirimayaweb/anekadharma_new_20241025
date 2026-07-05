@@ -153,7 +153,9 @@ $grid_id = 'labarugiGrid_' . htmlspecialchars($labarugi_tab_key, ENT_QUOTES, 'UT
                             }
                             $saved = labarugi_unit_tab_sync_detail_saved_row($labarugi_detail_maps, $jenis_tab, $ket_key, $unit_key);
                             $val = '';
-                            if ($is_calc) {
+                            if ($is_rinci_derived_sederhana) {
+                                $val = labarugi_detail_format_nominal(labarugi_unit_tab_sync_rinci_derived_nominal($labarugi_detail_maps, $ket_key, $unit_key));
+                            } elseif ($is_calc) {
                                 if ($saved && $saved->nominal_update !== null) {
                                     $val = labarugi_detail_format_nominal($saved->nominal_update);
                                 } elseif ($saved && $saved->nominal !== null) {

@@ -226,6 +226,17 @@ class Tbl_laba_rugi extends CI_Controller
             'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
             'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
         );
+        $this->load->helper('laba_rugi_unit_tab_sync');
+        if ($uuid_laba_rugi !== '' && $Get_bulan && (int) $Get_bulan > 0) {
+            $data['labarugi_detail_maps'] = labarugi_unit_tab_sync_reconcile_derived_maps(
+                $this,
+                $uuid_laba_rugi,
+                $Get_tahun,
+                $Get_bulan,
+                $data['labarugi_detail_maps'],
+                $data['list_unit']
+            );
+        }
         $data['labarugi_unit_publish_maps'] = array(
             'rinci' => labarugi_unit_publish_load_map($this, $uuid_laba_rugi, 'rinci', $Get_tahun, $Get_bulan),
             'sederhana' => labarugi_unit_publish_load_map($this, $uuid_laba_rugi, 'sederhana', $Get_tahun, $Get_bulan),
@@ -400,6 +411,28 @@ class Tbl_laba_rugi extends CI_Controller
             $keterangan_data
         );
 
+        $derived_peer_values = array();
+        if ($jenis_tab === 'rinci' && labarugi_unit_tab_sync_should_refresh_derived_after_rinci_save($nama_laba_rugi)) {
+            $detail_maps = array(
+                'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
+                'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
+            );
+            labarugi_unit_tab_sync_push_derived_to_sederhana(
+                $this,
+                $uuid_laba_rugi,
+                $tahun,
+                $bulan,
+                $unit,
+                $detail_maps,
+                $keterangan_data
+            );
+            foreach (labarugi_unit_tab_sync_rinci_derived_keys() as $derived_key) {
+                $derived_peer_values[$derived_key] = labarugi_detail_format_nominal(
+                    labarugi_unit_tab_sync_rinci_derived_nominal($detail_maps, $derived_key, $unit)
+                );
+            }
+        }
+
         echo json_encode(array(
             'ok' => true,
             'message' => 'Data berhasil disimpan.',
@@ -407,6 +440,7 @@ class Tbl_laba_rugi extends CI_Controller
             'uuid_laba_rugi' => $uuid_laba_rugi,
             'nominal_formatted' => labarugi_detail_format_nominal($nominal),
             'peer_synced' => labarugi_unit_tab_sync_should_mirror($nama_laba_rugi, $jenis_tab),
+            'derived_peer_values' => $derived_peer_values,
         ));
     }
 
