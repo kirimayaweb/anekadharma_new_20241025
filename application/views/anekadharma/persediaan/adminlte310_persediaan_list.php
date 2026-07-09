@@ -5472,17 +5472,29 @@ window.addEventListener('load', function() {
     }
 
     function htmlGenRecalcProgress(data) {
-        var phaseLabel = 'Fase 1: Generate dari bulan sumber';
-        if (data.phase === 'pembelian') {
-            phaseLabel = 'Fase 2: Pembelian → beli';
-        } else if (data.phase === 'unit_produk') {
-            phaseLabel = 'Fase 3: Produk jadi (sys_unit_produk) → SA & total_10';
-        } else if (data.phase === 'produksi') {
-            phaseLabel = 'Fase 4: Produksi bahan → bahan_produksi & total_10';
-        } else if (data.phase === 'penjualan') {
-            phaseLabel = 'Fase 5: Penjualan → uuid_persediaan atau nama+satuan; unit & penjualan += jumlah, total_10 -= jumlah';
-        } else if (data.phase === 'pecah_satuan') {
-            phaseLabel = 'Fase 6: Pecah satuan → pecah_satuan & total_10 / SA target';
+        var phaseLabel = data.progress_label || '';
+        if (!phaseLabel) {
+            if (data.phase === 'verifikasi_pembelian') {
+                phaseLabel = 'Fase 1: Verifikasi uuid_persediaan — tbl_pembelian / tbl_pembelian_jasa';
+            } else if (data.phase === 'verifikasi_penjualan') {
+                phaseLabel = 'Fase 2: Verifikasi uuid_persediaan — tbl_penjualan (bulan target)';
+            } else if (data.phase === 'reset_target') {
+                phaseLabel = 'Fase 3: Mengosongkan persediaan bulan target';
+            } else if (data.phase === 'copy_persediaan') {
+                phaseLabel = 'Fase 4: Copy persediaan dari bulan sebelumnya';
+            } else if (data.phase === 'pembelian') {
+                phaseLabel = 'Fase 2: Pembelian → beli';
+            } else if (data.phase === 'unit_produk') {
+                phaseLabel = 'Fase 3: Produk jadi (sys_unit_produk) → SA & total_10';
+            } else if (data.phase === 'produksi') {
+                phaseLabel = 'Fase 4: Produksi bahan → bahan_produksi & total_10';
+            } else if (data.phase === 'penjualan') {
+                phaseLabel = 'Fase 5: Penjualan → uuid_persediaan atau nama+satuan; unit & penjualan += jumlah, total_10 -= jumlah';
+            } else if (data.phase === 'pecah_satuan') {
+                phaseLabel = 'Fase 6: Pecah satuan → pecah_satuan & total_10 / SA target';
+            } else {
+                phaseLabel = 'Fase 1: Generate dari bulan sumber';
+            }
         }
         var total = data.total_phase || data.total_sumber || 1;
         var selesai = data.offset_selesai || 0;
@@ -5618,10 +5630,36 @@ window.addEventListener('load', function() {
             Swal.close();
 
             var s = data.summary || {};
+            var isV2Ready = !!(data.v2_ready || s.v2_ready);
             var isGenerateOnly = !!(data.generate_only || s.generate_only);
             var isPembelianOnly = !!(data.pembelian_only || s.pembelian_only);
             var summaryHtml;
-            if (isGenerateOnly) {
+            if (isV2Ready) {
+                $('#gen-recalc-phase-lanjut').addClass('d-none');
+                $('#gen-recalc-summary-wrap').removeClass('d-none');
+                $('#gen-recalc-mode-notice').removeClass('d-none');
+                var orphanLine = '';
+                if ((s.verifikasi_penjualan_orphan || 0) > 0) {
+                    orphanLine = '<br/><span class="text-warning">Penjualan tanpa referensi pembelian/persediaan: <strong>'
+                        + (s.verifikasi_penjualan_orphan || 0) + '</strong> record (kemungkinan produk baru)</span>';
+                }
+                summaryHtml = '<strong class="text-success">Verifikasi &amp; copy persediaan selesai</strong><br/>'
+                    + 'Waktu proses: <strong>' + escapeHtmlGen(s.generated_at || '') + '</strong><br/>'
+                    + 'Bulan target: <strong>' + escapeHtmlGen(s.bulan_label || bulanKey) + '</strong> '
+                    + '(sumber: ' + escapeHtmlGen(s.bulan_sumber_label || '') + ')<br/>'
+                    + 'Verifikasi pembelian — update/generate uuid: <strong>' + (s.verifikasi_pembelian_update || 0) + '</strong>'
+                    + ' (generate baru: <strong>' + (s.verifikasi_pembelian_generate || 0) + '</strong>, '
+                    + 'sudah ada: <strong>' + (s.verifikasi_pembelian_skip || 0) + '</strong>)<br/>'
+                    + 'Verifikasi penjualan — update uuid: <strong>' + (s.verifikasi_penjualan_update || 0) + '</strong>, '
+                    + 'sudah aman: <strong>' + ((s.verifikasi_penjualan_skip || 0) + (s.verifikasi_penjualan_aman || 0)) + '</strong>'
+                    + orphanLine
+                    + '<br/>Hapus data bulan target: <strong>' + (s.reset_target || 0) + '</strong> record'
+                    + ((s.target_kosong_verified || 0) === 1
+                        ? ' <span class="text-success">(kosong diverifikasi ✓)</span>'
+                        : '')
+                    + '<br/>Copy dari bulan sumber: <strong>' + (s.generate_insert || 0) + '</strong> record'
+                    + '<br/><em class="text-muted">Data persediaan sudah siap sesuai prosedur copy dari bulan sebelumnya. Fase recalculate berikutnya belum dijalankan.</em>';
+            } else if (isGenerateOnly) {
                 $('#gen-recalc-phase-lanjut').addClass('d-none');
                 $('#gen-recalc-summary-wrap').addClass('d-none');
                 $('#gen-recalc-mode-notice').removeClass('d-none');
@@ -5728,10 +5766,13 @@ window.addEventListener('load', function() {
             }
             loadHistoryGenerateList(bulanKey);
 
-            var swalIcon = isGenerateOnly
+            var swalIcon = isV2Ready
+                ? ((s.verifikasi_penjualan_orphan || 0) > 0 ? 'warning' : 'success')
+                : (isGenerateOnly
                 ? ((data.has_masalah || (s.verifikasi_beda || 0) > 0 || (s.verifikasi_tidak_ada_target || 0) > 0 || (s.verifikasi_target_ekstra || 0) > 0 || (s.masalah_negatif || 0) > 0) ? 'warning' : 'success')
-                : 'success';
-            var swalTitle = isGenerateOnly ? 'Generate selesai' : (isPembelianOnly ? 'Generate + Pembelian selesai' : 'Selesai');
+                : 'success');
+            var swalTitle = isV2Ready ? 'Verifikasi & Copy selesai'
+                : (isGenerateOnly ? 'Generate selesai' : (isPembelianOnly ? 'Generate + Pembelian selesai' : 'Selesai'));
             var masalahNotice = '';
             if (isGenerateOnly && (s.masalah_negatif || 0) > 0) {
                 masalahNotice = '<br/><strong class="text-danger">Perhatian: ditemukan nilai total_10 minus di bulan sumber — tidak di-copy.</strong>';
@@ -5752,7 +5793,7 @@ window.addEventListener('load', function() {
                 savePersediaanBulanData(bulanKey);
                 savePersediaanGenFromBulanKey(bulanKey);
                 cekGeneratePersediaanBulan();
-                if ((isGenerateOnly && data.refresh_persediaan) || (isPembelianOnly && data.refresh_persediaan) || (!isGenerateOnly && !isPembelianOnly && data.refresh_persediaan && $('#form-persediaan-bulan').length)) {
+                if ((isV2Ready && data.refresh_persediaan) || (isGenerateOnly && data.refresh_persediaan) || (isPembelianOnly && data.refresh_persediaan) || (!isGenerateOnly && !isPembelianOnly && !isV2Ready && data.refresh_persediaan && $('#form-persediaan-bulan').length)) {
                     savePersediaanMainTabKey('generate');
                     saveCurrentPersediaanTabs();
                     $('#form-persediaan-bulan').submit();
@@ -5828,12 +5869,14 @@ window.addEventListener('load', function() {
                 icon: 'question',
                 title: 'Konfirmasi Generate & Recalculate',
                 html: '<p>Bulan target: <strong>' + bulanKey + '</strong></p>'
-                    + '<p class="small text-muted mb-0">Fase 1: salin sumber (total_10 &gt;= 1), hapus target sa=0 &amp; beli=0 &amp; total_10=0.<br/>'
-                    + 'Fase 2: pembelian → beli += jumlah, total_10 += jumlah (nama+satuan+hpp+spop).<br/>'
-                    + 'Fase 3: produk jadi dari sys_unit_produk → insert/SA += jumlah_produksi (prioritas uuid_persediaan, lalu nama+satuan+hpp+spop).<br/>'
-                    + 'Fase 4: bahan produksi dari sys_unit_produk_bahan → bahan_produksi += jumlah_bahan, total_10 -= jumlah_bahan (nama+satuan+hpp+spop).<br/>'
-                    + 'Fase 5: penjualan dari tbl_penjualan → cocokkan uuid_persediaan, fallback nama_barang+satuan; unit + penjualan += jumlah, total_10 -= jumlah.<br/>'
-                    + 'Fase 6: pecah satuan dari tbl_pembelian_pecah_satuan → sumber pecah_satuan += jumlah, total_10 -= jumlah; target sa/total_10 += jumlah_barang_baru.</p>',
+                    + '<p class="small text-muted mb-0">'
+                    + '<strong>Urutan proses baru:</strong><br/>'
+                    + '1. Verifikasi <code>uuid_persediaan</code> di tbl_pembelian &amp; tbl_pembelian_jasa<br/>'
+                    + '2. Verifikasi <code>uuid_persediaan</code> di tbl_penjualan bulan target (+ sys_unit_produk jika perlu)<br/>'
+                    + '3. Hapus persediaan bulan target, lalu copy semua record dari bulan sebelumnya<br/>'
+                    + '4. Field sa, tuj, total_10 diisi dari total_10 bulan sumber (per uuid_persediaan)<br/>'
+                    + '<em>Fase recalculate pembelian/penjualan/produksi belum dijalankan.</em>'
+                    + '</p>',
                 showCancelButton: true,
                 confirmButtonText: 'Ya, Generate & Recalculate',
                 cancelButtonText: 'Batal',
@@ -5868,10 +5911,11 @@ window.addEventListener('load', function() {
                 Swal.fire({
                     title: 'Generate & Recalculate',
                     html: htmlGenRecalcProgress({
-                        phase: res.can_recalc_only ? 'pembelian' : 'generate',
+                        phase: 'verifikasi_pembelian',
+                        progress_label: 'Verifikasi tbl_pembelian',
                         offset_selesai: 0,
                         total_phase: totalPhase,
-                        pesan: 'Memulai proses...'
+                        pesan: 'Memulai verifikasi uuid_persediaan...'
                     }),
                     allowOutsideClick: false,
                     showConfirmButton: false,
