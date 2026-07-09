@@ -768,7 +768,7 @@ class Tbl_laba_rugi extends CI_Controller
 
     public function labarugi_print_unit($Get_tahun = null, $Get_bulan = null, $jenis_tab = 'rinci')
     {
-        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'laba_rugi_unit_tab_sync', 'dashboard_laporan_publish'));
+        $this->load->helper(array('laba_rugi_detail', 'laba_rugi_keterangan', 'laba_rugi_unit_publish', 'laba_rugi_unit_merge', 'laba_rugi_unit_tab_sync', 'laba_rugi_cetak_unit', 'dashboard_laporan_publish'));
 
         $Get_tahun = (int) $Get_tahun;
         $Get_bulan = (int) $Get_bulan;
@@ -802,6 +802,21 @@ class Tbl_laba_rugi extends CI_Controller
             return;
         }
 
+        $detail_maps = array(
+            'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
+            'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
+        );
+        if ($Get_bulan > 0) {
+            $detail_maps = labarugi_unit_tab_sync_reconcile_derived_maps(
+                $this,
+                $uuid_laba_rugi,
+                $Get_tahun,
+                $Get_bulan,
+                $detail_maps,
+                $list_unit
+            );
+        }
+
         $this->load->library('PdfGenerator');
         $data = array(
             'tahun_laba_rugi' => $Get_tahun,
@@ -809,11 +824,8 @@ class Tbl_laba_rugi extends CI_Controller
             'jenis_tab' => $jenis_tab,
             'published_units' => $published_units,
             'keterangan_rows' => labarugi_keterangan_rows_by_tab($this, $jenis_tab),
-            'detail_map' => labarugi_detail_load_map($this, $uuid_laba_rugi, $jenis_tab),
-            'detail_maps' => array(
-                'rinci' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'rinci'),
-                'sederhana' => labarugi_detail_load_map($this, $uuid_laba_rugi, 'sederhana'),
-            ),
+            'detail_map' => isset($detail_maps[$jenis_tab]) ? $detail_maps[$jenis_tab] : array(),
+            'detail_maps' => $detail_maps,
         );
 
         $html = $this->load->view('anekadharma/tbl_laba_rugi/adminlte310_labarugi_cetak_unit.php', $data, true);
