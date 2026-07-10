@@ -115,6 +115,7 @@ class Sys_unit extends CI_Controller
             'uuid_unit' => set_value('uuid_unit'),
             'kode_unit' => set_value('kode_unit'),
             'nama_unit' => set_value('nama_unit'),
+            'alamat' => set_value('alamat'),
             'keterangan' => set_value('keterangan'),
         );
         // $this->load->view('sys_unit/sys_unit_form', $data);
@@ -132,6 +133,7 @@ class Sys_unit extends CI_Controller
                 // 'uuid_unit' => $this->input->post('uuid_unit',TRUE),
                 'kode_unit' => $this->input->post('kode_unit', TRUE),
                 'nama_unit' => $this->input->post('nama_unit', TRUE),
+                'alamat' => $this->input->post('alamat', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),
             );
 
@@ -153,6 +155,7 @@ class Sys_unit extends CI_Controller
                 'uuid_unit' => set_value('uuid_unit', $row->uuid_unit),
                 'kode_unit' => set_value('kode_unit', $row->kode_unit),
                 'nama_unit' => set_value('nama_unit', $row->nama_unit),
+                'alamat' => set_value('alamat', isset($row->alamat) ? $row->alamat : ''),
                 'keterangan' => set_value('keterangan', $row->keterangan),
             );
             $this->load->view('sys_unit/sys_unit_form', $data);
@@ -173,6 +176,7 @@ class Sys_unit extends CI_Controller
                 'uuid_unit' => $this->input->post('uuid_unit', TRUE),
                 'kode_unit' => $this->input->post('kode_unit', TRUE),
                 'nama_unit' => $this->input->post('nama_unit', TRUE),
+                'alamat' => $this->input->post('alamat', TRUE),
                 'keterangan' => $this->input->post('keterangan', TRUE),
             );
 
@@ -182,13 +186,143 @@ class Sys_unit extends CI_Controller
         }
     }
 
+    /**
+     * AJAX: ambil 1 record unit untuk modal ubah.
+     */
+    public function ajax_get()
+    {
+        header('Content-Type: application/json');
+        $id = (int) $this->input->get_post('id', TRUE);
+        $row = $id > 0 ? $this->Sys_unit_model->get_by_id($id) : null;
+
+        if (!$row) {
+            echo json_encode(array('ok' => false, 'message' => 'Data unit tidak ditemukan.'));
+            return;
+        }
+
+        echo json_encode(array(
+            'ok' => true,
+            'data' => array(
+                'id' => (int) $row->id,
+                'uuid_unit' => isset($row->uuid_unit) ? $row->uuid_unit : '',
+                'kode_unit' => isset($row->kode_unit) ? $row->kode_unit : '',
+                'nama_unit' => isset($row->nama_unit) ? $row->nama_unit : '',
+                'alamat' => isset($row->alamat) ? $row->alamat : '',
+                'keterangan' => isset($row->keterangan) ? $row->keterangan : '',
+            ),
+        ));
+    }
+
+    /**
+     * AJAX: update data unit dari modal.
+     */
+    public function ajax_update()
+    {
+        header('Content-Type: application/json');
+
+        $id = (int) $this->input->post('id', TRUE);
+        $nama_unit = trim((string) $this->input->post('nama_unit', TRUE));
+        $alamat = trim((string) $this->input->post('alamat', TRUE));
+        $kode_unit = trim((string) $this->input->post('kode_unit', TRUE));
+        $keterangan = trim((string) $this->input->post('keterangan', TRUE));
+
+        if ($id <= 0) {
+            echo json_encode(array('ok' => false, 'message' => 'ID unit tidak valid.'));
+            return;
+        }
+
+        if ($nama_unit === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Nama unit wajib diisi.'));
+            return;
+        }
+
+        if ($alamat === '') {
+            echo json_encode(array('ok' => false, 'message' => 'Alamat wajib diisi sebelum disimpan.'));
+            return;
+        }
+
+        $row = $this->Sys_unit_model->get_by_id($id);
+        if (!$row) {
+            echo json_encode(array('ok' => false, 'message' => 'Data unit tidak ditemukan.'));
+            return;
+        }
+
+        $data = array(
+            'kode_unit' => $kode_unit,
+            'nama_unit' => $nama_unit,
+            'alamat' => $alamat,
+            'keterangan' => $keterangan,
+        );
+
+        $this->Sys_unit_model->update($id, $data);
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => 'Data unit berhasil diubah.',
+        ));
+    }
+
+    /**
+     * AJAX: soft-delete unit (hapus_unit = 1) jika belum dipakai di transaksi.
+     */
+    public function ajax_delete()
+    {
+        header('Content-Type: application/json');
+
+        $id = (int) $this->input->post('id', TRUE);
+        if ($id <= 0) {
+            echo json_encode(array('ok' => false, 'message' => 'ID unit tidak valid.'));
+            return;
+        }
+
+        $row = $this->Sys_unit_model->get_by_id($id);
+        if (!$row) {
+            echo json_encode(array('ok' => false, 'message' => 'Data unit tidak ditemukan.'));
+            return;
+        }
+
+        $uuid_unit = isset($row->uuid_unit) ? $row->uuid_unit : '';
+        $usage = $this->Sys_unit_model->is_unit_in_use($uuid_unit);
+
+        if (!empty($usage['used'])) {
+            $label_map = array(
+                'tbl_pembelian' => 'pembelian',
+                'tbl_pembelian_jasa' => 'pembelian jasa',
+                'tbl_penjualan' => 'penjualan',
+            );
+            $labels = array();
+            foreach ($usage['tables'] as $t) {
+                $labels[] = isset($label_map[$t]) ? $label_map[$t] : $t;
+            }
+            echo json_encode(array(
+                'ok' => false,
+                'message' => 'Data unit tidak boleh dihapus karena digunakan untuk data ' . implode(' / ', $labels) . '.',
+            ));
+            return;
+        }
+
+        $this->Sys_unit_model->soft_delete($id);
+
+        echo json_encode(array(
+            'ok' => true,
+            'message' => 'Proses hapus unit berhasil.',
+        ));
+    }
+
     public function delete($id)
     {
         $row = $this->Sys_unit_model->get_by_id($id);
 
         if ($row) {
-            $this->Sys_unit_model->delete($id);
-            $this->session->set_flashdata('message', 'Delete Record Success');
+            $uuid_unit = isset($row->uuid_unit) ? $row->uuid_unit : '';
+            $usage = $this->Sys_unit_model->is_unit_in_use($uuid_unit);
+            if (!empty($usage['used'])) {
+                $this->session->set_flashdata('message', 'Data unit tidak boleh dihapus karena masih digunakan di transaksi.');
+                redirect(site_url('sys_unit'));
+                return;
+            }
+            $this->Sys_unit_model->soft_delete($id);
+            $this->session->set_flashdata('message', 'Proses hapus unit berhasil');
             redirect(site_url('sys_unit'));
         } else {
             $this->session->set_flashdata('message', 'Record Not Found');

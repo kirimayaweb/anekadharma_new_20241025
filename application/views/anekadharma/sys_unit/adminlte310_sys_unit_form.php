@@ -64,6 +64,10 @@
                                 <textarea class="form-control" rows="3" name="nama_unit" id="nama_unit" placeholder="Nama Unit"><?php echo $nama_unit; ?></textarea>
                             </div>
                             <div class="form-group">
+                                <label for="alamat">Alamat <?php echo form_error('alamat') ?></label>
+                                <textarea class="form-control" rows="3" name="alamat" id="alamat" placeholder="Alamat"><?php echo isset($alamat) ? $alamat : ''; ?></textarea>
+                            </div>
+                            <div class="form-group">
                                 <label for="keterangan">Keterangan <?php echo form_error('keterangan') ?></label>
                                 <textarea class="form-control" rows="3" name="keterangan" id="keterangan" placeholder="Keterangan"><?php echo $keterangan; ?></textarea>
                             </div>
