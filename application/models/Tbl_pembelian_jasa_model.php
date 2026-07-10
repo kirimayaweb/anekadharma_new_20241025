@@ -135,6 +135,8 @@ class Tbl_pembelian_jasa_model extends CI_Model
 
     function get_by_tgl_range($date_awal, $date_akhir)
     {
+        $cols = 'id, uuid_spop, tgl_po, spop, nmrfakturkwitansi, supplier_nama, kode_barang, uraian, jumlah, satuan, konsumen, harga_satuan, statuslu, kas_bank, tgl_bayar';
+        $this->db->select($cols, FALSE);
         $this->db->where($this->tgl_po . ' >=', $date_awal);
         $this->db->where($this->tgl_po . ' <=', $date_akhir);
         $this->db->order_by($this->tgl_po, $this->order);

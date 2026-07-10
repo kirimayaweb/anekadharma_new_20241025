@@ -122,7 +122,12 @@ class Tbl_pembelian_jasa extends CI_Controller
 			$this->session->set_userdata('filter_tbl_pembelian_jasa_tgl_akhir_display', $tgl_akhir_display);
 		}
 		if ($rows !== null) {
-			$this->session->set_userdata('filter_tbl_pembelian_jasa_ids', $this->_collect_row_ids($rows));
+			$row_count = count($rows);
+			if ($row_count > 0 && $row_count <= 3000) {
+				$this->session->set_userdata('filter_tbl_pembelian_jasa_ids', $this->_collect_row_ids($rows));
+			} else {
+				$this->session->unset_userdata('filter_tbl_pembelian_jasa_ids');
+			}
 		}
 	}
 
@@ -161,11 +166,106 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 	private function _get_pembelian_jasa_between($date_awal, $date_akhir)
 	{
-		$sql = 'SELECT * FROM `tbl_pembelian_jasa` WHERE `tgl_po` BETWEEN '
+		$cols = 'id, uuid_spop, tgl_po, spop, nmrfakturkwitansi, supplier_nama, kode_barang, uraian, jumlah, satuan, konsumen, harga_satuan, statuslu, kas_bank, tgl_bayar';
+		$sql = 'SELECT ' . $cols . ' FROM `tbl_pembelian_jasa` WHERE `tgl_po` BETWEEN '
 			. $this->db->escape($date_awal) . ' AND '
 			. $this->db->escape($date_akhir)
 			. ' ORDER BY `tgl_po`, `spop`, `id`';
 		return $this->db->query($sql)->result();
+	}
+
+	/**
+	 * URL pengajuan pembayaran per uuid_spop — batch query (hindari N+1 di view).
+	 */
+	private function _build_pengajuan_url_by_uuid_spop(array $uuid_spop_list)
+	{
+		$urls = array();
+		if (empty($uuid_spop_list)) {
+			return $urls;
+		}
+
+		$base = site_url('tbl_pembelian_jasa/create_pembayaran');
+		foreach ($uuid_spop_list as $uuid) {
+			$urls[$uuid] = $base . '/' . $uuid . '/pembelian';
+		}
+
+		if (!$this->db->table_exists('tbl_penjualan')) {
+			return $urls;
+		}
+
+		$resolved = array();
+		$pending = array_fill_keys($uuid_spop_list, true);
+
+		$chunks = array_chunk($uuid_spop_list, 400);
+		foreach ($chunks as $chunk) {
+			$in = implode(',', array_map(array($this->db, 'escape'), $chunk));
+
+			$sql_persediaan = "SELECT bj.uuid_spop, p.uuid_penjualan,
+				CASE WHEN per.uuid_spop = bj.uuid_spop THEN 0 ELSE 1 END AS match_rank,
+				p.tgl_jual, p.id
+				FROM tbl_pembelian_jasa bj
+				INNER JOIN persediaan per ON (per.uuid_spop = bj.uuid_spop OR TRIM(per.spop) = TRIM(bj.spop))
+				INNER JOIN tbl_penjualan p ON per.uuid_barang = p.uuid_barang AND p.barang_jasa = 'jasa'
+				WHERE bj.uuid_spop IN ($in)
+				ORDER BY bj.uuid_spop, match_rank, p.tgl_jual DESC, p.id DESC";
+			foreach ($this->db->query($sql_persediaan)->result() as $row) {
+				if (!isset($pending[$row->uuid_spop]) || isset($resolved[$row->uuid_spop])) {
+					continue;
+				}
+				if (!empty($row->uuid_penjualan)) {
+					$resolved[$row->uuid_spop] = site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan/' . $row->uuid_penjualan);
+					unset($pending[$row->uuid_spop]);
+				}
+			}
+
+			if (empty($pending)) {
+				break;
+			}
+
+			$still = array_keys($pending);
+			$in2 = implode(',', array_map(array($this->db, 'escape'), $still));
+			$sql_nmrpesan = "SELECT bj.uuid_spop, p.uuid_penjualan, p.tgl_jual, p.id
+				FROM tbl_pembelian_jasa bj
+				INNER JOIN tbl_penjualan p ON p.barang_jasa = 'jasa' AND TRIM(p.nmrpesan) = TRIM(bj.spop)
+				WHERE bj.uuid_spop IN ($in2)
+				ORDER BY bj.uuid_spop, p.tgl_jual DESC, p.id DESC";
+			foreach ($this->db->query($sql_nmrpesan)->result() as $row) {
+				if (!isset($pending[$row->uuid_spop]) || isset($resolved[$row->uuid_spop])) {
+					continue;
+				}
+				if (!empty($row->uuid_penjualan)) {
+					$resolved[$row->uuid_spop] = site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan/' . $row->uuid_penjualan);
+					unset($pending[$row->uuid_spop]);
+				}
+			}
+
+			if (empty($pending)) {
+				break;
+			}
+
+			$still = array_keys($pending);
+			$in3 = implode(',', array_map(array($this->db, 'escape'), $still));
+			$sql_uraian = "SELECT bj.uuid_spop, p.uuid_penjualan, p.tgl_jual, p.id
+				FROM tbl_pembelian_jasa bj
+				INNER JOIN tbl_penjualan p ON p.barang_jasa = 'jasa' AND TRIM(p.nama_barang) = TRIM(bj.uraian) AND TRIM(bj.uraian) <> ''
+				WHERE bj.uuid_spop IN ($in3)
+				ORDER BY bj.uuid_spop, p.tgl_jual DESC, p.id DESC";
+			foreach ($this->db->query($sql_uraian)->result() as $row) {
+				if (!isset($pending[$row->uuid_spop]) || isset($resolved[$row->uuid_spop])) {
+					continue;
+				}
+				if (!empty($row->uuid_penjualan)) {
+					$resolved[$row->uuid_spop] = site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan/' . $row->uuid_penjualan);
+					unset($pending[$row->uuid_spop]);
+				}
+			}
+		}
+
+		foreach ($resolved as $uuid => $url) {
+			$urls[$uuid] = $url;
+		}
+
+		return $urls;
 	}
 
 	private function _build_pembelian_jasa_list_data($Get_date_awal, $Get_date_akhir)
@@ -173,17 +273,31 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$Tbl_pembelian = $this->_get_pembelian_jasa_between($Get_date_awal, $Get_date_akhir);
 
 		$uuid_spop_list = array();
+		$excel_export_ids = array();
 		foreach ($Tbl_pembelian as $row) {
 			if (!empty($row->uuid_spop)) {
 				$uuid_spop_list[$row->uuid_spop] = $row->uuid_spop;
 			}
+			if (!empty($row->id)) {
+				$excel_export_ids[] = (int) $row->id;
+			}
 		}
 		$uuid_spop_list = array_values($uuid_spop_list);
 
+		$pengajuan_by_uuid_spop = array();
+		$pengajuan_sum_by_uuid_spop = array();
+		if (!empty($uuid_spop_list)) {
+			$pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list);
+			$pengajuan_sum_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list);
+		}
+
 		return array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'pengajuan_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list),
-			'pengajuan_sum_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list),
+			'pengajuan_by_uuid_spop' => $pengajuan_by_uuid_spop,
+			'pengajuan_sum_by_uuid_spop' => $pengajuan_sum_by_uuid_spop,
+			'pengajuan_url_by_uuid_spop' => $this->_build_pengajuan_url_by_uuid_spop($uuid_spop_list),
+			'excel_export_ids_str' => implode(',', $excel_export_ids),
+			'row_count' => count($Tbl_pembelian),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
 			'start' => 0,
@@ -2889,6 +3003,8 @@ class Tbl_pembelian_jasa extends CI_Controller
 			// print_r("TOTAL_X: ");
 			// print_r($TOTAL_X);
 			// print_r("<br/>");
+
+
 			$data = array(
 				'date_input' => date("Y-m-d H:i:s"),
 

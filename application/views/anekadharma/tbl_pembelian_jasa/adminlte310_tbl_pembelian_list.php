@@ -1,6 +1,5 @@
 <div class="content-wrapper">
 
-
     <div class="content-header">
         <div class="container-fluid">
             <div class="row mb-2">
@@ -43,19 +42,12 @@
             $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
         }
 
-        // echo $Get_date_akhir;
-        // echo "<br/>";
-        // echo "<br/>";
-
-        $excel_export_ids = array();
-        if (!empty($Tbl_pembelian_data)) {
-            foreach ($Tbl_pembelian_data as $row_export) {
-                if (!empty($row_export->id)) {
-                    $excel_export_ids[] = (int) $row_export->id;
-                }
-            }
+        if (!isset($excel_export_ids_str)) {
+            $excel_export_ids_str = '';
         }
-        $excel_export_ids_str = implode(',', $excel_export_ids);
+        if (!isset($row_count)) {
+            $row_count = !empty($Tbl_pembelian_data) ? count($Tbl_pembelian_data) : 0;
+        }
 
         ?>
 
@@ -132,8 +124,13 @@
 
 
                     <div class="card-body">
+                        <div id="pembelian-jasa-loading" class="text-center py-3" style="display:none;">
+                            <i class="fa fa-spinner fa-spin fa-2x text-danger"></i>
+                            <p class="mt-2 mb-0">Memuat data pembelian jasa...</p>
+                        </div>
+                        <p class="text-muted mb-2"><small>Menampilkan <strong><?php echo (int) $row_count; ?></strong> baris data.</small></p>
 
-                        <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
+                        <table id="tblPembelianJasaList" class="display nowrap" style="width:100%">
                             <thead>
                                 <tr>
                                     <th style="text-align:center" width="10px">No</th>
@@ -161,11 +158,17 @@
                                 if (!isset($pengajuan_sum_by_uuid_spop)) {
                                     $pengajuan_sum_by_uuid_spop = array();
                                 }
+                                if (!isset($pengajuan_url_by_uuid_spop)) {
+                                    $pengajuan_url_by_uuid_spop = array();
+                                }
                                 if (!function_exists('render_pengajuan_pembelian_jasa_cell')) {
-                                    function render_pengajuan_pembelian_jasa_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $CI)
+                                    function render_pengajuan_pembelian_jasa_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop)
                                     {
                                         $result_pengajuan_by_uuid_spop = isset($pengajuan_by_uuid_spop[$uuid_spop]) ? $pengajuan_by_uuid_spop[$uuid_spop] : array();
                                         $TOTAL_Nominal_pengajuan = isset($pengajuan_sum_by_uuid_spop[$uuid_spop]) ? $pengajuan_sum_by_uuid_spop[$uuid_spop] : 0;
+                                        $url_pengajuan = isset($pengajuan_url_by_uuid_spop[$compare_uuid_spop])
+                                            ? $pengajuan_url_by_uuid_spop[$compare_uuid_spop]
+                                            : site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian');
 
                                         if ($result_pengajuan_by_uuid_spop) {
                                             $startx = 0;
@@ -175,11 +178,11 @@
 
                                             if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
                                                 if ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
-                                                    echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($CI, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                    echo anchor($url_pengajuan, '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                                 }
                                             }
                                         } elseif ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
-                                            echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($CI, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                            echo anchor($url_pengajuan, '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                         }
                                     }
                                 }
@@ -243,7 +246,7 @@
                                             </td>
                                             <td>
                                                 <?php
-                                                render_pengajuan_pembelian_jasa_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $this);
+                                                render_pengajuan_pembelian_jasa_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop);
                                                 $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
 
                                                 ?>
@@ -443,7 +446,7 @@
                                     </td>
                                     <td>
                                         <?php
-                                        render_pengajuan_pembelian_jasa_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $this);
+                                        render_pengajuan_pembelian_jasa_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop);
                                         ?>
                                     </td>
                                     <td></td>
@@ -513,12 +516,6 @@
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
-    div.dataTables_wrapper {
-        width: 100%;
-        margin: 0 auto;
-    }
-
-    /* DATA PEMBELIAN JASA: border kuning (tanpa background kuning penuh) */
     .pembelian-jasa-data-card {
         border: 2px solid #ffc107 !important;
         box-shadow: none;
@@ -528,33 +525,55 @@
         border-bottom: 1px solid #ffc107 !important;
     }
 
-    #tglSPOPFreeze {
+    #tblPembelianJasaList {
         border: 1px solid #ffc107;
     }
 
-    #tglSPOPFreeze th,
-    #tglSPOPFreeze td {
+    #tblPembelianJasaList th,
+    #tblPembelianJasaList td {
         border-color: #ffe082 !important;
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#example').DataTable({
-            "scrollY": 900,
-            "scrollX": true
+    function initPembelianJasaDataTable() {
+        var tableSel = '#tblPembelianJasaList';
+        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery(tableSel).length) {
+            return;
+        }
+        if (jQuery.fn.DataTable.isDataTable(tableSel)) {
+            jQuery(tableSel).DataTable().destroy();
+        }
+        jQuery(tableSel).DataTable({
+            deferRender: true,
+            processing: true,
+            pageLength: 50,
+            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+            scrollY: 520,
+            scrollX: true,
+            scrollCollapse: true,
+            order: [],
+            language: {
+                processing: 'Memproses...',
+                lengthMenu: 'Tampilkan _MENU_ baris',
+                zeroRecords: 'Data tidak ditemukan',
+                info: 'Baris _START_ s/d _END_ dari _TOTAL_',
+                infoEmpty: 'Tidak ada data',
+                paginate: {
+                    first: 'Awal',
+                    last: 'Akhir',
+                    next: 'Berikutnya',
+                    previous: 'Sebelumnya'
+                }
+            }
         });
-    });
-</script>
-<script>
-    $(document).ready(function() {
-        $('#example9').DataTable({
-            "scrollY": 900,
-            "scrollX": true
-        });
-    });
+    }
+
+    if (document.readyState === 'complete') {
+        initPembelianJasaDataTable();
+    } else {
+        window.addEventListener('load', initPembelianJasaDataTable);
+    }
 
     function cetakExcelPembelianJasa() {
         var tglAwal = document.querySelector('input[name="tgl_awal"]').value;
@@ -584,6 +603,10 @@
                 var tglAwal = form.querySelector('input[name="tgl_awal"]');
                 var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
                 if (tglAwal && tglAkhir && tglAwal.value && tglAkhir.value) {
+                    var loader = document.getElementById('pembelian-jasa-loading');
+                    if (loader) {
+                        loader.style.display = 'block';
+                    }
                     form.submit();
                 }
             }, 400);
@@ -594,6 +617,12 @@
             if (!form) {
                 return;
             }
+            form.addEventListener('submit', function() {
+                var loader = document.getElementById('pembelian-jasa-loading');
+                if (loader) {
+                    loader.style.display = 'block';
+                }
+            });
             form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
                 el.addEventListener('change', submitCariPembelianJasaOtomatis);
             });
