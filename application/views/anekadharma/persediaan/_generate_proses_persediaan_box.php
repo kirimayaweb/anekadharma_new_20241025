@@ -189,6 +189,7 @@ $nom_label = $nominal_ok ? 'Total Nominal SESUAI' : 'Total Nominal BELUM SESUAI'
 					'table_id' => 'table-gen-proses-sumber-barang',
 					'bulan_tampil' => $bulan_sumber,
 					'tab_mode' => 'barang',
+					'excel_jenis' => 'proses_persediaan_sumber_barang',
 				)); ?>
 			</div>
 			<div class="tab-pane fade" id="gen-proses-sumber-jasa" role="tabpanel">
@@ -197,6 +198,7 @@ $nom_label = $nominal_ok ? 'Total Nominal SESUAI' : 'Total Nominal BELUM SESUAI'
 					'table_id' => 'table-gen-proses-sumber-jasa',
 					'bulan_tampil' => $bulan_sumber,
 					'tab_mode' => 'jasa',
+					'excel_jenis' => 'proses_persediaan_sumber_jasa',
 				)); ?>
 			</div>
 		</div>
@@ -229,6 +231,7 @@ $nom_label = $nominal_ok ? 'Total Nominal SESUAI' : 'Total Nominal BELUM SESUAI'
 					'table_id' => 'table-gen-proses-target-barang',
 					'bulan_tampil' => $bulan_target,
 					'tab_mode' => 'barang',
+					'excel_jenis' => 'proses_persediaan_target_copy_barang',
 				)); ?>
 			</div>
 			<div class="tab-pane fade" id="gen-proses-target-jasa" role="tabpanel">
@@ -237,6 +240,7 @@ $nom_label = $nominal_ok ? 'Total Nominal SESUAI' : 'Total Nominal BELUM SESUAI'
 					'table_id' => 'table-gen-proses-target-jasa',
 					'bulan_tampil' => $bulan_target,
 					'tab_mode' => 'jasa',
+					'excel_jenis' => 'proses_persediaan_target_copy_jasa',
 				)); ?>
 			</div>
 		</div>

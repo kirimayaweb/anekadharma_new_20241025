@@ -28,9 +28,16 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 $total_terjual = 0;
 $total_pecah_satuan = 0;
 $total_bahan_produksi = 0;
+$excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 ?>
+<?php if ($excel_jenis !== '') {
+	$this->load->view('anekadharma/persediaan/_gen_proses_excel_btn', array(
+		'excel_jenis' => $excel_jenis,
+		'excel_title' => isset($excel_title) ? $excel_title : 'Export datatable persediaan ke Excel',
+	));
+} ?>
 <div class="persediaan-tab-dt-wrap">
-<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
+<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:16px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
 	<thead>
 		<tr>
 			<th width="50px">No</th>

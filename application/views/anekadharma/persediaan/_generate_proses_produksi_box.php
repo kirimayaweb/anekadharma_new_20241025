@@ -67,5 +67,6 @@ $produksi_badge = $produksi_ok ? 'badge-success' : 'badge-danger';
 	<?php $this->load->view('anekadharma/persediaan/_gen_proses_produksi_table', array(
 		'rows' => $rows_unit_produk,
 		'table_id' => 'table-gen-proses-produksi',
+		'excel_jenis' => 'proses_produksi',
 	)); ?>
 </div>

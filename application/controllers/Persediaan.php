@@ -587,6 +587,7 @@ class Persediaan extends CI_Controller
 			'url_generate_proses_produksi_view' => site_url('Persediaan/ajax_generate_proses_produksi_view'),
 			'url_generate_proses_penjualan_view' => site_url('Persediaan/ajax_generate_proses_penjualan_view'),
 			'url_generate_proses_persediaan_full_view' => site_url('Persediaan/ajax_generate_proses_persediaan_full_view'),
+			'url_excel_generate_proses' => site_url('Persediaan/excel_generate_proses'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
 			'url_gen_recalc_summary_tables' => site_url('Persediaan/ajax_gen_recalc_summary_tables'),
 			'url_gen_recalc_extra_tables' => site_url('Persediaan/ajax_gen_recalc_extra_tables'),
@@ -2107,6 +2108,40 @@ class Persediaan extends CI_Controller
 		} catch (Throwable $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		}
+	}
+
+	/**
+	 * Export Excel datatable box verifikasi proses generate (copy / pembelian / produksi / penjualan / lengkap).
+	 */
+	public function excel_generate_proses()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel verifikasi proses')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if ($bulan === '') {
+			$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		}
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$jenis = trim((string) $this->input->post('jenis', TRUE));
+		$allowed = array_keys(persediaan_gen_proses_excel_jenis_definitions());
+		if ($jenis === '' || !in_array($jenis, $allowed, true)) {
+			show_error('Jenis export tidak valid.', 400);
+			return;
+		}
+
+		$namaFile = 'Verifikasi_Proses_' . $bulan . '_' . $jenis . '_' . date('Y-m-d_H-i-s') . '.xlsx';
+		excel_prepare_download($namaFile);
+		persediaan_gen_proses_export_excel_output($this, $bulan, $jenis);
+		exit();
 	}
 
 	/**

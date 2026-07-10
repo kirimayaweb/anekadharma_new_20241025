@@ -218,6 +218,7 @@ $all_label = $all_ok ? 'Verifikasi Lengkap OK' : 'Verifikasi Lengkap BELUM SESUA
 					'table_id' => 'table-gen-proses-full-target-barang',
 					'bulan_tampil' => $bulan_target,
 					'tab_mode' => 'barang',
+					'excel_jenis' => 'proses_persediaan_full_barang',
 				)); ?>
 			</div>
 			<div class="tab-pane fade" id="gen-proses-full-target-jasa" role="tabpanel">
@@ -226,6 +227,7 @@ $all_label = $all_ok ? 'Verifikasi Lengkap OK' : 'Verifikasi Lengkap BELUM SESUA
 					'table_id' => 'table-gen-proses-full-target-jasa',
 					'bulan_tampil' => $bulan_target,
 					'tab_mode' => 'jasa',
+					'excel_jenis' => 'proses_persediaan_full_jasa',
 				)); ?>
 			</div>
 		</div>

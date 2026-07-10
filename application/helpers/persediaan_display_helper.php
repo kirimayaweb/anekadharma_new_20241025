@@ -1405,7 +1405,7 @@ function persediaan_export_write_styled_cell($row, $col, $value, $col_types, $st
 /**
  * Export Excel tab Data Persediaan (Barang / Jasa) — tampilan selaras datatable + style tabel.
  */
-function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kategori = 'barang')
+function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kategori = 'barang', $prepare_download = true, $title_override = '')
 {
 	$CI->load->helper('exportexcel');
 
@@ -1455,13 +1455,18 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$totals_nominal_unit[$uf] = 0;
 	}
 
-	excel_prepare_download(
-		'Persediaan_' . preg_replace('/[^A-Za-z0-9_]+/', '_', $judul_jenis) . '_' . $bagian_bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx'
-	);
+	if ($prepare_download) {
+		excel_prepare_download(
+			'Persediaan_' . preg_replace('/[^A-Za-z0-9_]+/', '_', $judul_jenis) . '_' . $bagian_bulan . '_' . date('Y-m-d_H-i-s') . '.xlsx'
+		);
+	}
 
 	xlsBOF();
 	xlsSetColumnWidths($widths);
-	xlsWriteLabelBold14(0, 0, 'DATA PERSEDIAAN — ' . strtoupper($judul_jenis) . ' — Bulan ' . $bulan_label);
+	$title_line = ($title_override !== '')
+		? (string) $title_override
+		: ('DATA PERSEDIAAN — ' . strtoupper($judul_jenis) . ' — Bulan ' . $bulan_label);
+	xlsWriteLabelBold14(0, 0, $title_line);
 	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
 
 	$header_row = 3;
@@ -2322,4 +2327,420 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 		'rows_manual' => $rows_manual,
 		'rekap' => persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target),
 	);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * Generate Persediaan — export Excel datatable box verifikasi proses
+ * -------------------------------------------------------------------------
+ */
+function persediaan_gen_proses_excel_jenis_definitions()
+{
+	return array(
+		'proses_persediaan_sumber_barang' => array(
+			'title' => 'Verifikasi Copy — Persediaan Sumber Barang',
+			'type' => 'persediaan',
+			'kategori' => 'barang',
+		),
+		'proses_persediaan_sumber_jasa' => array(
+			'title' => 'Verifikasi Copy — Persediaan Sumber Jasa',
+			'type' => 'persediaan',
+			'kategori' => 'jasa',
+		),
+		'proses_persediaan_target_copy_barang' => array(
+			'title' => 'Verifikasi Copy — Hasil Copy Barang',
+			'type' => 'persediaan_copy',
+			'kategori' => 'barang',
+		),
+		'proses_persediaan_target_copy_jasa' => array(
+			'title' => 'Verifikasi Copy — Hasil Copy Jasa',
+			'type' => 'persediaan_copy',
+			'kategori' => 'jasa',
+		),
+		'proses_persediaan_full_barang' => array(
+			'title' => 'Verifikasi Lengkap — Persediaan Barang',
+			'type' => 'persediaan',
+			'kategori' => 'barang',
+		),
+		'proses_persediaan_full_jasa' => array(
+			'title' => 'Verifikasi Lengkap — Persediaan Jasa',
+			'type' => 'persediaan',
+			'kategori' => 'jasa',
+		),
+		'proses_pembelian_barang' => array(
+			'title' => 'Verifikasi Pembelian — Barang',
+			'type' => 'pembelian',
+			'tab_mode' => 'barang',
+		),
+		'proses_pembelian_jasa' => array(
+			'title' => 'Verifikasi Pembelian — Jasa',
+			'type' => 'pembelian',
+			'tab_mode' => 'jasa',
+		),
+		'proses_produksi' => array(
+			'title' => 'Verifikasi Produksi — sys_unit_produk',
+			'type' => 'produksi',
+		),
+		'proses_penjualan_masuk' => array(
+			'title' => 'Verifikasi Penjualan — Masuk Persediaan',
+			'type' => 'penjualan',
+			'penjualan_kategori' => 'masuk',
+		),
+		'proses_penjualan_tidak' => array(
+			'title' => 'Verifikasi Penjualan — Tidak Masuk',
+			'type' => 'penjualan',
+			'penjualan_kategori' => 'tidak_masuk',
+		),
+		'proses_penjualan_manual' => array(
+			'title' => 'Verifikasi Penjualan — Verifikasi Manual',
+			'type' => 'penjualan',
+			'penjualan_kategori' => 'manual',
+		),
+	);
+}
+
+function persediaan_gen_proses_excel_load_rows($CI, $bulan_target, $jenis, $def)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$bulan_sumber = date('Y-m', strtotime('-1 month', $ts));
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$type = isset($def['type']) ? $def['type'] : '';
+
+	if ($type === 'persediaan') {
+		$bulan_data = $bulan_target;
+		if (strpos($jenis, '_sumber_') !== false) {
+			$bulan_data = $bulan_sumber;
+		}
+		$rows = persediaan_gen_proses_load_rows_bulan($CI, $bulan_data);
+		$is_jasa = isset($def['kategori']) && $def['kategori'] === 'jasa';
+		return persediaan_filter_rows_by_kategori_tab($rows, $is_jasa);
+	}
+
+	if ($type === 'persediaan_copy') {
+		$rows_all = persediaan_gen_proses_load_rows_bulan($CI, $bulan_target);
+		$rows = persediaan_gen_proses_filter_rows_hasil_copy($rows_all);
+		$is_jasa = isset($def['kategori']) && $def['kategori'] === 'jasa';
+		return persediaan_filter_rows_by_kategori_tab($rows, $is_jasa);
+	}
+
+	if ($type === 'pembelian') {
+		$tabel = (isset($def['tab_mode']) && $def['tab_mode'] === 'jasa') ? 'tbl_pembelian_jasa' : 'tbl_pembelian';
+		return persediaan_gen_v2_load_pembelian_bulan_rows($CI, $tabel, $tgl_awal, $tgl_akhir);
+	}
+
+	if ($type === 'produksi') {
+		return persediaan_gen_v2_load_unit_produk_bulan_rows($CI, $tgl_awal, $tgl_akhir);
+	}
+
+	if ($type === 'penjualan') {
+		$ctx = array(
+			'tgl_awal' => $tgl_awal,
+			'tgl_akhir' => $tgl_akhir,
+			'tanggal_beli_target' => $tgl_awal,
+		);
+		$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
+		$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+		$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
+		$kat_want = isset($def['penjualan_kategori']) ? $def['penjualan_kategori'] : 'masuk';
+		$out = array();
+		foreach ($rows_all as $row_pen) {
+			$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $map, $cache_pembelian);
+			$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
+			if ($kat_want === 'masuk' && $kat === 'masuk') {
+				$out[] = $cls;
+			} elseif ($kat_want === 'tidak_masuk' && $kat !== 'masuk' && $kat !== 'manual' && $kat !== 'skip') {
+				$out[] = $cls;
+			} elseif ($kat_want === 'manual' && $kat === 'manual') {
+				$out[] = $cls;
+			}
+		}
+		return $out;
+	}
+
+	return array();
+}
+
+function persediaan_gen_proses_excel_bulan_label($bulan)
+{
+	$bulan = trim((string) $bulan);
+	if (preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return date('m/Y', strtotime($bulan . '-01'));
+	}
+	return $bulan;
+}
+
+function persediaan_gen_proses_excel_write_pembelian_rows($rows, $tab_mode, $title, $bulan_label)
+{
+	$CI = function_exists('get_instance') ? get_instance() : null;
+	if ($CI) {
+		$CI->load->helper('persediaan_display');
+	}
+
+	$show_kategori = (strtolower(trim((string) $tab_mode)) !== 'jasa');
+	$headers = array('No', 'Tgl Po', 'Spop');
+	if ($show_kategori) {
+		$headers[] = 'Kategori';
+	}
+	$headers = array_merge($headers, array(
+		'No. Faktur/Kwitansi', 'Supplier', 'Kode Barang', 'Nama Barang', 'Jumlah', 'Satuan',
+		'Konsumen', 'Harga Satuan', 'Harga Total', 'Statuslu', 'Kas/Bank', 'Tgl Bayar',
+	));
+
+	$sum_jumlah = 0.0;
+	$sum_harga_total = 0.0;
+	$col_jumlah = $show_kategori ? 8 : 7;
+	$col_harga_total = $show_kategori ? 12 : 11;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, $title . ' — ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+	persediaan_excel_write_headers(3, $headers);
+
+	$row_num = 4;
+	$no = 0;
+	foreach ($rows as $row) {
+		$no++;
+		$harga_satuan = isset($row->harga_satuan) ? $row->harga_satuan : 0;
+		$jumlah = isset($row->jumlah) ? $row->jumlah : 0;
+		$harga_total = isset($row->harga_total) ? $row->harga_total : ((float) persediaan_parse_angka($jumlah) * (float) persediaan_parse_angka($harga_satuan));
+		$sum_jumlah += (float) persediaan_parse_angka($jumlah);
+		$sum_harga_total += (float) persediaan_parse_angka($harga_total);
+
+		$cells = array(
+			(string) $no,
+			persediaan_gen_proses_pembelian_format_tgl(isset($row->tgl_po) ? $row->tgl_po : ''),
+			isset($row->spop) ? (string) $row->spop : '',
+		);
+		if ($show_kategori) {
+			$cells[] = isset($row->kategori) ? (string) $row->kategori : '';
+		}
+		$cells = array_merge($cells, array(
+			isset($row->nmrfakturkwitansi) ? (string) $row->nmrfakturkwitansi : '',
+			isset($row->supplier_nama) ? (string) $row->supplier_nama : '',
+			isset($row->kode_barang) ? (string) $row->kode_barang : '',
+			isset($row->uraian) ? (string) $row->uraian : '',
+			persediaan_gen_proses_pembelian_format_jumlah($jumlah),
+			isset($row->satuan) ? (string) $row->satuan : '',
+			isset($row->konsumen) ? (string) $row->konsumen : '',
+			persediaan_gen_proses_pembelian_format_nominal($harga_satuan),
+			persediaan_gen_proses_pembelian_format_nominal($harga_total),
+			isset($row->statuslu) ? (string) $row->statuslu : '',
+			isset($row->kas_bank) ? (string) $row->kas_bank : (isset($row->kasbank) ? (string) $row->kasbank : ''),
+			persediaan_gen_proses_pembelian_format_tgl(isset($row->tgl_bayar) ? $row->tgl_bayar : ''),
+		));
+
+		$row_style = ($row_num % 2 === 0) ? 18 : 7;
+		foreach ($cells as $col => $cell) {
+			$style = $row_style;
+			if ($col === $col_jumlah || $col === $col_harga_total) {
+				$style = 8;
+			}
+			xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $style);
+		}
+		$row_num++;
+	}
+
+	foreach ($headers as $col => $label) {
+		if ($col === 0) {
+			xlsWriteCellStyle($row_num, $col, 'TOTAL', 24);
+		} elseif ($col === $col_jumlah) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah), 25);
+		} elseif ($col === $col_harga_total) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_harga_total), 25);
+		} else {
+			xlsWriteCellStyle($row_num, $col, '', 24);
+		}
+	}
+
+	xlsEOF();
+}
+
+function persediaan_gen_proses_excel_write_produksi_rows($CI, $rows, $title, $bulan_label)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$headers = array(
+		'No', 'Tgl Transaksi', 'SPOP', 'Nama Unit', 'Kode Barang', 'Nama Barang',
+		'Jumlah Produksi', 'Satuan', 'Harga Satuan', 'Total Nominal', 'Keterangan',
+	);
+	$col_jumlah = 6;
+	$col_total_nominal = 9;
+	$sum_jumlah = 0.0;
+	$sum_total_nominal = 0.0;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, $title . ' — ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+	persediaan_excel_write_headers(3, $headers);
+
+	$row_num = 4;
+	$no = 0;
+	foreach ($rows as $row) {
+		$no++;
+		$jumlah = isset($row->jumlah_produksi) ? $row->jumlah_produksi : 0;
+		$harga_satuan = isset($row->harga_satuan) ? $row->harga_satuan : 0;
+		$total_nominal = (float) persediaan_parse_angka($jumlah) * (float) persediaan_parse_angka($harga_satuan);
+		$sum_jumlah += (float) persediaan_parse_angka($jumlah);
+		$sum_total_nominal += $total_nominal;
+		$spop_tampil = persediaan_gen_v2_resolve_spop_unit_produk_row($CI, $row);
+
+		$cells = array(
+			(string) $no,
+			persediaan_gen_proses_pembelian_format_tgl(isset($row->tgl_transaksi) ? $row->tgl_transaksi : ''),
+			$spop_tampil,
+			isset($row->nama_unit) ? (string) $row->nama_unit : '',
+			isset($row->kode_barang) ? (string) $row->kode_barang : '',
+			isset($row->nama_barang) ? (string) $row->nama_barang : '',
+			persediaan_gen_proses_pembelian_format_jumlah($jumlah),
+			isset($row->satuan) ? (string) $row->satuan : '',
+			persediaan_gen_proses_pembelian_format_nominal($harga_satuan),
+			persediaan_gen_proses_pembelian_format_nominal($total_nominal),
+			isset($row->keterangan) ? (string) $row->keterangan : '',
+		);
+
+		$row_style = ($row_num % 2 === 0) ? 18 : 7;
+		foreach ($cells as $col => $cell) {
+			$style = ($col === $col_jumlah || $col === $col_total_nominal) ? 8 : $row_style;
+			xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $style);
+		}
+		$row_num++;
+	}
+
+	foreach ($headers as $col => $label) {
+		if ($col === 0) {
+			xlsWriteCellStyle($row_num, $col, 'TOTAL', 24);
+		} elseif ($col === $col_jumlah) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah), 25);
+		} elseif ($col === $col_total_nominal) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_total_nominal), 25);
+		} else {
+			xlsWriteCellStyle($row_num, $col, '', 24);
+		}
+	}
+
+	xlsEOF();
+}
+
+function persediaan_gen_proses_excel_write_penjualan_rows($rows, $title, $bulan_label)
+{
+	$headers = array(
+		'No', 'Status', 'ID', 'Tgl Jual', 'UUID Persediaan', 'Nama Barang', 'Satuan', 'Unit',
+		'Harga Satuan', 'Jumlah', 'Total Harga', 'ID Persediaan', 'Match Via', 'Keterangan',
+	);
+	$col_jumlah = 9;
+	$col_total_harga = 10;
+	$sum_jumlah = 0.0;
+	$sum_total_harga = 0.0;
+
+	xlsBOF();
+	xlsWriteLabelBold14(0, 0, $title . ' — ' . $bulan_label);
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
+	persediaan_excel_write_headers(3, $headers);
+
+	$row_num = 4;
+	$no = 0;
+	foreach ($rows as $row) {
+		$no++;
+		$jumlah = isset($row->jumlah) ? $row->jumlah : 0;
+		$harga = isset($row->harga_satuan) ? $row->harga_satuan : 0;
+		$total_harga = (float) persediaan_parse_angka($jumlah) * (float) persediaan_parse_angka($harga);
+		$sum_jumlah += (float) persediaan_parse_angka($jumlah);
+		$sum_total_harga += $total_harga;
+
+		$cells = array(
+			(string) $no,
+			isset($row->status_label) ? (string) $row->status_label : '',
+			(string) (int) (isset($row->id) ? $row->id : 0),
+			persediaan_gen_proses_pembelian_format_tgl(isset($row->tgl_jual) ? $row->tgl_jual : ''),
+			isset($row->uuid_persediaan) ? (string) $row->uuid_persediaan : '',
+			isset($row->nama_barang) ? (string) $row->nama_barang : '',
+			isset($row->satuan) ? (string) $row->satuan : '',
+			isset($row->unit) ? (string) $row->unit : '',
+			persediaan_gen_proses_pembelian_format_nominal($harga),
+			persediaan_gen_proses_pembelian_format_jumlah($jumlah),
+			persediaan_gen_proses_pembelian_format_nominal($total_harga),
+			isset($row->id_persediaan_match) ? (string) (int) $row->id_persediaan_match : '—',
+			isset($row->match_via) ? (string) $row->match_via : '',
+			isset($row->status_keterangan) ? (string) $row->status_keterangan : '',
+		);
+
+		$row_style = ($row_num % 2 === 0) ? 18 : 7;
+		foreach ($cells as $col => $cell) {
+			$style = ($col === $col_jumlah || $col === $col_total_harga) ? 8 : $row_style;
+			xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $style);
+		}
+		$row_num++;
+	}
+
+	foreach ($headers as $col => $label) {
+		if ($col === 0) {
+			xlsWriteCellStyle($row_num, $col, 'TOTAL', 24);
+		} elseif ($col === $col_jumlah) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah), 25);
+		} elseif ($col === $col_total_harga) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_total_harga), 25);
+		} else {
+			xlsWriteCellStyle($row_num, $col, '', 24);
+		}
+	}
+
+	xlsEOF();
+}
+
+function persediaan_gen_proses_export_excel_output($CI, $bulan_target, $jenis)
+{
+	$CI->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+	$defs = persediaan_gen_proses_excel_jenis_definitions();
+	if (!isset($defs[$jenis])) {
+		xlsBOF();
+		xlsWriteLabel(0, 0, 'Jenis export tidak valid.');
+		xlsEOF();
+		return;
+	}
+
+	$def = $defs[$jenis];
+	$rows = persediaan_gen_proses_excel_load_rows($CI, $bulan_target, $jenis, $def);
+	$bulan_label = persediaan_gen_proses_excel_bulan_label($bulan_target);
+	$title = isset($def['title']) ? $def['title'] : $jenis;
+	$type = isset($def['type']) ? $def['type'] : '';
+	$ts = strtotime($bulan_target . '-01');
+
+	if ($type === 'persediaan' || $type === 'persediaan_copy') {
+		$kategori = isset($def['kategori']) ? $def['kategori'] : 'barang';
+		$bulan_export = $bulan_target;
+		$bulan_title = $bulan_label;
+		if (strpos($jenis, '_sumber_') !== false) {
+			$bulan_export = date('Y-m', strtotime('-1 month', $ts));
+			$bulan_title = persediaan_gen_proses_excel_bulan_label($bulan_export);
+		}
+		persediaan_export_excel_tab_data_output($CI, $bulan_export, $rows, $kategori, false, $title . ' — ' . $bulan_title);
+		return;
+	}
+
+	if ($type === 'pembelian') {
+		persediaan_gen_proses_excel_write_pembelian_rows(
+			$rows,
+			isset($def['tab_mode']) ? $def['tab_mode'] : 'barang',
+			$title,
+			$bulan_label
+		);
+		return;
+	}
+
+	if ($type === 'produksi') {
+		persediaan_gen_proses_excel_write_produksi_rows($CI, $rows, $title, $bulan_label);
+		return;
+	}
+
+	if ($type === 'penjualan') {
+		persediaan_gen_proses_excel_write_penjualan_rows($rows, $title, $bulan_label);
+		return;
+	}
+
+	xlsBOF();
+	xlsWriteLabel(0, 0, 'Tipe export tidak dikenali.');
+	xlsEOF();
 }

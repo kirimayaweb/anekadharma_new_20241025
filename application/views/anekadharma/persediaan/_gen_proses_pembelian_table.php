@@ -22,7 +22,14 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 $col_jumlah = $show_kategori ? 8 : 7;
 $col_harga_total = $show_kategori ? 12 : 11;
 $col_count = $show_kategori ? 16 : 15;
+$excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 ?>
+<?php if ($excel_jenis !== '') {
+	$this->load->view('anekadharma/persediaan/_gen_proses_excel_btn', array(
+		'excel_jenis' => $excel_jenis,
+		'excel_title' => isset($excel_title) ? $excel_title : 'Export datatable pembelian ke Excel',
+	));
+} ?>
 <div class="gen-proses-pembelian-dt-wrap persediaan-tab-dt-wrap">
 	<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped table-sm gen-proses-pembelian-dt display nowrap" style="width:100%"
 		data-empty-msg="<?php echo htmlspecialchars($empty_msg, ENT_QUOTES, 'UTF-8'); ?>"

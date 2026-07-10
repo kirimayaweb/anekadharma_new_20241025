@@ -120,6 +120,7 @@ $jasa_badge = $jasa_ok ? 'badge-success' : 'badge-danger';
 				'rows' => $rows_pembelian_barang,
 				'table_id' => 'table-gen-proses-pembelian-barang',
 				'tab_mode' => 'barang',
+				'excel_jenis' => 'proses_pembelian_barang',
 			)); ?>
 		</div>
 		<div class="tab-pane fade" id="gen-proses-pembelian-jasa" role="tabpanel">
@@ -127,6 +128,7 @@ $jasa_badge = $jasa_ok ? 'badge-success' : 'badge-danger';
 				'rows' => $rows_pembelian_jasa,
 				'table_id' => 'table-gen-proses-pembelian-jasa',
 				'tab_mode' => 'jasa',
+				'excel_jenis' => 'proses_pembelian_jasa',
 			)); ?>
 		</div>
 	</div>
