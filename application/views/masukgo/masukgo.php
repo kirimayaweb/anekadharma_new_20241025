@@ -65,6 +65,32 @@
                 increaseArea: '20%'
             });
         });
+        // Hapus cache lokal hasil Generate & Recalculate saat masuk halaman login
+        (function() {
+            try {
+                var prefix = 'genProsesVerify_v1_';
+                var idxKey = 'genProsesVerify_v1_index';
+                var keys = [];
+                try {
+                    var idxRaw = localStorage.getItem(idxKey);
+                    if (idxRaw) {
+                        keys = JSON.parse(idxRaw) || [];
+                    }
+                } catch (eIdx) {}
+                if (!keys.length) {
+                    for (var i = localStorage.length - 1; i >= 0; i--) {
+                        var k = localStorage.key(i);
+                        if (k && k.indexOf(prefix) === 0) {
+                            keys.push(k);
+                        }
+                    }
+                }
+                keys.forEach(function(k) {
+                    try { localStorage.removeItem(k); } catch (eR) {}
+                });
+                localStorage.removeItem(idxKey);
+            } catch (eClear) {}
+        })();
     </script>
 </body>
 

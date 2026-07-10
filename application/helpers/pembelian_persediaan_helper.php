@@ -1677,6 +1677,94 @@ function pembelian_jasa_cetak_pembayaran_storage_key_uuid_spop($uuid_spop)
 }
 
 /**
+ * Teks default deskripsi periode di bawah uraian (editable, disimpan di tbl_penjualan_cetak_pembayaran).
+ * Format: Periode Bulan [bulan] [tahun] - [tanggal akhir bulan] tahun [tahun]
+ */
+function cetak_pembayaran_jasa_default_deskripsi_periode($tgl_sumber)
+{
+	$tgl_sumber = trim((string) $tgl_sumber);
+	if ($tgl_sumber === '' || $tgl_sumber === '0000-00-00' || $tgl_sumber === '0000-00-00 00:00:00') {
+		return '';
+	}
+
+	$ts = strtotime($tgl_sumber);
+	if ($ts === false) {
+		return '';
+	}
+
+	$bulan_indo = array(
+		1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+		5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+		9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+	);
+
+	$bulan_ke = (int) date('n', $ts);
+	$tahun = date('Y', $ts);
+	$tgl_awal = 1;
+	$tgl_akhir = (int) date('t', $ts);
+	$nama_bulan = isset($bulan_indo[$bulan_ke]) ? $bulan_indo[$bulan_ke] : date('F', $ts);
+
+	// Contoh: Periode Bulan Januari 2026 1 - 31 Januari tahun 2026
+	return 'Periode Bulan ' . $nama_bulan . ' ' . $tahun . ' ' . $tgl_awal . ' - ' . $tgl_akhir . ' ' . $nama_bulan . ' tahun ' . $tahun;
+}
+
+/**
+ * Ambil tgl_po terkait penjualan jasa (via uuid_persediaan / spop / uraian), fallback tgl_jual.
+ */
+function cetak_pembayaran_jasa_resolve_tgl_po_from_penjualan($CI, $row_penjualan)
+{
+	if (empty($row_penjualan)) {
+		return '';
+	}
+
+	$tgl_jual = '';
+	if (!empty($row_penjualan->tgl_jual) && $row_penjualan->tgl_jual !== '0000-00-00 00:00:00') {
+		$tgl_jual = $row_penjualan->tgl_jual;
+	}
+
+	$uuid_persediaan = isset($row_penjualan->uuid_persediaan) ? trim((string) $row_penjualan->uuid_persediaan) : '';
+	if ($uuid_persediaan !== '' && $CI->db->table_exists('persediaan') && $CI->db->table_exists('tbl_pembelian_jasa')) {
+		$sql = "SELECT bj.tgl_po
+			FROM persediaan per
+			INNER JOIN tbl_pembelian_jasa bj ON (
+				(TRIM(COALESCE(per.uuid_spop, '')) <> '' AND per.uuid_spop = bj.uuid_spop)
+				OR (TRIM(COALESCE(per.spop, '')) <> '' AND TRIM(per.spop) = TRIM(bj.spop))
+			)
+			WHERE per.uuid_persediaan = ?
+			AND bj.tgl_po IS NOT NULL AND bj.tgl_po <> '0000-00-00'
+			ORDER BY
+				CASE WHEN ? <> '' AND DATE_FORMAT(bj.tgl_po, '%Y-%m') = DATE_FORMAT(?, '%Y-%m') THEN 0 ELSE 1 END,
+				bj.tgl_po DESC, bj.id DESC
+			LIMIT 1";
+		$row = $CI->db->query($sql, array($uuid_persediaan, $tgl_jual, $tgl_jual))->row();
+		if ($row && !empty($row->tgl_po)) {
+			return $row->tgl_po;
+		}
+	}
+
+	$nama_barang = isset($row_penjualan->nama_barang) ? trim((string) $row_penjualan->nama_barang) : '';
+	if ($nama_barang !== '' && $CI->db->table_exists('tbl_pembelian_jasa')) {
+		$sql_uraian = "SELECT tgl_po FROM tbl_pembelian_jasa
+			WHERE TRIM(uraian) = ?
+			AND tgl_po IS NOT NULL AND tgl_po <> '0000-00-00'
+			ORDER BY
+				CASE WHEN ? <> '' AND DATE_FORMAT(tgl_po, '%Y-%m') = DATE_FORMAT(?, '%Y-%m') THEN 0 ELSE 1 END,
+				tgl_po DESC, id DESC
+			LIMIT 1";
+		$row = $CI->db->query($sql_uraian, array($nama_barang, $tgl_jual, $tgl_jual))->row();
+		if ($row && !empty($row->tgl_po)) {
+			return $row->tgl_po;
+		}
+	}
+
+	if ($tgl_jual !== '') {
+		return $tgl_jual;
+	}
+
+	return '';
+}
+
+/**
  * Data form cetak pembayaran dari semua baris tbl_pembelian_jasa dalam satu uuid_spop.
  */
 function pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($CI, $uuid_spop)
@@ -1731,6 +1819,8 @@ function pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($CI, $uuid_spop)
 		'tgl_bayar_selected' => $tgl_bayar_selected,
 		'uuid_spop' => $uuid_spop,
 		'spop_label' => $first->spop,
+		'tgl_po_sumber' => $first->tgl_po,
+		'deskripsi_periode_default' => cetak_pembayaran_jasa_default_deskripsi_periode($first->tgl_po),
 	);
 }
 
