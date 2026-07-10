@@ -388,11 +388,11 @@
 
                                                 if ($list_data->uuid_spop) {
                                                     $this->load->helper('pembelian_persediaan');
-                                                    $url_form_pembayaran_jasa = penjualan_jasa_url_cetak_pembayaran_form_by_uuid_spop($this, $list_data->uuid_spop);
-                                                    if ($url_form_pembayaran_jasa !== '') {
+                                                    $url_form_pembayaran_spop = pembelian_jasa_url_cetak_pembayaran_form_per_uuid_spop($this, $list_data->uuid_spop);
+                                                    if ($url_form_pembayaran_spop !== '') {
                                                         echo anchor(
-                                                            $url_form_pembayaran_jasa,
-                                                            '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>',
+                                                            $url_form_pembayaran_spop,
+                                                            '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran (SPOP)</i>',
                                                             'class="btn btn-warning btn-xs" target="_blank"'
                                                         );
                                                     }

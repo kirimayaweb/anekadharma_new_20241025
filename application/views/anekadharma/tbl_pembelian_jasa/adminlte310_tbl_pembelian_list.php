@@ -187,6 +187,8 @@
                                 $Total_per_SPOP = 0;
                                 $TOTAL_LUNAS = 0;
                                 $TOTAL_HUTANG = 0;
+                                $TOTAL_JUMLAH = 0;
+                                $TOTAL_HARGA = 0;
                                 $list_spop_status_lu = "";
                                 $x_button = 0;
                                 foreach ($Tbl_pembelian_data as $list_data) {
@@ -344,7 +346,10 @@
 
                                         <td align="center"><?php echo $list_data->kode_barang; ?></td>
                                         <td align="left"><?php echo $list_data->uraian; ?></td>
-                                        <td align="right"><?php echo nominal($list_data->jumlah); ?></td>
+                                        <td align="right"><?php
+                                            echo nominal($list_data->jumlah);
+                                            $TOTAL_JUMLAH = $TOTAL_JUMLAH + (float) $list_data->jumlah;
+                                        ?></td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
                                         <td align="left"><?php echo $list_data->konsumen; ?></td>
                                         <td align="right">
@@ -361,6 +366,7 @@
                                             echo number_format($total_per_uraian, 2, ',', '.');
 
                                             $Total_per_SPOP = $Total_per_SPOP + $total_per_uraian;
+                                            $TOTAL_HARGA = $TOTAL_HARGA + $total_per_uraian;
 
                                             ?>
                                         </td>
@@ -410,6 +416,7 @@
                                 }
                                 ?>
 
+                                <?php if (!empty($Tbl_pembelian_data) && isset($list_data) && is_object($list_data)) { ?>
                                 <!-- TOTAL SPOP AKHIR -->
                                 <tr>
                                     <td><?php echo ++$start ?></td>
@@ -424,7 +431,7 @@
                                     </td>
                                     <!-- <td></td> -->
                                     <!-- <td></td> -->
-                                    <td><?php echo $list_data->spop; ?></td>
+                                    <td><?php echo isset($list_data->spop) ? $list_data->spop : ''; ?></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
@@ -447,9 +454,31 @@
                                     <td></td>
                                     <td></td>
                                 </tr>
+                                <?php } ?>
                             </tbody>
 
                             <tfoot>
+                                <tr style="background-color:#fff3cd;">
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th style="text-align:right">TOTAL</th>
+                                    <th style="text-align:right">
+                                        <?php echo "<strong>" . nominal($TOTAL_JUMLAH) . "</strong>"; ?>
+                                    </th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th style="text-align:right">
+                                        <?php echo "<strong>" . number_format($TOTAL_HARGA, 2, ',', '.') . "</strong>"; ?>
+                                    </th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
                                 <tr>
                                     <th></th>
                                     <th></th>

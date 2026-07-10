@@ -632,19 +632,35 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
                     </div>
 
                     <?php
-                    // echo $action_ubah_per_id . $list_data->id;
+                    $row_data_barang_jual = $list_data;
+                    $id_persediaan_barang = (int) $list_data->id_persediaan_barang;
+                    $penjualan_kolom_unit_modal = penjualan_resolve_kolom_persediaan_unit($this, isset($uuid_unit) ? $uuid_unit : '');
+                    $row_persediaan = null;
 
-                    $row_data_barang_jual = $this->Tbl_penjualan_model->get_by_id($list_data->id);
+                    if ($id_persediaan_barang > 0 && !empty($Data_stock)) {
+                        foreach ($Data_stock as $stock_row) {
+                            if ((int) $stock_row->id === $id_persediaan_barang) {
+                                $row_persediaan = $stock_row;
+                                break;
+                            }
+                        }
+                    }
+                    if ($row_persediaan === null && $id_persediaan_barang > 0) {
+                        $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+                    }
+                    if ($row_persediaan === null && !empty($list_data->uuid_persediaan)) {
+                        $row_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($list_data->uuid_persediaan);
+                    }
 
-                    // cek data stock persediaan dengan filter by id_persediaan_barang dari tabel penjualan
-
-
-                    $get_data_Persediaan_by_id = $this->Persediaan_model->get_by_id($row_data_barang_jual->id_persediaan_barang);
-
-                    // Jumlah stock dikurangi , sudah terjual yang dikurang barang terjual di id penjualan ini
-                    $Get_stock_di_persediaan = $get_data_Persediaan_by_id->total_10 - ($get_data_Persediaan_by_id->penjualan - $row_data_barang_jual->jumlah);
-
-                    // print_r($row_data_barang_jual);
+                    $jumlah_jual_saat_ini = (int) $row_data_barang_jual->jumlah;
+                    if ($row_persediaan !== null) {
+                        $Get_stock_di_persediaan = penjualan_get_sisa_stock_penjualan($row_persediaan, $penjualan_kolom_unit_modal) + $jumlah_jual_saat_ini;
+                    } else {
+                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                    }
+                    if ($Get_stock_di_persediaan < 1) {
+                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                    }
 
                     // `id`, `uuid_penjualan_proses`, `uuid_penjualan`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`, `tgl_input`, `tgl_jual`, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, `umpphpsl22`, `piutang`, `penjualandpp`, `utangppn`, `cetak_bukti_penjualan`, `id_usr`, ``, ``, ``, ``, ``, ``
 

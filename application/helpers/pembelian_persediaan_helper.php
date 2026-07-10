@@ -1665,7 +1665,89 @@ function penjualan_jasa_resolve_penjualan_by_uuid_spop($CI, $uuid_spop)
 }
 
 /**
- * URL form input pembayaran penjualan jasa (halaman cetak_penjualan_per_uuid_penjualan).
+ * Kunci penyimpanan cetak pembayaran per kelompok SPOP pembelian jasa (bukan per uuid_penjualan).
+ */
+function pembelian_jasa_cetak_pembayaran_storage_key_uuid_spop($uuid_spop)
+{
+	$uuid_spop = trim((string) $uuid_spop);
+	if ($uuid_spop === '') {
+		return '';
+	}
+	return 'SPOP_' . $uuid_spop;
+}
+
+/**
+ * Data form cetak pembayaran dari semua baris tbl_pembelian_jasa dalam satu uuid_spop.
+ */
+function pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($CI, $uuid_spop)
+{
+	$uuid_spop = trim((string) $uuid_spop);
+	if ($uuid_spop === '' || !isset($CI->db)) {
+		return null;
+	}
+
+	$CI->db->where('uuid_spop', $uuid_spop);
+	$CI->db->order_by('id', 'ASC');
+	$rows = $CI->db->get('tbl_pembelian_jasa')->result();
+	if (empty($rows)) {
+		return null;
+	}
+
+	$first = $rows[0];
+	$data_penjualan = array();
+	$total_penjualan = 0;
+	foreach ($rows as $row) {
+		$item = new stdClass();
+		$item->nama_barang = $row->uraian;
+		$item->jumlah = (float) $row->jumlah;
+		$item->satuan = $row->satuan;
+		$item->harga_satuan = (float) $row->harga_satuan;
+		$data_penjualan[] = $item;
+		$total_penjualan += $item->jumlah * $item->harga_satuan;
+	}
+
+	$bulan_indo = array(
+		1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+		5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+		9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+	);
+	$tgl_bayar_selected = '';
+	if (!empty($first->tgl_po)) {
+		$ts_bayar = strtotime($first->tgl_po);
+		if ($ts_bayar !== false) {
+			$bulan_ke = (int) date('n', $ts_bayar);
+			$tgl_bayar_selected = date('j', $ts_bayar) . ' - ' . $bulan_indo[$bulan_ke] . ' - ' . date('Y', $ts_bayar);
+		}
+	}
+
+	return array(
+		'data_master' => $first,
+		'data_penjualan' => $data_penjualan,
+		'total_penjualan' => $total_penjualan,
+		'nmr_pesan_selected' => $first->spop,
+		'tgl_jual_selected' => date('d M Y', strtotime($first->tgl_po)),
+		'konsumen_nama_selected' => $first->supplier_nama,
+		'konsumen_alamat_selected' => isset($first->konsumen) ? $first->konsumen : '',
+		'tgl_bayar_selected' => $tgl_bayar_selected,
+		'uuid_spop' => $uuid_spop,
+		'spop_label' => $first->spop,
+	);
+}
+
+/**
+ * URL form cetak pembayaran per kelompok SPOP pembelian jasa (semua uraian dalam SPOP).
+ */
+function pembelian_jasa_url_cetak_pembayaran_form_per_uuid_spop($CI, $uuid_spop)
+{
+	$uuid_spop = trim((string) $uuid_spop);
+	if ($uuid_spop === '') {
+		return '';
+	}
+	return site_url('tbl_penjualan_jasa/cetak_pembayaran_per_uuid_spop/' . rawurlencode($uuid_spop));
+}
+
+/**
+ * URL form input pembayaran penjualan jasa per 1 record (uuid_penjualan / uuid_persediaan).
  */
 function penjualan_jasa_url_cetak_pembayaran_form_by_uuid_spop($CI, $uuid_spop)
 {

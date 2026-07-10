@@ -1634,6 +1634,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'is_siap_cetak' => $is_siap_cetak,
 			'auto_open_pdf' => $auto_open_pdf,
 			'pdf_url' => ($row_cetak) ? site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan_pdf/' . $uuid_penjualan . '/' . $row_cetak->uuid_cetak_pembayaran) : '',
+			'cetak_mode' => 'penjualan_record',
+			'card_title' => 'Input Cetak Pembayaran Jasa (Per Record)',
+			'back_url' => site_url('tbl_penjualan_jasa'),
 		));
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa_form', $data);
@@ -1747,6 +1750,208 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$nmr_pesan_safe = 'tanpa_nomor';
 		}
 		$pdf_nama_file = 'NOTA_PENJUALAN_' . $nmr_pesan_safe . '.pdf';
+
+		$this->pdf->stream($pdf_nama_file, array("Attachment" => 0));
+	}
+
+	private function _pack_cetak_pembayaran_jasa_view_data($base, $storage_key, $action_url, $pdf_url_base, $extra = array())
+	{
+		$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_latest_by_uuid_penjualan($storage_key);
+
+		$prosentase_ppn = '2';
+		if ($row_cetak && (float) $row_cetak->prosentase_ppn > 0) {
+			$prosentase_ppn = rtrim(rtrim(number_format((float) $row_cetak->prosentase_ppn, 2, '.', ''), '0'), '.');
+		}
+		$jumlah_ppn = 0;
+		$fee_admin = 10000;
+		if ($row_cetak) {
+			$jumlah_ppn = (float) $row_cetak->jumlah_ppn;
+			$fee_admin = (float) $row_cetak->fee_admin;
+		} else {
+			$jumlah_ppn = round($base['total_penjualan'] * 2 / 100);
+		}
+		if ($row_cetak && $row_cetak->dibayar > 0) {
+			$dibayar = (float) $row_cetak->dibayar;
+		} else {
+			$dibayar = $base['total_penjualan'] + $jumlah_ppn + $fee_admin;
+		}
+		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+
+		$save_action = $this->session->flashdata('cetak_save_action');
+		$auto_open_pdf = ($this->session->flashdata('cetak_open_pdf') === '1');
+		$uuid_cetak_flash = $this->session->flashdata('uuid_cetak_pembayaran_flash');
+		if (!empty($uuid_cetak_flash)) {
+			$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_by_uuid_cetak_pembayaran($uuid_cetak_flash);
+		}
+
+		$is_saved = !empty($row_cetak);
+		$is_siap_cetak = ($save_action === 'simpan_cetak');
+
+		$payload = array_merge($base, array(
+			'uuid_cetak_pembayaran' => ($row_cetak) ? $row_cetak->uuid_cetak_pembayaran : '',
+			'action' => $action_url,
+			'prosentase_ppn' => $prosentase_ppn,
+			'jumlah_ppn' => $jumlah_ppn,
+			'fee_admin' => $fee_admin,
+			'fee_admin_display' => number_format($fee_admin, 0, ',', '.'),
+			'dibayar' => $dibayar,
+			'terbilang_dibayar' => $terbilang_dibayar,
+			'is_saved' => $is_saved,
+			'is_siap_cetak' => $is_siap_cetak,
+			'auto_open_pdf' => $auto_open_pdf,
+			'pdf_url' => ($row_cetak) ? $pdf_url_base . '/' . $row_cetak->uuid_cetak_pembayaran : '',
+		), $extra);
+
+		return $payload;
+	}
+
+	/**
+	 * Form cetak pembayaran per kelompok SPOP pembelian jasa (semua uraian dalam 1 SPOP).
+	 */
+	public function cetak_pembayaran_per_uuid_spop($uuid_spop = null)
+	{
+		$uuid_spop = trim((string) $uuid_spop);
+		if ($uuid_spop === '') {
+			show_404();
+		}
+
+		$base = pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($this, $uuid_spop);
+		if ($base === null) {
+			show_error('Data pembelian jasa untuk SPOP ini tidak ditemukan.', 404);
+			return;
+		}
+
+		$storage_key = pembelian_jasa_cetak_pembayaran_storage_key_uuid_spop($uuid_spop);
+		$data = $this->_pack_cetak_pembayaran_jasa_view_data(
+			$base,
+			$storage_key,
+			site_url('tbl_penjualan_jasa/cetak_pembayaran_per_uuid_spop_action/' . rawurlencode($uuid_spop)),
+			site_url('tbl_penjualan_jasa/cetak_pembayaran_per_uuid_spop_pdf/' . rawurlencode($uuid_spop)),
+			array(
+				'cetak_mode' => 'pembelian_spop',
+				'uuid_spop' => $uuid_spop,
+				'card_title' => 'Input Cetak Pembayaran Jasa (Per SPOP)',
+				'back_url' => site_url('tbl_pembelian_jasa/pembayaran_ke_supplier'),
+			)
+		);
+
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa_form', $data);
+	}
+
+	public function cetak_pembayaran_per_uuid_spop_action($uuid_spop = null)
+	{
+		$uuid_spop = trim((string) $uuid_spop);
+		if ($uuid_spop === '') {
+			show_404();
+		}
+
+		$base = pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($this, $uuid_spop);
+		if ($base === null) {
+			show_error('Data pembelian jasa untuk SPOP ini tidak ditemukan.', 404);
+			return;
+		}
+
+		$storage_key = pembelian_jasa_cetak_pembayaran_storage_key_uuid_spop($uuid_spop);
+
+		$prosentase_ppn = (float) str_replace(',', '.', $this->input->post('prosentase_ppn', TRUE));
+		$jumlah_ppn = (float) str_replace(',', '.', $this->input->post('jumlah_ppn', TRUE));
+		$fee_admin_raw = $this->input->post('fee_admin', TRUE);
+		$fee_admin = (float) str_replace('.', '', str_replace(',', '.', $fee_admin_raw));
+		$total_penjualan = (float) $this->input->post('total_penjualan', TRUE);
+		if ($total_penjualan <= 0) {
+			$total_penjualan = $base['total_penjualan'];
+		}
+		$dibayar = (float) str_replace(',', '.', $this->input->post('dibayar', TRUE));
+		if ($dibayar <= 0) {
+			$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+		}
+		$terbilang = $this->input->post('terbilang', TRUE);
+
+		$save_data = array(
+			'uuid_penjualan' => $storage_key,
+			'tgl_input' => date('Y-m-d H:i:s'),
+			'total_penjualan' => $total_penjualan,
+			'prosentase_ppn' => $prosentase_ppn,
+			'jumlah_ppn' => $jumlah_ppn,
+			'fee_admin' => $fee_admin,
+			'dibayar' => $dibayar,
+			'terbilang' => $terbilang,
+			'id_usr' => $this->session->userdata('id'),
+		);
+
+		$uuid_cetak_pembayaran = $this->Tbl_penjualan_cetak_pembayaran_model->update_by_uuid_penjualan($storage_key, $save_data);
+
+		$open_print = $this->input->post('open_print', TRUE);
+		if ($open_print === '1') {
+			$this->session->set_flashdata('cetak_save_action', 'simpan_cetak');
+			$this->session->set_flashdata('cetak_open_pdf', '1');
+			$this->session->set_flashdata('message', 'Data cetak pembayaran SPOP berhasil disimpan dan siap dicetak.');
+		} else {
+			$this->session->set_flashdata('cetak_save_action', 'simpan');
+			$this->session->set_flashdata('message', 'Data cetak pembayaran SPOP berhasil disimpan.');
+		}
+		$this->session->set_flashdata('uuid_cetak_pembayaran_flash', $uuid_cetak_pembayaran);
+
+		redirect(site_url('tbl_penjualan_jasa/cetak_pembayaran_per_uuid_spop/' . rawurlencode($uuid_spop)));
+	}
+
+	public function cetak_pembayaran_per_uuid_spop_pdf($uuid_spop = null, $uuid_cetak_pembayaran = null)
+	{
+		$uuid_spop = trim((string) $uuid_spop);
+		if ($uuid_spop === '') {
+			show_404();
+		}
+
+		$base = pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($this, $uuid_spop);
+		if ($base === null) {
+			show_error('Data pembelian jasa untuk SPOP ini tidak ditemukan.', 404);
+			return;
+		}
+
+		$storage_key = pembelian_jasa_cetak_pembayaran_storage_key_uuid_spop($uuid_spop);
+
+		$row_cetak = null;
+		if (!empty($uuid_cetak_pembayaran)) {
+			$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_by_uuid_cetak_pembayaran($uuid_cetak_pembayaran);
+		}
+		if (!$row_cetak) {
+			$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_latest_by_uuid_penjualan($storage_key);
+		}
+
+		$total_penjualan = $base['total_penjualan'];
+		$PPN_NOMINAL = ($row_cetak) ? (float) $row_cetak->jumlah_ppn : 0;
+		$FEE_ADMIN_NOMINAL = ($row_cetak) ? (float) $row_cetak->fee_admin : 0;
+		$DIBAYAR = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : ($total_penjualan + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL);
+		$prosentase_ppn_label = ($row_cetak && $row_cetak->prosentase_ppn > 0) ? ' (' . rtrim(rtrim(number_format($row_cetak->prosentase_ppn, 2, ',', '.'), '0'), ',') . '%)' : '';
+		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+
+		$data = array(
+			'data_penjualan' => $base['data_penjualan'],
+			'nmr_pesan_selected' => $base['nmr_pesan_selected'],
+			'tgl_jual_selected' => $base['tgl_jual_selected'],
+			'konsumen_nama_selected' => $base['konsumen_nama_selected'],
+			'konsumen_alamat_selected' => $base['konsumen_alamat_selected'],
+			'tgl_bayar_selected' => $base['tgl_bayar_selected'],
+			'TOTAL_PENJUALAN' => $total_penjualan,
+			'PPN_NOMINAL' => $PPN_NOMINAL,
+			'FEE_ADMIN_NOMINAL' => $FEE_ADMIN_NOMINAL,
+			'DIBAYAR' => $DIBAYAR,
+			'prosentase_ppn_label' => $prosentase_ppn_label,
+			'terbilang_dibayar' => $terbilang_dibayar,
+		);
+
+		$html = $this->load->view('anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa.php', $data, true);
+
+		$this->pdf->loadHtml($html);
+		$this->pdf->render();
+
+		$nmr_pesan = isset($base['spop_label']) ? trim((string) $base['spop_label']) : '';
+		$nmr_pesan_safe = preg_replace('/[^A-Za-z0-9._-]+/', '_', $nmr_pesan);
+		$nmr_pesan_safe = trim($nmr_pesan_safe, '._-');
+		if ($nmr_pesan_safe === '') {
+			$nmr_pesan_safe = 'tanpa_spop';
+		}
+		$pdf_nama_file = 'NOTA_PEMBAYARAN_SPOP_' . $nmr_pesan_safe . '.pdf';
 
 		$this->pdf->stream($pdf_nama_file, array("Attachment" => 0));
 	}
