@@ -1595,9 +1595,19 @@ class Tbl_penjualan_jasa extends CI_Controller
 		if ($row_cetak && (float) $row_cetak->prosentase_ppn > 0) {
 			$prosentase_ppn = rtrim(rtrim(number_format((float) $row_cetak->prosentase_ppn, 2, '.', ''), '0'), '.');
 		}
-		$jumlah_ppn = ($row_cetak) ? (float) $row_cetak->jumlah_ppn : 0;
-		$fee_admin = ($row_cetak) ? (float) $row_cetak->fee_admin : 0;
-		$dibayar = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : $base['total_penjualan'];
+		$jumlah_ppn = 0;
+		$fee_admin = 10000;
+		if ($row_cetak) {
+			$jumlah_ppn = (float) $row_cetak->jumlah_ppn;
+			$fee_admin = (float) $row_cetak->fee_admin;
+		} else {
+			$jumlah_ppn = round($base['total_penjualan'] * 2 / 100);
+		}
+		if ($row_cetak && $row_cetak->dibayar > 0) {
+			$dibayar = (float) $row_cetak->dibayar;
+		} else {
+			$dibayar = $base['total_penjualan'] + $jumlah_ppn + $fee_admin;
+		}
 		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
 
 		$save_action = $this->session->flashdata('cetak_save_action');
@@ -1617,7 +1627,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'prosentase_ppn' => $prosentase_ppn,
 			'jumlah_ppn' => $jumlah_ppn,
 			'fee_admin' => $fee_admin,
-			'fee_admin_display' => ($fee_admin > 0) ? number_format($fee_admin, 0, ',', '.') : '',
+			'fee_admin_display' => number_format($fee_admin, 0, ',', '.'),
 			'dibayar' => $dibayar,
 			'terbilang_dibayar' => $terbilang_dibayar,
 			'is_saved' => $is_saved,

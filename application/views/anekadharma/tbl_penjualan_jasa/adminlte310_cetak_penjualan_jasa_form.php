@@ -197,7 +197,7 @@
 							<th style="border: 1px solid black; border-right:none;">&nbsp;</th>
 							<th colspan="2" style="text-align:center; border: 1px solid black; border-right:none;">
 								<strong>Fee Admin</strong>
-								<input type="text" name="fee_admin" id="fee_admin" class="cetak-input-inline cetak-input-fee" value="<?php echo htmlspecialchars($fee_admin_display, ENT_QUOTES, 'UTF-8'); ?>" placeholder="0" inputmode="numeric" autocomplete="off">
+								<input type="text" name="fee_admin" id="fee_admin" class="cetak-input-inline cetak-input-fee" value="<?php echo htmlspecialchars($fee_admin_display, ENT_QUOTES, 'UTF-8'); ?>" placeholder="10.000" inputmode="numeric" autocomplete="off">
 							</th>
 							<th style="text-align:right; border: 1px solid black;">
 								<strong id="display_fee_admin" class="cetak-readonly-nominal"><?php echo nominal($fee_admin); ?></strong>
