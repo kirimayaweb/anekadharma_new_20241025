@@ -397,7 +397,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian_jasa/create_pembayaran_action/' . $uuid_spop),
 			'id' => set_value('id'),
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			// 'nmrsj' => $row_per_uuid_spop->nmrsj,
@@ -514,7 +514,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian_jasa/create_pembayaran_action/' . $uuid_spop),
 			'id' => set_value('id'),
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			'nmrfakturkwitansi' => $row_per_uuid_spop->nmrfakturkwitansi,
@@ -523,15 +523,30 @@ class Tbl_pembelian_jasa extends CI_Controller
 			'nominal_pengajuan' => $Total_Nominal_Sisa_Tagihan,
 			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
 			// 'nominal_pengajuan' => str_replace(",", ".", str_replace(".", "", $x_total)),
+			'tgl_permohonan' => date('Y-m-d'),
+			'nomor_permohonan' => '',
+			'keterangan' => '',
+			'tgl_jatuh_tempo' => '',
+			'uuid_bank' => '',
+			'nama_bank' => '',
+			'nomor_rekening' => '',
+			'atas_nama_rekening' => '',
+			'nomor_bkk' => '',
+			'tgl_nomor_bkk' => '',
+			'uuid_bank_bkk' => '',
+			'nama_bank_bkk' => '',
+			'nomor_cek_giro' => '',
+			'uuid_account_unit' => '',
+			'account' => '',
 			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
 			'supplier_nama' => $row_per_uuid_spop->supplier_nama,
 			'uuid_konsumen' => $row_per_uuid_spop->uuid_konsumen,
 			'konsumen' => $row_per_uuid_spop->konsumen,
 			'statuslu' => $row_per_uuid_spop->statuslu,
 			'kas_bank' => $row_per_uuid_spop->kas_bank,
-			'nama_direktur' => $row_per_direktur->full_name,
-			'nama_kabagkeuangan' => $row_per_kabagkeuangan->full_name,
-			'nama_kasirpemebelian' => $row_per_kasirpembelian->full_name,
+			'nama_direktur' => ($row_per_direktur ? $row_per_direktur->full_name : ''),
+			'nama_kabagkeuangan' => ($row_per_kabagkeuangan ? $row_per_kabagkeuangan->full_name : ''),
+			'nama_kasirpemebelian' => ($row_per_kasirpembelian ? $row_per_kasirpembelian->full_name : ''),
 			'from_pembelian_page' => $from_pembelian_page,
 		);
 
@@ -722,7 +737,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		// print_r("<br/>");
 		// die;
 
-		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
+		redirect(site_url('tbl_pembelian_jasa/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}
 
 	public function success_pengajuan($uuid_pengajuan_bayar_terproses)
@@ -751,7 +766,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian_jasa/create_pembayaran_action/' . $uuid_spop),
 			'id' => set_value('id'),
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			'nmrfakturkwitansi' => $row_per_uuid_spop->nmrfakturkwitansi,
@@ -825,7 +840,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Simpan',
-			'action' => site_url('tbl_pembelian/create_pembayaran_action/' . $uuid_spop),
+			'action' => site_url('tbl_pembelian_jasa/create_pembayaran_action/' . $uuid_spop),
 			'id' => set_value('id'),
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			'nmrfakturkwitansi' => $row_per_uuid_spop->nmrfakturkwitansi,
@@ -1153,7 +1168,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		// print_r("<br/>");
 		// die;
 
-		redirect(site_url('tbl_pembelian/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
+		redirect(site_url('tbl_pembelian_jasa/success_pengajuan/' . $uuid_pengajuan_bayar_terproses));
 	}
 
 
@@ -1210,6 +1225,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 
 		// $RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($Query_data_pengajuan_bayar_by_id->uuid_spop);
 
 		$from_pembelian_page = "BukanPembelian";
 		$UPDATE_PROSES = "UPDATE_PROSES";
@@ -1218,7 +1234,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$data = array(
 			'data_ALL_per_SPOP' => $RESULT_per_uuid_spop,
 			'button' => 'Update',
-			'action' => site_url('tbl_pembelian/update_pembayaran_ke_supplier_action/' . $id_data),
+			'action' => site_url('tbl_pembelian_jasa/update_pembayaran_ke_supplier_action/' . $id_data),
 			'id' => $Query_data_pengajuan_bayar_by_id->id,
 			'tgl_po' => $row_per_uuid_spop->tgl_po,
 			'tgl_permohonan' => $Query_data_pengajuan_bayar_by_id->tgl_permohonan,
@@ -1301,10 +1317,10 @@ class Tbl_pembelian_jasa extends CI_Controller
 		if ($row) {
 			$this->Tbl_pembelian_pengajuan_bayar_model->delete($id_data);
 			$this->session->set_flashdata('message', 'Delete Record Success');
-			redirect(site_url('Tbl_pembelian/pembayaran_ke_supplier'));
+			redirect(site_url('Tbl_pembelian_jasa/pembayaran_ke_supplier'));
 		} else {
 			$this->session->set_flashdata('message', 'Record Not Found');
-			redirect(site_url('Tbl_pembelian/pembayaran_ke_supplier'));
+			redirect(site_url('Tbl_pembelian_jasa/pembayaran_ke_supplier'));
 		}
 	}
 

@@ -339,12 +339,12 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 		<!-- BARIS KE 6+ — data penjualan (minimal 5 baris) -->
 		<?php
 		$start = 0;
-		$TOTAL_PENJUALAN = 0;
+		$calc_total_penjualan = 0;
 		$min_data_rows = 5;
 
 		foreach ($data_penjualan as $list_data) {
 			$x_total = $list_data->jumlah * $list_data->harga_satuan;
-			$TOTAL_PENJUALAN += $x_total;
+			$calc_total_penjualan += $x_total;
 		?>
 			<tr class="cetak-barang">
 				<th class="cetak-col-no-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong><?php echo ++$start; ?></strong></th>
@@ -366,10 +366,24 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 			</tr>
 		<?php
 		}
-		$PPN_NOMINAL = 28000;
-		$FEE_ADMIN_NOMINAL = 10000;
-		$DIBAYAR = $TOTAL_PENJUALAN - $PPN_NOMINAL - $FEE_ADMIN_NOMINAL;
-		$terbilang_dibayar = ucwords(terbilang((int) round($DIBAYAR))) . ' Rupiah';
+		if (!isset($TOTAL_PENJUALAN) || $TOTAL_PENJUALAN <= 0) {
+			$TOTAL_PENJUALAN = $calc_total_penjualan;
+		}
+		if (!isset($PPN_NOMINAL)) {
+			$PPN_NOMINAL = 0;
+		}
+		if (!isset($FEE_ADMIN_NOMINAL)) {
+			$FEE_ADMIN_NOMINAL = 0;
+		}
+		if (!isset($prosentase_ppn_label)) {
+			$prosentase_ppn_label = '';
+		}
+		if (!isset($DIBAYAR)) {
+			$DIBAYAR = $TOTAL_PENJUALAN + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL;
+		}
+		if (!isset($terbilang_dibayar) || $terbilang_dibayar === '') {
+			$terbilang_dibayar = ucwords(terbilang((int) round($DIBAYAR))) . ' Rupiah';
+		}
 		$cetak_border_no_tb = 'border-left: 1px solid black; border-right: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;';
 		?>
 
@@ -394,7 +408,7 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 		<tr class="cetak-barang">
 			<th class="cetak-col-no-cell" style="border: 1px solid black; border-right:none; border-collapse: collapse;">&nbsp;</th>
 			<th class="cetak-col-deskripsi-cell" style="border: 1px solid black; border-right:none; border-collapse: collapse;">&nbsp;</th>
-			<th colspan="2" class="cetak-col-unit-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong>PPN</strong></th>
+			<th colspan="2" class="cetak-col-unit-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong>PPN<?php echo htmlspecialchars($prosentase_ppn_label, ENT_QUOTES, 'UTF-8'); ?></strong></th>
 			<th class="cetak-col-jumlah-cell" style="text-align:right; border: 1px solid black; border-collapse: collapse;"><strong><?php echo nominal($PPN_NOMINAL); ?></strong></th>
 		</tr>
 

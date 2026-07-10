@@ -144,7 +144,7 @@
 
                                         <?php
 
-                                        $sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`";
+                                        $sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='" . $list_data->uuid_spop . "' GROUP by `uuid_spop`";
 
                                         $Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
 
@@ -231,11 +231,11 @@
 
                                                 // echo "<br/>";
 
-                                                echo anchor(site_url('tbl_pembelian/update_pembayaran_ke_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH  </i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(site_url('tbl_pembelian_jasa/update_pembayaran_ke_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-pencil-square-o" aria-hidden="true">UBAH  </i>', 'class="btn btn-warning btn-xs"');
 
                                                 // echo anchor(site_url('tbl_pembelian/delete_pembayaran_dari_supplier/' . $list_data->uuid_spop), '<i class="fa fa-trash-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
 
-                                                echo anchor(site_url('tbl_pembelian/delete_pembayaran_dari_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-trash-o">HAPUS</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin Akan MENGHAPUS Data ini ?\')"');
+                                                echo anchor(site_url('tbl_pembelian_jasa/delete_pembayaran_dari_supplier/' . $list_data_TRANSFER->id), '<i class="fa fa-trash-o">HAPUS</i>', 'title="delete" class="btn btn-danger btn-sm" onclick="javasciprt: return confirm(\'Anda Yakin Akan MENGHAPUS Data ini ?\')"');
                                            
                                                 ++$start_TRANSFER;
                                             }
@@ -381,13 +381,13 @@
                                                             // echo $Total_pengajuan_bayar;
                                                             // echo "<br/>";
 
-                                                            echo anchor(site_url('tbl_pembelian/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan_bayar->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN ' . number_format($Total_pengajuan_bayar, 2, ',', '.') . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                                            echo anchor(site_url('tbl_pembelian_jasa/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan_bayar->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">CETAK PENGAJUAN ' . number_format($Total_pengajuan_bayar, 2, ',', '.') . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
                                                         }
                                                     }
                                                 }
 
                                                 if ($list_data->uuid_spop) {
-                                                    echo anchor(site_url('tbl_pembelian/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                    echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                                 }
 
                                                 // echo $list_data->nominal_pengajuan;

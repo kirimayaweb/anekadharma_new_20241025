@@ -467,6 +467,13 @@ class Tbl_pembelian extends CI_Controller
 	{
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		if (!$row_per_uuid_spop) {
+			$this->load->model('Tbl_pembelian_jasa_model');
+			if ($this->Tbl_pembelian_jasa_model->get_by_uuid_spop($uuid_spop)) {
+				redirect(site_url('tbl_pembelian_jasa/create_pembayaran/' . $uuid_spop));
+				return;
+			}
+		}
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
 		$data = array(
@@ -598,6 +605,7 @@ class Tbl_pembelian extends CI_Controller
 			'nominal_pengajuan' => $Total_Nominal_Sisa_Tagihan,
 			// 'nominal_pengajuan' => preg_replace("/[^0-9]/", "", $x_total),
 			// 'nominal_pengajuan' => str_replace(",", ".", str_replace(".", "", $x_total)),
+			'tgl_permohonan' => date('Y-m-d'),
 			'supplier_kode' => $row_per_uuid_spop->supplier_kode,
 			'supplier_nama' => $row_per_uuid_spop->supplier_nama,
 			'uuid_konsumen' => $row_per_uuid_spop->uuid_konsumen,
