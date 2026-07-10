@@ -1610,6 +1610,91 @@ function penjualan_enrich_data_cetak_penjualan($CI, $rows_penjualan)
 }
 
 /**
+ * Cari data penjualan jasa yang terkait SPOP pembelian jasa (via persediaan).
+ */
+function penjualan_jasa_resolve_penjualan_by_uuid_spop($CI, $uuid_spop)
+{
+	$uuid_spop = trim((string) $uuid_spop);
+	if ($uuid_spop === '' || !isset($CI->db) || !$CI->db->table_exists('tbl_penjualan')) {
+		return null;
+	}
+
+	$sql = "SELECT p.uuid_penjualan, p.tgl_jual, p.nmrkirim, p.nmrpesan
+		FROM tbl_penjualan p
+		INNER JOIN persediaan per ON per.uuid_barang = p.uuid_barang
+		INNER JOIN tbl_pembelian_jasa bj ON bj.uuid_spop = ?
+		WHERE p.barang_jasa = 'jasa'
+		AND (
+			per.uuid_spop = bj.uuid_spop
+			OR TRIM(per.spop) = TRIM(bj.spop)
+		)
+		ORDER BY
+			CASE WHEN per.uuid_spop = bj.uuid_spop THEN 0 ELSE 1 END,
+			p.tgl_jual DESC,
+			p.id DESC
+		LIMIT 1";
+
+	$row = $CI->db->query($sql, array($uuid_spop))->row();
+	if ($row && !empty($row->uuid_penjualan)) {
+		return $row;
+	}
+
+	$sql_nmrpesan = "SELECT p.uuid_penjualan, p.tgl_jual, p.nmrkirim, p.nmrpesan
+		FROM tbl_penjualan p
+		INNER JOIN tbl_pembelian_jasa bj ON bj.uuid_spop = ?
+		WHERE p.barang_jasa = 'jasa'
+		AND TRIM(p.nmrpesan) = TRIM(bj.spop)
+		ORDER BY p.tgl_jual DESC, p.id DESC
+		LIMIT 1";
+
+	$row = $CI->db->query($sql_nmrpesan, array($uuid_spop))->row();
+	if ($row && !empty($row->uuid_penjualan)) {
+		return $row;
+	}
+
+	$sql_uraian = "SELECT p.uuid_penjualan, p.tgl_jual, p.nmrkirim, p.nmrpesan
+		FROM tbl_penjualan p
+		INNER JOIN tbl_pembelian_jasa bj ON bj.uuid_spop = ?
+		WHERE p.barang_jasa = 'jasa'
+		AND TRIM(p.nama_barang) = TRIM(bj.uraian)
+		AND TRIM(bj.uraian) <> ''
+		ORDER BY p.tgl_jual DESC, p.id DESC
+		LIMIT 1";
+
+	return $CI->db->query($sql_uraian, array($uuid_spop))->row();
+}
+
+/**
+ * URL form input pembayaran penjualan jasa (halaman cetak_penjualan_per_uuid_penjualan).
+ */
+function penjualan_jasa_url_cetak_pembayaran_form_by_uuid_spop($CI, $uuid_spop)
+{
+	$row = penjualan_jasa_resolve_penjualan_by_uuid_spop($CI, $uuid_spop);
+	if (!$row || empty($row->uuid_penjualan)) {
+		return '';
+	}
+
+	return site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan/' . $row->uuid_penjualan);
+}
+
+/**
+ * URL tombol pengajuan/buat pembayaran: prioritas form cetak penjualan jasa.
+ */
+function penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($CI, $uuid_spop, $from_pembelian_page = false)
+{
+	$url_cetak = penjualan_jasa_url_cetak_pembayaran_form_by_uuid_spop($CI, $uuid_spop);
+	if ($url_cetak !== '') {
+		return $url_cetak;
+	}
+
+	if ($from_pembelian_page) {
+		return site_url('tbl_pembelian_jasa/create_pembayaran/' . $uuid_spop . '/pembelian');
+	}
+
+	return site_url('tbl_pembelian_jasa/create_pembayaran/' . $uuid_spop);
+}
+
+/**
  * Bungkus nama konsumen per baris di kotak KEPADA YTH. (cetak penjualan PDF).
  * Pemisah baris hanya di spasi agar kata tidak terpotong.
  */

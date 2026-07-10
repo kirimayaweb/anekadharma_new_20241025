@@ -232,13 +232,13 @@
                                                     if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
 
                                                         if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                            echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                            echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                                         }
                                                     }
                                                 } else {
 
                                                     if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                        echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                        echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                                     }
                                                 }
 
@@ -465,7 +465,7 @@
                                             // echo " : ";
                                             if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
                                                 if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                    echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                    echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                                 }
                                             }
                                         } else {
@@ -474,7 +474,7 @@
 
                                             if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
 
-                                                echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian'), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
+                                                echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
                                             }
 
                                             // }else{

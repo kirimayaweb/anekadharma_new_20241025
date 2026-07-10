@@ -387,7 +387,15 @@
                                                 }
 
                                                 if ($list_data->uuid_spop) {
-                                                    echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                    $this->load->helper('pembelian_persediaan');
+                                                    $url_form_pembayaran_jasa = penjualan_jasa_url_cetak_pembayaran_form_by_uuid_spop($this, $list_data->uuid_spop);
+                                                    if ($url_form_pembayaran_jasa !== '') {
+                                                        echo anchor(
+                                                            $url_form_pembayaran_jasa,
+                                                            '<i class="fa fa-pencil-square-o" aria-hidden="true">Buat Pengajuan Pembayaran</i>',
+                                                            'class="btn btn-warning btn-xs" target="_blank"'
+                                                        );
+                                                    }
                                                 }
 
                                                 // echo $list_data->nominal_pengajuan;

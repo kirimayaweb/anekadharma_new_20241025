@@ -14,7 +14,7 @@ class Tbl_pembelian_jasa extends CI_Controller
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
 		$this->load->library('Pdf');
-		$this->load->helper(array('nominal'));
+		$this->load->helper(array('nominal', 'pembelian_persediaan'));
 	}
 
 
@@ -956,11 +956,8 @@ class Tbl_pembelian_jasa extends CI_Controller
         sum(tbl_pembelian_jasa_a.harga_total) as total_pembelian,
         tbl_pembelian_jasa_a.supplier_nama as supplier_nama,
         tbl_pembelian_jasa_a.statuslu as statuslu,
-        -- tbl_pembelian_pengajuan_bayar_a.uuid_pengajuan_bayar as uuid_pengajuan_bayar,
-        -- tbl_pembelian_pengajuan_bayar_a.nominal_pengajuan as nominal_pengajuan
 		tbl_pembelian_jasa_a.kas_bank as kas_bank
         FROM tbl_pembelian_jasa tbl_pembelian_jasa_a 
-		-- left join   tbl_pembelian_pengajuan_bayar  tbl_pembelian_pengajuan_bayar_a ON  tbl_pembelian_pengajuan_bayar_a.uuid_spop = tbl_pembelian_jasa_a.uuid_spop
 		group by tbl_pembelian_jasa_a.uuid_spop
 		order by tbl_pembelian_jasa_a.tgl_po asc
         ";
