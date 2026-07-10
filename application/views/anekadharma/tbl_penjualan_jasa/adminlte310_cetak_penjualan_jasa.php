@@ -345,10 +345,17 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 		foreach ($data_penjualan as $list_data) {
 			$x_total = $list_data->jumlah * $list_data->harga_satuan;
 			$calc_total_penjualan += $x_total;
+			$is_first_deskripsi_row = ($start === 0);
+			$deskripsi_periode_cetak = isset($deskripsi_periode) ? trim((string) $deskripsi_periode) : '';
 		?>
 			<tr class="cetak-barang">
 				<th class="cetak-col-no-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong><?php echo ++$start; ?></strong></th>
-				<th class="cetak-col-deskripsi-cell" style="text-align:left; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong><?php echo $list_data->nama_barang; ?></strong></th>
+				<th class="cetak-col-deskripsi-cell" style="text-align:left; border: 1px solid black; border-right:none; border-collapse: collapse; vertical-align: top;">
+					<strong><?php echo $list_data->nama_barang; ?></strong>
+					<?php if ($is_first_deskripsi_row && $deskripsi_periode_cetak !== '') { ?>
+						<br><span style="font-weight: normal; font-size: 0.95em;"><?php echo htmlspecialchars($deskripsi_periode_cetak, ENT_QUOTES, 'UTF-8'); ?></span>
+					<?php } ?>
+				</th>
 				<th class="cetak-col-unit-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong><?php echo nominal($list_data->jumlah) . ' ' . $list_data->satuan; ?></strong></th>
 				<th class="cetak-col-harga-cell" style="text-align:right; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong><?php echo nominal($list_data->harga_satuan); ?></strong></th>
 				<th class="cetak-col-jumlah-cell" style="text-align:right; border: 1px solid black; border-collapse: collapse;"><strong><?php echo nominal($x_total); ?></strong></th>

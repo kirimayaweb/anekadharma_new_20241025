@@ -1532,12 +1532,31 @@ class Tbl_penjualan_jasa extends CI_Controller
 	{
 		$data_master_penjualan_per_uuidpenjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
 
+		// Alamat nota: dari sys_unit.alamat sesuai unit penjualan (uuid_unit / nama unit)
 		$konsumen_alamat_selected = '';
-		if (!empty($data_master_penjualan_per_uuidpenjualan->uuid_konsumen)) {
-			$konsumen_row = $this->Sys_konsumen_model->get_by_uuid_konsumen($data_master_penjualan_per_uuidpenjualan->uuid_konsumen);
-			if ($konsumen_row && isset($konsumen_row->alamat_konsumen)) {
-				$konsumen_alamat_selected = $konsumen_row->alamat_konsumen;
-			}
+		$this->Sys_unit_model->ensure_schema();
+
+		$uuid_unit = '';
+		if (!empty($data_master_penjualan_per_uuidpenjualan->uuid_unit)) {
+			$uuid_unit = trim((string) $data_master_penjualan_per_uuidpenjualan->uuid_unit);
+		}
+		$nama_unit = '';
+		if (!empty($data_master_penjualan_per_uuidpenjualan->unit)) {
+			$nama_unit = trim((string) $data_master_penjualan_per_uuidpenjualan->unit);
+		}
+
+		$unit_row = null;
+		if ($uuid_unit !== '') {
+			$unit_row = $this->Sys_unit_model->get_by_uuid_unit($uuid_unit);
+		}
+		if (!$unit_row && $nama_unit !== '') {
+			$unit_row = $this->db->query(
+				"SELECT * FROM sys_unit WHERE TRIM(nama_unit) = ? OR TRIM(kode_unit) = ? LIMIT 1",
+				array($nama_unit, $nama_unit)
+			)->row();
+		}
+		if ($unit_row && isset($unit_row->alamat) && trim((string) $unit_row->alamat) !== '') {
+			$konsumen_alamat_selected = trim((string) $unit_row->alamat);
 		}
 
 		$tgl_bayar_raw = null;
@@ -1569,6 +1588,18 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$total_penjualan += ($list_data->jumlah * $list_data->harga_satuan);
 		}
 
+		$tgl_po_sumber = cetak_pembayaran_jasa_resolve_tgl_po_from_penjualan($this, $data_master_penjualan_per_uuidpenjualan);
+		if ($tgl_po_sumber === '' && !empty($data_penjualan[0])) {
+			$tgl_po_sumber = cetak_pembayaran_jasa_resolve_tgl_po_from_penjualan($this, $data_penjualan[0]);
+		}
+		$deskripsi_periode_default = cetak_pembayaran_jasa_default_deskripsi_periode($tgl_po_sumber);
+		$uuid_persediaan_ref = '';
+		if (!empty($data_master_penjualan_per_uuidpenjualan->uuid_persediaan)) {
+			$uuid_persediaan_ref = trim((string) $data_master_penjualan_per_uuidpenjualan->uuid_persediaan);
+		} elseif (!empty($data_penjualan[0]->uuid_persediaan)) {
+			$uuid_persediaan_ref = trim((string) $data_penjualan[0]->uuid_persediaan);
+		}
+
 		return array(
 			'data_master' => $data_master_penjualan_per_uuidpenjualan,
 			'data_penjualan' => $data_penjualan,
@@ -1578,6 +1609,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'konsumen_nama_selected' => $data_master_penjualan_per_uuidpenjualan->konsumen_nama,
 			'konsumen_alamat_selected' => $konsumen_alamat_selected,
 			'tgl_bayar_selected' => $tgl_bayar_selected,
+			'tgl_po_sumber' => $tgl_po_sumber,
+			'deskripsi_periode_default' => $deskripsi_periode_default,
+			'uuid_persediaan_ref' => $uuid_persediaan_ref,
 		);
 	}
 
@@ -1609,12 +1643,19 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$dibayar = $base['total_penjualan'] + $jumlah_ppn + $fee_admin;
 		}
 		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$deskripsi_periode_default = isset($base['deskripsi_periode_default']) ? $base['deskripsi_periode_default'] : '';
+		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
+			? trim((string) $row_cetak->deskripsi_periode)
+			: $deskripsi_periode_default;
 
 		$save_action = $this->session->flashdata('cetak_save_action');
 		$auto_open_pdf = ($this->session->flashdata('cetak_open_pdf') === '1');
 		$uuid_cetak_flash = $this->session->flashdata('uuid_cetak_pembayaran_flash');
 		if (!empty($uuid_cetak_flash)) {
 			$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_by_uuid_cetak_pembayaran($uuid_cetak_flash);
+			if ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '') {
+				$deskripsi_periode = trim((string) $row_cetak->deskripsi_periode);
+			}
 		}
 
 		$is_saved = !empty($row_cetak);
@@ -1630,6 +1671,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'fee_admin_display' => number_format($fee_admin, 0, ',', '.'),
 			'dibayar' => $dibayar,
 			'terbilang_dibayar' => $terbilang_dibayar,
+			'deskripsi_periode' => $deskripsi_periode,
+			'deskripsi_periode_default' => $deskripsi_periode_default,
+			'autosave_deskripsi_url' => site_url('tbl_penjualan_jasa/cetak_penjualan_deskripsi_periode_autosave/' . $uuid_penjualan),
 			'is_saved' => $is_saved,
 			'is_siap_cetak' => $is_siap_cetak,
 			'auto_open_pdf' => $auto_open_pdf,
@@ -1663,6 +1707,10 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
 		}
 		$terbilang = $this->input->post('terbilang', TRUE);
+		$deskripsi_periode = trim((string) $this->input->post('deskripsi_periode', TRUE));
+		if ($deskripsi_periode === '' && !empty($base['deskripsi_periode_default'])) {
+			$deskripsi_periode = $base['deskripsi_periode_default'];
+		}
 
 		$save_data = array(
 			'uuid_penjualan' => $uuid_penjualan,
@@ -1673,6 +1721,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'fee_admin' => $fee_admin,
 			'dibayar' => $dibayar,
 			'terbilang' => $terbilang,
+			'deskripsi_periode' => $deskripsi_periode,
 			'id_usr' => $this->session->userdata('id'),
 		);
 
@@ -1695,6 +1744,75 @@ class Tbl_penjualan_jasa extends CI_Controller
 	public function cetak_penjualan_per_uuid_penjualan_success($uuid_penjualan = null, $uuid_cetak_pembayaran = null)
 	{
 		redirect(site_url('tbl_penjualan_jasa/cetak_penjualan_per_uuid_penjualan/' . $uuid_penjualan));
+	}
+
+	/**
+	 * Autosave deskripsi periode (kolom di bawah uraian) ke tbl_penjualan_cetak_pembayaran.
+	 * storage_key = uuid_penjualan atau SPOP_{uuid_spop}
+	 */
+	public function cetak_penjualan_deskripsi_periode_autosave($storage_key = null)
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$storage_key = trim((string) $storage_key);
+		if ($storage_key === '') {
+			echo json_encode(array('ok' => false, 'message' => 'storage_key kosong'));
+			return;
+		}
+
+		$deskripsi_periode = trim((string) $this->input->post('deskripsi_periode', TRUE));
+		$row = $this->Tbl_penjualan_cetak_pembayaran_model->get_latest_by_uuid_penjualan($storage_key);
+
+		if ($row) {
+			$save_data = array(
+				'deskripsi_periode' => $deskripsi_periode,
+				'tgl_input' => date('Y-m-d H:i:s'),
+				'id_usr' => $this->session->userdata('id'),
+			);
+			$uuid_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->update_by_uuid_penjualan($storage_key, $save_data);
+		} else {
+			$total_penjualan = 0;
+			$jumlah_ppn = 0;
+			$fee_admin = 10000;
+			$dibayar = 0;
+
+			if (strpos($storage_key, 'SPOP_') === 0) {
+				$uuid_spop = substr($storage_key, 5);
+				$base = pembelian_jasa_prepare_cetak_pembayaran_by_uuid_spop($this, $uuid_spop);
+				if ($base !== null) {
+					$total_penjualan = (float) $base['total_penjualan'];
+					$jumlah_ppn = round($total_penjualan * 2 / 100);
+					$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+				}
+			} else {
+				$base = $this->_prepare_cetak_penjualan_jasa_data($storage_key);
+				if (!empty($base['total_penjualan'])) {
+					$total_penjualan = (float) $base['total_penjualan'];
+					$jumlah_ppn = round($total_penjualan * 2 / 100);
+					$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+				}
+			}
+
+			$save_data = array(
+				'uuid_penjualan' => $storage_key,
+				'tgl_input' => date('Y-m-d H:i:s'),
+				'total_penjualan' => $total_penjualan,
+				'prosentase_ppn' => 2,
+				'jumlah_ppn' => $jumlah_ppn,
+				'fee_admin' => $fee_admin,
+				'dibayar' => $dibayar,
+				'terbilang' => '',
+				'deskripsi_periode' => $deskripsi_periode,
+				'id_usr' => $this->session->userdata('id'),
+			);
+			$uuid_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->update_by_uuid_penjualan($storage_key, $save_data);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'uuid_cetak_pembayaran' => $uuid_cetak,
+			'deskripsi_periode' => $deskripsi_periode,
+		));
 	}
 
 	public function cetak_penjualan_per_uuid_penjualan_pdf($uuid_penjualan = null, $uuid_cetak_pembayaran = null)
@@ -1720,6 +1838,10 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$DIBAYAR = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : ($total_penjualan + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL);
 		$prosentase_ppn_label = ($row_cetak && $row_cetak->prosentase_ppn > 0) ? ' (' . rtrim(rtrim(number_format($row_cetak->prosentase_ppn, 2, ',', '.'), '0'), ',') . '%)' : '';
 		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$deskripsi_periode_default = isset($base['deskripsi_periode_default']) ? $base['deskripsi_periode_default'] : '';
+		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
+			? trim((string) $row_cetak->deskripsi_periode)
+			: $deskripsi_periode_default;
 
 		$data = array(
 			'data_penjualan' => $base['data_penjualan'],
@@ -1734,6 +1856,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'DIBAYAR' => $DIBAYAR,
 			'prosentase_ppn_label' => $prosentase_ppn_label,
 			'terbilang_dibayar' => $terbilang_dibayar,
+			'deskripsi_periode' => $deskripsi_periode,
 		);
 
 		$html = $this->load->view('anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa.php', $data, true);
@@ -1777,11 +1900,24 @@ class Tbl_penjualan_jasa extends CI_Controller
 		}
 		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
 
+		$deskripsi_periode_default = '';
+		if (!empty($base['deskripsi_periode_default'])) {
+			$deskripsi_periode_default = $base['deskripsi_periode_default'];
+		} elseif (!empty($base['data_master']->tgl_po)) {
+			$deskripsi_periode_default = cetak_pembayaran_jasa_default_deskripsi_periode($base['data_master']->tgl_po);
+		}
+		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
+			? trim((string) $row_cetak->deskripsi_periode)
+			: $deskripsi_periode_default;
+
 		$save_action = $this->session->flashdata('cetak_save_action');
 		$auto_open_pdf = ($this->session->flashdata('cetak_open_pdf') === '1');
 		$uuid_cetak_flash = $this->session->flashdata('uuid_cetak_pembayaran_flash');
 		if (!empty($uuid_cetak_flash)) {
 			$row_cetak = $this->Tbl_penjualan_cetak_pembayaran_model->get_by_uuid_cetak_pembayaran($uuid_cetak_flash);
+			if ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '') {
+				$deskripsi_periode = trim((string) $row_cetak->deskripsi_periode);
+			}
 		}
 
 		$is_saved = !empty($row_cetak);
@@ -1796,6 +1932,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'fee_admin_display' => number_format($fee_admin, 0, ',', '.'),
 			'dibayar' => $dibayar,
 			'terbilang_dibayar' => $terbilang_dibayar,
+			'deskripsi_periode' => $deskripsi_periode,
+			'deskripsi_periode_default' => $deskripsi_periode_default,
+			'autosave_deskripsi_url' => site_url('tbl_penjualan_jasa/cetak_penjualan_deskripsi_periode_autosave/' . rawurlencode($storage_key)),
 			'is_saved' => $is_saved,
 			'is_siap_cetak' => $is_siap_cetak,
 			'auto_open_pdf' => $auto_open_pdf,
@@ -1866,6 +2005,10 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
 		}
 		$terbilang = $this->input->post('terbilang', TRUE);
+		$deskripsi_periode = trim((string) $this->input->post('deskripsi_periode', TRUE));
+		if ($deskripsi_periode === '' && !empty($base['data_master']->tgl_po)) {
+			$deskripsi_periode = cetak_pembayaran_jasa_default_deskripsi_periode($base['data_master']->tgl_po);
+		}
 
 		$save_data = array(
 			'uuid_penjualan' => $storage_key,
@@ -1876,6 +2019,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'fee_admin' => $fee_admin,
 			'dibayar' => $dibayar,
 			'terbilang' => $terbilang,
+			'deskripsi_periode' => $deskripsi_periode,
 			'id_usr' => $this->session->userdata('id'),
 		);
 
@@ -1924,6 +2068,13 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$DIBAYAR = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : ($total_penjualan + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL);
 		$prosentase_ppn_label = ($row_cetak && $row_cetak->prosentase_ppn > 0) ? ' (' . rtrim(rtrim(number_format($row_cetak->prosentase_ppn, 2, ',', '.'), '0'), ',') . '%)' : '';
 		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$deskripsi_periode_default = '';
+		if (!empty($base['data_master']->tgl_po)) {
+			$deskripsi_periode_default = cetak_pembayaran_jasa_default_deskripsi_periode($base['data_master']->tgl_po);
+		}
+		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
+			? trim((string) $row_cetak->deskripsi_periode)
+			: $deskripsi_periode_default;
 
 		$data = array(
 			'data_penjualan' => $base['data_penjualan'],
@@ -1938,6 +2089,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'DIBAYAR' => $DIBAYAR,
 			'prosentase_ppn_label' => $prosentase_ppn_label,
 			'terbilang_dibayar' => $terbilang_dibayar,
+			'deskripsi_periode' => $deskripsi_periode,
 		);
 
 		$html = $this->load->view('anekadharma/tbl_penjualan_jasa/adminlte310_cetak_penjualan_jasa.php', $data, true);
