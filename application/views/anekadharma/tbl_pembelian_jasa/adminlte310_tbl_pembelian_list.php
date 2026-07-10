@@ -158,17 +158,12 @@
                                 if (!isset($pengajuan_sum_by_uuid_spop)) {
                                     $pengajuan_sum_by_uuid_spop = array();
                                 }
-                                if (!isset($pengajuan_url_by_uuid_spop)) {
-                                    $pengajuan_url_by_uuid_spop = array();
-                                }
                                 if (!function_exists('render_pengajuan_pembelian_jasa_cell')) {
-                                    function render_pengajuan_pembelian_jasa_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop)
+                                    function render_pengajuan_pembelian_jasa_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop)
                                     {
                                         $result_pengajuan_by_uuid_spop = isset($pengajuan_by_uuid_spop[$uuid_spop]) ? $pengajuan_by_uuid_spop[$uuid_spop] : array();
                                         $TOTAL_Nominal_pengajuan = isset($pengajuan_sum_by_uuid_spop[$uuid_spop]) ? $pengajuan_sum_by_uuid_spop[$uuid_spop] : 0;
-                                        $url_pengajuan = isset($pengajuan_url_by_uuid_spop[$compare_uuid_spop])
-                                            ? $pengajuan_url_by_uuid_spop[$compare_uuid_spop]
-                                            : site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian');
+                                        $url_pengajuan = site_url('tbl_pembelian_jasa/create_pembayaran/' . $compare_uuid_spop . '/pembelian');
 
                                         if ($result_pengajuan_by_uuid_spop) {
                                             $startx = 0;
@@ -246,7 +241,7 @@
                                             </td>
                                             <td>
                                                 <?php
-                                                render_pengajuan_pembelian_jasa_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop);
+                                                render_pengajuan_pembelian_jasa_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop);
                                                 $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
 
                                                 ?>
@@ -446,7 +441,7 @@
                                     </td>
                                     <td>
                                         <?php
-                                        render_pengajuan_pembelian_jasa_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $pengajuan_url_by_uuid_spop);
+                                        render_pengajuan_pembelian_jasa_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop);
                                         ?>
                                     </td>
                                     <td></td>
