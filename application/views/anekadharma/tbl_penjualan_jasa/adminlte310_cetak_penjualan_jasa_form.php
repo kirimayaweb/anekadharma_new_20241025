@@ -9,7 +9,12 @@
 		<section class="content">
 			<div class="card">
 				<div class="card-header">
-					<h3 class="card-title">Input Cetak Pembayaran Jasa</h3>
+					<h3 class="card-title"><?php echo htmlspecialchars(isset($card_title) ? $card_title : 'Input Cetak Pembayaran Jasa', ENT_QUOTES, 'UTF-8'); ?></h3>
+					<?php if (!empty($cetak_mode) && $cetak_mode === 'pembelian_spop' && !empty($spop_label)) { ?>
+						<span class="badge badge-warning ml-2">SPOP: <?php echo htmlspecialchars($spop_label, ENT_QUOTES, 'UTF-8'); ?> (<?php echo count($data_penjualan); ?> baris)</span>
+					<?php } elseif (!empty($cetak_mode) && $cetak_mode === 'penjualan_record') { ?>
+						<span class="badge badge-info ml-2">Per 1 record penjualan</span>
+					<?php } ?>
 				</div>
 				<div class="card-body">
 					<?php if ($this->session->flashdata('message')) { ?>
@@ -256,7 +261,7 @@
 
 					<div class="row mt-4 align-items-center">
 						<div class="col-md-3 col-sm-12 mb-2">
-							<a href="<?php echo site_url('tbl_penjualan_jasa'); ?>" class="btn btn-default">Kembali</a>
+							<a href="<?php echo !empty($back_url) ? $back_url : site_url('tbl_penjualan_jasa'); ?>" class="btn btn-default">Kembali</a>
 						</div>
 						<div class="col-md-9 col-sm-12 text-center mb-2">
 							<div class="cetak-btn-group-tengah">

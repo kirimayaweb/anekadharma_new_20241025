@@ -198,7 +198,7 @@
                                     if (($compare_uuid_spop <> $list_data->uuid_spop) and ($start >= 1)) {
                                         // Buat 1 baris untuk total dan background = KUNING
                                 ?>
-                                        <tr>
+                                        <tr class="pj-spop-total-row">
                                             <td><?php
                                                 echo ++$start;
                                                 // echo "-compare : ";
@@ -255,7 +255,7 @@
                                     <?php
                                     }
                                     ?>
-                                    <tr>
+                                    <tr class="pj-data-row" data-statuslu="<?php echo htmlspecialchars((string) $list_data->statuslu, ENT_QUOTES, 'UTF-8'); ?>">
                                         <?php
                                         if ($compare_uuid_spop == $list_data->uuid_spop) {
                                         ?>
@@ -418,7 +418,7 @@
 
                                 <?php if (!empty($Tbl_pembelian_data) && isset($list_data) && is_object($list_data)) { ?>
                                 <!-- TOTAL SPOP AKHIR -->
-                                <tr>
+                                <tr class="pj-spop-total-row">
                                     <td><?php echo ++$start ?></td>
                                     <td>
                                         <?php
@@ -466,13 +466,13 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right">TOTAL</th>
-                                    <th style="text-align:right">
+                                    <th style="text-align:right" class="js-pj-total-jumlah">
                                         <?php echo "<strong>" . nominal($TOTAL_JUMLAH) . "</strong>"; ?>
                                     </th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th style="text-align:right">
+                                    <th style="text-align:right" class="js-pj-total-harga">
                                         <?php echo "<strong>" . number_format($TOTAL_HARGA, 2, ',', '.') . "</strong>"; ?>
                                     </th>
                                     <th></th>
@@ -493,7 +493,7 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right">TOTAL LUNAS</th>
-                                    <th style="text-align:right">
+                                    <th style="text-align:right" class="js-pj-total-lunas">
                                         <?php
                                         // echo nominal($TOTAL_LUNAS);
                                         echo number_format($TOTAL_LUNAS, 2, ',', '.');
@@ -517,7 +517,7 @@
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right"><?php echo "<font color='red'>TOTAL HUTANG</font>"; ?></th>
-                                    <th style="text-align:right">
+                                    <th style="text-align:right" class="js-pj-total-hutang">
                                         <?php
                                         // echo "<font color='red'>" . nominal($TOTAL_HUTANG) . "</font>"; 
                                         echo "<font color='red'>" . number_format($TOTAL_HUTANG, 2, ',', '.') . "</font>";
@@ -560,6 +560,57 @@
 </style>
 
 <script>
+    function parsePembelianJasaNominal(value) {
+        if (typeof value === 'number') {
+            return value;
+        }
+        var text = jQuery('<div>').html(value == null ? '' : value).text();
+        text = text.replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
+        var number = parseFloat(text);
+        return isNaN(number) ? 0 : number;
+    }
+
+    function formatPembelianJasaNominal(value, decimals) {
+        return Number(value || 0).toLocaleString('id-ID', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
+        });
+    }
+
+    function updatePembelianJasaFooterTotals(api) {
+        var totalJumlah = 0;
+        var totalHarga = 0;
+        var totalLunas = 0;
+        var totalHutang = 0;
+
+        api.rows({ search: 'applied' }).every(function() {
+            var rowNode = this.node();
+            if (!rowNode || !jQuery(rowNode).hasClass('pj-data-row')) {
+                return;
+            }
+
+            var $td = jQuery(rowNode).children('td');
+            var jumlah = parsePembelianJasaNominal($td.eq(7).text());
+            var harga = parsePembelianJasaNominal($td.eq(11).text());
+            var statuslu = (jQuery(rowNode).attr('data-statuslu') || $td.eq(12).text() || '').toString().trim().toUpperCase();
+
+            totalJumlah += jumlah;
+            totalHarga += harga;
+
+            if (statuslu.indexOf('U') === 0) {
+                totalHutang += harga;
+            } else {
+                totalLunas += harga;
+            }
+        });
+
+        var $wrapper = jQuery(api.table().container());
+        $wrapper.find('.js-pj-total-jumlah').html('<strong>' + formatPembelianJasaNominal(totalJumlah, 0) + '</strong>');
+        $wrapper.find('.js-pj-total-harga').html('<strong>' + formatPembelianJasaNominal(totalHarga, 2) + '</strong>');
+        $wrapper.find('.js-pj-total-lunas').html(formatPembelianJasaNominal(totalLunas, 2));
+        $wrapper.find('.js-pj-total-hutang').html('<font color="red">' + formatPembelianJasaNominal(totalHutang, 2) + '</font>');
+    }
+
     function initPembelianJasaDataTable() {
         var tableSel = '#tblPembelianJasaList';
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery(tableSel).length) {
@@ -583,12 +634,16 @@
                 zeroRecords: 'Data tidak ditemukan',
                 info: 'Baris _START_ s/d _END_ dari _TOTAL_',
                 infoEmpty: 'Tidak ada data',
+                search: 'Cari:',
                 paginate: {
                     first: 'Awal',
                     last: 'Akhir',
                     next: 'Berikutnya',
                     previous: 'Sebelumnya'
                 }
+            },
+            footerCallback: function() {
+                updatePembelianJasaFooterTotals(this.api());
             }
         });
     }
