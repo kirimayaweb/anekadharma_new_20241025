@@ -76,100 +76,118 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 	public function index()
 	{
-
-
-		$Get_date_awal = date("Y-m-1 00:00:00");
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
-
-
-		$Get_date_akhir = date("Y-m-t 00:00:00"); // TANGGAL AKHIR BULAN -t
-		// print_r($Get_date_akhir);
-		// print_r("<br/>");
-
-		// die;
-
-
-		$sql = "SELECT * FROM `tbl_pembelian_jasa` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
-
-		// print_r($this->db->query($sql)->result());
-		// die;
-
-		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-		$Tbl_pembelian = $this->db->query($sql)->result();
-
-		$this->_set_filter_session_pembelian_jasa($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
-
-		$data = array(
-			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'start' => 0,
-		);
+		list($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir) = $this->_resolve_pembelian_jasa_filter_dates();
+		$data = $this->_build_pembelian_jasa_list_data($Get_date_awal, $Get_date_akhir);
+		$this->_set_filter_session_pembelian_jasa($Get_date_awal, $Get_date_akhir, $data['Tbl_pembelian_data'], $disp_awal, $disp_akhir);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian_jasa/adminlte310_tbl_pembelian_list', $data);
 	}
 
 
 	public function cari_between_date()
 	{
-
-		// print_r($this->input->post('tgl_awal', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('tgl_akhir', TRUE));
-		// print_r("<br/>");
-
-		// $Get_date_awal = $this->input->post('tgl_awal', TRUE);
-		if (date("Y", strtotime($this->input->post('tgl_awal', TRUE))) < 2020) {
-			// $Get_date_awal = date("Y-m-d 00:00:00");
-			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-		} else {
-			$Get_date_awal = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_awal', TRUE)));
+		if (strtoupper($this->input->server('REQUEST_METHOD')) === 'POST') {
+			$tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
+			$tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
+			if (!empty($tgl_awal_raw) && !empty($tgl_akhir_raw)) {
+				$qs = '?tgl_awal=' . rawurlencode($tgl_awal_raw) . '&tgl_akhir=' . rawurlencode($tgl_akhir_raw);
+				redirect(site_url('tbl_pembelian_jasa/cari_between_date' . $qs));
+				return;
+			}
 		}
 
-		// print_r($Get_date_awal);
-		// print_r("<br/>");
-
-		// $Get_date_awal_proses =  date('Y-m-d', strtotime($Get_date_awal. ' - 1 day'));
-
-		// print_r($Get_date_awal_proses);
-		// print_r("<br/>");
-
-		// $Get_date_akhir = $this->input->post('tgl_akhir', TRUE);
-		if (date("Y", strtotime($this->input->post('tgl_akhir', TRUE))) < 2020) {
-			$Get_date_akhir = date("Y-m-d 00:00:00");
-		} else {
-			$Get_date_akhir = date("Y-m-d 23:59:59", strtotime($this->input->post('tgl_akhir', TRUE)));
+		$tgl_awal_get = $this->input->get('tgl_awal', TRUE);
+		$tgl_akhir_get = $this->input->get('tgl_akhir', TRUE);
+		if (empty($tgl_awal_get) || empty($tgl_akhir_get)) {
+			$disp_awal = $this->session->userdata('filter_tbl_pembelian_jasa_tgl_awal_display');
+			$disp_akhir = $this->session->userdata('filter_tbl_pembelian_jasa_tgl_akhir_display');
+			if (!empty($disp_awal) && !empty($disp_akhir)) {
+				$qs = '?tgl_awal=' . rawurlencode($disp_awal) . '&tgl_akhir=' . rawurlencode($disp_akhir);
+				redirect(site_url('tbl_pembelian_jasa/cari_between_date' . $qs));
+				return;
+			}
 		}
-		// print_r($Get_date_akhir);
-		// print_r("<br/>");
 
+		list($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir) = $this->_resolve_pembelian_jasa_filter_dates();
+		$data = $this->_build_pembelian_jasa_list_data($Get_date_awal, $Get_date_akhir);
+		$this->_set_filter_session_pembelian_jasa($Get_date_awal, $Get_date_akhir, $data['Tbl_pembelian_data'], $disp_awal, $disp_akhir);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian_jasa/adminlte310_tbl_pembelian_list', $data);
+	}
 
-		$sql = "SELECT * FROM `tbl_pembelian_jasa` WHERE `tgl_po` between '$Get_date_awal' and '$Get_date_akhir' ORDER BY `tgl_po`,`spop`,`id`";
+	private function _set_filter_session_pembelian_jasa($date_awal, $date_akhir, $rows = null, $tgl_awal_display = null, $tgl_akhir_display = null)
+	{
+		$this->session->set_userdata('filter_tbl_pembelian_jasa_date_awal', $date_awal);
+		$this->session->set_userdata('filter_tbl_pembelian_jasa_date_akhir', $date_akhir);
+		if ($tgl_awal_display !== null && $tgl_akhir_display !== null) {
+			$this->session->set_userdata('filter_tbl_pembelian_jasa_tgl_awal_display', $tgl_awal_display);
+			$this->session->set_userdata('filter_tbl_pembelian_jasa_tgl_akhir_display', $tgl_akhir_display);
+		}
+		if ($rows !== null) {
+			$this->session->set_userdata('filter_tbl_pembelian_jasa_ids', $this->_collect_row_ids($rows));
+		}
+	}
 
-		// print_r($this->db->query($sql)->result());
-		// die;
+	/**
+	 * @return array [sql_awal, sql_akhir, tampil_awal, tampil_akhir]
+	 */
+	private function _resolve_pembelian_jasa_filter_dates()
+	{
+		$tgl_awal_in = $this->input->get_post('tgl_awal', TRUE);
+		$tgl_akhir_in = $this->input->get_post('tgl_akhir', TRUE);
+		if (!empty($tgl_awal_in) && !empty($tgl_akhir_in)) {
+			list($awal, $akhir) = $this->_parse_cari_between_dates($tgl_awal_in, $tgl_akhir_in);
+			$this->_set_filter_session_pembelian_jasa($awal, $akhir, null, $tgl_awal_in, $tgl_akhir_in);
+			return array($awal, $akhir, $tgl_awal_in, $tgl_akhir_in);
+		}
 
-		// $Tbl_pembelian = $this->Tbl_pembelian_model->get_all();
-		$Tbl_pembelian = $this->db->query($sql)->result();
+		$awal = $this->session->userdata('filter_tbl_pembelian_jasa_date_awal');
+		$akhir = $this->session->userdata('filter_tbl_pembelian_jasa_date_akhir');
+		$disp_awal = $this->session->userdata('filter_tbl_pembelian_jasa_tgl_awal_display');
+		$disp_akhir = $this->session->userdata('filter_tbl_pembelian_jasa_tgl_akhir_display');
+		if ($awal && $akhir) {
+			if (!$disp_awal) {
+				$disp_awal = date('d-m-Y', strtotime($awal));
+				$disp_akhir = date('d-m-Y', strtotime($akhir));
+			}
+			return array($awal, $akhir, $disp_awal, $disp_akhir);
+		}
 
-		$this->_set_filter_session_pembelian_jasa($Get_date_awal, $Get_date_akhir, $Tbl_pembelian);
+		$awal = date('Y-m-01 00:00:00');
+		$akhir = date('Y-m-t 23:59:59');
+		$disp_awal = date('d-m-Y', strtotime($awal));
+		$disp_akhir = date('d-m-Y', strtotime($akhir));
+		$this->_set_filter_session_pembelian_jasa($awal, $akhir, null, $disp_awal, $disp_akhir);
+		return array($awal, $akhir, $disp_awal, $disp_akhir);
+	}
 
-		$data = array(
+	private function _get_pembelian_jasa_between($date_awal, $date_akhir)
+	{
+		$sql = 'SELECT * FROM `tbl_pembelian_jasa` WHERE `tgl_po` BETWEEN '
+			. $this->db->escape($date_awal) . ' AND '
+			. $this->db->escape($date_akhir)
+			. ' ORDER BY `tgl_po`, `spop`, `id`';
+		return $this->db->query($sql)->result();
+	}
+
+	private function _build_pembelian_jasa_list_data($Get_date_awal, $Get_date_akhir)
+	{
+		$Tbl_pembelian = $this->_get_pembelian_jasa_between($Get_date_awal, $Get_date_akhir);
+
+		$uuid_spop_list = array();
+		foreach ($Tbl_pembelian as $row) {
+			if (!empty($row->uuid_spop)) {
+				$uuid_spop_list[$row->uuid_spop] = $row->uuid_spop;
+			}
+		}
+		$uuid_spop_list = array_values($uuid_spop_list);
+
+		return array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'pengajuan_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_grouped_by_uuid_spop_in($uuid_spop_list),
+			'pengajuan_sum_by_uuid_spop' => $this->Tbl_pembelian_pengajuan_bayar_model->get_sum_nominal_grouped_by_uuid_spop_in($uuid_spop_list),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
 			'start' => 0,
 		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian_jasa/adminlte310_tbl_pembelian_list', $data);
-	}
-
-	private function _set_filter_session_pembelian_jasa($date_awal, $date_akhir, $rows = null)
-	{
-		$this->session->set_userdata('filter_tbl_pembelian_jasa_date_awal', $date_awal);
-		$this->session->set_userdata('filter_tbl_pembelian_jasa_date_akhir', $date_akhir);
-		if ($rows !== null) {
-			$this->session->set_userdata('filter_tbl_pembelian_jasa_ids', $this->_collect_row_ids($rows));
-		}
 	}
 
 	private function _get_barang_dari_persediaan($uuid_barang)
@@ -198,16 +216,26 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 	private function _parse_cari_between_dates($tgl_awal_input, $tgl_akhir_input)
 	{
-		if (date('Y', strtotime($tgl_awal_input)) < 2020) {
-			$Get_date_awal = date('Y-m-d', strtotime('-1 day'));
-		} else {
-			$Get_date_awal = date('Y-m-d 23:59:59', strtotime($tgl_awal_input));
+		$ts_awal = pembelian_parse_tanggal_po($tgl_awal_input);
+		if ($ts_awal === false) {
+			$ts_awal = strtotime(str_replace('/', '-', trim((string) $tgl_awal_input)));
 		}
 
-		if (date('Y', strtotime($tgl_akhir_input)) < 2020) {
-			$Get_date_akhir = date('Y-m-d 00:00:00');
+		$ts_akhir = pembelian_parse_tanggal_po($tgl_akhir_input);
+		if ($ts_akhir === false) {
+			$ts_akhir = strtotime(str_replace('/', '-', trim((string) $tgl_akhir_input)));
+		}
+
+		if ($ts_awal === false || date('Y', $ts_awal) < 2020) {
+			$Get_date_awal = date('Y-m-d 00:00:00', strtotime('-1 day'));
 		} else {
-			$Get_date_akhir = date('Y-m-d 23:59:59', strtotime($tgl_akhir_input));
+			$Get_date_awal = date('Y-m-d 00:00:00', $ts_awal);
+		}
+
+		if ($ts_akhir === false || date('Y', $ts_akhir) < 2020) {
+			$Get_date_akhir = date('Y-m-d 23:59:59');
+		} else {
+			$Get_date_akhir = date('Y-m-d 23:59:59', $ts_akhir);
 		}
 
 		return array($Get_date_awal, $Get_date_akhir);

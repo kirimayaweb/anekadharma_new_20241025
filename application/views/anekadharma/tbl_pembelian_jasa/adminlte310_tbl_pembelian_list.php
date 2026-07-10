@@ -155,6 +155,34 @@
                             </thead>
                             <tbody>
                                 <?php
+                                if (!isset($pengajuan_by_uuid_spop)) {
+                                    $pengajuan_by_uuid_spop = array();
+                                }
+                                if (!isset($pengajuan_sum_by_uuid_spop)) {
+                                    $pengajuan_sum_by_uuid_spop = array();
+                                }
+                                if (!function_exists('render_pengajuan_pembelian_jasa_cell')) {
+                                    function render_pengajuan_pembelian_jasa_cell($uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $CI)
+                                    {
+                                        $result_pengajuan_by_uuid_spop = isset($pengajuan_by_uuid_spop[$uuid_spop]) ? $pengajuan_by_uuid_spop[$uuid_spop] : array();
+                                        $TOTAL_Nominal_pengajuan = isset($pengajuan_sum_by_uuid_spop[$uuid_spop]) ? $pengajuan_sum_by_uuid_spop[$uuid_spop] : 0;
+
+                                        if ($result_pengajuan_by_uuid_spop) {
+                                            $startx = 0;
+                                            foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
+                                                echo anchor(site_url('tbl_pembelian_jasa/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
+                                            }
+
+                                            if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
+                                                if ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
+                                                    echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($CI, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                                }
+                                            }
+                                        } elseif ($list_spop_status_lu == "Hutang" or $list_spop_status_lu == "U") {
+                                            echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($CI, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
+                                        }
+                                    }
+                                }
                                 $compare_spop = 0;
                                 $compare_uuid_spop = 0;
                                 $start = isset($start) ? $start : 0;
@@ -215,33 +243,7 @@
                                             </td>
                                             <td>
                                                 <?php
-
-                                                $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($compare_uuid_spop);
-
-                                                $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($compare_uuid_spop)->total_pengajuan;
-
-                                                if ($result_pengajuan_by_uuid_spop) {
-                                                    $startx = 0;
-                                                    $total_nominal_pengajuan = 0;
-                                                    foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
-                                                        echo anchor(site_url('tbl_pembelian_jasa/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
-                                                        $total_nominal_pengajuan = $total_nominal_pengajuan + $list_data_pengajuan->nominal_pengajuan;
-                                                    }
-
-                                                    if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
-
-                                                        if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                            echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
-                                                        }
-                                                    }
-                                                } else {
-
-                                                    if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                        echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
-                                                    }
-                                                }
-
+                                                render_pengajuan_pembelian_jasa_cell($compare_uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $this);
                                                 $list_spop_status_lu = $list_data->statuslu; // untuk cek kondisi di baris terakhir (SPOP) ==> Ubah status_lu dengan status data record yang baru.
 
                                                 ?>
@@ -441,49 +443,7 @@
                                     </td>
                                     <td>
                                         <?php
-                                        // if ($list_spop_status_lu == "U") {
-                                        //     echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs"');
-                                        // }
-
-
-                                        $result_pengajuan_by_uuid_spop = $this->Tbl_pembelian_pengajuan_bayar_model->get_by_uuid_spop($list_data->uuid_spop);
-
-                                        $TOTAL_Nominal_pengajuan = $this->Tbl_pembelian_pengajuan_bayar_model->get_sumNominal_by_uuid_spop($list_data->uuid_spop)->total_pengajuan;
-
-                                        if ($result_pengajuan_by_uuid_spop) {
-                                            $startx = 0;
-                                            $total_nominal_pengajuan = 0;
-                                            foreach ($result_pengajuan_by_uuid_spop as $list_data_pengajuan) {
-                                                // echo $list_data_pengajuan->uuid_pengajuan_bayar;
-                                                echo anchor(site_url('tbl_pembelian_jasa/cetak_pengajuan_bayar_per_spop/' . $list_data_pengajuan->uuid_pengajuan_bayar), '<i class="fa fa-pencil-square-o" aria-hidden="true">Cetak Pengajuan ' . ++$startx . '</i>', 'class="btn btn-success btn-xs" target="_blank"');
-
-                                                $total_nominal_pengajuan = $total_nominal_pengajuan + $list_data_pengajuan->nominal_pengajuan;
-                                            }
-                                            // echo $TOTAL_Nominal_pengajuan;
-                                            // echo " : ";
-                                            // echo $Total_per_SPOP;
-                                            // echo " : ";
-                                            if ($TOTAL_Nominal_pengajuan < $Total_per_SPOP) {
-                                                if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-                                                    echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
-                                                }
-                                            }
-                                        } else {
-                                            // if ($total_nominal_pengajuan < $Total_per_SPOP) {
-
-
-                                            if ($list_spop_status_lu == "Hutang"  or $list_spop_status_lu == "U") {
-
-                                                echo anchor(penjualan_jasa_url_pengajuan_pembayaran_by_uuid_spop($this, $compare_uuid_spop, true), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" target="_blank"');
-                                            }
-
-                                            // }else{
-                                            //     echo anchor(site_url('tbl_pembelian_jasa/create_pembayaran/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">Pengajuan Pembayaran</i>', 'class="btn btn-warning btn-xs" disabled');
-                                            // }
-
-                                        }
-
-
+                                        render_pengajuan_pembelian_jasa_cell($list_data->uuid_spop, $compare_uuid_spop, $Total_per_SPOP, $list_spop_status_lu, $pengajuan_by_uuid_spop, $pengajuan_sum_by_uuid_spop, $this);
                                         ?>
                                     </td>
                                     <td></td>
