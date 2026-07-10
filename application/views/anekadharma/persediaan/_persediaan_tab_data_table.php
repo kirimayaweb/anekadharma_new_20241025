@@ -18,11 +18,16 @@ $money_col_indexes = persediaan_tab_data_money_column_indexes();
 $total_total_10 = 0;
 $total_nilai_persediaan = 0;
 $total_sa = 0;
+$total_sa_nominal = 0;
 $total_beli = 0;
+$total_beli_nominal = 0;
 $total_nominal_unit = array();
 foreach (persediaan_list_unit_columns() as $uf_total) {
 	$total_nominal_unit[$uf_total] = 0;
 }
+$total_terjual = 0;
+$total_pecah_satuan = 0;
+$total_bahan_produksi = 0;
 ?>
 <div class="persediaan-tab-dt-wrap">
 <table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:15px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
@@ -34,8 +39,10 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 			<th>Satuan</th>
 			<th class="text-right persediaan-col-money">Hpp</th>
 			<th>Sa</th>
+			<th class="text-right persediaan-col-money">Sa. Nominal</th>
 			<th>Spop</th>
 			<th>Beli</th>
+			<th class="text-right persediaan-col-money">Beli Nmnl</th>
 			<th>Tuj</th>
 			<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
 				<th><?php echo htmlspecialchars(persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
@@ -60,9 +67,16 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 			$total_total_10 += $total_10_row;
 			$total_nilai_persediaan += $nilai_persediaan_row;
 			$total_sa += persediaan_parse_angka(isset($persediaan->sa) ? $persediaan->sa : 0);
+			$total_sa_nominal += persediaan_hitung_sa_nominal_row($persediaan);
 			$total_beli += persediaan_parse_angka(isset($persediaan->beli) ? $persediaan->beli : 0);
+			$total_beli_nominal += persediaan_hitung_beli_nominal_row($persediaan);
 			foreach (persediaan_list_unit_columns() as $uf_total) {
 				$total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
+			}
+			if ($show_keluar_columns) {
+				$total_terjual += persediaan_parse_angka(isset($persediaan->penjualan) ? $persediaan->penjualan : 0);
+				$total_pecah_satuan += persediaan_parse_angka(isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0);
+				$total_bahan_produksi += persediaan_parse_angka(isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0);
 			}
 		?>
 			<tr>
@@ -86,8 +100,10 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 				<td><?php echo $persediaan->satuan ?></td>
 				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_hpp_row($persediaan); ?></td>
 				<td><?php echo $persediaan->sa ?></td>
+				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_sa_nominal_row($persediaan); ?></td>
 				<td><?php echo $persediaan->spop ?></td>
 				<td><?php echo $persediaan->beli ?></td>
+				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_beli_nominal_row($persediaan); ?></td>
 				<td><?php echo $persediaan->tuj ?></td>
 				<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
 					<td><?php
@@ -113,11 +129,16 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 	<tfoot>
 		<tr>
 			<?php
-			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns, $total_sa, $total_beli);
+			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi);
 			$idx_foot_total_10 = persediaan_list_col_index_total_10();
 			$idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
 			$idx_foot_sa = persediaan_list_col_index_sa();
+			$idx_foot_sa_nominal = persediaan_list_col_index_sa_nominal();
 			$idx_foot_beli = persediaan_list_col_index_beli();
+			$idx_foot_beli_nominal = persediaan_list_col_index_beli_nominal();
+			$idx_foot_terjual = persediaan_list_col_index_terjual();
+			$idx_foot_pecah_satuan = persediaan_list_col_index_pecah_satuan();
+			$idx_foot_bahan_produksi = persediaan_list_col_index_bahan_produksi();
 			$idx_foot_nominal = array();
 			foreach (persediaan_list_unit_columns() as $uf_foot) {
 				if (persediaan_field_has_nominal_column($uf_foot)) {
@@ -132,7 +153,12 @@ foreach (persediaan_list_unit_columns() as $uf_total) {
 				} elseif ($foot_val !== '' && (
 					$col_foot === $idx_foot_total_10
 					|| $col_foot === $idx_foot_sa
+					|| $col_foot === $idx_foot_sa_nominal
 					|| $col_foot === $idx_foot_beli
+					|| $col_foot === $idx_foot_beli_nominal
+					|| $col_foot === $idx_foot_terjual
+					|| $col_foot === $idx_foot_pecah_satuan
+					|| $col_foot === $idx_foot_bahan_produksi
 					|| persediaan_tab_data_is_money_column($col_foot)
 					|| in_array($col_foot, $idx_foot_nominal, true)
 				)) {

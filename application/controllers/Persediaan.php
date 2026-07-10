@@ -582,6 +582,11 @@ class Persediaan extends CI_Controller
 			'url_analisa_recalculate_persediaan' => site_url('Persediaan/ajax_analisa_recalculate_persediaan'),
 			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
 			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
+			'url_generate_proses_persediaan_view' => site_url('Persediaan/ajax_generate_proses_persediaan_view'),
+			'url_generate_proses_pembelian_view' => site_url('Persediaan/ajax_generate_proses_pembelian_view'),
+			'url_generate_proses_produksi_view' => site_url('Persediaan/ajax_generate_proses_produksi_view'),
+			'url_generate_proses_penjualan_view' => site_url('Persediaan/ajax_generate_proses_penjualan_view'),
+			'url_generate_proses_persediaan_full_view' => site_url('Persediaan/ajax_generate_proses_persediaan_full_view'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
 			'url_gen_recalc_summary_tables' => site_url('Persediaan/ajax_gen_recalc_summary_tables'),
 			'url_gen_recalc_extra_tables' => site_url('Persediaan/ajax_gen_recalc_extra_tables'),
@@ -742,6 +747,15 @@ class Persediaan extends CI_Controller
 		);
 		$can_generate = ($count_sumber_all > 0) || $can_recalc_only;
 
+		$this->load->helper('pembelian_persediaan');
+		$count_pembelian_barang = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian', $tgl_awal, $tgl_akhir);
+		$count_pembelian_jasa = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir);
+		$show_pembelian_proses_view = ($count_target > 0 || $count_pembelian_barang > 0 || $count_pembelian_jasa > 0);
+		$count_unit_produk = persediaan_gen_v2_count_unit_produk_bulan($this, $tgl_awal, $tgl_akhir);
+		$show_produksi_proses_view = ($count_target > 0 || $count_unit_produk > 0);
+		$count_penjualan = persediaan_gen_v2_count_penjualan_bulan($this, $tgl_awal, $tgl_akhir);
+		$show_penjualan_proses_view = ($count_target > 0 || $count_penjualan > 0);
+
 		$message = '';
 		if ($count_sumber_all === 0 && !$can_recalc_only) {
 			$message = 'Tidak ada data sumber bulan ' . date('m/Y', strtotime($bulan_sumber . '-01'))
@@ -773,6 +787,14 @@ class Persediaan extends CI_Controller
 			'count_sumber_all' => $count_sumber_all,
 			'count_sumber_skip_total10' => max(0, $count_sumber_all - $count_sumber),
 			'sudah_ada_data' => $sudah_ada,
+			'show_proses_view' => ($count_target > 0 && $count_sumber_all > 0),
+			'show_pembelian_proses_view' => $show_pembelian_proses_view,
+			'count_pembelian_barang' => $count_pembelian_barang,
+			'count_pembelian_jasa' => $count_pembelian_jasa,
+			'show_produksi_proses_view' => $show_produksi_proses_view,
+			'count_unit_produk' => $count_unit_produk,
+			'show_penjualan_proses_view' => $show_penjualan_proses_view,
+			'count_penjualan' => $count_penjualan,
 			'can_generate' => $can_generate,
 			'can_recalc_only' => ($count_sumber_all === 0 && $can_recalc_only),
 			'user_can_generate' => true,
@@ -1828,6 +1850,258 @@ class Persediaan extends CI_Controller
 			$this->db->db_debug = $db_debug;
 
 			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: tampilan box Persediaan Proses Generate (datatable lengkap bulan sumber & target).
+	 */
+	public function ajax_generate_proses_persediaan_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat data proses generate.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_persediaan_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+				'bulan_sumber_label' => isset($package['bulan_sumber_label']) ? $package['bulan_sumber_label'] : '',
+			));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: tampilan box Proses Pembelian (verifikasi + datatable tbl_pembelian / jasa).
+	 */
+	public function ajax_generate_proses_pembelian_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_pembelian_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat data proses pembelian.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_pembelian_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+			));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: tampilan box Proses Produksi (verifikasi + datatable sys_unit_produk).
+	 */
+	public function ajax_generate_proses_produksi_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_produksi_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat data proses produksi.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_produksi_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+			));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: tampilan box Proses Penjualan (verifikasi + datatable tbl_penjualan).
+	 */
+	public function ajax_generate_proses_penjualan_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_penjualan_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat data proses penjualan.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_penjualan_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+			));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: tampilan box verifikasi persediaan lengkap (setelah copy + pembelian + produksi + penjualan).
+	 */
+	public function ajax_generate_proses_persediaan_full_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_persediaan_full_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat verifikasi persediaan lengkap.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_persediaan_full_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+				'bulan_sumber_label' => isset($package['bulan_sumber_label']) ? $package['bulan_sumber_label'] : '',
+			));
 		} catch (Exception $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		} catch (Throwable $e) {

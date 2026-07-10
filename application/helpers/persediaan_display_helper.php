@@ -362,7 +362,7 @@ function persediaan_list_fields_tgl_keluar_sampai_total_10($CI = null)
 
 function persediaan_list_prefix_column_count()
 {
-	return 9;
+	return 11;
 }
 
 function persediaan_list_col_index_sa()
@@ -370,9 +370,57 @@ function persediaan_list_col_index_sa()
 	return 5;
 }
 
+function persediaan_list_col_index_sa_nominal()
+{
+	return 6;
+}
+
 function persediaan_list_col_index_beli()
 {
-	return 7;
+	return 8;
+}
+
+function persediaan_list_col_index_beli_nominal()
+{
+	return 9;
+}
+
+/**
+ * Nominal SA baris = sa × hpp.
+ */
+function persediaan_hitung_sa_nominal_row($row)
+{
+	$sa = persediaan_parse_angka(isset($row->sa) ? $row->sa : persediaan_row_get($row, 'sa'));
+	if ($sa == 0.0) {
+		return 0;
+	}
+	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+
+	return $sa * $hpp;
+}
+
+function persediaan_tampil_sa_nominal_row($row)
+{
+	return persediaan_format_rupiah_tampil(persediaan_hitung_sa_nominal_row($row));
+}
+
+/**
+ * Nominal beli baris = beli × hpp.
+ */
+function persediaan_hitung_beli_nominal_row($row)
+{
+	$beli = persediaan_parse_angka(isset($row->beli) ? $row->beli : persediaan_row_get($row, 'beli'));
+	if ($beli == 0.0) {
+		return 0;
+	}
+	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+
+	return $beli * $hpp;
+}
+
+function persediaan_tampil_beli_nominal_row($row)
+{
+	return persediaan_format_rupiah_tampil(persediaan_hitung_beli_nominal_row($row));
 }
 
 /**
@@ -442,10 +490,25 @@ function persediaan_list_col_index_nilai_persediaan($CI = null)
 	return persediaan_list_col_index_total_10($CI) + 1;
 }
 
+function persediaan_list_col_index_terjual($CI = null)
+{
+	return persediaan_list_col_index_nilai_persediaan($CI) + 1;
+}
+
+function persediaan_list_col_index_pecah_satuan($CI = null)
+{
+	return persediaan_list_col_index_nilai_persediaan($CI) + 2;
+}
+
+function persediaan_list_col_index_bahan_produksi($CI = null)
+{
+	return persediaan_list_col_index_nilai_persediaan($CI) + 3;
+}
+
 /**
  * Baris footer datatable / export (label Total + jumlah per kolom).
  */
-function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true, $total_sa = null, $total_beli = null)
+function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true, $total_sa = null, $total_beli = null, $total_sa_nominal = null, $total_beli_nominal = null, $total_terjual = null, $total_pecah_satuan = null, $total_bahan_produksi = null)
 {
 	$totals_nominal_unit = is_array($totals_nominal_unit) ? $totals_nominal_unit : array();
 	$footer = array();
@@ -456,12 +519,20 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 	}
 
 	$idx_sa = persediaan_list_col_index_sa();
+	$idx_sa_nominal = persediaan_list_col_index_sa_nominal();
 	$idx_beli = persediaan_list_col_index_beli();
+	$idx_beli_nominal = persediaan_list_col_index_beli_nominal();
 	if ($total_sa !== null && isset($footer[$idx_sa])) {
 		$footer[$idx_sa] = persediaan_format_angka_tampil($total_sa);
 	}
+	if ($total_sa_nominal !== null && isset($footer[$idx_sa_nominal])) {
+		$footer[$idx_sa_nominal] = persediaan_format_rupiah_tampil($total_sa_nominal, true);
+	}
 	if ($total_beli !== null && isset($footer[$idx_beli])) {
 		$footer[$idx_beli] = persediaan_format_angka_tampil($total_beli);
+	}
+	if ($total_beli_nominal !== null && isset($footer[$idx_beli_nominal])) {
+		$footer[$idx_beli_nominal] = persediaan_format_rupiah_tampil($total_beli_nominal, true);
 	}
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
@@ -481,9 +552,15 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 
 	$footer[] = persediaan_format_rupiah_tampil($total_nilai_persediaan, true);
 	if ($show_keluar_columns) {
-		$footer[] = '';
-		$footer[] = '';
-		$footer[] = '';
+		$footer[] = ($total_terjual !== null)
+			? persediaan_format_angka_tampil($total_terjual)
+			: '';
+		$footer[] = ($total_pecah_satuan !== null)
+			? persediaan_format_angka_tampil($total_pecah_satuan)
+			: '';
+		$footer[] = ($total_bahan_produksi !== null)
+			? persediaan_format_angka_tampil($total_bahan_produksi)
+			: '';
 	}
 
 	return $footer;
@@ -560,8 +637,10 @@ function persediaan_tab_data_prefix_headers($tab_mode = 'barang')
 		'Satuan',
 		'Hpp',
 		'Sa',
+		'Sa. Nominal',
 		'Spop',
 		'Beli',
+		'Beli Nmnl',
 		'Tuj',
 	);
 }
@@ -589,7 +668,7 @@ function persediaan_tab_data_export_headers($CI = null, $show_keluar_columns = t
 
 function persediaan_tab_data_export_column_types($CI = null, $show_keluar_columns = true, $tab_mode = 'barang')
 {
-	$types = array('number', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number');
+	$types = array('number', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number', 'number', 'number');
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
 		if ($field === 'tgl_keluar') {
@@ -617,7 +696,7 @@ function persediaan_tab_data_export_column_types($CI = null, $show_keluar_column
  */
 function persediaan_tab_data_fixed_left_columns()
 {
-	return 8;
+	return 9;
 }
 
 /**
@@ -625,7 +704,11 @@ function persediaan_tab_data_fixed_left_columns()
  */
 function persediaan_tab_data_money_column_indexes($CI = null)
 {
-	$indexes = array(persediaan_list_col_index_hpp($CI));
+	$indexes = array(
+		persediaan_list_col_index_hpp($CI),
+		persediaan_list_col_index_sa_nominal(),
+		persediaan_list_col_index_beli_nominal(),
+	);
 
 	foreach (persediaan_list_unit_columns($CI) as $field) {
 		if (!persediaan_field_has_nominal_column($field)) {
@@ -701,7 +784,7 @@ function persediaan_export_blank_if_zero($value)
  */
 function persediaan_export_column_types($CI = null)
 {
-	$types = array('number', 'text', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number');
+	$types = array('number', 'text', 'text', 'text', 'text', 'number', 'number', 'number', 'number', 'number', 'number', 'number');
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
 		if ($field === 'tgl_keluar') {
@@ -792,8 +875,10 @@ function persediaan_export_headers($CI = null)
 		'Satuan',
 		'Hpp',
 		'Sa',
+		'Sa. Nominal',
 		'Spop',
 		'Beli',
+		'Beli Nmnl',
 		'Tuj',
 	);
 
@@ -827,8 +912,10 @@ function persediaan_export_row_cells($row, $no, $bulan_filter = '', $CI = null)
 		isset($row->satuan) ? $row->satuan : '',
 		persediaan_export_blank_if_zero(isset($row->hpp) ? $row->hpp : ''),
 		persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		persediaan_export_blank_if_zero(persediaan_hitung_sa_nominal_row($row)),
 		persediaan_export_blank_if_zero(isset($row->spop) ? $row->spop : ''),
 		persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		persediaan_export_blank_if_zero(persediaan_hitung_beli_nominal_row($row)),
 		persediaan_export_blank_if_zero(isset($row->tuj) ? $row->tuj : ''),
 	);
 
@@ -971,13 +1058,15 @@ function persediaan_generate_distribusi_nol_fields($CI = null)
 	return $fields;
 }
 
-function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $total_sa = null, $total_beli = null)
+function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $total_sa = null, $total_beli = null, $total_sa_nominal = null, $total_beli_nominal = null, $total_terjual = null, $total_pecah_satuan = null, $total_bahan_produksi = null)
 {
-	$footer = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, true, $total_sa, $total_beli);
+	$footer = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, true, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi);
 	$idx_total_10 = persediaan_list_col_index_total_10($CI);
 	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
 	$idx_sa = persediaan_list_col_index_sa();
+	$idx_sa_nominal = persediaan_list_col_index_sa_nominal();
 	$idx_beli = persediaan_list_col_index_beli();
+	$idx_beli_nominal = persediaan_list_col_index_beli_nominal();
 	if (isset($footer[$idx_total_10])) {
 		$footer[$idx_total_10] = persediaan_export_blank_if_zero($total_total_10);
 	}
@@ -987,8 +1076,14 @@ function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan
 	if ($total_sa !== null && isset($footer[$idx_sa])) {
 		$footer[$idx_sa] = persediaan_export_blank_if_zero($total_sa);
 	}
+	if ($total_sa_nominal !== null && isset($footer[$idx_sa_nominal])) {
+		$footer[$idx_sa_nominal] = persediaan_export_blank_if_zero($total_sa_nominal);
+	}
 	if ($total_beli !== null && isset($footer[$idx_beli])) {
 		$footer[$idx_beli] = persediaan_export_blank_if_zero($total_beli);
+	}
+	if ($total_beli_nominal !== null && isset($footer[$idx_beli_nominal])) {
+		$footer[$idx_beli_nominal] = persediaan_export_blank_if_zero($total_beli_nominal);
 	}
 	foreach (persediaan_list_unit_columns($CI) as $field) {
 		if (!persediaan_field_has_nominal_column($field)) {
@@ -1000,6 +1095,24 @@ function persediaan_export_footer_cells($total_total_10, $total_nilai_persediaan
 				? (float) $totals_nominal_unit[$field]
 				: 0;
 			$footer[$idx_nom] = persediaan_export_blank_if_zero($sum_nom);
+		}
+	}
+	if ($total_terjual !== null) {
+		$idx_terjual = persediaan_list_col_index_terjual($CI);
+		if (isset($footer[$idx_terjual])) {
+			$footer[$idx_terjual] = persediaan_export_blank_if_zero($total_terjual);
+		}
+	}
+	if ($total_pecah_satuan !== null) {
+		$idx_pecah = persediaan_list_col_index_pecah_satuan($CI);
+		if (isset($footer[$idx_pecah])) {
+			$footer[$idx_pecah] = persediaan_export_blank_if_zero($total_pecah_satuan);
+		}
+	}
+	if ($total_bahan_produksi !== null) {
+		$idx_bahan = persediaan_list_col_index_bahan_produksi($CI);
+		if (isset($footer[$idx_bahan])) {
+			$footer[$idx_bahan] = persediaan_export_blank_if_zero($total_bahan_produksi);
 		}
 	}
 	return $footer;
@@ -1238,8 +1351,10 @@ function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = 
 		isset($row->satuan) ? $row->satuan : '',
 		persediaan_tampil_hpp_row($row),
 		persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		persediaan_tampil_sa_nominal_row($row),
 		persediaan_export_blank_if_zero(isset($row->spop) ? $row->spop : ''),
 		persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		persediaan_tampil_beli_nominal_row($row),
 		persediaan_export_blank_if_zero(isset($row->tuj) ? $row->tuj : ''),
 	);
 
@@ -1321,7 +1436,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$col_types = persediaan_tab_data_export_column_types($CI, $show_keluar_columns, $filter_kategori);
 	$col_count = count($headers);
 
-	$widths = array(5, 10, 28, 8, 10, 8, 8, 8, 8);
+	$widths = array(5, 10, 28, 8, 10, 8, 12, 8, 8, 12, 8);
 	while (count($widths) < $col_count) {
 		$widths[] = 11;
 	}
@@ -1329,7 +1444,12 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$total_total_10 = 0;
 	$total_nilai_persediaan = 0;
 	$total_sa = 0;
+	$total_sa_nominal = 0;
 	$total_beli = 0;
+	$total_beli_nominal = 0;
+	$total_terjual = 0;
+	$total_pecah_satuan = 0;
+	$total_bahan_produksi = 0;
 	$totals_nominal_unit = array();
 	foreach (persediaan_list_unit_columns($CI) as $uf) {
 		$totals_nominal_unit[$uf] = 0;
@@ -1356,9 +1476,16 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$total_total_10 += persediaan_hitung_total_10_net($data);
 		$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
 		$total_sa += persediaan_parse_angka(isset($data->sa) ? $data->sa : persediaan_row_get($data, 'sa'));
+		$total_sa_nominal += persediaan_hitung_sa_nominal_row($data);
 		$total_beli += persediaan_parse_angka(isset($data->beli) ? $data->beli : persediaan_row_get($data, 'beli'));
+		$total_beli_nominal += persediaan_hitung_beli_nominal_row($data);
 		foreach (persediaan_list_unit_columns($CI) as $uf) {
 			$totals_nominal_unit[$uf] += persediaan_hitung_kolom_nominal_row($data, $uf);
+		}
+		if ($show_keluar_columns) {
+			$total_terjual += persediaan_parse_angka(isset($data->penjualan) ? $data->penjualan : 0);
+			$total_pecah_satuan += persediaan_parse_angka(isset($data->pecah_satuan) ? $data->pecah_satuan : 0);
+			$total_bahan_produksi += persediaan_parse_angka(isset($data->bahan_produksi) ? $data->bahan_produksi : 0);
 		}
 
 		$cells = persediaan_tab_data_display_cells($data, $no, $bulan, $CI, $show_keluar_columns);
@@ -1374,11 +1501,13 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$row_num++;
 	}
 
-	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns, $total_sa, $total_beli);
+	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi);
 	$idx_total_10 = persediaan_list_col_index_total_10($CI);
 	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
 	$idx_sa = persediaan_list_col_index_sa();
+	$idx_sa_nominal = persediaan_list_col_index_sa_nominal();
 	$idx_beli = persediaan_list_col_index_beli();
+	$idx_beli_nominal = persediaan_list_col_index_beli_nominal();
 	$money_cols = persediaan_tab_data_money_column_indexes($CI);
 	if (isset($footer_cells[$idx_total_10])) {
 		$footer_cells[$idx_total_10] = persediaan_format_angka_tampil($total_total_10);
@@ -1389,8 +1518,14 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	if (isset($footer_cells[$idx_sa])) {
 		$footer_cells[$idx_sa] = persediaan_format_angka_tampil($total_sa);
 	}
+	if (isset($footer_cells[$idx_sa_nominal])) {
+		$footer_cells[$idx_sa_nominal] = persediaan_format_rupiah_tampil($total_sa_nominal, true);
+	}
 	if (isset($footer_cells[$idx_beli])) {
 		$footer_cells[$idx_beli] = persediaan_format_angka_tampil($total_beli);
+	}
+	if (isset($footer_cells[$idx_beli_nominal])) {
+		$footer_cells[$idx_beli_nominal] = persediaan_format_rupiah_tampil($total_beli_nominal, true);
 	}
 	foreach (persediaan_list_unit_columns($CI) as $field) {
 		if (!persediaan_field_has_nominal_column($field)) {
@@ -1400,6 +1535,20 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		if ($idx_nom >= 0 && isset($footer_cells[$idx_nom])) {
 			$sum_nom = isset($totals_nominal_unit[$field]) ? (float) $totals_nominal_unit[$field] : 0;
 			$footer_cells[$idx_nom] = persediaan_format_rupiah_tampil($sum_nom, true);
+		}
+	}
+	if ($show_keluar_columns) {
+		$idx_terjual = persediaan_list_col_index_terjual($CI);
+		$idx_pecah = persediaan_list_col_index_pecah_satuan($CI);
+		$idx_bahan = persediaan_list_col_index_bahan_produksi($CI);
+		if (isset($footer_cells[$idx_terjual])) {
+			$footer_cells[$idx_terjual] = persediaan_format_angka_tampil($total_terjual);
+		}
+		if (isset($footer_cells[$idx_pecah])) {
+			$footer_cells[$idx_pecah] = persediaan_format_angka_tampil($total_pecah_satuan);
+		}
+		if (isset($footer_cells[$idx_bahan])) {
+			$footer_cells[$idx_bahan] = persediaan_format_angka_tampil($total_bahan_produksi);
 		}
 	}
 
@@ -1430,4 +1579,747 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	}
 
 	xlsEOF();
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * Generate Persediaan — tampilan proses (bulan sumber vs target + rekap)
+ * -------------------------------------------------------------------------
+ */
+function persediaan_gen_proses_floats_equal($a, $b)
+{
+	return abs((float) $a - (float) $b) < 0.0001;
+}
+
+/**
+ * Salin nilai kolom hpp ke bulan target tanpa memotong desimal (jangan floor ke integer).
+ */
+function persediaan_salin_field_hpp_dari_sumber($hpp_raw)
+{
+	$hpp_raw = trim((string) $hpp_raw);
+	if ($hpp_raw === '' || $hpp_raw === '-') {
+		return '0';
+	}
+
+	return $hpp_raw;
+}
+
+/**
+ * Qty salin generate = floor(total_10) bulan sumber (selaras copy V2).
+ */
+function persediaan_gen_proses_qty_copy_dari_row($row, $field = 'total_10')
+{
+	return (int) floor(persediaan_parse_angka(persediaan_row_get($row, $field)));
+}
+
+/**
+ * Nominal verifikasi copy: qty salin × hpp (hpp utuh, tanpa floor).
+ */
+function persediaan_gen_proses_hitung_nominal_copy_row($row, $qty_field = 'total_10')
+{
+	$qty = persediaan_gen_proses_qty_copy_dari_row($row, $qty_field);
+	if ($qty <= 0) {
+		return 0.0;
+	}
+	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+
+	return (float) $qty * (float) $hpp;
+}
+
+function persediaan_gen_proses_sum_nominal_copy_rows($rows, $qty_field = 'total_10')
+{
+	$sum = 0.0;
+	if (!is_array($rows)) {
+		return $sum;
+	}
+	foreach ($rows as $row) {
+		$sum += persediaan_gen_proses_hitung_nominal_copy_row($row, $qty_field);
+	}
+
+	return $sum;
+}
+
+function persediaan_gen_proses_nominal_equal($a, $b)
+{
+	return abs((float) $a - (float) $b) < 1.0;
+}
+
+/**
+ * Record persediaan bulan target hasil copy dari bulan sumber (bukan insert pembelian).
+ */
+function persediaan_gen_proses_row_is_hasil_copy($row)
+{
+	if (empty($row)) {
+		return false;
+	}
+
+	$lama = trim((string) persediaan_row_get($row, 'uuid_persediaan_lama'));
+	if ($lama !== '' && strpos($lama, 'gen_pembelian:') === 0) {
+		return false;
+	}
+	if ($lama !== '' && strpos($lama, 'gen_src:') === 0) {
+		return true;
+	}
+
+	$beli = persediaan_parse_angka(persediaan_row_get($row, 'beli'));
+
+	return $beli <= 0.0001;
+}
+
+/**
+ * Record persediaan dari proses pembelian V2 (penanda gen_pembelian:* atau beli > 0 tanpa gen_src).
+ */
+function persediaan_gen_proses_row_is_hasil_pembelian($row)
+{
+	if (empty($row)) {
+		return false;
+	}
+
+	$lama = trim((string) persediaan_row_get($row, 'uuid_persediaan_lama'));
+	if ($lama !== '' && strpos($lama, 'gen_pembelian:') === 0) {
+		return true;
+	}
+	if ($lama !== '' && strpos($lama, 'gen_src:') === 0) {
+		return false;
+	}
+
+	return persediaan_parse_angka(persediaan_row_get($row, 'beli')) > 0.0001;
+}
+
+function persediaan_gen_proses_filter_rows_hasil_copy($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+
+	$out = array();
+	foreach ($rows as $row) {
+		if (persediaan_gen_proses_row_is_hasil_copy($row)) {
+			$out[] = $row;
+		}
+	}
+
+	return $out;
+}
+
+function persediaan_gen_proses_filter_rows_hasil_pembelian($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+
+	$out = array();
+	foreach ($rows as $row) {
+		if (persediaan_gen_proses_row_is_hasil_pembelian($row)) {
+			$out[] = $row;
+		}
+	}
+
+	return $out;
+}
+
+function persediaan_gen_proses_sum_field_rows($rows, $field)
+{
+	$sum = 0.0;
+	if (!is_array($rows)) {
+		return $sum;
+	}
+	foreach ($rows as $row) {
+		$sum += persediaan_parse_angka(persediaan_row_get($row, $field));
+	}
+
+	return $sum;
+}
+
+function persediaan_gen_proses_sum_total_10_nominal_rows($rows)
+{
+	$sum = 0.0;
+	if (!is_array($rows)) {
+		return $sum;
+	}
+	foreach ($rows as $row) {
+		$t10 = persediaan_parse_angka(persediaan_row_get($row, 'total_10'));
+		$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+		$sum += $t10 * $hpp;
+	}
+
+	return $sum;
+}
+
+function persediaan_gen_proses_sum_sa_nominal_rows($rows)
+{
+	$sum = 0.0;
+	if (!is_array($rows)) {
+		return $sum;
+	}
+	foreach ($rows as $row) {
+		$sum += persediaan_hitung_sa_nominal_row($row);
+	}
+
+	return $sum;
+}
+
+function persediaan_gen_proses_load_rows_bulan($CI, $bulan)
+{
+	if (!$CI || !$CI->db->table_exists('persediaan')) {
+		return array();
+	}
+
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return array();
+	}
+
+	$ts = strtotime($bulan . '-01');
+	if ($ts === false) {
+		return array();
+	}
+
+	$tanggal_beli = date('Y-m-01', $ts);
+	$rows = $CI->db->query(
+		"SELECT * FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `namabarang` ASC, `id` ASC",
+		array($tanggal_beli)
+	)->result();
+
+	$CI->load->helper('pembelian_persediaan');
+	$rows = persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
+
+	return persediaan_filter_rows_tab_data($rows);
+}
+
+function persediaan_gen_v2_copy_rekap_session_key($bulan)
+{
+	return 'gen_v2_copy_rekap_' . trim((string) $bulan);
+}
+
+/**
+ * Simpan snapshot rekap verifikasi copy (saat copy selesai, sebelum pembelian/produksi/penjualan).
+ */
+function persediaan_gen_v2_save_copy_rekap($CI, $bulan, $rekap, $verified_at = null)
+{
+	if (!$CI || !is_array($rekap)) {
+		return false;
+	}
+
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return false;
+	}
+
+	$CI->session->set_userdata(persediaan_gen_v2_copy_rekap_session_key($bulan), array(
+		'rekap' => $rekap,
+		'verified_at' => $verified_at ? (string) $verified_at : date('Y-m-d H:i:s'),
+		'bulan' => $bulan,
+	));
+
+	return true;
+}
+
+/**
+ * Muat snapshot rekap copy dari session (atau batch state aktif).
+ */
+function persediaan_gen_v2_load_copy_rekap_meta($CI, $bulan)
+{
+	$bulan = trim((string) $bulan);
+	$empty = array(
+		'rekap' => null,
+		'verified_at' => '',
+		'from_snapshot' => false,
+	);
+
+	if (!$CI || !preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return $empty;
+	}
+
+	$data = $CI->session->userdata(persediaan_gen_v2_copy_rekap_session_key($bulan));
+	if (is_array($data) && !empty($data['rekap']) && is_array($data['rekap'])) {
+		return array(
+			'rekap' => $data['rekap'],
+			'verified_at' => isset($data['verified_at']) ? (string) $data['verified_at'] : '',
+			'from_snapshot' => true,
+		);
+	}
+
+	$state = $CI->session->userdata('gen_recalc_state_' . $bulan);
+	if (is_array($state) && !empty($state['gen_proses_copy_rekap']) && is_array($state['gen_proses_copy_rekap'])) {
+		return array(
+			'rekap' => $state['gen_proses_copy_rekap'],
+			'verified_at' => isset($state['gen_proses_copy_verified_at']) ? (string) $state['gen_proses_copy_verified_at'] : '',
+			'from_snapshot' => true,
+		);
+	}
+
+	return $empty;
+}
+
+function persediaan_gen_proses_build_rekap($rows_sumber, $rows_target)
+{
+	$sum_total10_sumber = persediaan_gen_proses_sum_field_rows($rows_sumber, 'total_10');
+	$sum_sa_target = persediaan_gen_proses_sum_field_rows($rows_target, 'sa');
+	$sum_total10_target = persediaan_gen_proses_sum_field_rows($rows_target, 'total_10');
+
+	$qty_ok = persediaan_gen_proses_floats_equal($sum_total10_sumber, $sum_sa_target)
+		&& persediaan_gen_proses_floats_equal($sum_sa_target, $sum_total10_target);
+
+	// Bulan sumber: nominal total_10 pakai qty salin (floor) × hpp utuh — selaras prosedur copy V2.
+	$nom_total10_sumber = persediaan_gen_proses_sum_nominal_copy_rows($rows_sumber, 'total_10');
+	$nom_sa_target = persediaan_gen_proses_sum_nominal_copy_rows($rows_target, 'sa');
+	$nom_total10_target = persediaan_gen_proses_sum_nominal_copy_rows($rows_target, 'total_10');
+
+	$nominal_ok = persediaan_gen_proses_nominal_equal($nom_total10_sumber, $nom_sa_target)
+		&& persediaan_gen_proses_nominal_equal($nom_sa_target, $nom_total10_target);
+
+	return array(
+		'qty_ok' => $qty_ok ? 1 : 0,
+		'nominal_ok' => $nominal_ok ? 1 : 0,
+		'sum_total10_sumber' => $sum_total10_sumber,
+		'sum_sa_target' => $sum_sa_target,
+		'sum_total10_target' => $sum_total10_target,
+		'nom_total10_sumber' => $nom_total10_sumber,
+		'nom_sa_target' => $nom_sa_target,
+		'nom_total10_target' => $nom_total10_target,
+		'sum_total10_sumber_fmt' => persediaan_format_angka_tampil($sum_total10_sumber),
+		'sum_sa_target_fmt' => persediaan_format_angka_tampil($sum_sa_target),
+		'sum_total10_target_fmt' => persediaan_format_angka_tampil($sum_total10_target),
+		'nom_total10_sumber_fmt' => persediaan_format_rupiah_tampil($nom_total10_sumber, true),
+		'nom_sa_target_fmt' => persediaan_format_rupiah_tampil($nom_sa_target, true),
+		'nom_total10_target_fmt' => persediaan_format_rupiah_tampil($nom_total10_target, true),
+		'count_sumber' => is_array($rows_sumber) ? count($rows_sumber) : 0,
+		'count_target' => is_array($rows_target) ? count($rows_target) : 0,
+	);
+}
+
+function persediaan_generate_proses_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$bulan_sumber = date('Y-m', strtotime('-1 month', $ts));
+	$rows_sumber = persediaan_gen_proses_load_rows_bulan($CI, $bulan_sumber);
+	$rows_target_all = persediaan_gen_proses_load_rows_bulan($CI, $bulan_target);
+	$rows_target = persediaan_gen_proses_filter_rows_hasil_copy($rows_target_all);
+
+	$copy_meta = persediaan_gen_v2_load_copy_rekap_meta($CI, $bulan_target);
+	if (!empty($copy_meta['rekap']) && is_array($copy_meta['rekap'])) {
+		$rekap = $copy_meta['rekap'];
+	} else {
+		$rekap = persediaan_gen_proses_build_rekap($rows_sumber, $rows_target);
+	}
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_sumber' => $bulan_sumber,
+		'bulan_target_label' => date('m/Y', $ts),
+		'bulan_sumber_label' => date('m/Y', strtotime($bulan_sumber . '-01')),
+		'verifikasi_mode' => 'copy_persediaan',
+		'rows_sumber_barang' => persediaan_filter_rows_by_kategori_tab($rows_sumber, false),
+		'rows_sumber_jasa' => persediaan_filter_rows_by_kategori_tab($rows_sumber, true),
+		'rows_target_barang' => persediaan_filter_rows_by_kategori_tab($rows_target, false),
+		'rows_target_jasa' => persediaan_filter_rows_by_kategori_tab($rows_target, true),
+		'count_target_copy' => count($rows_target),
+		'count_target_all' => is_array($rows_target_all) ? count($rows_target_all) : 0,
+		'rekap' => $rekap,
+		'copy_verified_at' => isset($copy_meta['verified_at']) ? $copy_meta['verified_at'] : '',
+		'rekap_from_snapshot' => !empty($copy_meta['from_snapshot']),
+	);
+}
+
+/**
+ * Rekap verifikasi persediaan setelah semua proses (copy + pembelian + produksi + penjualan).
+ */
+function persediaan_gen_proses_build_rekap_full($rows_sumber, $rows_target_all, $CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+
+	$sum_total10_sumber = persediaan_gen_proses_sum_field_rows($rows_sumber, 'total_10');
+	$sum_sa_target = persediaan_gen_proses_sum_field_rows($rows_target_all, 'sa');
+	$sum_total10_target = persediaan_gen_proses_sum_field_rows($rows_target_all, 'total_10');
+	$sum_beli = persediaan_gen_proses_sum_field_rows($rows_target_all, 'beli');
+	$sum_penjualan = persediaan_gen_proses_sum_field_rows($rows_target_all, 'penjualan');
+	$sum_pecah = persediaan_gen_proses_sum_field_rows($rows_target_all, 'pecah_satuan');
+	$sum_bahan = persediaan_gen_proses_sum_field_rows($rows_target_all, 'bahan_produksi');
+
+	$sa_ok = persediaan_gen_proses_floats_equal($sum_total10_sumber, $sum_sa_target);
+	$expected_total10 = $sum_sa_target + $sum_beli - $sum_penjualan - $sum_pecah - $sum_bahan;
+	$saldo_ok = persediaan_gen_proses_floats_equal($expected_total10, $sum_total10_target);
+	$qty_ok = $sa_ok && $saldo_ok;
+
+	$nom_total10_sumber = persediaan_gen_proses_sum_total_10_nominal_rows($rows_sumber);
+	$nom_sa_target = persediaan_gen_proses_sum_sa_nominal_rows($rows_target_all);
+	$nom_total10_target = persediaan_gen_proses_sum_total_10_nominal_rows($rows_target_all);
+
+	$sum_beli_nom = 0.0;
+	$sum_keluar_nom = 0.0;
+	if (is_array($rows_target_all)) {
+		foreach ($rows_target_all as $row) {
+			$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
+			$sum_beli_nom += persediaan_parse_angka(persediaan_row_get($row, 'beli')) * $hpp;
+			$sum_keluar_nom += (
+				persediaan_parse_angka(persediaan_row_get($row, 'penjualan'))
+				+ persediaan_parse_angka(persediaan_row_get($row, 'pecah_satuan'))
+				+ persediaan_parse_angka(persediaan_row_get($row, 'bahan_produksi'))
+			) * $hpp;
+		}
+	}
+
+	$sa_nominal_ok = persediaan_gen_proses_nominal_equal($nom_total10_sumber, $nom_sa_target);
+	$expected_nom_total10 = $nom_sa_target + $sum_beli_nom - $sum_keluar_nom;
+	$saldo_nominal_ok = persediaan_gen_proses_nominal_equal($expected_nom_total10, $nom_total10_target);
+	$nominal_ok = $sa_nominal_ok && $saldo_nominal_ok;
+
+	$rekap_pembelian = persediaan_gen_proses_pembelian_build_rekap($CI, $bulan_target);
+	$rekap_produksi = persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target);
+	$rekap_penjualan = persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target);
+
+	$pembelian_ok = !empty($rekap_pembelian['barang_ok']) && !empty($rekap_pembelian['jasa_ok']);
+	$produksi_ok = !empty($rekap_produksi['produksi_ok']);
+	$penjualan_ok = !empty($rekap_penjualan['penjualan_ok']);
+	$all_ok = $qty_ok && $nominal_ok && $pembelian_ok && $produksi_ok && $penjualan_ok;
+
+	return array(
+		'verifikasi_mode' => 'full_persediaan',
+		'all_ok' => $all_ok ? 1 : 0,
+		'qty_ok' => $qty_ok ? 1 : 0,
+		'nominal_ok' => $nominal_ok ? 1 : 0,
+		'sa_ok' => $sa_ok ? 1 : 0,
+		'saldo_ok' => $saldo_ok ? 1 : 0,
+		'sa_nominal_ok' => $sa_nominal_ok ? 1 : 0,
+		'saldo_nominal_ok' => $saldo_nominal_ok ? 1 : 0,
+		'pembelian_ok' => $pembelian_ok ? 1 : 0,
+		'produksi_ok' => $produksi_ok ? 1 : 0,
+		'penjualan_ok' => $penjualan_ok ? 1 : 0,
+		'sum_total10_sumber' => $sum_total10_sumber,
+		'sum_sa_target' => $sum_sa_target,
+		'sum_total10_target' => $sum_total10_target,
+		'sum_beli' => $sum_beli,
+		'sum_penjualan' => $sum_penjualan,
+		'sum_pecah_satuan' => $sum_pecah,
+		'sum_bahan_produksi' => $sum_bahan,
+		'expected_total10' => $expected_total10,
+		'nom_total10_sumber' => $nom_total10_sumber,
+		'nom_sa_target' => $nom_sa_target,
+		'nom_total10_target' => $nom_total10_target,
+		'expected_nom_total10' => $expected_nom_total10,
+		'sum_total10_sumber_fmt' => persediaan_format_angka_tampil($sum_total10_sumber),
+		'sum_sa_target_fmt' => persediaan_format_angka_tampil($sum_sa_target),
+		'sum_total10_target_fmt' => persediaan_format_angka_tampil($sum_total10_target),
+		'sum_beli_fmt' => persediaan_format_angka_tampil($sum_beli),
+		'sum_penjualan_fmt' => persediaan_format_angka_tampil($sum_penjualan),
+		'sum_pecah_satuan_fmt' => persediaan_format_angka_tampil($sum_pecah),
+		'sum_bahan_produksi_fmt' => persediaan_format_angka_tampil($sum_bahan),
+		'expected_total10_fmt' => persediaan_format_angka_tampil($expected_total10),
+		'nom_total10_sumber_fmt' => persediaan_format_rupiah_tampil($nom_total10_sumber, true),
+		'nom_sa_target_fmt' => persediaan_format_rupiah_tampil($nom_sa_target, true),
+		'nom_total10_target_fmt' => persediaan_format_rupiah_tampil($nom_total10_target, true),
+		'expected_nom_total10_fmt' => persediaan_format_rupiah_tampil($expected_nom_total10, true),
+		'count_sumber' => is_array($rows_sumber) ? count($rows_sumber) : 0,
+		'count_target' => is_array($rows_target_all) ? count($rows_target_all) : 0,
+		'rekap_pembelian' => $rekap_pembelian,
+		'rekap_produksi' => $rekap_produksi,
+		'rekap_penjualan' => $rekap_penjualan,
+	);
+}
+
+function persediaan_generate_proses_persediaan_full_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$bulan_sumber = date('Y-m', strtotime('-1 month', $ts));
+	$rows_sumber = persediaan_gen_proses_load_rows_bulan($CI, $bulan_sumber);
+	$rows_target_all = persediaan_gen_proses_load_rows_bulan($CI, $bulan_target);
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_sumber' => $bulan_sumber,
+		'bulan_target_label' => date('m/Y', $ts),
+		'bulan_sumber_label' => date('m/Y', strtotime($bulan_sumber . '-01')),
+		'verifikasi_mode' => 'full_persediaan',
+		'rows_target_barang' => persediaan_filter_rows_by_kategori_tab($rows_target_all, false),
+		'rows_target_jasa' => persediaan_filter_rows_by_kategori_tab($rows_target_all, true),
+		'count_target_all' => is_array($rows_target_all) ? count($rows_target_all) : 0,
+		'rekap' => persediaan_gen_proses_build_rekap_full($rows_sumber, $rows_target_all, $CI, $bulan_target),
+	);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * Generate Persediaan — box proses pembelian (verifikasi + datatable)
+ * -------------------------------------------------------------------------
+ */
+function persediaan_gen_proses_pembelian_format_tgl($value)
+{
+	$value = trim((string) $value);
+	if ($value === '' || $value === '0000-00-00') {
+		return '';
+	}
+	$ts = strtotime($value);
+	if ($ts === false) {
+		return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+	}
+
+	return date('d M Y', $ts);
+}
+
+function persediaan_gen_proses_pembelian_format_nominal($value)
+{
+	if (!function_exists('persediaan_format_rupiah_tampil')) {
+		return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+	}
+
+	return persediaan_format_rupiah_tampil($value, true);
+}
+
+function persediaan_gen_proses_pembelian_format_jumlah($value)
+{
+	if (!function_exists('persediaan_format_angka_tampil')) {
+		return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+	}
+
+	return persediaan_format_angka_tampil(persediaan_parse_angka($value));
+}
+
+function persediaan_gen_proses_pembelian_build_rekap($CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	$count_barang = persediaan_gen_v2_count_pembelian_bulan($CI, 'tbl_pembelian', $tgl_awal, $tgl_akhir);
+	$count_jasa = persediaan_gen_v2_count_pembelian_bulan($CI, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir);
+	$sum_jumlah_barang = persediaan_gen_v2_sum_jumlah_pembelian_bulan($CI, 'tbl_pembelian', $tgl_awal, $tgl_akhir);
+	$sum_jumlah_jasa = persediaan_gen_v2_sum_jumlah_pembelian_bulan($CI, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir);
+	$sum_beli_barang = persediaan_gen_v2_sum_beli_persediaan_kategori($CI, $tgl_awal, $tgl_akhir, 'barang');
+	$sum_beli_jasa = persediaan_gen_v2_sum_beli_persediaan_kategori($CI, $tgl_awal, $tgl_akhir, 'jasa');
+
+	$barang_ok = persediaan_gen_proses_floats_equal($sum_jumlah_barang, $sum_beli_barang);
+	$jasa_ok = persediaan_gen_proses_floats_equal($sum_jumlah_jasa, $sum_beli_jasa);
+
+	return array(
+		'barang_ok' => $barang_ok ? 1 : 0,
+		'jasa_ok' => $jasa_ok ? 1 : 0,
+		'count_barang' => $count_barang,
+		'count_jasa' => $count_jasa,
+		'sum_jumlah_barang' => $sum_jumlah_barang,
+		'sum_jumlah_jasa' => $sum_jumlah_jasa,
+		'sum_beli_barang' => $sum_beli_barang,
+		'sum_beli_jasa' => $sum_beli_jasa,
+		'sum_jumlah_barang_fmt' => persediaan_format_angka_tampil($sum_jumlah_barang),
+		'sum_jumlah_jasa_fmt' => persediaan_format_angka_tampil($sum_jumlah_jasa),
+		'sum_beli_barang_fmt' => persediaan_format_angka_tampil($sum_beli_barang),
+		'sum_beli_jasa_fmt' => persediaan_format_angka_tampil($sum_beli_jasa),
+	);
+}
+
+function persediaan_generate_proses_pembelian_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$CI->load->helper('pembelian_persediaan');
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_target_label' => date('m/Y', $ts),
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'rows_pembelian_barang' => persediaan_gen_v2_load_pembelian_bulan_rows($CI, 'tbl_pembelian', $tgl_awal, $tgl_akhir),
+		'rows_pembelian_jasa' => persediaan_gen_v2_load_pembelian_bulan_rows($CI, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir),
+		'rekap' => persediaan_gen_proses_pembelian_build_rekap($CI, $bulan_target),
+	);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * Generate Persediaan — box proses produksi (sys_unit_produk)
+ * -------------------------------------------------------------------------
+ */
+function persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	$count_unit = persediaan_gen_v2_count_unit_produk_bulan($CI, $tgl_awal, $tgl_akhir);
+	$sum_jumlah = persediaan_gen_v2_sum_jumlah_produksi_bulan($CI, $tgl_awal, $tgl_akhir);
+	$sum_beli = persediaan_gen_v2_sum_beli_persediaan_unit_produk($CI, $tgl_awal, $tgl_akhir);
+	$produksi_ok = persediaan_gen_proses_floats_equal($sum_jumlah, $sum_beli);
+
+	return array(
+		'produksi_ok' => $produksi_ok ? 1 : 0,
+		'count_unit_produk' => $count_unit,
+		'sum_jumlah_produksi' => $sum_jumlah,
+		'sum_beli_persediaan' => $sum_beli,
+		'sum_jumlah_produksi_fmt' => persediaan_format_angka_tampil($sum_jumlah),
+		'sum_beli_persediaan_fmt' => persediaan_format_angka_tampil($sum_beli),
+	);
+}
+
+function persediaan_generate_proses_produksi_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$CI->load->helper('pembelian_persediaan');
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_target_label' => date('m/Y', $ts),
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'rows_unit_produk' => persediaan_gen_v2_load_unit_produk_bulan_rows($CI, $tgl_awal, $tgl_akhir),
+		'rekap' => persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target),
+	);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * Generate Persediaan — box proses penjualan (tbl_penjualan)
+ * -------------------------------------------------------------------------
+ */
+function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	$count_penjualan = persediaan_gen_v2_count_penjualan_bulan($CI, $tgl_awal, $tgl_akhir);
+	$sum_jumlah = persediaan_gen_v2_sum_jumlah_penjualan_bulan($CI, $tgl_awal, $tgl_akhir);
+	$sum_penj_pers = persediaan_gen_v2_sum_penjualan_persediaan_bulan($CI, $tgl_awal, $tgl_akhir);
+	$penjualan_ok = persediaan_gen_proses_floats_equal($sum_jumlah, $sum_penj_pers);
+
+	$ctx = array(
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'tanggal_beli_target' => $tgl_awal,
+	);
+	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
+	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+	$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
+
+	$count_masuk = 0;
+	$count_tidak_masuk = 0;
+	$count_manual = 0;
+	$count_skip = 0;
+	foreach ($rows_all as $row_pen) {
+		$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $map, $cache_pembelian);
+		$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
+		if ($kat === 'masuk') {
+			$count_masuk++;
+		} elseif ($kat === 'manual') {
+			$count_manual++;
+		} elseif ($kat === 'skip') {
+			$count_skip++;
+		} else {
+			$count_tidak_masuk++;
+		}
+	}
+
+	return array(
+		'penjualan_ok' => $penjualan_ok ? 1 : 0,
+		'count_penjualan' => $count_penjualan,
+		'sum_jumlah_penjualan' => $sum_jumlah,
+		'sum_penjualan_persediaan' => $sum_penj_pers,
+		'sum_jumlah_penjualan_fmt' => persediaan_format_angka_tampil($sum_jumlah),
+		'sum_penjualan_persediaan_fmt' => persediaan_format_angka_tampil($sum_penj_pers),
+		'count_masuk' => $count_masuk,
+		'count_tidak_masuk' => $count_tidak_masuk,
+		'count_manual' => $count_manual,
+		'count_skip' => $count_skip,
+	);
+}
+
+function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$CI->load->helper('pembelian_persediaan');
+
+	$ctx = array(
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'tanggal_beli_target' => $tgl_awal,
+	);
+	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
+	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+	$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
+
+	$rows_masuk = array();
+	$rows_tidak_masuk = array();
+	$rows_manual = array();
+	foreach ($rows_all as $row_pen) {
+		$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $map, $cache_pembelian);
+		$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
+		if ($kat === 'masuk') {
+			$rows_masuk[] = $cls;
+		} elseif ($kat === 'manual') {
+			$rows_manual[] = $cls;
+		} elseif ($kat !== 'skip') {
+			$rows_tidak_masuk[] = $cls;
+		}
+	}
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_target_label' => date('m/Y', $ts),
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'rows_masuk' => $rows_masuk,
+		'rows_tidak_masuk' => $rows_tidak_masuk,
+		'rows_manual' => $rows_manual,
+		'rekap' => persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target),
+	);
 }
