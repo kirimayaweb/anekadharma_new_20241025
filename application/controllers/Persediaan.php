@@ -4154,6 +4154,31 @@ class Persediaan extends CI_Controller
 		return $row_cnt ? (int) $row_cnt->jml : 0;
 	}
 
+	private function persediaan_field_exists($field_name)
+	{
+		static $fields_cache = null;
+		if ($fields_cache === null) {
+			$fields_cache = $this->db->list_fields('persediaan');
+		}
+		return in_array($field_name, $fields_cache, true);
+	}
+
+	private function persediaan_aggregate_sql_column($field_name, $alias = null)
+	{
+		$alias = $alias === null ? $field_name : $alias;
+		$quoted_alias = '`' . str_replace('`', '``', $alias) . '`';
+		$column_name = $field_name;
+		if ($field_name === 'sekret' && !$this->persediaan_field_exists('sekret') && $this->persediaan_field_exists('Sekretariat')) {
+			$column_name = 'Sekretariat';
+		} elseif ($field_name === 'cetak' && !$this->persediaan_field_exists('cetak') && $this->persediaan_field_exists('CETAK')) {
+			$column_name = 'CETAK';
+		} elseif ($field_name === 'grafikita' && !$this->persediaan_field_exists('grafikita') && $this->persediaan_field_exists('GRAFIKITA')) {
+			$column_name = 'GRAFIKITA';
+		}
+		$quoted_column = '`' . str_replace('`', '``', $column_name) . '`';
+		return 'SUM(COALESCE(' . $quoted_column . ', 0)) AS ' . $quoted_alias;
+	}
+
 	private function get_persediaan_by_bulan($bulan)
 	{
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
@@ -4168,12 +4193,52 @@ class Persediaan extends CI_Controller
 				$rows = array();
 			} else {
 				$tanggal_beli = date('Y-m-01', $ts);
-				$rows = $this->db->query(
-					"SELECT * FROM `persediaan`
+				$select_parts = array(
+					'MIN(`id`) AS `id`',
+					'MAX(`uuid_persediaan`) AS `uuid_persediaan`',
+					'MAX(`uuid_spop`) AS `uuid_spop`',
+					'MAX(`uuid_gudang`) AS `uuid_gudang`',
+					'MAX(`nama_gudang`) AS `nama_gudang`',
+					'MAX(`uuid_barang`) AS `uuid_barang`',
+					'MAX(`kode_barang`) AS `kode_barang`',
+					'MAX(`tanggal_beli`) AS `tanggal_beli`',
+					'MAX(`tanggal`) AS `tanggal`',
+					'MAX(`kode`) AS `kode`',
+					'MAX(`kategori`) AS `kategori`',
+					'MAX(`tuj`) AS `tuj`',
+					'MAX(`tgl_keluar`) AS `tgl_keluar`',
+					'`namabarang`',
+					'`satuan`',
+					'`hpp`',
+					'`spop`',
+					$this->persediaan_aggregate_sql_column('sa'),
+					$this->persediaan_aggregate_sql_column('beli'),
+					$this->persediaan_aggregate_sql_column('sekret', 'sekret'),
+					$this->persediaan_aggregate_sql_column('cetak', 'cetak'),
+					$this->persediaan_aggregate_sql_column('grafikita', 'grafikita'),
+					$this->persediaan_aggregate_sql_column('dinas_umum', 'dinas_umum'),
+					$this->persediaan_aggregate_sql_column('atk_rsud', 'atk_rsud'),
+					$this->persediaan_aggregate_sql_column('ppbmp_kbs', 'ppbmp_kbs'),
+					$this->persediaan_aggregate_sql_column('kbs', 'kbs'),
+					$this->persediaan_aggregate_sql_column('ppbmp', 'ppbmp'),
+					$this->persediaan_aggregate_sql_column('medis', 'medis'),
+					$this->persediaan_aggregate_sql_column('siiplah_bosda', 'siiplah_bosda'),
+					$this->persediaan_aggregate_sql_column('sembako', 'sembako'),
+					$this->persediaan_aggregate_sql_column('fc_gose', 'fc_gose'),
+					$this->persediaan_aggregate_sql_column('fc_manding', 'fc_manding'),
+					$this->persediaan_aggregate_sql_column('fc_psamya', 'fc_psamya'),
+					$this->persediaan_aggregate_sql_column('total_10', 'total_10'),
+					$this->persediaan_aggregate_sql_column('nilai_persediaan', 'nilai_persediaan'),
+					$this->persediaan_aggregate_sql_column('penjualan', 'penjualan'),
+					$this->persediaan_aggregate_sql_column('pecah_satuan', 'pecah_satuan'),
+					$this->persediaan_aggregate_sql_column('bahan_produksi', 'bahan_produksi')
+				);
+				$sql = "SELECT " . implode(",\n\t\t\t\t\t\t", $select_parts) . "
+					FROM `persediaan`
 					WHERE `tanggal_beli` = ?
-					ORDER BY `namabarang` ASC, `id` ASC",
-					array($tanggal_beli)
-				)->result();
+					GROUP BY `spop`, `namabarang`, `satuan`, `hpp`
+					ORDER BY `namabarang` ASC, `spop` ASC";
+				$rows = $this->db->query($sql, array($tanggal_beli))->result();
 			}
 		}
 
