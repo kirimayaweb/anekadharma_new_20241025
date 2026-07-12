@@ -160,6 +160,7 @@
                                 $compare_uuid_spop = 0;
                                 $start = isset($start) ? $start : 0;
                                 $Total_per_SPOP = 0;
+                                $TOTAL_JUMLAH_BARANG = 0;
                                 $TOTAL_LUNAS = 0;
                                 $TOTAL_HUTANG = 0;
                                 $list_spop_status_lu = "";
@@ -349,7 +350,12 @@
 
                                         <td align="center"><?php echo $list_data->kode_barang; ?></td>
                                         <td align="left"><?php echo $list_data->uraian; ?></td>
-                                        <td align="right"><?php echo nominal($list_data->jumlah); ?></td>
+                                        <td align="right">
+                                            <?php 
+                                            echo nominal($list_data->jumlah); 
+                                            $TOTAL_JUMLAH_BARANG = $TOTAL_JUMLAH_BARANG + $list_data->jumlah;
+                                            ?>
+                                            </td>
                                         <td align="left"><?php echo $list_data->satuan; ?></td>
                                         <td align="left"><?php echo $list_data->konsumen; ?></td>
                                         <td align="right">
@@ -509,7 +515,15 @@
                                     <th></th>
                                     <th></th>
                                     <th></th>
-                                    <th></th>
+                                    <th style="text-align:right">
+                                        
+                                    
+                                    <?php
+                                        // echo nominal($TOTAL_LUNAS);
+                                        echo number_format($TOTAL_JUMLAH_BARANG, 0, ',', '.');
+                                        ?>
+                                
+                                </th>
                                     <th></th>
                                     <th></th>
                                     <th style="text-align:right">TOTAL LUNAS</th>
