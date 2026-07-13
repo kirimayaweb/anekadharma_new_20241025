@@ -415,7 +415,7 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 		<tr class="cetak-barang">
 			<th class="cetak-col-no-cell" style="border: 1px solid black; border-right:none; border-collapse: collapse;">&nbsp;</th>
 			<th class="cetak-col-deskripsi-cell" style="border: 1px solid black; border-right:none; border-collapse: collapse;">&nbsp;</th>
-			<th colspan="2" class="cetak-col-unit-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong>PPN<?php echo htmlspecialchars($prosentase_ppn_label, ENT_QUOTES, 'UTF-8'); ?></strong></th>
+			<th colspan="2" class="cetak-col-unit-cell" style="text-align:center; border: 1px solid black; border-right:none; border-collapse: collapse;"><strong>PPH<?php echo htmlspecialchars($prosentase_ppn_label, ENT_QUOTES, 'UTF-8'); ?></strong></th>
 			<th class="cetak-col-jumlah-cell" style="text-align:right; border: 1px solid black; border-collapse: collapse;"><strong><?php echo nominal($PPN_NOMINAL); ?></strong></th>
 		</tr>
 
