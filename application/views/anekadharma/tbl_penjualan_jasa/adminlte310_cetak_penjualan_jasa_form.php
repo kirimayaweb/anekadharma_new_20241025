@@ -272,7 +272,7 @@
 							<th style="border: 1px solid black; border-right:none;">&nbsp;</th>
 							<th style="border: 1px solid black; border-right:none;">&nbsp;</th>
 							<th colspan="2" style="text-align:center; border: 1px solid black; border-right:none;">
-								<strong>PPN</strong>
+								<strong>PPH</strong>
 								<input type="text" name="prosentase_ppn" id="prosentase_ppn" class="cetak-input-inline cetak-input-ppn" value="<?php echo htmlspecialchars($prosentase_ppn, ENT_QUOTES, 'UTF-8'); ?>" placeholder="2" inputmode="decimal" autocomplete="off">
 								<strong class="cetak-label-persen">%</strong>
 							</th>
