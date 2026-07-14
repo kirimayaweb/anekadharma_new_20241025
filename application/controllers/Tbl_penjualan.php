@@ -1929,80 +1929,105 @@ class Tbl_penjualan extends CI_Controller
 		}
 	}
 
-	public function delete($id = null, $uuid_penjualan = null)
+	public function delete($id = null, $uuid_penjualan = null, $source_form = null)
 	{
 		$row = $this->Tbl_penjualan_model->get_by_id($id);
 
-		// if ($row) {
-
-		// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
-
-		$Get_id_persediaan_barang = $row->id_persediaan_barang;
-
-		// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
-		$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
-
-		// print_r($row_data_persediaan);
+		// print_r($row);
 		// print_r("<br/>");
 		// print_r("<br/>");
-
-		$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
-
-		// print_r($Get_total_penjualan_by_id_persediaan);
 		// print_r("<br/>");
-		// print_r("<br/>");
-
-		$Get_total_persediaan_total_10_di_tbl_persediaan = $row_data_persediaan->total_10;
-
-		// print_r($Get_total_persediaan_total_10_di_tbl_persediaan);
-		// print_r("<br/>");
-		// print_r("<br/>");
-
-
-		// print_r("Get_total_penjualan_by_id_persediaan=");
-		// print_r("<br/>");
-		// print_r($Get_total_penjualan_by_id_persediaan);
-		// print_r("<br/>");
-		// print_r($row->jumlah);
-		// print_r("<br/>");
-		// print_r($Get_total_penjualan_by_id_persediaan > $row->jumlah);
-		// print_r("<br/>");
-		// print_r("<br/>");
-
 		// die;
 
-
-		// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
-		if ($Get_total_penjualan_by_id_persediaan >= $row->jumlah) {
-
-			penjualan_update_persediaan_saat_jual(
-				$this,
-				$Get_id_persediaan_barang,
-				isset($row->uuid_unit) ? $row->uuid_unit : '',
-				$row->jumlah,
-				'kurangi'
-			);
-
-			// } else {
-			// 	// print_r("Buat fieldnya jadi 0");
-			// 	// print_r("<br/>");
-			// 	// print_r("tidak ada yang dikurangi");
-			// 	// die;
-			// }
-
-			// Hapus record di tabel penjualan
-			$this->Tbl_penjualan_model->delete($id);
+		// CEK APAKAH ADA DATA DI PERSEDIAAN SESUAI UUID_PERSEDIAAN ATAU ID ATAU NAMA BARANG , SATUAN DAN HARGA SATUANYA
+		// JIKA TIDAK ADA DI DATA PERSEDIAAN MAKA LANGSUNG HAPUS SAJA YANG DI PENJUALAN TANPA PERHATIKAN DATA DI PERSEDIAAN 
+		// KARENA KEMUNGKINAN DATA TIDAK SINKRON DENGAN DATA PERSEDIAAN , JADI HAPUS SAJA BAGIAN PENJUALAN
 
 
-			$this->session->set_flashdata('message', 'Delete Record Success');
+		$this->db->where('uuid_persediaan', $row->uuid_persediaan);
+		$DATA_persediaan = $this->db->get('persediaan');
 
+		if ($DATA_persediaan->num_rows() > 0) {
+			// print_r("ADa record berdasarkan uuid_persediaan");
+
+
+			// if ($row) {
+
+			// Get data penjualan berdasarkan uuid_penjualan , mengurangi jumlah field penjualan di tabel persediaan berdasarkan uuid_penjualan
+
+			$Get_id_persediaan_barang = $row->id_persediaan_barang;
+
+			// Cek nominal penjualan di tabel persediaan berdasarkan id_persediaan_barang
+			$row_data_persediaan = $this->Persediaan_model->get_by_id($Get_id_persediaan_barang);
+
+			// print_r($row_data_persediaan);
+			// print_r("<br/>");
+			// print_r("<br/>");
+
+			$Get_total_penjualan_by_id_persediaan = $row_data_persediaan->penjualan;
+
+			// print_r($Get_total_penjualan_by_id_persediaan);
+			// print_r("<br/>");
+			// print_r("<br/>");
+
+			$Get_total_persediaan_total_10_di_tbl_persediaan = $row_data_persediaan->total_10;
+
+			// print_r($Get_total_persediaan_total_10_di_tbl_persediaan);
+			// print_r("<br/>");
+			// print_r("<br/>");
+
+
+			// print_r("Get_total_penjualan_by_id_persediaan=");
+			// print_r("<br/>");
+			// print_r($Get_total_penjualan_by_id_persediaan);
+			// print_r("<br/>");
+			// print_r($row->jumlah);
+			// print_r("<br/>");
+			// print_r($Get_total_penjualan_by_id_persediaan > $row->jumlah);
+			// print_r("<br/>");
+			// print_r("<br/>");
 
 			// die;
 
-			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+
+			// if ($Get_total_penjualan_by_id_persediaan > 0 and $Get_total_penjualan_by_id_persediaan > $row->jumlah) {
+			if ($Get_total_penjualan_by_id_persediaan >= $row->jumlah) {
+
+				penjualan_update_persediaan_saat_jual(
+					$this,
+					$Get_id_persediaan_barang,
+					isset($row->uuid_unit) ? $row->uuid_unit : '',
+					$row->jumlah,
+					'kurangi'
+				);
+
+				// } else {
+				// 	// print_r("Buat fieldnya jadi 0");
+				// 	// print_r("<br/>");
+				// 	// print_r("tidak ada yang dikurangi");
+				// 	// die;
+				// }
+
+				// Hapus record di tabel penjualan
+				$this->Tbl_penjualan_model->delete($id);
+
+
+				$this->session->set_flashdata('message', 'Delete Record Success');
+
+
+				// die;
+
+				redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+			} else {
+				$this->session->set_flashdata('message', 'Record Not Found');
+				// redirect(site_url('tbl_penjualan'));
+				redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+			}
 		} else {
-			$this->session->set_flashdata('message', 'Record Not Found');
-			redirect(site_url('tbl_penjualan'));
+			// print_r("TIDAK ADA DATA");
+			// hapus data di penjualan berdasarkan id penjualan dan kembali ke halaman source
+			$this->Tbl_penjualan_model->delete($id);
+			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
 		}
 	}
 
@@ -2442,9 +2467,18 @@ class Tbl_penjualan extends CI_Controller
 		$compare_bulan_num = (int) date('m', strtotime($Get_date_awal));
 		$compare_tahun_num = (int) date('Y', strtotime($Get_date_awal));
 		$nama_bulan_id = array(
-			1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-			5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-			9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+			1 => 'Januari',
+			2 => 'Februari',
+			3 => 'Maret',
+			4 => 'April',
+			5 => 'Mei',
+			6 => 'Juni',
+			7 => 'Juli',
+			8 => 'Agustus',
+			9 => 'September',
+			10 => 'Oktober',
+			11 => 'November',
+			12 => 'Desember',
 		);
 		$active_tab = trim((string) $this->input->get('tab', TRUE));
 		if ($active_tab !== 'compare') {
@@ -3491,9 +3525,11 @@ class Tbl_penjualan extends CI_Controller
 			return 'pu_atk';
 		}
 
-		if (strpos($gabung_norm, 'PUFCGOSE') !== false
+		if (
+			strpos($gabung_norm, 'PUFCGOSE') !== false
 			|| strpos($gabung_norm, 'FCGOSE') !== false
-			|| (strpos($gabung, 'FC') !== false && strpos($gabung, 'GOSE') !== false)) {
+			|| (strpos($gabung, 'FC') !== false && strpos($gabung, 'GOSE') !== false)
+		) {
 			return 'pu_fc_gose';
 		}
 
