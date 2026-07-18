@@ -87,10 +87,10 @@ foreach ($Data_stock as $list_data) {
 		<?php
 	} elseif ($bisa_pilih) {
 		?>
-		<form action="<?php echo htmlspecialchars($form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
-			<div class="modal fade" id="modal-xl_1_<?php echo (int) $list_data->id; ?>" tabindex="-1">
-				<div class="modal-dialog modal-lg modal-isi-jumlah-barang">
-					<div class="modal-content">
+		<div class="modal fade" id="modal-xl_1_<?php echo (int) $list_data->id; ?>" tabindex="-1">
+			<div class="modal-dialog modal-lg modal-isi-jumlah-barang">
+				<div class="modal-content">
+					<form class="form-simpan-jumlah-barang-penjualan" action="<?php echo htmlspecialchars($form_action, ENT_QUOTES, 'UTF-8'); ?>" method="post">
 						<div class="modal-header">
 							<h4 class="modal-title">Isi Jumlah Barang</h4>
 							<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
@@ -118,19 +118,23 @@ foreach ($Data_stock as $list_data) {
 							</div>
 						</div>
 						<div class="modal-footer justify-content-between">
+							<input type="hidden" name="ajax" value="1">
 							<input type="hidden" name="tgl_jual" value="<?php echo htmlspecialchars($tgl_jual_X, ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="uuid_unit" value="<?php echo htmlspecialchars($uuid_unit, ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="uuid_konsumen" value="<?php echo htmlspecialchars($uuid_konsumen, ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="uuid_barang" value="<?php echo htmlspecialchars($list_data->uuid_barang, ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="nmrpesan" value="<?php echo htmlspecialchars($nmrpesan, ENT_QUOTES, 'UTF-8'); ?>">
-							<input type="hidden" name="nmrkirim" value="<?php echo htmlspecialchars($nmrkirim, ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="uuid_unit" value="<?php echo htmlspecialchars(isset($uuid_unit) ? $uuid_unit : '', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="uuid_konsumen" value="<?php echo htmlspecialchars(isset($uuid_konsumen) ? $uuid_konsumen : '', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="uuid_persediaan" value="<?php echo htmlspecialchars(isset($list_data->uuid_persediaan) ? $list_data->uuid_persediaan : '', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="id_persediaan_barang" value="<?php echo (int) $list_data->id; ?>">
+							<input type="hidden" name="uuid_penjualan" value="<?php echo htmlspecialchars($uuid_penjualan !== '' ? $uuid_penjualan : 'new', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="uuid_penjualan_proses" value="<?php echo htmlspecialchars($uuid_penjualan !== '' ? $uuid_penjualan : 'new', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="nmrpesan" value="<?php echo htmlspecialchars(isset($nmrpesan) ? $nmrpesan : '', ENT_QUOTES, 'UTF-8'); ?>">
+							<input type="hidden" name="nmrkirim" value="<?php echo htmlspecialchars(isset($nmrkirim) ? $nmrkirim : '', ENT_QUOTES, 'UTF-8'); ?>">
 							<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-							<button type="submit" class="btn btn-primary">SIMPAN</button>
+							<button type="submit" class="btn btn-primary btn-simpan-jumlah-barang">SIMPAN</button>
 						</div>
-					</div>
+					</form>
 				</div>
 			</div>
-		</form>
+		</div>
 		<?php
 	}
 }

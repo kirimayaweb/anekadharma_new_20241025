@@ -898,6 +898,7 @@ class Tbl_penjualan extends CI_Controller
 			'nama_konsumen' => $data_nama_konsumen,
 			'uuid_unit' => $Get_UUID_unit,
 			'unit' => $Get_nama_unit,
+			'uuid_penjualan' => '',
 			'filter_bulan_penjualan' => $filter_bulan_penjualan,
 			'Data_stock' => $Data_stock,
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim'),
@@ -1027,232 +1028,310 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
+	/**
+	 * URL kembali setelah simpan/validasi barang penjualan.
+	 * Kasir (uuid ada) → kasir_penjualan/{uuid}; penjualan baru → create.
+	 */
+	private function _url_kembali_setelah_simpan_barang($uuid_penjualan)
+	{
+		$uuid_penjualan = trim((string) $uuid_penjualan);
+		if ($uuid_penjualan !== '' && strtolower($uuid_penjualan) !== 'new') {
+			return site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan);
+		}
+		return site_url('tbl_penjualan/create');
+	}
+
+	private function _redirect_setelah_simpan_barang($uuid_penjualan, $message = null)
+	{
+		if ($message !== null && $message !== '') {
+			$this->session->set_flashdata('message', $message);
+		}
+		redirect($this->_url_kembali_setelah_simpan_barang($uuid_penjualan));
+	}
+
+	private function _is_ajax_penjualan_request()
+	{
+		if (!empty($_SERVER['HTTP_X_REQUESTED_WITH'])
+			&& strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+			return true;
+		}
+		return (string) $this->input->post('ajax', TRUE) === '1';
+	}
+
+	private function _respon_simpan_barang($ok, $message, $uuid_penjualan, $extra = array())
+	{
+		$redirect = $this->_url_kembali_setelah_simpan_barang($uuid_penjualan);
+		if ($this->_is_ajax_penjualan_request()) {
+			$this->output->set_content_type('application/json');
+			echo json_encode(array_merge(array(
+				'ok' => (bool) $ok,
+				'message' => (string) $message,
+				'redirect' => $redirect,
+				'uuid_penjualan' => $uuid_penjualan,
+			), is_array($extra) ? $extra : array()));
+			return;
+		}
+		if ($ok) {
+			$this->session->set_flashdata('message', $message !== '' ? $message : 'Barang penjualan berhasil ditambahkan.');
+			redirect($redirect);
+			return;
+		}
+		$this->_redirect_setelah_simpan_barang($uuid_penjualan, $message);
+	}
+
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
+		$this->load->helper('pembelian_persediaan');
 
-		// AMBIL DATA DARI PERSEDIAAN (filter id + uuid_barang)
+		$uuid_penjualan = trim((string) $uuid_penjualan);
+		if ($uuid_penjualan === '') {
+			$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		}
+		if ($uuid_penjualan === '') {
+			$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan_proses', TRUE));
+		}
+		if ($uuid_penjualan === '') {
+			$uuid_penjualan = 'new';
+		}
+
 		$id_persediaan_barang = (int) $id_persediaan_barang;
-		$data_barang = $this->Persediaan_model->get_by_id($id_persediaan_barang);
-		if (empty($data_barang)) {
-			$data_barang = $this->db->where('id', $id_persediaan_barang)->get('persediaan')->row();
+		if ($id_persediaan_barang <= 0) {
+			$id_persediaan_barang = (int) $this->input->post('id_persediaan_barang', TRUE);
 		}
 
-		if (empty($data_barang)) {
-			$this->session->set_flashdata('message', 'Barang persediaan tidak ditemukan.');
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
+		$uuid_persediaan_post = trim((string) $this->input->post('uuid_persediaan', TRUE));
 
-		if (trim((string) $data_barang->uuid_barang) === '') {
-			$this->session->set_flashdata('message', 'Barang persediaan tidak memiliki uuid_barang.');
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
-
-		$uuid_barang_post = trim((string) $this->input->post('uuid_barang', TRUE));
-		if ($uuid_barang_post !== '' && $uuid_barang_post !== $data_barang->uuid_barang) {
-			$this->session->set_flashdata('message', 'Data barang tidak sesuai (uuid_barang).');
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
-
-		if ($this->db->field_exists('kategori', 'persediaan') && penjualan_is_kategori_jasa(isset($data_barang->kategori) ? $data_barang->kategori : '')) {
-			$this->session->set_flashdata('message', 'Item kategori Jasa tidak dapat dijual melalui Input Barang Penjualan.');
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
-
-		$tgl_jual_simpan = trim((string) $this->input->post('tgl_jual', TRUE));
-		$filter_bulan = penjualan_get_filter_tgl_jual($this, $tgl_jual_simpan);
-		if (!empty($data_barang->tanggal_beli)) {
-			$tgl_beli = date('Y-m-d', strtotime($data_barang->tanggal_beli));
-			if ($tgl_beli < $filter_bulan['awal'] || $tgl_beli > $filter_bulan['akhir']) {
-				$this->session->set_flashdata(
-					'message',
-					'Barang tidak termasuk persediaan bulan ' . $filter_bulan['bulan_label'] . ' (sesuai Tgl Jual).'
-				);
-				redirect(site_url('tbl_penjualan/create'));
+		$is_new = (strtolower($uuid_penjualan) === 'new');
+		$row_header = null;
+		if (!$is_new) {
+			$row_header = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+			if (empty($row_header)) {
+				$this->_respon_simpan_barang(false, 'Data penjualan (uuid) tidak ditemukan.', 'new');
 				return;
 			}
 		}
 
-		// unIT
-		$this->db->where('uuid_unit', $this->input->post('uuid_unit', TRUE));
-		$sys_unit_data = $this->db->get('sys_unit');
-
-		// print_r($sys_unit_data);
-		// print_r("<br/>");
-
-		if ($sys_unit_data->num_rows() > 0) {
-
-			$Get_unit_data = $sys_unit_data->row_array();
-
-			$Get_uuid_unit = $this->input->post('uuid_unit', TRUE);
-			$Get_kode_unit = $Get_unit_data['kode_unit'];
-			$Get_nama_unit = $Get_unit_data['nama_unit'];
+		// Ambil data barang dari tabel persediaan via uuid_persediaan (utama) / id
+		$data_barang = null;
+		if ($uuid_persediaan_post !== '') {
+			$data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan_post);
+			if (empty($data_barang)) {
+				$data_barang = $this->db->where('uuid_persediaan', $uuid_persediaan_post)->get('persediaan')->row();
+			}
 		}
-
-		// 		print_r($Get_uuid_unit);
-		// 		print_r("<br/>");
-		// 		print_r($Get_nama_unit);
-		// 		print_r("<br/>");
-		// die;
-		// KONSUMEN
-		$uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-		$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-
-
-		if (empty($data_konsumen)) {
-			$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
-			$data_nama_konsumen = $data_konsumen->nama_unit;
-		} else {
-			$data_nama_konsumen = $data_konsumen->nama_konsumen;
+		if (empty($data_barang) && $id_persediaan_barang > 0) {
+			$data_barang = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+			if (empty($data_barang)) {
+				$data_barang = $this->db->where('id', $id_persediaan_barang)->get('persediaan')->row();
+			}
 		}
-
-		$jumlah_simpan = preg_replace('/[^0-9]/', '', $this->input->post('jumlah', TRUE));
-		if ((int) $jumlah_simpan <= 0) {
-			$this->session->set_flashdata('message', 'Jumlah barang wajib diisi dan lebih dari 0.');
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
-
-		$uuid_unit_simpan = isset($Get_uuid_unit) ? $Get_uuid_unit : $this->input->post('uuid_unit', TRUE);
-		$hasil_ensure_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_simpan);
-		if (empty($hasil_ensure_unit['ok'])) {
-			$this->session->set_flashdata(
-				'message',
-				isset($hasil_ensure_unit['message']) ? $hasil_ensure_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.'
+		if (empty($data_barang)) {
+			$this->_respon_simpan_barang(
+				false,
+				'Barang persediaan tidak ditemukan'
+					. ($uuid_persediaan_post !== '' ? ' (uuid_persediaan: ' . $uuid_persediaan_post . ')' : '')
+					. ($id_persediaan_barang > 0 ? ' (id: ' . $id_persediaan_barang . ')' : '') . '.',
+				$uuid_penjualan
 			);
-			redirect(site_url('tbl_penjualan/create'));
 			return;
 		}
-		$kolom_unit_simpan = penjualan_resolve_kolom_persediaan_unit($this, $uuid_unit_simpan);
+
+		$id_persediaan_barang = (int) $data_barang->id;
+		$uuid_persediaan = trim((string) (isset($data_barang->uuid_persediaan) ? $data_barang->uuid_persediaan : ''));
+		if ($uuid_persediaan === '') {
+			$this->_respon_simpan_barang(false, 'Barang persediaan tidak memiliki uuid_persediaan.', $uuid_penjualan);
+			return;
+		}
+		if ($uuid_persediaan_post !== '' && $uuid_persediaan_post !== $uuid_persediaan) {
+			$this->_respon_simpan_barang(false, 'Data barang tidak sesuai (uuid_persediaan).', $uuid_penjualan);
+			return;
+		}
+
+		// uuid_barang opsional: pakai dari persediaan jika ada, jika kosong pakai uuid_persediaan
+		$uuid_barang_simpan = trim((string) (isset($data_barang->uuid_barang) ? $data_barang->uuid_barang : ''));
+		if ($uuid_barang_simpan === '') {
+			$uuid_barang_simpan = $uuid_persediaan;
+		}
+
+		if ($this->db->field_exists('kategori', 'persediaan') && penjualan_is_kategori_jasa(isset($data_barang->kategori) ? $data_barang->kategori : '')) {
+			$this->_respon_simpan_barang(false, 'Item kategori Jasa tidak dapat dijual melalui Input Barang Penjualan.', $uuid_penjualan);
+			return;
+		}
+
+		// Header transaksi: POST dulu, fallback ke data penjualan existing (kasir ubah)
+		$tgl_jual_simpan = trim((string) $this->input->post('tgl_jual', TRUE));
+		$Get_uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
+		$uuid_konsumen = trim((string) $this->input->post('uuid_konsumen', TRUE));
+		$nmrpesan = trim((string) $this->input->post('nmrpesan', TRUE));
+		$nmrkirim = trim((string) $this->input->post('nmrkirim', TRUE));
+
+		if (!$is_new && !empty($row_header)) {
+			if ($tgl_jual_simpan === '' && !empty($row_header->tgl_jual)) {
+				$tgl_jual_simpan = penjualan_format_tgl_jual_tampil($row_header->tgl_jual);
+			}
+			if ($Get_uuid_unit === '' && !empty($row_header->uuid_unit)) {
+				$Get_uuid_unit = trim((string) $row_header->uuid_unit);
+			}
+			if ($uuid_konsumen === '' && !empty($row_header->uuid_konsumen)) {
+				$uuid_konsumen = trim((string) $row_header->uuid_konsumen);
+			}
+			if ($nmrpesan === '' && isset($row_header->nmrpesan)) {
+				$nmrpesan = (string) $row_header->nmrpesan;
+			}
+			if ($nmrkirim === '' && isset($row_header->nmrkirim)) {
+				$nmrkirim = (string) $row_header->nmrkirim;
+			}
+		}
+
+		if ($tgl_jual_simpan === '') {
+			$this->_respon_simpan_barang(false, 'Tgl Jual wajib diisi.', $uuid_penjualan);
+			return;
+		}
+
+		$Get_nama_unit = '';
+		if ($Get_uuid_unit !== '') {
+			$this->db->where('uuid_unit', $Get_uuid_unit);
+			$sys_unit_data = $this->db->get('sys_unit');
+			if ($sys_unit_data->num_rows() > 0) {
+				$Get_unit_data = $sys_unit_data->row_array();
+				$Get_nama_unit = $Get_unit_data['nama_unit'];
+			} elseif (!$is_new && !empty($row_header->unit)) {
+				$Get_nama_unit = (string) $row_header->unit;
+			}
+		}
+		if ($Get_uuid_unit === '' || $Get_nama_unit === '') {
+			$this->_respon_simpan_barang(false, 'Unit penjualan wajib dipilih.', $uuid_penjualan);
+			return;
+		}
+
+		$data_nama_konsumen = '';
+		if ($uuid_konsumen !== '') {
+			$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
+			if (empty($data_konsumen)) {
+				$data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
+				if (!empty($data_konsumen)) {
+					$data_nama_konsumen = $data_konsumen->nama_unit;
+				}
+			} else {
+				$data_nama_konsumen = $data_konsumen->nama_konsumen;
+			}
+		}
+		if ($data_nama_konsumen === '' && !$is_new && !empty($row_header->konsumen_nama)) {
+			$data_nama_konsumen = (string) $row_header->konsumen_nama;
+		}
+		if ($uuid_konsumen === '' || $data_nama_konsumen === '') {
+			$this->_respon_simpan_barang(false, 'Konsumen / unit konsumen tidak ditemukan.', $uuid_penjualan);
+			return;
+		}
+
+		$jumlah_simpan = preg_replace('/[^0-9]/', '', (string) $this->input->post('jumlah', TRUE));
+		if ((int) $jumlah_simpan <= 0) {
+			$this->_respon_simpan_barang(false, 'Jumlah barang wajib diisi dan lebih dari 0.', $uuid_penjualan);
+			return;
+		}
+
+		$hasil_ensure_unit = penjualan_ensure_persediaan_kolom_unit($this, $Get_uuid_unit);
+		if (empty($hasil_ensure_unit['ok'])) {
+			$this->_respon_simpan_barang(
+				false,
+				isset($hasil_ensure_unit['message']) ? $hasil_ensure_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
+				$uuid_penjualan
+			);
+			return;
+		}
+
+		$kolom_unit_simpan = penjualan_resolve_kolom_persediaan_unit($this, $Get_uuid_unit);
 		$sisa_stock_simpan = penjualan_get_sisa_stock_penjualan($data_barang, $kolom_unit_simpan);
 		if ((int) $jumlah_simpan > $sisa_stock_simpan) {
-			$this->session->set_flashdata(
-				'message',
-				'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').'
+			$this->_respon_simpan_barang(
+				false,
+				'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').',
+				$uuid_penjualan
 			);
-			redirect(site_url('tbl_penjualan/create'));
 			return;
 		}
 
-		// =========SIMPAN DATA==================
-		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
+		$ts_jual = pembelian_parse_tanggal_po($tgl_jual_simpan);
+		if ($ts_jual === false) {
+			$ts_jual = strtotime(str_replace('/', '-', $tgl_jual_simpan));
+		}
+		if ($ts_jual === false) {
+			$this->_respon_simpan_barang(false, 'Format Tgl Jual tidak valid.', $uuid_penjualan);
+			return;
+		}
+		$tgl_jual_X = date('Y-m-d', $ts_jual);
 
+		$harga_satuan_simpan = str_replace(',', '.', str_replace('.', '', (string) $this->input->post('harga_satuan_beli', TRUE)));
+		if ($harga_satuan_simpan === '' || !is_numeric($harga_satuan_simpan)) {
+			$harga_satuan_simpan = isset($data_barang->hpp) ? $data_barang->hpp : 0;
+		}
+		$total_nominal_simpan = ((int) $jumlah_simpan) * (float) $harga_satuan_simpan;
 
-		if ($uuid_penjualan == "new") {
-			// print_r("NEW");
-			$data = array(
-				'tgl_input' => date("Y-m-d H:i:s"),
-				'tgl_jual' => $tgl_jual_X,
-				// 'uuid_penjualan' => "new",
-				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
-				'uuid_unit' => $Get_uuid_unit,
-				'unit' => $Get_nama_unit,
-				'uuid_konsumen' => $uuid_konsumen,
-				'konsumen_nama' => $data_nama_konsumen,
-				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_persediaan' => $data_barang->uuid_persediaan,
-				'id_persediaan_barang' => $id_persediaan_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'kode_barang' => $data_barang->kode_barang,
-				// 'nama_barang' => $data_barang->uraian,
-				'nama_barang' => $data_barang->namabarang,
-				// 'uuid_unit' => $uuid_unit_selected,
-				// 'unit' => $data_nama_unit,
-				'proses_bayar' => "belum_bayar",
-				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
-				'satuan' => $data_barang->satuan,
-				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
-				'id_usr' => 1,
-			);
+		$data = array(
+			'tgl_input' => date('Y-m-d H:i:s'),
+			'tgl_jual' => $tgl_jual_X,
+			'nmrpesan' => $nmrpesan,
+			'nmrkirim' => $nmrkirim,
+			'uuid_unit' => $Get_uuid_unit,
+			'unit' => $Get_nama_unit,
+			'uuid_konsumen' => $uuid_konsumen,
+			'konsumen_nama' => $data_nama_konsumen,
+			'uuid_persediaan' => $uuid_persediaan,
+			'id_persediaan_barang' => $id_persediaan_barang,
+			'uuid_barang' => $uuid_barang_simpan,
+			'kode_barang' => isset($data_barang->kode_barang) ? $data_barang->kode_barang : '',
+			'nama_barang' => isset($data_barang->namabarang) ? $data_barang->namabarang : '',
+			'proses_bayar' => 'belum_bayar',
+			'jumlah' => (int) $jumlah_simpan,
+			'satuan' => isset($data_barang->satuan) ? $data_barang->satuan : '',
+			'harga_satuan' => $harga_satuan_simpan,
+			'total_nominal' => $total_nominal_simpan,
+			'id_usr' => 1,
+		);
 
-
-
+		if ($is_new) {
 			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
-			// print_r('create_action_simpan_barang NEW');
-			// print_r("<br/>");
-			// print_r("<br/>");
-			// print_r($data);
-			// die;
-			// print_r($uuid_penjualan);
 		} else {
-			// print_r("BUKAN NEW");
-
-
-
-
-			$data = array(
-				'tgl_input' => date("Y-m-d H:i:s"),
-
-				'tgl_jual' => $tgl_jual_X,
-				'uuid_penjualan' => $uuid_penjualan,
-				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
-				'uuid_unit' => $Get_uuid_unit,
-				'unit' => $Get_nama_unit,
-				'uuid_konsumen' => $uuid_konsumen,
-				'konsumen_nama' => $data_nama_konsumen,
-				// 'uuid_barang' => $data_barang->uuid_pembelian, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'uuid_persediaan' => $data_barang->uuid_persediaan,
-				'id_persediaan_barang' => $id_persediaan_barang,
-				'uuid_barang' => $data_barang->uuid_barang, //uuid_barang berdasarkan uuid_pembelian karena beda harga (barang sama, waktu beda belanja harga beda)
-				'kode_barang' => $data_barang->kode_barang,
-				// 'nama_barang' => $data_barang->uraian,
-				'nama_barang' => $data_barang->namabarang,
-				// 'uuid_unit' => $uuid_unit_selected,
-				// 'unit' => $data_nama_unit,
-				'proses_bayar' => "belum_bayar",
-				'jumlah' => preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)),
-				'satuan' => $data_barang->satuan,
-				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
-				'total_nominal' =>  preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE)) * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
-				'id_usr' => 1,
-			);
-
-			// print_r("Barang baru");
-			// print_r("<br/>");
-			// print_r($data);
-			// die;
-
-			$this->Tbl_penjualan_model->insert_add_barang($data);
+			$data['uuid_penjualan'] = $uuid_penjualan;
+			$uuid_hasil = $this->Tbl_penjualan_model->insert_add_barang($data);
+			if (empty($uuid_hasil)) {
+				$db_err = $this->db->error();
+				$msg_db = !empty($db_err['message']) ? $db_err['message'] : 'Insert penjualan gagal.';
+				$this->_respon_simpan_barang(false, $msg_db, $uuid_penjualan);
+				return;
+			}
 		}
 
-		// die;
-		// =========SIMPAN DATA==================
-
+		if ($uuid_penjualan === '' || $uuid_penjualan === null || strtolower((string) $uuid_penjualan) === 'new') {
+			$this->_respon_simpan_barang(false, 'Gagal menyimpan data penjualan (UUID tidak valid).', 'new');
+			return;
+		}
 
 		$hasil_persediaan = penjualan_update_persediaan_saat_jual(
 			$this,
 			$id_persediaan_barang,
-			isset($Get_uuid_unit) ? $Get_uuid_unit : $this->input->post('uuid_unit', TRUE),
+			$Get_uuid_unit,
 			$jumlah_simpan,
 			'tambah'
 		);
+
 		if (empty($hasil_persediaan['ok'])) {
-			$this->session->set_flashdata(
-				'message',
-				isset($hasil_persediaan['message']) ? $hasil_persediaan['message'] : 'Gagal memperbarui persediaan.'
+			$this->_respon_simpan_barang(
+				false,
+				isset($hasil_persediaan['message'])
+					? ($hasil_persediaan['message'] . ' (barang penjualan sudah tersimpan; periksa stok persediaan)')
+					: 'Gagal memperbarui persediaan.',
+				$uuid_penjualan
 			);
-			if ($uuid_penjualan === 'new') {
-				redirect(site_url('tbl_penjualan/create_action_inisiasi/new'));
-			} else {
-				redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
-			}
 			return;
 		}
 
-
-		// die;
-
-		// redirect("kasir_penjualan/".$uuid_penjualan);
-		// redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan . '/' . $tgl_jual_X . '/' . $this->input->post('nmrkirim', TRUE)));
-		redirect(site_url('tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+		$this->_respon_simpan_barang(true, 'Barang penjualan berhasil ditambahkan.', $uuid_penjualan, array(
+			'id_persediaan_barang' => $id_persediaan_barang,
+			'jumlah' => (int) $jumlah_simpan,
+			'nama_barang' => $data['nama_barang'],
+		));
 	}
-
 	// public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
 	public function kasir_penjualan($uuid_penjualan)
 	{

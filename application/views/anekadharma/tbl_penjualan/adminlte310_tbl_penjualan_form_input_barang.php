@@ -114,13 +114,17 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 		max-height: none !important;
 		overflow: auto !important;
 	}
-	#container-modal-pilih-barang-nested .modal {
+	#container-modal-pilih-barang-nested .modal,
+	.modal.modal-isi-jumlah-barang-host,
+	body > .modal[id^="modal-xl_1_"] {
 		z-index: 1065;
 	}
-	#container-modal-pilih-barang-nested .modal-dialog.modal-isi-jumlah-barang {
+	#container-modal-pilih-barang-nested .modal-dialog.modal-isi-jumlah-barang,
+	body > .modal[id^="modal-xl_1_"] .modal-dialog.modal-isi-jumlah-barang {
 		max-width: min(720px, 96vw);
 	}
-	#container-modal-pilih-barang-nested .penjualan-label-info-jumlah {
+	#container-modal-pilih-barang-nested .penjualan-label-info-jumlah,
+	body > .modal[id^="modal-xl_1_"] .penjualan-label-info-jumlah {
 		display: block;
 		width: 100%;
 		min-width: 0;
@@ -192,7 +196,15 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                     </div>
                     <br />
 
-
+                    <?php
+                    $flash_penjualan = $this->session->flashdata('message');
+                    if (!empty($flash_penjualan)) {
+                        echo '<div class="alert alert-info alert-dismissible fade show mx-3" role="alert">'
+                            . htmlspecialchars($flash_penjualan, ENT_QUOTES, 'UTF-8')
+                            . '<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+                            . '</div>';
+                    }
+                    ?>
 
                     <div class="card-body">
 
@@ -1200,6 +1212,14 @@ function penjualanInitInputBarangScript() {
         }, 60);
     });
 
+    // Nested modal "Isi Jumlah" dipindah ke body agar submit & fokus tidak tertahan parent modal
+    $(document).on('show.bs.modal', '#container-modal-pilih-barang-nested .modal', function() {
+        var $m = $(this);
+        if (!$m.parent().is('body')) {
+            $m.appendTo('body');
+        }
+    });
+
     $(window).on('resize.penjualanPilihBarang', function() {
         if ($('#modal-xl.modal-pilih-barang-penjualan').hasClass('show')) {
             window.sesuaikanDataTablePilihBarang();
@@ -1228,6 +1248,112 @@ function penjualanInitInputBarangScript() {
             /* data sudah dimuat di dalam modal */
         }, function() {
             $btn.prop('disabled', false);
+        });
+    });
+
+    // Simpan jumlah barang via AJAX: tutup modal → animasi proses → sukses → reload kasir
+    $(document).on('submit', '.form-simpan-jumlah-barang-penjualan', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $form = $(this);
+        var $btn = $form.find('.btn-simpan-jumlah-barang');
+        var $modalIsi = $form.closest('.modal');
+        var uuid = cfg.uuidPenjualan || '';
+        if (!uuid) {
+            uuid = 'new';
+        }
+
+        $form.find('input[name="ajax"]').val('1');
+        $form.find('input[name="uuid_penjualan"]').val(uuid);
+        $form.find('input[name="uuid_penjualan_proses"]').val(uuid);
+        $form.find('input[name="tgl_jual"]').val(getTglJualVal());
+        $form.find('input[name="uuid_unit"]').val($('#uuid_unit').val() || '');
+        $form.find('input[name="uuid_konsumen"]').val($('#uuid_konsumen').val() || '');
+        $form.find('input[name="nmrpesan"]').val($('#nmrpesan').val() || '');
+        $form.find('input[name="nmrkirim"]').val($('#nmrkirim').val() || '');
+
+        var jumlahVal = $.trim($form.find('input[name="jumlah"]').val() || '');
+        if (!jumlahVal || parseInt(jumlahVal, 10) <= 0) {
+            penjualanAlertPesan('Jumlah belum diisi', 'Isi jumlah barang terlebih dahulu.', 'warning');
+            return;
+        }
+
+        var postData = $form.serialize();
+        var postUrl = $form.attr('action');
+        var namaBarang = $.trim($form.find('.modal-body input.form-control:disabled').val() || 'barang');
+
+        $btn.prop('disabled', true).text('Menyimpan...');
+
+        // Tutup modal Isi Jumlah + Pilih Barang segera setelah klik Simpan
+        if ($modalIsi.length) {
+            $modalIsi.modal('hide');
+        }
+        $('#modal-xl').modal('hide');
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open').css('padding-right', '');
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Menambahkan data penjualan',
+                html: 'Sedang memproses <strong>' + $('<div>').text(namaBarang).html() + '</strong>...<br><small>Mohon tunggu sebentar</small>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                didOpen: function() {
+                    Swal.showLoading();
+                }
+            });
+        }
+
+        $.ajax({
+            url: postUrl,
+            type: 'POST',
+            dataType: 'json',
+            data: postData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).done(function(res) {
+            if (res && res.ok) {
+                var redirectUrl = res.redirect || cfg.urlKasirPenjualan;
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil menambahkan barang penjualan',
+                        text: (res.message || 'Barang berhasil ditambahkan ke list penjualan.'),
+                        confirmButtonText: 'OK',
+                        timer: 1800,
+                        timerProgressBar: true
+                    }).then(function() {
+                        window.location.href = redirectUrl;
+                    });
+                    setTimeout(function() {
+                        window.location.href = redirectUrl;
+                    }, 1900);
+                } else {
+                    alert((res.message || 'Barang berhasil ditambahkan.'));
+                    window.location.href = redirectUrl;
+                }
+                return;
+            }
+
+            $btn.prop('disabled', false).text('SIMPAN');
+            penjualanAlertPesan('Gagal menyimpan', (res && res.message) ? res.message : 'Barang tidak dapat ditambahkan.', 'error');
+        }).fail(function(xhr) {
+            var msg = 'Tidak dapat menyimpan barang penjualan.';
+            if (xhr && xhr.responseText) {
+                try {
+                    var parsed = JSON.parse(xhr.responseText);
+                    if (parsed && parsed.message) {
+                        msg = parsed.message;
+                    }
+                } catch (ignoreJson) {
+                    if (xhr.responseText.indexOf('Database Error') !== -1) {
+                        msg = 'Error database saat menyimpan penjualan.';
+                    }
+                }
+            }
+            $btn.prop('disabled', false).text('SIMPAN');
+            penjualanAlertPesan('Gagal menyimpan', msg, 'error');
         });
     });
 

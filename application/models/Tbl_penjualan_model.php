@@ -406,25 +406,24 @@ class Tbl_penjualan_model extends CI_Model
         // print_r($data);
         // die;
 
-        $this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
+		$this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
         // $this->db->set('uuid_penjualan', "replace(uuid(),'-','')", FALSE);
-        $this->db->insert($this->table, $data);
+        $ok = $this->db->insert($this->table, $data);
+        if (!$ok) {
+            return null;
+        }
 
-        $datainsert = array(
-            'PROCESS' => 'INSERT',
-            'id' => $this->db->insert_id()
-        );
+        $insert_id = (int) $this->db->insert_id();
+        if ($insert_id <= 0) {
+            return null;
+        }
 
-
-        // print_r("<br/>");
-        // print_r($datainsert['id']);
-        // print_r("<br/>");
-        $this->db->where($this->id, $datainsert['id']);
-        $uuid_penjualan = $this->db->get($this->table)->row()->uuid_penjualan;
-        // print_r($uuid_penjualan);
-        // die;
-        return $uuid_penjualan;
-        // die;
+        $this->db->where($this->id, $insert_id);
+        $row = $this->db->get($this->table)->row();
+        if (empty($row) || empty($row->uuid_penjualan)) {
+            return null;
+        }
+        return $row->uuid_penjualan;
 
 
     }
