@@ -596,7 +596,8 @@ if (isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uu
 foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 ?>
     <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-    <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post">
+    <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post" class="penjualan-form-ubah-barang">
+        <input type="hidden" name="konfirmasi_ubah_harga" value="0">
         <div class="modal fade" id="modal-xl-input-barang_<?php echo $list_data->id ?>">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
@@ -609,23 +610,35 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
                     </div>
 
                     <?php
-                    // echo $action_ubah_per_id . $list_data->id;
+                    $row_data_barang_jual = $list_data;
+                    $id_persediaan_barang = (int) $list_data->id_persediaan_barang;
+                    $penjualan_kolom_unit_modal = penjualan_resolve_kolom_persediaan_unit($this, isset($uuid_unit) ? $uuid_unit : '');
+                    $row_persediaan = null;
 
-                    $row_data_barang_jual = $this->Tbl_penjualan_model->get_by_id($list_data->id);
+                    if ($id_persediaan_barang > 0 && !empty($Data_stock)) {
+                        foreach ($Data_stock as $stock_row) {
+                            if ((int) $stock_row->id === $id_persediaan_barang) {
+                                $row_persediaan = $stock_row;
+                                break;
+                            }
+                        }
+                    }
+                    if ($row_persediaan === null && $id_persediaan_barang > 0) {
+                        $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+                    }
+                    if ($row_persediaan === null && !empty($list_data->uuid_persediaan)) {
+                        $row_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($list_data->uuid_persediaan);
+                    }
 
-                    // cek data stock persediaan dengan filter by id_persediaan_barang dari tabel penjualan
-
-
-                    $get_data_Persediaan_by_id = $this->Persediaan_model->get_by_id($row_data_barang_jual->id_persediaan_barang);
-
-                    // Jumlah stock dikurangi , sudah terjual yang dikurang barang terjual di id penjualan ini
-                    $Get_stock_di_persediaan = $get_data_Persediaan_by_id->total_10 - ($get_data_Persediaan_by_id->penjualan - $row_data_barang_jual->jumlah);
-
-                    // print_r($row_data_barang_jual);
-
-                    // `id`, `uuid_penjualan_proses`, `uuid_penjualan`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`, `tgl_input`, `tgl_jual`, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, `umpphpsl22`, `piutang`, `penjualandpp`, `utangppn`, `cetak_bukti_penjualan`, `id_usr`, ``, ``, ``, ``, ``, ``
-
-
+                    $jumlah_jual_saat_ini = (int) $row_data_barang_jual->jumlah;
+                    if ($row_persediaan !== null) {
+                        $Get_stock_di_persediaan = penjualan_get_sisa_stock_penjualan($row_persediaan, $penjualan_kolom_unit_modal) + $jumlah_jual_saat_ini;
+                    } else {
+                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                    }
+                    if ($Get_stock_di_persediaan < 1) {
+                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                    }
                     ?>
 
                     <div class="modal-body">
@@ -655,8 +668,11 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 
 
                                 <div class="col-4">
-                                    <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" value="
-                                    <?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>" placeholder="<?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>">
+                                    <?php
+                                    $harga_awal_angka_kasir = penjualan_parse_harga_satuan_input($row_data_barang_jual->harga_satuan);
+                                    $harga_awal_tampil_kasir = number_format($row_data_barang_jual->harga_satuan, 2, ',', '.');
+                                    ?>
+                                    <input type="text" class="form-control input-harga-satuan-ubah" name="harga_satuan" value="<?php echo $harga_awal_tampil_kasir; ?>" data-harga-awal="<?php echo htmlspecialchars((string) $harga_awal_angka_kasir, ENT_QUOTES, 'UTF-8'); ?>" data-harga-awal-tampil="<?php echo htmlspecialchars($harga_awal_tampil_kasir, ENT_QUOTES, 'UTF-8'); ?>" placeholder="<?php echo $harga_awal_tampil_kasir; ?>">
                                 </div>
                                 <div class="col-4">
                                     <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
@@ -688,6 +704,8 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 }
 }
 ?>
+
+<?php $this->load->view('anekadharma/tbl_penjualan/_penjualan_form_ubah_barang_js'); ?>
 
 
 

@@ -153,17 +153,17 @@
                                     <th rowspan="2">Satuan</th>
                                     <th rowspan="2">Harga Satuan</th>
                                     <th rowspan="2">Jumlah</th>
-                                    <th rowspan="2">Total <br> harga</th>
+                                    <th rowspan="2">Nilai Kontrak</th>
 
                                     <!-- Colspan -->
                                     <th colspan="2" style="text-align:center" width="50px">Debit</th>
                                     <th colspan="2" style="text-align:center" width="50px">Kredit</th>
                                 </tr>
                                 <tr>
-                                    <th width="25px">UM PPH PSL 22</th>
-                                    <th>Piutang</th>
-                                    <th width="25px">Penjualan DPP</th>
-                                    <th>Utang PPN</th>
+                                    <th width="25px">11301 <br/> Piutang</th>
+                                    <th>51132 <br/> BPP OS</th>
+                                    <th width="25px">41131 <br/> Penjualan Jasa Outsourcing</th>
+                                    <th>21204 <br/> Utang PPH 23 (2%)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -350,25 +350,22 @@
                                                 $Total_Jumlah_per_nmrkirim = $Total_Jumlah_per_nmrkirim + $jumlah_per_nmrkirim;
                                                 $TOTAL_ALL_JUMLAH = $TOTAL_ALL_JUMLAH + $jumlah_per_nmrkirim;
 
-                                                // umpphpsl22
-                                                $x_var_umpphpsl22 = 1.351351;
-                                                $umpphpsl22_per_nmrkirim = ($jumlah_per_nmrkirim * $x_var_umpphpsl22) / 100;
+                                                // 51132 BPP OS = 10500; 11301 Piutang = Nilai Kontrak - 51132
+                                                $nilai_bpp_os = 10500;
+                                                $piutang_per_nmrkirim = $nilai_bpp_os;
+                                                $umpphpsl22_per_nmrkirim = $jumlah_per_nmrkirim - $nilai_bpp_os;
                                                 $Total_UMPPHPSL22_per_nmrkirim = $Total_UMPPHPSL22_per_nmrkirim + $umpphpsl22_per_nmrkirim;
                                                 $TOTAL_ALL_UMPPHPSL22 = $TOTAL_ALL_UMPPHPSL22 + $umpphpsl22_per_nmrkirim;
 
-                                                $x_piutang_percentage = 11.261261;
-                                                $piutang_per_nmrkirim = ($jumlah_per_nmrkirim - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
                                                 $Total_piutang_per_nmrkirim = $Total_piutang_per_nmrkirim + $piutang_per_nmrkirim;
                                                 $TOTAL_ALL_piutang = $TOTAL_ALL_piutang + $piutang_per_nmrkirim;
 
-                                                $x_penjualandpp_percentage = 90.090090;
-                                                $penjualandpp_per_nmrkirim = ($jumlah_per_nmrkirim * $x_penjualandpp_percentage) / 100;
+                                                // 21204 Utang PPH 23 (2%) = 2% Nilai Kontrak; 41131 = Nilai Kontrak - 2%
+                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * 2) / 100;
+                                                $penjualandpp_per_nmrkirim = $jumlah_per_nmrkirim - $utangppn_per_nmrkirim;
                                                 $Total_penjualandpp_per_nmrkirim = $Total_penjualandpp_per_nmrkirim + $penjualandpp_per_nmrkirim;
                                                 $TOTAL_ALL_penjualandpp = $TOTAL_ALL_penjualandpp + $penjualandpp_per_nmrkirim;
 
-
-                                                $x_utangppn_percentage = 9.909910;
-                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * $x_utangppn_percentage) / 100;
                                                 $Total_utangppn_per_nmrkirim = $Total_utangppn_per_nmrkirim + $utangppn_per_nmrkirim;
                                                 $TOTAL_ALL_utangppn = $TOTAL_ALL_utangppn + $utangppn_per_nmrkirim;
 
@@ -379,26 +376,26 @@
                                             <td align="right"> <?php echo nominal($jumlah_per_nmrkirim); ?> </td>
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($umpphpsl22_per_nmrkirim); 
+                                                // 11301 Piutang = Nilai Kontrak - 51132 BPP OS
                                                 echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
 
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($piutang_per_nmrkirim);
+                                                // 51132 BPP OS
                                                 echo number_format($piutang_per_nmrkirim, 2, ',', '.');
                                                 ?></td>
 
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($penjualandpp_per_nmrkirim);
+                                                // 41131 Penjualan Jasa Outsourcing
                                                 echo number_format($penjualandpp_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($utangppn_per_nmrkirim);
+                                                // 21204 Utang PPH 23 (2%)
                                                 echo number_format($utangppn_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
@@ -488,25 +485,22 @@
                                                 $Total_Jumlah_per_nmrkirim = $Total_Jumlah_per_nmrkirim + $jumlah_per_nmrkirim;
                                                 $TOTAL_ALL_JUMLAH = $TOTAL_ALL_JUMLAH + $jumlah_per_nmrkirim;
 
-                                                // umpphpsl22
-                                                $x_var_umpphpsl22 = 1.351351;
-                                                $umpphpsl22_per_nmrkirim = ($jumlah_per_nmrkirim * $x_var_umpphpsl22) / 100;
+                                                // 51132 BPP OS = 10500; 11301 Piutang = Nilai Kontrak - 51132
+                                                $nilai_bpp_os = 10500;
+                                                $piutang_per_nmrkirim = $nilai_bpp_os;
+                                                $umpphpsl22_per_nmrkirim = $jumlah_per_nmrkirim - $nilai_bpp_os;
                                                 $Total_UMPPHPSL22_per_nmrkirim = $Total_UMPPHPSL22_per_nmrkirim + $umpphpsl22_per_nmrkirim;
                                                 $TOTAL_ALL_UMPPHPSL22 = $TOTAL_ALL_UMPPHPSL22 + $umpphpsl22_per_nmrkirim;
 
-                                                $x_piutang_percentage = 11.261261;
-                                                $piutang_per_nmrkirim = ($jumlah_per_nmrkirim - (($jumlah_per_nmrkirim * $x_piutang_percentage) / 100));
                                                 $Total_piutang_per_nmrkirim = $Total_piutang_per_nmrkirim + $piutang_per_nmrkirim;
                                                 $TOTAL_ALL_piutang = $TOTAL_ALL_piutang + $piutang_per_nmrkirim;
 
-                                                $x_penjualandpp_percentage = 90.090090;
-                                                $penjualandpp_per_nmrkirim = ($jumlah_per_nmrkirim * $x_penjualandpp_percentage) / 100;
+                                                // 21204 Utang PPH 23 (2%) = 2% Nilai Kontrak; 41131 = Nilai Kontrak - 2%
+                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * 2) / 100;
+                                                $penjualandpp_per_nmrkirim = $jumlah_per_nmrkirim - $utangppn_per_nmrkirim;
                                                 $Total_penjualandpp_per_nmrkirim = $Total_penjualandpp_per_nmrkirim + $penjualandpp_per_nmrkirim;
                                                 $TOTAL_ALL_penjualandpp = $TOTAL_ALL_penjualandpp + $penjualandpp_per_nmrkirim;
 
-
-                                                $x_utangppn_percentage = 9.909910;
-                                                $utangppn_per_nmrkirim = ($jumlah_per_nmrkirim * $x_utangppn_percentage) / 100;
                                                 $Total_utangppn_per_nmrkirim = $Total_utangppn_per_nmrkirim + $utangppn_per_nmrkirim;
                                                 $TOTAL_ALL_utangppn = $TOTAL_ALL_utangppn + $utangppn_per_nmrkirim;
 
@@ -516,32 +510,32 @@
 
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($jumlah_per_nmrkirim); 
+                                                // Nilai Kontrak
                                                 echo number_format($jumlah_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($umpphpsl22_per_nmrkirim); 
+                                                // 11301 Piutang = Nilai Kontrak - 51132 BPP OS
                                                 echo number_format($umpphpsl22_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
 
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($piutang_per_nmrkirim);
+                                                // 51132 BPP OS
                                                 echo number_format($piutang_per_nmrkirim, 2, ',', '.');
                                                 ?></td>
 
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($penjualandpp_per_nmrkirim);
+                                                // 41131 Penjualan Jasa Outsourcing
                                                 echo number_format($penjualandpp_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>
                                             <td align="right">
                                                 <?php
-                                                // echo nominal($utangppn_per_nmrkirim);
+                                                // 21204 Utang PPH 23 (2%)
                                                 echo number_format($utangppn_per_nmrkirim, 2, ',', '.');
                                                 ?>
                                             </td>

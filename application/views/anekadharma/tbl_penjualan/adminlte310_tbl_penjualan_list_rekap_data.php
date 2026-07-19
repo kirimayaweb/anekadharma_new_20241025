@@ -1,4 +1,5 @@
 <div class="content-wrapper">
+<div class="content-wrapper">
 
 
     <div class="content-header">
@@ -53,6 +54,17 @@
         $is_rekap_konsumen = ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen');
         $is_rekap_barang = ($field_rekap === 'nama_barang');
         $rekap_filter_options = isset($rekap_filter_options) && is_array($rekap_filter_options) ? $rekap_filter_options : array();
+        $this->load->helper('pembelian_persediaan');
+        if (!isset($action_ubah_per_id) || trim((string) $action_ubah_per_id) === '') {
+            $action_ubah_per_id = site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/');
+        }
+        $rekap_aksi_opts = array(
+            'action_ubah_per_id' => $action_ubah_per_id,
+            'field_rekap' => $field_rekap,
+            'filter_query_string' => $filter_qs,
+            'tgl_awal_param' => $tgl_awal_tampil,
+            'tgl_akhir_param' => $tgl_akhir_tampil,
+        );
         ?>
 
         <div class="box box-warning box-solid">
@@ -222,6 +234,16 @@
                                 font-weight: bold;
                                 font-size: 1.1em;
                             }
+                            #tglSPOPFreeze th.rekap-col-aksi-header,
+                            #tglSPOPFreeze td.rekap-col-aksi {
+                                min-width: 118px;
+                                white-space: nowrap;
+                                text-align: center;
+                                vertical-align: middle;
+                            }
+                            #tglSPOPFreeze td.rekap-col-aksi .btn {
+                                margin: 1px 2px;
+                            }
                         </style>
 
 
@@ -239,6 +261,7 @@
 
                                 <tr>
                                     <th>No</th>
+                                    <th class="rekap-col-aksi-header">Action</th>
 
                                     <th>
                                         <?php
@@ -299,6 +322,7 @@
                                         <!-- BARIS KE 1 HANYA MENAMPILKAN DATA NAMA KONSUMEN -->
                                         <tr>
                                             <td><?php echo ++$start; ?></td>
+                                            <td></td>
                                             <td>
                                                 <?php
                                                 // echo $field_rekap;
@@ -312,6 +336,7 @@
                                             </td>
                                             <td></td><!-- SPOP list nama barang persediaan-->
 
+                                            <td></td>
                                             <td></td>
                                             <td></td>
                                             <td></td>
@@ -334,6 +359,7 @@
                                         <!-- Baris ke 2 untuk data penjualan dari group / kelompok pertama -->
                                         <tr>
                                             <td><?php echo ++$start; ?></td>
+                                            <?php echo penjualan_render_rekap_aksi_cell($list_data_TRANSAKSI_BARANG, $rekap_aksi_opts); ?>
                                             <td></td>
                                             <td>
                                                 <?php
@@ -408,6 +434,7 @@
                                             <!-- Baris GROUP SAMA -> LIST NAMA BARANG -->
                                             <tr>
                                                 <td><?php echo ++$start; ?></td>
+                                                <?php echo penjualan_render_rekap_aksi_cell($list_data_TRANSAKSI_BARANG, $rekap_aksi_opts); ?>
                                                 <td></td>
                                                 <td>
                                                     <?php
@@ -484,6 +511,7 @@
                                                 <td></td>
                                                 <td></td>
                                                 <td></td>
+                                                <td></td>
                                                 <td align="right"><strong>TOTAL</strong></td>
                                                 <td></td>
                                                 <td class="rekap-nominal-total" align="right">
@@ -520,6 +548,7 @@
                                             <!-- BARIS NAMA GROUP BARU -->
                                             <tr>
                                                 <td><?php echo ++$start; ?></td>
+                                                <td></td>
                                                 <td>
                                                     <?php
                                                     echo $field_rekap_loop;
@@ -546,6 +575,7 @@
                                             <!-- BARIS TRANSAKSI BARANG -->
                                             <tr>
                                                 <td><?php echo ++$start; ?></td>
+                                                <?php echo penjualan_render_rekap_aksi_cell($list_data_TRANSAKSI_BARANG, $rekap_aksi_opts); ?>
                                                 <td></td>
                                                 <td>
                                                     <?php
@@ -627,6 +657,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
+                                    <td></td>
                                     <td align="right"><strong>TOTAL</strong></td>
                                     <td></td>
                                     <td class="rekap-nominal-total" align="right"><?php echo number_format($Total_jumlah_Barang, 2, ',', '.'); ?></td>
@@ -651,6 +682,40 @@
         </div>
     </section>
 </div>
+
+<?php $this->load->view('anekadharma/tbl_penjualan/_rekap_penjualan_modals_ubah'); ?>
+
+<?php
+$flash_rekap_ubah = $this->session->flashdata('message');
+if (!empty($flash_rekap_ubah)) :
+    ?>
+<script>
+(function() {
+    function tampilSwalSuksesRekapUbah() {
+        if (typeof Swal === 'undefined') {
+            return;
+        }
+        Swal.fire({
+            icon: 'success',
+            title: 'Update Selesai',
+            html: <?php echo json_encode(strip_tags((string) $flash_rekap_ubah), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>,
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            allowOutsideClick: true,
+            customClass: {
+                popup: 'penjualan-ubah-swal-success'
+            }
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tampilSwalSuksesRekapUbah);
+    } else {
+        tampilSwalSuksesRekapUbah();
+    }
+})();
+</script>
+<?php endif; ?>
 
 <script>
 (function() {
@@ -863,10 +928,10 @@
                 return;
             }
 
-            var col1 = teksDariDataTableCell(d[1]);
-            var col5 = teksDariDataTableCell(d[5]);
-            var col6 = teksDariDataTableCell(d[6]);
-            var col7 = teksDariDataTableCell(d[7]);
+            var col1 = teksDariDataTableCell(d[2]);
+            var col5 = teksDariDataTableCell(d[6]);
+            var col6 = teksDariDataTableCell(d[7]);
+            var col7 = teksDariDataTableCell(d[8]);
 
             if (col1 !== '') {
                 currentGroup = col1;

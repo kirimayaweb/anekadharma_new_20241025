@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 if (!defined('BASEPATH'))
 	exit('No direct script access allowed');
@@ -205,7 +205,7 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 	/**
-	 * Opsi combobox filter rekap — hanya nilai yang benar-benar ada di data penjualan
+	 * Opsi combobox filter rekap â€” hanya nilai yang benar-benar ada di data penjualan
 	 * pada rentang tanggal (inklusif awal & akhir).
 	 */
 	private function _get_rekap_filter_options_from_rows($rows, $field_rekap)
@@ -468,6 +468,7 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_akhir_param' => $tgl_akhir_param,
 			'filter_query_string' => $filter_qs,
 			'rekap_filter_options' => $this->_get_rekap_filter_options_from_rows($Tbl_penjualan_data, $field_rekap),
+			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
 		);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list_rekap_data', $data);
@@ -1030,7 +1031,7 @@ class Tbl_penjualan extends CI_Controller
 
 	/**
 	 * URL kembali setelah simpan/validasi barang penjualan.
-	 * Kasir (uuid ada) → kasir_penjualan/{uuid}; penjualan baru → create.
+	 * Kasir (uuid ada) â†’ kasir_penjualan/{uuid}; penjualan baru â†’ create.
 	 */
 	private function _url_kembali_setelah_simpan_barang($uuid_penjualan)
 	{
@@ -1055,7 +1056,13 @@ class Tbl_penjualan extends CI_Controller
 			&& strtolower((string) $_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
 			return true;
 		}
-		return (string) $this->input->post('ajax', TRUE) === '1';
+		if ((string) $this->input->post('ajax', TRUE) === '1') {
+			return true;
+		}
+		if ((string) $this->input->post('redirect_rekap', TRUE) === '1') {
+			return true;
+		}
+		return false;
 	}
 
 	private function _respon_simpan_barang($ok, $message, $uuid_penjualan, $extra = array())
@@ -1514,139 +1521,89 @@ class Tbl_penjualan extends CI_Controller
 
 	public function create_action_nmrkirim_update_per_id_penjualan($id)
 	{
+		$is_ajax = $this->_is_ajax_penjualan_request();
 
-		// print_r("create_action_nmrkirim_update_per_id_penjualan");
-		// print_r("<br/>");
-		// print_r($id);
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_konsumen', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_barang', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('satuan', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('jumlah', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('uuid_gudang', TRUE));
-		// print_r("<br/>");
-		// print_r($this->input->post('harga_satuan', TRUE));
-		// print_r("<br/>");
-		// die;
+		try {
+			$row_penjualan = $this->Tbl_penjualan_model->get_by_id($id);
+			if (empty($row_penjualan)) {
+				$pesan = 'Data penjualan tidak ditemukan.';
+				$this->session->set_flashdata('message', $pesan);
+				$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this);
+				if ($this->_penjualan_respond_ubah_barang_ajax(false, $pesan, $redirect_url)) {
+					return;
+				}
+				redirect($redirect_url);
+				return;
+			}
 
-		// Get uuid_spop from id
-		$sql_data_penjualan = "SELECT * FROM `tbl_penjualan` WHERE `id`='$id'";
-		// $get_uuid_spop = $this->db->query($sql_data_penjualan)->row()->uuid_spop;
-		$Get_uuid_penjualan = $this->db->query($sql_data_penjualan)->row()->uuid_penjualan;
-		$get_id_persediaan = $this->db->query($sql_data_penjualan)->row()->id_persediaan_barang;
-		$get_jmlh_penjualan_awal = $this->db->query($sql_data_penjualan)->row()->jumlah;
+			$jumlah_Jual_ubah = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
+			$harga_satuan_x = penjualan_parse_harga_satuan_input($this->input->post('harga_satuan', TRUE));
+			$konfirmasi_ubah_harga = ($this->input->post('konfirmasi_ubah_harga', TRUE) === '1');
 
-		// print_r($this->db->query($sql_data_pembelian)->row());
-		// print_r("<br/>");
+			$hasil = penjualan_proses_ubah_barang_per_id($this, $id, $jumlah_Jual_ubah, $harga_satuan_x, $konfirmasi_ubah_harga);
+			if (!is_array($hasil)) {
+				throw new Exception('Fungsi proses ubah barang tidak mengembalikan data valid.');
+			}
 
-		// print_r($this->db->query($sql_data_pembelian)->row()->uuid_persediaan);
-		// print_r("<br/>");
+			$ok = !empty($hasil['ok']);
+			if (!$ok) {
+				$pesan = isset($hasil['message']) ? $hasil['message'] : 'Gagal memperbarui data penjualan.';
+				$this->session->set_flashdata('message', $pesan);
+			} else {
+				$pesan = 'Proses update selesai. Data penjualan berhasil diperbarui.';
+				$this->session->set_flashdata('message', $pesan);
+			}
 
-		// die;
-		// print_r($get_uuid_spop);
+			$uuid_penjualan = !empty($hasil['uuid_penjualan'])
+				? $hasil['uuid_penjualan']
+				: (isset($row_penjualan->uuid_penjualan) ? $row_penjualan->uuid_penjualan : '');
+			$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan);
+			if ($this->_penjualan_respond_ubah_barang_ajax($ok, $pesan, $redirect_url)) {
+				return;
+			}
+			redirect($redirect_url);
+		} catch (Exception $e) {
+			$pesan = 'Error: ' . $e->getMessage();
+			log_message('error', 'create_action_nmrkirim_update_per_id_penjualan id=' . (int) $id . ' — ' . $e->getMessage());
+			if ($is_ajax) {
+				$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this);
+				$this->_penjualan_respond_ubah_barang_ajax(false, $pesan, $redirect_url);
+				return;
+			}
+			$this->session->set_flashdata('message', $pesan);
+			redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this));
+		} catch (Throwable $e) {
+			$pesan = 'Error fatal: ' . $e->getMessage();
+			log_message('error', 'create_action_nmrkirim_update_per_id_penjualan id=' . (int) $id . ' — ' . $e->getMessage());
+			if ($is_ajax) {
+				$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this);
+				$this->_penjualan_respond_ubah_barang_ajax(false, $pesan, $redirect_url);
+				return;
+			}
+			$this->session->set_flashdata('message', $pesan);
+			redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this));
+		}
+	}
 
-		// die;
-
-		// Data Persediaan berdasarkan uuid_persediaan
-		$sql_data_persediaan_by_uuid_persediaan = "SELECT * FROM `persediaan` WHERE `id`='$get_id_persediaan'";
-		$get_jmlh_penjualan_dipersediaan = $this->db->query($sql_data_persediaan_by_uuid_persediaan)->row()->penjualan;
-		$get_jmlh_STOCK_dipersediaan = $this->db->query($sql_data_persediaan_by_uuid_persediaan)->row()->total_10;
-
-
-
-
-
-
-
-
-		// $row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
-
-		// GET KONSUMEN DATA
-		// $GET_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-
-		// $sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$GET_uuid_konsumen'";
-		// $get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_unit;
-		// $get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
-
-		// GET BARANG DATA
-		$GET_uuid_barang = $this->input->post('uuid_barang', TRUE);
-		$sql_uuid_barang = "SELECT * FROM `sys_nama_barang` WHERE `uuid_barang`='$GET_uuid_barang'";
-		// $get_kode_barang = $this->db->query($sql_uuid_barang)->row()->kode_barang;
-		// $get_nama_barang = $this->db->query($sql_uuid_barang)->row()->nama_barang;
-
-		$jumlah_Jual_ubah = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
-
-
-		// print_r("jumlah jual awal:");
-		// print_r($get_jmlh_penjualan_awal);
-		// print_r("<br/>");
-		// print_r($jumlah_Jual_ubah);
-		// print_r("<br/>");
-
-		// $harga_satuan_tanpa_titik = str_replace('.', '', $this->input->post('harga_satuan', TRUE)); // menghilangkan titik		
-		// $harga_satuan_x = str_replace(',', '.', $harga_satuan_tanpa_titik); // mengganti koma dengan titik
-		// Masukkan data ke database
-
-		$harga_satuan_x = str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan', TRUE))); // menghilangkan titik dan mengubah koma menjadi titik agar bisa masuk ke type data decimal di mysql
-
-		// print_r($this->input->post('harga_satuan', TRUE));
-		// print_r("<br/>");
-		// print_r($harga_satuan_x);
-		// die;
-
-		$TOTAL_X = $jumlah_Jual_ubah * $harga_satuan_x;
-
-		// UPDATE DATA BARANG
-		$data = array(
-			// 'date_input' => date("Y-m-d H:i:s"),
-			'jumlah' => $jumlah_Jual_ubah,
-			'harga_satuan' => $harga_satuan_x,
-			'total_nominal' => $TOTAL_X,
-		);
-
-		// print_r($id);
-		// print_r("<br/>");
-		// print_r($data);
-		// die;
-
-		$this->Tbl_penjualan_model->update($id, $data);
-
-		//KONTROL INI BELUM ADA:
-		// NOTE : HARUS CEK FIELD PENJUALAN , JIKA SUDAH ADA PROSES PENJUALAN, MAKA TIDAK BOLEH MENGUBAH NAMA BARANG, HANYA BISA MENGUBAH HPP DAN JUMLAH BELI (JUMLAH BELI HARUS LEBIH DARI TOTAL JUMLAH TERJUAL)
-
-		// UPDATE DATA DI PERSEDIAAN berdasarkan id persediaan atau uuid_persediaan
-
-
-		// fiel penjualan tabel persediaan: Kalkulasi total penjualan - jumlah jual awal kemudian total penjualan + jumlah jual akhir
-
-		$row_penjualan_unit = $this->db->query($sql_data_penjualan)->row();
-		$hasil_persediaan = penjualan_update_persediaan_selisih_jual(
-			$this,
-			$get_id_persediaan,
-			isset($row_penjualan_unit->uuid_unit) ? $row_penjualan_unit->uuid_unit : '',
-			$get_jmlh_penjualan_awal,
-			$jumlah_Jual_ubah
-		);
-		if (empty($hasil_persediaan['ok'])) {
-			$this->session->set_flashdata(
-				'message',
-				isset($hasil_persediaan['message']) ? $hasil_persediaan['message'] : 'Gagal memperbarui persediaan.'
-			);
-			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $Get_uuid_penjualan));
-			return;
+	private function _penjualan_respond_ubah_barang_ajax($ok, $message, $redirect_url)
+	{
+		if (!$this->_is_ajax_penjualan_request()) {
+			return false;
 		}
 
-		// print_r("persediaan");
-		// print_r("<br/>");
-		// print_r($Update_data_persediaan);
-		// die;
+		while (ob_get_level() > 0) {
+			ob_end_clean();
+		}
 
-		redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $Get_uuid_penjualan));
+		$this->output->set_content_type('application/json', 'utf-8');
+		echo json_encode(array(
+			'ok' => (bool) $ok,
+			'message' => (string) $message,
+			'redirect_url' => (string) $redirect_url,
+		), JSON_UNESCAPED_UNICODE);
+		exit;
 	}
+
 
 
 	// public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)
@@ -2012,6 +1969,12 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$row = $this->Tbl_penjualan_model->get_by_id($id);
 
+		if (empty($row)) {
+			$this->session->set_flashdata('message', 'Record Not Found');
+			redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan, $source_form));
+			return;
+		}
+
 		// print_r($row);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -2096,17 +2059,16 @@ class Tbl_penjualan extends CI_Controller
 
 				// die;
 
-				redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+				redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan, $source_form));
 			} else {
 				$this->session->set_flashdata('message', 'Record Not Found');
-				// redirect(site_url('tbl_penjualan'));
-				redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+				redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan, $source_form));
 			}
 		} else {
 			// print_r("TIDAK ADA DATA");
 			// hapus data di penjualan berdasarkan id penjualan dan kembali ke halaman source
 			$this->Tbl_penjualan_model->delete($id);
-			redirect(site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan));
+			redirect(penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan, $source_form));
 		}
 	}
 
@@ -4045,7 +4007,7 @@ class Tbl_penjualan extends CI_Controller
 		// dan 
 		// untuk penjualan otomatis 2 data di buku besar:
 		// 1. kode akun terpilih ( 11101, 41101 dan 21201 ) masuk kredit
-		// 2. 11301 ( debet )
+		// 2.Â 11301Â (Â debetÂ )
 
 
 		// Pak maaf ralat.. yg jurnal penjualan itu : 
@@ -4053,7 +4015,7 @@ class Tbl_penjualan extends CI_Controller
 		// - Total penjualan masuk kode akun 11301 (otomatis)
 		// - kreditnya ada 2 : 41101 - 41131 (penjualan) dan 21201 (utang PPN)/21204 (utang pph 23)
 
-		// Untuk penjualan cetak, atk, kebersihan, medis
+		// Untuk penjualan cetak, atk, kebersihan,Â medis
 
 
 		// ================ END OF NOTE SETTING KODE AKUN UNTUK TRANSAKSI PENJUALAN =========
