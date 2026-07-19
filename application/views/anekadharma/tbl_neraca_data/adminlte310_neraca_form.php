@@ -823,38 +823,21 @@
 							<tr>
 								<!-- AKTIVA -->
 
-
+								<!-- X PIUTANG NON USAHA -->
 								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
 
-								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php echo neraca_render_label_keterangan('piutang_non_usaha'); ?></th>
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php //echo neraca_render_label_keterangan('piutang_non_usaha'); ?></th>
 
-								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp"></th>
 
 								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
 
 
 
 									<div class="row" align="left" style="color:#f9032f;text-align:left;">
-										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_non_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
+										<div class="neraca-calc-legacy" style="display:none;"><?php //echo neraca_system_total_value('piutang_non_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
 										<div class="sm-4">
-											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha">
-												<!-- 													
-												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
-																																																															?>" width: 60px; /> -->
-
-
-
-												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
-																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha);
-
-																																															echo number_format($data_tbl_neraca_data->piutang_non_usaha, 2, ',', '.');
-																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_non_usaha;
-																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
-
-
-																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
-																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
-											</form>
+											
 										</div>
 									</div>
 								</th>
@@ -1140,7 +1123,7 @@
 																																														// echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap); 
 																																														// $GET_Total_AKTIVA_TETAP_BERSIH=$GET_Total_AKTIVA_TETAP_BERSIH+$data_tbl_neraca_data->aktiva_tetap;
 																																														?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
- -->
+ 									-->
 
 									<!-- 																					<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
 																					<button type="submit" class="btn btn-success btn-xs">Simpan </button> -->
@@ -1424,6 +1407,266 @@
 
 
 
+							
+
+								<!-- Aktiva Tetap Tidak Berwujud -->
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+								<th style="font-size: 0.550em; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse; text-align:left;" colspan="310"><strong>Aktiva Tetap Tidak Berwujud</strong></th>
+
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size: 0.550em;text-align:left; width: 310px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="310"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php echo neraca_render_label_keterangan('aktiva_tetap_tidak_berwujud'); ?></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('aktiva_tetap_berwujud', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
+										<div class="sm-4">
+
+
+
+											<form action="<?php echo $action . '/aktiva_tetap_tidak_berwujud'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="aktiva_tetap_berwujud">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->aktiva_tetap_berwujud;
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->aktiva_tetap_berwujud);
+
+																																															echo number_format($data_tbl_neraca_data->aktiva_tetap_tidak_berwujud, 2, ',', '.');
+
+																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->aktiva_tetap_tidak_berwujud;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+
+										</div>
+									</div>
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label"><?php //echo neraca_render_label_keterangan('utang_afiliasi'); ?></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">
+									<!-- Rp. -->
+								</th>
+
+								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;border-top:none;border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+									
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php echo neraca_render_label_keterangan('akumulasi_depresiasi_attb'); ?></th>
+
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('akumulasi_depresiasi_atb', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
+										<div class="sm-4">
+
+
+
+
+
+											<form action="<?php echo $action . '/akumulasi_depresiasi_atb'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="akumulasi_depresiasi_atb">
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->akumulasi_depresiasi_atb; 
+																																																																?>" width: 50px; /> -->
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->akumulasi_depresiasi_atb);
+
+																																															echo number_format($data_tbl_neraca_data->akumulasi_depresiasi_atb, 2, ',', '.');
+																																															$GET_Total_AKTIVA_TETAP_BERSIH = $GET_Total_AKTIVA_TETAP_BERSIH + $data_tbl_neraca_data->akumulasi_depresiasi_atb;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+										</div>
+									</div>
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label">
+									<!-- Total Utang -->
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">
+									<!-- Rp. -->
+								</th>
+
+								<th style="font-size:0.550em; text-align:right; width: 150px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+									
+
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none;  border-top:none;border-bottom:none;border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label">Total Aktiva Tetap Bersih</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"><?php //echo nominal($Total_Aktiva_Tetap_Bersih) 
+																																																										?>
+
+									<!-- <input type="text" class="form-control uang" onkeyup="sum_total_aktiva_lancar();" name="total_aktiva_tetap_bersih" id="total_aktiva_tetap_bersih" placeholder="" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" value="" ; /> -->
+
+									<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																												// echo $GET_Total_AKTIVA_TETAP_BERSIH; 
+																																												echo number_format($GET_Total_AKTIVA_TETAP_BERSIH, 2, ',', '.');
+																																												?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
+
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+							<tr>
+								<!-- AKTIVA -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;height: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-right:none;border-left:none;border-top:none;border-bottom:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right;  width: 150px;border: 1px solid black;border-right:none;border-left:none;border-top:none;border-bottom:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-top:none;border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+
+
+
+
+
+
+
 							<tr>
 								<!-- AKTIVA -->
 
@@ -1458,7 +1701,102 @@
 
 							</tr>
 
+								
+								<!-- end of Aktiva Tetap Tidak Berwujud -->
+									
+							
+							
+							<!-- INSERT PIUTANG NON USAHA -->
 
+							<tr>
+								<!-- AKTIVA -->
+
+								<!-- PIUTANG NON USAHA -->
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse; text-align:left;" colspan="250" class="neraca-col-label"><?php echo neraca_render_label_keterangan('piutang_non_usaha'); ?></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="neraca-calc-legacy" style="display:none;"><?php echo neraca_system_total_value('piutang_non_usaha', isset($neraca_system_totals) ? $neraca_system_totals : array()); ?></div>
+										<div class="sm-4">
+											<form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha">
+												<!-- 													
+												<input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha; 
+																																																															?>" width: 60px; /> -->
+
+
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+																																															// echo str_replace('.', ',', $data_tbl_neraca_data->piutang_non_usaha);
+
+																																															echo number_format($data_tbl_neraca_data->piutang_non_usaha, 2, ',', '.');
+																																															$GET_TOTAL_AKTIVA_LANCAR = $GET_TOTAL_AKTIVA_LANCAR + $data_tbl_neraca_data->piutang_non_usaha;
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:black;" />
+
+
+																																	<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+											</form>
+										</div>
+									</div>
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+								<!-- PASIVA  -->
+
+
+								<th style="font-size:0.550em; text-align:left; width: 10px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;  border-collapse: collapse;" colspan="25" class="neraca-col-gap"></th>
+
+								<th style="font-size: 0.550em;text-align:left; width: 300px;border: 1px solid black;border-top:none;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="250" class="neraca-col-label"></th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black; border-bottom:none; border-right:none;border-left:none;  border-collapse: collapse;" colspan="25" class="neraca-col-rp">Rp.</th>
+
+								<th style="font-size:0.550em; text-align:right; border-top:none;border-bottom:none; width: 150px;border: 1px solid black;border-bottom:none;  border-right:none;border-left:none;  border-collapse: collapse;" colspan="195" class="neraca-col-input">
+
+
+
+									<div class="row" align="left" style="color:#f9032f;text-align:left;">
+										<div class="sm-4">
+										</div>
+										<div class="row" align="right">
+											<div class="sm-12">
+
+
+												<!-- <form action="<?php echo $action . '/piutang_non_usaha'; ?>" method="post" class="neraca-kode-akun-form" data-field-neraca="piutang_non_usaha"> -->
+
+												<!-- <input type="text" class="form-control uang" onkeyup="sum_total_utang_lancar();" name="input_box" id="input_box" placeholder="" style="font-size:1vw;font-weight: bold;text-align:right;color:red;" value="<?php //echo $data_tbl_neraca_data->piutang_non_usaha;
+																																																																?>" width: 50px; /> -->
+
+												<input type="tel" pattern="[0-9(,)]{15}" name="input_box" id="input_box" onchange="setTwoNumberDecimal" min="0" max="10" step="0,25" value="<?php
+
+																																															// echo $TOTAL_UTANG_LANCAR; 
+																																															echo number_format($TOTAL_UTANG_LANCAR, 2, ',', '.');
+
+																																															?>" style="font-size:1.1vw;font-weight: bold;text-align:right;color:red;" />
+
+
+												<!-- 																					<button type="button" class="btn btn-warning btn-xs btn-neraca-get-kode-akun-form" style="white-space:nowrap;margin-left:2px;" onclick="return (window.neracaOpenSettingKodeAkun ? neracaOpenSettingKodeAkun(this) : false);"><i class="fa fa-cog"></i> Setting Kode Akun</button>
+																					<button type="submit" class="btn btn-success btn-xs">Simpan </button>
+												</form> -->
+											</div>
+										</div>
+									</div>
+
+								</th>
+
+								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
+
+							</tr>
+
+
+									<!-- END OF INSERT PIUTANG NON USAHA -->
 
 
 
@@ -1557,7 +1895,6 @@
 								<th style="font-size:0.550em; text-align:left; width: 20px;border: 1px solid black;  border-left:none; border-top:none;border-bottom:none; border-collapse: collapse;" colspan="5" class="neraca-col-center"></th>
 
 							</tr>
-
 
 
 

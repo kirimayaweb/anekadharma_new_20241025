@@ -705,8 +705,7 @@ class Tbl_neraca_data extends CI_Controller
 				);
 			}
 		}
-
-
+	
 
 
 		// print_r($GET_tbl_neraca_data_RECORD->row());
@@ -714,7 +713,10 @@ class Tbl_neraca_data extends CI_Controller
 
 		$this->load->helper(array('dashboard', 'dashboard_laporan_publish'));
 		$data['neraca_can_publish'] = dashboard_user_can_update_laporan_bulanan($this);
-		$data['neraca_is_published'] = false;
+		
+		
+
+
 		$data['neraca_has_record'] = isset($data['data_tbl_neraca_data']);
 		if ($Get_bulan && (int) $Get_bulan > 0) {
 			$data['neraca_is_published'] = dashboard_laporan_is_published($this, 'neraca', $Get_tahun, $Get_bulan);
@@ -722,6 +724,9 @@ class Tbl_neraca_data extends CI_Controller
 				$data['neraca_has_record'] = dashboard_laporan_has_saved_data($this, 'tbl_neraca_data', $Get_tahun, $Get_bulan);
 			}
 		}
+
+
+
 
 		$this->_load_neraca_form_view($data);
 	}
