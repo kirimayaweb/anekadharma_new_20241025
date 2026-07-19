@@ -215,6 +215,13 @@
                                 height: calc(1.5em + 0.42rem);
                                 padding: 0.18rem 0.36rem;
                             }
+                            #tglSPOPFreeze tr.rekap-baris-total td {
+                                background-color: yellow !important;
+                            }
+                            #tglSPOPFreeze tr.rekap-baris-total td.rekap-nominal-total {
+                                font-weight: bold;
+                                font-size: 1.1em;
+                            }
                         </style>
 
 
@@ -335,11 +342,7 @@
                                                 $Query_data_persediaan_barang = $this->db->get('persediaan');
                                                 $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
-                                                // echo "nomor spop : "; 
-                                                // if ($Get_data_persediaan_barang->spop) {
-                                                //     echo "SPOP: ";
-                                                // }
-                                                echo $Get_data_persediaan_barang->spop;
+                                                echo ($Get_data_persediaan_barang) ? $Get_data_persediaan_barang->spop : '';
                                                 ?>
                                             </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
 
@@ -413,11 +416,7 @@
                                                     $Query_data_persediaan_barang = $this->db->get('persediaan');
                                                     $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
-                                                    // echo "nomor spop : "; 
-                                                    // if ($Get_data_persediaan_barang->spop) {
-                                                    //     echo "SPOP: ";
-                                                    // }
-                                                    echo $Get_data_persediaan_barang->spop;
+                                                    echo ($Get_data_persediaan_barang) ? $Get_data_persediaan_barang->spop : '';
                                                     ?>
                                                 </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
 
@@ -478,51 +477,28 @@
 
                                             <!-- BARIS TOTAL GROUP LAMA -->
 
-                                            <tr>
+                                            <tr class="rekap-baris-total">
                                                 <td><?php echo ++$start; ?></td>
                                                 <td></td>
                                                 <td></td>
                                                 <td></td>
                                                 <td></td>
                                                 <td></td>
-                                                <td>
-                                                    <?php
-                                                    echo $Nama_Konsumen;
-                                                    ?>
-                                                </td>
+                                                <td align="right"><strong>TOTAL</strong></td>
                                                 <td></td>
-                                                <td align="right">
+                                                <td class="rekap-nominal-total" align="right">
                                                     <?php
                                                     echo number_format($Total_jumlah_Barang, 2, ',', '.');
-                                                    // echo $list_data_TRANSAKSI_BARANG->jumlah;
-                                                    // $Total_jumlah_Barang = $Total_jumlah_Barang + $list_data_TRANSAKSI_BARANG->jumlah;
-
                                                     $Total_jumlah_Barang = 0; //RESET TOTAL JUMLAH BARANG UNTUK GROUP SELANJUTNYA
                                                     ?>
                                                 </td>
-                                                <td align="right">
-                                                    <?php
-                                                    // echo number_format($list_data_TRANSAKSI_BARANG->harga_satuan, 2, ',', '.');
-                                                    ?>
-                                                </td>
-                                                <td align="right">
-
+                                                <td align="right"></td>
+                                                <td class="rekap-nominal-total" align="right">
                                                     <?php
                                                     echo number_format($Total_Harga, 2, ',', '.');
-
-                                                    // echo number_format($list_data_TRANSAKSI_BARANG->jumlah * $list_data_TRANSAKSI_BARANG->harga_satuan, 2, ',', '.');
-
-                                                    // $Total_Harga = $Total_Harga + ($list_data_TRANSAKSI_BARANG->jumlah * $list_data_TRANSAKSI_BARANG->harga_satuan);
-
                                                     $Total_Harga = 0; // RESET TOTAL JUMLAH HARGA , SETELAH TOTAL HARGA PER GROUP
-
                                                     ?>
                                                 </td>
-
-
-
-
-
                                             </tr>
 
 
@@ -578,11 +554,7 @@
                                                     $Query_data_persediaan_barang = $this->db->get('persediaan');
                                                     $Get_data_persediaan_barang = $Query_data_persediaan_barang->row();
 
-                                                    // echo "nomor spop : "; 
-                                                    // if ($Get_data_persediaan_barang->spop) {
-                                                    //     echo "SPOP: ";
-                                                    // }
-                                                    echo $Get_data_persediaan_barang->spop;
+                                                    echo ($Get_data_persediaan_barang) ? $Get_data_persediaan_barang->spop : '';
                                                     ?>
                                                 </td> <!-- SPOP X data isi nomor spop dari nama barang pertama -->
 
@@ -648,31 +620,18 @@
 
 
                                 <!-- 1 BARIS TOTAL $field_rekap TERAKHIR -->
-                                <tr>
+                                <tr class="rekap-baris-total">
                                     <td><?php echo ++$start; ?></td>
-                                    <td><?php //echo $list_data_TRANSAKSI_BARANG->namabarang_persediaan; 
-                                        echo "TOTAL"
-                                        ?></td>
-                                    <td></td> <!-- SPOP B total nama barang ke 2 dst -->
-
                                     <td></td>
                                     <td></td>
                                     <td></td>
-                                    <td>
-                                        <?php
-                                        //echo $Nama_Konsumen;
-                                        echo "TOTAL"
-                                        ?>
-                                    </td>
-                                    <td style="background-color:yellow;" align="right">TOTAL</td>
-                                    <td style="background-color:yellow;" align="right"><?php //echo "<font color='red'><strong>" . number_format($Total_jumlah_Barang, 0, ',', '.') . "</strong>"; 
-                                                                                        ?></td>
-                                    <td style="background-color:yellow;"></td>
-                                    <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        // echo "Total 4";
-                                        //echo "<font color='red'><strong>" . number_format($Total_Harga, 2, ',', '.') . "</strong>"; 
-                                        ?></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td align="right"><strong>TOTAL</strong></td>
+                                    <td></td>
+                                    <td class="rekap-nominal-total" align="right"><?php echo number_format($Total_jumlah_Barang, 2, ',', '.'); ?></td>
+                                    <td align="right"></td>
+                                    <td class="rekap-nominal-total" align="right"><?php echo number_format($Total_Harga, 2, ',', '.'); ?></td>
                                 </tr>
 
 
