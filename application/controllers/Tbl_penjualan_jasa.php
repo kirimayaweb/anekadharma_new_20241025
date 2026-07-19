@@ -1646,12 +1646,8 @@ class Tbl_penjualan_jasa extends CI_Controller
 		} else {
 			$jumlah_ppn = round($base['total_penjualan'] * 2 / 100);
 		}
-		if ($row_cetak && $row_cetak->dibayar > 0) {
-			$dibayar = (float) $row_cetak->dibayar;
-		} else {
-			$dibayar = $base['total_penjualan'] + $jumlah_ppn + $fee_admin;
-		}
-		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$dibayar = $base['total_penjualan'] - $jumlah_ppn - $fee_admin;
+		$terbilang_dibayar = '';
 		$deskripsi_periode_default = isset($base['deskripsi_periode_default']) ? $base['deskripsi_periode_default'] : '';
 		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
 			? trim((string) $row_cetak->deskripsi_periode)
@@ -1713,7 +1709,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 		}
 		$dibayar = (float) str_replace(',', '.', $this->input->post('dibayar', TRUE));
 		if ($dibayar <= 0) {
-			$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+			$dibayar = $total_penjualan - $jumlah_ppn - $fee_admin;
 		}
 		$terbilang = $this->input->post('terbilang', TRUE);
 		$deskripsi_periode = trim((string) $this->input->post('deskripsi_periode', TRUE));
@@ -1791,14 +1787,14 @@ class Tbl_penjualan_jasa extends CI_Controller
 				if ($base !== null) {
 					$total_penjualan = (float) $base['total_penjualan'];
 					$jumlah_ppn = round($total_penjualan * 2 / 100);
-					$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+					$dibayar = $total_penjualan - $jumlah_ppn - $fee_admin;
 				}
 			} else {
 				$base = $this->_prepare_cetak_penjualan_jasa_data($storage_key);
 				if (!empty($base['total_penjualan'])) {
 					$total_penjualan = (float) $base['total_penjualan'];
 					$jumlah_ppn = round($total_penjualan * 2 / 100);
-					$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+					$dibayar = $total_penjualan - $jumlah_ppn - $fee_admin;
 				}
 			}
 
@@ -1844,9 +1840,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$total_penjualan = $base['total_penjualan'];
 		$PPN_NOMINAL = ($row_cetak) ? (float) $row_cetak->jumlah_ppn : 0;
 		$FEE_ADMIN_NOMINAL = ($row_cetak) ? (float) $row_cetak->fee_admin : 0;
-		$DIBAYAR = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : ($total_penjualan + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL);
+		$DIBAYAR = $total_penjualan - $PPN_NOMINAL - $FEE_ADMIN_NOMINAL;
 		$prosentase_ppn_label = ($row_cetak && $row_cetak->prosentase_ppn > 0) ? ' (' . rtrim(rtrim(number_format($row_cetak->prosentase_ppn, 2, ',', '.'), '0'), ',') . '%)' : '';
-		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$terbilang_dibayar = '';
 		$deskripsi_periode_default = isset($base['deskripsi_periode_default']) ? $base['deskripsi_periode_default'] : '';
 		$deskripsi_periode = ($row_cetak && isset($row_cetak->deskripsi_periode) && trim((string) $row_cetak->deskripsi_periode) !== '')
 			? trim((string) $row_cetak->deskripsi_periode)
@@ -1902,12 +1898,8 @@ class Tbl_penjualan_jasa extends CI_Controller
 		} else {
 			$jumlah_ppn = round($base['total_penjualan'] * 2 / 100);
 		}
-		if ($row_cetak && $row_cetak->dibayar > 0) {
-			$dibayar = (float) $row_cetak->dibayar;
-		} else {
-			$dibayar = $base['total_penjualan'] + $jumlah_ppn + $fee_admin;
-		}
-		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$dibayar = $base['total_penjualan'] - $jumlah_ppn - $fee_admin;
+		$terbilang_dibayar = '';
 
 		$deskripsi_periode_default = '';
 		if (!empty($base['deskripsi_periode_default'])) {
@@ -2011,7 +2003,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 		}
 		$dibayar = (float) str_replace(',', '.', $this->input->post('dibayar', TRUE));
 		if ($dibayar <= 0) {
-			$dibayar = $total_penjualan + $jumlah_ppn + $fee_admin;
+			$dibayar = $total_penjualan - $jumlah_ppn - $fee_admin;
 		}
 		$terbilang = $this->input->post('terbilang', TRUE);
 		$deskripsi_periode = trim((string) $this->input->post('deskripsi_periode', TRUE));
@@ -2074,9 +2066,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$total_penjualan = $base['total_penjualan'];
 		$PPN_NOMINAL = ($row_cetak) ? (float) $row_cetak->jumlah_ppn : 0;
 		$FEE_ADMIN_NOMINAL = ($row_cetak) ? (float) $row_cetak->fee_admin : 0;
-		$DIBAYAR = ($row_cetak && $row_cetak->dibayar > 0) ? (float) $row_cetak->dibayar : ($total_penjualan + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL);
+		$DIBAYAR = $total_penjualan - $PPN_NOMINAL - $FEE_ADMIN_NOMINAL;
 		$prosentase_ppn_label = ($row_cetak && $row_cetak->prosentase_ppn > 0) ? ' (' . rtrim(rtrim(number_format($row_cetak->prosentase_ppn, 2, ',', '.'), '0'), ',') . '%)' : '';
-		$terbilang_dibayar = ($row_cetak && !empty($row_cetak->terbilang)) ? $row_cetak->terbilang : '';
+		$terbilang_dibayar = '';
 		$deskripsi_periode_default = '';
 		if (!empty($base['data_master']->tgl_po)) {
 			$deskripsi_periode_default = cetak_pembayaran_jasa_default_deskripsi_periode($base['data_master']->tgl_po);

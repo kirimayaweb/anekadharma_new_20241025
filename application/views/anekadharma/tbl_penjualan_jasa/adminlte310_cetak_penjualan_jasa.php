@@ -386,10 +386,12 @@ $konsumen_nama_kepada_yth = format_kepada_yth_nama_cetak(isset($konsumen_nama_se
 			$prosentase_ppn_label = '';
 		}
 		if (!isset($DIBAYAR)) {
-			$DIBAYAR = $TOTAL_PENJUALAN + $PPN_NOMINAL + $FEE_ADMIN_NOMINAL;
+			$DIBAYAR = $TOTAL_PENJUALAN - $PPN_NOMINAL - $FEE_ADMIN_NOMINAL;
 		}
-		if (!isset($terbilang_dibayar) || $terbilang_dibayar === '') {
+		if (isset($DIBAYAR) && $DIBAYAR > 0) {
 			$terbilang_dibayar = ucwords(terbilang((int) round($DIBAYAR))) . ' Rupiah';
+		} elseif (!isset($terbilang_dibayar)) {
+			$terbilang_dibayar = '';
 		}
 		$cetak_border_no_tb = 'border-left: 1px solid black; border-right: 1px solid black; border-top: none; border-bottom: none; border-collapse: collapse;';
 		?>

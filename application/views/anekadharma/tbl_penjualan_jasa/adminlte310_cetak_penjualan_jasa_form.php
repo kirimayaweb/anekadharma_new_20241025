@@ -471,7 +471,7 @@
 			jumlahPpn = Math.round((total * prosentase) / 100);
 		}
 
-		var dibayar = total + jumlahPpn + feeAdmin;
+		var dibayar = total - jumlahPpn - feeAdmin;
 		var terbilangText = '';
 		if (dibayar > 0) {
 			terbilangText = terbilang(dibayar).replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + ' Rupiah';

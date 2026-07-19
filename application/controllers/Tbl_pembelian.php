@@ -2357,7 +2357,7 @@ class Tbl_pembelian extends CI_Controller
 			'sa' => $jumlah_x,
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
-			// 'beli' => $this->input->post('beli', TRUE),
+			'beli' => $jumlah_x,
 			// 'tuj' => $this->input->post('tuj', TRUE),
 			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
 			// 'sekret' => $this->input->post('sekret', TRUE),
@@ -2680,47 +2680,49 @@ class Tbl_pembelian extends CI_Controller
 		//KONTROL INI BELUM ADA:
 		// NOTE : HARUS CEK FIELD PENJUALAN , JIKA SUDAH ADA PROSES PENJUALAN, MAKA TIDAK BOLEH MENGUBAH NAMA BARANG, HANYA BISA MENGUBAH HPP DAN JUMLAH BELI (JUMLAH BELI HARUS LEBIH DARI TOTAL JUMLAH TERJUAL)
 
-		// UPDATE DATA DI PERSEDIAAN berdasarkan id persediaan atau uuid_persediaan
-		// $get_uuid_persediaan
-		// $Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
-		$Update_data_persediaan = array(
-			// 'id' => $this->input->post('id', TRUE),
-			// 'tanggal' => date("Y-m-d H:i:s"),
-			// 'tanggal_beli' => $row_per_uuid_spop->tgl_po,
-			// 'kode' => $this->input->post('kode', TRUE),
+		// PROSES PERUBAHAN DATA DI PERSEDIAAN:
+		// 1. DELETE record lama di tbl_persediaan berdasarkan id yang tersimpan
+		// 2. INSERT record baru ke tbl_persediaan dari data pembelian yang sudah di-update
+		// 3. UPDATE tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang baru
+
+		// Step 1: Delete old persediaan record
+		$this->Persediaan_model->delete($get_id_persediaan);
+
+		// Step 2: Prepare data untuk insert persediaan baru
+		$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
+		$Insert_data_persediaan = array(
+			'tanggal' => date("Y-m-d H:i:s"),
+			'tanggal_beli' => date("Y-m-d", strtotime($this->input->post('date_input', TRUE) ?: date("Y-m-d"))),
 			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
 			'namabarang' => $get_nama_barang,
 			'satuan' => $this->input->post('satuan', TRUE),
 			'hpp' => $harga_satuan_x,
 			'sa' => $jumlah_x,
-			// 'uuid_spop' => $row_per_uuid_spop->uuid_spop,
-			// 'spop' => $row_per_uuid_spop->spop,
-			// 'beli' => $this->input->post('beli', TRUE),
-			// 'tuj' => $this->input->post('tuj', TRUE),
-			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
-			// 'sekret' => $this->input->post('sekret', TRUE),
-			// 'cetak' => $this->input->post('cetak', TRUE),
-			// 'grafikita' => $this->input->post('grafikita', TRUE),
-			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
-			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
-			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
-			// 'kbs' => $this->input->post('kbs', TRUE),
-			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
-			// 'medis' => $this->input->post('medis', TRUE),
-			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
-			// 'sembako' => $this->input->post('sembako', TRUE),
-			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
-			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
-			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
+			'uuid_spop' => $get_uuid_spop,
+			'spop' => $this->db->query("SELECT spop FROM `tbl_pembelian` WHERE `id`='$id'")->row()->spop,
+			'beli' => $jumlah_x,
 			'total_10' => $jumlah_x,
-			'nilai_persediaan' => $TOTAL_X,
+			'nilai_persediaan' => $Get_nominal_persediaan,
 		);
 
-		$this->Persediaan_model->update($get_id_persediaan, $Update_data_persediaan);
+		// Step 3: Insert record baru ke persediaan
+		$GET_NEW_ID_PERSEDIAAN = $this->Persediaan_model->insert_produk_baru($Insert_data_persediaan);
+
+		// Step 4: Get uuid_persediaan dari record baru yang di-insert
+		$this->db->where('id', $GET_NEW_ID_PERSEDIAAN);
+		$DATA_persediaan_new = $this->db->get('persediaan');
+		$GET_NEW_UUID_PERSEDIAAN = $DATA_persediaan_new->row()->uuid_persediaan;
+
+		// Step 5: Update tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang baru
+		$update_pembelian_persediaan_ids = array(
+			'id_persediaan_barang' => $GET_NEW_ID_PERSEDIAAN,
+			'uuid_persediaan' => $GET_NEW_UUID_PERSEDIAAN,
+		);
+		$this->Tbl_pembelian_model->update($id, $update_pembelian_persediaan_ids);
 
 		// print_r("<br/>");
 		// print_r("<br/>");
-		// print_r($Update_data_persediaan);
+		// print_r($Insert_data_persediaan);
 		// print_r("<br/>");
 		// print_r("<br/>");
 		// die;
@@ -3341,7 +3343,7 @@ class Tbl_pembelian extends CI_Controller
 			'uuid_spop' => $Get_uuid_spop,
 			// 'uuid_spop' => $get_uuid_spop_generating,
 			'spop' => $Get_spop,
-			// 'beli' => $this->input->post('beli', TRUE),
+			'beli' => $this->input->post('jumlah', TRUE),
 			// 'tuj' => $this->input->post('tuj', TRUE),
 			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
 			// 'sekret' => $this->input->post('sekret', TRUE),
@@ -3841,7 +3843,61 @@ class Tbl_pembelian extends CI_Controller
 
 			// print_r($data);
 			// die;
-			$this->Tbl_pembelian_model->update($this->input->post('id', TRUE), $data);
+			
+			// GET id dan persediaan info sebelum update
+			$id_pembelian = $this->input->post('id', TRUE);
+			$old_pembelian = $this->Tbl_pembelian_model->get_by_id($id_pembelian);
+			$id_persediaan_lama = $old_pembelian->id_persediaan_barang;
+			$uuid_spop = $old_pembelian->uuid_spop;
+			
+			// Step 0: DELETE old persediaan record DULU sebelum update tbl_pembelian
+			if ($id_persediaan_lama) {
+				$this->Persediaan_model->delete($id_persediaan_lama);
+			}
+			
+			// Step 1: UPDATE tbl_pembelian (hapus relasi ke persediaan lama)
+			$data['id_persediaan_barang'] = 0;
+			$data['uuid_persediaan'] = '';
+			$this->Tbl_pembelian_model->update($id_pembelian, $data);
+			
+			// Step 2: INSERT record persediaan BARU
+			if ($id_pembelian) {
+				$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
+				$Insert_data_persediaan = array(
+					'tanggal' => date("Y-m-d H:i:s"),
+					'tanggal_beli' => $date_po,
+					'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+					'namabarang' => $get_nama_barang,
+					'satuan' => $this->input->post('satuan', TRUE),
+					'hpp' => $harga_satuan_x,
+					'sa' => $jumlah_x,
+					'uuid_spop' => $uuid_spop,
+					'spop' => $this->input->post('spop', TRUE),
+					'beli' => $jumlah_x,
+					'total_10' => $jumlah_x,
+					'nilai_persediaan' => $Get_nominal_persediaan,
+				);
+				
+				// Insert record baru
+				$GET_NEW_ID_PERSEDIAAN = $this->Persediaan_model->insert_produk_baru($Insert_data_persediaan);
+				
+				// Get uuid_persediaan dari record baru
+				if ($GET_NEW_ID_PERSEDIAAN) {
+					$this->db->where('id', $GET_NEW_ID_PERSEDIAAN);
+					$DATA_persediaan_new = $this->db->get('persediaan');
+					if ($DATA_persediaan_new->num_rows() > 0) {
+						$GET_NEW_UUID_PERSEDIAAN = $DATA_persediaan_new->row()->uuid_persediaan;
+						
+						// Step 3: Update tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang BARU
+						$update_pembelian_persediaan_ids = array(
+							'id_persediaan_barang' => $GET_NEW_ID_PERSEDIAAN,
+							'uuid_persediaan' => $GET_NEW_UUID_PERSEDIAAN,
+						);
+						$this->Tbl_pembelian_model->update($id_pembelian, $update_pembelian_persediaan_ids);
+					}
+				}
+			}
+			
 			$this->session->set_flashdata('message', 'Update Record Success');
 			redirect(site_url('tbl_pembelian'));
 		}
