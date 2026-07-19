@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $bulan_produksi_selected = isset($bulan_produksi_selected) && $bulan_produksi_selected !== ''
     ? $bulan_produksi_selected
     : date('Y-m');
