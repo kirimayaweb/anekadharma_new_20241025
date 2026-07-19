@@ -130,18 +130,15 @@ class Tbl_penjualan_jasa extends CI_Controller
 
 	private function _penjualan_hitung_kolom_tampilan($data)
 	{
-		$jumlah_total = (float) $data->jumlah * (float) $data->harga_satuan;
-		$umpphpsl22 = ($jumlah_total * 1.351351) / 100;
-		$piutang = $jumlah_total - (($jumlah_total * 11.261261) / 100);
-		$penjualandpp = ($jumlah_total * 90.090090) / 100;
-		$utangppn = ($jumlah_total * 9.909910) / 100;
+		$this->load->helper('tbl_penjualan_jasa_list');
+		$calc = tbl_penjualan_jasa_hitung_kolom($data);
 
 		return array(
-			'jumlah_total' => $jumlah_total,
-			'umpphpsl22' => $umpphpsl22,
-			'piutang' => $piutang,
-			'penjualandpp' => $penjualandpp,
-			'utangppn' => $utangppn,
+			'jumlah_total' => $calc['nilai_kontrak'],
+			'umpphpsl22' => $calc['piutang_11301'],
+			'piutang' => $calc['bpp_os_51132'],
+			'penjualandpp' => $calc['penjualan_jasa_41131'],
+			'utangppn' => $calc['utang_pph23_21204'],
 		);
 	}
 
@@ -2530,7 +2527,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 
 	public function excel()
 	{
-		$this->load->helper('exportexcel');
+		$this->load->helper(array('exportexcel', 'tbl_penjualan_jasa_list'));
 
 		$source = $this->input->get('source', TRUE);
 		if ($source !== 'tbl_penjualan_jasa') {
@@ -2568,58 +2565,19 @@ class Tbl_penjualan_jasa extends CI_Controller
 			}
 		}
 
-		$namaFile = 'Data_penjualan_' . date('Y-m-d_H-i-s') . '.xlsx';
-		$tablehead = 0;
-		$tablebody = 1;
-		$nourut = 1;
-
-		excel_prepare_download($namaFile);
-		xlsBOF();
-
-		$kolomhead = 0;
-		xlsWriteLabel($tablehead, $kolomhead++, 'No');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Tgl Jual');
-		xlsWriteLabel($tablehead, $kolomhead++, 'nmrkirim');
-		xlsWriteLabel($tablehead, $kolomhead++, 'nmrpesan');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Konsumen');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Kode');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Nama Barang');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Unit');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Satuan');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Harga Satuan');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Jumlah');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Total harga');
-		xlsWriteLabel($tablehead, $kolomhead++, 'UM PPH PSL 22');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Piutang');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Penjualan DPP');
-		xlsWriteLabel($tablehead, $kolomhead++, 'Utang PPN');
-
-		foreach ($Tbl_penjualan_rows as $data) {
-			$calc = $this->_penjualan_hitung_kolom_tampilan($data);
-			$kolombody = 0;
-
-			xlsWriteNumber($tablebody, $kolombody++, $nourut);
-			xlsWriteLabel($tablebody, $kolombody++, date('d M Y', strtotime($data->tgl_jual)));
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmrkirim);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nmrpesan);
-			xlsWriteLabel($tablebody, $kolombody++, $data->konsumen_nama);
-			xlsWriteLabel($tablebody, $kolombody++, $data->kode_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->nama_barang);
-			xlsWriteLabel($tablebody, $kolombody++, $data->unit);
-			xlsWriteLabel($tablebody, $kolombody++, $data->satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->harga_satuan);
-			xlsWriteNumber($tablebody, $kolombody++, $data->jumlah);
-			xlsWriteNumber($tablebody, $kolombody++, $calc['jumlah_total']);
-			xlsWriteNumber($tablebody, $kolombody++, $calc['umpphpsl22']);
-			xlsWriteNumber($tablebody, $kolombody++, $calc['piutang']);
-			xlsWriteNumber($tablebody, $kolombody++, $calc['penjualandpp']);
-			xlsWriteNumber($tablebody, $kolombody++, $calc['utangppn']);
-
-			$tablebody++;
-			$nourut++;
+		$periode_awal = $this->input->get('tgl_awal', TRUE);
+		$periode_akhir = $this->input->get('tgl_akhir', TRUE);
+		if (empty($periode_awal) || empty($periode_akhir)) {
+			list(, , $disp_awal, $disp_akhir) = $this->_resolve_penjualan_filter_dates();
+			if (empty($periode_awal)) {
+				$periode_awal = $disp_awal;
+			}
+			if (empty($periode_akhir)) {
+				$periode_akhir = $disp_akhir;
+			}
 		}
 
-		xlsEOF();
+		tbl_penjualan_jasa_export_excel_output($Tbl_penjualan_rows, $periode_awal, $periode_akhir);
 		exit();
 	}
 
