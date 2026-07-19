@@ -2142,6 +2142,11 @@
         border-radius: 20px;
         margin-right: 6px;
     }
+    .gen-proses-produksi-tabs .nav-link {
+        font-weight: 600;
+        border-radius: 20px;
+        margin-right: 6px;
+    }
     .gen-proses-penjualan-dt-wrap {
         overflow: visible;
     }
@@ -6935,7 +6940,9 @@ window.addEventListener('load', function() {
     });
 
     var GEN_PROSES_PRODUKSI_TABLE_SELECTORS = [
-        '#table-gen-proses-produksi'
+        '#table-gen-proses-produksi',
+        '#table-gen-proses-produksi-bahan-real',
+        '#table-gen-proses-produksi-bahan'
     ];
 
     function destroyGenerateProsesProduksiTables() {
@@ -6951,22 +6958,53 @@ window.addEventListener('load', function() {
         });
     }
 
-    function initGenerateProsesProduksiTables() {
+    function adjustGenerateProsesProduksiTables() {
         if (!$.fn.DataTable) {
             return;
         }
         GEN_PROSES_PRODUKSI_TABLE_SELECTORS.forEach(function(sel) {
-            if (!$(sel).length || $.fn.DataTable.isDataTable(sel)) {
-                return;
+            if ($.fn.DataTable.isDataTable(sel)) {
+                try {
+                    $(sel).DataTable().columns.adjust();
+                } catch (eAdjProd) {}
             }
-            var $table = $(sel);
-            var emptyMsg = $table.data('empty-msg') || 'Tidak ada data produksi pada bulan ini.';
-            $table.DataTable(genProsesDtScrollOpts({
-                order: [[1, 'asc']],
-                language: genProsesDtLang(emptyMsg),
-                footerCallback: genProsesDtFooterCallbackTwoCols('col-jumlah', 'col-total-nominal')
-            }));
         });
+    }
+
+    function initOneGenerateProsesProduksiTable(sel) {
+        if (!$.fn.DataTable || !sel || !$(sel).length || $.fn.DataTable.isDataTable(sel)) {
+            return;
+        }
+        var $table = $(sel);
+        var emptyMsg = $table.data('empty-msg') || 'Tidak ada data produksi pada bulan ini.';
+        var orderCol = 1;
+        if (sel.indexOf('bahan-real') !== -1) {
+            orderCol = 1;
+        } else if (sel.indexOf('bahan') !== -1) {
+            orderCol = 1;
+        }
+        $table.DataTable(genProsesDtScrollOpts({
+            order: [[orderCol, 'asc']],
+            language: genProsesDtLang(emptyMsg),
+            footerCallback: genProsesDtFooterCallbackTwoCols('col-jumlah', 'col-total-nominal')
+        }));
+    }
+
+    function initGenerateProsesProduksiTables() {
+        if (!$.fn.DataTable) {
+            return;
+        }
+        // Init tabel di tab aktif dulu, lalu yang lain
+        var $activePane = $('#gen-proses-produksi-mount .tab-pane.active');
+        if ($activePane.length) {
+            $activePane.find('table.gen-proses-produksi-dt').each(function() {
+                initOneGenerateProsesProduksiTable('#' + this.id);
+            });
+        }
+        GEN_PROSES_PRODUKSI_TABLE_SELECTORS.forEach(function(sel) {
+            initOneGenerateProsesProduksiTable(sel);
+        });
+        setTimeout(adjustGenerateProsesProduksiTables, 120);
     }
 
     function loadGenerateProsesProduksiView(bulanKey, options) {
@@ -7011,6 +7049,16 @@ window.addEventListener('load', function() {
             });
         });
     }
+
+    $(document).on('shown.bs.tab', '#gen-proses-produksi-mount a[data-toggle="pill"]', function(e) {
+        var target = $(e.target).closest('a[data-toggle="pill"]').attr('href') || '';
+        if (target) {
+            $(target).find('table.gen-proses-produksi-dt').each(function() {
+                initOneGenerateProsesProduksiTable('#' + this.id);
+            });
+        }
+        setTimeout(adjustGenerateProsesProduksiTables, 120);
+    });
 
     var GEN_PROSES_PENJUALAN_TABLE_SELECTORS = [
         '#table-gen-proses-penjualan-masuk',

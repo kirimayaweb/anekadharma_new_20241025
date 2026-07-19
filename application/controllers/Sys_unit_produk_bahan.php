@@ -197,84 +197,156 @@ class Sys_unit_produk_bahan extends CI_Controller
 
     public function delete($id = null, $source_page_pref_1 = null, $source_page_pref_2 = null, $source_page_pref_3 = null)
     {
-
-        // print_r($source_page_pref_1); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        // print_r($source_page_pref_2); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        // print_r($source_page_pref_3); //Untuk mengembalikan kembali ke halaman sys_unit_produk yang menghapus salah satu bahan, kembali ke halaman Sys_uni_produk/Create_produksi/id_persediaan_barang
-        // // die;
-
         $row = $this->Sys_unit_produk_bahan_model->get_by_id($id);
 
-        // print_r($row);
-        // die;
-
         if ($row) {
-
-            // GET ID PERSEDIAAN / UUID_PERSEDIAAN UNTUK REKALKULASI FIELD bahan_produksi ( mengurangi jumlah bahan_produksi )
-
-
-            $GET_Detail_Data_Bahan = $this->Sys_unit_produk_bahan_model->get_by_id($id);
-
-            // print_r("<br/>");
-            // print_r($GET_Detail_Data_Bahan);
-            // print_r("<br/>");
-
-            $get_uuid_persediaan_bahan = $GET_Detail_Data_Bahan->uuid_persediaan_bahan;
-            $GET_jumlah_bahan_yang_dihapus = $GET_Detail_Data_Bahan->jumlah_bahan;
-
-            // print_r("<br/>");
-            // print_r($get_uuid_persediaan_bahan);
-            // print_r("<br/>");
-
-            $GET_Jumlah_Bahan_Produksi = $this->Persediaan_model->get_by_uuid_persediaan($get_uuid_persediaan_bahan);
-            // print_r($GET_Jumlah_Bahan_Produksi);
-            // print_r("<br/>");
-            // print_r($GET_Jumlah_Bahan_Produksi->bahan_produksi);
-            // print_r("<br/>");
-
-            $GET_id_persediaan_bahan=$GET_Jumlah_Bahan_Produksi->id;
-
-            $GET_jumlah_bahan_setelah_dikurangi=$GET_Jumlah_Bahan_Produksi->bahan_produksi-$GET_jumlah_bahan_yang_dihapus;
-
-            // print_r($GET_jumlah_bahan_setelah_dikurangi);
-            // print_r("<br/>");
-
-            // UPDATE jumlah field bahan_produksi di tabel persediaan
-
-            $sql_update_uuid_persediaan = "UPDATE `persediaan` SET `bahan_produksi`='$GET_jumlah_bahan_setelah_dikurangi' WHERE `id`='$GET_id_persediaan_bahan'";
-    
-            $this->db->query($sql_update_uuid_persediaan);
-
-
-            // die;
-
-
-
-
-
-
+            $this->_kembalikan_persediaan_saat_hapus_bahan($row);
             $this->Sys_unit_produk_bahan_model->delete($id);
 
-
-
             $this->session->set_flashdata('message', 'Delete Record Success');
-            if ($source_page_pref_1 == null) {
+            $this->_redirect_setelah_hapus_bahan($source_page_pref_1, $source_page_pref_2, $source_page_pref_3);
+            return;
+        }
 
-                redirect(site_url('sys_unit_produk_bahan'));
-            } else {
+        $this->session->set_flashdata('message', 'Record Not Found');
+        $this->_redirect_setelah_hapus_bahan($source_page_pref_1, $source_page_pref_2, $source_page_pref_3);
+    }
 
-                redirect(site_url($source_page_pref_1 . '/' . $source_page_pref_2 . '/' . $source_page_pref_3));
-            }
+    private function _redirect_setelah_hapus_bahan($source_page_pref_1, $source_page_pref_2, $source_page_pref_3)
+    {
+        if ($source_page_pref_1 === null) {
+            redirect(site_url('sys_unit_produk_bahan'));
+            return;
+        }
+
+        $url = site_url($source_page_pref_1 . '/' . $source_page_pref_2 . '/' . $source_page_pref_3);
+        $bulan = trim((string) $this->session->userdata('bulan_produksi_selected'));
+        if ($bulan !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            $url .= '?bulan=' . urlencode($bulan);
+        }
+        redirect($url);
+    }
+
+    /**
+     * Kembalikan stock bahan ke persediaan saat hapus 1 record sys_unit_produk_bahan.
+     * Prioritas: id_persediaan → uuid_persediaan_bahan (bulan sama).
+     * Jika persediaan tidak ditemukan, proses update diabaikan (record bahan tetap dihapus).
+     */
+    private function _kembalikan_persediaan_saat_hapus_bahan($row_bahan)
+    {
+        if (!$row_bahan) {
+            return false;
+        }
+
+        $jumlah_bahan = $this->_parse_jumlah_angka(isset($row_bahan->jumlah_bahan) ? $row_bahan->jumlah_bahan : 0);
+        if ($jumlah_bahan <= 0 || !$this->db->field_exists('bahan_produksi', 'persediaan')) {
+            return false;
+        }
+
+        $id_persediaan = 0;
+        if ($this->db->field_exists('id_persediaan', 'sys_unit_produk_bahan')) {
+            $id_persediaan = isset($row_bahan->id_persediaan) ? (int) $row_bahan->id_persediaan : 0;
+        }
+
+        $row_persediaan = null;
+        if ($id_persediaan > 0) {
+            $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan);
         } else {
-            $this->session->set_flashdata('message', 'Record Not Found');
-            if ($source_page_pref_1 == null) {
+            $row_persediaan = $this->_cari_persediaan_bahan_fallback_uuid($row_bahan, $jumlah_bahan);
+        }
 
-                redirect(site_url('sys_unit_produk_bahan'));
-            } else {
+        if (!$row_persediaan) {
+            return false;
+        }
 
-                redirect(site_url($source_page_pref_1 . '/' . $source_page_pref_2 . '/' . $source_page_pref_3));
+        return $this->_update_persediaan_kembalikan_bahan((int) $row_persediaan->id, $jumlah_bahan);
+    }
+
+    private function _cari_persediaan_bahan_fallback_uuid($row_bahan, $jumlah_bahan)
+    {
+        $uuid_persediaan_bahan = trim((string) (isset($row_bahan->uuid_persediaan_bahan) ? $row_bahan->uuid_persediaan_bahan : ''));
+        if ($uuid_persediaan_bahan === '') {
+            return null;
+        }
+
+        $bulan_ym = $this->_bulan_ym_dari_tgl_transaksi(isset($row_bahan->tgl_transaksi) ? $row_bahan->tgl_transaksi : '');
+        if ($bulan_ym === '') {
+            $bulan_sess = trim((string) $this->session->userdata('bulan_produksi_selected'));
+            if ($bulan_sess !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan_sess)) {
+                $bulan_ym = $bulan_sess;
             }
         }
+
+        $this->db->from('persediaan');
+        $this->db->where('uuid_persediaan', $uuid_persediaan_bahan);
+        if ($bulan_ym !== '') {
+            $this->db->where("DATE_FORMAT(tanggal_beli, '%Y-%m') =", $bulan_ym);
+        }
+        $this->db->where(
+            'CAST(COALESCE(NULLIF(TRIM(bahan_produksi), \'\'), \'0\') AS UNSIGNED) >',
+            (int) $jumlah_bahan
+        );
+        $this->db->order_by('bahan_produksi', 'DESC');
+        $this->db->order_by('id', 'ASC');
+        $this->db->limit(1);
+
+        return $this->db->get()->row();
+    }
+
+    private function _update_persediaan_kembalikan_bahan($id_persediaan, $jumlah_bahan)
+    {
+        $id_persediaan = (int) $id_persediaan;
+        $jumlah_bahan = $this->_parse_jumlah_angka($jumlah_bahan);
+        if ($id_persediaan <= 0 || $jumlah_bahan <= 0) {
+            return false;
+        }
+
+        $row = $this->Persediaan_model->get_by_id($id_persediaan);
+        if (!$row) {
+            return false;
+        }
+
+        $bahan_lama = $this->_parse_jumlah_angka(isset($row->bahan_produksi) ? $row->bahan_produksi : 0);
+        $total_10_lama = $this->_parse_jumlah_angka(isset($row->total_10) ? $row->total_10 : 0);
+        $hpp = (float) preg_replace('/[^0-9.]/', '', (string) (isset($row->hpp) ? $row->hpp : 0));
+
+        $bahan_baru = max(0, $bahan_lama - $jumlah_bahan);
+        $total_10_baru = $total_10_lama + $jumlah_bahan;
+        $nilai_persediaan = (int) floor($total_10_baru * $hpp);
+
+        $update = array(
+            'bahan_produksi' => (string) $bahan_baru,
+            'total_10' => (string) $total_10_baru,
+        );
+        if ($this->db->field_exists('nilai_persediaan', 'persediaan')) {
+            $update['nilai_persediaan'] = (string) $nilai_persediaan;
+        }
+        if ($this->db->field_exists('tuj', 'persediaan')) {
+            $update['tuj'] = (string) $total_10_baru;
+        }
+
+        $this->Persediaan_model->update($id_persediaan, $update);
+
+        return true;
+    }
+
+    private function _bulan_ym_dari_tgl_transaksi($tgl_transaksi)
+    {
+        $tgl_transaksi = trim((string) $tgl_transaksi);
+        if ($tgl_transaksi === '') {
+            return '';
+        }
+        $ts = strtotime($tgl_transaksi);
+        if (!$ts) {
+            return '';
+        }
+
+        return date('Y-m', $ts);
+    }
+
+    private function _parse_jumlah_angka($value)
+    {
+        return (int) preg_replace('/[^0-9]/', '', (string) $value);
     }
 
     public function _rules()
