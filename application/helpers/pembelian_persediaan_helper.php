@@ -1293,6 +1293,667 @@ function penjualan_update_persediaan_selisih_jual($CI, $id_persediaan, $uuid_uni
 }
 
 /**
+ * URL redirect setelah ubah/hapus barang penjualan (kasir atau rekap).
+ */
+function penjualan_resolve_redirect_setelah_ubah_hapus($CI, $uuid_penjualan = null, $source_form = null)
+{
+	$redirect_rekap = trim((string) $CI->input->post('redirect_rekap', TRUE));
+	if ($redirect_rekap === '') {
+		$redirect_rekap = trim((string) $CI->input->get('redirect_rekap', TRUE));
+	}
+	if ($redirect_rekap === '' && trim((string) $source_form) === 'rekap') {
+		$redirect_rekap = '1';
+	}
+
+	if ($redirect_rekap === '1') {
+		$field_rekap = trim((string) $CI->input->post('field_rekap', TRUE));
+		if ($field_rekap === '') {
+			$field_rekap = trim((string) $CI->input->get('field_rekap', TRUE));
+		}
+		if ($field_rekap === '') {
+			$field_rekap = 'unit';
+		}
+
+		$tgl_awal = trim((string) $CI->input->post('tgl_awal', TRUE));
+		if ($tgl_awal === '') {
+			$tgl_awal = trim((string) $CI->input->get('tgl_awal', TRUE));
+		}
+		$tgl_akhir = trim((string) $CI->input->post('tgl_akhir', TRUE));
+		if ($tgl_akhir === '') {
+			$tgl_akhir = trim((string) $CI->input->get('tgl_akhir', TRUE));
+		}
+
+		$url = site_url('Tbl_penjualan/RekapData/' . $field_rekap);
+		if ($tgl_awal !== '' && $tgl_akhir !== '') {
+			$url .= '?tgl_awal=' . rawurlencode($tgl_awal) . '&tgl_akhir=' . rawurlencode($tgl_akhir);
+		}
+		return $url;
+	}
+
+	$uuid_penjualan = trim((string) $uuid_penjualan);
+	if ($uuid_penjualan !== '') {
+		return site_url('Tbl_penjualan/kasir_penjualan/' . $uuid_penjualan);
+	}
+
+	return site_url('tbl_penjualan');
+}
+
+/**
+ * Parse harga satuan dari input form penjualan.
+ */
+function penjualan_parse_harga_satuan_input($raw_harga)
+{
+	return (float) str_replace(',', '.', str_replace('.', '', trim((string) $raw_harga)));
+}
+
+/**
+ * Buat tabel arsip persediaan sumber yang dihapus saat ubah HPP penjualan.
+ */
+function penjualan_update_hpp_ensure_table($CI)
+{
+	$table = 'tbl_penjualan_update_hpp';
+	if ($CI->db->table_exists($table)) {
+		return true;
+	}
+
+	$sql = "CREATE TABLE IF NOT EXISTS `" . $table . "` (
+		`id` int(11) NOT NULL AUTO_INCREMENT,
+		`id_penjualan` int(11) NOT NULL DEFAULT 0,
+		`id_persediaan_lama` int(11) NOT NULL DEFAULT 0,
+		`uuid_persediaan_lama` varchar(255) DEFAULT NULL,
+		`id_persediaan_baru` int(11) NOT NULL DEFAULT 0,
+		`uuid_persediaan_baru` varchar(255) DEFAULT NULL,
+		`uuid_barang` varchar(255) DEFAULT NULL,
+		`namabarang` varchar(255) DEFAULT NULL,
+		`satuan` varchar(50) DEFAULT NULL,
+		`hpp_lama` varchar(50) DEFAULT NULL,
+		`hpp_baru` varchar(50) DEFAULT NULL,
+		`harga_satuan_lama` double DEFAULT NULL,
+		`harga_satuan_baru` double DEFAULT NULL,
+		`jumlah_penjualan` int(11) NOT NULL DEFAULT 0,
+		`sa` varchar(50) DEFAULT NULL,
+		`penjualan` varchar(50) DEFAULT NULL,
+		`beli` varchar(50) DEFAULT NULL,
+		`total_10` varchar(50) DEFAULT NULL,
+		`tanggal_beli` date DEFAULT NULL,
+		`tanggal` varchar(20) DEFAULT NULL,
+		`tgl_jual` datetime DEFAULT NULL,
+		`data_persediaan_json` mediumtext DEFAULT NULL,
+		`keterangan` varchar(255) DEFAULT NULL,
+		`id_user` int(11) DEFAULT NULL,
+		`created_at` datetime DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `idx_id_penjualan` (`id_penjualan`),
+		KEY `idx_uuid_persediaan_lama` (`uuid_persediaan_lama`(191)),
+		KEY `idx_created_at` (`created_at`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8";
+
+	return (bool) $CI->db->query($sql);
+}
+
+/**
+ * Record sumber hanya salinan penjualan murni (sa=penjualan, beli=0, total_10=0) → hapus setelah copy HPP.
+ */
+function penjualan_persediaan_sumber_siap_hapus_setelah_copy_hpp($row_sumber, $jumlah_baru)
+{
+	if (empty($row_sumber)) {
+		return false;
+	}
+
+	$CI = get_instance();
+	$CI->load->helper('persediaan_display');
+
+	$row = penjualan_normalize_row_untuk_hitung_sisa($row_sumber);
+	$sa = (int) floor(persediaan_parse_angka($row->sa));
+	$penjualan = (int) floor(persediaan_parse_angka($row->penjualan));
+	$beli = (int) floor(persediaan_parse_angka($row->beli));
+	$total_10 = (int) floor(persediaan_parse_angka($row->total_10));
+	$jumlah_baru = (int) preg_replace('/[^0-9]/', '', (string) $jumlah_baru);
+
+	return (
+		$beli === 0
+		&& $total_10 === 0
+		&& $sa === $penjualan
+		&& $penjualan > 0
+		&& $jumlah_baru === $penjualan
+	);
+}
+
+/**
+ * Simpan arsip persediaan sumber ke tbl_penjualan_update_hpp lalu hapus dari persediaan.
+ */
+function penjualan_update_hpp_simpan_dan_hapus_persediaan_sumber($CI, $id_penjualan, $row_penjualan, $row_sumber, $row_persediaan_baru, $harga_lama, $harga_baru, $jumlah_baru)
+{
+	if (empty($row_sumber) || empty($row_persediaan_baru)) {
+		return array('ok' => false, 'message' => 'Data persediaan sumber/barubaru tidak lengkap untuk arsip.');
+	}
+
+	if (!penjualan_update_hpp_ensure_table($CI)) {
+		return array('ok' => false, 'message' => 'Gagal membuat tabel tbl_penjualan_update_hpp.');
+	}
+
+	$CI->load->helper('persediaan_display');
+	$CI->load->model('Persediaan_model');
+
+	$id_persediaan_lama = (int) (isset($row_sumber->id) ? $row_sumber->id : 0);
+	$id_persediaan_baru = (int) (isset($row_persediaan_baru->id) ? $row_persediaan_baru->id : 0);
+	$uuid_lama = isset($row_sumber->uuid_persediaan) ? trim((string) $row_sumber->uuid_persediaan) : '';
+	$uuid_baru = isset($row_persediaan_baru->uuid_persediaan) ? trim((string) $row_persediaan_baru->uuid_persediaan) : '';
+	$hpp_lama = isset($row_sumber->hpp) ? trim((string) $row_sumber->hpp) : '';
+	$hpp_baru = isset($row_persediaan_baru->hpp) ? trim((string) $row_persediaan_baru->hpp) : (string) (int) floor($harga_baru);
+
+	$row_json = json_encode($row_sumber, JSON_UNESCAPED_UNICODE);
+	if ($row_json === false) {
+		$row_json = null;
+	}
+
+	$id_user = (int) $CI->session->userdata('id');
+	if ($id_user <= 0) {
+		$id_user = (int) $CI->session->userdata('sess_id');
+	}
+
+	$data_archive = array(
+		'id_penjualan' => (int) $id_penjualan,
+		'id_persediaan_lama' => $id_persediaan_lama,
+		'uuid_persediaan_lama' => $uuid_lama,
+		'id_persediaan_baru' => $id_persediaan_baru,
+		'uuid_persediaan_baru' => $uuid_baru,
+		'uuid_barang' => isset($row_sumber->uuid_barang) ? trim((string) $row_sumber->uuid_barang) : '',
+		'namabarang' => isset($row_sumber->namabarang) ? trim((string) $row_sumber->namabarang) : '',
+		'satuan' => isset($row_sumber->satuan) ? trim((string) $row_sumber->satuan) : '',
+		'hpp_lama' => $hpp_lama,
+		'hpp_baru' => $hpp_baru,
+		'harga_satuan_lama' => (float) $harga_lama,
+		'harga_satuan_baru' => (float) $harga_baru,
+		'jumlah_penjualan' => (int) preg_replace('/[^0-9]/', '', (string) $jumlah_baru),
+		'sa' => isset($row_sumber->sa) ? trim((string) $row_sumber->sa) : '0',
+		'penjualan' => isset($row_sumber->penjualan) ? trim((string) $row_sumber->penjualan) : '0',
+		'beli' => isset($row_sumber->beli) ? trim((string) $row_sumber->beli) : '0',
+		'total_10' => isset($row_sumber->total_10) ? trim((string) $row_sumber->total_10) : '0',
+		'tanggal_beli' => !empty($row_sumber->tanggal_beli) ? date('Y-m-d', strtotime((string) $row_sumber->tanggal_beli)) : null,
+		'tanggal' => isset($row_sumber->tanggal) ? trim((string) $row_sumber->tanggal) : '',
+		'tgl_jual' => (!empty($row_penjualan) && !empty($row_penjualan->tgl_jual))
+			? date('Y-m-d H:i:s', strtotime((string) $row_penjualan->tgl_jual))
+			: null,
+		'data_persediaan_json' => $row_json,
+		'keterangan' => 'Hapus persediaan sumber setelah copy ubah HPP (sa=penjualan, beli=0, total_10=0)',
+		'id_user' => ($id_user > 0 ? $id_user : null),
+		'created_at' => date('Y-m-d H:i:s'),
+	);
+
+	$insert_ok = $CI->db->insert('tbl_penjualan_update_hpp', $data_archive);
+	$db_err = $CI->db->error();
+	if (!$insert_ok || !empty($db_err['code'])) {
+		return array(
+			'ok' => false,
+			'message' => 'Gagal arsip ke tbl_penjualan_update_hpp: '
+				. (isset($db_err['message']) ? trim((string) $db_err['message']) : 'insert gagal'),
+		);
+	}
+
+	$CI->Persediaan_model->delete($id_persediaan_lama);
+	$db_err = $CI->db->error();
+	if (!empty($db_err['code'])) {
+		return array(
+			'ok' => false,
+			'message' => 'Gagal hapus persediaan sumber (id=' . $id_persediaan_lama . '): '
+				. (isset($db_err['message']) ? trim((string) $db_err['message']) : 'database error'),
+		);
+	}
+
+	return array('ok' => true);
+}
+
+/**
+ * Ambil row persediaan dari record penjualan (bulan tgl_jual → uuid_persediaan → id_persediaan_barang).
+ */
+function penjualan_resolve_row_persediaan_dari_penjualan($CI, $row_penjualan)
+{
+	if (empty($row_penjualan)) {
+		return null;
+	}
+
+	$CI->load->model('Persediaan_model');
+
+	$row_bulan = penjualan_resolve_persediaan_bulan_penjualan_row($CI, $row_penjualan);
+	if (!empty($row_bulan)) {
+		return $row_bulan;
+	}
+
+	$uuid_persediaan = isset($row_penjualan->uuid_persediaan) ? trim((string) $row_penjualan->uuid_persediaan) : '';
+	if ($uuid_persediaan !== '') {
+		$tgl_jual = isset($row_penjualan->tgl_jual) ? trim((string) $row_penjualan->tgl_jual) : '';
+		if ($tgl_jual !== '') {
+			$filter = pembelian_get_filter_tanggal($CI, $tgl_jual);
+			$bulan_where = penjualan_sql_filter_bulan_persediaan_where('persediaan');
+			$bulan_ym = date('Y-m', strtotime($filter['awal']));
+			$row = $CI->db->query(
+				"SELECT * FROM `persediaan`
+				WHERE TRIM(COALESCE(`uuid_persediaan`, '')) = ?
+				AND {$bulan_where}
+				LIMIT 1",
+				array(
+					$uuid_persediaan,
+					$filter['awal'],
+					$filter['akhir'],
+					$filter['awal'],
+					$filter['akhir'],
+					$bulan_ym,
+				)
+			)->row();
+			if (!empty($row)) {
+				return $row;
+			}
+		}
+
+		$row = $CI->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+		if (!empty($row)) {
+			return $row;
+		}
+	}
+
+	$id_persediaan = (int) (isset($row_penjualan->id_persediaan_barang) ? $row_penjualan->id_persediaan_barang : 0);
+	if ($id_persediaan > 0) {
+		return $CI->Persediaan_model->get_by_id($id_persediaan);
+	}
+
+	return null;
+}
+
+/**
+ * Update penjualan + total_10 (+ kolom unit) saat jumlah penjualan berubah (harga sama).
+ */
+function penjualan_update_persediaan_selisih_jumlah_dan_total10($CI, $row_persediaan, $uuid_unit, $jumlah_lama, $jumlah_baru)
+{
+	$CI->load->model('Persediaan_model');
+	$CI->load->helper('persediaan_display');
+
+	$jumlah_lama = (int) preg_replace('/[^0-9]/', '', (string) $jumlah_lama);
+	$jumlah_baru = (int) preg_replace('/[^0-9]/', '', (string) $jumlah_baru);
+	$delta = $jumlah_baru - $jumlah_lama;
+	if ($delta === 0 || empty($row_persediaan)) {
+		return array('ok' => true);
+	}
+
+	$id_persediaan = (int) $row_persediaan->id;
+	if ($id_persediaan <= 0) {
+		return array('ok' => false, 'message' => 'ID persediaan tidak valid.');
+	}
+
+	$row = penjualan_normalize_row_untuk_hitung_sisa($row_persediaan);
+	$kolom_unit = penjualan_resolve_kolom_persediaan_unit($CI, $uuid_unit);
+	$penjualan_val = (int) floor(persediaan_parse_angka($row->penjualan));
+	$total_10_val = (int) floor(persediaan_parse_angka($row->total_10));
+
+	if ($delta > 0) {
+		$sisa = penjualan_get_sisa_stock_penjualan($row, $kolom_unit);
+		if ($delta > $sisa) {
+			return array(
+				'ok' => false,
+				'message' => 'Jumlah melebihi stok tersedia (sisa: ' . (int) $sisa . ').',
+			);
+		}
+	} elseif ($penjualan_val < abs($delta)) {
+		return array('ok' => false, 'message' => 'Kolom penjualan persediaan tidak mencukupi untuk dikurangi.');
+	}
+
+	$update = array(
+		'penjualan' => max(0, $penjualan_val + $delta),
+		'total_10' => max(0, $total_10_val - $delta),
+	);
+	if ($kolom_unit !== null && $CI->db->field_exists($kolom_unit, 'persediaan')) {
+		$unit_val = penjualan_get_nilai_kolom_unit($row, $kolom_unit);
+		$update[$kolom_unit] = max(0, $unit_val + $delta);
+	}
+	if ($CI->db->field_exists('nilai_persediaan', 'persediaan')) {
+		$hpp = persediaan_parse_angka($row->hpp);
+		$update['nilai_persediaan'] = (int) floor($update['total_10'] * $hpp);
+	}
+
+	$CI->Persediaan_model->update($id_persediaan, $update);
+	return array('ok' => true);
+}
+
+/**
+ * Ubah jumlah/harga satuan satu baris penjualan + sinkron persediaan.
+ */
+function penjualan_proses_ubah_barang_per_id($CI, $id, $jumlah_baru, $harga_satuan_baru, $konfirmasi_ubah_harga = false)
+{
+	$CI->load->model('Tbl_penjualan_model');
+	$CI->load->model('Persediaan_model');
+	$CI->load->helper('persediaan_display');
+
+	$id = (int) $id;
+	$jumlah_baru = (int) preg_replace('/[^0-9]/', '', (string) $jumlah_baru);
+	$harga_satuan_baru = penjualan_parse_harga_satuan_input($harga_satuan_baru);
+	$konfirmasi_ubah_harga = ($konfirmasi_ubah_harga === true || $konfirmasi_ubah_harga === '1' || $konfirmasi_ubah_harga === 1);
+
+	$row_penjualan = $CI->Tbl_penjualan_model->get_by_id($id);
+	if (empty($row_penjualan)) {
+		return array('ok' => false, 'message' => 'Data penjualan tidak ditemukan.');
+	}
+	if ($jumlah_baru <= 0) {
+		return array('ok' => false, 'message' => 'Jumlah penjualan harus lebih dari 0.');
+	}
+	if ($harga_satuan_baru <= 0) {
+		return array('ok' => false, 'message' => 'Harga satuan harus lebih dari 0.');
+	}
+
+	$jumlah_lama = (int) preg_replace('/[^0-9]/', '', (string) $row_penjualan->jumlah);
+	$harga_lama = penjualan_parse_harga_satuan_input($row_penjualan->harga_satuan);
+	$harga_berubah = abs($harga_satuan_baru - $harga_lama) >= 0.01;
+	$uuid_unit = isset($row_penjualan->uuid_unit) ? trim((string) $row_penjualan->uuid_unit) : '';
+	$total_nominal = $jumlah_baru * $harga_satuan_baru;
+
+	if ($harga_berubah && !$konfirmasi_ubah_harga) {
+		return array('ok' => false, 'message' => 'Konfirmasi perubahan harga satuan diperlukan.');
+	}
+
+	$row_sumber = penjualan_resolve_row_persediaan_dari_penjualan($CI, $row_penjualan);
+	if (empty($row_sumber)) {
+		return array('ok' => false, 'message' => 'Data persediaan tidak ditemukan (uuid_persediaan).');
+	}
+
+	if (!$harga_berubah) {
+		$CI->Tbl_penjualan_model->update($id, array(
+			'jumlah' => $jumlah_baru,
+			'harga_satuan' => $harga_satuan_baru,
+			'total_nominal' => $total_nominal,
+		));
+
+		if ($jumlah_baru !== $jumlah_lama) {
+			$hasil_persediaan = penjualan_update_persediaan_selisih_jumlah_dan_total10(
+				$CI,
+				$row_sumber,
+				$uuid_unit,
+				$jumlah_lama,
+				$jumlah_baru
+			);
+			if (empty($hasil_persediaan['ok'])) {
+				return $hasil_persediaan;
+			}
+		}
+
+		return array(
+			'ok' => true,
+			'uuid_penjualan' => isset($row_penjualan->uuid_penjualan) ? $row_penjualan->uuid_penjualan : '',
+		);
+	}
+
+	$id_persediaan_sumber = (int) $row_sumber->id;
+	$row_sumber = penjualan_normalize_row_untuk_hitung_sisa($row_sumber);
+	$kolom_unit = penjualan_resolve_kolom_persediaan_unit($CI, $uuid_unit);
+
+	$penjualan_sumber = (int) floor(persediaan_parse_angka($row_sumber->penjualan));
+	$total_10_sumber = (int) floor(persediaan_parse_angka($row_sumber->total_10));
+	$sa_sumber = (int) floor(persediaan_parse_angka($row_sumber->sa));
+	$beli_sumber = (int) floor(persediaan_parse_angka($row_sumber->beli));
+	$sumber_total10_nol_beli_nol = ($total_10_sumber === 0 && $beli_sumber === 0);
+	$sumber_hapus_setelah_copy = penjualan_persediaan_sumber_siap_hapus_setelah_copy_hpp($row_sumber, $jumlah_baru);
+
+	if ($penjualan_sumber < $jumlah_baru) {
+		return array('ok' => false, 'message' => 'Kolom penjualan persediaan sumber tidak mencukupi.');
+	}
+
+	$db_debug_asli = $CI->db->db_debug;
+	$CI->db->db_debug = false;
+
+	$CI->db->trans_start();
+
+	if (!$sumber_hapus_setelah_copy) {
+		$update_sumber = array(
+			'penjualan' => max(0, $penjualan_sumber - $jumlah_baru),
+		);
+		if ($sumber_total10_nol_beli_nol) {
+			$update_sumber['total_10'] = '0';
+			$update_sumber['beli'] = '0';
+			if ($sa_sumber > $jumlah_baru) {
+				$update_sumber['sa'] = (string) max(0, $sa_sumber - $jumlah_baru);
+			}
+			if ($CI->db->field_exists('tuj', 'persediaan')) {
+				$update_sumber['tuj'] = '0';
+			}
+		} else {
+			$update_sumber['total_10'] = (string) ($total_10_sumber + $jumlah_baru);
+		}
+		if ($kolom_unit !== null && $CI->db->field_exists($kolom_unit, 'persediaan')) {
+			$unit_lama = penjualan_get_nilai_kolom_unit($row_sumber, $kolom_unit);
+			$update_sumber[$kolom_unit] = max(0, $unit_lama - $jumlah_lama);
+		}
+		if ($CI->db->field_exists('nilai_persediaan', 'persediaan')) {
+			$hpp_sumber = persediaan_parse_angka($row_sumber->hpp);
+			if ($sumber_total10_nol_beli_nol) {
+				$update_sumber['nilai_persediaan'] = '0';
+			} else {
+				$total_10_update = (int) floor(persediaan_parse_angka($update_sumber['total_10']));
+				$update_sumber['nilai_persediaan'] = (string) (int) floor($total_10_update * $hpp_sumber);
+			}
+		}
+		$CI->Persediaan_model->update($id_persediaan_sumber, $update_sumber);
+		$db_err = $CI->db->error();
+		if (!empty($db_err['code'])) {
+			$CI->db->trans_rollback();
+			$CI->db->db_debug = $db_debug_asli;
+			return array(
+				'ok' => false,
+				'message' => 'Gagal update persediaan sumber (id=' . $id_persediaan_sumber . '): '
+					. (isset($db_err['message']) ? trim((string) $db_err['message']) : 'database error'),
+			);
+		}
+	}
+
+	$insert_data = array();
+	foreach ($CI->db->list_fields('persediaan') as $field_name) {
+		if ($field_name === 'id' || $field_name === 'uuid_persediaan') {
+			continue;
+		}
+		if (property_exists($row_sumber, $field_name)) {
+			$insert_data[$field_name] = $row_sumber->$field_name;
+		}
+	}
+
+	$tgl_jual = isset($row_penjualan->tgl_jual) ? trim((string) $row_penjualan->tgl_jual) : '';
+	$tanggal_beli_baru = penjualan_get_tanggal_beli_dari_tgl_jual($CI, $tgl_jual);
+	$hpp_baru_t = (string) (int) floor($harga_satuan_baru);
+
+	if ($tanggal_beli_baru !== null) {
+		$insert_data['tanggal_beli'] = $tanggal_beli_baru;
+		$ts_beli = strtotime($tanggal_beli_baru);
+		if ($ts_beli !== false) {
+			$insert_data['tanggal'] = date('d/m/Y', $ts_beli);
+		}
+	}
+
+	$insert_data['hpp'] = $hpp_baru_t;
+	$insert_data['sa'] = (string) $jumlah_baru;
+	$insert_data['beli'] = '0';
+	$insert_data['total_10'] = '0';
+	$insert_data['penjualan'] = (string) $jumlah_baru;
+	$insert_data['nilai_persediaan'] = '0';
+	if ($CI->db->field_exists('tuj', 'persediaan')) {
+		$insert_data['tuj'] = '0';
+	}
+
+	foreach (penjualan_persediaan_kolom_unit_existing($CI) as $kolom_unit_nama) {
+		$insert_data[$kolom_unit_nama] = '0';
+	}
+	if ($kolom_unit !== null && $CI->db->field_exists($kolom_unit, 'persediaan')) {
+		$insert_data[$kolom_unit] = (string) $jumlah_baru;
+	}
+
+	$new_id_persediaan = (int) $CI->Persediaan_model->insert_produk_baru($insert_data);
+	$db_err = $CI->db->error();
+	if ($new_id_persediaan <= 0 || !empty($db_err['code'])) {
+		$CI->db->trans_rollback();
+		$CI->db->db_debug = $db_debug_asli;
+		return array(
+			'ok' => false,
+			'message' => 'Gagal insert persediaan baru: '
+				. (isset($db_err['message']) && trim((string) $db_err['message']) !== ''
+					? trim((string) $db_err['message'])
+					: 'insert gagal (id=' . $new_id_persediaan . ')'),
+		);
+	}
+
+	$row_persediaan_baru = $CI->Persediaan_model->get_by_id($new_id_persediaan);
+	if (empty($row_persediaan_baru)) {
+		$CI->db->trans_rollback();
+		$CI->db->db_debug = $db_debug_asli;
+		return array('ok' => false, 'message' => 'Record persediaan baru tidak ditemukan setelah insert (id=' . $new_id_persediaan . ').');
+	}
+	$uuid_persediaan_baru = (!empty($row_persediaan_baru) && !empty($row_persediaan_baru->uuid_persediaan))
+		? trim((string) $row_persediaan_baru->uuid_persediaan)
+		: '';
+
+	$update_penjualan = array(
+		'jumlah' => $jumlah_baru,
+		'harga_satuan' => (int) floor($harga_satuan_baru),
+		'total_nominal' => $total_nominal,
+		'id_persediaan_barang' => $new_id_persediaan,
+	);
+	if ($uuid_persediaan_baru !== '') {
+		$update_penjualan['uuid_persediaan'] = $uuid_persediaan_baru;
+	}
+	if ($uuid_persediaan_baru !== '' && !empty($row_sumber->uuid_persediaan)
+		&& trim((string) $uuid_persediaan_baru) === trim((string) $row_sumber->uuid_persediaan)) {
+		$CI->db->trans_rollback();
+		$CI->db->db_debug = $db_debug_asli;
+		return array('ok' => false, 'message' => 'Gagal membuat uuid_persediaan baru untuk record persediaan.');
+	}
+
+	if ($sumber_hapus_setelah_copy) {
+		$hasil_hapus = penjualan_update_hpp_simpan_dan_hapus_persediaan_sumber(
+			$CI,
+			$id,
+			$row_penjualan,
+			$row_sumber,
+			$row_persediaan_baru,
+			$harga_lama,
+			$harga_satuan_baru,
+			$jumlah_baru
+		);
+		if (empty($hasil_hapus['ok'])) {
+			$CI->db->trans_rollback();
+			$CI->db->db_debug = $db_debug_asli;
+			return $hasil_hapus;
+		}
+	}
+
+	$CI->Tbl_penjualan_model->update($id, $update_penjualan);
+	$db_err = $CI->db->error();
+	if (!empty($db_err['code'])) {
+		$CI->db->trans_rollback();
+		$CI->db->db_debug = $db_debug_asli;
+		return array(
+			'ok' => false,
+			'message' => 'Gagal update tbl_penjualan (id=' . (int) $id . '): '
+				. (isset($db_err['message']) ? trim((string) $db_err['message']) : 'database error'),
+		);
+	}
+
+	$CI->db->trans_complete();
+	$CI->db->db_debug = $db_debug_asli;
+	if ($CI->db->trans_status() === false) {
+		return array('ok' => false, 'message' => 'Gagal menyimpan perubahan penjualan (harga satuan berubah). Transaksi dibatalkan.');
+	}
+
+	return array(
+		'ok' => true,
+		'uuid_penjualan' => isset($row_penjualan->uuid_penjualan) ? $row_penjualan->uuid_penjualan : '',
+	);
+}
+
+/**
+ * HTML kolom Action (Hapus + Ubah) di halaman rekap penjualan.
+ */
+function penjualan_render_rekap_aksi_cell($row, $opts = array())
+{
+	$CI = get_instance();
+	$CI->load->helper('url');
+
+	if (empty($row) || empty($row->id)) {
+		return '<td class="rekap-col-aksi"></td>';
+	}
+
+	$action_ubah = !empty($opts['action_ubah_per_id'])
+		? $opts['action_ubah_per_id']
+		: site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/');
+	$field_rekap = !empty($opts['field_rekap']) ? $opts['field_rekap'] : 'unit';
+	$uuid_penjualan = isset($row->uuid_penjualan) ? trim((string) $row->uuid_penjualan) : '';
+
+	$delete_qs = '';
+	if (!empty($opts['filter_query_string'])) {
+		$delete_qs = $opts['filter_query_string'];
+		if (strpos($delete_qs, '?') === false) {
+			$delete_qs = '?' . ltrim($delete_qs, '?&');
+		}
+		$delete_qs .= '&field_rekap=' . rawurlencode($field_rekap);
+	} elseif (!empty($opts['tgl_awal_param']) && !empty($opts['tgl_akhir_param'])) {
+		$delete_qs = '?tgl_awal=' . rawurlencode($opts['tgl_awal_param'])
+			. '&tgl_akhir=' . rawurlencode($opts['tgl_akhir_param'])
+			. '&field_rekap=' . rawurlencode($field_rekap);
+	} else {
+		$delete_qs = '?field_rekap=' . rawurlencode($field_rekap);
+	}
+
+	$delete_url = site_url('tbl_penjualan/delete/' . (int) $row->id . '/' . $uuid_penjualan . '/rekap') . $delete_qs;
+	$id_row = (int) $row->id;
+
+	$html = '<td class="rekap-col-aksi" nowrap>';
+	$html .= anchor(
+		$delete_url,
+		'Hapus',
+		'class="btn btn-danger btn-xs rekap-btn-hapus" onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"'
+	);
+	$html .= ' <button type="button" class="btn btn-warning btn-xs rekap-btn-ubah" data-toggle="modal" data-target="#modal-rekap-ubah-barang_'
+		. $id_row . '">UBAH</button>';
+	$html .= '</td>';
+
+	return $html;
+}
+
+/**
+ * Hitung Jumlah Maks untuk modal ubah barang penjualan.
+ */
+function penjualan_hitung_jumlah_maks_ubah_barang($CI, $row_penjualan, $data_stock = null)
+{
+	$row_penjualan = is_object($row_penjualan) ? $row_penjualan : null;
+	if ($row_penjualan === null) {
+		return 1;
+	}
+
+	$CI->load->model('Persediaan_model');
+	$id_persediaan_barang = (int) $row_penjualan->id_persediaan_barang;
+	$uuid_unit = isset($row_penjualan->uuid_unit) ? trim((string) $row_penjualan->uuid_unit) : '';
+	$penjualan_kolom_unit_modal = penjualan_resolve_kolom_persediaan_unit($CI, $uuid_unit);
+	$row_persediaan = null;
+
+	if ($id_persediaan_barang > 0 && is_array($data_stock) && !empty($data_stock)) {
+		foreach ($data_stock as $stock_row) {
+			if ((int) $stock_row->id === $id_persediaan_barang) {
+				$row_persediaan = $stock_row;
+				break;
+			}
+		}
+	}
+	if ($row_persediaan === null && $id_persediaan_barang > 0) {
+		$row_persediaan = $CI->Persediaan_model->get_by_id($id_persediaan_barang);
+	}
+	if ($row_persediaan === null && !empty($row_penjualan->uuid_persediaan)) {
+		$row_persediaan = $CI->Persediaan_model->get_by_uuid_persediaan($row_penjualan->uuid_persediaan);
+	}
+
+	$jumlah_jual_saat_ini = (int) preg_replace('/[^0-9]/', '', (string) $row_penjualan->jumlah);
+	if ($row_persediaan !== null) {
+		$jumlah_maks = penjualan_get_sisa_stock_penjualan($row_persediaan, $penjualan_kolom_unit_modal) + $jumlah_jual_saat_ini;
+	} else {
+		$jumlah_maks = max($jumlah_jual_saat_ini, 1);
+	}
+
+	return max($jumlah_maks, $jumlah_jual_saat_ini, 1);
+}
+
+/**
  * Daftar stock persediaan untuk modal Pilih Barang penjualan (filter bulan Tgl Jual).
  */
 function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit = null)

@@ -46,6 +46,11 @@ $mode_update_produksi = isset($mode_update_produksi) ? (bool) $mode_update_produ
 $bulan_produksi_terkunci = isset($bulan_produksi_terkunci) ? $bulan_produksi_terkunci : '';
 $bulan_produksi_terkunci_label = isset($bulan_produksi_terkunci_label) ? $bulan_produksi_terkunci_label : '';
 $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
+$url_kembali_data_produk = isset($url_kembali_data_produk) && $url_kembali_data_produk !== ''
+    ? $url_kembali_data_produk
+    : (site_url('Sys_unit_produk') . '?bulan=' . urlencode($bulan_produksi_selected));
+$url_cancel_produksi = isset($url_cancel_produksi) ? $url_cancel_produksi : site_url('Sys_unit_produk/cancel_produksi');
+$perlu_cancel_sebelum_keluar = (!$produk_sudah_ada && $jumlah_bahan_count >= 1);
 ?>
 <div class="content-wrapper">
 
@@ -218,16 +223,49 @@ $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
                                                 $tanggal_beli_bahan_tampil = '-';
                                                 $bulan_bahan_ym = '';
                                                 $sesuai_bulan_bahan = false;
+
+                                                // Bulan acuan = bulan produksi record bahan (bukan bulan berjalan)
+                                                $bulan_cari_bahan = $bulan_produksi_ym;
+                                                if (!empty($list_data->tgl_transaksi)) {
+                                                    $ts_trx_bahan = strtotime($list_data->tgl_transaksi);
+                                                    if ($ts_trx_bahan) {
+                                                        $bulan_cari_bahan = date('Y-m', $ts_trx_bahan);
+                                                    }
+                                                }
+
+                                                $row_persediaan_bahan = null;
                                                 if (!empty($list_data->uuid_persediaan_bahan)) {
+                                                    // uuid_persediaan bisa dipakai lintas bulan — ambil record sesuai bulan produksi
                                                     $this->db->where('uuid_persediaan', $list_data->uuid_persediaan_bahan);
+                                                    $this->db->where("DATE_FORMAT(tanggal_beli, '%Y-%m') =", $bulan_cari_bahan);
+                                                    $this->db->order_by('id', 'ASC');
+                                                    $this->db->limit(1);
                                                     $row_persediaan_bahan = $this->db->get('persediaan')->row();
-                                                    if ($row_persediaan_bahan && !empty($row_persediaan_bahan->tanggal_beli)) {
-                                                        $ts_beli_bahan = strtotime($row_persediaan_bahan->tanggal_beli);
-                                                        if ($ts_beli_bahan) {
-                                                            $tanggal_beli_bahan_tampil = date('d-M-Y', $ts_beli_bahan);
-                                                            $bulan_bahan_ym = date('Y-m', $ts_beli_bahan);
-                                                            $sesuai_bulan_bahan = ($bulan_bahan_ym === $bulan_produksi_ym);
-                                                        }
+
+                                                    // Fallback: cocokkan via tanggal_beli exact = Y-m-01
+                                                    if (!$row_persediaan_bahan) {
+                                                        $this->db->where('uuid_persediaan', $list_data->uuid_persediaan_bahan);
+                                                        $this->db->where('tanggal_beli', $bulan_cari_bahan . '-01');
+                                                        $this->db->order_by('id', 'ASC');
+                                                        $this->db->limit(1);
+                                                        $row_persediaan_bahan = $this->db->get('persediaan')->row();
+                                                    }
+                                                }
+
+                                                if ($row_persediaan_bahan && !empty($row_persediaan_bahan->tanggal_beli)) {
+                                                    $ts_beli_bahan = strtotime($row_persediaan_bahan->tanggal_beli);
+                                                    if ($ts_beli_bahan) {
+                                                        $tanggal_beli_bahan_tampil = date('d-M-Y', $ts_beli_bahan);
+                                                        $bulan_bahan_ym = date('Y-m', $ts_beli_bahan);
+                                                        $sesuai_bulan_bahan = ($bulan_bahan_ym === $bulan_produksi_ym);
+                                                    }
+                                                } elseif (!empty($list_data->tgl_transaksi)) {
+                                                    // Fallback tampil dari tgl_transaksi bahan jika persediaan bulan itu tidak ketemu
+                                                    $ts_trx_bahan = strtotime($list_data->tgl_transaksi);
+                                                    if ($ts_trx_bahan) {
+                                                        $tanggal_beli_bahan_tampil = date('d-M-Y', $ts_trx_bahan);
+                                                        $bulan_bahan_ym = date('Y-m', $ts_trx_bahan);
+                                                        $sesuai_bulan_bahan = ($bulan_bahan_ym === $bulan_produksi_ym);
                                                     }
                                                 }
                                             ?>
@@ -250,7 +288,7 @@ $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
 
                                                         // echo anchor(site_url('tbl_pembelian/delete_by_uuid_pembelian_from_per_spop_update/' . $list_data->uuid_pembelian . '/' . $list_data->uuid_spop), '<i class="fa fa-pencil-square-o" aria-hidden="true">HAPUS</i>', 'class="btn btn-danger btn-xs"');
 
-                                                        echo anchor(site_url('Sys_unit_produk_bahan/delete/' . $list_data->id . '/Sys_unit_produk/create_produksi/' . $id_persediaan_barang), '<i class="fa fa-trash-o" aria-hidden="true">Hapus Bahan</i>', 'class="btn btn-danger btn-sm" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
+                                                        echo anchor(site_url('Sys_unit_produk_bahan/delete/' . $list_data->id . '/Sys_unit_produk/create_produksi/' . $id_persediaan_barang), '<i class="fa fa-trash-o" aria-hidden="true">Hapus Bahan</i>', 'class="btn btn-danger btn-sm btn-hapus-bahan-produksi" Delete', 'onclick="javasciprt: return confirm(\'Are You Sure ?\')"');
 
                                                         ?>
 
@@ -337,9 +375,9 @@ $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
                                 </div>
 
                                 <div class="card-body border-top pt-3">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-8">
-                                            <small class="text-muted d-block" id="info-btn-produk-baru">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <small class="text-muted d-block text-center mb-3" id="info-btn-produk-baru">
                                                 <?php if ($jumlah_bahan_count < 1) { ?>
                                                     Tambahkan minimal 1 bahan melalui tombol Input Bahan untuk mengaktifkan tombol simpan.
                                                 <?php } elseif (empty($id_persediaan_barang)) { ?>
@@ -351,20 +389,36 @@ $tgl_transaksi_awal = isset($tgl_transaksi_awal) ? $tgl_transaksi_awal : '';
                                                 <?php } ?>
                                             </small>
                                         </div>
-                                        <div class="col-md-4 text-md-right mt-2 mt-md-0">
+                                    </div>
+                                    <div class="row" align="center">
+                                        <div class="col-12 mb-2">
                                             <button type="submit" form="form-produk-baru" class="btn btn-primary btn-lg" id="btn-simpan-produk-baru" <?php echo $btn_produk_siap ? '' : 'disabled'; ?>>
                                                 <?php echo htmlspecialchars($label_btn_produk, ENT_QUOTES, 'UTF-8'); ?>
                                             </button>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <div class="row" align="center">
                                         <div class="col-12">
-                                            <a href="<?php echo site_url('Sys_unit_produk') ?>" class="btn btn-success">Kembali ke data produk</a>
+                                            <?php if ($perlu_cancel_sebelum_keluar) { ?>
+                                            <button type="button" class="btn btn-danger btn-lg mr-2" id="btn-cancel-produk">
+                                                Cancel Produk
+                                            </button>
+                                            <?php } ?>
+                                            <a href="<?php echo htmlspecialchars($url_kembali_data_produk, ENT_QUOTES, 'UTF-8'); ?>"
+                                               class="btn btn-success"
+                                               id="btn-kembali-data-produk"
+                                               data-perlu-cancel="<?php echo $perlu_cancel_sebelum_keluar ? '1' : '0'; ?>">
+                                                Kembali ke data produk
+                                            </a>
                                         </div>
                                     </div>
+                                    <?php if ($perlu_cancel_sebelum_keluar) { ?>
+                                    <div class="row mt-2" align="center">
+                                        <div class="col-12">
+                                            <small class="text-danger">
+                                                Sudah ada data bahan. Klik <strong>Simpan</strong> atau <strong>Cancel Produk</strong> sebelum kembali ke halaman lain.
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <?php } ?>
                                 </div>
 
                             </div>
@@ -819,6 +873,10 @@ window.addEventListener('load', function() {
     var bulanProduksiTerkunciLabel = <?php echo json_encode($bulan_produksi_terkunci_label); ?>;
     var tglTransaksiAwal = <?php echo json_encode($tgl_transaksi_awal); ?>;
     var tglTransaksiTerakhirValid = tglTransaksiAwal || ($('#tgl_transaksi_produk').val() || '');
+    var urlKembaliDataProduk = <?php echo json_encode($url_kembali_data_produk); ?>;
+    var urlCancelProduksi = <?php echo json_encode($url_cancel_produksi); ?>;
+    var perluCancelSebelumKeluar = <?php echo $perlu_cancel_sebelum_keluar ? 'true' : 'false'; ?>;
+    var allowLeaveProduksi = false;
 
     var namaBulanIndonesia = {
         '01': 'Januari', '02': 'Februari', '03': 'Maret', '04': 'April',
@@ -1234,14 +1292,100 @@ window.addEventListener('load', function() {
                 return false;
             }
         }
+        allowLeaveProduksi = true;
         try {
             localStorage.removeItem(storageKeyProdukDraft);
-        } catch (e) {}
+        } catch (err) {}
+    });
+
+    function jalankanCancelProduksi() {
+        if (!urlCancelProduksi) {
+            return;
+        }
+        allowLeaveProduksi = true;
+        try {
+            localStorage.removeItem(storageKeyProdukDraft);
+        } catch (err) {}
+        var sep = urlCancelProduksi.indexOf('?') >= 0 ? '&' : '?';
+        window.location.href = urlCancelProduksi + sep + 'bulan=' + encodeURIComponent(bulanProduksiBahanAktif || '');
+    }
+
+    function konfirmasiCancelProduksi(onCancelUser) {
+        var pesan = 'Cancel produk akan mengembalikan stock semua bahan yang sudah diinput dan menghapus data bahan draft. Lanjutkan?';
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cancel Produk?',
+                text: pesan,
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Cancel Produk',
+                cancelButtonText: 'Tidak',
+                confirmButtonColor: '#dc3545'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    jalankanCancelProduksi();
+                } else if (typeof onCancelUser === 'function') {
+                    onCancelUser();
+                }
+            });
+            return;
+        }
+        if (window.confirm(pesan)) {
+            jalankanCancelProduksi();
+        } else if (typeof onCancelUser === 'function') {
+            onCancelUser();
+        }
+    }
+
+    $(document).on('click', '#btn-cancel-produk', function(e) {
+        e.preventDefault();
+        konfirmasiCancelProduksi();
+    });
+
+    $(document).on('click', '#btn-kembali-data-produk', function(e) {
+        var perluCancel = $(this).attr('data-perlu-cancel') === '1' || perluCancelSebelumKeluar;
+        if (!perluCancel || allowLeaveProduksi) {
+            allowLeaveProduksi = true;
+            return;
+        }
+        e.preventDefault();
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Belum bisa kembali',
+                html: 'Sudah ada data bahan / nama produk draft.<br>Pilih <strong>Simpan</strong> atau <strong>Cancel Produk</strong> terlebih dahulu.',
+                showCancelButton: true,
+                confirmButtonText: 'Cancel Produk',
+                cancelButtonText: 'Tetap di halaman',
+                confirmButtonColor: '#dc3545'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    konfirmasiCancelProduksi();
+                }
+            });
+            return;
+        }
+        if (window.confirm('Sudah ada data bahan. Cancel produk sekarang untuk kembali?')) {
+            konfirmasiCancelProduksi();
+        }
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (!perluCancelSebelumKeluar || allowLeaveProduksi) {
+            return;
+        }
+        e.preventDefault();
+        e.returnValue = '';
     });
 
     $('#modal-input-jumlah-bahan').appendTo('body');
 
+    $(document).on('click', '.btn-hapus-bahan-produksi', function() {
+        allowLeaveProduksi = true;
+    });
+
     $('#form-simpan-bahan-produksi').on('submit', function() {
+        allowLeaveProduksi = true;
         salinDraftProdukKeFormBahan();
     });
 

@@ -2147,6 +2147,105 @@
         border-radius: 20px;
         margin-right: 6px;
     }
+    .gen-prod-riil-stat {
+        border-radius: 12px;
+        padding: 0.85rem 1rem;
+        height: 100%;
+        border: 1px solid transparent;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+    }
+    .gen-prod-riil-stat-produk {
+        background: linear-gradient(135deg, #fff8e1 0%, #ffe082 100%);
+        border-color: #ffca28;
+    }
+    .gen-prod-riil-stat-bahan {
+        background: linear-gradient(135deg, #e3f2fd 0%, #90caf9 100%);
+        border-color: #42a5f5;
+    }
+    .gen-prod-riil-stat-margin {
+        background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);
+        border-color: #66bb6a;
+    }
+    .gen-prod-riil-stat-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        opacity: 0.85;
+        margin-bottom: 0.25rem;
+    }
+    .gen-prod-riil-stat-val {
+        display: block;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    .gen-prod-riil-card {
+        border: 1px solid #ffe082;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .gen-prod-riil-card-head {
+        background: linear-gradient(120deg, #f57c00 0%, #ffb300 55%, #ffca28 100%);
+        color: #fff;
+        border-bottom: 0;
+        padding: 0.9rem 1.1rem;
+    }
+    .gen-prod-riil-name {
+        font-size: 1.05rem;
+    }
+    .gen-prod-riil-head-metrics {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        margin-top: 0.5rem;
+    }
+    @media (min-width: 768px) {
+        .gen-prod-riil-head-metrics {
+            margin-top: 0;
+        }
+    }
+    .gen-prod-riil-metric span {
+        display: block;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        opacity: 0.85;
+    }
+    .gen-prod-riil-metric strong {
+        font-size: 0.95rem;
+    }
+    .gen-prod-riil-bahan-table thead th {
+        background: #fff8e1;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        border-top: 0;
+    }
+    .gen-prod-riil-bahan-table tbody td {
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+    .gen-prod-riil-total-row th {
+        background: #fff3cd;
+        border-top: 2px solid #ffb300;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .gen-prod-riil-total-row.is-plus th:nth-child(7),
+    .gen-prod-riil-total-row.is-plus th:nth-child(8) {
+        color: #1b5e20;
+    }
+    .gen-prod-riil-total-row.is-minus th:nth-child(7),
+    .gen-prod-riil-total-row.is-minus th:nth-child(8) {
+        color: #b71c1c;
+    }
+    .gen-prod-riil-formula {
+        background: #fafafa;
+        border-top: 1px dashed #ffd54f;
+    }
+    .gen-prod-margin-summary .gen-prod-riil-stat {
+        min-height: 72px;
+    }
     .gen-proses-penjualan-dt-wrap {
         overflow: visible;
     }
@@ -6940,9 +7039,7 @@ window.addEventListener('load', function() {
     });
 
     var GEN_PROSES_PRODUKSI_TABLE_SELECTORS = [
-        '#table-gen-proses-produksi',
-        '#table-gen-proses-produksi-bahan-real',
-        '#table-gen-proses-produksi-bahan'
+        '#table-gen-proses-produksi-margin'
     ];
 
     function destroyGenerateProsesProduksiTables() {
@@ -6976,15 +7073,9 @@ window.addEventListener('load', function() {
             return;
         }
         var $table = $(sel);
-        var emptyMsg = $table.data('empty-msg') || 'Tidak ada data produksi pada bulan ini.';
-        var orderCol = 1;
-        if (sel.indexOf('bahan-real') !== -1) {
-            orderCol = 1;
-        } else if (sel.indexOf('bahan') !== -1) {
-            orderCol = 1;
-        }
+        var emptyMsg = $table.data('empty-msg') || 'Tidak ada data margin produk pada bulan ini.';
         $table.DataTable(genProsesDtScrollOpts({
-            order: [[orderCol, 'asc']],
+            order: [[2, 'asc']],
             language: genProsesDtLang(emptyMsg),
             footerCallback: genProsesDtFooterCallbackTwoCols('col-jumlah', 'col-total-nominal')
         }));
