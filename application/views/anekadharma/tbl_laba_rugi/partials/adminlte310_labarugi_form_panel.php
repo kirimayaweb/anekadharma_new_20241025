@@ -1,4 +1,4 @@
-﻿<?php defined('BASEPATH') OR exit('No direct script access allowed');
+<?php defined('BASEPATH') OR exit('No direct script access allowed');
 if (!isset($labarugi_view_mode)) { $labarugi_view_mode = 'utama'; }
 if (!isset($labarugi_tab_key)) { $labarugi_tab_key = 'utama'; }
 if (!isset($data_tbl_laba_rugi) || empty($data_tbl_laba_rugi)) {
