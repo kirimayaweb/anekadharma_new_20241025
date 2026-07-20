@@ -722,7 +722,6 @@ if (!empty($flash_rekap_ubah)) :
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
     var rekapFieldAktif = <?php echo json_encode($field_rekap); ?>;
     var rekapFilterSearchTerdaftar = false;
-    window.rekapRowFilterIndex = {};
 
     function getTanggalFilterRekap() {
         var tglAwal = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
@@ -895,17 +894,19 @@ if (!empty($flash_rekap_ubah)) :
         return String(teks || '').replace(/\s+/g, ' ').trim();
     }
 
-    function teksDariDataTableCell(val) {
-        if (val === null || val === undefined) {
+    function teksDariTdElement(td) {
+        if (!td) {
             return '';
         }
-        var s = String(val);
-        if (s.indexOf('<') !== -1) {
-            var tmp = document.createElement('div');
-            tmp.innerHTML = s;
-            s = tmp.textContent || tmp.innerText || s;
+        return normalisasiTeksRekap(td.innerText || td.textContent || '');
+    }
+
+    function teksDariTdNode(tr, colIdx) {
+        if (!tr) {
+            return '';
         }
-        return normalisasiTeksRekap(s);
+        var cells = tr.querySelectorAll('td');
+        return cells[colIdx] ? teksDariTdElement(cells[colIdx]) : '';
     }
 
     function normRekapKey(teks) {
@@ -913,7 +914,6 @@ if (!empty($flash_rekap_ubah)) :
     }
 
     function rebuildRekapFilterIndex() {
-        window.rekapRowFilterIndex = {};
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
             return;
         }
@@ -921,17 +921,16 @@ if (!empty($flash_rekap_ubah)) :
         var currentGroup = '';
         var table = jQuery('#tglSPOPFreeze').DataTable();
 
-        table.rows().every(function() {
-            var idx = this.index();
-            var d = this.data();
-            if (!d || !d.length) {
+        table.rows({ order: 'original' }).every(function() {
+            var node = this.node();
+            if (!node) {
                 return;
             }
 
-            var col1 = teksDariDataTableCell(d[2]);
-            var col5 = teksDariDataTableCell(d[6]);
-            var col6 = teksDariDataTableCell(d[7]);
-            var col7 = teksDariDataTableCell(d[8]);
+            var col1 = teksDariTdNode(node, 2);
+            var col5 = teksDariTdNode(node, 6);
+            var col6 = teksDariTdNode(node, 7);
+            var col7 = teksDariTdNode(node, 8);
 
             if (col1 !== '') {
                 currentGroup = col1;
@@ -955,12 +954,10 @@ if (!empty($flash_rekap_ubah)) :
                 }
             }
 
-            window.rekapRowFilterIndex[idx] = {
-                group: currentGroup,
-                unit: unitVal,
-                konsumen: konsumenVal,
-                barang: barangVal
-            };
+            node.setAttribute('data-rekap-group', currentGroup);
+            node.setAttribute('data-rekap-unit', unitVal);
+            node.setAttribute('data-rekap-konsumen', konsumenVal);
+            node.setAttribute('data-rekap-barang', barangVal);
         });
     }
 
@@ -980,26 +977,31 @@ if (!empty($flash_rekap_ubah)) :
         return '';
     }
 
-    function barisRekapCocokFilterIndex(dataIndex, filterVal) {
+    function barisRekapCocokFilterIndex(settings, dataIndex, filterVal) {
         if (!filterVal) {
             return true;
         }
 
-        var row = window.rekapRowFilterIndex[dataIndex];
-        if (!row) {
-            return true;
+        var aoRow = settings.aoData && settings.aoData[dataIndex] ? settings.aoData[dataIndex] : null;
+        var tr = aoRow && aoRow.nTr ? aoRow.nTr : null;
+        if (!tr) {
+            return false;
         }
 
         var fv = normRekapKey(filterVal);
+        var groupVal = tr.getAttribute('data-rekap-group') || '';
+        var unitVal = tr.getAttribute('data-rekap-unit') || '';
+        var konsumenVal = tr.getAttribute('data-rekap-konsumen') || '';
+        var barangVal = tr.getAttribute('data-rekap-barang') || '';
 
         if (rekapFieldAktif === 'unit') {
-            return normRekapKey(row.unit) === fv || normRekapKey(row.group) === fv;
+            return normRekapKey(unitVal) === fv || normRekapKey(groupVal) === fv;
         }
         if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-            return normRekapKey(row.konsumen) === fv || normRekapKey(row.group) === fv;
+            return normRekapKey(konsumenVal) === fv || normRekapKey(groupVal) === fv;
         }
         if (rekapFieldAktif === 'nama_barang') {
-            return normRekapKey(row.barang) === fv || normRekapKey(row.group) === fv;
+            return normRekapKey(barangVal) === fv || normRekapKey(groupVal) === fv;
         }
         return true;
     }
@@ -1018,7 +1020,7 @@ if (!empty($flash_rekap_ubah)) :
             if (!filterVal) {
                 return true;
             }
-            return barisRekapCocokFilterIndex(dataIndex, filterVal);
+            return barisRekapCocokFilterIndex(settings, dataIndex, filterVal);
         });
     }
 
@@ -1027,23 +1029,34 @@ if (!empty($flash_rekap_ubah)) :
         if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
             return;
         }
-        jQuery('#tglSPOPFreeze').DataTable().draw();
+        jQuery('#tglSPOPFreeze').DataTable().draw(false);
     }
+
+    var rekapFilterComboboxTerikat = false;
 
     function initRekapFilterCombobox() {
         daftarRekapFilterSearch();
         muatFilterRekapDariSession();
-        rebuildRekapFilterIndex();
+
+        if (rekapFilterComboboxTerikat || !window.jQuery) {
+            return;
+        }
 
         var selector = getSelectorFilterRekapAktif();
-        if (selector && window.jQuery) {
-            jQuery(document)
-                .off('change.rekapFilter', selector)
-                .on('change.rekapFilter', selector, function() {
-                    simpanFilterRekapKeSession();
-                    refreshDataTableRekapFilter();
-                });
+        if (!selector) {
+            return;
         }
+
+        var $sel = jQuery(selector);
+        if (!$sel.length) {
+            return;
+        }
+
+        rekapFilterComboboxTerikat = true;
+        $sel.off('change.rekapFilter').on('change.rekapFilter', function() {
+            simpanFilterRekapKeSession();
+            refreshDataTableRekapFilter();
+        });
     }
 
     function initRekapHalaman() {
@@ -1052,13 +1065,28 @@ if (!empty($flash_rekap_ubah)) :
         refreshDataTableRekapFilter();
     }
 
-    if (window.jQuery) {
-        jQuery(window).on('load', function() {
-            window.setTimeout(initRekapHalaman, 200);
-        });
+    window.initRekapDataTableFilter = function() {
+        initRekapHalaman();
+    };
+
+    function cobaInitRekapFilter(attempt) {
+        attempt = attempt || 0;
+        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+            initRekapHalaman();
+            return;
+        }
+        if (attempt < 40) {
+            window.setTimeout(function() {
+                cobaInitRekapFilter(attempt + 1);
+            }, 150);
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        cobaInitRekapFilter(0);
     } else {
         window.addEventListener('load', function() {
-            window.setTimeout(initRekapHalaman, 200);
+            cobaInitRekapFilter(0);
         });
     }
 })();
