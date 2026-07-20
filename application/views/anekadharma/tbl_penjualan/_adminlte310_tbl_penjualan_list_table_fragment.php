@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 if (!isset($Tbl_penjualan_tab_data)) {
 	$Tbl_penjualan_tab_data = isset($Tbl_penjualan_data) ? $Tbl_penjualan_data : array();
 }
