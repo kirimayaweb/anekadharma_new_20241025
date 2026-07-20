@@ -1,4 +1,4 @@
-﻿<form action="<?php echo $action; ?>" method="post">
+<form action="<?php echo $action; ?>" method="post">
 
 
 	<div class="content-wrapper">
