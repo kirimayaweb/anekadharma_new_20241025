@@ -237,6 +237,49 @@ class Tbl_penjualan extends CI_Controller
 		return array_values($options);
 	}
 
+	private function _resolve_rekap_filter_value($filter_rekap, $options)
+	{
+		$filter_rekap = trim((string) $filter_rekap);
+		if ($filter_rekap === '' || !is_array($options)) {
+			return '';
+		}
+
+		foreach ($options as $opt) {
+			if (strcasecmp(trim((string) $opt), $filter_rekap) === 0) {
+				return trim((string) $opt);
+			}
+		}
+
+		return '';
+	}
+
+	private function _filter_rekap_rows_by_value($rows, $field_rekap, $filter_val)
+	{
+		if ($filter_val === '' || !is_array($rows)) {
+			return $rows;
+		}
+
+		$col = $this->_get_rekap_filter_col_name($field_rekap);
+		$needle = strtoupper($filter_val);
+
+		return array_values(array_filter($rows, function ($row) use ($col, $needle) {
+			if (!is_object($row) || !isset($row->$col)) {
+				return false;
+			}
+			return strtoupper(trim((string) $row->$col)) === $needle;
+		}));
+	}
+
+	private function _rekap_filter_query_string($tgl_awal_display, $tgl_akhir_display, $filter_rekap = '')
+	{
+		$qs = '?tgl_awal=' . rawurlencode($tgl_awal_display) . '&tgl_akhir=' . rawurlencode($tgl_akhir_display);
+		$filter_rekap = trim((string) $filter_rekap);
+		if ($filter_rekap !== '') {
+			$qs .= '&filter_rekap=' . rawurlencode($filter_rekap);
+		}
+		return $qs;
+	}
+
 	private function _filter_penjualan_proses_bayar($rows, $filter = 'all')
 	{
 		if (!is_array($rows)) {
@@ -455,9 +498,12 @@ class Tbl_penjualan extends CI_Controller
 		list($Get_date_awal, $Get_date_akhir, $tgl_awal_param, $tgl_akhir_param) = $this->_resolve_penjualan_filter_dates();
 		$order_field = $this->_rekap_order_field($field_rekap);
 		$field_rekap = $order_field;
-		$filter_qs = $this->_penjualan_filter_query_string($tgl_awal_param, $tgl_akhir_param);
-		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, $order_field);
-		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_param, $tgl_akhir_param, $Tbl_penjualan_data);
+		$Tbl_penjualan_all = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir, $order_field);
+		$rekap_filter_options = $this->_get_rekap_filter_options_from_rows($Tbl_penjualan_all, $field_rekap);
+		$rekap_filter_aktif = $this->_resolve_rekap_filter_value($this->input->get('filter_rekap', TRUE), $rekap_filter_options);
+		$Tbl_penjualan_data = $this->_filter_rekap_rows_by_value($Tbl_penjualan_all, $field_rekap, $rekap_filter_aktif);
+		$filter_qs = $this->_rekap_filter_query_string($tgl_awal_param, $tgl_akhir_param, $rekap_filter_aktif);
+		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_param, $tgl_akhir_param, $Tbl_penjualan_all);
 
 		$data = array(
 			'Tbl_penjualan_data' => $Tbl_penjualan_data,
@@ -467,7 +513,8 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_awal_param' => $tgl_awal_param,
 			'tgl_akhir_param' => $tgl_akhir_param,
 			'filter_query_string' => $filter_qs,
-			'rekap_filter_options' => $this->_get_rekap_filter_options_from_rows($Tbl_penjualan_data, $field_rekap),
+			'rekap_filter_aktif' => $rekap_filter_aktif,
+			'rekap_filter_options' => $rekap_filter_options,
 			'action_ubah_per_id' => site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/'),
 		);
 
