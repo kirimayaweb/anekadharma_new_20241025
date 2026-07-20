@@ -54,6 +54,7 @@
         $is_rekap_konsumen = ($field_rekap === 'konsumen_nama' || $field_rekap === 'konsumen');
         $is_rekap_barang = ($field_rekap === 'nama_barang');
         $rekap_filter_options = isset($rekap_filter_options) && is_array($rekap_filter_options) ? $rekap_filter_options : array();
+        $rekap_filter_aktif = isset($rekap_filter_aktif) ? trim((string) $rekap_filter_aktif) : '';
         $this->load->helper('pembelian_persediaan');
         if (!isset($action_ubah_per_id) || trim((string) $action_ubah_per_id) === '') {
             $action_ubah_per_id = site_url('tbl_penjualan/create_action_nmrkirim_update_per_id_penjualan/');
@@ -105,10 +106,10 @@
                                 <span class="rekap-btn-filter-wrap">
                                     <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="nama_barang">Rekap Barang</a>
                                     <?php if ($is_rekap_barang) { ?>
-                                    <select id="rekap-filter-barang" class="form-control form-control-sm rekap-filter-select" title="Filter nama barang">
+                                    <select id="rekap-filter-barang" name="filter_rekap" class="form-control form-control-sm rekap-filter-select" title="Filter nama barang">
                                         <option value="">— Semua Barang —</option>
                                         <?php foreach ($rekap_filter_options as $opt_barang) { ?>
-                                        <option value="<?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <option value="<?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($rekap_filter_aktif !== '' && strcasecmp($opt_barang, $rekap_filter_aktif) === 0) ? ' selected' : ''; ?>><?php echo htmlspecialchars($opt_barang, ENT_QUOTES, 'UTF-8'); ?></option>
                                         <?php } ?>
                                     </select>
                                     <?php } ?>
@@ -116,10 +117,10 @@
                                 <span class="rekap-btn-filter-wrap">
                                     <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="konsumen_nama">Rekap Konsumen</a>
                                     <?php if ($is_rekap_konsumen) { ?>
-                                    <select id="rekap-filter-konsumen" class="form-control form-control-sm rekap-filter-select" title="Filter konsumen">
+                                    <select id="rekap-filter-konsumen" name="filter_rekap" class="form-control form-control-sm rekap-filter-select" title="Filter konsumen">
                                         <option value="">— Semua Konsumen —</option>
                                         <?php foreach ($rekap_filter_options as $opt_konsumen) { ?>
-                                        <option value="<?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <option value="<?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($rekap_filter_aktif !== '' && strcasecmp($opt_konsumen, $rekap_filter_aktif) === 0) ? ' selected' : ''; ?>><?php echo htmlspecialchars($opt_konsumen, ENT_QUOTES, 'UTF-8'); ?></option>
                                         <?php } ?>
                                     </select>
                                     <?php } ?>
@@ -127,14 +128,17 @@
                                 <span class="rekap-btn-filter-wrap">
                                     <a href="#" class="btn btn-warning btn-sm btn-rekap-jenis" data-field="unit">Rekap Unit</a>
                                     <?php if ($is_rekap_unit) { ?>
-                                    <select id="rekap-filter-unit" class="form-control form-control-sm rekap-filter-select" title="Filter unit">
+                                    <select id="rekap-filter-unit" name="filter_rekap" class="form-control form-control-sm rekap-filter-select" title="Filter unit">
                                         <option value="">— Semua Unit —</option>
                                         <?php foreach ($rekap_filter_options as $opt_unit) { ?>
-                                        <option value="<?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?></option>
+                                        <option value="<?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?>"<?php echo ($rekap_filter_aktif !== '' && strcasecmp($opt_unit, $rekap_filter_aktif) === 0) ? ' selected' : ''; ?>><?php echo htmlspecialchars($opt_unit, ENT_QUOTES, 'UTF-8'); ?></option>
                                         <?php } ?>
                                     </select>
                                     <?php } ?>
                                 </span>
+                                <button type="submit" class="btn btn-primary btn-sm" id="btn-cari-rekap-penjualan" title="Cari data rekap">
+                                    <i class="fa fa-search" aria-hidden="true"></i> Cari
+                                </button>
                                 <button type="button" class="btn btn-success btn-sm" onclick="cetakExcelRekapData(); return false;">
                                     <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel
                                 </button>
@@ -720,8 +724,8 @@ if (!empty($flash_rekap_ubah)) :
 <script>
 (function() {
     var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
-    var rekapFieldAktif = <?php echo json_encode($field_rekap); ?>;
-    var rekapFilterSearchTerdaftar = false;
+    var submitTimer = null;
+    var rekapSedangSubmit = false;
 
     function getTanggalFilterRekap() {
         var tglAwal = document.querySelector('#form-cari-rekap-penjualan input[name="tgl_awal"]');
@@ -732,13 +736,66 @@ if (!empty($flash_rekap_ubah)) :
         };
     }
 
+    function getFilterRekapAktif() {
+        var el = document.querySelector('#form-cari-rekap-penjualan select[name="filter_rekap"]');
+        return el ? el.value : '';
+    }
+
     function buildRekapUrl(field) {
         var tgl = getTanggalFilterRekap();
+        var filterVal = getFilterRekapAktif();
         var url = baseRekapUrl + field;
         if (tgl.awal && tgl.akhir) {
             url += '?tgl_awal=' + encodeURIComponent(tgl.awal) + '&tgl_akhir=' + encodeURIComponent(tgl.akhir);
+            if (filterVal) {
+                url += '&filter_rekap=' + encodeURIComponent(filterVal);
+            }
         }
         return url;
+    }
+
+    function updateHrefTombolRekap() {
+        document.querySelectorAll('.btn-rekap-jenis').forEach(function(btn) {
+            var field = btn.getAttribute('data-field');
+            if (field) {
+                btn.href = buildRekapUrl(field);
+            }
+        });
+    }
+
+    function tampilkanLoadingRekap() {
+        var btn = document.getElementById('btn-cari-rekap-penjualan');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin" aria-hidden="true"></i> Memuat...';
+        }
+    }
+
+    function submitCariRekap(segera) {
+        clearTimeout(submitTimer);
+        var jalankan = function() {
+            if (rekapSedangSubmit) {
+                return;
+            }
+            var form = document.getElementById('form-cari-rekap-penjualan');
+            var tgl = getTanggalFilterRekap();
+            if (!form) {
+                return;
+            }
+            if (!tgl.awal || !tgl.akhir) {
+                alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+                return;
+            }
+            rekapSedangSubmit = true;
+            tampilkanLoadingRekap();
+            form.submit();
+        };
+
+        if (segera) {
+            jalankan();
+        } else {
+            submitTimer = setTimeout(jalankan, 350);
+        }
     }
 
     document.querySelectorAll('.btn-rekap-jenis').forEach(function(btn) {
@@ -756,85 +813,6 @@ if (!empty($flash_rekap_ubah)) :
             window.location.href = buildRekapUrl(field);
         });
     });
-
-    var submitTimer = null;
-
-    function submitCariRekapOtomatis() {
-        clearTimeout(submitTimer);
-        submitTimer = setTimeout(function() {
-            var form = document.getElementById('form-cari-rekap-penjualan');
-            var tgl = getTanggalFilterRekap();
-            if (form && tgl.awal && tgl.akhir) {
-                try {
-                    sessionStorage.removeItem('rekap_filter_' + rekapFieldAktif);
-                } catch (eClear) { /* abaikan */ }
-                form.submit();
-            }
-        }, 400);
-    }
-
-    function updateHrefTombolRekap() {
-        document.querySelectorAll('.btn-rekap-jenis').forEach(function(btn) {
-            var field = btn.getAttribute('data-field');
-            if (field) {
-                btn.href = buildRekapUrl(field);
-            }
-        });
-    }
-
-    function getSelectorFilterRekapAktif() {
-        if (rekapFieldAktif === 'unit') {
-            return '#rekap-filter-unit';
-        }
-        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-            return '#rekap-filter-konsumen';
-        }
-        if (rekapFieldAktif === 'nama_barang') {
-            return '#rekap-filter-barang';
-        }
-        return null;
-    }
-
-    function simpanFilterRekapKeSession() {
-        var selector = getSelectorFilterRekapAktif();
-        if (!selector || !window.jQuery) {
-            return;
-        }
-        var val = jQuery(selector).val() || '';
-        try {
-            sessionStorage.setItem('rekap_filter_' + rekapFieldAktif, val);
-        } catch (eSession) { /* abaikan */ }
-    }
-
-    function muatFilterRekapDariSession() {
-        var selector = getSelectorFilterRekapAktif();
-        if (!selector || !window.jQuery) {
-            return;
-        }
-        var $sel = jQuery(selector);
-        if (!$sel.length) {
-            return;
-        }
-        try {
-            var saved = sessionStorage.getItem('rekap_filter_' + rekapFieldAktif);
-            if (saved === null || saved === '') {
-                $sel.val('');
-                return;
-            }
-            var found = false;
-            $sel.find('option').each(function() {
-                if (normRekapKey(jQuery(this).val()) === normRekapKey(saved)) {
-                    $sel.val(jQuery(this).val());
-                    found = true;
-                    return false;
-                }
-            });
-            if (!found) {
-                $sel.val('');
-                sessionStorage.removeItem('rekap_filter_' + rekapFieldAktif);
-            }
-        } catch (eSession) { /* abaikan */ }
-    }
 
     function initDatepickerRekapPenjualan() {
         if (!window.jQuery || typeof jQuery.fn.datetimepicker !== 'function') {
@@ -877,216 +855,77 @@ if (!empty($flash_rekap_ubah)) :
             .off('change.datetimepicker.rekap hide.datetimepicker.rekap')
             .on('change.datetimepicker.rekap hide.datetimepicker.rekap', function() {
                 updateHrefTombolRekap();
-                simpanFilterRekapKeSession();
-                submitCariRekapOtomatis();
+                submitCariRekap(false);
             });
 
         $('#rekap_input_tgl_awal, #rekap_input_tgl_akhir')
-            .off('change.rekapTgl blur.rekapTgl')
+            .off('change.rekapTgl blur.rekapTgl keyup.rekapTgl')
             .on('change.rekapTgl blur.rekapTgl', function() {
                 updateHrefTombolRekap();
+                submitCariRekap(false);
+            })
+            .on('keyup.rekapTgl', function(e) {
+                if (e.key === 'Enter') {
+                    updateHrefTombolRekap();
+                    submitCariRekap(true);
+                }
             });
     }
 
-    updateHrefTombolRekap();
-
-    function normalisasiTeksRekap(teks) {
-        return String(teks || '').replace(/\s+/g, ' ').trim();
-    }
-
-    function teksDariTdElement(td) {
-        if (!td) {
-            return '';
-        }
-        return normalisasiTeksRekap(td.innerText || td.textContent || '');
-    }
-
-    function teksDariTdNode(tr, colIdx) {
-        if (!tr) {
-            return '';
-        }
-        var cells = tr.querySelectorAll('td');
-        return cells[colIdx] ? teksDariTdElement(cells[colIdx]) : '';
-    }
-
-    function normRekapKey(teks) {
-        return normalisasiTeksRekap(teks).toUpperCase();
-    }
-
-    function rebuildRekapFilterIndex() {
-        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
-            return;
+    function pasangEventFormRekap() {
+        var form = document.getElementById('form-cari-rekap-penjualan');
+        if (form) {
+            form.addEventListener('submit', function() {
+                rekapSedangSubmit = true;
+                tampilkanLoadingRekap();
+            });
         }
 
-        var currentGroup = '';
-        var table = jQuery('#tglSPOPFreeze').DataTable();
-
-        table.rows({ order: 'original' }).every(function() {
-            var node = this.node();
-            if (!node) {
-                return;
-            }
-
-            var col1 = teksDariTdNode(node, 2);
-            var col5 = teksDariTdNode(node, 6);
-            var col6 = teksDariTdNode(node, 7);
-            var col7 = teksDariTdNode(node, 8);
-
-            if (col1 !== '') {
-                currentGroup = col1;
-            }
-
-            var unitVal = col5;
-            var konsumenVal = col6;
-            var barangVal = col7;
-
-            if (rekapFieldAktif === 'unit') {
-                if (unitVal === '' && currentGroup !== '') {
-                    unitVal = currentGroup;
-                }
-            } else if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-                if (konsumenVal === '' && currentGroup !== '') {
-                    konsumenVal = currentGroup;
-                }
-            } else if (rekapFieldAktif === 'nama_barang') {
-                if (barangVal === '' && currentGroup !== '') {
-                    barangVal = currentGroup;
-                }
-            }
-
-            node.setAttribute('data-rekap-group', currentGroup);
-            node.setAttribute('data-rekap-unit', unitVal);
-            node.setAttribute('data-rekap-konsumen', konsumenVal);
-            node.setAttribute('data-rekap-barang', barangVal);
-        });
-    }
-
-    function getNilaiFilterRekapAktif() {
-        if (rekapFieldAktif === 'unit') {
-            var elUnit = document.getElementById('rekap-filter-unit');
-            return elUnit ? normalisasiTeksRekap(elUnit.value) : '';
+        var selector = '#rekap-filter-unit, #rekap-filter-konsumen, #rekap-filter-barang';
+        if (window.jQuery) {
+            jQuery(document)
+                .off('change.rekapFilter', selector)
+                .on('change.rekapFilter', selector, function() {
+                    submitCariRekap(false);
+                });
         }
-        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-            var elKonsumen = document.getElementById('rekap-filter-konsumen');
-            return elKonsumen ? normalisasiTeksRekap(elKonsumen.value) : '';
-        }
-        if (rekapFieldAktif === 'nama_barang') {
-            var elBarang = document.getElementById('rekap-filter-barang');
-            return elBarang ? normalisasiTeksRekap(elBarang.value) : '';
-        }
-        return '';
-    }
-
-    function barisRekapCocokFilterIndex(settings, dataIndex, filterVal) {
-        if (!filterVal) {
-            return true;
-        }
-
-        var aoRow = settings.aoData && settings.aoData[dataIndex] ? settings.aoData[dataIndex] : null;
-        var tr = aoRow && aoRow.nTr ? aoRow.nTr : null;
-        if (!tr) {
-            return false;
-        }
-
-        var fv = normRekapKey(filterVal);
-        var groupVal = tr.getAttribute('data-rekap-group') || '';
-        var unitVal = tr.getAttribute('data-rekap-unit') || '';
-        var konsumenVal = tr.getAttribute('data-rekap-konsumen') || '';
-        var barangVal = tr.getAttribute('data-rekap-barang') || '';
-
-        if (rekapFieldAktif === 'unit') {
-            return normRekapKey(unitVal) === fv || normRekapKey(groupVal) === fv;
-        }
-        if (rekapFieldAktif === 'konsumen_nama' || rekapFieldAktif === 'konsumen') {
-            return normRekapKey(konsumenVal) === fv || normRekapKey(groupVal) === fv;
-        }
-        if (rekapFieldAktif === 'nama_barang') {
-            return normRekapKey(barangVal) === fv || normRekapKey(groupVal) === fv;
-        }
-        return true;
-    }
-
-    function daftarRekapFilterSearch() {
-        if (rekapFilterSearchTerdaftar || !window.jQuery || !jQuery.fn.dataTable) {
-            return;
-        }
-        rekapFilterSearchTerdaftar = true;
-        jQuery.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            var tableId = settings.nTable ? settings.nTable.getAttribute('id') : '';
-            if (tableId !== 'tglSPOPFreeze') {
-                return true;
-            }
-            var filterVal = getNilaiFilterRekapAktif();
-            if (!filterVal) {
-                return true;
-            }
-            return barisRekapCocokFilterIndex(settings, dataIndex, filterVal);
-        });
-    }
-
-    function refreshDataTableRekapFilter() {
-        rebuildRekapFilterIndex();
-        if (!window.jQuery || !jQuery.fn.DataTable || !jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
-            return;
-        }
-        jQuery('#tglSPOPFreeze').DataTable().draw(false);
-    }
-
-    var rekapFilterComboboxTerikat = false;
-
-    function initRekapFilterCombobox() {
-        daftarRekapFilterSearch();
-        muatFilterRekapDariSession();
-
-        if (rekapFilterComboboxTerikat || !window.jQuery) {
-            return;
-        }
-
-        var selector = getSelectorFilterRekapAktif();
-        if (!selector) {
-            return;
-        }
-
-        var $sel = jQuery(selector);
-        if (!$sel.length) {
-            return;
-        }
-
-        rekapFilterComboboxTerikat = true;
-        $sel.off('change.rekapFilter').on('change.rekapFilter', function() {
-            simpanFilterRekapKeSession();
-            refreshDataTableRekapFilter();
-        });
     }
 
     function initRekapHalaman() {
+        updateHrefTombolRekap();
         initDatepickerRekapPenjualan();
-        initRekapFilterCombobox();
-        refreshDataTableRekapFilter();
+        pasangEventFormRekap();
     }
 
-    window.initRekapDataTableFilter = function() {
-        initRekapHalaman();
+    window.submitRekapFilterTanggal = function() {
+        submitCariRekap(false);
     };
+    window.handleRekapFilterComboboxChange = function() {
+        submitCariRekap(false);
+    };
+    window.submitCariRekapSegera = function() {
+        submitCariRekap(true);
+    };
+    window.initRekapDataTableFilter = initRekapHalaman;
 
-    function cobaInitRekapFilter(attempt) {
+    function cobaInitRekapHalaman(attempt) {
         attempt = attempt || 0;
-        if (window.jQuery && jQuery.fn.DataTable && jQuery.fn.DataTable.isDataTable('#tglSPOPFreeze')) {
+        if (window.jQuery) {
             initRekapHalaman();
             return;
         }
-        if (attempt < 40) {
+        if (attempt < 30) {
             window.setTimeout(function() {
-                cobaInitRekapFilter(attempt + 1);
-            }, 150);
+                cobaInitRekapHalaman(attempt + 1);
+            }, 100);
         }
     }
 
     if (document.readyState === 'complete') {
-        cobaInitRekapFilter(0);
+        cobaInitRekapHalaman(0);
     } else {
         window.addEventListener('load', function() {
-            cobaInitRekapFilter(0);
+            cobaInitRekapHalaman(0);
         });
     }
 })();
