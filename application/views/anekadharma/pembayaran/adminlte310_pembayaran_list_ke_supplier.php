@@ -144,7 +144,7 @@
 
                                         <?php
 
-                                        $sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='$uuid_spop' GROUP by `uuid_spop`";
+                                        $sql_pembayaran = "SELECT `uuid_spop`, sum(`nominal_pengajuan`) as total_sudah_terbayar FROM `tbl_pembelian_pengajuan_bayar` WHERE `uuid_spop`='" . $list_data->uuid_spop . "' GROUP by `uuid_spop`";
 
                                         $Data_Pembayaran_uuid_spop = $this->db->query($sql_pembayaran)->row();
 
