@@ -373,9 +373,6 @@
 
 										?>
 
-
-										?>
-
 										<input type="text" class="form-control datetimepicker-input" data-target="#tgl_nomor_bkk" id="tgl_nomor_bkk" name="tgl_nomor_bkk" value="<?php echo $tgl_bkk; ?>" required />
 										<div class="input-group-append" data-target="#tgl_nomor_bkk" data-toggle="datetimepicker">
 											<div class="input-group-text">
@@ -469,7 +466,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="<?php echo $nomor_rekening ?>">
+										<input type="text" name="nomor_rekening_bkk" id="nomor_rekening_bkk" placeholder="Nomor rekening" value="<?php echo $nomor_rekening_bkk; ?>">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
@@ -492,7 +489,7 @@
 									<th style="font-size:0.550em; text-align:left; width: 2px" colspan="2">:</th>
 									<th style="font-size:0.550em; text-align:left; width: 348px;" colspan="348"></th>
 									<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="102">
-										<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="<?php echo $atas_nama_rekening ?>">
+										<input type="text" name="atas_nama_rekening_bkk" id="atas_nama_rekening_bkk" placeholder="Atas Nama" value="<?php echo $atas_nama_rekening_bkk; ?>">
 									</th>
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->
 									<!-- <th style="font-size:0.550em; width: 2px;" colspan="2"></th> -->

@@ -314,7 +314,7 @@
 
 				<th style="font-size:0.550em; text-align:left; width: 100px;" colspan="100">BANK</th>
 				<th style="font-size:0.550em; text-align:left; width: 400px;" colspan="400">
-					<?php echo ": " . $nama_bank . "&ensp;&ensp;&ensp;" . $nomor_rekening_bkk . "&ensp;&ensp;&ensp; a.n: " . $atas_nama_rekening_bkk;  ?>
+					<?php echo ": " . $nama_bank_bkk . "&ensp;&ensp;&ensp;" . $nomor_rekening_bkk . "&ensp;&ensp;&ensp; a.n: " . $atas_nama_rekening_bkk;  ?>
 				</th>
 
 			<?php } else {
