@@ -386,7 +386,7 @@ $get_list_data = $x_list_data;
                                                     </div>
                                                     <div class="col-3">
                                                         <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                                        <input type="text" name="harga_satuan" id="harga_satuan_beli" placeholder="harga Satuan" class="form-control" inputmode="numeric" autocomplete="off" required>
+                                                        <input type="text" name="harga_satuan" id="harga_satuan_beli" placeholder="contoh: 1.250,50" class="form-control" inputmode="decimal" autocomplete="off" required>
                                                     </div>
                                                 </div>
 
@@ -1223,7 +1223,7 @@ $get_list_data = $x_list_data;
             }
             var nama = (row.nama_barang || '').toUpperCase();
             var satuan = jQuery.trim(row.satuan || '');
-            var harga = formatHargaSatuanPembelian(row.harga_satuan || '');
+            var harga = formatHargaSatuanPembelian(row.harga_satuan || '', true);
             return nama + ' ( satuan : ' + satuan + ', harga satuan : ' + harga + ' )';
         }
 
@@ -1276,31 +1276,78 @@ $get_list_data = $x_list_data;
         }
         window.refreshBarangOptions = refreshBarangOptions;
 
-        function formatHargaSatuanPembelian(value) {
-            if (value === null || typeof value === 'undefined' || value === '') {
+        /**
+         * Format harga satuan gaya Indonesia: titik = ribuan, koma = desimal.
+         * Contoh tampilan: 6.826,75 (= 6826.75)
+         * @param {*} value
+         * @param {boolean} fromDatabase - true jika nilai dari DB/API (desimal titik Inggris)
+         */
+        function formatHargaSatuanPembelian(value, fromDatabase) {
+            if (value === null || typeof value === 'undefined') {
                 return '';
             }
 
-            var valueString = String(value).trim();
-            if (/^(\d{1,3}\.)+\d{3}$/.test(valueString)) {
-                valueString = valueString.replace(/\./g, '');
-            } else if (/^\d+(\.\d+)?$/.test(valueString)) {
-                var numericValue = parseFloat(valueString);
-                if (!isNaN(numericValue)) {
-                    valueString = String(Math.round(numericValue));
-                }
-            } else {
-                valueString = valueString.replace(/[^0-9]/g, '');
+            var raw = String(value).trim();
+            if (raw === '') {
+                return '';
             }
 
-            return valueString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            // Dari DB/API: 6826.75 → 6.826,75
+            if (fromDatabase === true && /^\d+(\.\d+)?$/.test(raw)) {
+                var partsDb = raw.split('.');
+                var intDb = partsDb[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                if (partsDb.length > 1 && partsDb[1] !== '') {
+                    var decDb = partsDb[1].substring(0, 4).replace(/0+$/, '');
+                    return decDb !== '' ? (intDb + ',' + decDb) : intDb;
+                }
+                return intDb;
+            }
+
+            // Input pengguna: titik selalu pemisah ribuan, koma selalu desimal
+            var trailingComma = /,$/.test(raw.replace(/\s/g, ''));
+            var cleaned = raw.replace(/[^\d.,]/g, '');
+            var intPart = '';
+            var decPart = '';
+
+            if (cleaned.indexOf(',') !== -1) {
+                var commaIdx = cleaned.indexOf(',');
+                intPart = cleaned.substring(0, commaIdx).replace(/\./g, '').replace(/[^\d]/g, '');
+                decPart = cleaned.substring(commaIdx + 1).replace(/[^\d]/g, '').substring(0, 4);
+            } else {
+                // Semua titik = ribuan (jangan anggap desimal Inggris)
+                intPart = cleaned.replace(/\./g, '').replace(/[^\d]/g, '');
+            }
+
+            intPart = intPart.replace(/^0+(?=\d)/, '');
+            if (intPart === '') {
+                intPart = '0';
+            }
+
+            var intFmt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            if (trailingComma && decPart === '') {
+                return intFmt + ',';
+            }
+            if (decPart !== '') {
+                return intFmt + ',' + decPart;
+            }
+            return intFmt;
         }
         window.formatHargaSatuanPembelian = formatHargaSatuanPembelian;
 
         function applyFormatHargaSatuanPembelian(input) {
             var inputElement = $(input);
-            var angka = inputElement.val().replace(/[^0-9]/g, '');
-            inputElement.val(formatHargaSatuanPembelian(angka));
+            var el = inputElement.get(0);
+            var oldVal = inputElement.val();
+            var oldLen = oldVal.length;
+            var selStart = el && typeof el.selectionStart === 'number' ? el.selectionStart : oldLen;
+            var newVal = formatHargaSatuanPembelian(oldVal, false);
+            inputElement.val(newVal);
+            if (el && typeof el.setSelectionRange === 'function') {
+                var newPos = Math.max(0, newVal.length - (oldLen - selStart));
+                try {
+                    el.setSelectionRange(newPos, newPos);
+                } catch (e) {}
+            }
         }
 
         function isiSatuanHargaDariOpsiBarang($modal, uuidBarang) {
@@ -1320,7 +1367,7 @@ $get_list_data = $x_list_data;
             var harga = jQuery.trim($opt.attr('data-harga-satuan') || '');
 
             $modal.find('input[name="satuan"]').val(satuan);
-            $modal.find('input[name="harga_satuan"]').val(harga ? formatHargaSatuanPembelian(harga) : '');
+            $modal.find('input[name="harga_satuan"]').val(harga ? formatHargaSatuanPembelian(harga, true) : '');
         }
 
         function loadDetailBarangPembelian(uuidBarang) {
@@ -1385,7 +1432,7 @@ $get_list_data = $x_list_data;
             }
             tbody.innerHTML = '';
             window.barangDuplikatPersediaanCache.forEach(function(row, idx) {
-                var hppTampil = formatHargaSatuanPembelian(row.harga_satuan || '');
+                var hppTampil = formatHargaSatuanPembelian(row.harga_satuan || '', true);
                 var tr = document.createElement('tr');
                 var tdNo = document.createElement('td');
                 tdNo.textContent = String(idx + 1);
@@ -1610,7 +1657,7 @@ $get_list_data = $x_list_data;
                 elSatuan.value = data.satuan || '';
             }
             if (elHpp) {
-                elHpp.value = formatHargaSatuanPembelian(data.harga_satuan || '');
+                elHpp.value = formatHargaSatuanPembelian(data.harga_satuan || '', true);
             }
             if (elKode && data.kode_barang) {
                 elKode.value = data.kode_barang;

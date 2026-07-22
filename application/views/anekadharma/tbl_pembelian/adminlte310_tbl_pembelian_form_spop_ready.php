@@ -705,7 +705,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                     <?php
                                     $get_format_rupiah_harga_satuan = number_format($row->harga_satuan, 2, ',', '.');
                                     ?>
-                                    <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" value="<?php echo $get_format_rupiah_harga_satuan; ?>" inputmode="numeric" autocomplete="off" required>
+                                    <input type="text" name="harga_satuan" id="harga_satuan" placeholder="contoh: 1.250,50" class="form-control" value="<?php echo $get_format_rupiah_harga_satuan; ?>" inputmode="decimal" autocomplete="off" required>
                                 </div>
                             </div>
 
@@ -852,7 +852,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                             </div>
                             <div class="col-3">
                                 <label for="satuan">Harga Satuan <?php echo form_error('harga_satuan') ?></label>
-                                <input type="text" name="harga_satuan" id="harga_satuan" placeholder="harga Satuan" class="form-control" inputmode="numeric" autocomplete="off" required>
+                                <input type="text" name="harga_satuan" id="harga_satuan" placeholder="contoh: 1.250,50" class="form-control" inputmode="decimal" autocomplete="off" required>
                             </div>
                         </div>
 
@@ -1186,30 +1186,76 @@ foreach ($data_ALL_per_SPOP as $list_data) {
         }
         window.refreshModalPembelianData = refreshModalPembelianData;
 
-        function formatHargaSatuanPembelianSpopReady(value) {
-            if (value === null || typeof value === 'undefined' || value === '') {
+        /**
+         * Format harga satuan gaya Indonesia: titik = ribuan, koma = desimal.
+         * Contoh tampilan: 6.826,75 (= 6826.75)
+         * @param {*} value
+         * @param {boolean} fromDatabase - true jika nilai dari DB/API (desimal titik Inggris)
+         */
+        function formatHargaSatuanPembelianSpopReady(value, fromDatabase) {
+            if (value === null || typeof value === 'undefined') {
                 return '';
             }
 
-            var valueString = String(value).trim();
-            if (/^(\d{1,3}\.)+\d{3}$/.test(valueString)) {
-                valueString = valueString.replace(/\./g, '');
-            } else if (/^\d+(\.\d+)?$/.test(valueString)) {
-                var numericValue = parseFloat(valueString);
-                if (!isNaN(numericValue)) {
-                    valueString = String(Math.round(numericValue));
-                }
-            } else {
-                valueString = valueString.replace(/[^0-9]/g, '');
+            var raw = String(value).trim();
+            if (raw === '') {
+                return '';
             }
 
-            return valueString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            // Dari DB/API: 6826.75 → 6.826,75
+            if (fromDatabase === true && /^\d+(\.\d+)?$/.test(raw)) {
+                var partsDb = raw.split('.');
+                var intDb = partsDb[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                if (partsDb.length > 1 && partsDb[1] !== '') {
+                    var decDb = partsDb[1].substring(0, 4).replace(/0+$/, '');
+                    return decDb !== '' ? (intDb + ',' + decDb) : intDb;
+                }
+                return intDb;
+            }
+
+            // Input pengguna: titik selalu pemisah ribuan, koma selalu desimal
+            var trailingComma = /,$/.test(raw.replace(/\s/g, ''));
+            var cleaned = raw.replace(/[^\d.,]/g, '');
+            var intPart = '';
+            var decPart = '';
+
+            if (cleaned.indexOf(',') !== -1) {
+                var commaIdx = cleaned.indexOf(',');
+                intPart = cleaned.substring(0, commaIdx).replace(/\./g, '').replace(/[^\d]/g, '');
+                decPart = cleaned.substring(commaIdx + 1).replace(/[^\d]/g, '').substring(0, 4);
+            } else {
+                intPart = cleaned.replace(/\./g, '').replace(/[^\d]/g, '');
+            }
+
+            intPart = intPart.replace(/^0+(?=\d)/, '');
+            if (intPart === '') {
+                intPart = '0';
+            }
+
+            var intFmt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            if (trailingComma && decPart === '') {
+                return intFmt + ',';
+            }
+            if (decPart !== '') {
+                return intFmt + ',' + decPart;
+            }
+            return intFmt;
         }
 
         function applyFormatHargaSatuanPembelianSpopReady(input) {
             var inputElement = $(input);
-            var angka = inputElement.val().replace(/[^0-9]/g, '');
-            inputElement.val(formatHargaSatuanPembelianSpopReady(angka));
+            var el = inputElement.get(0);
+            var oldVal = inputElement.val();
+            var oldLen = oldVal.length;
+            var selStart = el && typeof el.selectionStart === 'number' ? el.selectionStart : oldLen;
+            var newVal = formatHargaSatuanPembelianSpopReady(oldVal, false);
+            inputElement.val(newVal);
+            if (el && typeof el.setSelectionRange === 'function') {
+                var newPos = Math.max(0, newVal.length - (oldLen - selStart));
+                try {
+                    el.setSelectionRange(newPos, newPos);
+                } catch (e) {}
+            }
         }
 
         function getBarangFormFromSelect(selectElement) {
@@ -1219,7 +1265,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
         function setDetailBarangToForm(form, kategori, satuan, hargaSatuan) {
             form.find('input[name="kategori_barang_info"]').val(kategori || '');
             form.find('input[name="satuan"]').val(satuan || '');
-            form.find('input[name="harga_satuan"]').val(formatHargaSatuanPembelianSpopReady(hargaSatuan));
+            form.find('input[name="harga_satuan"]').val(formatHargaSatuanPembelianSpopReady(hargaSatuan, true));
         }
 
         function loadDetailBarangPembelianSpopReady(selectElement) {
