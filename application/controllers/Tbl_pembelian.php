@@ -617,6 +617,8 @@ class Tbl_pembelian extends CI_Controller
 			'tgl_nomor_bkk' => '',
 			'uuid_bank_bkk' => '',
 			'nama_bank_bkk' => '',
+			'nomor_rekening_bkk' => '',
+			'atas_nama_rekening_bkk' => '',
 			'nomor_cek_giro' => '',
 			'uuid_account_unit' => '',
 			'account' => '',
@@ -727,15 +729,15 @@ class Tbl_pembelian extends CI_Controller
 			'nomor_faktur' => $this->input->post('nomor_faktur', TRUE),
 			'uuid_bank' => $this->input->post('uuid_bank', TRUE),
 
-			// ditransfer ke
-			'nama_bank' => $row_per_uuid_bank->nama_bank,
+			// ditransfer ke rekening supplier
+			'nama_bank' => ($row_per_uuid_bank ? $row_per_uuid_bank->nama_bank : ''),
 			'nomor_rekening' => $this->input->post('nomor_rekening', TRUE),
 			'atas_nama_rekening' => $this->input->post('atas_nama_rekening', TRUE),
 
 			'nomor_bkk' => $this->input->post('nomor_bkk', TRUE),
 			'tgl_nomor_bkk' => $date_tgl_nomor_bkk,
 
-			// 'bank_checkbox' => $this->input->post('bank_checkbox', TRUE),
+			// rekening sumber pembayaran BKK
 			'uuid_bank_bkk' => $this->input->post('uuid_bank_bkk', TRUE),
 			'nomor_rekening_bkk' => $this->input->post('nomor_rekening_bkk', TRUE),
 			'atas_nama_rekening_bkk' => $this->input->post('atas_nama_rekening_bkk', TRUE),
@@ -841,6 +843,9 @@ class Tbl_pembelian extends CI_Controller
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
+		$row_per_uuid_bank_bkk = $this->Sys_bank_model->get_by_uuid_bank($row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk);
+		$nama_bank_bkk = ($row_per_uuid_bank_bkk ? $row_per_uuid_bank_bkk->nama_bank : '');
+
 		// die;
 
 		// print_r($row_per_uuid_pengajuan_bayar_terproses->nominal_pengajuan);
@@ -887,6 +892,7 @@ class Tbl_pembelian extends CI_Controller
 			'nama_kabagkeuangan' => $row_per_uuid_pengajuan_bayar_terproses->nama_kabagkeuangan,
 			'nama_kasirpemebelian' => $row_per_uuid_pengajuan_bayar_terproses->nama_kasirpemebelian,
 			'uuid_bank_bkk' => $row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk,
+			'nama_bank_bkk' => $nama_bank_bkk,
 			'nomor_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->nomor_rekening_bkk,
 			'atas_nama_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->atas_nama_rekening_bkk,
 
@@ -910,6 +916,9 @@ class Tbl_pembelian extends CI_Controller
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+
+		$row_per_uuid_bank_bkk = $this->Sys_bank_model->get_by_uuid_bank($row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk);
+		$nama_bank_bkk = ($row_per_uuid_bank_bkk ? $row_per_uuid_bank_bkk->nama_bank : '');
 
 		// die;
 
@@ -959,6 +968,7 @@ class Tbl_pembelian extends CI_Controller
 			'nama_kabagkeuangan' => $row_per_uuid_pengajuan_bayar_terproses->nama_kabagkeuangan,
 			'nama_kasirpemebelian' => $row_per_uuid_pengajuan_bayar_terproses->nama_kasirpemebelian,
 			'uuid_bank_bkk' => $row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk,
+			'nama_bank_bkk' => $nama_bank_bkk,
 			'nomor_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->nomor_rekening_bkk,
 			'atas_nama_rekening_bkk' => $row_per_uuid_pengajuan_bayar_terproses->atas_nama_rekening_bkk,
 
@@ -1158,15 +1168,15 @@ class Tbl_pembelian extends CI_Controller
 			'nomor_faktur' => $this->input->post('nomor_faktur', TRUE),
 			'uuid_bank' => $this->input->post('uuid_bank', TRUE),
 
-			// ditransfer ke
-			'nama_bank' => $row_per_uuid_bank->nama_bank,
+			// ditransfer ke rekening supplier
+			'nama_bank' => ($row_per_uuid_bank ? $row_per_uuid_bank->nama_bank : ''),
 			'nomor_rekening' => $this->input->post('nomor_rekening', TRUE),
 			'atas_nama_rekening' => $this->input->post('atas_nama_rekening', TRUE),
 
 			'nomor_bkk' => $this->input->post('nomor_bkk', TRUE),
 			'tgl_nomor_bkk' => $date_tgl_nomor_bkk,
 
-			// 'bank_checkbox' => $this->input->post('bank_checkbox', TRUE),
+			// rekening sumber pembayaran BKK
 			'uuid_bank_bkk' => $this->input->post('uuid_bank_bkk', TRUE),
 			'nomor_rekening_bkk' => $this->input->post('nomor_rekening_bkk', TRUE),
 			'atas_nama_rekening_bkk' => $this->input->post('atas_nama_rekening_bkk', TRUE),
@@ -1288,7 +1298,7 @@ class Tbl_pembelian extends CI_Controller
 
 		$row_per_uuid_bank = $this->Sys_bank_model->get_by_uuid_bank($Query_data_pengajuan_bayar_by_id->uuid_bank_bkk);
 
-		$GET_NAMA_BANK_BKK = $row_per_uuid_bank->nama_bank;
+		$GET_NAMA_BANK_BKK = ($row_per_uuid_bank ? $row_per_uuid_bank->nama_bank : '');
 		// print_r($GET_NAMA_BANK_BKK);
 
 		// print_r("<br/>");
@@ -1345,7 +1355,8 @@ class Tbl_pembelian extends CI_Controller
 
 			'uuid_bank_bkk' => $Query_data_pengajuan_bayar_by_id->uuid_bank_bkk,
 			'nama_bank_bkk' => $GET_NAMA_BANK_BKK,
-
+			'nomor_rekening_bkk' => $Query_data_pengajuan_bayar_by_id->nomor_rekening_bkk,
+			'atas_nama_rekening_bkk' => $Query_data_pengajuan_bayar_by_id->atas_nama_rekening_bkk,
 
 			'nama_direktur' => $Query_data_pengajuan_bayar_by_id->nama_direktur,
 			'nama_kabagkeuangan' => $Query_data_pengajuan_bayar_by_id->nama_kabagkeuangan,
