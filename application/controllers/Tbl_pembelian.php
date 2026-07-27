@@ -1543,32 +1543,35 @@ class Tbl_pembelian extends CI_Controller
 		// RIWAYAT PEMBAYARAN PENJUALAN ACCOUNTING
 
 		$this->db->where('uuid_konsumen', $uuid_konsumen);
-		//$this->db->where('password',  $test);
 		$sys_konsumen_data = $this->db->get('sys_konsumen');
 
+		// Default fallback agar aman saat UUID tidak ditemukan di sys_konsumen maupun sys_unit.
+		$get_kode_konsumen = '';
+		$get_nama_konsumen = (string) $uuid_konsumen;
+		$get_nomor_kontak_konsumen = '';
+		$get_alamat_konsumen = '';
+		$Data_konsumen = null;
+
 		if ($sys_konsumen_data->num_rows() > 0) {
-			// Konsumen dari sys_konsumen
-			// $get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 			$sql_uuid_konsumen = "SELECT * FROM `sys_konsumen` WHERE `uuid_konsumen`='$uuid_konsumen'";
-			$get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_konsumen;
-			$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_konsumen;
-			$get_nomor_kontak_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nmr_kontak_konsumen;
-			$get_alamat_konsumen = $this->db->query($sql_uuid_konsumen)->row()->alamat_konsumen;
-			$Data_konsumen = $this->db->query($sql_uuid_konsumen)->row();
+			$row_konsumen = $this->db->query($sql_uuid_konsumen)->row();
+			if ($row_konsumen) {
+				$get_kode_konsumen = isset($row_konsumen->kode_konsumen) ? $row_konsumen->kode_konsumen : '';
+				$get_nama_konsumen = isset($row_konsumen->nama_konsumen) ? $row_konsumen->nama_konsumen : $get_nama_konsumen;
+				$get_nomor_kontak_konsumen = isset($row_konsumen->nmr_kontak_konsumen) ? $row_konsumen->nmr_kontak_konsumen : '';
+				$get_alamat_konsumen = isset($row_konsumen->alamat_konsumen) ? $row_konsumen->alamat_konsumen : '';
+				$Data_konsumen = $row_konsumen;
+			}
 		} else {
-			// Konsumen dari unit
-
-			// $uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
-			// $data_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
-			// $data_nama_konsumen = $data_konsumen->nama_unit;
-
-			// $get_uuid_konsumen = $this->input->post('uuid_konsumen', TRUE);
 			$sql_uuid_konsumen = "SELECT * FROM `sys_unit` WHERE `uuid_unit`='$uuid_konsumen'";
-			$get_kode_konsumen = $this->db->query($sql_uuid_konsumen)->row()->kode_unit;
-			$get_nama_konsumen = $this->db->query($sql_uuid_konsumen)->row()->nama_unit;
-			$get_nomor_kontak_konsumen = $this->db->query($sql_uuid_konsumen)->row()->keterangan;
-			$get_alamat_konsumen = $this->db->query($sql_uuid_konsumen)->row()->keterangan;
-			$Data_konsumen = $this->db->query($sql_uuid_konsumen)->row();
+			$row_unit = $this->db->query($sql_uuid_konsumen)->row();
+			if ($row_unit) {
+				$get_kode_konsumen = isset($row_unit->kode_unit) ? $row_unit->kode_unit : '';
+				$get_nama_konsumen = isset($row_unit->nama_unit) ? $row_unit->nama_unit : $get_nama_konsumen;
+				$get_nomor_kontak_konsumen = isset($row_unit->keterangan) ? $row_unit->keterangan : '';
+				$get_alamat_konsumen = isset($row_unit->keterangan) ? $row_unit->keterangan : '';
+				$Data_konsumen = $row_unit;
+			}
 		}
 
 		$data = array(

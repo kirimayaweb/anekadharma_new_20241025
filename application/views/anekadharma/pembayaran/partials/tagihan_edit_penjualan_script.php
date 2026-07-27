@@ -98,6 +98,12 @@
         $('#pj_total_preview').val(fmtNumber(jml * harga));
     }
 
+    function updateTotalPreviewModalRow() {
+        var jml = parseAngkaId($('#pjm_jumlah').val());
+        var harga = parseAngkaId($('#pjm_harga_satuan').val());
+        $('#pjm_total_preview').val(fmtNumber(jml * harga));
+    }
+
     function resetFormPenjualan(mode) {
         mode = mode || 'update';
         $('#pj_mode').val(mode);
@@ -135,6 +141,20 @@
         $('#judulFormPenjualanTagihan').text(mode === 'create' ? 'Tambah Baris Penjualan' : 'Ubah Data Penjualan #' + (r.id || ''));
         $('#btnSimpanPenjualanTagihan').html('<i class="fa fa-save"></i> ' + (mode === 'create' ? 'Tambah' : 'Simpan'));
         updateTotalPreview();
+    }
+
+    function fillModalRowFromRow(r) {
+        $('#pjm_id').val(r.id || '');
+        $('#pjm_uuid_penjualan').val(r.uuid_penjualan || currentCtx.uuid_penjualan || '');
+        $('#pjm_tgl_jual').val(r.tgl_jual_raw || '');
+        $('#pjm_nmrpesan').val(r.nmrpesan || '');
+        $('#pjm_nmrkirim').val(r.nmrkirim || '');
+        $('#pjm_kode_barang').val(r.kode_barang || '');
+        $('#pjm_nama_barang').val(r.nama_barang || '');
+        $('#pjm_jumlah').val(r.jumlah != null ? formatAngkaIdInput(r.jumlah) : '');
+        $('#pjm_satuan').val(r.satuan || '');
+        $('#pjm_harga_satuan').val(r.harga_satuan != null ? formatAngkaIdInput(r.harga_satuan) : '');
+        updateTotalPreviewModalRow();
     }
 
     function renderValidasiBox(resp) {
@@ -343,12 +363,43 @@
     // Global agar onclick di tombol (termasuk hasil clone FixedColumns) selalu jalan
     window.openEditPenjualanTagihan = openEditPenjualanModal;
 
+    function setupEditRowModalStacking() {
+        var $child = $('#modalEditRowBarangPenjualanTagihan');
+        if (!$child.length) return;
+
+        $child.off('shown.bs.modal.editrowstack hidden.bs.modal.editrowstack');
+
+        $child.on('shown.bs.modal.editrowstack', function() {
+            window.setTimeout(function() {
+                var $backdrop = $('.modal-backdrop').last();
+                if ($backdrop.length) {
+                    $backdrop.addClass('backdrop-edit-row-penjualan');
+                }
+                $('body').addClass('modal-open');
+            }, 10);
+        });
+
+        $child.on('hidden.bs.modal.editrowstack', function() {
+            $('.modal-backdrop.backdrop-edit-row-penjualan').remove();
+            if ($('#modalEditPenjualanTagihan').hasClass('show')) {
+                $('body').addClass('modal-open');
+            }
+        });
+    }
+
     window.handleEditPenjualanRowTagihan = function(id, el) {
         var row = findRowById(id);
         if (!row) {
             notify('warning', 'Perhatian', 'Data baris penjualan tidak ditemukan. Silakan klik Muat Ulang.');
             return false;
         }
+
+        fillModalRowFromRow(row);
+        $('#modalEditRowBarangPenjualanTagihan').modal({
+            backdrop: 'static',
+            keyboard: false,
+            show: true
+        });
 
         fillFormFromRow(row, 'update');
 
@@ -381,8 +432,6 @@
             }
             notify('success', 'Berhasil', resp.message || 'Data penjualan berhasil dihapus.');
             loadDetailPenjualan({ syncRecordToDetail: true });
-            // Refresh halaman tagihan agar total sinkron
-            window.setTimeout(function() { window.location.reload(); }, 700);
         }).fail(function() {
             notify('error', 'Gagal', 'Gagal menghubungi server saat hapus.');
         });
@@ -691,6 +740,61 @@
     });
 
     $('#pj_jumlah, #pj_harga_satuan').on('input change', updateTotalPreview);
+    $('#pjm_jumlah, #pjm_harga_satuan').on('input change', updateTotalPreviewModalRow);
+
+    $('#formEditRowBarangPenjualanTagihan').on('submit', function(e) {
+        e.preventDefault();
+        var payload = {
+            id: $('#pjm_id').val(),
+            uuid_penjualan: $('#pjm_uuid_penjualan').val() || currentCtx.uuid_penjualan,
+            tgl_jual: $('#pjm_tgl_jual').val(),
+            nmrpesan: $('#pjm_nmrpesan').val(),
+            nmrkirim: $('#pjm_nmrkirim').val(),
+            kode_barang: $('#pjm_kode_barang').val(),
+            nama_barang: $('#pjm_nama_barang').val(),
+            jumlah: $('#pjm_jumlah').val(),
+            satuan: $('#pjm_satuan').val(),
+            harga_satuan: $('#pjm_harga_satuan').val()
+        };
+
+        if (!payload.id) {
+            notify('warning', 'Perhatian', 'ID data penjualan tidak ditemukan.');
+            return;
+        }
+
+        $('#btnSimpanRowBarangPenjualanTagihan').prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Menyimpan...');
+        $.ajax({
+            url: ajaxUrlUpdate,
+            type: 'POST',
+            dataType: 'json',
+            data: payload
+        }).done(function(resp) {
+            if (!resp || !resp.success) {
+                notify('error', 'Gagal', (resp && resp.message) ? resp.message : 'Gagal menyimpan perubahan data.');
+                return;
+            }
+
+            currentCtx.dirty = true;
+            if (resp.uuid_penjualan) {
+                currentCtx.uuid_penjualan = resp.uuid_penjualan;
+            }
+            if (resp.total_detail != null) {
+                currentCtx.total_nominal_record = resp.total_detail;
+            }
+
+            $('#modalEditRowBarangPenjualanTagihan').modal('hide');
+            notify('success', 'Berhasil', resp.message || 'Data penjualan berhasil diupdate.');
+            loadDetailPenjualan({ syncRecordToDetail: true }).done(function() {
+                if ($('#modalEditPenjualanTagihan').hasClass('show')) {
+                    $('body').addClass('modal-open');
+                }
+            });
+        }).fail(function() {
+            notify('error', 'Gagal', 'Gagal menghubungi server saat simpan edit data.');
+        }).always(function() {
+            $('#btnSimpanRowBarangPenjualanTagihan').prop('disabled', false).html('<i class="fa fa-save"></i> Simpan Perubahan');
+        });
+    });
 
     $('#formPenjualanTagihanCrud').on('submit', function(e) {
         e.preventDefault();
@@ -738,8 +842,6 @@
             }
             notify('success', 'Berhasil', resp.message || 'Data penjualan berhasil disimpan.');
             loadDetailPenjualan({ syncRecordToDetail: true });
-            // Soft-reload halaman tagihan agar total di tabel utama ikut berubah
-            window.setTimeout(function() { window.location.reload(); }, 900);
         }).fail(function() {
             notify('error', 'Gagal', 'Gagal menghubungi server saat simpan.');
         }).always(function() {
@@ -761,11 +863,13 @@
     }
 
     // Pastikan modal tidak terpotong overflow content-wrapper / FixedColumns
-    ['#modalEditPenjualanTagihan', '#modalPilihPersediaanTagihan', '#modalIsiJumlahPersediaanTagihan'].forEach(function(sel) {
+    ['#modalEditPenjualanTagihan', '#modalEditRowBarangPenjualanTagihan', '#modalPilihPersediaanTagihan', '#modalIsiJumlahPersediaanTagihan'].forEach(function(sel) {
         if ($(sel).length) {
             $(sel).appendTo('body');
         }
     });
+
+    setupEditRowModalStacking();
 
     console.log('Edit Penjualan tagihan: script siap (+ Tambah Barang).');
 })();

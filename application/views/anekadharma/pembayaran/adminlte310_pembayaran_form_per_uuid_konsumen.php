@@ -88,7 +88,6 @@
                                         <tr>
                                             <th style="text-align:center" width="10px">No</th>
                                             <th style="text-align:center" width="170px">Action</th>
-                                            <th style="text-align:center">Total Nominal</th>
                                             <th style="text-align:center">Tgl Jual</th>
                                             <th style="text-align:center">No Pesan</th>
                                             <th style="text-align:center">No Kirim</th>
@@ -97,6 +96,7 @@
                                             <th style="text-align:center">Jumlah</th>
                                             <th style="text-align:center">Satuan</th>
                                             <th style="text-align:center">Harga Satuan</th>
+                                            <th style="text-align:center">Total Nominal</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -104,46 +104,17 @@
                                         $start = 0;
                                         $TOTAL_NOMINAL_TAGIHAN_ALL = 0;
 
-                                        // Total per dokumen: nomor pesan + nomor kirim yang sama
-                                        $tagihan_group_totals = array();
-                                        $tagihan_group_counts = array();
-                                        foreach ($Data_konsumen_tagihan as $_tg) {
-                                            $_pesan = trim((string) (isset($_tg->nmrpesan) ? $_tg->nmrpesan : ''));
-                                            $_kirim = trim((string) (isset($_tg->nmrkirim) ? $_tg->nmrkirim : ''));
-                                            if ($_pesan !== '' || $_kirim !== '') {
-                                                $_gkey = $_pesan . '||' . $_kirim;
-                                            } else {
-                                                $_gkey = 'uuid:' . (isset($_tg->uuid_penjualan) ? $_tg->uuid_penjualan : '');
-                                            }
-                                            if (!isset($tagihan_group_totals[$_gkey])) {
-                                                $tagihan_group_totals[$_gkey] = 0;
-                                                $tagihan_group_counts[$_gkey] = 0;
-                                            }
-                                            $tagihan_group_totals[$_gkey] += (float) $_tg->total_nominal;
-                                            $tagihan_group_counts[$_gkey]++;
-                                        }
-
                                         foreach ($Data_konsumen_tagihan as $list_data) {
-                                            $TOTAL_NOMINAL_TAGIHAN_ALL = $TOTAL_NOMINAL_TAGIHAN_ALL + $list_data->total_nominal;
+                                            $total_nominal_row = (float) $list_data->jumlah * (float) $list_data->harga_satuan;
+                                            $TOTAL_NOMINAL_TAGIHAN_ALL += $total_nominal_row;
                                             $pesan_row = trim((string) (isset($list_data->nmrpesan) ? $list_data->nmrpesan : ''));
                                             $kirim_row = trim((string) (isset($list_data->nmrkirim) ? $list_data->nmrkirim : ''));
-                                            if ($pesan_row !== '' || $kirim_row !== '') {
-                                                $gkey_row = $pesan_row . '||' . $kirim_row;
-                                            } else {
-                                                $gkey_row = 'uuid:' . (isset($list_data->uuid_penjualan) ? $list_data->uuid_penjualan : '');
-                                            }
-                                            $total_group_row = isset($tagihan_group_totals[$gkey_row])
-                                                ? (float) $tagihan_group_totals[$gkey_row]
-                                                : (float) $list_data->total_nominal;
-                                            $count_group_row = isset($tagihan_group_counts[$gkey_row])
-                                                ? (int) $tagihan_group_counts[$gkey_row]
-                                                : 1;
                                         ?>
                                             <tr data-uuid-penjualan="<?php echo htmlspecialchars($list_data->uuid_penjualan, ENT_QUOTES, 'UTF-8'); ?>"
                                                 data-nmrpesan="<?php echo htmlspecialchars($pesan_row, ENT_QUOTES, 'UTF-8'); ?>"
                                                 data-nmrkirim="<?php echo htmlspecialchars($kirim_row, ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-total-line="<?php echo htmlspecialchars((string) $list_data->total_nominal, ENT_QUOTES, 'UTF-8'); ?>"
-                                                data-total-group="<?php echo htmlspecialchars((string) $total_group_row, ENT_QUOTES, 'UTF-8'); ?>">
+                                                data-total-line="<?php echo htmlspecialchars((string) $total_nominal_row, ENT_QUOTES, 'UTF-8'); ?>"
+                                                data-total-group="<?php echo htmlspecialchars((string) $total_nominal_row, ENT_QUOTES, 'UTF-8'); ?>">
                                                 <td><?php echo ++$start ?></td>
                                                 <td class="tagihan-action-cell" align="center">
                                                     <div class="tagihan-action-inline">
@@ -158,7 +129,7 @@
                                                             class="btn btn-danger btn-xs btn-edit-penjualan-tagihan"
                                                             data-uuid-penjualan="<?php echo htmlspecialchars($list_data->uuid_penjualan, ENT_QUOTES, 'UTF-8'); ?>"
                                                             data-uuid-penjualan-proses="<?php echo htmlspecialchars($list_data->uuid_penjualan_proses, ENT_QUOTES, 'UTF-8'); ?>"
-                                                            data-total-nominal="<?php echo htmlspecialchars((string) $total_group_row, ENT_QUOTES, 'UTF-8'); ?>"
+                                                            data-total-nominal="<?php echo htmlspecialchars((string) $total_nominal_row, ENT_QUOTES, 'UTF-8'); ?>"
                                                             data-nmrpesan="<?php echo htmlspecialchars($pesan_row, ENT_QUOTES, 'UTF-8'); ?>"
                                                             data-nmrkirim="<?php echo htmlspecialchars($kirim_row, ENT_QUOTES, 'UTF-8'); ?>"
                                                             data-nama-barang="<?php echo htmlspecialchars($list_data->nama_barang, ENT_QUOTES, 'UTF-8'); ?>"
@@ -166,9 +137,6 @@
                                                             <i class="fa fa-pencil"></i> Edit Penjualan
                                                         </button>
                                                     </div>
-                                                </td>
-                                                <td style="text-align:right" class="td-total-group-tagihan">
-                                                    <strong class="text-danger"><?php echo nominal($total_group_row); ?></strong>
                                                 </td>
                                                 <td><?php echo date("d M Y", strtotime($list_data->tgl_jual)); ?></td>
                                                 <td><?php echo htmlspecialchars($list_data->nmrpesan, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -178,6 +146,9 @@
                                                 <td style="text-align:right"><?php echo nominal($list_data->jumlah); ?></td>
                                                 <td><?php echo htmlspecialchars($list_data->satuan, ENT_QUOTES, 'UTF-8'); ?></td>
                                                 <td style="text-align:right"><?php echo nominal($list_data->harga_satuan); ?></td>
+                                                <td style="text-align:right" class="td-total-group-tagihan">
+                                                    <strong class="text-danger"><?php echo nominal($total_nominal_row); ?></strong>
+                                                </td>
                                             </tr>
                                         <?php } ?>
                                     </tbody>
@@ -185,8 +156,8 @@
                                         <tr>
                                             <th></th>
                                             <th style="text-align:right">TOTAL TAGIHAN</th>
-                                            <th style="text-align:right"><?php echo nominal($TOTAL_NOMINAL_TAGIHAN_ALL); ?></th>
                                             <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+                                            <th style="text-align:right"><?php echo nominal($TOTAL_NOMINAL_TAGIHAN_ALL); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -712,6 +683,88 @@
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit 1 Baris Data Barang Penjualan -->
+<div class="modal fade" id="modalEditRowBarangPenjualanTagihan" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:760px;">
+        <div class="modal-content">
+            <form id="formEditRowBarangPenjualanTagihan" autocomplete="off">
+                <div class="modal-header bg-warning">
+                    <h4 class="modal-title text-dark"><i class="fa fa-pencil"></i> Edit Data Barang Penjualan</h4>
+                    <button type="button" class="close text-dark" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="pjm_id" name="id" value="">
+                    <input type="hidden" id="pjm_uuid_penjualan" name="uuid_penjualan" value="">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-2">
+                                <label>Tgl Jual</label>
+                                <input type="date" class="form-control form-control-sm" id="pjm_tgl_jual" name="tgl_jual">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-2">
+                                <label>No Pesan</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_nmrpesan" name="nmrpesan">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-2">
+                                <label>No Kirim</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_nmrkirim" name="nmrkirim">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6">
+                            <div class="form-group mb-2">
+                                <label>Kode</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_kode_barang" name="kode_barang">
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-sm-12">
+                            <div class="form-group mb-2">
+                                <label>Nama Barang / Jasa</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_nama_barang" name="nama_barang" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-4">
+                            <div class="form-group mb-2">
+                                <label>Jumlah</label>
+                                <input type="text" inputmode="decimal" class="form-control form-control-sm" id="pjm_jumlah" name="jumlah" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-4">
+                            <div class="form-group mb-2">
+                                <label>Satuan</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_satuan" name="satuan">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-4">
+                            <div class="form-group mb-2">
+                                <label>Harga Satuan</label>
+                                <input type="text" inputmode="decimal" class="form-control form-control-sm" id="pjm_harga_satuan" name="harga_satuan" required>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-12">
+                            <div class="form-group mb-2">
+                                <label>Total baris (otomatis)</label>
+                                <input type="text" class="form-control form-control-sm" id="pjm_total_preview" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary" id="btnSimpanRowBarangPenjualanTagihan">
+                        <i class="fa fa-save"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -1397,6 +1450,15 @@
     }
     #modalIsiJumlahPersediaanTagihan {
         z-index: 1070;
+    }
+    #modalEditRowBarangPenjualanTagihan {
+        z-index: 1080;
+    }
+    #modalEditRowBarangPenjualanTagihan .modal-dialog {
+        z-index: 1081;
+    }
+    .modal-backdrop.backdrop-edit-row-penjualan {
+        z-index: 1075 !important;
     }
     .modal-backdrop + .modal-backdrop {
         z-index: 1055;
