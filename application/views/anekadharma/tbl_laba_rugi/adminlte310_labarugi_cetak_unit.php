@@ -1,7 +1,8 @@
 <head>
 	<style>
 		@page { margin: 8mm 10mm; size: A4 portrait; }
-		body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 11pt; color: #000; }
+		body { margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1a2e24; background: #fff; }
+
 		.unit-page {
 			margin: 0;
 			padding: 0;
@@ -9,153 +10,223 @@
 		}
 		.unit-page.unit-page-after-break {
 			page-break-after: always;
-			border-top: none !important;
 		}
 		@media screen {
 			.unit-page + .unit-page {
-				margin-top: 24px;
-				padding-top: 0;
-				border-top: none;
+				margin-top: 28px;
 			}
 		}
+
+		/* ---- Header ---- */
 		.cetak-unit-header {
 			text-align: center;
-			font-weight: bold;
-			font-style: normal;
-			border: none;
-			margin: 0 0 0.35em 0;
-			padding: 0;
-			line-height: 1.25;
+			margin: 0 0 0.55em 0;
+			padding: 0.55em 0.7em 0.45em;
+			background-color: #edf5f0;
+			border: 1px solid #b8d4c4;
+			line-height: 1.3;
 		}
 		.cetak-unit-header p {
-			margin: 0.15em 0;
+			margin: 0.12em 0;
 			padding: 0;
-			border: none !important;
-			font-size: 1.09em;
+			font-size: 1.05em;
 			font-weight: bold;
-			color: #000;
+			color: #1b4332;
+		}
+		.cetak-unit-header .cetak-unit-head-company {
+			font-size: 1.12em;
+			letter-spacing: 0.03em;
+		}
+		.cetak-unit-header .cetak-unit-head-title {
+			font-size: 0.98em;
+			color: #2d6a4f;
+		}
+		.cetak-unit-header .cetak-unit-head-periode {
+			font-size: 0.92em;
+			font-weight: 600;
+			color: #40916c;
 		}
 		.cetak-unit-header .cetak-unit-head-unit {
-			font-size: 0.95em;
+			display: inline-block;
+			margin-top: 0.35em;
+			padding: 0.28em 0.85em;
+			font-size: 0.9em;
 			font-weight: 700;
-			margin-top: 0.25em;
+			color: #fff;
+			background-color: #2d6a4f;
+			border: 1px solid #1b4332;
 		}
 		.cetak-unit-header .cetak-unit-head-kode {
 			display: inline-block;
 			font-size: 0.82em;
 			font-weight: 800;
-			letter-spacing: 0.02em;
-			margin-right: 0.35em;
+			letter-spacing: 0.04em;
+			margin-right: 0.4em;
+			padding: 0.1em 0.35em;
+			background-color: rgba(255,255,255,0.18);
 		}
+
+		/* ---- Kotak batas luar data ---- */
+		.cetak-outer-box {
+			width: 100%;
+			border-collapse: collapse;
+			table-layout: fixed;
+			margin: 0 0 0.65em 0;
+		}
+		.cetak-outer-box > tbody > tr > td {
+			border: 2px solid #2d6a4f;
+			padding: 0;
+			background-color: #ffffff;
+		}
+
 		#customers {
-			font-family: Arial, sans-serif;
+			font-family: Arial, Helvetica, sans-serif;
 			border-collapse: collapse;
 			width: 100%;
 			table-layout: fixed;
-			color: #000;
-			border: none !important;
-			border-top: none !important;
+			color: #1a2e24;
+			border: none;
 		}
 		#customers td, #customers th {
-			border: 0;
-			padding: 0.2em 0.3em;
-			font-family: Arial, sans-serif;
+			border: none;
+			border-bottom: 1px solid #dce8e2;
+			padding: 0.22em 0.45em;
+			font-family: Arial, Helvetica, sans-serif;
 			font-size: 1em;
 			font-weight: normal;
 			vertical-align: middle;
-			color: #000;
+			color: #1a2e24;
 			line-height: 1.35;
 		}
-		#customers th { background-color: transparent; color: #000; }
-		#customers > tr:first-child th {
-			border-top: none !important;
+		#customers tr:last-child th {
+			border-bottom: none;
 		}
+
+		/* Baris header kolom */
+		#customers tr.row-col-header th {
+			background-color: #2d6a4f !important;
+			color: #ffffff !important;
+			font-weight: 700;
+			font-size: 0.88em;
+			letter-spacing: 0.04em;
+			text-transform: uppercase;
+			border-bottom: 2px solid #1b4332 !important;
+			padding-top: 0.35em;
+			padding-bottom: 0.35em;
+		}
+		#customers tr.row-col-header .col-rp,
+		#customers tr.row-col-header .col-nominal {
+			text-align: center;
+		}
+
+		/* Baris bergantian — background lembut */
+		#customers tr.row-data-even th {
+			background-color: #f7fbf9 !important;
+		}
+		#customers tr.row-data-odd th {
+			background-color: #eef5f1 !important;
+		}
+
+		/* Baris judul grup */
 		#customers tr.row-title th {
-			background: #eef5f0 !important;
-			border-top: none !important;
-			border-bottom: none !important;
+			background-color: #d8ebe2 !important;
+			border-top: 1px solid #a8cbb8 !important;
+			border-bottom: 1px solid #a8cbb8 !important;
+			color: #1b4332;
 		}
-		#customers .col-label { text-align: left; padding-left: 0.6em; width: 72%; }
+
+		/* Baris subtotal */
+		#customers tr.row-subtotal th {
+			background-color: #e3f0ea !important;
+			border-top: 1px solid #b5d0c2 !important;
+		}
+
+		/* Baris summary / total penting */
+		#customers tr.row-summary th {
+			background-color: #c8e6d4 !important;
+			border-top: 2px solid #74a88a !important;
+			border-bottom: 2px solid #2d6a4f !important;
+			color: #1b4332;
+		}
+
+		#customers .col-label { text-align: left; padding-left: 0.65em; width: 72%; }
 		#customers .col-rp { text-align: left; width: 8%; white-space: nowrap; }
-		#customers .col-nominal { text-align: right; padding-right: 0.5em; width: 20%; white-space: nowrap; }
-		#customers .col-empty { text-align: center; color: #666; }
+		#customers .col-nominal { text-align: right; padding-right: 0.55em; width: 20%; white-space: nowrap; }
+		#customers .col-empty { text-align: center; color: #6b8f7a; }
 
 		#customers .cetak-label-title {
-			font-size: 1.09em;
+			font-size: 1.02em;
 			font-weight: 800;
-			padding-left: 0.6em;
-			background: transparent;
-			border-top: none !important;
+			padding-left: 0.65em;
 			color: #1b4332;
+			letter-spacing: 0.02em;
 		}
-		#customers .cetak-label-indent { padding-left: 1.2em; font-weight: 600; }
-		#customers .cetak-label-deep-indent { padding-left: 2.4em; font-weight: 600; }
+		#customers .cetak-label-indent { padding-left: 1.35em; font-weight: 600; }
+		#customers .cetak-label-deep-indent { padding-left: 2.5em; font-weight: 600; }
 		#customers .cetak-label-sub-muted {
-			padding-left: 2.4em;
-			font-size: 0.82em;
+			padding-left: 2.5em;
+			font-size: 0.84em;
 			font-style: italic;
 			font-weight: 400;
-			color: #2d4a38;
+			color: #3d5a48;
 		}
 		#customers .cetak-label-summary {
-			font-size: 1.09em;
+			font-size: 1.02em;
 			font-weight: 800;
-			padding-left: 0.6em;
-			background: transparent;
+			padding-left: 0.65em;
 			color: #1b4332;
 		}
-		#customers tr.row-summary th { background: transparent !important; }
 		#customers .label-bold { font-weight: 600; }
 
 		#customers .cetak-nominal-calc {
 			font-weight: 700;
-			color: #c62828;
+			color: #b71c1c;
 		}
 		#customers .cetak-nominal-muted {
 			font-style: italic;
 			font-weight: 400;
-			color: #000;
+			color: #3d5a48;
 		}
 		#customers .cetak-nominal-subtotal {
 			font-weight: 800;
-			color: #c62828;
+			color: #b71c1c;
 		}
 
+		#customers tr.row-summary .cetak-nominal-calc,
+		#customers tr.row-summary .cetak-nominal-subtotal {
+			color: #8b0000;
+		}
+
+		/* ---- TTD Footer ---- */
 		#ttd-footer {
 			width: 100%;
 			border-collapse: collapse;
 			table-layout: fixed;
-			margin-top: 0.4em;
-			font-family: Arial, sans-serif;
+			margin-top: 0.5em;
+			font-family: Arial, Helvetica, sans-serif;
 		}
-
 		#ttd-footer th {
 			border: none;
 			font-weight: normal;
 			font-size: 1em;
-			font-family: Arial, sans-serif;
 			padding: 0.12em 0;
 			background: transparent;
-			color: #000;
-			line-height: 1.2;
+			color: #1a2e24;
+			line-height: 1.25;
 		}
-
 		#ttd-footer .ttd-col-nominal {
 			text-align: center;
 			padding-right: 0.5em;
 			white-space: nowrap;
 		}
-
 		#ttd-footer .ttd-signature-space {
-			height: 2.2em;
+			height: 2.4em;
 			padding: 0;
 		}
-
 		#ttd-footer .ttd-direktur-nama {
 			font-weight: bold;
 			text-decoration: underline;
 		}
-
 	</style>
 </head>
 <?php
@@ -247,48 +318,71 @@ foreach ($published_units as $unit_row) {
 ?>
 <div class="unit-page<?php echo $is_last_unit_page ? '' : ' unit-page-after-break'; ?>" style="font-size: <?php echo $cetak_unit_base_font_pt; ?>pt;">
 	<div class="cetak-unit-header">
-		<p><strong>PERUMDA ANEKA DHARMA KABUPATEN BANTUL</strong></p>
-		<p><strong>LAPORAN LABA - RUGI PER UNIT (<?php echo htmlspecialchars($cetak_judul_tab, ENT_QUOTES, 'UTF-8'); ?>)</strong></p>
-		<p><strong>Per <?php echo labarugi_cetak_unit_bulan_teks($bulan_laba_rugi); ?> Tahun <?php echo (int) $tahun_laba_rugi; ?></strong></p>
+		<p class="cetak-unit-head-company"><strong>PERUMDA ANEKA DHARMA KABUPATEN BANTUL</strong></p>
+		<p class="cetak-unit-head-title"><strong>LAPORAN LABA - RUGI PER UNIT (<?php echo htmlspecialchars($cetak_judul_tab, ENT_QUOTES, 'UTF-8'); ?>)</strong></p>
+		<p class="cetak-unit-head-periode"><strong>Per <?php echo labarugi_cetak_unit_bulan_teks($bulan_laba_rugi); ?> Tahun <?php echo (int) $tahun_laba_rugi; ?></strong></p>
 		<p class="cetak-unit-head-unit">
 			<span class="cetak-unit-head-kode"><?php echo htmlspecialchars($unit_key, ENT_QUOTES, 'UTF-8'); ?></span>
 			<?php echo htmlspecialchars($unit_label, ENT_QUOTES, 'UTF-8'); ?>
 		</p>
 	</div>
-	<table id="customers" width="100%">
-		<colgroup>
-			<col style="width:72%">
-			<col style="width:8%">
-			<col style="width:20%">
-		</colgroup>
 
-		<?php foreach ($keterangan_rows as $ket_row) {
-            $ket_key = $ket_row['key'];
-            $ket_label = $ket_row['label'];
-            $is_title = labarugi_keterangan_is_title_row($ket_row);
-            $is_summary = labarugi_keterangan_is_calculated_key_for_tab($ket_key, $jenis_tab)
-                && labarugi_keterangan_row_style_for_key($ket_key, $jenis_tab) === 'summary';
-            $label_classes = labarugi_keterangan_cetak_label_classes($ket_key, $ket_row, $jenis_tab);
-            $row_class = '';
-            if ($is_title) {
-                $row_class = 'row-title';
-            } elseif ($is_summary) {
-                $row_class = 'row-summary';
-            }
-            $nom_cell_class = labarugi_cetak_unit_nominal_cell_class($ket_key, $jenis_tab);
-            $nom = isset($vals[$ket_key]) ? $vals[$ket_key] : 0;
-        ?>
-		<tr class="<?php echo htmlspecialchars(trim($row_class), ENT_QUOTES, 'UTF-8'); ?>">
-			<th class="<?php echo htmlspecialchars(implode(' ', $label_classes), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></th>
-			<?php if ($is_title) { ?>
-			<th class="col-rp col-empty">&mdash;</th>
-			<th class="col-nominal col-empty">&mdash;</th>
-			<?php } else { ?>
-			<th class="col-rp <?php echo htmlspecialchars($nom_cell_class, ENT_QUOTES, 'UTF-8'); ?>">Rp.</th>
-			<th class="col-nominal <?php echo htmlspecialchars($nom_cell_class, ENT_QUOTES, 'UTF-8'); ?>"><?php echo labarugi_cetak_unit_format_nominal($nom); ?></th>
-			<?php } ?>
+	<table class="cetak-outer-box" width="100%">
+		<tr>
+			<td>
+				<table id="customers" width="100%">
+					<colgroup>
+						<col style="width:72%">
+						<col style="width:8%">
+						<col style="width:20%">
+					</colgroup>
+
+					<tr class="row-col-header">
+						<th class="col-label">Uraian</th>
+						<th class="col-rp">&nbsp;</th>
+						<th class="col-nominal">Jumlah (Rp)</th>
+					</tr>
+
+					<?php
+                    $row_index = 0;
+                    foreach ($keterangan_rows as $ket_row) {
+                        $ket_key = $ket_row['key'];
+                        $ket_label = $ket_row['label'];
+                        $is_title = labarugi_keterangan_is_title_row($ket_row);
+                        $row_style = labarugi_keterangan_row_style_for_key($ket_key, $jenis_tab);
+                        $is_summary = labarugi_keterangan_is_calculated_key_for_tab($ket_key, $jenis_tab)
+                            && $row_style === 'summary';
+                        $is_subtotal = labarugi_keterangan_is_calculated_key_for_tab($ket_key, $jenis_tab)
+                            && $row_style === 'subtotal';
+                        $label_classes = labarugi_keterangan_cetak_label_classes($ket_key, $ket_row, $jenis_tab);
+                        $row_class = '';
+                        if ($is_title) {
+                            $row_class = 'row-title';
+                        } elseif ($is_summary) {
+                            $row_class = 'row-summary';
+                        } elseif ($is_subtotal) {
+                            $row_class = 'row-subtotal';
+                        } else {
+                            $row_class = ($row_index % 2 === 0) ? 'row-data-even' : 'row-data-odd';
+                        }
+                        $row_index++;
+                        $nom_cell_class = labarugi_cetak_unit_nominal_cell_class($ket_key, $jenis_tab);
+                        $nom = isset($vals[$ket_key]) ? $vals[$ket_key] : 0;
+                    ?>
+					<tr class="<?php echo htmlspecialchars(trim($row_class), ENT_QUOTES, 'UTF-8'); ?>">
+						<th class="<?php echo htmlspecialchars(implode(' ', $label_classes), ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($ket_label, ENT_QUOTES, 'UTF-8'); ?></th>
+						<?php if ($is_title) { ?>
+						<th class="col-rp col-empty">&mdash;</th>
+						<th class="col-nominal col-empty">&mdash;</th>
+						<?php } else { ?>
+						<th class="col-rp <?php echo htmlspecialchars($nom_cell_class, ENT_QUOTES, 'UTF-8'); ?>">Rp.</th>
+						<th class="col-nominal <?php echo htmlspecialchars($nom_cell_class, ENT_QUOTES, 'UTF-8'); ?>"><?php echo labarugi_cetak_unit_format_nominal($nom); ?></th>
+						<?php } ?>
+					</tr>
+					<?php } ?>
+				</table>
+			</td>
 		</tr>
-		<?php } ?>
 	</table>
 
 	<table id="ttd-footer" width="100%" style="font-size: <?php echo $cetak_unit_base_font_pt; ?>pt;">

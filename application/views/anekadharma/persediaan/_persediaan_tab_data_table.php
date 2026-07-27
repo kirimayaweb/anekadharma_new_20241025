@@ -69,7 +69,7 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 		<?php
 		$start = 0;
 		foreach ($Persediaan_rows as $persediaan) {
-			$total_10_row = persediaan_hitung_total_10_net($persediaan);
+			$total_10_row = persediaan_hitung_total_10_kalkulasi($persediaan);
 			$nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
 			$total_total_10 += $total_10_row;
 			$total_nilai_persediaan += $nilai_persediaan_row;
