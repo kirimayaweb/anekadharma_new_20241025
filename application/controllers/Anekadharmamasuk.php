@@ -32,6 +32,10 @@ class Anekadharmamasuk extends CI_Controller
 
     function cheklogin()
     {
+        if (strtolower($this->input->method()) !== 'post') {
+            redirect('Anekadharmamasuk');
+            return;
+        }
 
        
         if (!$this->_guard_post_with_csrf()) {

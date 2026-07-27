@@ -36,7 +36,8 @@ if (!function_exists('persediaan_gen_proses_penjualan_status_badge')) {
 
 $col_jumlah = 9;
 $col_total_harga = 10;
-$col_count = 14;
+$col_count = 16;
+$show_solusi = !empty($show_solusi);
 $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 ?>
 <?php if ($excel_jenis !== '') {
@@ -66,7 +67,9 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<th>Total Harga</th>
 				<th>ID Persediaan</th>
 				<th>Match Via</th>
+				<th>Detail Masalah</th>
 				<th>Keterangan</th>
+				<?php if ($show_solusi) { ?><th>Aksi</th><?php } ?>
 			</tr>
 		</thead>
 		<tbody>
@@ -94,7 +97,40 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<td class="text-right" data-order="<?php echo htmlspecialchars((string) $total_harga, ENT_QUOTES, 'UTF-8'); ?>"><?php echo persediaan_gen_proses_pembelian_format_nominal($total_harga); ?></td>
 				<td><?php echo isset($row->id_persediaan_match) ? (int) $row->id_persediaan_match : '—'; ?></td>
 				<td><?php echo htmlspecialchars(isset($row->match_via) ? (string) $row->match_via : '', ENT_QUOTES, 'UTF-8'); ?></td>
+				<td class="small text-danger"><?php echo htmlspecialchars(isset($row->detail_masalah) ? (string) $row->detail_masalah : '', ENT_QUOTES, 'UTF-8'); ?></td>
 				<td class="small"><?php echo htmlspecialchars(isset($row->status_keterangan) ? (string) $row->status_keterangan : '', ENT_QUOTES, 'UTF-8'); ?></td>
+				<?php if ($show_solusi) {
+					$has_solusi = !empty($row->has_solusi);
+					$has_penyesuaian = !empty($row->has_penyesuaian);
+					$id_penj = (int) (isset($row->id) ? $row->id : 0);
+				?>
+				<td class="text-nowrap">
+					<?php if ($has_solusi) { ?>
+					<button type="button" class="btn btn-xs btn-primary btn-gen-pj-solusi mb-1"
+						data-id-penjualan="<?php echo $id_penj; ?>"
+						data-nama="<?php echo htmlspecialchars(isset($row->nama_barang) ? (string) $row->nama_barang : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-satuan="<?php echo htmlspecialchars(isset($row->satuan) ? (string) $row->satuan : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-hpp="<?php echo htmlspecialchars(isset($row->harga_satuan) ? (string) $row->harga_satuan : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-jumlah="<?php echo htmlspecialchars(isset($row->jumlah) ? (string) $row->jumlah : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-unit="<?php echo htmlspecialchars(isset($row->unit) ? (string) $row->unit : '', ENT_QUOTES, 'UTF-8'); ?>"
+						title="<?php echo htmlspecialchars(isset($row->solusi_label) ? (string) $row->solusi_label : 'Pilih record persediaan mirip', ENT_QUOTES, 'UTF-8'); ?>">
+						<i class="fas fa-wrench"></i> Solusi
+					</button>
+					<?php } ?>
+					<?php if ($has_penyesuaian) { ?>
+					<button type="button" class="btn btn-xs btn-warning btn-gen-pj-penyesuaian mb-1"
+						data-id-penjualan="<?php echo $id_penj; ?>"
+						data-nama="<?php echo htmlspecialchars(isset($row->nama_barang) ? (string) $row->nama_barang : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-satuan="<?php echo htmlspecialchars(isset($row->satuan) ? (string) $row->satuan : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-hpp="<?php echo htmlspecialchars(isset($row->harga_satuan) ? (string) $row->harga_satuan : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-jumlah="<?php echo htmlspecialchars(isset($row->jumlah) ? (string) $row->jumlah : '', ENT_QUOTES, 'UTF-8'); ?>"
+						data-unit="<?php echo htmlspecialchars(isset($row->unit) ? (string) $row->unit : '', ENT_QUOTES, 'UTF-8'); ?>">
+						<i class="fas fa-sliders-h"></i> Penyesuaian
+					</button>
+					<?php } ?>
+					<?php if (!$has_solusi && !$has_penyesuaian) { ?>—<?php } ?>
+				</td>
+				<?php } ?>
 			</tr>
 			<?php } ?>
 		</tbody>

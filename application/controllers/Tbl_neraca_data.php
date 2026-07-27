@@ -1257,12 +1257,20 @@ class Tbl_neraca_data extends CI_Controller
 			'bulan_neraca' => $data_detail->bulan_transaksi,
 		);
 
-		$this->load->library('PdfGenerator');
-		$html = $this->load->view('anekadharma/tbl_neraca_data/adminlte310_neraca_cetak.php', $data, true);
-		$this->pdf->loadHtml($html);
-		$this->pdf->setPaper('A4', 'landscape');
-		$this->pdf->render();
-		$this->pdf->stream('CETAK_NERACA.pdf', array('Attachment' => 0));
+		$this->load->helper('tbl_neraca_data_cetak');
+
+		if ($format === 'pdf') {
+			$this->load->library('PdfGenerator');
+			$html = $this->load->view('anekadharma/tbl_neraca_data/adminlte310_neraca_cetak.php', $data, true);
+			$this->pdf->loadHtml($html);
+			$this->pdf->setPaper('A4', 'landscape');
+			$this->pdf->render();
+			$this->pdf->stream('CETAK_NERACA.pdf', array('Attachment' => 0));
+			return;
+		}
+
+		$this->load->view('anekadharma/tbl_neraca_data/adminlte310_neraca_cetak.php', $data);
+		return;
 	}
 
 	public function neraca_cetak_excel($Get_tahun = null, $Get_bulan = null)

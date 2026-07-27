@@ -1592,6 +1592,13 @@ class Tbl_pembelian extends CI_Controller
 
 		// print_r($Data_konsumen_tagihan);
 
+		// Script modal Edit Penjualan harus di footer (setelah jQuery), bukan di body view.
+		$this->template->set('page_footer_scripts', $this->load->view(
+			'anekadharma/pembayaran/partials/tagihan_edit_penjualan_script',
+			array('uuid_konsumen' => $uuid_konsumen),
+			TRUE
+		));
+
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pembayaran/adminlte310_pembayaran_form_per_uuid_konsumen', $data);
 	}
 
@@ -1750,18 +1757,925 @@ class Tbl_pembelian extends CI_Controller
 
 	public function pilih_proses_bayar_pertransaksi($uuid_konsumen_selected = null, $uuid_penjualan_proses_selected = null)
 	{
+		$uuid_konsumen_selected = trim((string) $uuid_konsumen_selected);
+		$uuid_penjualan_proses_selected = trim((string) $uuid_penjualan_proses_selected);
 
-		$sql = "UPDATE `tbl_penjualan` SET `proses_bayar`='proses' WHERE `uuid_penjualan_proses`='$uuid_penjualan_proses_selected'";
-		$this->db->query($sql);
+		if ($uuid_konsumen_selected === '' || $uuid_penjualan_proses_selected === '') {
+			redirect(site_url('tbl_pembelian/pembayaran_dari_konsumen'));
+			return;
+		}
+
+		// Ambil semua baris dokumen yang sama (uuid_penjualan / no pesan + no kirim)
+		$rows = $this->_tagihan_fetch_penjualan_group('', $uuid_penjualan_proses_selected);
+		$ids = array();
+
+		if (!empty($rows)) {
+			foreach ($rows as $r) {
+				$proses = strtolower(trim((string) (isset($r->proses_bayar) ? $r->proses_bayar : '')));
+				// Jangan sentuh yang sudah lunas
+				if ($proses === 'bayar') {
+					continue;
+				}
+				$ids[] = (int) $r->id;
+			}
+		} else {
+			// Fallback: hanya baris yang diklik
+			$seed = $this->db->where('uuid_penjualan_proses', $uuid_penjualan_proses_selected)->get('tbl_penjualan')->row();
+			if (!empty($seed) && (int) $seed->id > 0) {
+				$proses = strtolower(trim((string) (isset($seed->proses_bayar) ? $seed->proses_bayar : '')));
+				if ($proses !== 'bayar') {
+					$ids[] = (int) $seed->id;
+				}
+			}
+		}
+
+		$ids = array_values(array_unique(array_filter($ids)));
+		if (!empty($ids)) {
+			$this->db->where_in('id', $ids);
+			$this->db->where('proses_bayar <>', 'bayar');
+			$this->db->update('tbl_penjualan', array('proses_bayar' => 'proses'));
+		}
+
 		redirect(site_url('tbl_pembelian/tagihan_per_uuid_konsumen/' . $uuid_konsumen_selected));
 	}
 
 	public function batal_proses_bayar_pertransaksi($uuid_konsumen_selected = null, $uuid_penjualan_proses_selected = null)
 	{
+		$uuid_konsumen_selected = trim((string) $uuid_konsumen_selected);
+		$uuid_penjualan_proses_selected = trim((string) $uuid_penjualan_proses_selected);
 
-		$sql = "UPDATE `tbl_penjualan` SET `proses_bayar`='belum_bayar' WHERE `uuid_penjualan_proses`='$uuid_penjualan_proses_selected'";
-		$this->db->query($sql);
+		if ($uuid_konsumen_selected === '' || $uuid_penjualan_proses_selected === '') {
+			redirect(site_url('tbl_pembelian/pembayaran_dari_konsumen'));
+			return;
+		}
+
+		// Batalkan seluruh grup dokumen (no pesan + no kirim / uuid_penjualan)
+		$rows = $this->_tagihan_fetch_penjualan_group('', $uuid_penjualan_proses_selected);
+		$ids = array();
+
+		if (!empty($rows)) {
+			foreach ($rows as $r) {
+				$proses = strtolower(trim((string) (isset($r->proses_bayar) ? $r->proses_bayar : '')));
+				if ($proses === 'proses') {
+					$ids[] = (int) $r->id;
+				}
+			}
+		} else {
+			$seed = $this->db->where('uuid_penjualan_proses', $uuid_penjualan_proses_selected)->get('tbl_penjualan')->row();
+			if (!empty($seed) && (int) $seed->id > 0) {
+				$ids[] = (int) $seed->id;
+			}
+		}
+
+		$ids = array_values(array_unique(array_filter($ids)));
+		if (!empty($ids)) {
+			$this->db->where_in('id', $ids);
+			$this->db->where('proses_bayar', 'proses');
+			$this->db->update('tbl_penjualan', array('proses_bayar' => 'belum_bayar'));
+		}
+
 		redirect(site_url('tbl_pembelian/tagihan_per_uuid_konsumen/' . $uuid_konsumen_selected));
+	}
+
+	/**
+	 * Parse angka format Indonesia: 8.000,45 → 8000.45 ; 8000,45 → 8000.45
+	 */
+	private function _tagihan_parse_angka($value)
+	{
+		$value = trim((string) $value);
+		if ($value === '') {
+			return 0.0;
+		}
+		$value = str_replace(' ', '', $value);
+		if (strpos($value, ',') !== false) {
+			// Format ID: titik = ribuan, koma = desimal
+			$value = str_replace('.', '', $value);
+			$value = str_replace(',', '.', $value);
+		} else {
+			// Hanya titik: jika 1 titik dan digit belakang <= 2 anggap desimal, selain itu ribuan
+			$parts = explode('.', $value);
+			if (count($parts) > 2) {
+				$value = str_replace('.', '', $value);
+			} elseif (count($parts) === 2 && strlen($parts[1]) > 2) {
+				$value = str_replace('.', '', $value);
+			}
+		}
+		$value = preg_replace('/[^0-9.\-]/', '', $value);
+		return is_numeric($value) ? (float) $value : 0.0;
+	}
+
+	/**
+	 * Format nominal: tampilkan desimal jika ada pecahan.
+	 */
+	private function _tagihan_fmt_nominal($angka, $force_decimals = null)
+	{
+		$angka = (float) $angka;
+		if ($force_decimals !== null) {
+			return number_format($angka, (int) $force_decimals, ',', '.');
+		}
+		if (abs($angka - round($angka)) < 0.0000001) {
+			return number_format($angka, 0, ',', '.');
+		}
+		return number_format($angka, 2, ',', '.');
+	}
+
+	/**
+	 * Ambil semua baris penjualan satu grup dokumen:
+	 * - uuid_penjualan yang sama, ATAU
+	 * - nomor pesan + nomor kirim + konsumen yang sama.
+	 */
+	private function _tagihan_fetch_penjualan_group($uuid_penjualan = '', $uuid_penjualan_proses = '', $uuid_konsumen = '', $nmrpesan = '', $nmrkirim = '')
+	{
+		$uuid_penjualan = trim((string) $uuid_penjualan);
+		$uuid_penjualan_proses = trim((string) $uuid_penjualan_proses);
+		$uuid_konsumen = trim((string) $uuid_konsumen);
+		$nmrpesan = trim((string) $nmrpesan);
+		$nmrkirim = trim((string) $nmrkirim);
+
+		$seed = null;
+		if ($uuid_penjualan_proses !== '') {
+			$seed = $this->db->where('uuid_penjualan_proses', $uuid_penjualan_proses)->get('tbl_penjualan')->row();
+		}
+		if (empty($seed) && $uuid_penjualan !== '') {
+			$seed = $this->db->where('uuid_penjualan', $uuid_penjualan)->order_by('id', 'ASC')->limit(1)->get('tbl_penjualan')->row();
+		}
+
+		if (!empty($seed)) {
+			if ($uuid_penjualan === '' && !empty($seed->uuid_penjualan)) {
+				$uuid_penjualan = trim((string) $seed->uuid_penjualan);
+			}
+			if ($uuid_konsumen === '' && !empty($seed->uuid_konsumen)) {
+				$uuid_konsumen = trim((string) $seed->uuid_konsumen);
+			}
+			if ($nmrpesan === '' && !empty($seed->nmrpesan)) {
+				$nmrpesan = trim((string) $seed->nmrpesan);
+			}
+			if ($nmrkirim === '' && !empty($seed->nmrkirim)) {
+				$nmrkirim = trim((string) $seed->nmrkirim);
+			}
+		}
+
+		$this->db->group_start();
+		if ($uuid_penjualan !== '') {
+			$this->db->where('uuid_penjualan', $uuid_penjualan);
+		} elseif ($uuid_penjualan_proses !== '') {
+			$this->db->where('uuid_penjualan_proses', $uuid_penjualan_proses);
+		} else {
+			$this->db->where('1 = 0', null, false);
+		}
+
+		// Perluas ke semua baris dokumen yang sama (no pesan + no kirim + konsumen)
+		if ($uuid_konsumen !== '' && ($nmrpesan !== '' || $nmrkirim !== '')) {
+			$this->db->or_group_start();
+			$this->db->where('uuid_konsumen', $uuid_konsumen);
+			if ($nmrpesan !== '') {
+				$this->db->where('nmrpesan', $nmrpesan);
+			}
+			if ($nmrkirim !== '') {
+				$this->db->where('nmrkirim', $nmrkirim);
+			}
+			$this->db->group_end();
+		}
+		$this->db->group_end();
+		$this->db->order_by('id', 'ASC');
+		$rows = $this->db->get('tbl_penjualan')->result();
+
+		if (empty($rows) && $uuid_penjualan_proses !== '') {
+			$this->db->where('uuid_penjualan_proses', $uuid_penjualan_proses);
+			$this->db->order_by('id', 'ASC');
+			$rows = $this->db->get('tbl_penjualan')->result();
+		}
+
+		return is_array($rows) ? $rows : array();
+	}
+
+	/**
+	 * Hitung total nominal grup penjualan (uuid_penjualan / nmrpesan+nmrkirim).
+	 */
+	private function _tagihan_sum_penjualan_group($uuid_penjualan = '', $uuid_konsumen = '', $nmrpesan = '', $nmrkirim = '')
+	{
+		$rows = $this->_tagihan_fetch_penjualan_group($uuid_penjualan, '', $uuid_konsumen, $nmrpesan, $nmrkirim);
+		$total = 0.0;
+		foreach ($rows as $r) {
+			$total += (float) $r->total_nominal;
+		}
+		return array(
+			'total' => $total,
+			'row_count' => count($rows),
+			'rows' => $rows,
+		);
+	}
+
+	/**
+	 * AJAX: detail penjualan untuk modal Edit Penjualan di halaman tagihan.
+	 * Ambil semua baris satu transaksi (uuid_penjualan / no pesan+kirim), validasi total.
+	 */
+	public function ajax_detail_penjualan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$uuid_penjualan_proses = trim((string) $this->input->post('uuid_penjualan_proses', TRUE));
+		$total_nominal_record = $this->_tagihan_parse_angka($this->input->post('total_nominal_record', TRUE));
+
+		if ($uuid_penjualan === '' && $uuid_penjualan_proses === '') {
+			echo json_encode(array(
+				'success' => false,
+				'message' => 'Parameter penjualan tidak lengkap.',
+			));
+			return;
+		}
+
+		$rows = $this->_tagihan_fetch_penjualan_group($uuid_penjualan, $uuid_penjualan_proses);
+
+		if (empty($rows)) {
+			echo json_encode(array(
+				'success' => false,
+				'message' => 'Data penjualan tidak ditemukan.',
+			));
+			return;
+		}
+
+		$detail = array();
+		$total_detail = 0;
+		$total_hitung = 0;
+		$clicked_found = false;
+		$meta = array(
+			'nmrpesan' => '',
+			'nmrkirim' => '',
+			'tgl_jual' => '',
+			'tgl_jual_raw' => '',
+			'konsumen_nama' => '',
+			'uuid_konsumen' => '',
+			'uuid_unit' => '',
+			'unit' => '',
+			'barang_jasa' => '',
+			'kategori' => '',
+			'bulan_label' => '',
+			'bulan_key' => '',
+			'uuid_penjualan' => $uuid_penjualan,
+			'uuid_penjualan_proses' => $uuid_penjualan_proses,
+			'id_persediaan_barang' => 0,
+		);
+
+		foreach ($rows as $r) {
+			$line_total = (float) $r->total_nominal;
+			$line_calc = ((float) $r->jumlah) * ((float) $r->harga_satuan);
+			$total_detail += $line_total;
+			$total_hitung += $line_calc;
+
+			$is_clicked = ($uuid_penjualan_proses !== '' && (string) $r->uuid_penjualan_proses === $uuid_penjualan_proses);
+			if ($is_clicked) {
+				$clicked_found = true;
+			}
+
+			if ($meta['nmrpesan'] === '' && !empty($r->nmrpesan)) {
+				$meta['nmrpesan'] = $r->nmrpesan;
+			}
+			if ($meta['nmrkirim'] === '' && !empty($r->nmrkirim)) {
+				$meta['nmrkirim'] = $r->nmrkirim;
+			}
+			if ($meta['tgl_jual'] === '' && !empty($r->tgl_jual)) {
+				$meta['tgl_jual'] = date('d M Y', strtotime($r->tgl_jual));
+				$meta['tgl_jual_raw'] = date('Y-m-d', strtotime($r->tgl_jual));
+				$meta['bulan_key'] = date('Y-m', strtotime($r->tgl_jual));
+				$meta['bulan_label'] = date('m/Y', strtotime($r->tgl_jual));
+			}
+			if ($meta['konsumen_nama'] === '' && !empty($r->konsumen_nama)) {
+				$meta['konsumen_nama'] = $r->konsumen_nama;
+			}
+			if ($meta['uuid_konsumen'] === '' && !empty($r->uuid_konsumen)) {
+				$meta['uuid_konsumen'] = $r->uuid_konsumen;
+			}
+			if ($meta['uuid_unit'] === '' && !empty($r->uuid_unit)) {
+				$meta['uuid_unit'] = $r->uuid_unit;
+			}
+			if ($meta['unit'] === '' && !empty($r->unit)) {
+				$meta['unit'] = $r->unit;
+			}
+			if ($meta['barang_jasa'] === '' && !empty($r->barang_jasa)) {
+				$meta['barang_jasa'] = $r->barang_jasa;
+			}
+			if (empty($meta['id_persediaan_barang']) && !empty($r->id_persediaan_barang)) {
+				$meta['id_persediaan_barang'] = (int) $r->id_persediaan_barang;
+			}
+			// Prioritas id_persediaan dari baris yang diklik
+			if ($is_clicked && !empty($r->id_persediaan_barang)) {
+				$meta['id_persediaan_barang'] = (int) $r->id_persediaan_barang;
+			}
+			if ($meta['uuid_penjualan'] === '' && !empty($r->uuid_penjualan)) {
+				$meta['uuid_penjualan'] = $r->uuid_penjualan;
+			}
+
+			$detail[] = array(
+				'id' => (int) $r->id,
+				'uuid_penjualan' => $r->uuid_penjualan,
+				'uuid_penjualan_proses' => $r->uuid_penjualan_proses,
+				'uuid_konsumen' => $r->uuid_konsumen,
+				'tgl_jual' => !empty($r->tgl_jual) ? date('d M Y', strtotime($r->tgl_jual)) : '',
+				'tgl_jual_raw' => !empty($r->tgl_jual) ? date('Y-m-d', strtotime($r->tgl_jual)) : '',
+				'nmrpesan' => $r->nmrpesan,
+				'nmrkirim' => $r->nmrkirim,
+				'kode_barang' => $r->kode_barang,
+				'nama_barang' => $r->nama_barang,
+				'jumlah' => (float) $r->jumlah,
+				'jumlah_fmt' => $this->_tagihan_fmt_nominal($r->jumlah),
+				'satuan' => $r->satuan,
+				'harga_satuan' => (float) $r->harga_satuan,
+				'harga_satuan_fmt' => $this->_tagihan_fmt_nominal($r->harga_satuan),
+				'total_nominal' => $line_total,
+				'total_nominal_fmt' => $this->_tagihan_fmt_nominal($r->total_nominal),
+				'line_ok' => abs($line_total - $line_calc) < 0.01,
+				'is_clicked' => $is_clicked,
+				'proses_bayar' => isset($r->proses_bayar) ? $r->proses_bayar : '',
+				'can_edit' => !in_array(strtolower(trim((string) (isset($r->proses_bayar) ? $r->proses_bayar : ''))), array('bayar'), true),
+			);
+		}
+
+		// Resolve kategori dari persediaan terkait (field kategori) / barang_jasa penjualan
+		$this->load->helper('pembelian_persediaan');
+		$kategori_resolved = '';
+		if (!empty($meta['id_persediaan_barang'])) {
+			$row_pers = $this->Persediaan_model->get_by_id((int) $meta['id_persediaan_barang']);
+			if (!empty($row_pers) && isset($row_pers->kategori)) {
+				$kategori_resolved = trim((string) $row_pers->kategori);
+			}
+		}
+		if ($kategori_resolved === '' && $meta['barang_jasa'] !== '') {
+			$kategori_resolved = trim((string) $meta['barang_jasa']);
+		}
+		if ($kategori_resolved === '' && !empty($detail)) {
+			// fallback: cek nama mengandung "jasa"
+			$nm = strtolower((string) (isset($detail[0]['nama_barang']) ? $detail[0]['nama_barang'] : ''));
+			if (strpos($nm, 'jasa') !== false) {
+				$kategori_resolved = 'jasa';
+			} else {
+				$kategori_resolved = 'barang';
+			}
+		}
+		if ($kategori_resolved === '') {
+			$kategori_resolved = 'barang';
+		}
+		$meta['kategori'] = $kategori_resolved;
+		$meta['barang_jasa'] = penjualan_is_kategori_jasa($kategori_resolved) ? 'jasa' : 'barang';
+
+		// Valid: total detail penjualan = nominal record diklik / total grup dokumen.
+		$is_single = count($detail) === 1;
+		$total_match_record = abs($total_detail - $total_nominal_record) < 0.01;
+		$data_konsisten = abs($total_detail - $total_hitung) < 0.01;
+		$valid = $data_konsisten && ($total_match_record || ($clicked_found && !$is_single) || count($detail) > 1);
+
+		echo json_encode(array(
+			'success' => true,
+			'meta' => $meta,
+			'rows' => $detail,
+			'total_detail' => $total_detail,
+			'total_detail_fmt' => $this->_tagihan_fmt_nominal($total_detail),
+			'total_hitung' => $total_hitung,
+			'total_hitung_fmt' => $this->_tagihan_fmt_nominal($total_hitung),
+			'total_nominal_record' => $total_nominal_record,
+			'total_nominal_record_fmt' => $this->_tagihan_fmt_nominal($total_nominal_record),
+			'total_match_record' => $total_match_record,
+			'data_konsisten' => $data_konsisten,
+			'valid' => $valid,
+			'row_count' => count($detail),
+			'url_edit' => site_url('Tbl_penjualan/update_penjualan/' . ($uuid_penjualan_proses !== '' ? $uuid_penjualan_proses : (isset($detail[0]['uuid_penjualan_proses']) ? $detail[0]['uuid_penjualan_proses'] : ''))),
+		));
+	}
+
+	/**
+	 * AJAX: update baris penjualan dari modal tagihan.
+	 */
+	public function ajax_update_penjualan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			echo json_encode(array('success' => false, 'message' => 'ID penjualan tidak valid.'));
+			return;
+		}
+
+		$row = $this->Tbl_penjualan_model->get_by_id($id);
+		if (empty($row)) {
+			echo json_encode(array('success' => false, 'message' => 'Data penjualan tidak ditemukan.'));
+			return;
+		}
+
+		$proses = strtolower(trim((string) (isset($row->proses_bayar) ? $row->proses_bayar : '')));
+		if ($proses === 'bayar') {
+			echo json_encode(array('success' => false, 'message' => 'Data sudah lunas/bayar, tidak bisa diubah.'));
+			return;
+		}
+
+		$jumlah = $this->_tagihan_parse_angka($this->input->post('jumlah', TRUE));
+		$harga_satuan = $this->_tagihan_parse_angka($this->input->post('harga_satuan', TRUE));
+		$total_nominal = round($jumlah * $harga_satuan, 2);
+
+		$tgl_jual_raw = trim((string) $this->input->post('tgl_jual', TRUE));
+		$tgl_jual = $row->tgl_jual;
+		if ($tgl_jual_raw !== '') {
+			$ts = strtotime($tgl_jual_raw);
+			if ($ts !== false) {
+				$tgl_jual = date('Y-m-d H:i:s', $ts);
+			}
+		}
+
+		$data = array(
+			'tgl_jual' => $tgl_jual,
+			'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+			'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+			'kode_barang' => $this->input->post('kode_barang', TRUE),
+			'nama_barang' => $this->input->post('nama_barang', TRUE),
+			'satuan' => $this->input->post('satuan', TRUE),
+			'jumlah' => $jumlah,
+			'harga_satuan' => $harga_satuan,
+			'total_nominal' => $total_nominal,
+		);
+
+		$this->Tbl_penjualan_model->update($id, $data);
+
+		$uuid_pj = isset($row->uuid_penjualan) ? $row->uuid_penjualan : '';
+		$total_detail_all = $total_nominal;
+		if ($uuid_pj !== '') {
+			$this->db->select_sum('total_nominal');
+			$this->db->where('uuid_penjualan', $uuid_pj);
+			$sum_row = $this->db->get('tbl_penjualan')->row();
+			$total_detail_all = !empty($sum_row) && isset($sum_row->total_nominal) ? (float) $sum_row->total_nominal : $total_nominal;
+		}
+
+		echo json_encode(array(
+			'success' => true,
+			'message' => 'Data penjualan berhasil diupdate.',
+			'total_nominal' => $total_nominal,
+			'total_nominal_fmt' => $this->_tagihan_fmt_nominal($total_nominal),
+			'total_detail' => $total_detail_all,
+			'total_detail_fmt' => $this->_tagihan_fmt_nominal($total_detail_all),
+			'uuid_penjualan' => $uuid_pj,
+		));
+	}
+
+	/**
+	 * AJAX: tambah baris penjualan baru (CRUD create) di modal tagihan.
+	 */
+	public function ajax_create_penjualan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$ref_id = (int) $this->input->post('ref_id', TRUE);
+
+		$ref = null;
+		if ($ref_id > 0) {
+			$ref = $this->Tbl_penjualan_model->get_by_id($ref_id);
+		}
+		if (empty($ref) && $uuid_penjualan !== '') {
+			$this->db->where('uuid_penjualan', $uuid_penjualan);
+			$this->db->order_by('id', 'ASC');
+			$this->db->limit(1);
+			$ref = $this->db->get('tbl_penjualan')->row();
+		}
+
+		if (empty($ref)) {
+			echo json_encode(array('success' => false, 'message' => 'Referensi penjualan tidak ditemukan.'));
+			return;
+		}
+
+		$jumlah = $this->_tagihan_parse_angka($this->input->post('jumlah', TRUE));
+		$harga_satuan = $this->_tagihan_parse_angka($this->input->post('harga_satuan', TRUE));
+		if ($jumlah <= 0) {
+			$jumlah = 1;
+		}
+		$total_nominal = round($jumlah * $harga_satuan, 2);
+
+		$tgl_jual_raw = trim((string) $this->input->post('tgl_jual', TRUE));
+		$tgl_jual = $ref->tgl_jual;
+		if ($tgl_jual_raw !== '') {
+			$ts = strtotime($tgl_jual_raw);
+			if ($ts !== false) {
+				$tgl_jual = date('Y-m-d H:i:s', $ts);
+			}
+		}
+
+		$nmrpesan = $this->input->post('nmrpesan', TRUE);
+		$nmrkirim = $this->input->post('nmrkirim', TRUE);
+		$kode_barang = $this->input->post('kode_barang', TRUE);
+		$nama_barang = $this->input->post('nama_barang', TRUE);
+		$satuan = $this->input->post('satuan', TRUE);
+
+		$data = array(
+			'uuid_penjualan' => $ref->uuid_penjualan,
+			'uuid_persediaan' => isset($ref->uuid_persediaan) ? $ref->uuid_persediaan : null,
+			'id_persediaan_barang' => isset($ref->id_persediaan_barang) ? (int) $ref->id_persediaan_barang : 0,
+			'uuid_barang' => isset($ref->uuid_barang) ? $ref->uuid_barang : null,
+			'tgl_input' => date('Y-m-d H:i:s'),
+			'tgl_jual' => $tgl_jual,
+			'nmrpesan' => ($nmrpesan !== null && $nmrpesan !== '') ? $nmrpesan : $ref->nmrpesan,
+			'nmrkirim' => ($nmrkirim !== null && $nmrkirim !== '') ? $nmrkirim : $ref->nmrkirim,
+			'uuid_konsumen' => $ref->uuid_konsumen,
+			'konsumen_id' => isset($ref->konsumen_id) ? $ref->konsumen_id : null,
+			'konsumen_nama' => isset($ref->konsumen_nama) ? $ref->konsumen_nama : null,
+			'kode_barang' => ($kode_barang !== null && $kode_barang !== '') ? $kode_barang : $ref->kode_barang,
+			'nama_barang' => ($nama_barang !== null && $nama_barang !== '') ? $nama_barang : $ref->nama_barang,
+			'uuid_unit' => isset($ref->uuid_unit) ? $ref->uuid_unit : null,
+			'unit' => isset($ref->unit) ? $ref->unit : null,
+			'satuan' => ($satuan !== null && $satuan !== '') ? $satuan : $ref->satuan,
+			'harga_satuan' => $harga_satuan > 0 ? $harga_satuan : (float) $ref->harga_satuan,
+			'jumlah' => $jumlah,
+			'total_nominal' => $total_nominal > 0 ? $total_nominal : ((float) $ref->harga_satuan * $jumlah),
+			'umpphpsl22' => isset($ref->umpphpsl22) ? $ref->umpphpsl22 : 0,
+			'piutang' => isset($ref->piutang) ? $ref->piutang : 0,
+			'penjualandpp' => isset($ref->penjualandpp) ? $ref->penjualandpp : 0,
+			'utangppn' => isset($ref->utangppn) ? $ref->utangppn : 0,
+			'cetak_bukti_penjualan' => 0,
+			'id_usr' => $this->session->userdata('id_users') ? $this->session->userdata('id_users') : (isset($ref->id_usr) ? $ref->id_usr : null),
+			'proses_bayar' => 'belum_bayar',
+			'barang_jasa' => isset($ref->barang_jasa) ? $ref->barang_jasa : null,
+		);
+
+		// insert_new biasanya generate uuid_penjualan_proses
+		if (method_exists($this->Tbl_penjualan_model, 'insert_add_barang')) {
+			$this->Tbl_penjualan_model->insert_add_barang($data);
+		} else {
+			$this->db->set('uuid_penjualan_proses', "replace(uuid(),'-','')", FALSE);
+			$this->db->insert('tbl_penjualan', $data);
+		}
+
+		echo json_encode(array(
+			'success' => true,
+			'message' => 'Baris penjualan berhasil ditambahkan.',
+			'uuid_penjualan' => $ref->uuid_penjualan,
+		));
+	}
+
+	/**
+	 * AJAX: hapus baris penjualan dari modal tagihan.
+	 */
+	public function ajax_delete_penjualan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			echo json_encode(array('success' => false, 'message' => 'ID penjualan tidak valid.'));
+			return;
+		}
+
+		$row = $this->Tbl_penjualan_model->get_by_id($id);
+		if (empty($row)) {
+			echo json_encode(array('success' => false, 'message' => 'Data penjualan tidak ditemukan.'));
+			return;
+		}
+
+		$proses = strtolower(trim((string) (isset($row->proses_bayar) ? $row->proses_bayar : '')));
+		if ($proses === 'bayar') {
+			echo json_encode(array('success' => false, 'message' => 'Data sudah lunas/bayar, tidak bisa dihapus.'));
+			return;
+		}
+
+		$this->Tbl_penjualan_model->delete($id);
+
+		echo json_encode(array(
+			'success' => true,
+			'message' => 'Data penjualan berhasil dihapus.',
+			'uuid_penjualan' => isset($row->uuid_penjualan) ? $row->uuid_penjualan : '',
+		));
+	}
+
+	/**
+	 * AJAX: daftar persediaan (barang/jasa) untuk Tambah Barang di modal tagihan.
+	 * Filter berdasarkan field kategori:
+	 * - kategori = jasa  → hanya data persediaan jasa
+	 * - kategori = barang (atau non-jasa) → persediaan non-jasa sesuai bulan/tahun tgl jual
+	 */
+	public function ajax_list_persediaan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper('pembelian_persediaan');
+
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$tgl_jual = trim((string) $this->input->post('tgl_jual', TRUE));
+		$uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
+		$tipe = strtolower(trim((string) $this->input->post('tipe', TRUE)));
+		$kategori_post = strtolower(trim((string) $this->input->post('kategori', TRUE)));
+		$id_persediaan_ref = (int) $this->input->post('id_persediaan_barang', TRUE);
+
+		$row_header = null;
+		if ($uuid_penjualan !== '') {
+			$row_header = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+			if (empty($row_header)) {
+				$row_header = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+			}
+		}
+
+		if ($tgl_jual === '' && !empty($row_header) && !empty($row_header->tgl_jual)) {
+			$tgl_jual = date('Y-m-d', strtotime($row_header->tgl_jual));
+		}
+		if ($uuid_unit === '' && !empty($row_header) && !empty($row_header->uuid_unit)) {
+			$uuid_unit = trim((string) $row_header->uuid_unit);
+		}
+		if ($id_persediaan_ref <= 0 && !empty($row_header) && !empty($row_header->id_persediaan_barang)) {
+			$id_persediaan_ref = (int) $row_header->id_persediaan_barang;
+		}
+
+		// Resolve kategori: POST → persediaan.kategori → penjualan.barang_jasa → default barang
+		$kategori = $kategori_post;
+		if ($kategori === '' && $id_persediaan_ref > 0) {
+			$row_pers = $this->Persediaan_model->get_by_id($id_persediaan_ref);
+			if (!empty($row_pers) && isset($row_pers->kategori) && trim((string) $row_pers->kategori) !== '') {
+				$kategori = strtolower(trim((string) $row_pers->kategori));
+			}
+		}
+		if ($kategori === '' && $tipe !== '') {
+			$kategori = $tipe;
+		}
+		if ($kategori === '' && !empty($row_header) && !empty($row_header->barang_jasa)) {
+			$kategori = strtolower(trim((string) $row_header->barang_jasa));
+		}
+		if ($kategori === '' && !empty($row_header) && !empty($row_header->nama_barang)
+			&& stripos((string) $row_header->nama_barang, 'jasa') !== false) {
+			$kategori = 'jasa';
+		}
+		if ($kategori === '') {
+			$kategori = 'barang';
+		}
+
+		$is_jasa = penjualan_is_kategori_jasa($kategori);
+		$tipe = $is_jasa ? 'jasa' : 'barang';
+
+		if ($tgl_jual === '') {
+			echo json_encode(array('success' => false, 'message' => 'Tanggal jual tidak ditemukan.'));
+			return;
+		}
+
+		try {
+			penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
+			if ($uuid_unit !== '') {
+				penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit);
+			}
+
+			if ($is_jasa) {
+				// Kategori JASA → tampilkan hanya data jasa
+				$stock_rows = penjualan_get_stock_persediaan_jasa_rows($this, $tgl_jual, $uuid_unit);
+			} else {
+				// Kategori BARANG (atau non-jasa) → persediaan bulan/tahun sesuai, exclude jasa
+				$stock_rows = penjualan_get_stock_persediaan_rows($this, $tgl_jual, $uuid_unit);
+			}
+		} catch (Exception $e) {
+			echo json_encode(array('success' => false, 'message' => $e->getMessage()));
+			return;
+		}
+
+		$kolom_unit = penjualan_resolve_kolom_persediaan_unit($this, $uuid_unit);
+		$label_unit = $kolom_unit ? penjualan_get_label_kolom_unit($kolom_unit) : '';
+		$bulan_label = date('m/Y', strtotime($tgl_jual));
+		$bulan_key = date('Y-m', strtotime($tgl_jual));
+
+		$list = array();
+		$no = 0;
+		foreach ($stock_rows as $s) {
+			if (empty($s->id) || trim((string) $s->nama_barang_beli) === '') {
+				continue;
+			}
+
+			$kat_row = isset($s->kategori_barang) ? strtolower(trim((string) $s->kategori_barang)) : '';
+			// Double-check filter kategori di sisi PHP
+			if ($is_jasa) {
+				if ($kat_row !== '' && !penjualan_is_kategori_jasa($kat_row)) {
+					continue;
+				}
+			} else {
+				if (penjualan_is_kategori_jasa($kat_row)) {
+					continue;
+				}
+			}
+
+			$sisa = penjualan_get_sisa_stock_penjualan($s, $kolom_unit);
+			$nilai_unit = $kolom_unit ? (int) floor(penjualan_get_nilai_kolom_unit($s, $kolom_unit)) : 0;
+			$tgl_po_fmt = '';
+			if (!empty($s->tanggal_beli) && $s->tanggal_beli !== '0000-00-00') {
+				$tgl_po_fmt = date('d M Y', strtotime($s->tanggal_beli));
+			} elseif (!empty($s->tanggal)) {
+				$ts = strtotime($s->tanggal);
+				if ($ts !== false) {
+					$tgl_po_fmt = date('d M Y', $ts);
+				}
+			}
+
+			$list[] = array(
+				'no' => ++$no,
+				'id' => (int) $s->id,
+				'uuid_persediaan' => isset($s->uuid_persediaan) ? $s->uuid_persediaan : '',
+				'uuid_barang' => isset($s->uuid_barang) ? $s->uuid_barang : '',
+				'kode_barang' => isset($s->kode_barang) ? $s->kode_barang : '',
+				'nama_barang' => $s->nama_barang_beli,
+				'satuan' => isset($s->satuan_persediaan) ? $s->satuan_persediaan : '',
+				'harga_satuan' => (float) $s->harga_satuan_persediaan,
+				'harga_satuan_fmt' => function_exists('nominal') ? nominal($s->harga_satuan_persediaan) : number_format((float) $s->harga_satuan_persediaan, 0, ',', '.'),
+				'sisa_stock' => (int) $sisa,
+				'sisa_stock_fmt' => function_exists('nominal') ? nominal($sisa) : number_format((int) $sisa, 0, ',', '.'),
+				'nilai_unit' => $nilai_unit,
+				'label_unit' => $label_unit,
+				'spop' => isset($s->spop) ? $s->spop : '',
+				'kategori' => isset($s->kategori_barang) ? $s->kategori_barang : '',
+				'tgl_po' => $tgl_po_fmt,
+				'bisa_pilih' => ($sisa > 0),
+			);
+		}
+
+		echo json_encode(array(
+			'success' => true,
+			'tipe' => $tipe,
+			'kategori' => $kategori,
+			'tgl_jual' => $tgl_jual,
+			'bulan_label' => $bulan_label,
+			'bulan_key' => $bulan_key,
+			'uuid_unit' => $uuid_unit,
+			'label_unit' => $label_unit,
+			'row_count' => count($list),
+			'rows' => $list,
+		));
+	}
+
+	/**
+	 * AJAX: tambah barang/jasa dari persediaan ke penjualan yang sedang diproses (modal tagihan).
+	 */
+	public function ajax_tambah_barang_dari_persediaan_tagihan()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper('pembelian_persediaan');
+
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$id_persediaan = (int) $this->input->post('id_persediaan_barang', TRUE);
+		$uuid_persediaan_post = trim((string) $this->input->post('uuid_persediaan', TRUE));
+		$jumlah = $this->_tagihan_parse_angka($this->input->post('jumlah', TRUE));
+		// Jumlah stok biasanya bilangan bulat; tetap izinkan pecahan jika diisi
+		if ($jumlah <= 0) {
+			echo json_encode(array('success' => false, 'message' => 'Jumlah wajib diisi dan lebih dari 0.'));
+			return;
+		}
+
+		if ($uuid_penjualan === '') {
+			echo json_encode(array('success' => false, 'message' => 'UUID penjualan tidak valid.'));
+			return;
+		}
+
+		$row_header = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+		if (empty($row_header)) {
+			$row_header = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		}
+		if (empty($row_header)) {
+			echo json_encode(array('success' => false, 'message' => 'Data penjualan tidak ditemukan.'));
+			return;
+		}
+
+		$data_barang = null;
+		if ($uuid_persediaan_post !== '') {
+			$data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan_post);
+			if (empty($data_barang)) {
+				$data_barang = $this->db->where('uuid_persediaan', $uuid_persediaan_post)->get('persediaan')->row();
+			}
+		}
+		if (empty($data_barang) && $id_persediaan > 0) {
+			$data_barang = $this->Persediaan_model->get_by_id($id_persediaan);
+		}
+		if (empty($data_barang)) {
+			echo json_encode(array('success' => false, 'message' => 'Barang persediaan tidak ditemukan.'));
+			return;
+		}
+
+		$id_persediaan = (int) $data_barang->id;
+		$uuid_persediaan = trim((string) (isset($data_barang->uuid_persediaan) ? $data_barang->uuid_persediaan : ''));
+		if ($uuid_persediaan === '') {
+			echo json_encode(array('success' => false, 'message' => 'Persediaan tidak memiliki uuid_persediaan.'));
+			return;
+		}
+
+		$uuid_barang_simpan = trim((string) (isset($data_barang->uuid_barang) ? $data_barang->uuid_barang : ''));
+		if ($uuid_barang_simpan === '') {
+			$uuid_barang_simpan = $uuid_persediaan;
+		}
+
+		$is_jasa = ($this->db->field_exists('kategori', 'persediaan')
+			&& penjualan_is_kategori_jasa(isset($data_barang->kategori) ? $data_barang->kategori : ''));
+		$header_jasa = (strtolower(trim((string) (isset($row_header->barang_jasa) ? $row_header->barang_jasa : ''))) === 'jasa');
+
+		$uuid_unit = trim((string) (isset($row_header->uuid_unit) ? $row_header->uuid_unit : ''));
+		$nama_unit = trim((string) (isset($row_header->unit) ? $row_header->unit : ''));
+		if ($uuid_unit === '') {
+			echo json_encode(array('success' => false, 'message' => 'Unit penjualan tidak ditemukan pada data penjualan.'));
+			return;
+		}
+
+		$hasil_ensure_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit);
+		if (empty($hasil_ensure_unit['ok'])) {
+			echo json_encode(array(
+				'success' => false,
+				'message' => isset($hasil_ensure_unit['message']) ? $hasil_ensure_unit['message'] : 'Gagal menyiapkan kolom unit.',
+			));
+			return;
+		}
+
+		$kolom_unit = penjualan_resolve_kolom_persediaan_unit($this, $uuid_unit);
+		$sisa_stock = penjualan_get_sisa_stock_penjualan($data_barang, $kolom_unit);
+		if ($jumlah > $sisa_stock) {
+			echo json_encode(array(
+				'success' => false,
+				'message' => 'Jumlah melebihi stok tersedia (' . (int) $sisa_stock . ').',
+			));
+			return;
+		}
+
+		$harga_satuan = $this->_tagihan_parse_angka($this->input->post('harga_satuan', TRUE));
+		if ($harga_satuan <= 0) {
+			$harga_satuan = isset($data_barang->hpp) ? (float) $data_barang->hpp : 0;
+		}
+		$total_nominal = round($jumlah * $harga_satuan, 2);
+
+		$tgl_jual_X = !empty($row_header->tgl_jual)
+			? date('Y-m-d', strtotime($row_header->tgl_jual))
+			: date('Y-m-d');
+
+		$data = array(
+			'uuid_penjualan' => $uuid_penjualan,
+			'tgl_input' => date('Y-m-d H:i:s'),
+			'tgl_jual' => $tgl_jual_X,
+			'nmrpesan' => isset($row_header->nmrpesan) ? $row_header->nmrpesan : '',
+			'nmrkirim' => isset($row_header->nmrkirim) ? $row_header->nmrkirim : '',
+			'uuid_unit' => $uuid_unit,
+			'unit' => $nama_unit,
+			'uuid_konsumen' => isset($row_header->uuid_konsumen) ? $row_header->uuid_konsumen : '',
+			'konsumen_id' => isset($row_header->konsumen_id) ? $row_header->konsumen_id : null,
+			'konsumen_nama' => isset($row_header->konsumen_nama) ? $row_header->konsumen_nama : '',
+			'uuid_persediaan' => $uuid_persediaan,
+			'id_persediaan_barang' => $id_persediaan,
+			'uuid_barang' => $uuid_barang_simpan,
+			'kode_barang' => isset($data_barang->kode_barang) ? $data_barang->kode_barang : '',
+			'nama_barang' => isset($data_barang->namabarang) ? $data_barang->namabarang : '',
+			'proses_bayar' => 'belum_bayar',
+			'jumlah' => $jumlah,
+			'satuan' => isset($data_barang->satuan) ? $data_barang->satuan : '',
+			'harga_satuan' => $harga_satuan,
+			'total_nominal' => $total_nominal,
+			'cetak_bukti_penjualan' => 0,
+			'id_usr' => $this->session->userdata('id_users') ? $this->session->userdata('id_users') : 1,
+			'barang_jasa' => ($is_jasa || $header_jasa) ? 'jasa' : (isset($row_header->barang_jasa) ? $row_header->barang_jasa : 'barang'),
+		);
+
+		$uuid_hasil = $this->Tbl_penjualan_model->insert_add_barang($data);
+		if (empty($uuid_hasil)) {
+			$db_err = $this->db->error();
+			echo json_encode(array(
+				'success' => false,
+				'message' => !empty($db_err['message']) ? $db_err['message'] : 'Gagal menambah baris penjualan.',
+			));
+			return;
+		}
+
+		$hasil_persediaan = penjualan_update_persediaan_saat_jual(
+			$this,
+			$id_persediaan,
+			$uuid_unit,
+			$jumlah,
+			'tambah'
+		);
+		if (empty($hasil_persediaan['ok'])) {
+			echo json_encode(array(
+				'success' => false,
+				'message' => isset($hasil_persediaan['message'])
+					? ($hasil_persediaan['message'] . ' (baris penjualan sudah tersimpan)')
+					: 'Gagal memperbarui persediaan.',
+				'uuid_penjualan' => $uuid_penjualan,
+			));
+			return;
+		}
+
+		// Hitung ulang total seluruh item dokumen (lama + baru) by uuid / no pesan+kirim
+		$sum_info = $this->_tagihan_sum_penjualan_group(
+			$uuid_penjualan,
+			isset($row_header->uuid_konsumen) ? $row_header->uuid_konsumen : '',
+			isset($row_header->nmrpesan) ? $row_header->nmrpesan : '',
+			isset($row_header->nmrkirim) ? $row_header->nmrkirim : ''
+		);
+		$total_detail_all = isset($sum_info['total']) ? (float) $sum_info['total'] : $total_nominal;
+		$row_count_all = isset($sum_info['row_count']) ? (int) $sum_info['row_count'] : 1;
+
+		echo json_encode(array(
+			'success' => true,
+			'message' => 'Barang berhasil ditambahkan ke penjualan.',
+			'uuid_penjualan' => $uuid_penjualan,
+			'nmrpesan' => isset($row_header->nmrpesan) ? $row_header->nmrpesan : '',
+			'nmrkirim' => isset($row_header->nmrkirim) ? $row_header->nmrkirim : '',
+			'nama_barang' => $data['nama_barang'],
+			'jumlah' => $jumlah,
+			'harga_satuan' => $harga_satuan,
+			'harga_satuan_fmt' => $this->_tagihan_fmt_nominal($harga_satuan),
+			'total_nominal' => $total_nominal,
+			'total_nominal_fmt' => $this->_tagihan_fmt_nominal($total_nominal),
+			'total_detail' => $total_detail_all,
+			'total_detail_fmt' => $this->_tagihan_fmt_nominal($total_detail_all),
+			'row_count' => $row_count_all,
+		));
 	}
 
 
@@ -4471,6 +5385,7 @@ class Tbl_pembelian extends CI_Controller
 
 		$sql_stock = "SELECT persediaan.id as id_persediaan, 
 						persediaan.uuid_persediaan as uuid_persediaan,
+						persediaan.uuid_barang as uuid_barang,
 						persediaan.kode_barang as kode_barang_persediaan,
 						persediaan.namabarang as nama_barang_persediaan,
 						persediaan.total_10 as jumlah_sediaan, 
@@ -4583,12 +5498,17 @@ class Tbl_pembelian extends CI_Controller
 		}
 
 
+		$jumlah_jual = 0;
+		if ($Data_Penjualan_barang && isset($Data_Penjualan_barang->Sum_jumlah_jual) && $Data_Penjualan_barang->Sum_jumlah_jual !== null) {
+			$jumlah_jual = $Data_Penjualan_barang->Sum_jumlah_jual;
+		}
+
 		$data = array(
 			'Data_Barang' => $Data_Barang,
 			'action' => site_url('tbl_pembelian/pecah_satuan_action/' . $uuid_persediaan),
 			'button' => 'Simpan',
 			// 'uuid_pembelian' => $uuid_pembelian,
-			'uuid_barang' => $Data_Barang->uuid_barang,
+			'uuid_barang' => isset($Data_Barang->uuid_barang) ? $Data_Barang->uuid_barang : '',
 			// 'tgl_po' => $Data_Barang->tgl_po,
 			// 'uuid_spop' => $Data_Barang->uuid_spop,
 			'kode_barang' => $Data_Barang->kode_barang_persediaan,
@@ -4601,11 +5521,10 @@ class Tbl_pembelian extends CI_Controller
 			// 'uuid_gudang' => $Data_Barang->uuid_gudang,
 			// 'nama_gudang' => $Data_Barang->nama_gudang,
 			'harga_satuan' => $Data_Barang->harga_satuan_persediaan,
-			'uuid_barang' => $Data_Barang->uuid_barang,
 			'uuid_persediaan' => $Data_Barang->uuid_persediaan,
 
 			'jumlah_beli' => $Data_Barang->jumlah_sediaan,
-			'jumlah_jual' => $Data_Penjualan_barang->Sum_jumlah_jual,
+			'jumlah_jual' => $jumlah_jual,
 
 		);
 

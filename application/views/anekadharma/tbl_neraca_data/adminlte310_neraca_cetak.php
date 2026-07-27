@@ -1,112 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
 <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Neraca - PERUMDA ANEKA DHARMA</title>
 	<style>
 		@page {
-			margin: 5mm 8mm;
+			margin: 6mm 8mm;
 			size: landscape;
+		}
+
+		* {
+			box-sizing: border-box;
 		}
 
 		body {
 			margin: 0;
 			padding: 0;
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 10pt;
-			line-height: 1.15;
+			font-family: 'Segoe UI', Tahoma, Arial, Helvetica, sans-serif;
+			font-size: 9.5pt;
+			line-height: 1.35;
+			color: #1a1a1a;
+			background: #ffffff;
 		}
 
+		#neraca-wrap {
+			page-break-inside: avoid;
+			max-width: 100%;
+		}
+
+		/* ===== HEADER — netral, tanpa warna mencolok ===== */
 		#neraca-header {
 			border-collapse: collapse;
 			width: 100%;
-			border: none;
+			margin-bottom: 8px;
 		}
 
 		#neraca-header th {
 			border: none;
 			text-align: center;
+			padding: 2px 0;
+			background: transparent;
+			color: #1a1a1a;
+		}
+
+		#neraca-header .company-name {
 			font-size: 12pt;
-			font-weight: bold;
-			padding: 1px 0;
-			line-height: 1.2;
+			font-weight: 700;
+			letter-spacing: 0.3px;
+		}
+
+		#neraca-header .report-title {
+			font-size: 11pt;
+			font-weight: 600;
+			margin-top: 2px;
+			text-transform: uppercase;
+			letter-spacing: 0.8px;
+		}
+
+		#neraca-header .report-period {
+			font-size: 9.5pt;
+			font-weight: 400;
+			margin-top: 2px;
+			color: #444;
 		}
 
 		#neraca-header-spacer {
 			height: 4px;
-			border: none;
-			font-size: 0;
-			line-height: 0;
 		}
 
+		/* ===== MAIN TABLE ===== */
 		#neraca {
 			border-collapse: collapse;
 			width: 100%;
 			table-layout: fixed;
-			border-left: 1px solid #000;
-			border-right: 1px solid #000;
-			border-bottom: 1px solid #000;
+			border: 1px solid #d1d5db;
 		}
 
 		#neraca td,
 		#neraca th {
 			border: 0;
-			padding: 1px 3px;
-			font-size: 10pt;
+			padding: 3px 6px;
+			font-size: 9.5pt;
 			font-weight: normal;
-			vertical-align: top;
-			line-height: 1.15;
-		}
-
-		#neraca tr.row-double-top th {
-			border-top: 3px double #000;
-			border-left: 1px solid #000;
-			border-right: 1px solid #000;
-			padding: 0;
-			height: 0;
-			line-height: 0;
-			font-size: 0;
-		}
-
-		#neraca tr.row-table-last th {
-			border-bottom: 1px solid #000;
-		}
-
-		#neraca tr th:first-child {
-			border-left: 1px solid #000;
-		}
-
-		#neraca tr th:last-child {
-			border-right: 1px solid #000;
-		}
-
-		#neraca tr.row-highlight-aktiva th:first-child,
-		#neraca tr.row-highlight-pasiva th:first-child {
-			border-left: 1px solid #000;
-		}
-
-		#neraca tr.row-highlight-aktiva th:last-child,
-		#neraca tr.row-highlight-pasiva th:last-child {
-			border-right: 1px solid #000;
+			vertical-align: middle;
+			line-height: 1.3;
+			color: #1a1a1a;
 		}
 
 		#neraca .col-gap {
 			width: 1%;
 			padding: 0;
-			border-top: none !important;
-			border-bottom: none !important;
+			background-color: #ffffff !important;
+			border-left: 1px solid #e5e7eb !important;
 			border-right: none !important;
-			border-left: 1px solid #000 !important;
 		}
 
 		#neraca .col-label {
 			width: 33%;
 			text-align: left;
-			padding-left: 4px;
+			padding-left: 8px;
 		}
 
 		#neraca .col-label.indent {
-			padding-left: 12px;
+			padding-left: 18px;
 		}
 
 		#neraca .col-label.indent-mid {
-			padding-left: 28px;
+			padding-left: 32px;
 			font-weight: bold;
 		}
 
@@ -118,112 +119,117 @@
 			width: 4%;
 			text-align: left;
 			white-space: nowrap;
+			color: #666;
+			font-size: 8.5pt;
 		}
 
 		#neraca .col-nominal {
 			width: 12%;
 			text-align: right;
-			padding-right: 4px;
+			padding-right: 8px;
 			white-space: nowrap;
+			font-variant-numeric: tabular-nums;
 		}
 
-		#neraca .section-row th,
-		#neraca .data-row th {
-			font-size: 10pt;
-			white-space: nowrap;
-			overflow: hidden;
-		}
-
-		#neraca .data-row.bold .col-label {
-			font-weight: bold;
-		}
-
+		#neraca .data-row.bold .col-label,
 		#neraca .data-row.bold .col-nominal,
 		#neraca .data-row.bold .col-rp {
 			font-weight: bold;
 		}
 
-		#neraca tr.row-highlight-aktiva th.col-rp-aktiva,
-		#neraca tr.row-highlight-aktiva th.col-nominal-aktiva,
-		#neraca tr.row-highlight-pasiva th.col-rp-pasiva,
-		#neraca tr.row-highlight-pasiva th.col-nominal-pasiva {
-			padding: 0;
-			border-top: none !important;
-			border-bottom: none !important;
-			border-left: none !important;
-			border-right: none !important;
-		}
-
-		#neraca tr.row-highlight-aktiva th.col-gap,
-		#neraca tr.row-highlight-pasiva th.col-gap,
-		#neraca tr.row-highlight-aktiva th.col-label,
-		#neraca tr.row-highlight-pasiva th.col-label {
-			border-top: none !important;
-			border-bottom: none !important;
-		}
-
-		#neraca tr.row-highlight-aktiva th.col-gap,
-		#neraca tr.row-highlight-pasiva th.col-gap {
-			border-left: 1px solid #000 !important;
-		}
-
-		#neraca .highlight-box {
-			display: block;
-			border-top: 1px solid #000;
-			border-bottom: 3px double #000;
-			padding: 1px 2px;
-			font-weight: bold;
-		}
-
-		#neraca .highlight-box-aktiva-rp {
-			margin-left: 0;
-			margin-right: 0;
-			text-align: left;
-		}
-
-		#neraca .highlight-box-aktiva-nominal {
-			margin-left: 0;
-			margin-right: 1mm;
-			text-align: right;
-		}
-
-		#neraca .highlight-box-pasiva-rp {
-			margin-left: 1mm;
-			margin-right: 0;
-			text-align: left;
-		}
-
-		#neraca .highlight-box-pasiva-nominal {
-			margin-left: 0;
-			margin-right: 1mm;
-			text-align: right;
-		}
-
 		#neraca .blank-row th {
-			height: 3px;
+			height: 4px;
 			padding: 0;
 			line-height: 0;
 			font-size: 0;
+			background-color: #ffffff !important;
 		}
 
-		#neraca-wrap {
-			page-break-inside: avoid;
+		#neraca tr.row-double-top th {
+			border-top: 1px solid #d1d5db;
+			padding: 0;
+			height: 0;
+			line-height: 0;
+			font-size: 0;
+			background: #ffffff;
 		}
 
+		#neraca tr.row-table-last th {
+			border-bottom: 1px solid #d1d5db;
+		}
+
+		/* Section — netral, fokus ke struktur */
+		#neraca .row-section-main th {
+			background-color: #ffffff !important;
+			color: #1a1a1a;
+			font-weight: 700;
+			font-size: 10pt;
+			text-transform: uppercase;
+			letter-spacing: 0.4px;
+			padding-top: 5px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #e5e7eb;
+		}
+
+		#neraca .row-section-sub th {
+			background-color: #ffffff !important;
+			color: #1a1a1a;
+			font-weight: 700;
+			font-size: 9.5pt;
+			padding-top: 4px;
+			padding-bottom: 4px;
+			border-bottom: 1px solid #eef0f2;
+		}
+
+		/* Baris data — garis lembut antar baris */
+		#neraca .row-data-item th {
+			border-bottom: 1px solid #eef0f2;
+		}
+
+		/* Total — garis hitam tegas */
+		#neraca .row-total-highlight th {
+			font-weight: 700;
+			background-color: #ffffff !important;
+			border-top: 2px solid #000000 !important;
+			border-bottom: 3px double #000000 !important;
+		}
+
+		#neraca .row-grand-total th {
+			font-weight: 700;
+			font-size: 10pt;
+			background-color: #ffffff !important;
+			color: #000000 !important;
+			text-transform: uppercase;
+			letter-spacing: 0.3px;
+			padding-top: 6px;
+			padding-bottom: 6px;
+			border-top: 2px solid #000000 !important;
+			border-bottom: 3px double #000000 !important;
+		}
+
+		#neraca .highlight-box {
+			display: inline;
+			font-weight: bold;
+			color: #000000;
+		}
+
+		/* ===== FOOTER / TTD ===== */
 		#ttd-footer {
 			width: 100%;
 			border-collapse: collapse;
 			table-layout: fixed;
-			margin-top: 4px;
+			margin-top: 12px;
 			page-break-inside: avoid;
 		}
 
 		#ttd-footer th {
 			border: none;
 			font-weight: normal;
-			font-size: 10pt;
-			padding: 1px 0;
-			line-height: 1.2;
+			font-size: 9.5pt;
+			padding: 2px 0;
+			line-height: 1.4;
+			color: #333;
+			background: transparent;
 		}
 
 		#ttd-footer .ttd-spacer-left {
@@ -237,19 +243,79 @@
 		#ttd-footer .ttd-col-right {
 			width: 50%;
 			text-align: center;
-			white-space: nowrap;
 		}
 
 		#ttd-footer .ttd-direktur-nama {
 			font-weight: bold;
 			text-decoration: underline;
+			color: #1a1a1a;
+			font-size: 10pt;
 		}
 
 		#ttd-footer .ttd-sign-space {
-			height: 28px;
+			height: 32px;
 			padding: 0;
-			line-height: 28px;
+			line-height: 32px;
 			font-size: 0;
+		}
+
+		.print-toolbar {
+			display: none;
+		}
+
+		@media screen {
+			body {
+				padding: 16px;
+				background: #f9fafb;
+			}
+
+			#neraca-wrap {
+				background: #fff;
+				padding: 16px;
+				border: 1px solid #e5e7eb;
+				border-radius: 4px;
+			}
+
+			.print-toolbar {
+				display: flex;
+				gap: 8px;
+				justify-content: flex-end;
+				margin-bottom: 12px;
+			}
+
+			.print-toolbar button,
+			.print-toolbar a {
+				background: #374151;
+				color: #fff;
+				border: none;
+				border-radius: 4px;
+				padding: 7px 14px;
+				font-size: 13px;
+				font-weight: 500;
+				cursor: pointer;
+				text-decoration: none;
+			}
+
+			.print-toolbar button:hover,
+			.print-toolbar a:hover {
+				background: #1f2937;
+			}
+		}
+
+		@media print {
+			body {
+				background: #fff;
+				padding: 0;
+			}
+
+			.print-toolbar {
+				display: none !important;
+			}
+
+			#neraca-wrap {
+				border: none;
+				padding: 0;
+			}
 		}
 	</style>
 </head>
@@ -295,6 +361,10 @@ $highlightPasivaLabels = array(
 	'TOTAL PASIVA',
 );
 
+/* Warna lembut hanya untuk baris data detail (bukan section/total) */
+$aktivaDataBg = array('#f8fafc', '#ffffff');
+$pasivaDataBg = array('#fafafa', '#ffffff');
+
 $format_amount = function ($value) {
 	if ($value === null || $value === '') {
 		return '';
@@ -314,24 +384,38 @@ $isHighlightPasiva = function ($label) use ($highlightPasivaLabels) {
 	return in_array($label, $highlightPasivaLabels, true);
 };
 
+$cellStyle = function ($bg, $extra = '') {
+	$s = 'background-color:' . $bg . ';';
+	if ($extra !== '') {
+		$s .= $extra;
+	}
+	return $s;
+};
+
 $isFirstDataRow = true;
 $rowCount = count($tableRows);
 $rowIndex = 0;
+$aktivaDataIdx = 0;
+$pasivaDataIdx = 0;
 ?>
 
 <body>
+
+<div class="print-toolbar">
+	<button type="button" onclick="window.print();">Cetak / Print</button>
+	<a href="?format=pdf" target="_blank">Download PDF</a>
+	<a href="?format=excel">Download Excel</a>
+</div>
 
 <div id="neraca-wrap">
 
 	<table id="neraca-header" width="100%">
 		<tr>
-			<th>PERUMDA ANEKA DHARMA KABUPATEN BANTUL</th>
-		</tr>
-		<tr>
-			<th>NERACA</th>
-		</tr>
-		<tr>
-			<th><?php echo $teks_periode; ?></th>
+			<th>
+				<div class="company-name">PERUMDA ANEKA DHARMA KABUPATEN BANTUL</div>
+				<div class="report-title">Neraca</div>
+				<div class="report-period"><?php echo htmlspecialchars($teks_periode); ?></div>
+			</th>
 		</tr>
 	</table>
 
@@ -373,6 +457,8 @@ $rowIndex = 0;
 			$indentMid = !empty($item['indent_mid']);
 			$highlightAktiva = $isHighlightAktiva($aktivaLabel);
 			$highlightPasiva = $isHighlightPasiva($pasivaLabel);
+			$isGrandTotal = ($aktivaLabel === 'TOTAL AKTIVA' || $pasivaLabel === 'TOTAL PASIVA');
+			$isDataDetail = ($type === 'data' && !$bold && !$highlightAktiva && !$highlightPasiva && !$isGrandTotal);
 
 			if ($isFirstDataRow) : ?>
 				<tr class="row-double-top">
@@ -389,11 +475,35 @@ $rowIndex = 0;
 			if ($rowIndex === $rowCount) {
 				$rowClass .= ' row-table-last';
 			}
-			if ($highlightAktiva) {
-				$rowClass .= ' row-highlight-aktiva';
+			if ($isGrandTotal) {
+				$rowClass .= ' row-grand-total';
+			} elseif ($highlightAktiva || $highlightPasiva) {
+				$rowClass .= ' row-total-highlight';
 			}
-			if ($highlightPasiva) {
-				$rowClass .= ' row-highlight-pasiva';
+			if ($type === 'section') {
+				$rowClass .= ' row-section-main';
+			} elseif ($type === 'subsection') {
+				$rowClass .= ' row-section-sub';
+			}
+			if ($isDataDetail) {
+				$rowClass .= ' row-data-item';
+			}
+
+			/* Background: putih/netral untuk section & total; lembut hanya baris data */
+			$aktivaBg = '#ffffff';
+			$pasivaBg = '#ffffff';
+			$aktivaExtra = '';
+			$pasivaExtra = '';
+
+			if ($isDataDetail) {
+				if ($aktivaLabel !== '' || ($aktivaAmount !== null && $aktivaAmount !== '')) {
+					$aktivaBg = $aktivaDataBg[$aktivaDataIdx % 2];
+					$aktivaDataIdx++;
+				}
+				if ($pasivaLabel !== '' || ($pasivaAmount !== null && $pasivaAmount !== '')) {
+					$pasivaBg = $pasivaDataBg[$pasivaDataIdx % 2];
+					$pasivaDataIdx++;
+				}
 			}
 
 			$aktivaLabelClass = 'col-label';
@@ -416,47 +526,31 @@ $rowIndex = 0;
 				$pasivaLabelClass .= ' label-bold';
 			}
 
-			$nominalAktivaClass = 'col-nominal col-nominal-aktiva';
-
 			$showAktivaRp = ($aktivaAmount !== null && $aktivaAmount !== '');
 			$showPasivaRp = ($pasivaAmount !== null && $pasivaAmount !== '');
 
-			$renderAktivaRp = '';
-			if ($showAktivaRp) {
-				$renderAktivaRp = $highlightAktiva
-					? '<span class="highlight-box highlight-box-aktiva-rp">Rp.</span>'
-					: 'Rp.';
-			}
+			$renderAktivaRp = $showAktivaRp ? 'Rp.' : '';
+			$renderAktivaNominal = $showAktivaRp ? $format_amount($aktivaAmount) : '';
+			$renderPasivaRp = $showPasivaRp ? 'Rp.' : '';
+			$renderPasivaNominal = $showPasivaRp ? $format_amount($pasivaAmount) : '';
 
-			$renderAktivaNominal = '';
-			if ($showAktivaRp) {
-				$renderAktivaNominal = $highlightAktiva
-					? '<span class="highlight-box highlight-box-aktiva-nominal">' . $format_amount($aktivaAmount) . '</span>'
-					: $format_amount($aktivaAmount);
+			if ($highlightAktiva && $showAktivaRp) {
+				$renderAktivaRp = '<span class="highlight-box">Rp.</span>';
+				$renderAktivaNominal = '<span class="highlight-box">' . $format_amount($aktivaAmount) . '</span>';
 			}
-
-			$renderPasivaRp = '';
-			if ($showPasivaRp) {
-				$renderPasivaRp = $highlightPasiva
-					? '<span class="highlight-box highlight-box-pasiva-rp">Rp.</span>'
-					: 'Rp.';
-			}
-
-			$renderPasivaNominal = '';
-			if ($showPasivaRp) {
-				$renderPasivaNominal = $highlightPasiva
-					? '<span class="highlight-box highlight-box-pasiva-nominal">' . $format_amount($pasivaAmount) . '</span>'
-					: $format_amount($pasivaAmount);
+			if ($highlightPasiva && $showPasivaRp) {
+				$renderPasivaRp = '<span class="highlight-box">Rp.</span>';
+				$renderPasivaNominal = '<span class="highlight-box">' . $format_amount($pasivaAmount) . '</span>';
 			}
 		?>
 			<tr class="<?php echo $rowClass; ?>">
-				<th class="<?php echo $aktivaLabelClass; ?>"><?php echo htmlspecialchars($aktivaLabel); ?></th>
-				<th class="col-rp col-rp-aktiva"><?php echo $renderAktivaRp; ?></th>
-				<th class="<?php echo $nominalAktivaClass; ?>"><?php echo $renderAktivaNominal; ?></th>
+				<th class="<?php echo $aktivaLabelClass; ?>" style="<?php echo $cellStyle($aktivaBg, $aktivaExtra); ?>"><?php echo htmlspecialchars($aktivaLabel); ?></th>
+				<th class="col-rp col-rp-aktiva" style="<?php echo $cellStyle($aktivaBg, $aktivaExtra); ?>"><?php echo $renderAktivaRp; ?></th>
+				<th class="col-nominal col-nominal-aktiva" style="<?php echo $cellStyle($aktivaBg, $aktivaExtra); ?>"><?php echo $renderAktivaNominal; ?></th>
 				<th class="col-gap">&nbsp;</th>
-				<th class="<?php echo $pasivaLabelClass; ?>"><?php echo htmlspecialchars($pasivaLabel); ?></th>
-				<th class="col-rp col-rp-pasiva"><?php echo $renderPasivaRp; ?></th>
-				<th class="col-nominal col-nominal-pasiva"><?php echo $renderPasivaNominal; ?></th>
+				<th class="<?php echo $pasivaLabelClass; ?>" style="<?php echo $cellStyle($pasivaBg, $pasivaExtra); ?>"><?php echo htmlspecialchars($pasivaLabel); ?></th>
+				<th class="col-rp col-rp-pasiva" style="<?php echo $cellStyle($pasivaBg, $pasivaExtra); ?>"><?php echo $renderPasivaRp; ?></th>
+				<th class="col-nominal col-nominal-pasiva" style="<?php echo $cellStyle($pasivaBg, $pasivaExtra); ?>"><?php echo $renderPasivaNominal; ?></th>
 			</tr>
 		<?php endforeach; ?>
 	</table>
@@ -464,7 +558,7 @@ $rowIndex = 0;
 	<?php
 	$ttd_tanggal = 'Bantul, ';
 	if ($bulan_neraca > 0) {
-		$ttd_tanggal .= 'Bulan ' . tbl_neraca_cetak_bulan_teks($bulan_neraca) . ' Tahun ' . $tahun_neraca;
+		$ttd_tanggal .= tbl_neraca_cetak_bulan_teks($bulan_neraca) . ' ' . $tahun_neraca;
 	} else {
 		$ttd_tanggal .= 'Tahun ' . $tahun_neraca;
 	}
@@ -478,7 +572,7 @@ $rowIndex = 0;
 		<tr>
 			<th class="ttd-spacer-left"></th>
 			<th class="ttd-spacer-mid"></th>
-			<th class="ttd-col-right"><?php echo $ttd_tanggal; ?></th>
+			<th class="ttd-col-right"><?php echo htmlspecialchars($ttd_tanggal); ?></th>
 		</tr>
 		<tr>
 			<th class="ttd-spacer-left"></th>
@@ -503,10 +597,11 @@ $rowIndex = 0;
 		<tr>
 			<th class="ttd-spacer-left"></th>
 			<th class="ttd-spacer-mid"></th>
-			<th class="ttd-col-right ttd-direktur-nama">Yuli Budi Sasangka,ST</th>
+			<th class="ttd-col-right ttd-direktur-nama">Yuli Budi Sasangka, ST</th>
 		</tr>
 	</table>
 
 </div>
 
 </body>
+</html>

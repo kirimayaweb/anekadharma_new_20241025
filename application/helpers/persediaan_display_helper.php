@@ -62,9 +62,8 @@ function persediaan_hitung_sisa_stock($row)
 }
 
 /**
- * Stok akhir tampilan tab Persediaan:
- * total_10 (nilai di DB) dikurangi terjual + pecah_satuan + bahan_produksi jika masih stok kotor;
- * jika total_10 sudah net (setelah recalculate), pakai nilai DB.
+ * Deteksi stok net dari nilai total_10 di DB (fallback generate/recalculate).
+ * Untuk tampilan tab Persediaan/search gunakan persediaan_hitung_total_10_kalkulasi().
  */
 function persediaan_hitung_total_10_net($row)
 {
@@ -96,11 +95,7 @@ function persediaan_hitung_total_10_net($row)
 
 function persediaan_tampil_total_10_net_row($row)
 {
-	$net = persediaan_hitung_total_10_net($row);
-	if ($net == 0) {
-		return persediaan_row_get($row, 'total_10') === '0' || persediaan_row_get($row, 'total_10') === 0 ? '0' : '';
-	}
-	return persediaan_format_angka_tampil($net);
+	return persediaan_tampil_total_10_stock_row($row);
 }
 
 /**
@@ -568,9 +563,7 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 
 function persediaan_hitung_nilai_persediaan_row($row)
 {
-	$total_10 = persediaan_hitung_total_10_net($row);
-	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : persediaan_row_get($row, 'hpp'));
-	return $total_10 * $hpp;
+	return persediaan_hitung_nilai_persediaan_stock_row($row);
 }
 
 function persediaan_format_angka_tampil($value)
@@ -923,7 +916,7 @@ function persediaan_export_row_cells($row, $no, $bulan_filter = '', $CI = null)
 		if ($field === 'tgl_keluar') {
 			$cells[] = persediaan_row_get($row, $field);
 		} elseif ($field === 'total_10') {
-			$cells[] = persediaan_export_blank_if_zero(persediaan_hitung_total_10_net($row));
+			$cells[] = persediaan_export_blank_if_zero(persediaan_hitung_total_10_kalkulasi($row));
 		} else {
 			$cells[] = persediaan_export_blank_if_zero(persediaan_row_get($row, $field));
 			if (persediaan_field_has_nominal_column($field)) {
@@ -1478,7 +1471,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$no = 0;
 	foreach ($rows as $data) {
 		$no++;
-		$total_total_10 += persediaan_hitung_total_10_net($data);
+		$total_total_10 += persediaan_hitung_total_10_kalkulasi($data);
 		$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
 		$total_sa += persediaan_parse_angka(isset($data->sa) ? $data->sa : persediaan_row_get($data, 'sa'));
 		$total_sa_nominal += persediaan_hitung_sa_nominal_row($data);
@@ -2199,6 +2192,23 @@ function persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target)
 		$sum_bahan_real += (float) (isset($rr->bahan_real) ? $rr->bahan_real : 0);
 	}
 
+	$rows_bahan_tidak_ada = persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awal, $tgl_akhir);
+	$rows_bahan_update = persediaan_gen_proses_produksi_build_bahan_update_rows($CI, $tgl_awal, $tgl_akhir);
+	$count_bahan_tidak_ada = count($rows_bahan_tidak_ada);
+	$count_bahan_update = count($rows_bahan_update);
+	$sum_bahan_produksi_pers = 0.0;
+	if ($CI->db->field_exists('bahan_produksi', 'persediaan')) {
+		$row_sum = $CI->db->query(
+			"SELECT SUM(CAST(REPLACE(REPLACE(`bahan_produksi`, '.', ''), ',', '.') AS DECIMAL(20,4))) AS jml
+			FROM `persediaan`
+			WHERE `tanggal_beli` = ?",
+			array($tgl_awal)
+		)->row();
+		if ($row_sum && isset($row_sum->jml)) {
+			$sum_bahan_produksi_pers = (float) $row_sum->jml;
+		}
+	}
+
 	return array(
 		'produksi_ok' => $produksi_ok ? 1 : 0,
 		'count_unit_produk' => $count_unit,
@@ -2215,6 +2225,10 @@ function persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target)
 		'sum_nominal_produk_fmt' => persediaan_format_angka_tampil($sum_nominal_produk),
 		'sum_bahan_real' => $sum_bahan_real,
 		'sum_bahan_real_fmt' => persediaan_format_angka_tampil($sum_bahan_real),
+		'count_bahan_tidak_ada' => $count_bahan_tidak_ada,
+		'count_bahan_update' => $count_bahan_update,
+		'sum_bahan_produksi_persediaan' => $sum_bahan_produksi_pers,
+		'sum_bahan_produksi_persediaan_fmt' => persediaan_format_angka_tampil($sum_bahan_produksi_pers),
 	);
 }
 
@@ -2277,6 +2291,7 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 	$CI->load->helper('pembelian_persediaan');
 	$raw = persediaan_gen_v2_load_unit_produk_bahan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 	$out = array();
+	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tgl_awal);
 
 	// Map produk untuk nama produk (via uuid_persediaan bahan = uuid_persediaan produk)
 	$produk_by_uuid = array();
@@ -2290,8 +2305,14 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 
 	foreach ($raw as $row) {
 		$uuid_bahan = isset($row->uuid_persediaan_bahan) ? trim((string) $row->uuid_persediaan_bahan) : '';
+		if ($uuid_bahan === '' && isset($row->uuid_persediaan)) {
+			$uuid_bahan = trim((string) $row->uuid_persediaan);
+		}
 		$jumlah = (float) persediaan_parse_angka(isset($row->jumlah_bahan) ? $row->jumlah_bahan : 0);
-		$pers = $uuid_bahan !== '' ? persediaan_gen_proses_produksi_lookup_persediaan_bahan($CI, $uuid_bahan, $tgl_awal, $tgl_akhir) : null;
+		$pers = persediaan_generate_recalculate_find_persediaan_for_produksi_bahan($CI, $row, $map);
+		if (!$pers && $uuid_bahan !== '') {
+			$pers = persediaan_gen_proses_produksi_lookup_persediaan_bahan($CI, $uuid_bahan, $tgl_awal, $tgl_akhir);
+		}
 
 		$harga_pers = $pers && isset($pers->hpp) ? (float) persediaan_parse_angka($pers->hpp) : 0.0;
 		$harga_bahan_tbl = (float) persediaan_parse_angka(isset($row->harga_satuan_bahan) ? $row->harga_satuan_bahan : 0);
@@ -2313,7 +2334,51 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 		$item->nama_produk = $produk && isset($produk->nama_barang) ? (string) $produk->nama_barang : '';
 		$item->id_persediaan_bahan = $pers && isset($pers->id) ? (int) $pers->id : 0;
 		$item->match_persediaan = $pers ? 1 : 0;
+		$item->bahan_produksi_persediaan = $pers && isset($pers->bahan_produksi)
+			? (float) persediaan_parse_angka($pers->bahan_produksi)
+			: 0.0;
+		$item->total_10_persediaan = $pers && isset($pers->total_10)
+			? (float) persediaan_parse_angka($pers->total_10)
+			: 0.0;
 		$out[] = $item;
+	}
+
+	return $out;
+}
+
+/**
+ * Record sys_unit_produk_bahan yang tidak cocok dengan persediaan bulan target.
+ */
+function persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awal, $tgl_akhir)
+{
+	$rows = persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akhir);
+	$out = array();
+	foreach ($rows as $row) {
+		if (!empty($row->match_persediaan)) {
+			continue;
+		}
+		$jumlah = isset($row->jumlah_bahan_num) ? (float) $row->jumlah_bahan_num : 0;
+		if ($jumlah <= 0) {
+			continue;
+		}
+		$out[] = $row;
+	}
+
+	return $out;
+}
+
+/**
+ * Record bahan produksi yang sudah terhubung ke persediaan (kolom bahan_produksi terisi).
+ */
+function persediaan_gen_proses_produksi_build_bahan_update_rows($CI, $tgl_awal, $tgl_akhir)
+{
+	$rows = persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akhir);
+	$out = array();
+	foreach ($rows as $row) {
+		if (empty($row->match_persediaan)) {
+			continue;
+		}
+		$out[] = $row;
 	}
 
 	return $out;
@@ -2374,8 +2439,8 @@ function persediaan_gen_proses_produksi_build_bahan_real_rows($CI, $tgl_awal, $t
 }
 
 /**
- * Tab 1 — Produksi Riil: produk + detail bahan + margin per baris bahan.
- * Margin baris = (harga_produk − harga_satuan_bahan) × jumlah_bahan
+ * Data Produksi Riil — satu baris per produk (sumber sama Sys_unit_produk / bulan).
+ * Margin = harga jual (nominal produk) − total harga bahan.
  */
 function persediaan_gen_proses_produksi_build_riil_groups($CI, $tgl_awal, $tgl_akhir)
 {
@@ -2387,150 +2452,96 @@ function persediaan_gen_proses_produksi_build_riil_groups($CI, $tgl_awal, $tgl_a
 	foreach ($bahan_rows as $b) {
 		$key = isset($b->uuid_persediaan) ? trim((string) $b->uuid_persediaan) : '';
 		if ($key === '') {
-			$key = '_tanpa_produk_' . (isset($b->id) ? (int) $b->id : uniqid());
+			continue;
 		}
 		if (!isset($bahan_by_produk[$key])) {
-			$bahan_by_produk[$key] = array();
+			$bahan_by_produk[$key] = array(
+				'jumlah' => 0.0,
+				'nominal' => 0.0,
+				'count' => 0,
+				'nama_list' => array(),
+			);
 		}
-		$bahan_by_produk[$key][] = $b;
+		$jb = (float) (isset($b->jumlah_bahan_num) ? $b->jumlah_bahan_num : 0);
+		$nb = (float) (isset($b->total_nominal_bahan) ? $b->total_nominal_bahan : 0);
+		$bahan_by_produk[$key]['jumlah'] += $jb;
+		$bahan_by_produk[$key]['nominal'] += $nb;
+		$bahan_by_produk[$key]['count']++;
+		$nama_b = isset($b->nama_bahan_tampil) ? trim((string) $b->nama_bahan_tampil) : '';
+		if ($nama_b === '' && isset($b->nama_barang_bahan)) {
+			$nama_b = trim((string) $b->nama_barang_bahan);
+		}
+		if ($nama_b !== '' && !in_array($nama_b, $bahan_by_produk[$key]['nama_list'], true)) {
+			$bahan_by_produk[$key]['nama_list'][] = $nama_b;
+		}
 	}
 
+	$rows = array();
 	$groups = array();
 	$sum_all_bahan = 0.0;
-	$sum_all_margin = 0.0;
 	$sum_all_produk = 0.0;
+	$sum_all_jumlah = 0.0;
+	$no = 0;
 
 	foreach ($produk_rows as $p) {
+		$no++;
 		$uuid = isset($p->uuid_persediaan) ? trim((string) $p->uuid_persediaan) : '';
 		$jumlah_produk = (float) persediaan_parse_angka(isset($p->jumlah_produksi) ? $p->jumlah_produksi : 0);
 		$harga_produk = (float) persediaan_parse_angka(isset($p->harga_satuan) ? $p->harga_satuan : 0);
 		$nominal_produk = $jumlah_produk * $harga_produk;
-		$bahan_list = ($uuid !== '' && isset($bahan_by_produk[$uuid])) ? $bahan_by_produk[$uuid] : array();
-		if ($uuid !== '' && isset($bahan_by_produk[$uuid])) {
-			unset($bahan_by_produk[$uuid]);
-		}
-
-		$detail = array();
-		$total_harga_bahan = 0.0;
-		$total_margin = 0.0;
-		$total_jumlah_bahan = 0.0;
-		$no_bahan = 0;
-		foreach ($bahan_list as $b) {
-			$no_bahan++;
-			$jb = (float) (isset($b->jumlah_bahan_num) ? $b->jumlah_bahan_num : 0);
-			$hb = (float) (isset($b->harga_satuan_persediaan) ? $b->harga_satuan_persediaan : 0);
-			$harga_bahan_line = $jb * $hb;
-			// Margin = (harga produk − harga satuan bahan) × jumlah bahan
-			$margin_line = ($harga_produk - $hb) * $jb;
-			$total_harga_bahan += $harga_bahan_line;
-			$total_margin += $margin_line;
-			$total_jumlah_bahan += $jb;
-
-			$detail[] = (object) array(
-				'no' => $no_bahan,
-				'id_bahan' => isset($b->id) ? (int) $b->id : 0,
-				'tgl_transaksi' => isset($b->tgl_transaksi) ? $b->tgl_transaksi : '',
-				'kode_barang_bahan' => isset($b->kode_barang_bahan) ? (string) $b->kode_barang_bahan : '',
-				'nama_bahan' => isset($b->nama_bahan_tampil) ? (string) $b->nama_bahan_tampil : (isset($b->nama_barang_bahan) ? (string) $b->nama_barang_bahan : ''),
-				'uuid_persediaan_bahan' => isset($b->uuid_persediaan_bahan) ? (string) $b->uuid_persediaan_bahan : '',
-				'jumlah_bahan' => $jb,
-				'satuan' => isset($b->satuan_tampil) ? (string) $b->satuan_tampil : '',
-				'harga_satuan_bahan' => $hb,
-				'total_harga_bahan' => $harga_bahan_line,
-				'harga_produk' => $harga_produk,
-				'harga_margin' => $margin_line,
-				'harga_sumber' => isset($b->harga_sumber) ? (string) $b->harga_sumber : '',
-				'match_persediaan' => !empty($b->match_persediaan) ? 1 : 0,
-			);
-		}
+		$agg = ($uuid !== '' && isset($bahan_by_produk[$uuid])) ? $bahan_by_produk[$uuid] : array(
+			'jumlah' => 0.0,
+			'nominal' => 0.0,
+			'count' => 0,
+			'nama_list' => array(),
+		);
+		$total_harga_bahan = (float) $agg['nominal'];
+		// Margin = harga jual produk − harga bahan
+		$total_margin = $nominal_produk - $total_harga_bahan;
+		$bahan_ringkas = !empty($agg['nama_list']) ? implode(', ', $agg['nama_list']) : '';
 
 		$sum_all_bahan += $total_harga_bahan;
-		$sum_all_margin += $total_margin;
 		$sum_all_produk += $nominal_produk;
+		$sum_all_jumlah += $jumlah_produk;
 
-		$groups[] = (object) array(
+		$row = (object) array(
+			'no' => $no,
+			'produk_id' => isset($p->id) ? (int) $p->id : 0,
 			'produk' => $p,
 			'uuid_persediaan' => $uuid,
+			'uuid_produk' => isset($p->uuid_produk) ? (string) $p->uuid_produk : '',
 			'nama_produk' => isset($p->nama_barang) ? (string) $p->nama_barang : '',
+			'nama_barang' => isset($p->nama_barang) ? (string) $p->nama_barang : '',
 			'nama_unit' => isset($p->nama_unit) ? (string) $p->nama_unit : '',
 			'kode_barang' => isset($p->kode_barang) ? (string) $p->kode_barang : '',
 			'tgl_transaksi' => isset($p->tgl_transaksi) ? $p->tgl_transaksi : '',
 			'spop' => persediaan_gen_v2_resolve_spop_unit_produk_row($CI, $p),
 			'jumlah_produksi' => $jumlah_produk,
 			'harga_produk' => $harga_produk,
+			'harga_satuan' => $harga_produk,
 			'nominal_produk' => $nominal_produk,
 			'satuan' => isset($p->satuan) ? (string) $p->satuan : '',
-			'bahan' => $detail,
-			'count_bahan' => count($detail),
-			'total_jumlah_bahan' => $total_jumlah_bahan,
+			'keterangan' => isset($p->keterangan) ? (string) $p->keterangan : '',
+			'count_bahan' => (int) $agg['count'],
+			'total_jumlah_bahan' => (float) $agg['jumlah'],
 			'total_harga_bahan' => $total_harga_bahan,
 			'total_margin' => $total_margin,
+			'bahan_ringkas' => $bahan_ringkas,
+			'bahan' => array(),
 		);
+		$rows[] = $row;
+		$groups[] = $row;
 	}
 
-	// Bahan tanpa produk terhubung
-	foreach ($bahan_by_produk as $orphan_list) {
-		if (empty($orphan_list)) {
-			continue;
-		}
-		$first = $orphan_list[0];
-		$detail = array();
-		$total_harga_bahan = 0.0;
-		$total_margin = 0.0;
-		$total_jumlah_bahan = 0.0;
-		$no_bahan = 0;
-		foreach ($orphan_list as $b) {
-			$no_bahan++;
-			$jb = (float) (isset($b->jumlah_bahan_num) ? $b->jumlah_bahan_num : 0);
-			$hb = (float) (isset($b->harga_satuan_persediaan) ? $b->harga_satuan_persediaan : 0);
-			$harga_bahan_line = $jb * $hb;
-			$total_harga_bahan += $harga_bahan_line;
-			$total_jumlah_bahan += $jb;
-			$detail[] = (object) array(
-				'no' => $no_bahan,
-				'id_bahan' => isset($b->id) ? (int) $b->id : 0,
-				'tgl_transaksi' => isset($b->tgl_transaksi) ? $b->tgl_transaksi : '',
-				'kode_barang_bahan' => isset($b->kode_barang_bahan) ? (string) $b->kode_barang_bahan : '',
-				'nama_bahan' => isset($b->nama_bahan_tampil) ? (string) $b->nama_bahan_tampil : '',
-				'uuid_persediaan_bahan' => isset($b->uuid_persediaan_bahan) ? (string) $b->uuid_persediaan_bahan : '',
-				'jumlah_bahan' => $jb,
-				'satuan' => isset($b->satuan_tampil) ? (string) $b->satuan_tampil : '',
-				'harga_satuan_bahan' => $hb,
-				'total_harga_bahan' => $harga_bahan_line,
-				'harga_produk' => 0.0,
-				'harga_margin' => 0.0 - $harga_bahan_line,
-				'harga_sumber' => isset($b->harga_sumber) ? (string) $b->harga_sumber : '',
-				'match_persediaan' => !empty($b->match_persediaan) ? 1 : 0,
-			);
-			$total_margin += (0.0 - $harga_bahan_line);
-		}
-		$sum_all_bahan += $total_harga_bahan;
-		$sum_all_margin += $total_margin;
-		$groups[] = (object) array(
-			'produk' => null,
-			'uuid_persediaan' => isset($first->uuid_persediaan) ? (string) $first->uuid_persediaan : '',
-			'nama_produk' => '(Produk tidak terhubung)',
-			'nama_unit' => isset($first->nama_unit) ? (string) $first->nama_unit : '',
-			'kode_barang' => '',
-			'tgl_transaksi' => isset($first->tgl_transaksi) ? $first->tgl_transaksi : '',
-			'spop' => '',
-			'jumlah_produksi' => 0.0,
-			'harga_produk' => 0.0,
-			'nominal_produk' => 0.0,
-			'satuan' => '',
-			'bahan' => $detail,
-			'count_bahan' => count($detail),
-			'total_jumlah_bahan' => $total_jumlah_bahan,
-			'total_harga_bahan' => $total_harga_bahan,
-			'total_margin' => $total_margin,
-		);
-	}
+	$sum_margin = $sum_all_produk - $sum_all_bahan;
 
 	return array(
+		'rows' => $rows,
 		'groups' => $groups,
+		'sum_jumlah_produksi' => $sum_all_jumlah,
 		'sum_nominal_produk' => $sum_all_produk,
 		'sum_harga_bahan' => $sum_all_bahan,
-		'sum_margin' => $sum_all_margin,
+		'sum_margin' => $sum_margin,
 	);
 }
 
@@ -2672,13 +2683,16 @@ function persediaan_generate_proses_produksi_package($CI, $bulan_target)
 	$rows_unit_produk = persediaan_gen_v2_load_unit_produk_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 	$rows_bahan = persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akhir);
 	$rows_bahan_real = persediaan_gen_proses_produksi_build_bahan_real_rows($CI, $tgl_awal, $tgl_akhir);
+	$rows_bahan_tidak_ada = persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awal, $tgl_akhir);
+	$rows_bahan_update = persediaan_gen_proses_produksi_build_bahan_update_rows($CI, $tgl_awal, $tgl_akhir);
 	$riil = persediaan_gen_proses_produksi_build_riil_groups($CI, $tgl_awal, $tgl_akhir);
-	$margin = persediaan_gen_proses_produksi_build_margin_produk_rows($CI, $tgl_awal, $tgl_akhir);
 	$rekap = persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target);
 	$rekap['sum_margin_riil'] = isset($riil['sum_margin']) ? $riil['sum_margin'] : 0;
 	$rekap['sum_margin_riil_fmt'] = persediaan_format_angka_tampil($rekap['sum_margin_riil']);
-	$rekap['sum_pengurangan_persediaan'] = isset($margin['sum_pengurangan']) ? $margin['sum_pengurangan'] : 0;
-	$rekap['sum_pengurangan_persediaan_fmt'] = persediaan_format_angka_tampil($rekap['sum_pengurangan_persediaan']);
+	$rekap['sum_nominal_produk_riil'] = isset($riil['sum_nominal_produk']) ? $riil['sum_nominal_produk'] : 0;
+	$rekap['sum_nominal_produk_riil_fmt'] = persediaan_format_angka_tampil($rekap['sum_nominal_produk_riil']);
+	$rekap['sum_harga_bahan_riil'] = isset($riil['sum_harga_bahan']) ? $riil['sum_harga_bahan'] : 0;
+	$rekap['sum_harga_bahan_riil_fmt'] = persediaan_format_angka_tampil($rekap['sum_harga_bahan_riil']);
 
 	return array(
 		'ok' => true,
@@ -2689,10 +2703,11 @@ function persediaan_generate_proses_produksi_package($CI, $bulan_target)
 		'rows_unit_produk' => $rows_unit_produk,
 		'rows_bahan_real' => $rows_bahan_real,
 		'rows_bahan' => $rows_bahan,
+		'rows_bahan_tidak_ada' => $rows_bahan_tidak_ada,
+		'rows_bahan_update' => $rows_bahan_update,
+		'rows_produksi_riil' => isset($riil['rows']) ? $riil['rows'] : array(),
 		'groups_produksi_riil' => isset($riil['groups']) ? $riil['groups'] : array(),
 		'riil_summary' => $riil,
-		'rows_margin_produk' => isset($margin['rows']) ? $margin['rows'] : array(),
-		'margin_summary' => $margin,
 		'rekap' => $rekap,
 	);
 }
@@ -2702,7 +2717,7 @@ function persediaan_generate_proses_produksi_package($CI, $bulan_target)
  * Generate Persediaan — box proses penjualan (tbl_penjualan)
  * -------------------------------------------------------------------------
  */
-function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target)
+function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target, $counts = null)
 {
 	$CI->load->helper('pembelian_persediaan');
 	$bulan_target = trim((string) $bulan_target);
@@ -2714,6 +2729,24 @@ function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target)
 	$sum_jumlah = persediaan_gen_v2_sum_jumlah_penjualan_bulan($CI, $tgl_awal, $tgl_akhir);
 	$sum_penj_pers = persediaan_gen_v2_sum_penjualan_persediaan_bulan($CI, $tgl_awal, $tgl_akhir);
 	$penjualan_ok = persediaan_gen_proses_floats_equal($sum_jumlah, $sum_penj_pers);
+
+	$base = array(
+		'penjualan_ok' => $penjualan_ok ? 1 : 0,
+		'count_penjualan' => $count_penjualan,
+		'sum_jumlah_penjualan' => $sum_jumlah,
+		'sum_penjualan_persediaan' => $sum_penj_pers,
+		'sum_jumlah_penjualan_fmt' => persediaan_format_angka_tampil($sum_jumlah),
+		'sum_penjualan_persediaan_fmt' => persediaan_format_angka_tampil($sum_penj_pers),
+	);
+
+	if (is_array($counts)) {
+		return array_merge($base, array(
+			'count_masuk' => (int) (isset($counts['count_masuk']) ? $counts['count_masuk'] : 0),
+			'count_tidak_masuk' => (int) (isset($counts['count_tidak_masuk']) ? $counts['count_tidak_masuk'] : 0),
+			'count_manual' => (int) (isset($counts['count_manual']) ? $counts['count_manual'] : 0),
+			'count_skip' => (int) (isset($counts['count_skip']) ? $counts['count_skip'] : 0),
+		));
+	}
 
 	$ctx = array(
 		'tgl_awal' => $tgl_awal,
@@ -2742,18 +2775,12 @@ function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target)
 		}
 	}
 
-	return array(
-		'penjualan_ok' => $penjualan_ok ? 1 : 0,
-		'count_penjualan' => $count_penjualan,
-		'sum_jumlah_penjualan' => $sum_jumlah,
-		'sum_penjualan_persediaan' => $sum_penj_pers,
-		'sum_jumlah_penjualan_fmt' => persediaan_format_angka_tampil($sum_jumlah),
-		'sum_penjualan_persediaan_fmt' => persediaan_format_angka_tampil($sum_penj_pers),
+	return array_merge($base, array(
 		'count_masuk' => $count_masuk,
 		'count_tidak_masuk' => $count_tidak_masuk,
 		'count_manual' => $count_manual,
 		'count_skip' => $count_skip,
-	);
+	));
 }
 
 function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
@@ -2784,17 +2811,35 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 	$rows_masuk = array();
 	$rows_tidak_masuk = array();
 	$rows_manual = array();
+	$count_masuk = 0;
+	$count_tidak_masuk = 0;
+	$count_manual = 0;
+	$count_skip = 0;
+
 	foreach ($rows_all as $row_pen) {
 		$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $map, $cache_pembelian);
 		$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
+
 		if ($kat === 'masuk') {
+			$count_masuk++;
 			$rows_masuk[] = $cls;
 		} elseif ($kat === 'manual') {
-			$rows_manual[] = $cls;
-		} elseif ($kat !== 'skip') {
-			$rows_tidak_masuk[] = $cls;
+			$count_manual++;
+			$rows_manual[] = persediaan_gen_v2_penjualan_enrich_masalah_row($CI, $ctx, $row_pen, $map, $cache_pembelian, $cls);
+		} elseif ($kat === 'skip') {
+			$count_skip++;
+		} else {
+			$count_tidak_masuk++;
+			$rows_tidak_masuk[] = persediaan_gen_v2_penjualan_enrich_masalah_row($CI, $ctx, $row_pen, $map, $cache_pembelian, $cls);
 		}
 	}
+
+	$rekap = persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target, array(
+		'count_masuk' => $count_masuk,
+		'count_tidak_masuk' => $count_tidak_masuk,
+		'count_manual' => $count_manual,
+		'count_skip' => $count_skip,
+	));
 
 	return array(
 		'ok' => true,
@@ -2805,7 +2850,152 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 		'rows_masuk' => $rows_masuk,
 		'rows_tidak_masuk' => $rows_tidak_masuk,
 		'rows_manual' => $rows_manual,
-		'rekap' => persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target),
+		'rekap' => $rekap,
+	);
+}
+
+function persediaan_gen_proses_pecah_satuan_build_rekap($CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$ctx = array(
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+		'tanggal_beli_target' => $tgl_awal,
+		'tanggal_beli' => $tgl_awal,
+	);
+
+	$count_pecah = persediaan_gen_v2_count_pecah_satuan_bulan($CI, $tgl_awal, $tgl_akhir);
+	$count_update = 0;
+	$count_tidak_cocok = 0;
+	$count_skip = 0;
+
+	if ($CI->db->table_exists('tbl_pembelian_pecah_satuan')) {
+		$list = $CI->db->query(
+			"SELECT * FROM `tbl_pembelian_pecah_satuan`
+			WHERE DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) >= ?
+			AND DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) <= ?
+			ORDER BY `id` ASC",
+			array($tgl_awal, $tgl_akhir)
+		)->result();
+		$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tgl_awal);
+		foreach ($list as $row_pecah) {
+			$jumlah_pecah = max(0, (int) floor(persediaan_parse_angka(isset($row_pecah->jumlah) ? $row_pecah->jumlah : 0)));
+			$jumlah_baru = max(0, (int) floor(persediaan_parse_angka(isset($row_pecah->jumlah_barang_baru) ? $row_pecah->jumlah_barang_baru : 0)));
+			if ($jumlah_pecah <= 0 || $jumlah_baru <= 0) {
+				$count_skip++;
+				continue;
+			}
+			$pick_src = persediaan_generate_recalculate_find_persediaan_for_pecah_source($row_pecah, $map);
+			if (!$pick_src) {
+				$count_tidak_cocok++;
+				continue;
+			}
+			$count_update++;
+		}
+	}
+
+	return array(
+		'count_pecah_satuan' => $count_pecah,
+		'count_update' => $count_update,
+		'count_tidak_cocok' => $count_tidak_cocok,
+		'count_skip' => $count_skip,
+		'pecah_ok' => ($count_pecah > 0 && $count_tidak_cocok === 0) ? 1 : 0,
+	);
+}
+
+function persediaan_gen_proses_pecah_satuan_load_rows($CI, $bulan_target)
+{
+	$CI->load->helper('pembelian_persediaan');
+	$bulan_target = trim((string) $bulan_target);
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	if (!$CI->db->table_exists('tbl_pembelian_pecah_satuan')) {
+		return array();
+	}
+
+	$list = $CI->db->query(
+		"SELECT * FROM `tbl_pembelian_pecah_satuan`
+		WHERE DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) >= ?
+		AND DATE(COALESCE(NULLIF(TRIM(`proses_input`), ''), `tgl_po`)) <= ?
+		ORDER BY `uraian` ASC, `id` ASC",
+		array($tgl_awal, $tgl_akhir)
+	)->result();
+
+	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tgl_awal);
+	$rows = array();
+	foreach ($list as $row) {
+		$o = clone $row;
+		$jumlah_pecah = max(0, (int) floor(persediaan_parse_angka(isset($row->jumlah) ? $row->jumlah : 0)));
+		$jumlah_baru = max(0, (int) floor(persediaan_parse_angka(isset($row->jumlah_barang_baru) ? $row->jumlah_barang_baru : 0)));
+		if ($jumlah_pecah <= 0 || $jumlah_baru <= 0) {
+			$o->status_label = 'Lewati';
+			$o->status_kategori = 'skip';
+			$o->status_keterangan = 'Jumlah pecah atau barang baru = 0';
+		} else {
+			$pick_src = persediaan_generate_recalculate_find_persediaan_for_pecah_source($row, $map);
+			$pick_tgt = persediaan_generate_recalculate_find_persediaan_for_pecah_target($row, $map);
+			if ($pick_src && $pick_tgt) {
+				$o->status_label = 'Update';
+				$o->status_kategori = 'update';
+				$o->status_keterangan = 'Sumber id=' . (int) $pick_src->id . ', target id=' . (int) $pick_tgt->id;
+				$o->id_persediaan_sumber = (int) $pick_src->id;
+				$o->id_persediaan_target = (int) $pick_tgt->id;
+			} elseif ($pick_src) {
+				$o->status_label = 'Sumber OK, target belum ada';
+				$o->status_kategori = 'partial';
+				$o->status_keterangan = 'Sumber id=' . (int) $pick_src->id . ' — target akan di-insert saat generate';
+				$o->id_persediaan_sumber = (int) $pick_src->id;
+			} else {
+				$o->status_label = 'Tidak cocok';
+				$o->status_kategori = 'gagal';
+				$o->status_keterangan = 'Sumber tidak cocok di persediaan (uraian+satuan+hpp)';
+			}
+		}
+		$rows[] = $o;
+	}
+
+	return $rows;
+}
+
+function persediaan_generate_proses_pecah_satuan_package($CI, $bulan_target)
+{
+	$bulan_target = trim((string) $bulan_target);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+	}
+
+	$CI->load->helper('pembelian_persediaan');
+	$rows_all = persediaan_gen_proses_pecah_satuan_load_rows($CI, $bulan_target);
+	$rows_update = array();
+	$rows_gagal = array();
+	foreach ($rows_all as $row) {
+		$kat = isset($row->status_kategori) ? $row->status_kategori : 'gagal';
+		if ($kat === 'update' || $kat === 'partial') {
+			$rows_update[] = $row;
+		} elseif ($kat === 'gagal') {
+			$rows_gagal[] = $row;
+		}
+	}
+
+	return array(
+		'ok' => true,
+		'bulan_target' => $bulan_target,
+		'bulan_target_label' => date('m/Y', $ts),
+		'rows_all' => $rows_all,
+		'rows_update' => $rows_update,
+		'rows_gagal' => $rows_gagal,
+		'rekap' => persediaan_gen_proses_pecah_satuan_build_rekap($CI, $bulan_target),
 	);
 }
 
@@ -2872,6 +3062,16 @@ function persediaan_gen_proses_excel_jenis_definitions()
 			'type' => 'produksi',
 			'produksi_mode' => 'bahan',
 		),
+		'proses_produksi_bahan_tidak_ada' => array(
+			'title' => 'Bahan Produksi Tidak Ada di Persediaan',
+			'type' => 'produksi',
+			'produksi_mode' => 'bahan_tidak_ada',
+		),
+		'proses_produksi_bahan_update' => array(
+			'title' => 'Update Bahan Produksi di Persediaan',
+			'type' => 'produksi',
+			'produksi_mode' => 'bahan_update',
+		),
 		'proses_produksi_riil' => array(
 			'title' => 'Verifikasi Produksi — Data Produksi Riil',
 			'type' => 'produksi',
@@ -2937,12 +3137,18 @@ function persediaan_gen_proses_excel_load_rows($CI, $bulan_target, $jenis, $def)
 		if ($mode === 'bahan') {
 			return persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akhir);
 		}
+		if ($mode === 'bahan_tidak_ada') {
+			return persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awal, $tgl_akhir);
+		}
+		if ($mode === 'bahan_update') {
+			return persediaan_gen_proses_produksi_build_bahan_update_rows($CI, $tgl_awal, $tgl_akhir);
+		}
 		if ($mode === 'bahan_real') {
 			return persediaan_gen_proses_produksi_build_bahan_real_rows($CI, $tgl_awal, $tgl_akhir);
 		}
 		if ($mode === 'riil') {
 			$riil = persediaan_gen_proses_produksi_build_riil_groups($CI, $tgl_awal, $tgl_akhir);
-			return isset($riil['groups']) ? $riil['groups'] : array();
+			return isset($riil['rows']) ? $riil['rows'] : array();
 		}
 		if ($mode === 'margin') {
 			$margin = persediaan_gen_proses_produksi_build_margin_produk_rows($CI, $tgl_awal, $tgl_akhir);
@@ -3290,136 +3496,75 @@ function persediaan_gen_proses_excel_write_produksi_bahan_rows($rows, $title, $b
 	xlsEOF();
 }
 
-function persediaan_gen_proses_excel_write_produksi_riil_rows($groups, $title, $bulan_label)
+function persediaan_gen_proses_excel_write_produksi_riil_rows($rows, $title, $bulan_label)
 {
 	$headers = array(
-		'No Produk', 'Tgl', 'SPOP', 'Nama Produk', 'Qty Produksi', 'Harga Produk', 'Nominal Produk',
-		'No Bahan', 'Kode Bahan', 'Nama Bahan', 'Jumlah Bahan', 'Satuan',
-		'Harga Satuan Bahan', 'Total Harga Bahan', 'Harga Margin', 'Sumber Harga',
+		'No', 'Tgl Transaksi', 'SPOP', 'Nama Unit', 'Kode Barang', 'Nama Produk',
+		'Jumlah Produksi', 'Satuan', 'Harga Jual', 'Nominal Jual',
+		'Jml Bahan', 'Total Harga Bahan', 'Margin (Jual−Bahan)', 'Ringkasan Bahan',
 	);
-	$col_qty_produk = 4;
-	$col_nominal_produk = 6;
-	$col_jumlah_bahan = 10;
-	$col_total_bahan = 13;
-	$col_margin = 14;
-	$sum_qty = 0.0;
-	$sum_nominal_produk = 0.0;
-	$sum_jumlah_bahan = 0.0;
-	$sum_total_bahan = 0.0;
+	$col_jumlah = 6;
+	$col_nominal = 9;
+	$col_bahan = 11;
+	$col_margin = 12;
+	$sum_jumlah = 0.0;
+	$sum_nominal = 0.0;
+	$sum_bahan = 0.0;
 	$sum_margin = 0.0;
-	$baris_count = 0;
 
 	xlsBOF();
 	xlsWriteLabelBold14(0, 0, $title . ' — ' . $bulan_label);
-	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Margin = (Harga produk − Harga satuan bahan) × Jumlah bahan');
+	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows) . ' | Margin = Nominal jual − Total harga bahan | Sumber: sys_unit_produk');
 	persediaan_excel_write_headers(3, $headers);
 
 	$row_num = 4;
-	$no_produk = 0;
-	foreach ($groups as $g) {
-		$no_produk++;
-		$sum_qty += (float) (isset($g->jumlah_produksi) ? $g->jumlah_produksi : 0);
-		$sum_nominal_produk += (float) (isset($g->nominal_produk) ? $g->nominal_produk : 0);
-		$sum_jumlah_bahan += (float) (isset($g->total_jumlah_bahan) ? $g->total_jumlah_bahan : 0);
-		$sum_total_bahan += (float) (isset($g->total_harga_bahan) ? $g->total_harga_bahan : 0);
-		$sum_margin += (float) (isset($g->total_margin) ? $g->total_margin : 0);
+	$no = 0;
+	foreach ($rows as $row) {
+		$no++;
+		$jumlah = isset($row->jumlah_produksi) ? (float) $row->jumlah_produksi : 0.0;
+		$nominal = isset($row->nominal_produk) ? (float) $row->nominal_produk : 0.0;
+		$bahan = isset($row->total_harga_bahan) ? (float) $row->total_harga_bahan : 0.0;
+		$margin = isset($row->total_margin) ? (float) $row->total_margin : ($nominal - $bahan);
+		$sum_jumlah += $jumlah;
+		$sum_nominal += $nominal;
+		$sum_bahan += $bahan;
+		$sum_margin += $margin;
 
-		$bahan = isset($g->bahan) && is_array($g->bahan) ? $g->bahan : array();
-		if (empty($bahan)) {
-			$baris_count++;
-			$cells = array(
-				(string) $no_produk,
-				persediaan_gen_proses_pembelian_format_tgl(isset($g->tgl_transaksi) ? $g->tgl_transaksi : ''),
-				isset($g->spop) ? (string) $g->spop : '',
-				isset($g->nama_produk) ? (string) $g->nama_produk : '',
-				persediaan_gen_proses_pembelian_format_jumlah(isset($g->jumlah_produksi) ? $g->jumlah_produksi : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($g->harga_produk) ? $g->harga_produk : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($g->nominal_produk) ? $g->nominal_produk : 0),
-				'',
-				'',
-				'(tanpa bahan)',
-				'',
-				'',
-				'',
-				'',
-				'',
-				'',
-			);
-			$row_style = ($row_num % 2 === 0) ? 18 : 7;
-			foreach ($cells as $col => $cell) {
-				xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $row_style);
-			}
-			$row_num++;
-			continue;
-		}
-
-		foreach ($bahan as $b) {
-			$baris_count++;
-			$cells = array(
-				(string) $no_produk,
-				persediaan_gen_proses_pembelian_format_tgl(isset($g->tgl_transaksi) ? $g->tgl_transaksi : ''),
-				isset($g->spop) ? (string) $g->spop : '',
-				isset($g->nama_produk) ? (string) $g->nama_produk : '',
-				persediaan_gen_proses_pembelian_format_jumlah(isset($g->jumlah_produksi) ? $g->jumlah_produksi : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($g->harga_produk) ? $g->harga_produk : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($g->nominal_produk) ? $g->nominal_produk : 0),
-				(string) (int) (isset($b->no) ? $b->no : 0),
-				isset($b->kode_barang_bahan) ? (string) $b->kode_barang_bahan : '',
-				isset($b->nama_bahan) ? (string) $b->nama_bahan : '',
-				persediaan_gen_proses_pembelian_format_jumlah(isset($b->jumlah_bahan) ? $b->jumlah_bahan : 0),
-				isset($b->satuan) ? (string) $b->satuan : '',
-				persediaan_gen_proses_pembelian_format_nominal(isset($b->harga_satuan_bahan) ? $b->harga_satuan_bahan : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($b->total_harga_bahan) ? $b->total_harga_bahan : 0),
-				persediaan_gen_proses_pembelian_format_nominal(isset($b->harga_margin) ? $b->harga_margin : 0),
-				isset($b->harga_sumber) ? (string) $b->harga_sumber : '',
-			);
-			$row_style = ($row_num % 2 === 0) ? 18 : 7;
-			$money_cols = array($col_qty_produk, $col_nominal_produk, $col_jumlah_bahan, $col_total_bahan, $col_margin);
-			foreach ($cells as $col => $cell) {
-				$style = in_array($col, $money_cols, true) ? 8 : $row_style;
-				xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $style);
-			}
-			$row_num++;
-		}
-
-		// Baris total per produk
-		$cells_total = array(
-			'',
-			'',
-			'',
-			'TOTAL — ' . (isset($g->nama_produk) ? (string) $g->nama_produk : ''),
-			'',
-			'',
-			'',
-			'',
-			'',
-			'',
-			persediaan_gen_proses_pembelian_format_jumlah(isset($g->total_jumlah_bahan) ? $g->total_jumlah_bahan : 0),
-			'',
-			'',
-			persediaan_gen_proses_pembelian_format_nominal(isset($g->total_harga_bahan) ? $g->total_harga_bahan : 0),
-			persediaan_gen_proses_pembelian_format_nominal(isset($g->total_margin) ? $g->total_margin : 0),
-			(string) ((int) (isset($g->count_bahan) ? $g->count_bahan : 0)) . ' bahan',
+		$cells = array(
+			(string) $no,
+			persediaan_gen_proses_pembelian_format_tgl(isset($row->tgl_transaksi) ? $row->tgl_transaksi : ''),
+			isset($row->spop) ? (string) $row->spop : '',
+			isset($row->nama_unit) ? (string) $row->nama_unit : '',
+			isset($row->kode_barang) ? (string) $row->kode_barang : '',
+			isset($row->nama_produk) ? (string) $row->nama_produk : (isset($row->nama_barang) ? (string) $row->nama_barang : ''),
+			persediaan_gen_proses_pembelian_format_jumlah($jumlah),
+			isset($row->satuan) ? (string) $row->satuan : '',
+			persediaan_gen_proses_pembelian_format_nominal(isset($row->harga_produk) ? $row->harga_produk : 0),
+			persediaan_gen_proses_pembelian_format_nominal($nominal),
+			(string) (int) (isset($row->count_bahan) ? $row->count_bahan : 0),
+			persediaan_gen_proses_pembelian_format_nominal($bahan),
+			persediaan_gen_proses_pembelian_format_nominal($margin),
+			isset($row->bahan_ringkas) ? (string) $row->bahan_ringkas : '',
 		);
-		foreach ($cells_total as $col => $cell) {
-			xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), 24);
+
+		$row_style = ($row_num % 2 === 0) ? 18 : 7;
+		$money_cols = array($col_jumlah, $col_nominal, $col_bahan, $col_margin);
+		foreach ($cells as $col => $cell) {
+			$style = in_array($col, $money_cols, true) ? 8 : $row_style;
+			xlsWriteCellStyle($row_num, $col, strip_tags((string) $cell), $style);
 		}
 		$row_num++;
 	}
 
-	xlsWriteLabel(2, 0, 'Total baris detail: ' . $baris_count . ' | Produk: ' . $no_produk);
-
 	foreach ($headers as $col => $label) {
 		if ($col === 0) {
-			xlsWriteCellStyle($row_num, $col, 'TOTAL SEMUA', 24);
-		} elseif ($col === $col_qty_produk) {
-			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_qty), 25);
-		} elseif ($col === $col_nominal_produk) {
-			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_nominal_produk), 25);
-		} elseif ($col === $col_jumlah_bahan) {
-			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah_bahan), 25);
-		} elseif ($col === $col_total_bahan) {
-			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_total_bahan), 25);
+			xlsWriteCellStyle($row_num, $col, 'TOTAL', 24);
+		} elseif ($col === $col_jumlah) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah), 25);
+		} elseif ($col === $col_nominal) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_nominal), 25);
+		} elseif ($col === $col_bahan) {
+			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_bahan), 25);
 		} elseif ($col === $col_margin) {
 			xlsWriteCellStyle($row_num, $col, persediaan_gen_proses_pembelian_format_nominal($sum_margin), 25);
 		} else {

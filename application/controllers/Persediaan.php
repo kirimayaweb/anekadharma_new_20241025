@@ -585,8 +585,15 @@ class Persediaan extends CI_Controller
 			'url_generate_proses_persediaan_view' => site_url('Persediaan/ajax_generate_proses_persediaan_view'),
 			'url_generate_proses_pembelian_view' => site_url('Persediaan/ajax_generate_proses_pembelian_view'),
 			'url_generate_proses_produksi_view' => site_url('Persediaan/ajax_generate_proses_produksi_view'),
+			'url_generate_proses_pecah_satuan_view' => site_url('Persediaan/ajax_generate_proses_pecah_satuan_view'),
+			'url_gen_pecah_cari_persediaan_sumber' => site_url('Persediaan/ajax_gen_pecah_cari_persediaan_sumber'),
+			'url_gen_pecah_proses_record' => site_url('Persediaan/ajax_gen_pecah_proses_record'),
 			'url_generate_proses_penjualan_view' => site_url('Persediaan/ajax_generate_proses_penjualan_view'),
 			'url_generate_proses_persediaan_full_view' => site_url('Persediaan/ajax_generate_proses_persediaan_full_view'),
+			'url_gen_penjualan_cari_persediaan_mirip' => site_url('Persediaan/ajax_gen_penjualan_cari_persediaan_mirip'),
+			'url_gen_penjualan_apply_persediaan' => site_url('Persediaan/ajax_gen_penjualan_apply_persediaan'),
+			'url_gen_penjualan_penyesuaian_pecah' => site_url('Persediaan/ajax_gen_penjualan_penyesuaian_pecah'),
+			'url_gen_penjualan_penyesuaian_produksi' => site_url('Persediaan/ajax_gen_penjualan_penyesuaian_produksi'),
 			'url_excel_generate_proses' => site_url('Persediaan/excel_generate_proses'),
 			'url_load_gen_recalc_history' => site_url('Persediaan/ajax_load_gen_recalc_history'),
 			'url_gen_recalc_summary_tables' => site_url('Persediaan/ajax_gen_recalc_summary_tables'),
@@ -1816,7 +1823,7 @@ class Persediaan extends CI_Controller
 	public function ajax_generate_recalculate_batch()
 	{
 		@set_time_limit(0);
-		@ini_set('memory_limit', '768M');
+		@ini_set('memory_limit', '1024M');
 		@ignore_user_abort(true);
 
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
@@ -2010,6 +2017,56 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
+	 * AJAX: tampilan box Proses Pecah Satuan (verifikasi + datatable tbl_pembelian_pecah_satuan).
+	 */
+	public function ajax_generate_proses_pecah_satuan_view()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate Persediaan'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+				return;
+			}
+
+			$package = persediaan_generate_proses_pecah_satuan_package($this, $bulan);
+			if (empty($package['ok'])) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => isset($package['message']) ? $package['message'] : 'Gagal memuat data proses pecah satuan.',
+				));
+				return;
+			}
+
+			$html = $this->load->view(
+				'anekadharma/persediaan/_generate_proses_pecah_satuan_box',
+				$package,
+				true
+			);
+
+			persediaan_ajax_json_output($this, array(
+				'ok' => true,
+				'html' => $html,
+				'rekap' => isset($package['rekap']) ? $package['rekap'] : array(),
+				'bulan_target_label' => isset($package['bulan_target_label']) ? $package['bulan_target_label'] : '',
+			));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
 	 * AJAX: tampilan box Proses Penjualan (verifikasi + datatable tbl_penjualan).
 	 */
 	public function ajax_generate_proses_penjualan_view()
@@ -2057,6 +2114,227 @@ class Persediaan extends CI_Controller
 		} catch (Throwable $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		}
+	}
+
+	/**
+	 * AJAX: cari record persediaan mirip untuk solusi penjualan gagal.
+	 */
+	public function ajax_gen_penjualan_cari_persediaan_mirip()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Solusi penjualan'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_penjualan = (int) $this->input->get_post('id_penjualan', TRUE);
+		if ($id_penjualan <= 0) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'ID penjualan tidak valid.'));
+			return;
+		}
+
+		$ctx = persediaan_gen_v2_penjualan_ctx($bulan);
+		if (empty($ctx['ok'])) {
+			persediaan_ajax_json_output($this, $ctx);
+			return;
+		}
+
+		$row_pen = $this->db->where('id', $id_penjualan)->limit(1)->get('tbl_penjualan')->row();
+		if (!$row_pen) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Record penjualan tidak ditemukan.'));
+			return;
+		}
+
+		$map = persediaan_gen_v2_build_map_persediaan_bulan_range($this, $ctx['tgl_awal'], $ctx['tgl_akhir']);
+		$result = persediaan_gen_v2_cari_persediaan_mirip_penjualan($this, $ctx, $row_pen, 25, $map);
+		$result['penjualan'] = array(
+			'id' => (int) $row_pen->id,
+			'nama_barang' => isset($row_pen->nama_barang) ? (string) $row_pen->nama_barang : '',
+			'satuan' => isset($row_pen->satuan) ? (string) $row_pen->satuan : '',
+			'hpp' => isset($row_pen->harga_satuan) ? $row_pen->harga_satuan : '',
+			'jumlah' => isset($row_pen->jumlah) ? $row_pen->jumlah : '',
+			'unit' => isset($row_pen->unit) ? (string) $row_pen->unit : '',
+		);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: proses penjualan ke record persediaan terpilih (tombol Solusi).
+	 */
+	public function ajax_gen_penjualan_apply_persediaan()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Solusi penjualan'),
+			));
+			return;
+		}
+
+		if (strtolower($this->input->method()) !== 'post') {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_penjualan = (int) $this->input->post('id_penjualan', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$result = persediaan_gen_v2_apply_penjualan_ke_persediaan($this, $bulan, $id_penjualan, $id_persediaan);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: cari persediaan sumber untuk proses manual record pecah satuan gagal.
+	 */
+	public function ajax_gen_pecah_cari_persediaan_sumber()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Solusi pecah satuan'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_pecah_satuan = (int) $this->input->get_post('id_pecah_satuan', TRUE);
+		if ($id_pecah_satuan <= 0) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'ID pecah satuan tidak valid.'));
+			return;
+		}
+
+		$result = persediaan_gen_v2_pecah_satuan_cari_persediaan_sumber($this, $bulan, $id_pecah_satuan, 60);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: proses manual 1 record pecah satuan gagal.
+	 */
+	public function ajax_gen_pecah_proses_record()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Proses record pecah satuan'),
+			));
+			return;
+		}
+
+		if (strtolower($this->input->method()) !== 'post') {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_pecah_satuan = (int) $this->input->post('id_pecah_satuan', TRUE);
+		$id_persediaan_sumber = (int) $this->input->post('id_persediaan_sumber', TRUE);
+		$result = persediaan_gen_v2_pecah_satuan_proses_record($this, $bulan, $id_pecah_satuan, $id_persediaan_sumber);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: penyesuaian pecah satuan dari modal penjualan gagal.
+	 */
+	public function ajax_gen_penjualan_penyesuaian_pecah()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Penyesuaian pecah satuan'),
+			));
+			return;
+		}
+
+		if (strtolower($this->input->method()) !== 'post') {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$payload = array(
+			'id_penjualan' => $this->input->post('id_penjualan', TRUE),
+			'id_persediaan_sumber' => $this->input->post('id_persediaan_sumber', TRUE),
+			'jumlah_pecah' => $this->input->post('jumlah_pecah', TRUE),
+			'jumlah_barang_baru' => $this->input->post('jumlah_barang_baru', TRUE),
+			'nama_barang_baru' => $this->input->post('nama_barang_baru', TRUE),
+			'satuan_barang_baru' => $this->input->post('satuan_barang_baru', TRUE),
+			'harga_satuan_barang_baru' => $this->input->post('harga_satuan_barang_baru', TRUE),
+		);
+		$result = persediaan_gen_v2_penyesuaian_pecah_satuan_dari_penjualan($this, $bulan, $payload);
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: penyesuaian produksi dari modal penjualan gagal.
+	 */
+	public function ajax_gen_penjualan_penyesuaian_produksi()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Penyesuaian produksi'),
+			));
+			return;
+		}
+
+		if (strtolower($this->input->method()) !== 'post') {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$payload = array(
+			'id_penjualan' => $this->input->post('id_penjualan', TRUE),
+			'id_persediaan' => $this->input->post('id_persediaan', TRUE),
+			'jumlah_produksi' => $this->input->post('jumlah_produksi', TRUE),
+		);
+		$result = persediaan_gen_v2_penyesuaian_produksi_dari_penjualan($this, $bulan, $payload);
+		persediaan_ajax_json_output($this, $result);
 	}
 
 	/**

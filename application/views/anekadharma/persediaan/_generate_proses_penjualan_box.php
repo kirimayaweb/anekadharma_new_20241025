@@ -128,6 +128,7 @@ $has_masalah = ((int) (isset($rekap['count_tidak_masuk']) ? $rekap['count_tidak_
 				'table_id' => 'table-gen-proses-penjualan-tidak',
 				'empty_msg' => 'Semua record penjualan sudah masuk atau perlu verifikasi manual.',
 				'excel_jenis' => 'proses_penjualan_tidak',
+				'show_solusi' => true,
 			)); ?>
 		</div>
 		<div class="tab-pane fade" id="gen-pj-pane-manual" role="tabpanel">
@@ -142,6 +143,7 @@ $has_masalah = ((int) (isset($rekap['count_tidak_masuk']) ? $rekap['count_tidak_
 				'table_id' => 'table-gen-proses-penjualan-manual',
 				'empty_msg' => 'Tidak ada record yang perlu verifikasi manual.',
 				'excel_jenis' => 'proses_penjualan_manual',
+				'show_solusi' => true,
 			)); ?>
 		</div>
 	</div>

@@ -141,6 +141,7 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                                 $TOTAL_HUTANG = 0;
                                 $start = 0;
                                 $TOTAL_PERSEDIAAN = 0;
+                                $TOTAL_NILAI_PERSEDIAAN = 0;
                                 foreach ($Data_stock as $list_data) {
 
                                     // if (($list_data->jumlah_belanja - $list_data->jumlah_terjual) > 0) { //HIDE SISA STOCK =0;
@@ -362,8 +363,8 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                                         <td style="text-align:right">
 
                                             <?php
-                                            $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $list_data->nilai_persediaan;
-                                            echo nominal($list_data->nilai_persediaan);
+                                            $TOTAL_NILAI_PERSEDIAAN = $TOTAL_NILAI_PERSEDIAAN + $nilai_persediaan_row;
+                                            echo nominal($nilai_persediaan_row);
                                             ?>
 
                                         </td>
@@ -401,7 +402,7 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                                     <th></th>
                                     <th></th>
                                     <th>TOTAL</th>
-                                    <th style="text-align:right"><?php echo nominal($TOTAL_PERSEDIAAN); ?></th>
+                                    <th style="text-align:right"><?php echo nominal($TOTAL_NILAI_PERSEDIAAN); ?></th>
 
                                 </tr>
                             </tfoot>
