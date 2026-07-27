@@ -1,0 +1,609 @@
+﻿2024-10-08 20:34:51 +0700|inisialisasi index
+2024-10-08 20:36:11 +0700|APPS folder
+2024-10-08 20:36:47 +0700|MASTER HOSTING
+2024-10-08 20:45:35 +0700|appli/cnfig
+2024-10-08 20:46:10 +0700|appli/controller
+2024-10-08 20:46:40 +0700|appli/core
+2024-10-08 20:46:55 +0700|appli/helpers
+2024-10-08 20:47:12 +0700|appli/hooks
+2024-10-08 20:47:34 +0700|appli/lang
+2024-10-09 07:29:21 +0700|htaccess
+2024-10-09 07:29:39 +0700|appli/cache
+2024-10-09 07:29:58 +0700|appli/third_party
+2024-10-09 07:30:27 +0700|appli/index.html
+2024-10-09 07:31:05 +0700|appli/libraries
+2024-10-09 07:35:15 +0700|appli/logs
+2024-10-09 07:35:27 +0700|appli/models
+2024-10-09 07:36:22 +0700|appli/third_partyX
+2024-10-09 07:36:49 +0700|appli/views
+2024-10-09 07:53:34 +0700|jquery
+2024-10-09 07:53:59 +0700|js
+2024-10-09 07:54:17 +0700|systems
+2024-10-09 08:05:32 +0700|assets/adminLTE310/dist
+2024-10-11 09:37:33 +0700|vendor/composer
+2024-10-11 09:38:04 +0700|vendor/tecn
+2024-10-11 09:38:35 +0700|vendor/sa
+2024-10-11 09:39:03 +0700|vendor/ph
+2024-10-11 09:39:29 +0700|vendor/mas
+2024-10-11 09:39:51 +0700|vendor/error
+2024-10-11 09:40:22 +0700|vendor/dompd
+2024-10-12 10:26:53 +0700|application
+2024-10-25 05:06:49 +0700|config
+2024-10-25 05:12:16 +0700|Add your commit
+2024-10-25 05:43:53 +0700|20241025 update
+2024-10-25 06:14:32 +0700|test.php
+2024-10-25 06:16:06 +0700|test.php
+2024-10-25 06:27:11 +0700|index dev
+2024-10-25 06:29:38 +0700|index production
+2024-10-25 10:44:36 +0700|neraca form
+2024-10-25 21:51:12 +0700|neraca form
+2024-10-25 22:05:48 +0700|neraca list
+2024-10-26 11:32:22 +0700|neraca form & list
+2024-10-26 20:12:49 +0700|adminlte v 230
+2024-10-27 07:07:06 +0700|lte230
+2024-10-27 08:09:31 +0700|neraca tahunan input dan cetak
+2024-10-27 09:13:04 +0700|neraca form , cetak , update dan baru
+2024-10-27 09:37:26 +0700|neraca
+2024-10-27 14:34:32 +0700|user dan menu
+2024-10-27 14:35:04 +0700|menu
+2024-10-27 19:44:25 +0700|menu dan user
+2024-10-27 19:53:35 +0700|user form
+2024-10-27 20:54:51 +0700|rekap penjualan
+2024-10-28 06:24:55 +0700|pendapatan lain-lain
+2024-10-28 06:32:20 +0700|menu labarugi
+2024-10-28 06:59:57 +0700|persediaan dan kontrol lupa password
+2024-11-01 14:45:06 +0700|neraca form : belum selesai untuk penjumlahan pecahan
+2024-11-02 18:14:35 +0700|neraca form
+2024-11-02 20:29:08 +0700|menu Dinamis
+2024-11-03 13:11:35 +0700|menu form
+2024-11-03 13:11:57 +0700|tbl hak akses
+2024-11-03 14:04:24 +0700|user controller
+2024-11-03 14:53:26 +0700|sidebar controlling
+2024-11-03 16:37:08 +0700|user dan tbl user level
+2024-11-03 16:37:52 +0700|user : is_login
+2024-11-03 16:44:41 +0700|form user
+2024-11-03 17:10:46 +0700|user form
+2024-12-01 17:02:49 +0700|persediaan : update tanggal where
+2024-12-01 17:29:09 +0700|buku bank
+2024-12-01 17:29:28 +0700|jurnal kas
+2024-12-01 17:33:26 +0700|jurnal kas
+2024-12-01 17:33:48 +0700|jurnal pembelian
+2024-12-01 17:35:24 +0700|jurnal penerimaan kas
+2024-12-01 17:38:12 +0700|jurnal pengeluaran kas
+2024-12-01 17:39:48 +0700|jurnal penjualan
+2024-12-01 17:41:01 +0700|jurnal umum
+2024-12-01 20:19:53 +0700|update jurnal
+2024-12-01 20:20:02 +0700|template
+2024-12-01 20:20:26 +0700|update
+2024-12-02 06:38:35 +0700|penjualan : form input barang
+2024-12-03 06:36:33 +0700|update input barang
+2024-12-04 19:01:38 +0700|penjualan : update data konsumen dari aneka (tambah kolom : kelompok persediaan)
+2024-12-04 20:21:45 +0700|sys_nama_barang : refresh_data_from_persediaan_data ( ambil list data barang dari tabel persediaan )
+2024-12-04 20:23:04 +0700|persediaan : refresh_data_from_sys_data_barang : update uuid_barang dan kode_barang di tabel persediaan berdasarkan uuid_barang dan kode_barang dari tebel sys_data_barang
+2024-12-04 20:23:39 +0700|form pembelian : list data barang dari tabel persediaan
+2024-12-04 20:30:10 +0700|penjualan : list nama barang
+2024-12-05 07:11:50 +0700|is login
+2024-12-05 07:16:13 +0700|is login, masukgo==>anekdharmamasuk
+2024-12-05 07:18:21 +0700|xFile ==> landingpage
+2024-12-05 07:19:14 +0700|redirect anekadharma login
+2024-12-05 07:23:52 +0700|welcome off file
+2024-12-05 07:24:21 +0700|is_login construct
+2024-12-05 12:16:01 +0700|dashboard dan persediaan :
+2024-12-05 12:16:52 +0700|uuid supplier
+2024-12-05 12:18:30 +0700|FORM PEMBELIAN : input barang
+2024-12-05 12:20:02 +0700|Tambah Barang
+2024-12-06 09:02:54 +0700|update konsumen
+2024-12-07 19:57:00 +0700|update persediaan : update tanggal dan tanggal beli berdasarkan spop
+2024-12-08 11:21:02 +0700|input form pembelian : input barang
+2024-12-08 18:00:09 +0700|PEMBELIAN : UPDATE DAN HAPUS RECORD PEMBELIAN
+2024-12-08 18:00:49 +0700|pembelian : update per id
+2024-12-08 19:31:43 +0700|cetak pengajuan pembayaran
+2024-12-08 20:11:48 +0700|KAS KECIL
+2024-12-08 20:28:18 +0700|kas kecil
+2024-12-08 20:29:57 +0700|kas kecil
+2024-12-09 05:56:51 +0700|kas kecil : is_login
+2024-12-09 06:11:22 +0700|kas kecil : format uang
+2024-12-09 06:15:18 +0700|kas kecil : input
+2024-12-09 09:24:58 +0700|kas kecil
+2024-12-09 09:25:34 +0700|Penjualan
+2024-12-09 20:55:20 +0700|produk
+2024-12-09 20:55:42 +0700|penjualan
+2024-12-10 07:41:32 +0700|PENJUALAN : FORM INPUT
+2024-12-10 07:44:25 +0700|Produk : list produk
+2024-12-10 08:02:00 +0700|penjualan : cetak excel
+2024-12-10 09:26:38 +0700|supplier list
+2024-12-10 20:19:42 +0700|produksi
+2024-12-11 05:31:24 +0700|penjualan : jumlah maks ==> color red
+2024-12-11 13:23:21 +0700|tbl user : is login
+2024-12-11 13:23:51 +0700|penjualan form
+2024-12-12 10:29:08 +0700|Data Stock
+2024-12-12 10:29:37 +0700|data stock
+2024-12-12 19:56:28 +0700|stock barang
+2024-12-12 20:49:56 +0700|stock dan penjualan
+2024-12-12 21:07:07 +0700|penjualan dan produk unit
+2024-12-13 07:19:31 +0700|penjualan : simpan
+2024-12-13 08:29:17 +0700|stock : hide kode barang
+2024-12-16 14:02:11 +0700|penjualan
+2024-12-16 19:31:03 +0700|penjualan : update
+2024-12-16 19:37:46 +0700|penjualan : update
+2024-12-16 19:40:03 +0700|penjualan : show nomor kirim
+2024-12-16 19:58:21 +0700|penjualan : cancel
+2024-12-16 20:02:53 +0700|penjualan cek
+2024-12-16 20:06:09 +0700|penjualan cek
+2024-12-16 20:21:50 +0700|penjualan : filter per uuid_penjualan
+2024-12-16 20:43:43 +0700|penjualan : tambah barang di uuid_penjualan yang ada
+2024-12-16 20:47:52 +0700|penjualan : update kendalii nama konsumen
+2024-12-16 20:48:21 +0700|penjualan : update id konsumen
+2024-12-16 20:54:31 +0700|excel file
+2024-12-16 20:56:33 +0700|excel file name date time
+2024-12-17 13:46:00 +0700|input produk baru
+2024-12-17 19:02:36 +0700|produk : update
+2024-12-18 15:14:25 +0700|Pembelian : update
+2024-12-18 15:17:51 +0700|pembelian
+2024-12-18 20:25:42 +0700|produk baru
+2024-12-18 20:55:09 +0700|pecah satuan
+2024-12-18 21:01:17 +0700|update nama barang
+2024-12-18 21:03:16 +0700|update list nama barang
+2024-12-18 21:16:32 +0700|pembayaran ke supplier : status lunas
+2024-12-19 06:10:57 +0700|Form Pembayaran
+2024-12-19 06:33:49 +0700|form pembayaran font color
+2024-12-19 09:23:21 +0700|pembelian proses
+2024-12-19 09:35:55 +0700|pembelian : button cancel
+2024-12-19 15:02:33 +0700|discuss
+2024-12-19 20:04:34 +0700|tangaal permohonan pengajuan pembayaran
+2024-12-19 20:29:13 +0700|Pengajuan Pembayaran
+2024-12-20 07:36:30 +0700|form pengajuan pembayaran
+2024-12-20 08:16:02 +0700|pengajuan pembayaran
+2024-12-20 08:47:49 +0700|Kas Kecil: Tambah Tombol input pembelian
+2024-12-21 19:10:36 +0700|PEMBAYARAN KE SUPPLIER : KOLOM TANGGAL
+2024-12-21 19:54:35 +0700|pembayaran ke supplier : kendali cancel cetak pengajuan pembayaran
+2024-12-21 20:09:29 +0700|Pembelian : hide bank if statuslu==Hutang
+2024-12-21 21:27:28 +0700|sys_nama_barang = kendali input nama barang baru
+2024-12-21 21:34:55 +0700|Pembelian : kendali tombol pengajuan hide untuk LUNAS
+2024-12-21 21:40:54 +0700|pembelian list
+2024-12-21 21:41:57 +0700|index dev
+2024-12-21 21:43:19 +0700|pembelian
+2024-12-21 21:45:27 +0700|pembelian
+2024-12-21 21:46:00 +0700|index production
+2024-12-22 19:57:51 +0700|pembelian list Pengajuan Pmebayaran X
+2024-12-22 20:00:10 +0700|pengajuan pembayaran X
+2024-12-22 20:03:25 +0700|pengajuan pembayaran X
+2024-12-22 20:04:24 +0700|tes
+2024-12-22 20:07:48 +0700|pengajuan pembayaran X
+2024-12-22 20:41:20 +0700|pengajuan pembayaran
+2024-12-22 20:51:59 +0700|spop
+2024-12-23 20:26:59 +0700|Penjualan : update form input
+2024-12-23 21:28:49 +0700|Pecah satuan
+2024-12-23 21:48:27 +0700|pecah satuan : tabel data stock
+2024-12-23 21:51:36 +0700|pecah satuan order by nama barang
+2024-12-24 14:04:52 +0700|kas kecil
+2024-12-24 14:09:22 +0700|update kas kecil
+2024-12-26 16:19:18 +0700|pecah satuan : data stock
+2024-12-26 16:28:55 +0700|stock
+2024-12-26 16:30:42 +0700|stock
+2024-12-26 16:31:49 +0700|stock
+2024-12-26 16:33:28 +0700|stock
+2024-12-26 17:57:27 +0700|form pecah satuan
+2024-12-26 18:00:42 +0700|Pecah satuan : hapus simpan pengurangan stock ke tabel penjualan
+2024-12-26 20:59:03 +0700|PECAH SATUAN : ROLLBACK
+2024-12-27 09:46:37 +0700|PECAH SATUAN ROLLBACK
+2024-12-27 10:15:00 +0700|PECAH SATUAN ROLLBACK
+2024-12-27 13:14:51 +0700|Persediaan : cek pembelian yang tidak ada di persediaan dan update datanya
+2024-12-27 13:20:51 +0700|Update persediaan : data pembelian ke persediaan cek
+2024-12-29 09:08:25 +0700|Penjualan : Tambah, ubah
+2024-12-29 21:49:05 +0700|Penjualan
+2024-12-30 05:17:47 +0700|update icon total
+2024-12-30 05:23:19 +0700|Penjualan
+2024-12-30 06:40:19 +0700|Uang Muka di depan
+2024-12-30 06:41:54 +0700|uang muka didepan
+2025-01-01 23:34:14 +0700|pembelian : input pecahan
+2025-01-01 23:44:19 +0700|pembelian : update pecahan
+2025-01-01 23:49:27 +0700|pembelian : update pecahan
+2025-01-02 04:56:19 +0700|Penjualan : pecahan 2 decimal di list form
+2025-01-02 05:10:26 +0700|penjualan : pecahan 2 desimal
+2025-01-02 05:17:18 +0700|penjualan : pecahan 2 desimal
+2025-01-02 05:46:02 +0700|penjualan : test git
+2025-01-02 05:47:53 +0700|penjualan : rollback test git
+2025-01-02 09:06:13 +0700|PERSEDIAAN : UPDATE id_persediaan_barang untuk pembelian dan penjualan dari id persediaan
+2025-01-08 05:30:17 +0700|kas kecil : hide pembelian sudah lunas
+2025-01-08 05:49:06 +0700|kas kecil : hapus data
+2025-01-08 05:56:26 +0700|kas kecil : total debet dan kredit
+2025-01-08 07:20:15 +0700|pengajuan pembayaran : auto terbilang di view dan cetak
+2025-01-08 07:52:24 +0700|pembelian : cetak pengajuan
+2025-01-08 09:26:13 +0700|kas kecil : cetak
+2025-01-08 09:28:12 +0700|kas kecil : cetak ke excel
+2025-01-08 11:37:35 +0700|kas kecil : update kas kecil dari pembelian statuslu:L dan kas
+2025-01-08 12:43:41 +0700|kas kecil : update data harga totla yang berbeda dengan pembelian
+2025-01-13 08:21:38 +0700|kas kecil : update data dan spop
+2025-01-13 11:55:06 +0700|kas kecil : cetak excel 2 digit belakang koma
+2025-01-13 15:18:35 +0700|pembayaran ke supplier
+2025-01-13 15:19:35 +0700|pembayaran ke supplier
+2025-01-14 21:13:10 +0700|pembelian : ubah data
+2025-01-15 11:11:33 +0700|pembelian : message ok cancel
+2025-01-15 14:58:13 +0700|pembelian : update data per spop dan update per record masing2 spop
+2025-01-15 16:44:45 +0700|pembelian : list data pembelian pengajuan pembayaran pada spop pertama
+2025-01-15 20:57:27 +0700|input produk : input produk --> simpan produk --> input bahan (belum selesai)
+2025-01-16 07:13:45 +0700|input produksi
+2025-01-16 07:14:05 +0700|pembelian : hapus per spop
+2025-01-16 07:17:05 +0700|input produk
+2025-01-16 11:44:13 +0700|kas kecil : tabel height
+2025-01-16 11:46:53 +0700|tabel hieght setting
+2025-01-21 09:40:35 +0700|STOCK : tanggal persediaan
+2025-01-21 09:43:10 +0700|STOCK : TANGGAL STOCK BARANG ==> d-m-Y
+2025-01-21 10:04:46 +0700|stock : persediaan update (total nominal persediaan masih ERROR)
+2025-01-22 08:18:22 +0700|STOCK : UPDATE DATA
+2025-01-23 07:47:16 +0700|pembelian : stock auto insert data pembelian ke persediaan
+2025-01-23 08:01:34 +0700|form pembelian : nama barang from sys_nama_barang
+2025-01-23 08:42:16 +0700|sys nama barang
+2025-01-23 08:45:47 +0700|sys nama barang
+2025-01-23 08:49:37 +0700|sys nama barang
+2025-01-23 09:07:17 +0700|pembelian form
+2025-01-23 09:13:19 +0700|pembelian : nama barang dari sys_namabarang
+2025-01-23 09:35:13 +0700|input barang dari pembelian
+2025-01-24 06:52:19 +0700|Pembelian : setting auto insert / update tabel kas kecil jika status Lunas dan kas
+2025-01-24 08:19:39 +0700|pembelian : pengajuan pembayaran termin (masih tampil U dan tombol pengajuan ) ketika total pembayaran masih kurang dari tagihan
+2025-01-24 08:56:41 +0700|kas kecil : jika pembayaran termin, maka belum status L pada tabel pembelian
+2025-01-24 09:57:09 +0700|pembelian : persedian error
+2025-01-24 14:36:27 +0700|input pembelian : search combobox
+2025-01-24 14:41:12 +0700|SEARCH SELECT2 COMBO BOX DI MODAL TIDAK TAMPIL
+2025-01-28 21:11:09 +0700|PEMBAYARAN BEA OPERASIONAL
+2025-01-30 07:45:36 +0700|Pembayaran bea operasional
+2025-01-30 08:02:54 +0700|bea operasional : excel
+2025-01-30 09:52:47 +0700|pembelian list : order by spop
+2025-01-31 06:30:16 +0700|Pembayaran ke supplier
+2025-01-31 06:32:08 +0700|PEMBAYARAN KE SUPPLIER
+2025-01-31 06:38:04 +0700|Pembayaran ke supplier : kolom pembayaran , nominal pengajuan
+2025-01-31 06:41:27 +0700|Pmebayaran ke supplier : total kekurangan
+2025-01-31 07:01:47 +0700|Pembayaran ke supplier : kolom terbayarkan
+2025-01-31 07:09:23 +0700|PEMABYARAN KE SUPPLIER : KOLOM PEMBAYARAN : L KAS DAN L BANK
+2025-01-31 07:12:35 +0700|PEMBAYARAN KE SUPPLIER : HANYA L TANPA KAS / BANK
+2025-01-31 07:15:29 +0700|pembayaran ke supplier : order by tanggal po
+2025-01-31 07:20:04 +0700|pembayaran ke supplier : kolom kas/ bank
+2025-01-31 07:22:33 +0700|pembayaran : L kas ==> nominal pengajuan
+2025-01-31 07:26:05 +0700|pembayaran ke supplier : kontrol L dan kas
+2025-01-31 07:28:27 +0700|kolom total kekurangan
+2025-01-31 09:09:51 +0700|BEA OPERASIONAL : UPDATE
+2025-01-31 09:20:57 +0700|Bea Operasional : update
+2025-01-31 09:21:53 +0700|Bea Operasional Update
+2025-01-31 09:37:16 +0700|Bea Operasional : form update
+2025-01-31 15:13:29 +0700|Persediaan : update data persediaan dari pembelian yang belum masuk ke persediaan
+2025-01-31 20:49:52 +0700|Penjualan : update display stock
+2025-02-01 05:25:15 +0700|PENJUALAN : INPUT BARANG , KOLOM SPOP PERSEDIAAN
+2025-02-01 05:55:38 +0700|PENJUALAN : MODAL TAMPIL UBAH DATA DAN UPDATE MODAL:HIDE SISA STOCK = 0
+2025-02-02 09:43:53 +0700|Penjualan : update list data penjualan untuk tombol delete
+2025-02-03 06:28:39 +0700|PENJUALAN : REKAP PENJUALAN
+2025-02-03 08:27:03 +0700|penjualan : rekap penjualan
+2025-02-03 08:28:05 +0700|Penjualan : hide button rekap penjualan
+2025-02-03 08:29:56 +0700|penjualan : rekap penjualan
+2025-02-03 08:39:56 +0700|Penjualan : join penjualan dan persediaan by id dan id_persediaan_barang
+2025-02-03 08:42:07 +0700|PENJUALAN : REKAP , JOIN TABEL PENJUALAN DAN PERSEDAIAAN BERDASARKAN ID DAN ID_PERSEDIAAN_BARANG
+2025-02-03 16:16:49 +0700|Persedian: sinkronisasi data pembelian ke persediaan
+2025-02-03 16:31:19 +0700|penjualan : form input , display all data persediaan
+2025-02-03 16:42:28 +0700|stock : kolom spop
+2025-02-04 09:25:03 +0700|PENJUALAN : REKAP PENJUALAN KOLOM SPOP
+2025-02-04 09:29:43 +0700|penjualan : rekap kolom total
+2025-02-04 09:32:43 +0700|penjualan : add spop
+2025-02-04 09:34:40 +0700|rekap : spop
+2025-02-04 10:07:38 +0700|Pembayaran ke supplier : cek nominal
+2025-02-04 10:49:10 +0700|Penjualan : off print_r
+2025-02-06 12:51:08 +0700|INPUT PRODUK: SIMPAN INPUT PRODUK
+2025-02-07 08:37:06 +0700|INPUT PRODUK
+2025-02-07 15:12:32 +0700|unit dan persediaan
+2025-02-07 15:15:00 +0700|persediaan
+2025-02-07 15:15:34 +0700|persediaan
+2025-02-07 15:18:08 +0700|sys unit produk
+2025-02-07 15:21:50 +0700|tabel pecah satuan
+2025-02-07 15:49:34 +0700|input produksi: number format
+2025-02-07 15:58:14 +0700|input produk : update harga satuan ke persediaan (hpp)
+2025-02-07 17:55:49 +0700|input produk : update produk
+2025-02-07 18:36:19 +0700|input produk : update produk
+2025-02-07 18:41:28 +0700|pembayaran dari konsumen : tinggi tabel
+2025-02-10 06:54:03 +0700|buku bank list data
+2025-02-10 07:53:34 +0700|buku bank
+2025-02-10 10:49:42 +0700|input produk : update tanggal tanpa update spop
+2025-02-10 12:48:37 +0700|input produksi : list data
+2025-02-10 14:05:30 +0700| buku bank
+2025-02-10 14:08:33 +0700|buku bank
+2025-02-10 20:33:44 +0700|buku besar
+2025-02-11 05:41:06 +0700|Jurnal pembelian
+2025-02-11 10:02:12 +0700|Jurnal Pembelian
+2025-02-11 13:16:06 +0700|form input penjualan (harga satuan : hilangkan titik dan ubha koma menjadi titik ) dan jurnal penjualan
+2025-02-11 13:31:37 +0700|Hapus data penjualan : update field penjualan di tabel persediaan
+2025-02-11 13:33:07 +0700|form input penjualan : harga satuan
+2025-02-11 13:38:43 +0700|penjualan simpan barang
+2025-02-11 20:59:39 +0700|Jurnal penjualan
+2025-02-12 13:31:26 +0700|buku besar
+2025-02-12 21:07:38 +0700|neraca saldo
+2025-02-12 21:09:54 +0700|neraca saldo
+2025-02-13 09:57:41 +0700|Pembelian : update_uuidpersediaan_pembelian
+2025-02-13 10:56:59 +0700|Pembelian : delete data
+2025-02-13 11:03:06 +0700|pembelian : catatan saat ada perubahan data pembelian
+2025-02-13 13:55:58 +0700|Penjualan : Ubah barang
+2025-02-13 15:41:59 +0700|Data Penyusutan
+2025-02-13 15:46:03 +0700|penyusutan list
+2025-02-13 16:32:44 +0700|rekening koran
+2025-02-13 16:38:18 +0700|Penjualan Accounting
+2025-02-14 13:12:51 +0700|cetak pengajuan pembayaran pembelian  nominal
+2025-02-14 14:12:06 +0700|pembelian : cetak pengajuan pembayaran nominal
+2025-02-17 15:43:58 +0700|Pecah satuan : update list data
+2025-02-17 15:45:39 +0700|update tanggal list
+2025-02-17 16:10:23 +0700|update form pecah satuan
+2025-02-17 16:11:40 +0700|pecah satuan : update form
+2025-02-17 17:06:03 +0700|pecah satuan : update kalkulasi jumlah stock
+2025-02-17 17:56:43 +0700|Jurnal
+2025-02-17 17:58:29 +0700|jurnal
+2025-02-17 18:00:10 +0700|jurnal
+2025-02-18 05:28:48 +0700|jurnal kas
+2025-02-18 09:59:42 +0700|Pecah satuan
+2025-02-18 10:02:55 +0700|pecah satuan
+2025-02-18 10:44:46 +0700|pecah satuan : update field pecah satuan di tabel persediaan
+2025-02-18 10:51:53 +0700|pecah satuan form : jumlah pengeluaran = jual + pecah satuan
+2025-02-18 10:58:36 +0700|Persediaan : update kolom penjualan dan pecah satuan
+2025-02-18 12:19:58 +0700|stock pecah satuan
+2025-02-18 12:25:16 +0700|Penjualan : stock (persediaan - (penjualan + pecah satuan))
+2025-02-18 13:06:02 +0700|Message box : hapus data barang
+2025-02-18 16:59:10 +0700|Penjualan : update nomor kirim
+2025-02-18 20:41:22 +0700|penjualan : update tombol simpan perubahan nomor kirim
+2025-02-18 21:07:30 +0700|Penjualan Accounting
+2025-02-18 21:13:26 +0700|Penjualan accounting cetak penjualan
+2025-02-19 05:28:57 +0700|STOCK ==> NOMINAL PERSEDIAAN (Sisa stock * harga satuan)
+2025-02-19 05:32:51 +0700|Stock
+2025-02-19 05:39:31 +0700|stock : query order tanggal beli desc
+2025-02-20 07:02:40 +0700|Pembelian : Hapus tombol hapus spop dan status
+2025-02-20 07:04:38 +0700|pembelian : hapus tombol hapus spop dan status
+2025-02-20 21:31:42 +0700|Input produk baru dan refresh data persediaan
+2025-02-20 21:52:47 +0700|Stock : penjualan + pecah satuan + bahan produksi
+2025-02-21 06:00:07 +0700|INPUT PRODUK : update jumlah bahan_produksi after delete bahan
+2025-02-24 17:38:11 +0700|jurnal kas
+2025-02-24 18:26:11 +0700|jurnal kas
+2025-02-24 18:31:09 +0700|jurnal kas
+2025-02-24 18:35:22 +0700|jurnal kas
+2025-02-24 18:35:40 +0700|jurnal kas
+2025-02-24 18:38:20 +0700|jurnal kas
+2025-02-24 18:40:24 +0700|jurnal kas
+2025-02-24 20:17:38 +0700|jurnal penerimaan kas
+2025-02-24 20:23:43 +0700|jurnal penerimaan kas
+2025-03-01 08:13:20 +0700|jurnal penerimaan kas
+2025-03-02 08:21:01 +0700|Jurnal penerimaan kas: kode akun
+2025-03-02 08:29:44 +0700|jurnal penerimaaan kas
+2025-03-02 11:40:53 +0700|jurnal kas , penerimaan kas dan pengeluaran kas
+2025-03-02 13:15:01 +0700|jurnal kas
+2025-03-02 13:26:52 +0700|jurnal kas
+2025-03-02 13:41:01 +0700|jurnal kas
+2025-03-02 13:47:46 +0700|jurnal kas
+2025-03-02 14:12:25 +0700|jurnal kas
+2025-03-02 20:57:27 +0700|jurnal kas penerimaan
+2025-03-03 07:47:24 +0700|jurnal kas : jurnal kas dan penerimaan
+2025-03-03 08:12:22 +0700|jurnal pengeluaran kas
+2025-03-03 08:20:20 +0700|jurnal penerimaan kas
+2025-03-03 08:27:04 +0700|pengeluaran kas
+2025-03-03 08:29:00 +0700|pengeluaran kas
+2025-03-03 08:30:55 +0700|pengeluaran kas
+2025-03-03 08:42:04 +0700|pengeluaran kas
+2025-03-03 08:43:15 +0700|pengeluaran kas
+2025-03-03 08:44:25 +0700|pengeluaran kas
+2025-03-03 08:47:59 +0700|pengeluaran kas
+2025-03-03 08:49:11 +0700|pengeluaran kas
+2025-03-03 08:50:28 +0700|pengeluaran kas
+2025-03-03 08:58:47 +0700|pengeluaran kas
+2025-03-03 09:02:46 +0700|pengeluaran kas
+2025-03-03 09:05:10 +0700|pengeluaran kas
+2025-03-03 11:38:53 +0700|jurnal penerimaan kas
+2025-03-03 11:43:15 +0700|penerimaan kas : first row
+2025-03-03 13:29:11 +0700|jurnal kas
+2025-03-03 16:11:21 +0700|jurnal pengeluaran kas
+2025-03-03 16:18:48 +0700|jurnal pengeluaran kas
+2025-03-03 16:35:40 +0700|jurnal pengeluaran kas
+2025-03-03 16:48:18 +0700|jurnal pengeluaran kas
+2025-03-04 06:42:22 +0700|sys kode akun : form input
+2025-03-04 08:43:48 +0700|Jurnal umum
+2025-03-04 08:52:28 +0700|jurnal pembelian
+2025-03-04 08:56:40 +0700|jurnal pembelian : string spop
+2025-03-04 08:59:40 +0700|jurnal kas dan penerimaan
+2025-03-04 09:09:22 +0700|jurnal umum
+2025-03-04 13:51:39 +0700|rekap penjualan per konsumen
+2025-03-04 16:35:29 +0700|pembelian : kendali ubah data , saat stock 0, maka tidak bisa hapus barang
+2025-03-05 06:27:47 +0700|template : set date picker date awal dan date akhir
+2025-03-05 06:48:46 +0700|pembelian BU
+2025-03-05 07:43:46 +0700|pembelian : between date
+2025-03-05 07:46:05 +0700|pembelian : between date
+2025-03-05 07:49:06 +0700|pembelian : between date
+2025-03-05 08:09:58 +0700|pembelian date
+2025-03-05 08:10:59 +0700|pembelian date between
+2025-03-05 08:12:15 +0700|date between
+2025-03-05 08:13:45 +0700|between date
+2025-03-05 08:15:09 +0700|between date
+2025-03-05 08:15:47 +0700|beween date
+2025-03-05 08:16:42 +0700|date between
+2025-03-05 08:17:49 +0700|pembelian : date
+2025-03-05 08:18:42 +0700|pembelian date
+2025-03-05 08:19:27 +0700|date pembelian
+2025-03-05 10:59:54 +0700|penjualan : date between
+2025-03-05 14:46:06 +0700|jurnal penjualan
+2025-03-05 14:46:24 +0700|jurnal umum
+2025-03-05 14:51:04 +0700|penjualan kode akun
+2025-03-05 14:52:12 +0700|tbl penjualan
+2025-03-05 14:53:57 +0700|tbl penjualan
+2025-03-05 14:56:30 +0700|jurnal umum
+2025-03-05 16:17:35 +0700|penjualan setting kode akun
+2025-03-05 16:21:32 +0700|buku besar
+2025-03-05 16:40:43 +0700|penjualan kode akun
+2025-03-05 17:38:49 +0700|buku besar
+2025-03-05 17:51:09 +0700|pembelian kode akun
+2025-03-05 17:51:26 +0700|buku besar
+2025-03-05 20:12:20 +0700|neraca saldo
+2025-03-05 20:29:15 +0700|data penyusutan
+2025-03-06 05:23:09 +0700|buku bank : update file
+2025-03-06 05:26:01 +0700|buku bank : border header
+2025-03-06 05:38:39 +0700|buku bank
+2025-03-07 08:55:45 +0700|unit produk
+2025-03-07 08:57:46 +0700|sys unit produk  bahan
+2025-03-08 10:48:52 +0700|penjualan : update unit
+2025-03-08 11:14:09 +0700|penjualan ubah data
+2025-03-08 11:45:04 +0700|penjualan
+2025-03-08 16:24:05 +0700|rekap penjualan
+2025-03-08 17:28:26 +0700|rekap data
+2025-03-09 11:54:54 +0700|penjualan rekap data cetak ke excel
+2025-03-09 12:40:55 +0700|penjualan rekap penjualan
+2025-03-13 10:54:26 +0700|pembelian : update ubah data
+2025-03-27 14:08:48 +0700|stock : display 2 digit harga satuan
+2025-03-27 14:10:11 +0700|stock : edit display 2 digit
+2025-03-27 14:13:35 +0700|stock barang: edit tampilan
+2025-03-27 14:14:44 +0700|stock barang
+2025-03-27 14:15:59 +0700|stock barang
+2025-04-11 08:10:22 +0700|form pembayaran ke supplier
+2025-04-11 08:13:26 +0700|pembayaran ke supplier test
+2025-04-11 08:14:26 +0700|pembayaran ke supplier test
+2025-04-17 11:55:59 +0700|PEMBAYARAN KE SUPPLIER
+2025-04-18 06:50:04 +0700|WA BROADCAST TOKEN NEW NOMOR WA BROADCAST
+2025-04-18 15:59:34 +0700|CETA PENGAJUAN BAYAR DI FORM PEMBAYARAN KE SUPPLIER
+2025-04-18 16:21:25 +0700|pembayaran ke supplier : buat pengajuan pembayaran
+2025-04-21 09:25:24 +0700|Form pembayaran kas kecil (detail info pembelian dan jumlah pembayaran transfer dan kas)
+2025-04-21 09:58:17 +0700|kas kecil : update data modal pembelian
+2025-04-22 19:20:43 +0700|kas kecil
+2025-05-04 16:15:51 +0700|Pembelian : Insert barang (pertama, kedua , ketiga dan selanjutnya)
+2025-05-08 09:33:24 +0700|Form persediaan
+2025-05-08 18:07:44 +0700|STOCK : kolom pecah satuan dan bahan produksi
+2025-05-18 07:40:03 +0700|Jurnal Penerimaan Kas
+2025-05-18 10:00:28 +0700|PENJUALAN ACCOUNTING : modal form list data barang
+2025-05-19 06:39:15 +0700|Necara Saldo FORM
+2025-05-20 07:37:48 +0700|jurnal kas
+2025-05-20 07:40:22 +0700|jurnal kas
+2025-05-20 07:59:22 +0700|jurnal kas
+2025-05-20 08:07:48 +0700|Jurnal penerimaan kas
+2025-05-20 08:29:13 +0700|Jurnal pengeluaran kas
+2025-05-20 08:32:28 +0700|Jurnal Kas
+2025-05-20 15:32:45 +0700|JURNAL PENYESUAIAN
+2025-05-20 15:34:16 +0700|jurnal penyesuaian
+2025-05-20 19:29:13 +0700|jurnal penyesuaian
+2025-05-21 19:33:48 +0700|jurnal penyesuaian
+2025-05-21 19:42:17 +0700|jurnal penyesuaian
+2025-05-21 19:43:31 +0700|jurnal penyesuaian
+2025-05-21 20:16:10 +0700|jurnal pembelian
+2025-05-21 20:21:19 +0700|buku besar
+2025-05-22 12:42:24 +0700|NERACA SALDO
+2025-05-22 12:42:42 +0700|KODE - KODE PENYUSUTAN
+2025-05-22 13:12:52 +0700|neraca saldo
+2025-05-22 13:59:30 +0700|KODE - KODE DATA PENYUSUTAN
+2025-05-22 15:27:42 +0700|neraca saldo
+2025-05-22 15:27:51 +0700|jurnal penyesuaian
+2025-05-22 18:30:36 +0700|neraca saldo
+2025-05-22 19:36:32 +0700|jurnal kas
+2025-05-22 19:46:47 +0700|jurnal tabel setting
+2025-05-23 05:14:09 +0700|jurnal kas
+2025-05-23 07:02:16 +0700|jurnal kas
+2025-05-23 07:03:46 +0700|jurnal kas
+2025-05-23 09:20:19 +0700|buku besar
+2025-05-23 09:20:44 +0700|PEMBELIAN : UPDATE KODE AKUN --> UPDATE KE BUKU BESAR
+2025-05-23 11:01:05 +0700|jurnal kas dan buku besar
+2025-05-23 11:01:29 +0700|penujualan ke buku besar
+2025-05-23 12:52:52 +0700|JURNAL KAS
+2025-05-23 15:19:08 +0700|neraca saldo
+2025-05-27 05:04:18 +0700|prnjualan : buku besar model
+2025-05-27 05:04:35 +0700|pembelian
+2025-05-27 09:15:00 +0700|JURNAL --> SETTING KODE AKUN PEMBELIAN
+2025-05-27 09:24:03 +0700|jurnal pembelian BU
+2025-05-27 09:26:22 +0700|jurnal pembelian
+2025-05-27 09:26:46 +0700|jurnal pembelian
+2025-05-27 13:12:20 +0700|jurnal pembelian
+2025-05-27 13:16:00 +0700|pembelian list
+2025-05-28 08:58:27 +0700|JURNAL PEMBELIAN : UPDATE KODE AKUN DAN JURNAL
+2025-05-29 20:36:34 +0700|jurnal kas
+2025-05-29 20:52:48 +0700|jurnal pembelian
+2025-05-29 21:01:55 +0700|jurnal pembelian
+2025-05-29 21:11:06 +0700|jurnal pembelian
+2025-05-30 06:01:16 +0700|jurnal pembelian
+2025-06-02 06:08:00 +0700|JURNAL PENJUALAN
+2025-06-02 06:10:55 +0700|jurnal penjualan
+2025-06-02 09:09:24 +0700|jurnal penjualan
+2025-06-02 21:04:50 +0700|jurnal penjualan
+2025-06-03 05:19:55 +0700|setting kode pembelian
+2025-06-03 10:52:36 +0700|jurnal penyesuaian
+2025-06-03 10:52:49 +0700|neraca saldo
+2025-06-03 15:55:50 +0700|Neraca Saldo
+2025-06-03 20:22:00 +0700|Laporan Neraca
+2025-06-03 21:45:05 +0700|neraca form
+2025-06-04 05:07:05 +0700|neraca adminlte 230
+2025-06-04 06:18:41 +0700|Laporan --> neraca
+2025-06-04 06:30:29 +0700|neraca laporan
+2025-06-04 06:35:55 +0700|laporan neraca ==> setting kabagkeuangan
+2025-06-08 20:21:54 +0700|jurnal kas : pl combo box
+2025-06-08 20:22:29 +0700|buku besar
+2025-06-08 20:57:31 +0700|Neraca Form
+2025-06-15 11:14:11 +0700|Form Input Neraca
+2025-06-16 14:27:02 +0700|Neraca Form
+2025-06-16 18:49:41 +0700|laba rugi
+2025-06-16 19:44:33 +0700|laba rugi
+2025-06-17 07:30:24 +0700|labarugi
+2025-06-17 08:26:11 +0700|laporan
+2025-06-17 08:26:45 +0700|laba rugi
+2025-06-17 20:50:09 +0700|laba rugi
+2025-06-18 10:03:23 +0700|laba rugi
+2025-06-18 11:31:14 +0700|laba rugi
+2025-06-19 09:06:27 +0700|laba rugi
+2025-06-19 10:07:55 +0700|Jurnal kas
+2025-06-19 10:15:33 +0700|neraca form
+2025-06-19 15:34:50 +0700|laba rugi
+2025-06-21 20:53:20 +0700|laba rugi
+2025-06-21 21:09:33 +0700|lab rugi cetak
+2025-06-22 07:40:05 +0700|Neraca
+2025-06-22 13:19:44 +0700|PEMBAYARAN LIST : KOLOM PENJUALAN ACCOUNTING
+2025-06-22 17:12:09 +0700|Pembayaran penjualan + accounting
+2025-06-22 21:11:28 +0700|pembayaran accounting
+2025-06-22 21:13:09 +0700|PENJUALAN ACCOUNTING
+2025-06-23 09:56:13 +0700|PENYUSUTAN
+2025-06-23 20:54:58 +0700|penyusutan
+2025-06-24 16:30:54 +0700|penyusutan list
+2025-06-24 16:31:10 +0700|penyusutan
+2025-06-24 16:31:32 +0700|penyusutan
+2025-06-24 16:37:57 +0700|penyusutan
+2025-06-24 16:40:37 +0700|penyusutan
+2025-06-24 20:51:53 +0700|data penyusutan
+2025-06-25 08:30:46 +0700|penyusutan
+2025-06-25 09:06:41 +0700|penyusutan
+2025-06-25 13:16:48 +0700|PENYUSUTAN
+2025-06-25 13:32:54 +0700|PENYUSUTAN
+2025-06-25 13:47:47 +0700|penyusutan
+2025-06-25 13:51:01 +0700|penyusutan
+2025-06-25 14:48:31 +0700|penyusutan
+2025-06-25 14:54:40 +0700|penyusutan
+2025-06-25 18:43:49 +0700|penyusutan
+2025-06-25 21:02:00 +0700|dashboard
+2025-06-26 11:40:54 +0700|Dashboard
+2025-06-26 12:42:25 +0700|dashboard
+2025-06-29 10:27:54 +0700|dashboard
+2025-06-29 17:03:33 +0700|Jurnal Kas
+2025-06-29 17:08:41 +0700|jurnal kas
+2025-07-03 19:59:58 +0700|dashboard : jurnal kas
+2025-07-08 16:18:28 +0700|menu dashboard
+2025-07-08 19:25:38 +0700|jurnal kas : cetak
+2025-07-08 19:30:13 +0700|dashboard : jurnal cetak
+2025-07-25 08:10:33 +0700|PEMBAYARAN KE SUPPLIER : UPDATE
+2025-07-25 09:55:53 +0700|PEMBAYARAN KE SUPPLIER
+2025-07-25 12:49:43 +0700|PEMBAYARAN KE SUPPLIER
+2025-07-25 13:14:56 +0700|PEMBAYARAN KE SUPPLIER
+2025-07-25 13:24:48 +0700|PEMBAYARAN KE SUPPLIER
+2025-07-25 13:42:37 +0700|PEMBAYARAN KE SUPPLIER : HAPUS RECORD PEMBAYARAN
+2025-07-25 17:29:36 +0700|jurnal kas akhir bulan
+2025-07-25 20:57:06 +0700|jurnal kas
+2025-07-25 21:00:47 +0700|jurnal kas saldo
+2025-07-26 14:41:07 +0700|SALDO JURNAL KAS
+2025-07-26 18:46:18 +0700|jurnal kas : cetak
+2025-07-26 18:47:44 +0700|jurnal kas : cetak excel
+2025-07-26 18:54:04 +0700|dashboard : jurnal kas
+2025-07-27 10:47:32 +0700|PENJUALAN : HAPUS_DATA
+2025-07-31 11:14:42 +0700|laba rugi : back form
+2025-08-06 16:24:42 +0700|jurnal pembelian : kode pl tidak terpilih
+2025-08-06 16:30:57 +0700|jurnal pembelian : sys_kode_pl field kode_pl
+2025-08-06 16:31:46 +0700|kode pl
+2025-08-06 16:34:47 +0700|kode pl
+2025-08-06 16:36:37 +0700|buku besar : index
+2025-08-11 05:43:18 +0700|setting kode akun penjualan : ubah kode akun
+2025-08-11 06:00:20 +0700|Tbl_penjualan --. tbl_penjualan
+2025-08-11 12:57:37 +0700|penjualan : ubah kode akun penjualan
+2025-08-13 07:12:27 +0700|buku bank : kode akun , ubah dan hapus data
+2025-08-13 08:50:27 +0700|Penjualan : update hapus data penjualan refresh data stock
+2025-08-21 07:44:55 +0700|neraca saldo list
+2025-08-25 11:33:06 +0700|button kredit
+2025-08-29 18:50:57 +0700|KIRIM WA MODEL : UBAH TOKEN UNTUK NOMOR WA BROADCAST YANG BARU
+2025-08-31 19:07:55 +0700|pecah satuan detail stock
