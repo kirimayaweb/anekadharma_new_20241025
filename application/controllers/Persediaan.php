@@ -4470,7 +4470,7 @@ class Persediaan extends CI_Controller
 			if ($ts === false) {
 				$rows = array();
 			} else {
-				$tanggal_beli = date('Y-m-01', $ts);
+				$bulan_key = date('Y-m', $ts);
 				$select_parts = array(
 					'MIN(`id`) AS `id`',
 					'MAX(`uuid_persediaan`) AS `uuid_persediaan`',
@@ -4513,10 +4513,10 @@ class Persediaan extends CI_Controller
 				);
 				$sql = "SELECT " . implode(",\n\t\t\t\t\t\t", $select_parts) . "
 					FROM `persediaan`
-					WHERE `tanggal_beli` = ?
+					WHERE LEFT(COALESCE(`tanggal_beli`, ''), 7) = ?
 					GROUP BY `spop`, `namabarang`, `satuan`, `hpp`
 					ORDER BY `namabarang` ASC, `spop` ASC";
-				$rows = $this->db->query($sql, array($tanggal_beli))->result();
+				$rows = $this->db->query($sql, array($bulan_key))->result();
 			}
 		}
 

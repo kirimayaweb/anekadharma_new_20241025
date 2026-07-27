@@ -2709,6 +2709,14 @@ window.addEventListener('load', function() {
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
     var genCekXhr = null;
     var genRecalcBatchRunning = false;
+    var genRecalcInFlight = false;
+    var genRecalcActiveRequestId = 0;
+    var genRecalcWatchdogTimer = null;
+    var genRecalcAbortController = null;
+    var genRecalcRunnerState = null;
+    var GEN_RECALC_REQUEST_TIMEOUT_MS = 95000;
+    var GEN_RECALC_RETRY_BASE_DELAY_MS = 1200;
+    var GEN_RECALC_VIEW_STEP_TIMEOUT_MS = 90000;
     var genRecalcBgWorker = null;
     var genRecalcBgTimer = null;
     var genRecalcBgTaskId = 0;
@@ -2772,6 +2780,71 @@ window.addEventListener('load', function() {
         }
     }
 
+    function hasGenRecalcPendingRun() {
+        return !!genRecalcBgTaskFn || !!genRecalcBgTimer;
+    }
+
+    function clearGenRecalcWatchdog() {
+        if (genRecalcWatchdogTimer) {
+            clearTimeout(genRecalcWatchdogTimer);
+            genRecalcWatchdogTimer = null;
+        }
+    }
+
+    function clearGenRecalcInFlightState() {
+        genRecalcInFlight = false;
+        clearGenRecalcWatchdog();
+        genRecalcAbortController = null;
+    }
+
+    function isGenRecalcAbortError(err) {
+        if (!err) {
+            return false;
+        }
+        if (err.name === 'AbortError') {
+            return true;
+        }
+        var msg = String(err && err.message ? err.message : err).toLowerCase();
+        return msg.indexOf('abort') >= 0;
+    }
+
+    function isGenRecalcRetryableError(err) {
+        if (isGenRecalcAbortError(err)) {
+            return true;
+        }
+        var msg = String(err && err.message ? err.message : err).toLowerCase();
+        return msg.indexOf('failed to fetch') >= 0
+            || msg.indexOf('networkerror') >= 0
+            || msg.indexOf('load failed') >= 0
+            || msg.indexOf('network') >= 0;
+    }
+
+    function maybeResumeGenRecalcFromBackground(reason) {
+        if (!genRecalcBatchRunning || !genRecalcRunnerState || !genRecalcRunnerState.active) {
+            return;
+        }
+        if (genRecalcInFlight || hasGenRecalcPendingRun()) {
+            return;
+        }
+        scheduleGenRecalcNextRun(function() {
+            if (!genRecalcBatchRunning || !genRecalcRunnerState || !genRecalcRunnerState.active || genRecalcInFlight) {
+                return;
+            }
+            runGenerateRecalculateBatch(
+                genRecalcRunnerState.bulanKey,
+                parseInt(genRecalcRunnerState.offset, 10) || 0,
+                genRecalcRunnerState
+            );
+        }, 0);
+
+        if (reason) {
+            setStatusGeneratePersediaan(
+                'info',
+                '<i class="fas fa-spinner fa-spin"></i> Melanjutkan proses generate di background (' + escapeHtmlGen(reason) + ')...'
+            );
+        }
+    }
+
     function scheduleGenRecalcNextRun(fn, delayMs) {
         clearGenRecalcNextRun();
         if (typeof fn !== 'function') {
@@ -2827,6 +2900,15 @@ window.addEventListener('load', function() {
 
     function stopGenRecalcBatchRunning() {
         clearGenRecalcNextRun();
+        clearGenRecalcWatchdog();
+        if (genRecalcAbortController && typeof genRecalcAbortController.abort === 'function') {
+            try {
+                genRecalcAbortController.abort();
+            } catch (eAbortStop) {}
+        }
+        genRecalcAbortController = null;
+        genRecalcInFlight = false;
+        genRecalcRunnerState = null;
         genRecalcBatchRunning = false;
         setGenRecalcButtonBusy(false);
         if (userCanGeneratePersediaan) {
@@ -8280,24 +8362,68 @@ window.addEventListener('load', function() {
         ctx = ctx || {};
         var steps = [];
         if (ctx.persediaan) {
-            steps.push({ label: 'Verifikasi copy persediaan', fn: loadGenerateProsesPersediaanView });
+            steps.push({ key: 'persediaan', label: 'Verifikasi copy persediaan', fn: loadGenerateProsesPersediaanView });
         }
         if (ctx.produksi) {
-            steps.push({ label: 'Verifikasi produksi', fn: loadGenerateProsesProduksiView });
+            steps.push({ key: 'produksi', label: 'Verifikasi produksi', fn: loadGenerateProsesProduksiView });
         }
         if (ctx.pembelian) {
-            steps.push({ label: 'Verifikasi pembelian', fn: loadGenerateProsesPembelianView });
+            steps.push({ key: 'pembelian', label: 'Verifikasi pembelian', fn: loadGenerateProsesPembelianView });
         }
         if (ctx.pecah_satuan) {
-            steps.push({ label: 'Verifikasi pecah satuan', fn: loadGenerateProsesPecahSatuanView });
+            steps.push({ key: 'pecah_satuan', label: 'Verifikasi pecah satuan', fn: loadGenerateProsesPecahSatuanView });
         }
         if (ctx.penjualan) {
-            steps.push({ label: 'Verifikasi penjualan', fn: loadGenerateProsesPenjualanView });
+            steps.push({ key: 'penjualan', label: 'Verifikasi penjualan', fn: loadGenerateProsesPenjualanView });
         }
         if (ctx.persediaan_full) {
-            steps.push({ label: 'Verifikasi persediaan lengkap', fn: loadGenerateProsesPersediaanFullView });
+            steps.push({ key: 'persediaan_full', label: 'Verifikasi persediaan lengkap', fn: loadGenerateProsesPersediaanFullView });
         }
         return steps;
+    }
+
+    function runGenProsesViewStepWithTimeout(step, bulanKey, idx, total) {
+        return new Promise(function(resolve) {
+            var done = false;
+            var timeoutMs = GEN_RECALC_VIEW_STEP_TIMEOUT_MS;
+            var timer = setTimeout(function() {
+                if (done) {
+                    return;
+                }
+                done = true;
+                resolve({
+                    ok: false,
+                    key: step && step.key ? step.key : ('step_' + idx),
+                    timeout: true,
+                    message: 'Timeout saat memuat ' + (step && step.label ? step.label : 'verifikasi')
+                });
+            }, timeoutMs);
+
+            Promise.resolve()
+                .then(function() {
+                    return step.fn(bulanKey, { skipScroll: true, initDelay: 80 });
+                })
+                .then(function(result) {
+                    if (done) {
+                        return;
+                    }
+                    done = true;
+                    clearTimeout(timer);
+                    resolve(result || { ok: false, key: step && step.key ? step.key : ('step_' + idx) });
+                })
+                .catch(function(err) {
+                    if (done) {
+                        return;
+                    }
+                    done = true;
+                    clearTimeout(timer);
+                    resolve({
+                        ok: false,
+                        key: step && step.key ? step.key : ('step_' + idx),
+                        error: String(err)
+                    });
+                });
+        });
     }
 
     function runGenProsesViewLoadSequence(bulanKey, steps) {
@@ -8319,9 +8445,11 @@ window.addEventListener('load', function() {
 
         var promises = steps.map(function(step, idx) {
             updateGenRecalcProcessSwal(htmlGenRecalcViewsLoadingProgress(completed, total, step.label + ' — memuat...'));
-            return step.fn(bulanKey, { skipScroll: true, initDelay: 80 }).then(function(result) {
+            return runGenProsesViewStepWithTimeout(step, bulanKey, idx, total).then(function(result) {
                 results[idx] = result;
-                bumpProgress(step.label + ' — selesai');
+                bumpProgress(
+                    step.label + (result && result.timeout ? ' — timeout, dilewati' : ' — selesai')
+                );
                 return result;
             });
         });
@@ -8650,6 +8778,21 @@ window.addEventListener('load', function() {
             });
             return;
         }
+        runner = runner || { offset: 0, active: true, isStart: true };
+        runner.bulanKey = bulanKey;
+        runner.offset = parseInt(offset, 10) || 0;
+        runner.active = runner.active !== false;
+        runner.retryCount = parseInt(runner.retryCount, 10) || 0;
+        genRecalcRunnerState = runner;
+
+        if (!runner.active || !genRecalcBatchRunning) {
+            return;
+        }
+
+        if (genRecalcInFlight) {
+            return;
+        }
+
         if (runner.isStart && typeof Swal !== 'undefined' && !Swal.isVisible()) {
             showGenRecalcProcessSwal(htmlGenRecalcProgress({
                 phase: 'verifikasi_pembelian',
@@ -8667,14 +8810,58 @@ window.addEventListener('load', function() {
             fd.append('start', '1');
         }
 
-        fetch(urlGenerateRecalculateBatch, {
+        var requestId = ++genRecalcActiveRequestId;
+        var thisOffset = runner.offset;
+        var localAbortController = null;
+        var fetchOptions = {
             method: 'POST',
             body: fd,
             credentials: 'same-origin',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
+        };
+
+        if (typeof AbortController !== 'undefined') {
+            localAbortController = new AbortController();
+            genRecalcAbortController = localAbortController;
+            fetchOptions.signal = localAbortController.signal;
+        }
+
+        genRecalcInFlight = true;
+        clearGenRecalcWatchdog();
+        genRecalcWatchdogTimer = setTimeout(function() {
+            if (!genRecalcBatchRunning || !runner.active || !genRecalcInFlight || requestId !== genRecalcActiveRequestId) {
+                return;
+            }
+            genRecalcInFlight = false;
+            genRecalcActiveRequestId++;
+            if (localAbortController && typeof localAbortController.abort === 'function') {
+                try {
+                    localAbortController.abort();
+                } catch (eAbortReq) {}
+            }
+            runner.retryCount = (parseInt(runner.retryCount, 10) || 0) + 1;
+            var delayTimeout = Math.min(8000, GEN_RECALC_RETRY_BASE_DELAY_MS * runner.retryCount);
+            setStatusGeneratePersediaan(
+                'info',
+                '<i class="fas fa-spinner fa-spin"></i> Respons server lama pada offset <strong>'
+                + thisOffset + '</strong>. Mencoba lanjut otomatis...'
+            );
+            scheduleGenRecalcNextRun(function() {
+                if (genRecalcBatchRunning && runner.active && !genRecalcInFlight) {
+                    runGenerateRecalculateBatch(bulanKey, thisOffset, runner);
+                }
+            }, delayTimeout);
+        }, GEN_RECALC_REQUEST_TIMEOUT_MS);
+
+        fetch(urlGenerateRecalculateBatch, fetchOptions)
         .then(parseJsonFetchResponse)
         .then(function(data) {
+            if (requestId !== genRecalcActiveRequestId) {
+                return;
+            }
+            clearGenRecalcInFlightState();
+            runner.retryCount = 0;
+
             if (!data.ok) {
                 stopGenRecalcBatchRunning();
                 closeGenRecalcProcessSwalThen(function() {
@@ -8965,6 +9152,31 @@ window.addEventListener('load', function() {
             }
         })
         .catch(function(err) {
+            if (requestId !== genRecalcActiveRequestId) {
+                return;
+            }
+            clearGenRecalcInFlightState();
+
+            if (!runner.active || !genRecalcBatchRunning) {
+                return;
+            }
+
+            if (isGenRecalcRetryableError(err)) {
+                runner.retryCount = (parseInt(runner.retryCount, 10) || 0) + 1;
+                var delayRetry = Math.min(8000, GEN_RECALC_RETRY_BASE_DELAY_MS * runner.retryCount);
+                setStatusGeneratePersediaan(
+                    'info',
+                    '<i class="fas fa-spinner fa-spin"></i> Koneksi/server belum merespons stabil. Sistem mencoba lanjut otomatis (percobaan '
+                    + runner.retryCount + ')...'
+                );
+                scheduleGenRecalcNextRun(function() {
+                    if (genRecalcBatchRunning && runner.active && !genRecalcInFlight) {
+                        runGenerateRecalculateBatch(bulanKey, parseInt(runner.offset, 10) || 0, runner);
+                    }
+                }, delayRetry);
+                return;
+            }
+
             runner.active = false;
             stopGenRecalcBatchRunning();
             closeGenRecalcProcessSwalThen(function() {
@@ -11206,7 +11418,12 @@ window.addEventListener('load', function() {
             setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> Generate &amp; Recalculate tetap berjalan di background tab browser ini.');
         } else {
             setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> Generate &amp; Recalculate sedang berjalan...');
+            maybeResumeGenRecalcFromBackground('tab aktif kembali');
         }
+    });
+
+    $(window).on('focus pageshow', function() {
+        maybeResumeGenRecalcFromBackground('jendela aktif');
     });
 
     $(window).on('pagehide beforeunload', function() {

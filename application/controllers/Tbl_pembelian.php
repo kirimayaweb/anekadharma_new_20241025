@@ -252,6 +252,170 @@ class Tbl_pembelian extends CI_Controller
 		return array($Get_date_awal, $Get_date_akhir);
 	}
 
+	private function _parse_decimal_db($val)
+	{
+		$s = trim((string) $val);
+		if ($s === '') {
+			return 0;
+		}
+		$s = preg_replace('/\s+/', '', $s);
+		if (strpos($s, ',') !== false && strpos($s, '.') !== false) {
+			$s = str_replace('.', '', $s);
+			$s = str_replace(',', '.', $s);
+		} elseif (strpos($s, ',') !== false) {
+			$s = str_replace(',', '.', $s);
+		}
+		$s = preg_replace('/[^0-9\.\-]/', '', $s);
+		if ($s === '' || $s === '-' || $s === '.') {
+			return 0;
+		}
+		return (float) $s;
+	}
+
+	private function _parse_qty_db($val)
+	{
+		$qty = $this->_parse_decimal_db($val);
+		if ($qty < 0) {
+			$qty = 0;
+		}
+		return $qty;
+	}
+
+	private function _build_persediaan_from_pembelian_row($row)
+	{
+		$jumlah = $this->_parse_qty_db(isset($row->jumlah) ? $row->jumlah : 0);
+		$hpp = $this->_parse_decimal_db(isset($row->harga_satuan) ? $row->harga_satuan : 0);
+		$nilai = $jumlah * $hpp;
+		$tsPo = strtotime((string) (isset($row->tgl_po) ? $row->tgl_po : ''));
+		$tanggalTransaksi = $tsPo ? date('Y-m-d', $tsPo) : date('Y-m-d');
+		$tanggalBeli = $tsPo ? date('Y-m-01', $tsPo) : date('Y-m-01');
+
+		return array(
+			'tanggal' => $tanggalTransaksi,
+			'tanggal_beli' => $tanggalBeli,
+			'uuid_barang' => isset($row->uuid_barang) ? $row->uuid_barang : '',
+			'namabarang' => isset($row->uraian) ? $row->uraian : '',
+			'satuan' => isset($row->satuan) ? $row->satuan : '',
+			'hpp' => $hpp,
+			'sa' => $jumlah,
+			'uuid_spop' => isset($row->uuid_spop) ? $row->uuid_spop : '',
+			'spop' => isset($row->spop) ? $row->spop : '',
+			'beli' => $jumlah,
+			'total_10' => $jumlah,
+			'nilai_persediaan' => $nilai,
+		);
+	}
+
+	private function _sum_total_beli_by_link($id_persediaan, $uuid_persediaan)
+	{
+		$id_persediaan = (int) $id_persediaan;
+		$uuid_persediaan = trim((string) $uuid_persediaan);
+
+		if ($id_persediaan <= 0 && $uuid_persediaan === '') {
+			return 0;
+		}
+
+		$this->db->select('jumlah');
+		$this->db->from('tbl_pembelian');
+		if ($id_persediaan > 0 && $uuid_persediaan !== '') {
+			$this->db->group_start();
+			$this->db->where('id_persediaan_barang', $id_persediaan);
+			$this->db->or_where('uuid_persediaan', $uuid_persediaan);
+			$this->db->group_end();
+		} elseif ($id_persediaan > 0) {
+			$this->db->where('id_persediaan_barang', $id_persediaan);
+		} else {
+			$this->db->where('uuid_persediaan', $uuid_persediaan);
+		}
+
+		$rows = $this->db->get()->result();
+		$total = 0;
+		foreach ($rows as $r) {
+			$total += $this->_parse_qty_db(isset($r->jumlah) ? $r->jumlah : 0);
+		}
+
+		return $total;
+	}
+
+	private function _sync_persediaan_for_pembelian_id($id_pembelian)
+	{
+		$id_pembelian = (int) $id_pembelian;
+		if ($id_pembelian <= 0) {
+			return false;
+		}
+
+		$row = $this->Tbl_pembelian_model->get_by_id($id_pembelian);
+		if (!$row) {
+			return false;
+		}
+
+		$data_persediaan = $this->_build_persediaan_from_pembelian_row($row);
+		$id_persediaan = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+
+		if ($id_persediaan > 0) {
+			$existing = $this->Persediaan_model->get_by_id($id_persediaan);
+			if ($existing) {
+				$uuid_persediaan = isset($existing->uuid_persediaan) ? (string) $existing->uuid_persediaan : '';
+				if ($uuid_persediaan === '') {
+					$uuid_persediaan = isset($row->uuid_persediaan) ? (string) $row->uuid_persediaan : '';
+				}
+				$total_beli = $this->_sum_total_beli_by_link($id_persediaan, $uuid_persediaan);
+				if ($total_beli > 0) {
+					$data_persediaan['beli'] = $total_beli;
+				}
+				$this->Persediaan_model->update($id_persediaan, $data_persediaan);
+				if ($uuid_persediaan !== '') {
+					$this->Tbl_pembelian_model->update($id_pembelian, array(
+						'id_persediaan_barang' => $id_persediaan,
+						'uuid_persediaan' => $uuid_persediaan,
+					));
+				}
+				return true;
+			}
+		}
+
+		$new_id_persediaan = $this->Persediaan_model->insert_produk_baru($data_persediaan);
+		$new_uuid_persediaan = '';
+		if ($new_id_persediaan > 0) {
+			$new_row = $this->Persediaan_model->get_by_id($new_id_persediaan);
+			if ($new_row && !empty($new_row->uuid_persediaan)) {
+				$new_uuid_persediaan = (string) $new_row->uuid_persediaan;
+			}
+			$total_beli = $this->_sum_total_beli_by_link($new_id_persediaan, $new_uuid_persediaan);
+			if ($total_beli > 0) {
+				$this->Persediaan_model->update($new_id_persediaan, array('beli' => $total_beli));
+			}
+		}
+
+		$this->Tbl_pembelian_model->update($id_pembelian, array(
+			'id_persediaan_barang' => $new_id_persediaan,
+			'uuid_persediaan' => $new_uuid_persediaan,
+		));
+
+		return ($new_id_persediaan > 0);
+	}
+
+	private function _delete_linked_persediaan_by_pembelian_row($row)
+	{
+		if (!$row) {
+			return;
+		}
+
+		$id_persediaan = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+		if ($id_persediaan > 0) {
+			$this->Persediaan_model->delete($id_persediaan);
+			return;
+		}
+
+		$uuid_persediaan = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
+		if ($uuid_persediaan !== '') {
+			$pers = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan);
+			if ($pers && isset($pers->id)) {
+				$this->Persediaan_model->delete((int) $pers->id);
+			}
+		}
+	}
+
 	private function _get_pembelian_rows_for_excel_by_ids(array $ids, $preserve_request_order = false)
 	{
 		$ids = array_values(array_filter(array_map('intval', $ids)));
@@ -473,6 +637,9 @@ class Tbl_pembelian extends CI_Controller
 				redirect(site_url('tbl_pembelian_jasa/create_pembayaran/' . $uuid_spop));
 				return;
 			}
+			$this->session->set_flashdata('message', 'Data detail pembelian sudah kosong atau tidak ditemukan.');
+			redirect(site_url('tbl_pembelian'));
+			return;
 		}
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
@@ -525,6 +692,11 @@ class Tbl_pembelian extends CI_Controller
 
 		// open form pengajuan INPUT
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		if (!$row_per_uuid_spop) {
+			$this->session->set_flashdata('message', 'Data detail pembelian sudah kosong atau tidak ditemukan.');
+			redirect(site_url('tbl_pembelian'));
+			return;
+		}
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
 
@@ -841,6 +1013,11 @@ class Tbl_pembelian extends CI_Controller
 		$uuid_spop = $row_per_uuid_pengajuan_bayar_terproses->uuid_spop;
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		if (!$row_per_uuid_spop) {
+			$this->session->set_flashdata('message', 'Data detail pembelian sudah kosong atau tidak ditemukan.');
+			redirect(site_url('tbl_pembelian'));
+			return;
+		}
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
 		$row_per_uuid_bank_bkk = $this->Sys_bank_model->get_by_uuid_bank($row_per_uuid_pengajuan_bayar_terproses->uuid_bank_bkk);
@@ -2879,7 +3056,8 @@ class Tbl_pembelian extends CI_Controller
 						'id_usr' => 1,
 					);
 
-					$this->Tbl_pembelian_model->insert($data);
+					$id_new_pembelian = $this->Tbl_pembelian_model->insert($data);
+					$this->_sync_persediaan_for_pembelian_id($id_new_pembelian);
 				}
 			}
 
@@ -2902,6 +3080,11 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		if (!$row_per_uuid_spop) {
+			$this->session->set_flashdata('message', 'Data detail pembelian sudah kosong atau tidak ditemukan.');
+			redirect(site_url('tbl_pembelian'));
+			return;
+		}
 
 		// if ($row_per_uuid_spop) {
 		// 		print_r("ada data");
@@ -3245,6 +3428,8 @@ class Tbl_pembelian extends CI_Controller
 		$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 		$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 		$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+		$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+		$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
 
 		$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -3285,61 +3470,6 @@ class Tbl_pembelian extends CI_Controller
 		$Get_nominal = $jumlah_x * $harga_satuan_x;
 
 
-		// Insert barang ke data persediaan
-		$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
-		$data_persediaan = array(
-			// 'id' => $this->input->post('id', TRUE),
-			'tanggal' => date("Y-m-d H:i:s"),
-			'tanggal_beli' => $row_per_uuid_spop->tgl_po,
-			// 'kode' => $this->input->post('kode', TRUE),
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
-			'namabarang' => $get_nama_barang,
-			'satuan' => $this->input->post('satuan', TRUE),
-			'hpp' => $harga_satuan_x,
-			'sa' => $jumlah_x,
-			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
-			'spop' => $row_per_uuid_spop->spop,
-			'beli' => $jumlah_x,
-			// 'tuj' => $this->input->post('tuj', TRUE),
-			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
-			// 'sekret' => $this->input->post('sekret', TRUE),
-			// 'cetak' => $this->input->post('cetak', TRUE),
-			// 'grafikita' => $this->input->post('grafikita', TRUE),
-			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
-			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
-			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
-			// 'kbs' => $this->input->post('kbs', TRUE),
-			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
-			// 'medis' => $this->input->post('medis', TRUE),
-			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
-			// 'sembako' => $this->input->post('sembako', TRUE),
-			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
-			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
-			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
-			'total_10' => $jumlah_x,
-			'nilai_persediaan' => $Get_nominal_persediaan,
-		);
-
-		$GET_id_persediaan_beli_baru = $this->Persediaan_model->insert_produk_baru($data_persediaan);
-
-		// print_r($GET_id_persediaan_beli_baru);
-		// print_r("<br/>");
-
-		// GET UUID_PERSEDIAAN BY ID PERSEDIAAN
-
-		$this->db->where('id', $GET_id_persediaan_beli_baru);
-		$DATA_persediaan = $this->db->get('persediaan');
-
-		// print_r($DATA_persediaan->row());
-		// print_r("<br/>");
-
-		$GET_UUID_PERSEDIAAN = $DATA_persediaan->row()->uuid_persediaan;
-
-		// print_r($GET_UUID_PERSEDIAAN);
-		// print_r("<br/>");
-
-		// die;
-
 		// SIMPAN DATA KE PEMBELIAN
 		$data = array(
 			'date_input' => $row_per_uuid_spop->date_input,
@@ -3352,8 +3482,8 @@ class Tbl_pembelian extends CI_Controller
 
 			// 'nmrbpb' => $this->input->post('nmrbpb', TRUE),
 
-			'id_persediaan_barang' => $GET_id_persediaan_beli_baru,
-			'uuid_persediaan' => $GET_UUID_PERSEDIAAN,
+			'id_persediaan_barang' => $get_id_persediaan_ref,
+			'uuid_persediaan' => $get_uuid_persediaan_ref,
 
 			'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 			'spop' => $row_per_uuid_spop->spop,
@@ -3386,7 +3516,8 @@ class Tbl_pembelian extends CI_Controller
 		// print_r($data);
 		// die;
 
-		$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+		$inserted_id = $this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+		$this->_sync_persediaan_for_pembelian_id((int) $inserted_id);
 
 		// TABEL KAS KECIL
 		// JIKA STATUSLU = L & PILIHAN KAS ==> MAKA OTOMATIS MASUK DATA PENGELUARAN KAS KECIL
@@ -3619,48 +3750,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// print_r("<br/>");
 
-		//KONTROL INI BELUM ADA:
-		// NOTE : HARUS CEK FIELD PENJUALAN , JIKA SUDAH ADA PROSES PENJUALAN, MAKA TIDAK BOLEH MENGUBAH NAMA BARANG, HANYA BISA MENGUBAH HPP DAN JUMLAH BELI (JUMLAH BELI HARUS LEBIH DARI TOTAL JUMLAH TERJUAL)
-
-		// PROSES PERUBAHAN DATA DI PERSEDIAAN:
-		// 1. DELETE record lama di tbl_persediaan berdasarkan id yang tersimpan
-		// 2. INSERT record baru ke tbl_persediaan dari data pembelian yang sudah di-update
-		// 3. UPDATE tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang baru
-
-		// Step 1: Delete old persediaan record
-		$this->Persediaan_model->delete($get_id_persediaan);
-
-		// Step 2: Prepare data untuk insert persediaan baru
-		$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
-		$Insert_data_persediaan = array(
-			'tanggal' => date("Y-m-d H:i:s"),
-			'tanggal_beli' => date("Y-m-d", strtotime($this->input->post('date_input', TRUE) ?: date("Y-m-d"))),
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
-			'namabarang' => $get_nama_barang,
-			'satuan' => $this->input->post('satuan', TRUE),
-			'hpp' => $harga_satuan_x,
-			'sa' => $jumlah_x,
-			'uuid_spop' => $get_uuid_spop,
-			'spop' => $this->db->query("SELECT spop FROM `tbl_pembelian` WHERE `id`='$id'")->row()->spop,
-			'beli' => $jumlah_x,
-			'total_10' => $jumlah_x,
-			'nilai_persediaan' => $Get_nominal_persediaan,
-		);
-
-		// Step 3: Insert record baru ke persediaan
-		$GET_NEW_ID_PERSEDIAAN = $this->Persediaan_model->insert_produk_baru($Insert_data_persediaan);
-
-		// Step 4: Get uuid_persediaan dari record baru yang di-insert
-		$this->db->where('id', $GET_NEW_ID_PERSEDIAAN);
-		$DATA_persediaan_new = $this->db->get('persediaan');
-		$GET_NEW_UUID_PERSEDIAAN = $DATA_persediaan_new->row()->uuid_persediaan;
-
-		// Step 5: Update tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang baru
-		$update_pembelian_persediaan_ids = array(
-			'id_persediaan_barang' => $GET_NEW_ID_PERSEDIAAN,
-			'uuid_persediaan' => $GET_NEW_UUID_PERSEDIAAN,
-		);
-		$this->Tbl_pembelian_model->update($id, $update_pembelian_persediaan_ids);
+		$this->_sync_persediaan_for_pembelian_id((int) $id);
 
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -3707,6 +3797,12 @@ class Tbl_pembelian extends CI_Controller
 			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
 
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -3750,6 +3846,9 @@ class Tbl_pembelian extends CI_Controller
 
 				// 'nmrbpb' => $this->input->post('nmrbpb', TRUE),
 
+				'id_persediaan_barang' => $get_id_persediaan_ref,
+				'uuid_persediaan' => $get_uuid_persediaan_ref,
+
 				'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 				'spop' => $row_per_uuid_spop->spop,
 
@@ -3781,7 +3880,8 @@ class Tbl_pembelian extends CI_Controller
 			// print_r($data);
 			// die;
 
-			$this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+			$inserted_id = $this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+			$this->_sync_persediaan_for_pembelian_id((int) $inserted_id);
 			$get_uuid_spop_generating = $uuid_spop;
 		} else {
 
@@ -3901,7 +4001,12 @@ class Tbl_pembelian extends CI_Controller
 			);
 
 
-			$get_uuid_spop_generating = $this->Tbl_pembelian_model->insert_spop($data);
+			$inserted_id = $this->Tbl_pembelian_model->insert_spop($data);
+			$this->_sync_persediaan_for_pembelian_id((int) $inserted_id);
+
+			$this->db->where('id', $inserted_id);
+			$GET_DATA_PEMBELIAN = $this->db->get('tbl_pembelian');
+			$get_uuid_spop_generating = $GET_DATA_PEMBELIAN->row()->uuid_spop;
 			// print_r("<br/>");
 			// print_r($get_uuid_spop_generating);
 			// print_r("<br/>");
@@ -3918,6 +4023,11 @@ class Tbl_pembelian extends CI_Controller
 		$this->_ensure_filter_bulan_pembelian_session();
 
 		$row_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
+		if (!$row_per_uuid_spop) {
+			$this->session->set_flashdata('message', 'Data detail pembelian sudah kosong atau tidak ditemukan.');
+			redirect(site_url('tbl_pembelian'));
+			return;
+		}
 		$RESULT_per_uuid_spop = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
 
 		// print_r($RESULT_per_uuid_spop);
@@ -4070,6 +4180,9 @@ class Tbl_pembelian extends CI_Controller
 
 				// 'nmrbpb' => $this->input->post('nmrbpb', TRUE),
 
+				'id_persediaan_barang' => $get_id_persediaan_ref,
+				'uuid_persediaan' => $get_uuid_persediaan_ref,
+
 				'uuid_spop' => $row_per_uuid_spop->uuid_spop,
 				'spop' => $row_per_uuid_spop->spop,
 
@@ -4100,6 +4213,7 @@ class Tbl_pembelian extends CI_Controller
 			// die;
 
 			$GET_ID_PEMBELIAN_AFTER_INSERT = $this->Tbl_pembelian_model->insert($data); // insert untuk data lanjutan uuid_spop sudah ada
+			$this->_sync_persediaan_for_pembelian_id((int) $GET_ID_PEMBELIAN_AFTER_INSERT);
 			$get_uuid_spop_generating = $uuid_spop;
 
 			// print_r("Ada SPOP");
@@ -4154,6 +4268,8 @@ class Tbl_pembelian extends CI_Controller
 			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -4190,6 +4306,9 @@ class Tbl_pembelian extends CI_Controller
 
 			$data = array(
 				'date_input' => date("Y-m-d H:i:s"),
+
+				'id_persediaan_barang' => $get_id_persediaan_ref,
+				'uuid_persediaan' => $get_uuid_persediaan_ref,
 
 				'tgl_po' => $date_po,
 
@@ -4228,6 +4347,7 @@ class Tbl_pembelian extends CI_Controller
 
 
 			$GET_ID_PEMBELIAN_AFTER_INSERT = $this->Tbl_pembelian_model->insert_spop($data);
+			$this->_sync_persediaan_for_pembelian_id((int) $GET_ID_PEMBELIAN_AFTER_INSERT);
 			// $GET_ID_PEMBELIAN_AFTER_INSERT = $this->Tbl_pembelian_model->insert($data);
 
 			// print_r("TIDAK Ada SPOP");
@@ -4266,79 +4386,6 @@ class Tbl_pembelian extends CI_Controller
 			$Get_date_po = $date_po;
 			$Get_nominal = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
 		}
-
-		// die;
-		// PERSEDIAAN
-		// Simpan Barang ke persediaan ==> sebagai spop baru dan otomatis uuid_persediaan baru
-
-		$Get_nominal_persediaan = $this->input->post('jumlah', TRUE) * $harga_satuan_x;
-		$data_persediaan = array(
-			// 'id' => $this->input->post('id', TRUE),
-			'tanggal' => date("Y-m-d H:i:s"),
-			'tanggal_beli' => $Get_tanggal_beli,
-			// 'kode' => $this->input->post('kode', TRUE),
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
-			'namabarang' => $get_nama_barang,
-			'satuan' => $this->input->post('satuan', TRUE),
-			'hpp' => $harga_satuan_x,
-			'sa' => $this->input->post('jumlah', TRUE),
-			'uuid_spop' => $Get_uuid_spop,
-			// 'uuid_spop' => $get_uuid_spop_generating,
-			'spop' => $Get_spop,
-			'beli' => $this->input->post('jumlah', TRUE),
-			// 'tuj' => $this->input->post('tuj', TRUE),
-			// 'tgl_keluar' => $this->input->post('tgl_keluar', TRUE),
-			// 'sekret' => $this->input->post('sekret', TRUE),
-			// 'cetak' => $this->input->post('cetak', TRUE),
-			// 'grafikita' => $this->input->post('grafikita', TRUE),
-			// 'dinas_umum' => $this->input->post('dinas_umum', TRUE),
-			// 'atk_rsud' => $this->input->post('atk_rsud', TRUE),
-			// 'ppbmp_kbs' => $this->input->post('ppbmp_kbs', TRUE),
-			// 'kbs' => $this->input->post('kbs', TRUE),
-			// 'ppbmp' => $this->input->post('ppbmp', TRUE),
-			// 'medis' => $this->input->post('medis', TRUE),
-			// 'siiplah_bosda' => $this->input->post('siiplah_bosda', TRUE),
-			// 'sembako' => $this->input->post('sembako', TRUE),
-			// 'fc_gose' => $this->input->post('fc_gose', TRUE),
-			// 'fc_manding' => $this->input->post('fc_manding', TRUE),
-			// 'fc_psamya' => $this->input->post('fc_psamya', TRUE),
-			'total_10' => $this->input->post('jumlah', TRUE),
-			'nilai_persediaan' => $Get_nominal_persediaan,
-		);
-
-		// $this->Persediaan_model->insert($data_persediaan);
-		$GET_ID_PERSEDIAAN = $this->Persediaan_model->insert_produk_baru($data_persediaan);
-
-		// print_r("<br/>");
-		// print_r("<br/>");
-		// print_r("DATA PERSEDIAAN");
-		// print_r("<br/>");
-		// print_r($GET_ID_PERSEDIAAN);
-		// print_r("<br/>");
-
-		// UPDATE TBL_PEMBELIAN : ID_PERSEDIAAN DAN UUID_PERSEDIAAN DARI TABEL PERSEDIAAN DENGAN FILTER UUID_SPOP DARI TABEL PERSEDIAAN
-
-		$this->db->where('id', $GET_ID_PERSEDIAAN);
-		$GET_DATA_PERSEDIAAN = $this->db->get('persediaan');
-		$GET_uuid_persediaan = $GET_DATA_PERSEDIAAN->row()->uuid_persediaan;
-
-		// print_r($GET_uuid_persediaan);
-		// print_r("<br/>");
-
-		// UPDATE TBL_PEMBELIAN
-
-		$sql_update_tbl_pembelian = "UPDATE `tbl_pembelian` SET `uuid_persediaan`='$GET_uuid_persediaan',`id_persediaan_barang`='$GET_ID_PERSEDIAAN' WHERE `id`='$GET_ID_PEMBELIAN_AFTER_INSERT'";
-
-		$this->db->query($sql_update_tbl_pembelian);
-
-		// $this->db->set(array(
-		// 	'id_persediaan_barang' => $GET_ID_PERSEDIAAN,
-		// 	'uuid_persediaan' => $GET_uuid_persediaan,
-		// ));  // pass fields in array
-		// $this->db->where('id', $GET_ID_PEMBELIAN_AFTER_INSERT);
-		// $this->db->update('tbl_pembelian'); // table name
-
-		// END OF UPDATE TBL_PEMBELIAN : ID_PERSEDIAAN DAN UUID_PERSEDIAAN DARI TABEL PERSEDIAAN DENGAN FILTER UUID_SPOP DARI TABEL PERSEDIAAN
 
 		// die;
 
@@ -4786,59 +4833,9 @@ class Tbl_pembelian extends CI_Controller
 			// print_r($data);
 			// die;
 			
-			// GET id dan persediaan info sebelum update
-			$id_pembelian = $this->input->post('id', TRUE);
-			$old_pembelian = $this->Tbl_pembelian_model->get_by_id($id_pembelian);
-			$id_persediaan_lama = $old_pembelian->id_persediaan_barang;
-			$uuid_spop = $old_pembelian->uuid_spop;
-			
-			// Step 0: DELETE old persediaan record DULU sebelum update tbl_pembelian
-			if ($id_persediaan_lama) {
-				$this->Persediaan_model->delete($id_persediaan_lama);
-			}
-			
-			// Step 1: UPDATE tbl_pembelian (hapus relasi ke persediaan lama)
-			$data['id_persediaan_barang'] = 0;
-			$data['uuid_persediaan'] = '';
+			$id_pembelian = (int) $this->input->post('id', TRUE);
 			$this->Tbl_pembelian_model->update($id_pembelian, $data);
-			
-			// Step 2: INSERT record persediaan BARU
-			if ($id_pembelian) {
-				$Get_nominal_persediaan = $jumlah_x * $harga_satuan_x;
-				$Insert_data_persediaan = array(
-					'tanggal' => date("Y-m-d H:i:s"),
-					'tanggal_beli' => $date_po,
-					'uuid_barang' => $this->input->post('uuid_barang', TRUE),
-					'namabarang' => $get_nama_barang,
-					'satuan' => $this->input->post('satuan', TRUE),
-					'hpp' => $harga_satuan_x,
-					'sa' => $jumlah_x,
-					'uuid_spop' => $uuid_spop,
-					'spop' => $this->input->post('spop', TRUE),
-					'beli' => $jumlah_x,
-					'total_10' => $jumlah_x,
-					'nilai_persediaan' => $Get_nominal_persediaan,
-				);
-				
-				// Insert record baru
-				$GET_NEW_ID_PERSEDIAAN = $this->Persediaan_model->insert_produk_baru($Insert_data_persediaan);
-				
-				// Get uuid_persediaan dari record baru
-				if ($GET_NEW_ID_PERSEDIAAN) {
-					$this->db->where('id', $GET_NEW_ID_PERSEDIAAN);
-					$DATA_persediaan_new = $this->db->get('persediaan');
-					if ($DATA_persediaan_new->num_rows() > 0) {
-						$GET_NEW_UUID_PERSEDIAAN = $DATA_persediaan_new->row()->uuid_persediaan;
-						
-						// Step 3: Update tbl_pembelian dengan uuid_persediaan dan id_persediaan_barang BARU
-						$update_pembelian_persediaan_ids = array(
-							'id_persediaan_barang' => $GET_NEW_ID_PERSEDIAAN,
-							'uuid_persediaan' => $GET_NEW_UUID_PERSEDIAAN,
-						);
-						$this->Tbl_pembelian_model->update($id_pembelian, $update_pembelian_persediaan_ids);
-					}
-				}
-			}
+			$this->_sync_persediaan_for_pembelian_id($id_pembelian);
 			
 			$this->session->set_flashdata('message', 'Update Record Success');
 			redirect(site_url('tbl_pembelian'));
@@ -4915,6 +4912,10 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 		if ($data_per_uuidspop) {
+			$rows = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+			foreach ($rows as $r) {
+				$this->_delete_linked_persediaan_by_pembelian_row($r);
+			}
 			// print_r("Ada data");
 			$this->Tbl_pembelian_model->delete_by_uuid_spop($uuid_spop);
 			// die;
@@ -4931,6 +4932,7 @@ class Tbl_pembelian extends CI_Controller
 		$row = $this->Tbl_pembelian_model->get_by_id($id);
 
 		if ($row) {
+			$this->_delete_linked_persediaan_by_pembelian_row($row);
 			$this->Tbl_pembelian_model->delete($id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian'));
@@ -4945,18 +4947,15 @@ class Tbl_pembelian extends CI_Controller
 
 
 		$get_id_pembelian = $this->Tbl_pembelian_model->get_by_uuid_pembelian($uuid_pembelian);
-		$get_id_persediaan_di_tbl_pembelian = $get_id_pembelian->id_persediaan_barang;
 
 
 		$row = $this->Tbl_pembelian_model->get_by_id($get_id_pembelian->id);
 
 		if ($row) {
+			$this->_delete_linked_persediaan_by_pembelian_row($row);
 
 			// Hapus record di tabel pembelian
 			$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
-
-			// hapus record di tabel persediaan
-			$this->Persediaan_model->delete($get_id_persediaan_di_tbl_pembelian);
 
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian/create_add_uraian_update/' . $get_uuid_spop));
@@ -4975,6 +4974,10 @@ class Tbl_pembelian extends CI_Controller
 		$row = $this->Tbl_pembelian_model->get_by_uuid_spop($uuid_spop);
 
 		if ($row) {
+			$rows = $this->Tbl_pembelian_model->get_by_uuid_spop_ALL_result($uuid_spop);
+			foreach ($rows as $r) {
+				$this->_delete_linked_persediaan_by_pembelian_row($r);
+			}
 			$this->Tbl_pembelian_model->delete_by_uuid_spop($uuid_spop);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian'));
@@ -4992,6 +4995,7 @@ class Tbl_pembelian extends CI_Controller
 		$row = $this->Tbl_pembelian_model->get_by_id($get_id_pembelian->id);
 
 		if ($row) {
+			$this->_delete_linked_persediaan_by_pembelian_row($row);
 			$this->Tbl_pembelian_model->delete($get_id_pembelian->id);
 			$this->session->set_flashdata('message', 'Delete Record Success');
 			redirect(site_url('tbl_pembelian'));

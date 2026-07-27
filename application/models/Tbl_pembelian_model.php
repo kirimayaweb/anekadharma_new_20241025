@@ -355,6 +355,8 @@ class Tbl_pembelian_model extends CI_Model
             'PROCESS' => 'INSERT',
             'id' => $this->db->insert_id()
         );
+
+        return $datainsert['id'];
     }
 
     // insert data

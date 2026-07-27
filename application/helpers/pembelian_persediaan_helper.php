@@ -174,6 +174,8 @@ function pembelian_get_barang_by_uuid($CI, $uuid_barang)
 	$tgl = pembelian_get_filter_tanggal($CI);
 
 	$sql = "SELECT
+			`id`,
+			`uuid_persediaan`,
 			COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
 			`kode` AS kode_barang,
 			`namabarang` AS nama_barang,
