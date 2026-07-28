@@ -6227,6 +6227,13 @@ class Tbl_pembelian extends CI_Controller
 			$GET_jumlah_pecah_satuan_awal = 0;
 		}
 
+		// Jumlah field total_10 SEBELUM update (record sumber yang sama uuid_persediaan-nya)
+		if ($Get_data_barang_pecah_satuan->total_10) {
+			$GET_total_10_awal = (float) preg_replace('/[^0-9.\-]/', '', (string) $Get_data_barang_pecah_satuan->total_10);
+		} else {
+			$GET_total_10_awal = 0;
+		}
+
 		// print_r($GET_jumlah_pecah_satuan_awal);
 		// print_r("<br/>");
 		// print_r("<br/>");
@@ -6235,11 +6242,11 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 
 
-		// UPDATE FIELD pecah_satuan dengan jumlah yang baru:
+		// UPDATE FIELD pecah_satuan (bertambah) dan total_10 (berkurang) dengan jumlah yang sama,
+		// agar balance: pecah_satuan naik sebesar jumlah_barang_dari_stock, total_10 turun sebesar jumlah yang sama.
 		$data_update_persediaan_setelah_di_pecah = array(
-			// 'sa' => $Get_jumlah_setelah_dipecah,
-			// 'total_10' => $Get_jumlah_setelah_dipecah,
 			'pecah_satuan' => $GET_jumlah_pecah_satuan_awal + $get_jumlah_barang_di_pecah,
+			'total_10' => $GET_total_10_awal - (float) $get_jumlah_barang_di_pecah,
 		);
 
 		// print_r($data_update_persediaan_setelah_di_pecah);
