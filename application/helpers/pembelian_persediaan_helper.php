@@ -14090,33 +14090,95 @@ function persediaan_history_generate_table_exists($CI)
 
 function persediaan_history_generate_ensure_tables($CI)
 {
-	if (persediaan_history_generate_table_exists($CI)) {
-		return true;
-	}
+	// Check if tables exist
+	$exists = $CI->db->table_exists('persediaan_history_generate');
+	$exists_data = $CI->db->table_exists('persediaan_history_generate_data');
 
-	$sql_paths = array(
-		APPPATH . '../database/sql/persediaan_history_generate.sql',
-	);
-	if (defined('FCPATH')) {
-		$sql_paths[] = FCPATH . '../database/sql/persediaan_history_generate.sql';
-	}
-	foreach ($sql_paths as $path) {
-		if (!is_file($path)) {
-			continue;
+	// If tables don't exist, create them from SQL file
+	if (!$exists || !$exists_data) {
+		$sql_paths = array(
+			APPPATH . '../database/sql/persediaan_history_generate.sql',
+		);
+		if (defined('FCPATH')) {
+			$sql_paths[] = FCPATH . '../database/sql/persediaan_history_generate.sql';
 		}
-		$sql = file_get_contents($path);
-		if ($sql === false || trim($sql) === '') {
-			continue;
-		}
-		$parts = preg_split('/;\s*\n/', $sql);
-		foreach ($parts as $stmt) {
-			$stmt = trim($stmt);
-			if ($stmt === '' || stripos($stmt, 'CREATE TABLE') === false) {
+		foreach ($sql_paths as $path) {
+			if (!is_file($path)) {
 				continue;
 			}
-			$CI->db->query($stmt);
+			$sql = file_get_contents($path);
+			if ($sql === false || trim($sql) === '') {
+				continue;
+			}
+			$parts = preg_split('/;\s*\n/', $sql);
+			foreach ($parts as $stmt) {
+				$stmt = trim($stmt);
+				if ($stmt === '' || stripos($stmt, 'CREATE TABLE') === false) {
+					continue;
+				}
+				$CI->db->query($stmt);
+			}
+			break;
 		}
-		break;
+	}
+
+	// Ensure tables exist
+	if (!$CI->db->table_exists('persediaan_history_generate') || !$CI->db->table_exists('persediaan_history_generate_data')) {
+		return persediaan_history_generate_table_exists($CI);
+	}
+
+	// --- Auto-alter: add missing fields to persediaan_history_generate ---
+	$hdr_fields = $CI->db->list_fields('persediaan_history_generate');
+	$hdr_fields_lower = array_map('strtolower', $hdr_fields);
+
+	$required_hdr = array(
+		'bulan_target' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `bulan_target` VARCHAR(7) NOT NULL AFTER `id`",
+		'tanggal_beli_target' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `tanggal_beli_target` DATE NOT NULL AFTER `bulan_target`",
+		'tanggal_beli_sumber' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `tanggal_beli_sumber` DATE NOT NULL AFTER `tanggal_beli_target`",
+		'tanggal_klik_generate' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `tanggal_klik_generate` DATETIME NOT NULL AFTER `tanggal_beli_sumber`",
+		'tanggal_selesai' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `tanggal_selesai` DATETIME NULL DEFAULT NULL AFTER `tanggal_klik_generate`",
+		'reset_deleted_count' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `reset_deleted_count` INT(11) NOT NULL DEFAULT 0 AFTER `tanggal_selesai`",
+		'target_kosong_verified' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `target_kosong_verified` TINYINT(1) NOT NULL DEFAULT 0 AFTER `reset_deleted_count`",
+		'id_gen_recalc_log' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `id_gen_recalc_log` INT(11) UNSIGNED NULL DEFAULT NULL AFTER `target_kosong_verified`",
+		'generate_insert' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `generate_insert` INT(11) NOT NULL DEFAULT 0 AFTER `id_gen_recalc_log`",
+		'generate_update' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `generate_update` INT(11) NOT NULL DEFAULT 0 AFTER `generate_insert`",
+		'pembelian_update' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `pembelian_update` INT(11) NOT NULL DEFAULT 0 AFTER `generate_update`",
+		'pembelian_insert' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `pembelian_insert` INT(11) NOT NULL DEFAULT 0 AFTER `pembelian_update`",
+		'pembelian_gagal' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `pembelian_gagal` INT(11) NOT NULL DEFAULT 0 AFTER `pembelian_insert`",
+		'total_pembelian' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `total_pembelian` INT(11) NOT NULL DEFAULT 0 AFTER `pembelian_gagal`",
+		'summary_json' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `summary_json` LONGTEXT NULL AFTER `total_pembelian`",
+		'rekap_json' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `rekap_json` LONGTEXT NULL AFTER `summary_json`",
+		'proses_json' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `proses_json` LONGTEXT NULL AFTER `rekap_json`",
+		'summary_html' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `summary_html` LONGTEXT NULL AFTER `proses_json`",
+		'status' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'proses' AFTER `summary_html`",
+		'fase_terakhir' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `fase_terakhir` VARCHAR(32) NULL DEFAULT NULL AFTER `status`",
+		'id_user' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `id_user` INT(11) NULL DEFAULT NULL AFTER `fase_terakhir`",
+		'nama_user' => "ALTER TABLE `persediaan_history_generate` ADD COLUMN `nama_user` VARCHAR(150) NULL DEFAULT NULL AFTER `id_user`",
+	);
+
+	foreach ($required_hdr as $field => $sql) {
+		if (!in_array(strtolower($field), $hdr_fields_lower, true)) {
+			$CI->db->query($sql);
+		}
+	}
+
+	// --- Auto-alter: add missing fields to persediaan_history_generate_data ---
+	$dtl_fields = $CI->db->list_fields('persediaan_history_generate_data');
+	$dtl_fields_lower = array_map('strtolower', $dtl_fields);
+
+	$required_dtl = array(
+		'id_history' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `id_history` INT(11) UNSIGNED NOT NULL AFTER `id`",
+		'jenis' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `jenis` VARCHAR(64) NOT NULL AFTER `id_history`",
+		'judul' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `judul` VARCHAR(255) NOT NULL DEFAULT '' AFTER `jenis`",
+		'row_count' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `row_count` INT(11) NOT NULL DEFAULT 0 AFTER `judul`",
+		'totals_json' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `totals_json` TEXT NULL AFTER `row_count`",
+		'data_json' => "ALTER TABLE `persediaan_history_generate_data` ADD COLUMN `data_json` LONGTEXT NOT NULL AFTER `totals_json`",
+	);
+
+	foreach ($required_dtl as $field => $sql) {
+		if (!in_array(strtolower($field), $dtl_fields_lower, true)) {
+			$CI->db->query($sql);
+		}
 	}
 
 	return persediaan_history_generate_table_exists($CI);

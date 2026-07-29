@@ -2701,7 +2701,9 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
-		persediaan_history_generate_ensure_tables($this);
+		// Ensure history tables exist
+		$tables_created = persediaan_history_generate_ensure_tables($this);
+		
 		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
 		$items = array();
 		foreach ($list as $row) {
@@ -2724,15 +2726,18 @@ class Persediaan extends CI_Controller
 			);
 		}
 
+		$tables_ready = persediaan_history_generate_table_exists($this);
+		
 		persediaan_ajax_json_output($this, array(
 			'ok' => true,
 			'bulan' => $bulan,
-			'tables_ready' => persediaan_history_generate_table_exists($this),
+			'tables_ready' => $tables_ready,
+			'tables_created' => $tables_created,
 			'items' => $items,
 			'total' => count($items),
-			'message' => count($items) > 0
-				? ''
-				: 'Belum ada history generate untuk bulan ini.',
+			'message' => !$tables_ready
+				? 'Tabel history generate belum tersedia di database. Jalankan SQL dari file <code>database/sql/persediaan_history_generate.sql</code> atau klik Generate & Recalculate agar auto-create.'
+				: (count($items) > 0 ? '' : 'Belum ada history generate untuk bulan ini.'),
 		));
 	}
 
