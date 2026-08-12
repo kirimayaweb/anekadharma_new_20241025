@@ -12,7 +12,16 @@ class Persediaan extends CI_Controller
 		$this->load->model(array('Persediaan_model', 'Sys_konsumen_model'));
 		$this->load->library('form_validation');
 		$this->load->library('datatables');
+		$this->load->helper('pembelian_persediaan');
 	}
+
+	// CEK UUID-PERSEIDAAN SAMA ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+	// PERSEDIAAN + PEMBELIAN ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+	// SELECT p.id AS id_persediaan, p.uuid_persediaan, p.uuid_spop, p.tanggal_beli, p.namabarang, p.satuan AS satuan_persediaan, p.spop AS spop_persediaan, b.id AS id_pembelian, b.uuid_pembelian, b.tgl_po, b.uraian, b.satuan AS satuan_pembelian, b.harga_satuan FROM `persediaan` p INNER JOIN `tbl_pembelian` b ON p.uuid_persediaan = b.uuid_persediaan WHERE p.tanggal_beli LIKE '2026-01%' AND b.tgl_po LIKE '2026-01%';
+
+
+	// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 	// 
@@ -569,8 +578,27 @@ class Persediaan extends CI_Controller
 			'action_cari' => site_url('persediaan/search'),
 			'bulan_persediaan_selected' => $bulan,
 			'url_rekap_ajax' => site_url('Persediaan/ajax_rekap_bulan'),
+			'url_rekap_ajax_serverside' => site_url('Persediaan/ajax_rekap_bulan_serverside'),
 			'url_rekap_sync_step' => site_url('Persediaan/ajax_rekap_sync_step'),
 			'url_rekap_excel' => site_url('Persediaan/excel_rekap'),
+			'url_rekap_detail_produksi' => site_url('Persediaan/ajax_rekap_detail_produksi'),
+			'url_rekap_detail_produksi_serverside' => site_url('Persediaan/ajax_rekap_detail_produksi_serverside'),
+			'url_rekap_detail_produksi_excel' => site_url('Persediaan/excel_rekap_detail_produksi'),
+			'url_rekap_detail_pecah_satuan' => site_url('Persediaan/ajax_rekap_detail_pecah_satuan'),
+			'url_rekap_detail_pecah_satuan_serverside' => site_url('Persediaan/ajax_rekap_detail_pecah_satuan_serverside'),
+			'url_rekap_detail_pecah_satuan_excel' => site_url('Persediaan/excel_rekap_detail_pecah_satuan'),
+			'url_rekap_detail_pembelian_barang' => site_url('Persediaan/ajax_rekap_detail_pembelian_barang'),
+			'url_rekap_detail_pembelian_barang_serverside' => site_url('Persediaan/ajax_rekap_detail_pembelian_barang_serverside'),
+			'url_rekap_detail_pembelian_barang_excel' => site_url('Persediaan/excel_rekap_detail_pembelian_barang'),
+			'url_rekap_detail_pembelian_jasa_serverside' => site_url('Persediaan/ajax_rekap_detail_pembelian_jasa_serverside'),
+			'url_rekap_detail_pembelian_jasa_excel' => site_url('Persediaan/excel_rekap_detail_pembelian_jasa'),
+			'url_rekap_detail_pembelian_jasa' => site_url('Persediaan/ajax_rekap_detail_pembelian_jasa'),
+			'url_rekap_detail_penjualan_barang_serverside' => site_url('Persediaan/ajax_rekap_detail_penjualan_barang_serverside'),
+			'url_rekap_detail_penjualan_barang_excel' => site_url('Persediaan/excel_rekap_detail_penjualan_barang'),
+			'url_rekap_detail_penjualan_barang' => site_url('Persediaan/ajax_rekap_detail_penjualan_barang'),
+			'url_rekap_detail_penjualan_jasa_serverside' => site_url('Persediaan/ajax_rekap_detail_penjualan_jasa_serverside'),
+			'url_rekap_detail_penjualan_jasa_excel' => site_url('Persediaan/excel_rekap_detail_penjualan_jasa'),
+			'url_rekap_detail_penjualan_jasa' => site_url('Persediaan/ajax_rekap_detail_penjualan_jasa'),
 			'url_tambah_persediaan' => site_url('Persediaan/ajax_tambah_persediaan'),
 			'url_get_persediaan_jasa' => site_url('Persediaan/ajax_get_persediaan_jasa'),
 			'url_update_persediaan_jasa' => site_url('Persediaan/ajax_update_persediaan_jasa'),
@@ -1299,6 +1327,58 @@ class Persediaan extends CI_Controller
 		}
 	}
 
+	public function ajax_rekap_bulan_serverside()
+	{
+		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$hasil_rekap = persediaan_rekap_run_silent_db($this, function () use ($bulan) {
+				return $this->get_persediaan_rekap_rows($bulan);
+			});
+			$rows = isset($hasil_rekap['items']) && is_array($hasil_rekap['items']) ? $hasil_rekap['items'] : array();
+			$request = $this->get_datatables_request(0);
+			$filtered = $this->datatables_slice_rows(
+				$rows,
+				array('nomor', 'deskripsi', 'nominal_tampil'),
+				array(
+					0 => array('field' => 'nomor', 'numeric' => true),
+					1 => array('field' => 'deskripsi', 'numeric' => false),
+					2 => array('field' => 'nominal', 'numeric' => true),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'tanggal_rekap' => $this->get_tanggal_rekap_dari_bulan($bulan),
+				'total_detail' => isset($hasil_rekap['total_detail']) ? $hasil_rekap['total_detail'] : 0,
+				'total_detail_tampil' => isset($hasil_rekap['total_detail_tampil']) ? $hasil_rekap['total_detail_tampil'] : '0',
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat rekap: ' . $e->getMessage()));
+		}
+	}
+
 	/**
 	 * AJAX: satu langkah rekalkulasi rekap (step 1–21) untuk progress bar.
 	 */
@@ -1338,6 +1418,1631 @@ class Persediaan extends CI_Controller
 		}
 	}
 
+	/**
+	 * Parse bulan → tanggal awal & akhir bulan untuk filter detail.
+	 */
+	private function get_bulan_date_range($bulan)
+	{
+		$tgl_awal = $bulan . '-01';
+		$ts = strtotime($tgl_awal);
+		if ($ts === false) {
+			$tgl_awal = date('Y-m-01');
+			$ts = strtotime($tgl_awal);
+		}
+		$tgl_akhir = date('Y-m-t', $ts);
+		$tgl_awal_next = date('Y-m-01', strtotime('+1 month', $ts));
+		return array('awal' => $tgl_awal, 'akhir' => $tgl_akhir, 'awal_next' => $tgl_awal_next);
+	}
+
+	private function get_persediaan_uuid_lookup_by_bulan($bulan)
+	{
+		$lookup = array();
+		if (!$this->db->table_exists('persediaan') || !$this->db->field_exists('uuid_persediaan', 'persediaan')) {
+			return $lookup;
+		}
+
+		$rows = $this->db->query(
+			"SELECT TRIM(COALESCE(`uuid_persediaan`, '')) AS `uuid_persediaan`
+			 FROM `persediaan`
+			 WHERE LEFT(COALESCE(`tanggal_beli`, ''), 7) = ?
+			   AND TRIM(COALESCE(`uuid_persediaan`, '')) <> ''",
+			array($bulan)
+		)->result_array();
+
+		foreach ($rows as $row) {
+			$uuid = strtolower(trim((string) (isset($row['uuid_persediaan']) ? $row['uuid_persediaan'] : '')));
+			if ($uuid !== '') {
+				$lookup[$uuid] = true;
+			}
+		}
+
+		return $lookup;
+	}
+
+	private function get_datatables_request($default_order_col = 0)
+	{
+		$draw = (int) $this->input->post('draw', TRUE);
+		$start = max(0, (int) $this->input->post('start', TRUE));
+		$length = (int) $this->input->post('length', TRUE);
+		if ($length < 0) {
+			$length = 0;
+		}
+		$search = $this->input->post('search', TRUE);
+		$search_value = '';
+		if (is_array($search) && isset($search['value'])) {
+			$search_value = trim((string) $search['value']);
+		} else {
+			$search_value = trim((string) $search);
+		}
+		$order = $this->input->post('order', TRUE);
+		$order_col = $default_order_col;
+		$order_dir = 'asc';
+		if (is_array($order) && isset($order[0])) {
+			$order0 = $order[0];
+			if (isset($order0['column'])) {
+				$order_col = (int) $order0['column'];
+			}
+			if (isset($order0['dir']) && strtolower((string) $order0['dir']) === 'desc') {
+				$order_dir = 'desc';
+			}
+		}
+		return array(
+			'draw' => $draw,
+			'start' => $start,
+			'length' => $length,
+			'search' => $search_value,
+			'order_col' => $order_col,
+			'order_dir' => $order_dir,
+		);
+	}
+
+	private function datatables_row_matches_search($row, $search, $fields)
+	{
+		if ($search === '') {
+			return true;
+		}
+		$haystack = array();
+		foreach ($fields as $field) {
+			if (is_array($field)) {
+				$field_name = isset($field['field']) ? $field['field'] : '';
+			} else {
+				$field_name = (string) $field;
+			}
+			if ($field_name === '') {
+				continue;
+			}
+			$value = isset($row[$field_name]) ? $row[$field_name] : '';
+			$haystack[] = strtolower((string) $value);
+		}
+		return strpos(implode(' ', $haystack), strtolower($search)) !== false;
+	}
+
+	private function datatables_sort_rows(array $rows, $order_map, $order_col, $order_dir)
+	{
+		if (!isset($order_map[$order_col])) {
+			$order_col = 0;
+		}
+		$sort_cfg = $order_map[$order_col];
+		usort($rows, function ($a, $b) use ($sort_cfg, $order_dir) {
+			$field = isset($sort_cfg['field']) ? $sort_cfg['field'] : '';
+			$numeric = !empty($sort_cfg['numeric']);
+			$va = isset($a[$field]) ? $a[$field] : '';
+			$vb = isset($b[$field]) ? $b[$field] : '';
+			if ($numeric) {
+				$va = (float) $va;
+				$vb = (float) $vb;
+			} else {
+				$va = strtolower((string) $va);
+				$vb = strtolower((string) $vb);
+			}
+			if ($va == $vb) {
+				return 0;
+			}
+			$result = ($va < $vb) ? -1 : 1;
+			return ($order_dir === 'desc') ? -$result : $result;
+		});
+		return $rows;
+	}
+
+	private function datatables_slice_rows(array $rows, array $search_fields, array $order_map, array $request)
+	{
+		$records_total = count($rows);
+		$filtered = array();
+		foreach ($rows as $row) {
+			if ($this->datatables_row_matches_search($row, $request['search'], $search_fields)) {
+				$filtered[] = $row;
+			}
+		}
+		$records_filtered = count($filtered);
+		$filtered = $this->datatables_sort_rows($filtered, $order_map, $request['order_col'], $request['order_dir']);
+		if ($request['length'] > 0) {
+			$filtered = array_slice($filtered, $request['start'], $request['length']);
+		}
+		return array(
+			'recordsTotal' => $records_total,
+			'recordsFiltered' => $records_filtered,
+			'rows' => $filtered,
+		);
+	}
+
+	private function datatables_json_output(array $payload)
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		echo json_encode($payload);
+		exit();
+	}
+
+	/**
+	 * AJAX: detail produksi (sys_unit_produk) untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_produksi()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('sys_unit_produk')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$has_uuid_persediaan = $this->db->field_exists('uuid_persediaan', 'sys_unit_produk');
+			$persediaan_uuid_lookup = $this->get_persediaan_uuid_lookup_by_bulan($bulan);
+			$select_uuid = $has_uuid_persediaan ? ', `uuid_persediaan`' : '';
+
+			$rows = $this->db->query(
+				"SELECT `tgl_transaksi`, `kode_unit`, `nama_unit`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan`" . $select_uuid . "
+				 FROM `sys_unit_produk`
+				 WHERE `tgl_transaksi` >= ? AND `tgl_transaksi` < ?
+				 ORDER BY `tgl_transaksi` ASC, `nama_unit` ASC, `nama_barang` ASC",
+				array($range['awal'], $range['awal_next'])
+			)->result();
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah_produksi) ? $r->jumlah_produksi : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$uuid_persediaan = $has_uuid_persediaan ? trim((string) (isset($r->uuid_persediaan) ? $r->uuid_persediaan : '')) : '';
+				$uuid_key = strtolower($uuid_persediaan);
+				$sudah_tersimpan = ($uuid_key !== '' && isset($persediaan_uuid_lookup[$uuid_key]));
+				$status_html = $sudah_tersimpan
+					? '<span class="badge badge-success">Sudah tersimpan</span>'
+					: '<button type="button" class="btn btn-warning btn-xs btn-belum-tersimpan-persediaan" data-uuid-persediaan="' . htmlspecialchars($uuid_persediaan, ENT_QUOTES, 'UTF-8') . '">Belum tersimpan di data persediaan</button>';
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_transaksi) ? $r->tgl_transaksi : '',
+					'status_persediaan' => $sudah_tersimpan ? 'Sudah tersimpan' : 'Belum tersimpan di data persediaan',
+					'status_persediaan_html' => $status_html,
+					'uuid_persediaan' => $uuid_persediaan,
+					'kode_unit' => isset($r->kode_unit) ? $r->kode_unit : '',
+					'nama_unit' => isset($r->nama_unit) ? $r->nama_unit : '',
+					'nama_barang' => isset($r->nama_barang) ? $r->nama_barang : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail produksi: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail produksi: ' . $e->getMessage()));
+		}
+	}
+
+	public function ajax_rekap_detail_produksi_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('sys_unit_produk')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$has_uuid_persediaan = $this->db->field_exists('uuid_persediaan', 'sys_unit_produk');
+			$persediaan_uuid_lookup = $this->get_persediaan_uuid_lookup_by_bulan($bulan);
+			$select_uuid = $has_uuid_persediaan ? ', `uuid_persediaan`' : '';
+
+			$rows = $this->db->query(
+				"SELECT `tgl_transaksi`, `kode_unit`, `nama_unit`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan`" . $select_uuid . "
+				 FROM `sys_unit_produk`
+				 WHERE `tgl_transaksi` >= ? AND `tgl_transaksi` < ?
+				 ORDER BY `tgl_transaksi` ASC, `nama_unit` ASC, `nama_barang` ASC",
+				array($range['awal'], $range['awal_next'])
+			)->result_array();
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah_produksi']) ? $row['jumlah_produksi'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$uuid_persediaan = $has_uuid_persediaan ? trim((string) (isset($row['uuid_persediaan']) ? $row['uuid_persediaan'] : '')) : '';
+				$uuid_key = strtolower($uuid_persediaan);
+				$sudah_tersimpan = ($uuid_key !== '' && isset($persediaan_uuid_lookup[$uuid_key]));
+				$status_html = $sudah_tersimpan
+					? '<span class="badge badge-success">Sudah tersimpan</span>'
+					: '<button type="button" class="btn btn-warning btn-xs btn-belum-tersimpan-persediaan" data-uuid-persediaan="' . htmlspecialchars($uuid_persediaan, ENT_QUOTES, 'UTF-8') . '">Belum tersimpan di data persediaan</button>';
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'status_persediaan' => $sudah_tersimpan ? 'Sudah tersimpan' : 'Belum tersimpan di data persediaan',
+					'status_persediaan_html' => $status_html,
+					'uuid_persediaan' => $uuid_persediaan,
+					'tgl' => isset($row['tgl_transaksi']) ? $row['tgl_transaksi'] : '',
+					'kode_unit' => isset($row['kode_unit']) ? $row['kode_unit'] : '',
+					'nama_unit' => isset($row['nama_unit']) ? $row['nama_unit'] : '',
+					'nama_barang' => isset($row['nama_barang']) ? $row['nama_barang'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('status_persediaan', 'tgl', 'nama_unit', 'nama_barang', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'status_persediaan', 'numeric' => false),
+					2 => array('field' => 'tgl', 'numeric' => false),
+					3 => array('field' => 'nama_unit', 'numeric' => false),
+					4 => array('field' => 'nama_barang', 'numeric' => false),
+					5 => array('field' => 'jumlah', 'numeric' => true),
+					6 => array('field' => 'satuan', 'numeric' => false),
+					7 => array('field' => 'harga_satuan', 'numeric' => true),
+					8 => array('field' => 'total', 'numeric' => true),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail produksi: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail produksi: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_produksi()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('sys_unit_produk')) {
+			$rows = $this->db->query(
+				"SELECT `tgl_transaksi`, `kode_unit`, `nama_unit`, `nama_barang`, `jumlah_produksi`, `satuan`, `harga_satuan`
+				 FROM `sys_unit_produk`
+				 WHERE `tgl_transaksi` >= ? AND `tgl_transaksi` < ?
+				 ORDER BY `tgl_transaksi` ASC, `nama_unit` ASC, `nama_barang` ASC",
+				array($range['awal'], $range['awal_next'])
+			)->result_array();
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Produksi_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#0d6efd;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f8fbff;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#eef4ff;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Produksi Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>Nama Unit</th><th>Nama Barang</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Harga Satuan</th><th class="text-right">Total</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah_produksi']) ? $row['jumlah_produksi'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_transaksi']) ? $row['tgl_transaksi'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nama_unit']) ? $row['nama_unit'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nama_barang']) ? $row['nama_barang'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="7" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
+	/**
+	 * AJAX: detail pecah satuan (tbl_pembelian_pecah_satuan) untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_pecah_satuan()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('tbl_pembelian_pecah_satuan')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `nama_barang_baru`, `satuan_barang_baru`, `harga_satuan_barang_baru`, `supplier_nama`
+				 FROM `tbl_pembelian_pecah_satuan`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result();
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah) ? $r->jumlah : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_po) ? $r->tgl_po : '',
+					'spop' => isset($r->spop) ? $r->spop : '',
+					'uraian' => isset($r->uraian) ? $r->uraian : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'nama_barang_baru' => isset($r->nama_barang_baru) ? $r->nama_barang_baru : '',
+					'satuan_barang_baru' => isset($r->satuan_barang_baru) ? $r->satuan_barang_baru : '',
+					'harga_satuan_barang_baru' => number_format(persediaan_parse_angka(isset($r->harga_satuan_barang_baru) ? $r->harga_satuan_barang_baru : 0), 0, ',', '.'),
+					'supplier_nama' => isset($r->supplier_nama) ? $r->supplier_nama : '',
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pecah satuan: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pecah satuan: ' . $e->getMessage()));
+		}
+	}
+
+	public function ajax_rekap_detail_pecah_satuan_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('tbl_pembelian_pecah_satuan')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `nama_barang_baru`, `satuan_barang_baru`, `harga_satuan_barang_baru`, `supplier_nama`
+				 FROM `tbl_pembelian_pecah_satuan`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$harga_baru = persediaan_parse_angka(isset($row['harga_satuan_barang_baru']) ? $row['harga_satuan_barang_baru'] : 0);
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'tgl' => isset($row['tgl_po']) ? $row['tgl_po'] : '',
+					'spop' => isset($row['spop']) ? $row['spop'] : '',
+					'uraian' => isset($row['uraian']) ? $row['uraian'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'nama_barang_baru' => isset($row['nama_barang_baru']) ? $row['nama_barang_baru'] : '',
+					'satuan_barang_baru' => isset($row['satuan_barang_baru']) ? $row['satuan_barang_baru'] : '',
+					'harga_satuan_barang_baru' => $harga_baru,
+					'harga_satuan_barang_baru_tampil' => number_format($harga_baru, 0, ',', '.'),
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('tgl', 'spop', 'uraian', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil', 'nama_barang_baru', 'satuan_barang_baru', 'harga_satuan_barang_baru_tampil'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'tgl', 'numeric' => false),
+					2 => array('field' => 'spop', 'numeric' => false),
+					3 => array('field' => 'uraian', 'numeric' => false),
+					4 => array('field' => 'jumlah', 'numeric' => true),
+					5 => array('field' => 'satuan', 'numeric' => false),
+					6 => array('field' => 'harga_satuan', 'numeric' => true),
+					7 => array('field' => 'total', 'numeric' => true),
+					8 => array('field' => 'nama_barang_baru', 'numeric' => false),
+					9 => array('field' => 'satuan_barang_baru', 'numeric' => false),
+					10 => array('field' => 'harga_satuan_barang_baru', 'numeric' => true),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pecah satuan: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pecah satuan: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_pecah_satuan()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('tbl_pembelian_pecah_satuan')) {
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `nama_barang_baru`, `satuan_barang_baru`, `harga_satuan_barang_baru`
+				 FROM `tbl_pembelian_pecah_satuan`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Pecah_Satuan_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#198754;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f6fffa;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#e9f8f0;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Pecah Satuan Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>SPOP</th><th>Uraian Asal</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">HPP</th><th class="text-right">Total</th><th>Barang Baru</th><th>Satuan Baru</th><th class="text-right">HPP Baru</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$harga_baru = persediaan_parse_angka(isset($row['harga_satuan_barang_baru']) ? $row['harga_satuan_barang_baru'] : 0);
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_po']) ? $row['tgl_po'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['spop']) ? $row['spop'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['uraian']) ? $row['uraian'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nama_barang_baru']) ? $row['nama_barang_baru'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan_barang_baru']) ? $row['satuan_barang_baru'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga_baru, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="7" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '<td colspan="3"></td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
+	/**
+	 * AJAX: detail pembelian barang (tbl_pembelian) untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_pembelian_barang()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('tbl_pembelian')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result();
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah) ? $r->jumlah : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_po) ? $r->tgl_po : '',
+					'spop' => isset($r->spop) ? $r->spop : '',
+					'uraian' => isset($r->uraian) ? $r->uraian : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'supplier_nama' => isset($r->supplier_nama) ? $r->supplier_nama : '',
+					'konsumen' => isset($r->konsumen) ? $r->konsumen : '',
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pembelian barang: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pembelian barang: ' . $e->getMessage()));
+		}
+	}
+
+	public function ajax_rekap_detail_pembelian_barang_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('tbl_pembelian')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'tgl' => isset($row['tgl_po']) ? $row['tgl_po'] : '',
+					'spop' => isset($row['spop']) ? $row['spop'] : '',
+					'uraian' => isset($row['uraian']) ? $row['uraian'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'supplier_nama' => isset($row['supplier_nama']) ? $row['supplier_nama'] : '',
+					'konsumen' => isset($row['konsumen']) ? $row['konsumen'] : '',
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('tgl', 'spop', 'uraian', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil', 'supplier_nama', 'konsumen'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'tgl', 'numeric' => false),
+					2 => array('field' => 'spop', 'numeric' => false),
+					3 => array('field' => 'uraian', 'numeric' => false),
+					4 => array('field' => 'jumlah', 'numeric' => true),
+					5 => array('field' => 'satuan', 'numeric' => false),
+					6 => array('field' => 'harga_satuan', 'numeric' => true),
+					7 => array('field' => 'total', 'numeric' => true),
+					8 => array('field' => 'supplier_nama', 'numeric' => false),
+					9 => array('field' => 'konsumen', 'numeric' => false),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pembelian barang: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pembelian barang: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_pembelian_barang()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('tbl_pembelian')) {
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Pembelian_Barang_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#0d6efd;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f8fbff;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#eef4ff;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Pembelian Barang Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>SPOP</th><th>Uraian</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Harga Satuan</th><th class="text-right">Total</th><th>Supplier</th><th>Konsumen/Unit</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_po']) ? $row['tgl_po'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['spop']) ? $row['spop'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['uraian']) ? $row['uraian'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['supplier_nama']) ? $row['supplier_nama'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['konsumen']) ? $row['konsumen'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="7" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '<td colspan="2"></td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
+	/**
+	 * AJAX: detail pembelian jasa (tbl_pembelian_jasa) untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_pembelian_jasa()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('tbl_pembelian_jasa')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian_jasa`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result();
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah) ? $r->jumlah : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_po) ? $r->tgl_po : '',
+					'spop' => isset($r->spop) ? $r->spop : '',
+					'uraian' => isset($r->uraian) ? $r->uraian : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'supplier_nama' => isset($r->supplier_nama) ? $r->supplier_nama : '',
+					'konsumen' => isset($r->konsumen) ? $r->konsumen : '',
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pembelian jasa: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail pembelian jasa: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: detail penjualan barang (tbl_penjualan WHERE barang_jasa != 'jasa') untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_penjualan_barang()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('tbl_penjualan')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$kolom_barang_jasa = $this->db->field_exists('barang_jasa', 'tbl_penjualan');
+			if ($kolom_barang_jasa) {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ? AND (`barang_jasa` IS NULL OR `barang_jasa` <> 'jasa')
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result();
+			} else {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ?
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result();
+			}
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah) ? $r->jumlah : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_jual) ? $r->tgl_jual : '',
+					'nmrkirim' => isset($r->nmrkirim) ? $r->nmrkirim : '',
+					'nama_barang' => isset($r->nama_barang) ? $r->nama_barang : '',
+					'konsumen_nama' => isset($r->konsumen_nama) ? $r->konsumen_nama : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail penjualan barang: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail penjualan barang: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * AJAX: detail penjualan jasa (tbl_penjualan WHERE barang_jasa = 'jasa') untuk bulan terpilih.
+	 */
+	public function ajax_rekap_detail_penjualan_jasa()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				persediaan_ajax_json_output($this, $parsed);
+				return;
+			}
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+
+			if (!$this->db->table_exists('tbl_penjualan')) {
+				persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => array(), 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$kolom_barang_jasa = $this->db->field_exists('barang_jasa', 'tbl_penjualan');
+			if ($kolom_barang_jasa) {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ? AND `barang_jasa` = 'jasa'
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result();
+			} else {
+				$rows = array();
+			}
+
+			$out = array();
+			$no = 1;
+			$grand_total = 0;
+			foreach ($rows as $r) {
+				$qty   = persediaan_parse_angka(isset($r->jumlah) ? $r->jumlah : 0);
+				$harga = persediaan_parse_angka(isset($r->harga_satuan) ? $r->harga_satuan : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$out[] = array(
+					'no' => $no++,
+					'tgl' => isset($r->tgl_jual) ? $r->tgl_jual : '',
+					'nmrkirim' => isset($r->nmrkirim) ? $r->nmrkirim : '',
+					'nama_barang' => isset($r->nama_barang) ? $r->nama_barang : '',
+					'konsumen_nama' => isset($r->konsumen_nama) ? $r->konsumen_nama : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($r->satuan) ? $r->satuan : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+			persediaan_ajax_json_output($this, array('ok' => true, 'bulan' => $bulan, 'rows' => $out, 'grand_total' => $grand_total, 'grand_total_tampil' => number_format($grand_total, 0, ',', '.')));
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail penjualan jasa: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Gagal memuat detail penjualan jasa: ' . $e->getMessage()));
+		}
+	}
+
+	public function ajax_rekap_detail_pembelian_jasa_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('tbl_pembelian_jasa')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian_jasa`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'tgl' => isset($row['tgl_po']) ? $row['tgl_po'] : '',
+					'spop' => isset($row['spop']) ? $row['spop'] : '',
+					'uraian' => isset($row['uraian']) ? $row['uraian'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+					'supplier_nama' => isset($row['supplier_nama']) ? $row['supplier_nama'] : '',
+					'konsumen' => isset($row['konsumen']) ? $row['konsumen'] : '',
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('tgl', 'spop', 'uraian', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil', 'supplier_nama', 'konsumen'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'tgl', 'numeric' => false),
+					2 => array('field' => 'spop', 'numeric' => false),
+					3 => array('field' => 'uraian', 'numeric' => false),
+					4 => array('field' => 'jumlah', 'numeric' => true),
+					5 => array('field' => 'satuan', 'numeric' => false),
+					6 => array('field' => 'harga_satuan', 'numeric' => true),
+					7 => array('field' => 'total', 'numeric' => true),
+					8 => array('field' => 'supplier_nama', 'numeric' => false),
+					9 => array('field' => 'konsumen', 'numeric' => false),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pembelian jasa: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail pembelian jasa: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_pembelian_jasa()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('tbl_pembelian_jasa')) {
+			$rows = $this->db->query(
+				"SELECT `tgl_po`, `spop`, `uraian`, `jumlah`, `satuan`, `harga_satuan`, `supplier_nama`, `konsumen`
+				 FROM `tbl_pembelian_jasa`
+				 WHERE `tgl_po` BETWEEN ? AND ?
+				 ORDER BY `tgl_po` ASC, `spop` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Pembelian_Jasa_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#0d6efd;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f8fbff;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#eef4ff;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Pembelian Jasa Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>SPOP</th><th>Uraian</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Harga Satuan</th><th class="text-right">Total</th><th>Supplier</th><th>Konsumen/Unit</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_po']) ? $row['tgl_po'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['spop']) ? $row['spop'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['uraian']) ? $row['uraian'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['supplier_nama']) ? $row['supplier_nama'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['konsumen']) ? $row['konsumen'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="7" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '<td colspan="2"></td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
+	public function ajax_rekap_detail_penjualan_barang_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('tbl_penjualan')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$kolom_barang_jasa = $this->db->field_exists('barang_jasa', 'tbl_penjualan');
+			if ($kolom_barang_jasa) {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ? AND (`barang_jasa` IS NULL OR `barang_jasa` <> 'jasa')
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result_array();
+			} else {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ?
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result_array();
+			}
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'tgl' => isset($row['tgl_jual']) ? $row['tgl_jual'] : '',
+					'nmrkirim' => isset($row['nmrkirim']) ? $row['nmrkirim'] : '',
+					'nama_barang' => isset($row['nama_barang']) ? $row['nama_barang'] : '',
+					'konsumen_nama' => isset($row['konsumen_nama']) ? $row['konsumen_nama'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('tgl', 'nmrkirim', 'nama_barang', 'konsumen_nama', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'tgl', 'numeric' => false),
+					2 => array('field' => 'nmrkirim', 'numeric' => false),
+					3 => array('field' => 'nama_barang', 'numeric' => false),
+					4 => array('field' => 'konsumen_nama', 'numeric' => false),
+					5 => array('field' => 'jumlah', 'numeric' => true),
+					6 => array('field' => 'satuan', 'numeric' => false),
+					7 => array('field' => 'harga_satuan', 'numeric' => true),
+					8 => array('field' => 'total', 'numeric' => true),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail penjualan barang: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail penjualan barang: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_penjualan_barang()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('tbl_penjualan')) {
+			$kolom_barang_jasa = $this->db->field_exists('barang_jasa', 'tbl_penjualan');
+			if ($kolom_barang_jasa) {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ? AND (`barang_jasa` IS NULL OR `barang_jasa` <> 'jasa')
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result_array();
+			} else {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ?
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result_array();
+			}
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Penjualan_Barang_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#0d6efd;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f8fbff;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#eef4ff;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Penjualan Barang Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>No. Kirim</th><th>Nama Barang</th><th>Konsumen</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Harga Satuan</th><th class="text-right">Total</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_jual']) ? $row['tgl_jual'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nmrkirim']) ? $row['nmrkirim'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nama_barang']) ? $row['nama_barang'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['konsumen_nama']) ? $row['konsumen_nama'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="8" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
+	public function ajax_rekap_detail_penjualan_jasa_serverside()
+	{
+		$this->load->helper('persediaan_display');
+		try {
+			$parsed = $this->parse_bulan_rekap_input();
+			if (!$parsed['ok']) {
+				$this->datatables_json_output(array(
+					'draw' => 0,
+					'recordsTotal' => 0,
+					'recordsFiltered' => 0,
+					'data' => array(),
+					'ok' => false,
+					'message' => isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.',
+				));
+				return;
+			}
+
+			$bulan = $parsed['bulan'];
+			$range = $this->get_bulan_date_range($bulan);
+			if (!$this->db->table_exists('tbl_penjualan')) {
+				$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => true, 'bulan' => $bulan, 'grand_total' => 0, 'grand_total_tampil' => '0'));
+				return;
+			}
+
+			$kolom_barang_jasa = $this->db->field_exists('barang_jasa', 'tbl_penjualan');
+			if ($kolom_barang_jasa) {
+				$rows = $this->db->query(
+					"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+					 FROM `tbl_penjualan`
+					 WHERE `tgl_jual` BETWEEN ? AND ? AND `barang_jasa` = 'jasa'
+					 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+					array($range['awal'], $range['akhir'])
+				)->result_array();
+			} else {
+				$rows = array();
+			}
+
+			$mapped = array();
+			$grand_total = 0;
+			foreach ($rows as $idx => $row) {
+				$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+				$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+				$total = $qty * $harga;
+				$grand_total += $total;
+				$mapped[] = array(
+					'no' => $idx + 1,
+					'tgl' => isset($row['tgl_jual']) ? $row['tgl_jual'] : '',
+					'nmrkirim' => isset($row['nmrkirim']) ? $row['nmrkirim'] : '',
+					'nama_barang' => isset($row['nama_barang']) ? $row['nama_barang'] : '',
+					'konsumen_nama' => isset($row['konsumen_nama']) ? $row['konsumen_nama'] : '',
+					'jumlah' => $qty,
+					'jumlah_tampil' => number_format($qty, 0, ',', '.'),
+					'satuan' => isset($row['satuan']) ? $row['satuan'] : '',
+					'harga_satuan' => $harga,
+					'harga_satuan_tampil' => number_format($harga, 0, ',', '.'),
+					'total' => $total,
+					'total_tampil' => number_format($total, 0, ',', '.'),
+				);
+			}
+
+			$request = $this->get_datatables_request(1);
+			$filtered = $this->datatables_slice_rows(
+				$mapped,
+				array('tgl', 'nmrkirim', 'nama_barang', 'konsumen_nama', 'jumlah_tampil', 'satuan', 'harga_satuan_tampil', 'total_tampil'),
+				array(
+					0 => array('field' => 'no', 'numeric' => true),
+					1 => array('field' => 'tgl', 'numeric' => false),
+					2 => array('field' => 'nmrkirim', 'numeric' => false),
+					3 => array('field' => 'nama_barang', 'numeric' => false),
+					4 => array('field' => 'konsumen_nama', 'numeric' => false),
+					5 => array('field' => 'jumlah', 'numeric' => true),
+					6 => array('field' => 'satuan', 'numeric' => false),
+					7 => array('field' => 'harga_satuan', 'numeric' => true),
+					8 => array('field' => 'total', 'numeric' => true),
+				),
+				$request
+			);
+
+			$this->datatables_json_output(array(
+				'draw' => $request['draw'],
+				'recordsTotal' => $filtered['recordsTotal'],
+				'recordsFiltered' => $filtered['recordsFiltered'],
+				'data' => array_values($filtered['rows']),
+				'ok' => true,
+				'bulan' => $bulan,
+				'grand_total' => $grand_total,
+				'grand_total_tampil' => number_format($grand_total, 0, ',', '.'),
+			));
+		} catch (Exception $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail penjualan jasa: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			$this->datatables_json_output(array('draw' => 0, 'recordsTotal' => 0, 'recordsFiltered' => 0, 'data' => array(), 'ok' => false, 'message' => 'Gagal memuat detail penjualan jasa: ' . $e->getMessage()));
+		}
+	}
+
+	public function excel_rekap_detail_penjualan_jasa()
+	{
+		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan === '') {
+			$bulan = date('Y-m');
+		}
+
+		$this->load->helper('persediaan_display');
+		$parsed = $this->parse_bulan_rekap_input();
+		if (!$parsed['ok']) {
+			show_error(isset($parsed['message']) ? $parsed['message'] : 'Bulan rekap tidak valid.', 400);
+			return;
+		}
+
+		$bulan = $parsed['bulan'];
+		$range = $this->get_bulan_date_range($bulan);
+		$rows = array();
+		$grand_total = 0;
+		if ($this->db->table_exists('tbl_penjualan') && $this->db->field_exists('barang_jasa', 'tbl_penjualan')) {
+			$rows = $this->db->query(
+				"SELECT `tgl_jual`, `nmrkirim`, `nama_barang`, `jumlah`, `satuan`, `harga_satuan`, `konsumen_nama`
+				 FROM `tbl_penjualan`
+				 WHERE `tgl_jual` BETWEEN ? AND ? AND `barang_jasa` = 'jasa'
+				 ORDER BY `tgl_jual` ASC, `nmrkirim` ASC, `id` ASC",
+				array($range['awal'], $range['akhir'])
+			)->result_array();
+		}
+
+		$waktu_klik = date('Y-m-d_H-i-s');
+		$namaFile = 'Detail_Penjualan_Jasa_Persediaan_' . $bulan . '_' . $waktu_klik . '.xls';
+		header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+		header('Content-Disposition: attachment; filename="' . $namaFile . '"');
+		header('Pragma: no-cache');
+		header('Expires: 0');
+
+		echo '<html><head><meta charset="UTF-8"><style>';
+		echo 'body{font-family:Arial,sans-serif;font-size:12px;color:#222;}';
+		echo 'table{border-collapse:collapse;width:100%;margin-top:10px;}';
+		echo 'th,td{border:1px solid #c9d2dc;padding:6px 8px;vertical-align:top;}';
+		echo 'th{background:#0d6efd;color:#fff;font-weight:bold;text-align:center;}';
+		echo 'tr:nth-child(even) td{background:#f8fbff;}';
+		echo '.text-right{text-align:right;}';
+		echo '.title{font-size:16px;font-weight:bold;margin-bottom:4px;}';
+		echo '.subtitle{color:#555;margin-bottom:8px;}';
+		echo '.total-row td{font-weight:bold;background:#eef4ff;}';
+		echo '</style></head><body>';
+		echo '<div class="title">Detail Penjualan Jasa Persediaan</div>';
+		echo '<div class="subtitle">Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</div>';
+		echo '<table>';
+		echo '<thead><tr>';
+		echo '<th>No</th><th>Tanggal</th><th>No. Kirim</th><th>Nama Barang/Jasa</th><th>Konsumen</th><th class="text-right">Jumlah</th><th>Satuan</th><th class="text-right">Harga Satuan</th><th class="text-right">Total</th>';
+		echo '</tr></thead><tbody>';
+		$no = 0;
+		foreach ($rows as $row) {
+			$qty = persediaan_parse_angka(isset($row['jumlah']) ? $row['jumlah'] : 0);
+			$harga = persediaan_parse_angka(isset($row['harga_satuan']) ? $row['harga_satuan'] : 0);
+			$total = $qty * $harga;
+			$grand_total += $total;
+			$no++;
+			echo '<tr>';
+			echo '<td>' . $no . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['tgl_jual']) ? $row['tgl_jual'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nmrkirim']) ? $row['nmrkirim'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['nama_barang']) ? $row['nama_barang'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['konsumen_nama']) ? $row['konsumen_nama'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($qty, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td>' . htmlspecialchars(isset($row['satuan']) ? $row['satuan'] : '', ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($harga, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '<td class="text-right">' . htmlspecialchars(number_format($total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+			echo '</tr>';
+		}
+		echo '</tbody>';
+		echo '<tfoot><tr class="total-row">';
+		echo '<td colspan="8" class="text-right">Grand Total</td>';
+		echo '<td class="text-right">' . htmlspecialchars(number_format($grand_total, 0, ',', '.'), ENT_QUOTES, 'UTF-8') . '</td>';
+		echo '</tr></tfoot>';
+		echo '</table>';
+		echo '</body></html>';
+		exit();
+	}
+
 	private function get_tanggal_rekap_dari_bulan($bulan)
 	{
 		$ts = strtotime($bulan . '-01');
@@ -1350,8 +3055,13 @@ class Persediaan extends CI_Controller
 	private function get_urutan_nama_rekap()
 	{
 		$utama = array(
-			'Sediaan Awal', 'Pembelian PU', 'Pembelian Cetak', 'Pembelian Grafikita',
-			'TUJ', 'Sediaan Akhir', 'BPP',
+			'Sediaan Awal',
+			'Pembelian PU',
+			'Pembelian Cetak',
+			'Pembelian Grafikita',
+			'TUJ',
+			'Sediaan Akhir',
+			'BPP',
 		);
 		foreach ($this->get_rekap_breakdown_config() as $cfg) {
 			$utama[] = $cfg['nama'];
@@ -2703,7 +4413,7 @@ class Persediaan extends CI_Controller
 
 		// Ensure history tables exist
 		$tables_created = persediaan_history_generate_ensure_tables($this);
-		
+
 		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
 		$items = array();
 		foreach ($list as $row) {
@@ -2727,7 +4437,7 @@ class Persediaan extends CI_Controller
 		}
 
 		$tables_ready = persediaan_history_generate_table_exists($this);
-		
+
 		persediaan_ajax_json_output($this, array(
 			'ok' => true,
 			'bulan' => $bulan,
@@ -4418,7 +6128,7 @@ class Persediaan extends CI_Controller
 		$this->load->helper('pembelian_persediaan');
 		$row_cnt = $this->db->query(
 			"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli` = ?"
-			. persediaan_generate_recalculate_sql_filter_total10_positif(),
+				. persediaan_generate_recalculate_sql_filter_total10_positif(),
 			array($tanggal_beli_sumber)
 		)->row();
 

@@ -1978,7 +1978,7 @@ function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit =
 	}
 
 	$sql = "SELECT persediaan.id AS id,
-			persediaan.tanggal_beli AS tanggal_beli,
+			COALESCE(NULLIF(tbl_pembelian.tgl_po, ''), persediaan.tanggal_beli) AS tanggal_beli,
 			persediaan.tanggal AS tanggal,
 			persediaan.uuid_spop AS uuid_spop,
 			persediaan.spop AS spop,
@@ -1996,6 +1996,7 @@ function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit =
 			persediaan.penjualan AS penjualan{$unit_cols_sql},
 			{$kategori_sql}
 		FROM persediaan
+		LEFT JOIN tbl_pembelian ON tbl_pembelian.uuid_persediaan = persediaan.uuid_persediaan
 		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
 		AND {$bulan_where_sql}
 		AND {$bukan_jasa_sql}
