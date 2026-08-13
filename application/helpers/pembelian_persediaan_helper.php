@@ -580,76 +580,80 @@ function penjualan_sql_filter_bulan_persediaan_where($alias = 'persediaan')
 }
 
 /**
- * Kolom standar unit di persediaan (referensi / alias).
+ * Daftar persediaan kategori jasa untuk modal Pilih Jasa penjualan.
+ * Menggunakan subquery untuk mengambil tgl_po dari tbl_pembelian_jasa berdasarkan uuid_persediaan.
  */
-function penjualan_persediaan_kolom_unit_allowed()
+function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_unit = null)
 {
-	return array(
-		'cetak',
-		'grafikita',
-		'sekret',
-		'medis',
-		'ppbmp',
-		'dinas_umum',
-		'atk_rsud',
-		'siiplah_bosda',
-		'ppbmp_kbs',
-		'kbs',
-		'sembako',
-		'fc_psamya',
-		'fc_gose',
-		'fc_manding',
-		'tuj',
-	);
+	$tgl_jual = trim((string) $tgl_jual);
+	if ($tgl_jual === '') {
+		return array();
+	}
+
+	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$has_kategori = $CI->db->field_exists('kategori', 'persediaan');
+	$kategori_sql = $has_kategori ? 'persediaan.kategori AS kategori_barang' : "'' AS kategori_barang";
+	$jasa_sql = penjualan_sql_kategori_jasa_saja($CI, 'persediaan');
+	$uuid_barang_sql = penjualan_sql_uuid_barang_expr('persediaan');
+	$bulan_where_sql = penjualan_sql_filter_bulan_persediaan_where('persediaan');
+
+	$unit_cols_sql = '';
+	foreach (penjualan_persediaan_kolom_unit_existing($CI) as $kolom) {
+		$unit_cols_sql .= ",\n\t\t\tpersediaan.`{$kolom}` AS `{$kolom}`";
+	}
+
+	$sql = "SELECT persediaan.id AS id,
+			persediaan.tanggal_beli AS tanggal_beli,
+			persediaan.tanggal AS tanggal,
+			persediaan.uuid_spop AS uuid_spop,
+			persediaan.spop AS spop,
+			{$uuid_barang_sql} AS uuid_barang,
+			persediaan.uuid_persediaan AS uuid_persediaan,
+			persediaan.kode_barang AS kode_barang,
+			persediaan.namabarang AS nama_barang_beli,
+			persediaan.total_10 AS total_10,
+			persediaan.total_10 AS jumlah_sediaan,
+			persediaan.hpp AS harga_satuan_persediaan,
+			persediaan.satuan AS satuan_persediaan,
+			persediaan.pecah_satuan AS pecah_satuan,
+			persediaan.pecah_satuan AS pecah_satuan_persediaan,
+			persediaan.bahan_produksi AS bahan_produksi,
+			persediaan.penjualan AS penjualan{$unit_cols_sql},
+			{$kategori_sql},
+			(SELECT MAX(bpj.tgl_po) FROM tbl_pembelian_jasa bpj
+			 WHERE bpj.uuid_persediaan = persediaan.uuid_persediaan
+			   AND bpj.tgl_po IS NOT NULL
+			   AND bpj.tgl_po <> '0000-00-00'
+			   AND DATE(bpj.tgl_po) >= ?
+			   AND DATE(bpj.tgl_po) <= ?
+			) AS tgl_po_pembelian
+		FROM persediaan
+		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
+		AND {$bulan_where_sql}
+		AND {$jasa_sql}
+		ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
+
+	$bulan_ym = date('Y-m', strtotime($tgl['awal']));
+	$query = $CI->db->query($sql, array(
+		$tgl['awal'],
+		$tgl['akhir'],
+		$tgl['awal'],
+		$tgl['akhir'],
+		$bulan_ym,
+		$tgl['awal'],
+		$tgl['akhir'],
+	));
+	if ($query === false) {
+		$err = $CI->db->error();
+		$pesan = isset($err['message']) ? $err['message'] : 'Query persediaan jasa gagal.';
+		throw new Exception($pesan);
+	}
+
+	return $query->result();
 }
 
 /**
- * Field persediaan yang bukan kolom unit (di luar zona sebelum total_10).
- */
-function penjualan_persediaan_kolom_non_unit()
-{
-	return array(
-		'id',
-		'uuid_persediaan',
-		'uuid_spop',
-		'uuid_gudang',
-		'nama_gudang',
-		'uuid_barang',
-		'kode_barang',
-		'tanggal_beli',
-		'tanggal',
-		'kode',
-		'namabarang',
-		'satuan',
-		'hpp',
-		'sa',
-		'spop',
-		'beli',
-		'tuj',
-		'tgl_keluar',
-		'kategori',
-		'penjualan',
-		'pecah_satuan',
-		'bahan_produksi',
-		'total_10',
-		'nilai_persediaan',
-	);
-}
-
-function penjualan_normalize_unit_key($text)
-{
-	$key = strtolower(trim((string) $text));
-	$key = preg_replace('/[^a-z0-9]+/', '_', $key);
-	return trim($key, '_');
-}
-
-function penjualan_is_valid_persediaan_column_name($name)
-{
-	return (bool) preg_match('/^[a-z][a-z0-9_]{0,63}$/', (string) $name);
-}
-
-/**
- * Nama kolom persediaan dari baris sys_unit (prioritas kode_unit).
+ * Render HTML tbody + modal nested untuk Pilih Jasa penjualan.
  */
 function penjualan_kolom_dari_sys_unit_row($row_unit)
 {
@@ -20868,7 +20872,7 @@ function penjualan_sql_kategori_jasa_saja($CI, $alias = 'persediaan')
 /**
  * Daftar persediaan kategori jasa untuk modal Pilih Jasa penjualan.
  */
-function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_unit = null)
+function penjualan_get_stock_persediaan_jasa_rows_BU($CI, $tgl_jual = null, $uuid_unit = null)
 {
 	$tgl_jual = trim((string) $tgl_jual);
 	if ($tgl_jual === '') {
@@ -20904,7 +20908,14 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 			persediaan.pecah_satuan AS pecah_satuan_persediaan,
 			persediaan.bahan_produksi AS bahan_produksi,
 			persediaan.penjualan AS penjualan{$unit_cols_sql},
-			{$kategori_sql}
+			{$kategori_sql},
+			(SELECT MAX(bpj.tgl_po) FROM tbl_pembelian_jasa bpj
+			 WHERE bpj.uuid_persediaan = persediaan.uuid_persediaan
+			   AND bpj.tgl_po IS NOT NULL
+			   AND bpj.tgl_po <> '0000-00-00'
+			   AND DATE(bpj.tgl_po) >= ?
+			   AND DATE(bpj.tgl_po) <= ?
+			) AS tgl_po_pembelian
 		FROM persediaan
 		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
 		AND {$bulan_where_sql}
@@ -20918,6 +20929,8 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 		$tgl['awal'],
 		$tgl['akhir'],
 		$bulan_ym,
+		$tgl['awal'],
+		$tgl['akhir'],
 	));
 	if ($query === false) {
 		$err = $CI->db->error();
