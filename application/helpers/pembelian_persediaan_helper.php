@@ -20872,7 +20872,7 @@ function penjualan_sql_kategori_jasa_saja($CI, $alias = 'persediaan')
 /**
  * Daftar persediaan kategori jasa untuk modal Pilih Jasa penjualan.
  */
-function penjualan_get_stock_persediaan_jasa_rows_BU($CI, $tgl_jual = null, $uuid_unit = null)
+function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_unit = null)
 {
 	$tgl_jual = trim((string) $tgl_jual);
 	if ($tgl_jual === '') {
