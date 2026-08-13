@@ -1,4 +1,4 @@
-<div class="content-wrapper">
+﻿<div class="content-wrapper">
 
     <div class="content-header">
         <div class="container-fluid">
@@ -247,37 +247,286 @@
 
                         <!-- TAB 2: REKAP -->
                         <div class="tab-pane fade" id="panel-rekap" role="tabpanel" aria-labelledby="tab-rekap">
-                            <div class="row mb-3 align-items-end">
+                            <div class="row mb-2 align-items-end">
                                 <div class="col-md-12">
                                     <strong>REKAP PERSEDIAAN</strong>
                                 </div>
                                 <div class="col-md-12 mt-2">
                                     <label for="bulan_rekap">Bulan:</label>
                                     <input type="month" id="bulan_rekap" class="form-control d-inline-block" style="width:auto;vertical-align:middle;" value="<?php echo htmlspecialchars($bulan_tampil); ?>">
-                                    <button type="button" id="btn-cetak-excel-rekap" class="btn btn-primary ml-1" data-url="<?php echo isset($url_rekap_excel) ? $url_rekap_excel : site_url('Persediaan/excel_rekap'); ?>">Cetak ke Excel</button>
                                     <span id="rekap-status" class="ml-2 text-muted"></span>
                                 </div>
                             </div>
-                            <div id="rekap-table-wrap" class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
-                            <table id="table-rekap" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
-                                <thead>
-                                    <tr>
-                                        <th width="60px">Nomor</th>
-                                        <th>Deskripsi</th>
-                                        <th class="text-right">Nominal</th>
-                                    </tr>
-                                </thead>
-                                <tbody></tbody>
-                                <tfoot>
-                                    <tr class="font-weight-bold bg-light">
-                                        <td colspan="2" class="text-right">Total (baris 8–21)</td>
-                                        <td id="rekap-total-detail" class="text-right">0</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                            </div>
-                        </div>
 
+                            <!-- Sub-tab navigasi -->
+                            <ul class="nav nav-pills mb-2 flex-wrap" id="rekap-subtabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="rekap-subtab-data" data-toggle="pill" href="#rekap-panel-data" role="tab" aria-selected="true">Data</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-produksi" data-toggle="pill" href="#rekap-panel-produksi" role="tab" aria-selected="false">Detail Produksi</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-pecah-satuan" data-toggle="pill" href="#rekap-panel-pecah-satuan" role="tab" aria-selected="false">Detail Pecah Satuan</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-pembelian-barang" data-toggle="pill" href="#rekap-panel-pembelian-barang" role="tab" aria-selected="false">Detail Pembelian Barang</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-pembelian-jasa" data-toggle="pill" href="#rekap-panel-pembelian-jasa" role="tab" aria-selected="false">Detail Pembelian Jasa</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-penjualan-barang" data-toggle="pill" href="#rekap-panel-penjualan-barang" role="tab" aria-selected="false">Detail Penjualan Barang</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="rekap-subtab-penjualan-jasa" data-toggle="pill" href="#rekap-panel-penjualan-jasa" role="tab" aria-selected="false">Detail Penjualan Jasa</a>
+                                </li>
+                            </ul>
+
+                            <!-- Sub-tab konten -->
+                            <div class="tab-content" id="rekap-subtabs-content">
+
+                                <!-- Sub-tab 1: Data (rekap ringkasan) -->
+                                <div class="tab-pane fade show active" id="rekap-panel-data" role="tabpanel" aria-labelledby="rekap-subtab-data">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span class="text-muted small mr-auto">Ringkasan rekap bulan terpilih</span>
+                                        <button type="button" id="btn-cetak-excel-rekap" class="btn btn-primary btn-sm" data-url="<?php echo isset($url_rekap_excel) ? $url_rekap_excel : site_url('Persediaan/excel_rekap'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div id="rekap-table-wrap" class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="60px">Nomor</th>
+                                                <th>Deskripsi</th>
+                                                <th class="text-right">Nominal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="2" class="text-right">Total (baris 8-21)</td>
+                                                <td id="rekap-total-detail" class="text-right">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 2: Detail Produksi -->
+                                <div class="tab-pane fade" id="rekap-panel-produksi" role="tabpanel" aria-labelledby="rekap-subtab-produksi">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-produksi-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-produksi" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_produksi_excel) ? $url_rekap_detail_produksi_excel : site_url('Persediaan/excel_rekap_detail_produksi'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-produksi" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th width="170px">Status Persediaan</th>
+                                                <th>Tanggal</th>
+                                                <th>Nama Unit</th>
+                                                <th>Nama Barang</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">Harga Satuan</th>
+                                                <th class="text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="8" class="text-right">Grand Total</td>
+                                                <td id="rekap-produksi-grand-total" class="text-right">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 3: Detail Pecah Satuan -->
+                                <div class="tab-pane fade" id="rekap-panel-pecah-satuan" role="tabpanel" aria-labelledby="rekap-subtab-pecah-satuan">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-pecah-satuan-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-pecah-satuan" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_pecah_satuan_excel) ? $url_rekap_detail_pecah_satuan_excel : site_url('Persediaan/excel_rekap_detail_pecah_satuan'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-pecah-satuan" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th>Tanggal</th>
+                                                <th>SPOP</th>
+                                                <th>Uraian Asal</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">HPP</th>
+                                                <th class="text-right">Total</th>
+                                                <th>Barang Baru</th>
+                                                <th>Satuan Baru</th>
+                                                <th class="text-right">HPP Baru</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="7" class="text-right">Grand Total</td>
+                                                <td id="rekap-pecah-satuan-grand-total" class="text-right">0</td>
+                                                <td colspan="3"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 4: Detail Pembelian Barang -->
+                                <div class="tab-pane fade" id="rekap-panel-pembelian-barang" role="tabpanel" aria-labelledby="rekap-subtab-pembelian-barang">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-pembelian-barang-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-pembelian-barang" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_pembelian_barang_excel) ? $url_rekap_detail_pembelian_barang_excel : site_url('Persediaan/excel_rekap_detail_pembelian_barang'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-pembelian-barang" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th>Tanggal</th>
+                                                <th>SPOP</th>
+                                                <th>Uraian</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">Harga Satuan</th>
+                                                <th class="text-right">Total</th>
+                                                <th>Supplier</th>
+                                                <th>Konsumen/Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="7" class="text-right">Grand Total</td>
+                                                <td id="rekap-pembelian-barang-grand-total" class="text-right">0</td>
+                                                <td colspan="2"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 5: Detail Pembelian Jasa -->
+                                <div class="tab-pane fade" id="rekap-panel-pembelian-jasa" role="tabpanel" aria-labelledby="rekap-subtab-pembelian-jasa">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-pembelian-jasa-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-pembelian-jasa" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_pembelian_jasa_excel) ? $url_rekap_detail_pembelian_jasa_excel : site_url('Persediaan/excel_rekap_detail_pembelian_jasa'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-pembelian-jasa" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th>Tanggal</th>
+                                                <th>SPOP</th>
+                                                <th>Uraian</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">Harga Satuan</th>
+                                                <th class="text-right">Total</th>
+                                                <th>Supplier</th>
+                                                <th>Konsumen/Unit</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="7" class="text-right">Grand Total</td>
+                                                <td id="rekap-pembelian-jasa-grand-total" class="text-right">0</td>
+                                                <td colspan="2"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 6: Detail Penjualan Barang -->
+                                <div class="tab-pane fade" id="rekap-panel-penjualan-barang" role="tabpanel" aria-labelledby="rekap-subtab-penjualan-barang">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-penjualan-barang-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-penjualan-barang" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_penjualan_barang_excel) ? $url_rekap_detail_penjualan_barang_excel : site_url('Persediaan/excel_rekap_detail_penjualan_barang'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-penjualan-barang" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th>Tanggal</th>
+                                                <th>No. Kirim</th>
+                                                <th>Nama Barang</th>
+                                                <th>Konsumen</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">Harga Satuan</th>
+                                                <th class="text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="8" class="text-right">Grand Total</td>
+                                                <td id="rekap-penjualan-barang-grand-total" class="text-right">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                                <!-- Sub-tab 7: Detail Penjualan Jasa -->
+                                <div class="tab-pane fade" id="rekap-panel-penjualan-jasa" role="tabpanel" aria-labelledby="rekap-subtab-penjualan-jasa">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span id="rekap-detail-penjualan-jasa-status" class="text-muted small mr-auto"></span>
+                                        <button type="button" id="btn-cetak-excel-penjualan-jasa" class="btn btn-success btn-sm" data-url="<?php echo isset($url_rekap_detail_penjualan_jasa_excel) ? $url_rekap_detail_penjualan_jasa_excel : site_url('Persediaan/excel_rekap_detail_penjualan_jasa'); ?>">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive persediaan-dt-area persediaan-dt-area-scroll">
+                                    <table id="table-rekap-penjualan-jasa" class="table table-bordered table-striped table-sm mb-0" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th width="40px">No</th>
+                                                <th>Tanggal</th>
+                                                <th>No. Kirim</th>
+                                                <th>Nama Barang/Jasa</th>
+                                                <th>Konsumen</th>
+                                                <th class="text-right">Jumlah</th>
+                                                <th>Satuan</th>
+                                                <th class="text-right">Harga Satuan</th>
+                                                <th class="text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                        <tfoot>
+                                            <tr class="font-weight-bold bg-light">
+                                                <td colspan="8" class="text-right">Grand Total</td>
+                                                <td id="rekap-penjualan-jasa-grand-total" class="text-right">0</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    </div>
+                                </div>
+
+                            </div><!-- /.tab-content rekap-subtabs -->
+                        </div>
                         <!-- TAB 3: GENERATE PERSEDIAAN BULAN BARU -->
                         <?php
                         $gen_bulan_default = isset($gen_bulan_default) ? (int) $gen_bulan_default : (int) date('n');
@@ -10745,8 +10994,27 @@ window.addEventListener('load', function() {
     }
 
     var urlRekapAjax = <?php echo json_encode(isset($url_rekap_ajax) ? $url_rekap_ajax : site_url('Persediaan/ajax_rekap_bulan')); ?>;
+    var urlRekapAjaxServerside = <?php echo json_encode(isset($url_rekap_ajax_serverside) ? $url_rekap_ajax_serverside : site_url('Persediaan/ajax_rekap_bulan_serverside')); ?>;
     var urlRekapSyncStep = <?php echo json_encode(isset($url_rekap_sync_step) ? $url_rekap_sync_step : site_url('Persediaan/ajax_rekap_sync_step')); ?>;
     var urlRekapExcel = <?php echo json_encode(isset($url_rekap_excel) ? $url_rekap_excel : site_url('Persediaan/excel_rekap')); ?>;
+    var urlRekapDetailProduksi = <?php echo json_encode(isset($url_rekap_detail_produksi) ? $url_rekap_detail_produksi : site_url('Persediaan/ajax_rekap_detail_produksi')); ?>;
+    var urlRekapDetailProduksiServerside = <?php echo json_encode(isset($url_rekap_detail_produksi_serverside) ? $url_rekap_detail_produksi_serverside : site_url('Persediaan/ajax_rekap_detail_produksi_serverside')); ?>;
+    var urlRekapDetailProduksiExcel = <?php echo json_encode(isset($url_rekap_detail_produksi_excel) ? $url_rekap_detail_produksi_excel : site_url('Persediaan/excel_rekap_detail_produksi')); ?>;
+    var urlRekapDetailPecahSatuan = <?php echo json_encode(isset($url_rekap_detail_pecah_satuan) ? $url_rekap_detail_pecah_satuan : site_url('Persediaan/ajax_rekap_detail_pecah_satuan')); ?>;
+    var urlRekapDetailPecahSatuanServerside = <?php echo json_encode(isset($url_rekap_detail_pecah_satuan_serverside) ? $url_rekap_detail_pecah_satuan_serverside : site_url('Persediaan/ajax_rekap_detail_pecah_satuan_serverside')); ?>;
+    var urlRekapDetailPecahSatuanExcel = <?php echo json_encode(isset($url_rekap_detail_pecah_satuan_excel) ? $url_rekap_detail_pecah_satuan_excel : site_url('Persediaan/excel_rekap_detail_pecah_satuan')); ?>;
+    var urlRekapDetailPembelianBarang = <?php echo json_encode(isset($url_rekap_detail_pembelian_barang) ? $url_rekap_detail_pembelian_barang : site_url('Persediaan/ajax_rekap_detail_pembelian_barang')); ?>;
+    var urlRekapDetailPembelianBarangServerside = <?php echo json_encode(isset($url_rekap_detail_pembelian_barang_serverside) ? $url_rekap_detail_pembelian_barang_serverside : site_url('Persediaan/ajax_rekap_detail_pembelian_barang_serverside')); ?>;
+    var urlRekapDetailPembelianBarangExcel = <?php echo json_encode(isset($url_rekap_detail_pembelian_barang_excel) ? $url_rekap_detail_pembelian_barang_excel : site_url('Persediaan/excel_rekap_detail_pembelian_barang')); ?>;
+    var urlRekapDetailPembelianJasa = <?php echo json_encode(isset($url_rekap_detail_pembelian_jasa) ? $url_rekap_detail_pembelian_jasa : site_url('Persediaan/ajax_rekap_detail_pembelian_jasa')); ?>;
+    var urlRekapDetailPembelianJasaServerside = <?php echo json_encode(isset($url_rekap_detail_pembelian_jasa_serverside) ? $url_rekap_detail_pembelian_jasa_serverside : site_url('Persediaan/ajax_rekap_detail_pembelian_jasa_serverside')); ?>;
+    var urlRekapDetailPembelianJasaExcel = <?php echo json_encode(isset($url_rekap_detail_pembelian_jasa_excel) ? $url_rekap_detail_pembelian_jasa_excel : site_url('Persediaan/excel_rekap_detail_pembelian_jasa')); ?>;
+    var urlRekapDetailPenjualanBarang = <?php echo json_encode(isset($url_rekap_detail_penjualan_barang) ? $url_rekap_detail_penjualan_barang : site_url('Persediaan/ajax_rekap_detail_penjualan_barang')); ?>;
+    var urlRekapDetailPenjualanBarangServerside = <?php echo json_encode(isset($url_rekap_detail_penjualan_barang_serverside) ? $url_rekap_detail_penjualan_barang_serverside : site_url('Persediaan/ajax_rekap_detail_penjualan_barang_serverside')); ?>;
+    var urlRekapDetailPenjualanBarangExcel = <?php echo json_encode(isset($url_rekap_detail_penjualan_barang_excel) ? $url_rekap_detail_penjualan_barang_excel : site_url('Persediaan/excel_rekap_detail_penjualan_barang')); ?>;
+    var urlRekapDetailPenjualanJasa = <?php echo json_encode(isset($url_rekap_detail_penjualan_jasa) ? $url_rekap_detail_penjualan_jasa : site_url('Persediaan/ajax_rekap_detail_penjualan_jasa')); ?>;
+    var urlRekapDetailPenjualanJasaServerside = <?php echo json_encode(isset($url_rekap_detail_penjualan_jasa_serverside) ? $url_rekap_detail_penjualan_jasa_serverside : site_url('Persediaan/ajax_rekap_detail_penjualan_jasa_serverside')); ?>;
+    var urlRekapDetailPenjualanJasaExcel = <?php echo json_encode(isset($url_rekap_detail_penjualan_jasa_excel) ? $url_rekap_detail_penjualan_jasa_excel : site_url('Persediaan/excel_rekap_detail_penjualan_jasa')); ?>;
     var rekapTotalSteps = <?php echo (int) (isset($rekap_total_steps) ? $rekap_total_steps : 21); ?>;
     var rekapLoading = false;
     var rekapRecalcRunning = false;
@@ -10816,6 +11084,67 @@ window.addEventListener('load', function() {
         setTimeout(adjustRekapScrollArea, 50);
     }
 
+    function destroyRekapDataTable($table) {
+        if ($table && $table.length && $.fn.DataTable && $.fn.DataTable.isDataTable($table)) {
+            try {
+                $table.DataTable().destroy();
+            } catch (eDestroy) { /* abaikan */ }
+        }
+    }
+
+    function initRekapSummaryDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '320px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapAjaxServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'nomor', className: 'text-center', orderable: true },
+                { data: 'deskripsi', className: '' , orderable: true },
+                { data: 'nominal_tampil', className: 'text-right persediaan-col-money', orderable: true }
+            ],
+            order: [[0, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data rekap pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-total-detail').text(json.total_detail_tampil || '0');
+                $('#rekap-status').text(json.bulan ? ('Bulan: ' + json.bulan) : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#table-rekap').css('opacity', '1');
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
     function loadRekapDataOnly() {
         if (rekapLoading) {
             return Promise.reject(new Error('Sedang memuat rekap'));
@@ -10824,32 +11153,9 @@ window.addEventListener('load', function() {
         if (!bulan) {
             return Promise.resolve();
         }
-
         rekapLoading = true;
         $('#table-rekap').css('opacity', '0.5');
-
-        var formData = new FormData();
-        formData.append('bulan_persediaan', bulan);
-
-        return fetch(urlRekapAjax, {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(function(r) { return parseJsonFetchResponse(r); })
-        .then(function(res) {
-            if (!res.ok) {
-                throw new Error(res.message || 'Gagal memuat rekap');
-            }
-            try {
-                renderRekapTable(res);
-            } catch (renderErr) {
-                throw new Error(renderErr && renderErr.message ? renderErr.message : 'Gagal menampilkan data rekap');
-            }
-            return res;
-        })
-        .finally(function() {
+        return initRekapSummaryDataTable().finally(function() {
             rekapLoading = false;
             $('#table-rekap').css('opacity', '1');
         });
@@ -10859,6 +11165,595 @@ window.addEventListener('load', function() {
         savePersediaanMainTabKey('rekap');
         $('#tab-rekap').tab('show');
     }
+
+    function initRekapProduksiDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-produksi');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailProduksiServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'status_persediaan_html', className: 'text-center', orderable: false },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'nama_unit', className: '', orderable: true },
+                { data: 'nama_barang', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true }
+            ],
+            order: [[2, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data produksi pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-produksi-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-produksi-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-produksi-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    function initRekapPecahSatuanDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-pecah-satuan');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailPecahSatuanServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'spop', className: '', orderable: true },
+                { data: 'uraian', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'nama_barang_baru', className: '', orderable: true },
+                { data: 'satuan_barang_baru', className: '', orderable: true },
+                { data: 'harga_satuan_barang_baru_tampil', className: 'text-right persediaan-col-money', orderable: true }
+            ],
+            order: [[1, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data pecah satuan pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-pecah-satuan-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-pecah-satuan-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-pecah-satuan-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    function initRekapPembelianBarangDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-pembelian-barang');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailPembelianBarangServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'spop', className: '', orderable: true },
+                { data: 'uraian', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'supplier_nama', className: '', orderable: true },
+                { data: 'konsumen', className: '', orderable: true }
+            ],
+            order: [[1, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data pembelian barang pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-pembelian-barang-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-pembelian-barang-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-pembelian-barang-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    function initRekapPembelianJasaDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-pembelian-jasa');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailPembelianJasaServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'spop', className: '', orderable: true },
+                { data: 'uraian', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'supplier_nama', className: '', orderable: true },
+                { data: 'konsumen', className: '', orderable: true }
+            ],
+            order: [[1, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data pembelian jasa pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-pembelian-jasa-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-pembelian-jasa-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-pembelian-jasa-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    function initRekapPenjualanBarangDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-penjualan-barang');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailPenjualanBarangServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'nmrkirim', className: '', orderable: true },
+                { data: 'nama_barang', className: '', orderable: true },
+                { data: 'konsumen_nama', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true }
+            ],
+            order: [[1, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data penjualan barang pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-penjualan-barang-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-penjualan-barang-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-penjualan-barang-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    function initRekapPenjualanJasaDataTable() {
+        var bulan = getBulanRekapAktif();
+        var $table = $('#table-rekap-penjualan-jasa');
+        if (!$table.length || !$.fn.DataTable || !bulan) {
+            return Promise.resolve();
+        }
+        destroyRekapDataTable($table);
+        $table.find('tbody').empty();
+        var dt = $table.DataTable({
+            serverSide: true,
+            processing: true,
+            searching: true,
+            ordering: true,
+            paging: true,
+            pageLength: 25,
+            lengthChange: true,
+            scrollX: true,
+            scrollY: '360px',
+            scrollCollapse: true,
+            autoWidth: false,
+            destroy: true,
+            ajax: {
+                url: urlRekapDetailPenjualanJasaServerside,
+                type: 'POST',
+                data: function(d) {
+                    d.bulan_persediaan = bulan;
+                }
+            },
+            columns: [
+                { data: 'no', className: 'text-center', orderable: true },
+                { data: 'tgl', className: '', orderable: true },
+                { data: 'nmrkirim', className: '', orderable: true },
+                { data: 'nama_barang', className: '', orderable: true },
+                { data: 'konsumen_nama', className: '', orderable: true },
+                { data: 'jumlah_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'satuan', className: '', orderable: true },
+                { data: 'harga_satuan_tampil', className: 'text-right persediaan-col-money', orderable: true },
+                { data: 'total_tampil', className: 'text-right persediaan-col-money', orderable: true }
+            ],
+            order: [[1, 'asc']],
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                emptyTable: 'Tidak ada data penjualan jasa pada bulan terpilih',
+                zeroRecords: 'Data tidak ditemukan'
+            },
+            drawCallback: function(settings) {
+                var json = settings && settings.json ? settings.json : {};
+                $('#rekap-penjualan-jasa-grand-total').text(json.grand_total_tampil || '0');
+                $('#rekap-detail-penjualan-jasa-status').text(json.bulan ? ('Bulan: ' + json.bulan + ' — ' + (json.recordsFiltered || 0) + ' baris') : '');
+                setTimeout(adjustRekapScrollArea, 50);
+            },
+            initComplete: function() {
+                $('#rekap-detail-penjualan-jasa-status').text('Bulan: ' + bulan);
+            }
+        });
+        return Promise.resolve(dt);
+    }
+
+    var rekapDetailCfg = {
+        produksi: {
+            url: urlRekapDetailProduksiServerside,
+            tableId: '#table-rekap-produksi',
+            statusId: '#rekap-detail-produksi-status',
+            grandTotalId: '#rekap-produksi-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td class="text-center">' + (r.status_persediaan_html || escapeHtmlRekap(r.status_persediaan || '')) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nama_unit) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nama_barang) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '</tr>';
+            }
+        },
+        'pecah-satuan': {
+            url: urlRekapDetailPecahSatuanServerside,
+            tableId: '#table-rekap-pecah-satuan',
+            statusId: '#rekap-detail-pecah-satuan-status',
+            grandTotalId: '#rekap-pecah-satuan-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.spop) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.uraian) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nama_barang_baru) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan_barang_baru) + '</td>'
+                        + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_barang_baru_tampil || r.harga_satuan_barang_baru) + '</td>'
+                    + '</tr>';
+            }
+        },
+        'pembelian-barang': {
+                    url: urlRekapDetailPembelianBarangServerside,
+            tableId: '#table-rekap-pembelian-barang',
+            statusId: '#rekap-detail-pembelian-barang-status',
+            grandTotalId: '#rekap-pembelian-barang-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.spop) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.uraian) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.supplier_nama) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.konsumen) + '</td>'
+                    + '</tr>';
+            }
+        },
+        'pembelian-jasa': {
+            url: urlRekapDetailPembelianJasaServerside,
+            tableId: '#table-rekap-pembelian-jasa',
+            statusId: '#rekap-detail-pembelian-jasa-status',
+            grandTotalId: '#rekap-pembelian-jasa-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.spop) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.uraian) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.supplier_nama) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.konsumen) + '</td>'
+                    + '</tr>';
+            }
+        },
+        'penjualan-barang': {
+            url: urlRekapDetailPenjualanBarangServerside,
+            tableId: '#table-rekap-penjualan-barang',
+            statusId: '#rekap-detail-penjualan-barang-status',
+            grandTotalId: '#rekap-penjualan-barang-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nmrkirim) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nama_barang) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.konsumen_nama) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '</tr>';
+            }
+        },
+        'penjualan-jasa': {
+            url: urlRekapDetailPenjualanJasaServerside,
+            tableId: '#table-rekap-penjualan-jasa',
+            statusId: '#rekap-detail-penjualan-jasa-status',
+            grandTotalId: '#rekap-penjualan-jasa-grand-total',
+            buildRow: function(r) {
+                return '<tr>'
+                    + '<td>' + escapeHtmlRekap(r.no) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.tgl) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nmrkirim) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.nama_barang) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.konsumen_nama) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.jumlah_tampil) + '</td>'
+                    + '<td>' + escapeHtmlRekap(r.satuan) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.harga_satuan_tampil) + '</td>'
+                    + '<td class="text-right">' + escapeHtmlRekap(r.total_tampil) + '</td>'
+                    + '</tr>';
+            }
+        }
+    };
+
+    var rekapDetailLoaded = {};
+    var rekapDetailLoading = {};
+
+    function resetRekapDetailState() {
+        Object.keys(rekapDetailCfg).forEach(function(type) {
+            rekapDetailLoaded[type] = false;
+            rekapDetailLoading[type] = false;
+        });
+    }
+    resetRekapDetailState();
+
+    function loadRekapDetail(type) {
+        var cfg = rekapDetailCfg[type];
+        if (!cfg) { return; }
+        if (rekapDetailLoading[type]) { return; }
+        var bulan = getBulanRekapAktif();
+        if (!bulan) { return; }
+
+        if (type === 'produksi' || type === 'pecah-satuan' || type === 'pembelian-barang' || type === 'pembelian-jasa' || type === 'penjualan-barang' || type === 'penjualan-jasa') {
+            rekapDetailLoading[type] = true;
+            $(cfg.statusId).text('Memuat data...');
+            var initPromise;
+            if (type === 'produksi') {
+                initPromise = initRekapProduksiDataTable();
+            } else if (type === 'pecah-satuan') {
+                initPromise = initRekapPecahSatuanDataTable();
+            } else if (type === 'pembelian-barang') {
+                initPromise = initRekapPembelianBarangDataTable();
+            } else if (type === 'pembelian-jasa') {
+                initPromise = initRekapPembelianJasaDataTable();
+            } else if (type === 'penjualan-barang') {
+                initPromise = initRekapPenjualanBarangDataTable();
+            } else {
+                initPromise = initRekapPenjualanJasaDataTable();
+            }
+            initPromise
+                .then(function() {
+                    rekapDetailLoaded[type] = true;
+                })
+                .catch(function(err) {
+                    $(cfg.statusId).text('');
+                    $(cfg.tableId + ' tbody').html('<tr><td colspan="20" class="text-center text-danger">' + escapeHtmlRekap(err && err.message ? err.message : 'Gagal memuat data') + '</td></tr>');
+                    rekapDetailLoaded[type] = false;
+                })
+                .finally(function() {
+                    rekapDetailLoading[type] = false;
+                });
+            return;
+        }
+
+        rekapDetailLoading[type] = true;
+        var $status = $(cfg.statusId);
+        var $tbody = $(cfg.tableId + ' tbody');
+        $status.text('Memuat data...');
+        $tbody.html('<tr><td colspan="20" class="text-center"><i class="fas fa-spinner fa-spin"></i> Memuat...</td></tr>');
+
+        var fd = new FormData();
+        fd.append('bulan_persediaan', bulan);
+
+        fetch(cfg.url, {
+            method: 'POST', body: fd, credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return parseJsonFetchResponse(r); })
+        .then(function(res) {
+            if (!res.ok) { throw new Error(res.message || 'Gagal memuat data'); }
+            var html = '';
+            if (res.rows && res.rows.length) {
+                res.rows.forEach(function(r) { html += cfg.buildRow(r); });
+            } else {
+                html = '<tr><td colspan="20" class="text-center text-muted">Tidak ada data untuk bulan ini</td></tr>';
+            }
+            $tbody.html(html);
+            $(cfg.grandTotalId).text(res.grand_total_tampil || '0');
+            $status.text('Bulan: ' + bulan + ' — ' + (res.rows ? res.rows.length : 0) + ' baris');
+            rekapDetailLoaded[type] = true;
+        })
+        .catch(function(err) {
+            $tbody.html('<tr><td colspan="20" class="text-center text-danger">' + escapeHtmlRekap(err && err.message ? err.message : 'Gagal memuat data') + '</td></tr>');
+            $status.text('');
+            rekapDetailLoaded[type] = false;
+        })
+        .finally(function() {
+            rekapDetailLoading[type] = false;
+        });
+    }
+
+    function getActiveRekapSubTabType() {
+        var href = $('#rekap-subtabs .nav-link.active').attr('href') || '';
+        var map = {
+            '#rekap-panel-produksi': 'produksi',
+            '#rekap-panel-pecah-satuan': 'pecah-satuan',
+            '#rekap-panel-pembelian-barang': 'pembelian-barang',
+            '#rekap-panel-pembelian-jasa': 'pembelian-jasa',
+            '#rekap-panel-penjualan-barang': 'penjualan-barang',
+            '#rekap-panel-penjualan-jasa': 'penjualan-jasa'
+        };
+        return map[href] || null;
+    }
+
+    $('#rekap-subtabs a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
+        var href = $(e.target).attr('href') || '';
+        var map = {
+            '#rekap-panel-produksi': 'produksi',
+            '#rekap-panel-pecah-satuan': 'pecah-satuan',
+            '#rekap-panel-pembelian-barang': 'pembelian-barang',
+            '#rekap-panel-pembelian-jasa': 'pembelian-jasa',
+            '#rekap-panel-penjualan-barang': 'penjualan-barang',
+            '#rekap-panel-penjualan-jasa': 'penjualan-jasa'
+        };
+        var type = map[href];
+        if (type && !rekapDetailLoaded[type]) {
+            loadRekapDetail(type);
+        }
+    });
 
     function updateSwalRekapProgress(step, total, label, pct) {
         var bar = document.getElementById('swal-rekap-progress');
@@ -11190,6 +12085,74 @@ window.addEventListener('load', function() {
         exportGenRecalcSummaryExcel($(this).data('jenis') || '');
     });
 
+    $(document).on('click', '#btn-cetak-excel-produksi, #btn-cetak-excel-pecah-satuan, #btn-cetak-excel-pembelian-barang, #btn-cetak-excel-pembelian-jasa, #btn-cetak-excel-penjualan-barang, #btn-cetak-excel-penjualan-jasa', function() {
+        var tombolId = $(this).attr('id') || '';
+        var urlDefault = urlRekapDetailProduksiExcel || '';
+        var pesanSukses = 'File Excel detail produksi berhasil diunduh.';
+        var pesanGagal = 'Terjadi kesalahan saat export Excel detail produksi.';
+        if (tombolId === 'btn-cetak-excel-pecah-satuan') {
+            urlDefault = urlRekapDetailPecahSatuanExcel || '';
+            pesanSukses = 'File Excel detail pecah satuan berhasil diunduh.';
+            pesanGagal = 'Terjadi kesalahan saat export Excel detail pecah satuan.';
+        } else if (tombolId === 'btn-cetak-excel-pembelian-barang') {
+            urlDefault = urlRekapDetailPembelianBarangExcel || '';
+            pesanSukses = 'File Excel detail pembelian barang berhasil diunduh.';
+            pesanGagal = 'Terjadi kesalahan saat export Excel detail pembelian barang.';
+        } else if (tombolId === 'btn-cetak-excel-pembelian-jasa') {
+            urlDefault = urlRekapDetailPembelianJasaExcel || '';
+            pesanSukses = 'File Excel detail pembelian jasa berhasil diunduh.';
+            pesanGagal = 'Terjadi kesalahan saat export Excel detail pembelian jasa.';
+        } else if (tombolId === 'btn-cetak-excel-penjualan-barang') {
+            urlDefault = urlRekapDetailPenjualanBarangExcel || '';
+            pesanSukses = 'File Excel detail penjualan barang berhasil diunduh.';
+            pesanGagal = 'Terjadi kesalahan saat export Excel detail penjualan barang.';
+        } else if (tombolId === 'btn-cetak-excel-penjualan-jasa') {
+            urlDefault = urlRekapDetailPenjualanJasaExcel || '';
+            pesanSukses = 'File Excel detail penjualan jasa berhasil diunduh.';
+            pesanGagal = 'Terjadi kesalahan saat export Excel detail penjualan jasa.';
+        }
+        var url = $(this).data('url') || urlDefault;
+        var bulan = getBulanRekapAktif();
+        if (!url) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export tidak tersedia.' });
+            return;
+        }
+        if (!bulan) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan rekap terlebih dahulu.' });
+            return;
+        }
+        var formData = new FormData();
+        formData.append('bulan_persediaan', bulan);
+
+        tampilkanSwalExcelProgress();
+
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: pesanSukses,
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : pesanGagal
+            });
+        });
+    });
+
     function unduhExcelDariResponse(response) {
         if (!response.ok) {
             throw new Error('Export Excel gagal (HTTP ' + response.status + ')');
@@ -11332,6 +12295,10 @@ window.addEventListener('load', function() {
         if (!$(this).val() || rekapRecalcRunning) {
             return;
         }
+        resetRekapDetailState();
+        destroyRekapDataTable($('#table-rekap-pembelian-jasa'));
+        destroyRekapDataTable($('#table-rekap-penjualan-barang'));
+        destroyRekapDataTable($('#table-rekap-penjualan-jasa'));
         runRekapRecalcWithSwal({ showTabAfter: false, submitFormAfter: false });
     });
 
@@ -11346,6 +12313,10 @@ window.addEventListener('load', function() {
         if (href === '#panel-rekap') {
             if (!rekapRecalcRunning && !rekapLoading && !rekapSkipNextPanelLoad) {
                 loadRekapDataOnly();
+            }
+            var activeDetailType = getActiveRekapSubTabType();
+            if (activeDetailType && !rekapDetailLoaded[activeDetailType]) {
+                loadRekapDetail(activeDetailType);
             }
             setTimeout(adjustRekapScrollArea, 150);
         } else if (href === '#panel-generate-persediaan') {
