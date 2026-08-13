@@ -1016,6 +1016,101 @@ function penjualan_get_nilai_kolom_unit($row, $kolom_unit)
 }
 
 /**
+ * Normalisasi teks unit menjadi nama kolom persediaan (lowercase, underscore).
+ */
+function penjualan_normalize_unit_key($text)
+{
+	$key = strtolower(trim((string) $text));
+	$key = preg_replace('/[^a-z0-9]+/', '_', $key);
+	return trim($key, '_');
+}
+
+/**
+ * Validasi nama kolom persediaan (hanya huruf kecil, angka, underscore).
+ */
+function penjualan_is_valid_persediaan_column_name($name)
+{
+	$name = trim((string) $name);
+	if ($name === '') {
+		return false;
+	}
+	return (bool) preg_match('/^[a-z][a-z0-9_]*$/', $name);
+}
+
+/**
+ * Daftar kolom sistem persediaan yang TIDAK boleh dipakai sebagai kolom unit.
+ * Dibangun dinamis dari skema tabel persediaan (semua kolom) MINUS kolom unit
+ * yang diperbolehkan, agar selalu sinkron dengan struktur DB aktual.
+ */
+function penjualan_persediaan_kolom_non_unit()
+{
+	$CI = get_instance();
+
+	// Kolom sistem yang selalu dipertahankan walaupun tidak ada di DB.
+	$core = array(
+		'id',
+		'uuid_persediaan',
+		'uuid_barang',
+		'uuid_spop',
+		'kode',
+		'kode_barang',
+		'namabarang',
+		'satuan',
+		'hpp',
+		'sa',
+		'beli',
+		'spop',
+		'tanggal',
+		'tanggal_beli',
+		'tgl_keluar',
+		'total_10',
+		'penjualan',
+		'pecah_satuan',
+		'bahan_produksi',
+		'kategori',
+	);
+
+	if (!$CI || !property_exists($CI, 'db') || !$CI->db->table_exists('persediaan')) {
+		return $core;
+	}
+
+	// Semua kolom aktual tabel persediaan.
+	$all_fields = $CI->db->list_fields('persediaan');
+
+	// Identifikasi kolom distribusi unit: kolom di antara tgl_keluar dan total_10.
+	$unit_columns = array();
+	if ($CI->db->field_exists('tgl_keluar', 'persediaan') && $CI->db->field_exists('total_10', 'persediaan')) {
+		$inside = false;
+		foreach ($all_fields as $f) {
+			if ($f === 'tgl_keluar') {
+				$inside = true;
+				continue;
+			}
+			if ($f === 'total_10') {
+				break;
+			}
+			if ($inside) {
+				$unit_columns[] = $f;
+			}
+		}
+	}
+
+	// Semua kolom DB yang BUKAN kolom unit dianggap kolom sistem (non-unit).
+	$non_unit = array();
+	foreach ($all_fields as $col) {
+		if (!in_array($col, $unit_columns, true)) {
+			$non_unit[] = $col;
+		}
+	}
+
+	// Gabungkan kolom inti + kolom DB non-unit, pastikan unik & lowercase.
+	$merged = array_merge($core, $non_unit);
+	$merged = array_values(array_unique(array_map('strtolower', $merged)));
+
+	return $merged;
+}
+
+/**
  * Normalisasi properti baris hasil query stock modal (alias jumlah_sediaan / pecah_satuan_persediaan).
  */
 function penjualan_normalize_row_untuk_hitung_sisa($row)
