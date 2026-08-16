@@ -20975,57 +20975,81 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 	}
 
 	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$bulan = (int) date('n', strtotime($tgl['awal']));
+	$tahun = (int) date('Y', strtotime($tgl['awal']));
+
 	$has_kategori = $CI->db->field_exists('kategori', 'persediaan');
-	$kategori_sql = $has_kategori ? 'persediaan.kategori AS kategori_barang' : "'' AS kategori_barang";
-	$jasa_sql = penjualan_sql_kategori_jasa_saja($CI, 'persediaan');
-	$uuid_barang_sql = penjualan_sql_uuid_barang_expr('persediaan');
-	$bulan_where_sql = penjualan_sql_filter_bulan_persediaan_where('persediaan');
+	$kategori_sql = $has_kategori ? 'p.kategori AS kategori_barang' : "'' AS kategori_barang";
+	$jasa_filter = $has_kategori ? "AND LOWER(TRIM(COALESCE(p.kategori, ''))) = 'jasa'" : '';
 
 	$unit_cols_sql = '';
 	foreach (penjualan_persediaan_kolom_unit_existing($CI) as $kolom) {
-		$unit_cols_sql .= ",\n\t\t\tpersediaan.`{$kolom}` AS `{$kolom}`";
+		$unit_cols_sql .= ",\n\t\t\tp.`{$kolom}` AS `{$kolom}`";
 	}
 
-	$sql = "SELECT persediaan.id AS id,
-			persediaan.tanggal_beli AS tanggal_beli,
-			persediaan.tanggal AS tanggal,
-			persediaan.uuid_spop AS uuid_spop,
-			persediaan.spop AS spop,
-			{$uuid_barang_sql} AS uuid_barang,
-			persediaan.uuid_persediaan AS uuid_persediaan,
-			persediaan.kode_barang AS kode_barang,
-			persediaan.namabarang AS nama_barang_beli,
-			persediaan.total_10 AS total_10,
-			persediaan.total_10 AS jumlah_sediaan,
-			persediaan.hpp AS harga_satuan_persediaan,
-			persediaan.satuan AS satuan_persediaan,
-			persediaan.pecah_satuan AS pecah_satuan,
-			persediaan.pecah_satuan AS pecah_satuan_persediaan,
-			persediaan.bahan_produksi AS bahan_produksi,
-			persediaan.penjualan AS penjualan{$unit_cols_sql},
+	$sql = "SELECT
+			b.`tgl_po` AS tgl_po_pembelian,
+			p.`id` AS id,
+			p.`uuid_persediaan_lama`,
+			p.`uuid_persediaan`,
+			p.`uuid_spop`,
+			p.`uuid_gudang`,
+			p.`nama_gudang`,
+			COALESCE(
+				NULLIF(TRIM(p.uuid_barang), ''),
+				NULLIF(TRIM(p.uuid_persediaan), ''),
+				CONCAT('pid_', p.id)
+			) AS uuid_barang,
+			p.`kode_barang`,
+			p.`tanggal_beli`,
+			p.`tanggal`,
+			p.`kode`,
 			{$kategori_sql},
-			(SELECT MAX(bpj.tgl_po) FROM tbl_pembelian_jasa bpj
-			 WHERE bpj.uuid_persediaan = persediaan.uuid_persediaan
-			   AND bpj.tgl_po IS NOT NULL
-			   AND bpj.tgl_po <> '0000-00-00'
-			   AND DATE(bpj.tgl_po) >= ?
-			   AND DATE(bpj.tgl_po) <= ?
-			) AS tgl_po_pembelian
-		FROM persediaan
-		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
-		AND {$bulan_where_sql}
-		AND {$jasa_sql}
-		ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
+			p.`namabarang` AS nama_barang_beli,
+			p.`satuan` AS satuan_persediaan,
+			p.`hpp` AS harga_satuan_persediaan,
+			p.`sa`,
+			p.`spop`,
+			p.`beli`,
+			p.`tuj`,
+			p.`tgl_keluar`,
+			p.`Sekretariat`,
+			p.`CETAK`,
+			p.`GRAFIKITA`,
+			p.`dinas_umum`,
+			p.`atk_rsud`,
+			p.`ppbmp_kbs`,
+			p.`kbs`,
+			p.`ppbmp`,
+			p.`medis`,
+			p.`siiplah_bosda`,
+			p.`sembako`,
+			p.`fc_gose`,
+			p.`fc_manding`,
+			p.`fc_psamya`,
+			p.`kop_mp`,
+			p.`pu_outsor`,
+			p.`pu_buku`,
+			p.`total_10`,
+			p.`total_10` AS jumlah_sediaan,
+			p.`nilai_persediaan`,
+			p.`penjualan`,
+			p.`pecah_satuan`,
+			p.`pecah_satuan` AS pecah_satuan_persediaan,
+			p.`bahan_produksi`{$unit_cols_sql}
+		FROM `persediaan` p
+		LEFT JOIN `tbl_pembelian_jasa` b
+			ON p.`uuid_persediaan` = b.`uuid_persediaan`
+		WHERE TRIM(COALESCE(p.`namabarang`, '')) <> ''
+		AND MONTH(p.`tanggal_beli`) = ?
+		AND YEAR(p.`tanggal_beli`) = ?
+		AND p.`total_10` > 0
+		{$jasa_filter}
+		ORDER BY p.`namabarang` ASC, p.`id` ASC";
 
-	$bulan_ym = date('Y-m', strtotime($tgl['awal']));
 	$query = $CI->db->query($sql, array(
-		$tgl['awal'],
-		$tgl['akhir'],
-		$tgl['awal'],
-		$tgl['akhir'],
-		$bulan_ym,
-		$tgl['awal'],
-		$tgl['akhir'],
+		$bulan,
+		$tahun,
 	));
 	if ($query === false) {
 		$err = $CI->db->error();
