@@ -1211,12 +1211,7 @@ function penjualanInitInputBarangScript() {
         $btn.prop('disabled', true);
         $('#modal-xl').modal('show');
 
-        if (tbodySudahAdaDataJasa()) {
-            tampilkanModalPilihJasaDariDataAda();
-            $btn.prop('disabled', false);
-            return;
-        }
-
+        // Selalu muat ulang data dari server agar DataTable selalu fresh
         $('#modal-pilih-jasa-loading').removeClass('d-none');
         muatModalPilihBarang(function() {
             /* data sudah dimuat di dalam modal */
