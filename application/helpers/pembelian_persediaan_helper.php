@@ -21042,15 +21042,17 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 			p.`pecah_satuan` AS pecah_satuan_persediaan,
 			p.`bahan_produksi`{$unit_cols_sql}
 		FROM `persediaan` p
-		LEFT JOIN `tbl_pembelian_jasa` b
+		INNER JOIN `tbl_pembelian_jasa` b
 			ON p.`uuid_persediaan` = b.`uuid_persediaan`
 		WHERE TRIM(COALESCE(p.`namabarang`, '')) <> ''
-		AND MONTH(p.`tanggal_beli`) = ?
-		AND YEAR(p.`tanggal_beli`) = ?
+		AND MONTH(b.`tgl_po`) = ?
+		AND YEAR(b.`tgl_po`) = ?
+		AND b.`tgl_po` IS NOT NULL
+		AND b.`tgl_po` <> '0000-00-00'
 		AND p.`total_10` > 0
 		{$jasa_filter}
 		{$beli_condition}
-		ORDER BY p.`tanggal_beli` ASC";
+		ORDER BY b.`tgl_po` ASC, p.`tanggal_beli` ASC";
 
 	$query = $CI->db->query($sql, array(
 		$bulan,
