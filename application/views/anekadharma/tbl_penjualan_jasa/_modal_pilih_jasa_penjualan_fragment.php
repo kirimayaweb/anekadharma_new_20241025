@@ -48,7 +48,10 @@ foreach ($Data_stock as $list_data) {
 	$no = ++$start;
 	$harga_fmt = number_format((float) $list_data->harga_satuan_persediaan, 2, ',', '.');
 	$tgl_po_fmt = '';
-	if (!empty($list_data->tanggal_beli) && $list_data->tanggal_beli !== '0000-00-00') {
+	// Prioritaskan tgl_po dari tbl_pembelian_jasa (via LEFT JOIN di penjualan_get_stock_persediaan_jasa_rows)
+	if (!empty($list_data->tgl_po) && $list_data->tgl_po !== '0000-00-00' && $list_data->tgl_po !== '') {
+		$tgl_po_fmt = date('d M Y', strtotime($list_data->tgl_po));
+	} elseif (!empty($list_data->tanggal_beli) && $list_data->tanggal_beli !== '0000-00-00') {
 		$tgl_po_fmt = date('d M Y', strtotime($list_data->tanggal_beli));
 	} elseif (!empty($list_data->tanggal)) {
 		$ts_tgl = pembelian_parse_tanggal_po($list_data->tanggal);

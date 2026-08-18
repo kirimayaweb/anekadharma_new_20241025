@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?php echo base_url('assets/js/datatable-pilih-jasa-penjualan.js'); ?>"></script>
 <?php
 $this->load->helper('pembelian_persediaan');
 if (!isset($filter_bulan_penjualan)) {
@@ -130,6 +131,69 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_jasa($this, array(
 		white-space: nowrap;
 		overflow-x: auto;
 		overflow-y: hidden;
+	}
+	/* DataTable Styling untuk Modal PILIH JASA */
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_filter input[type="search"] {
+		border: 1px solid #ced4da;
+		border-radius: 0.25rem;
+		padding: 0.375rem 0.75rem;
+		height: auto;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_length select {
+		border: 1px solid #ced4da;
+		border-radius: 0.25rem;
+		padding: 0.375rem 0.75rem;
+		height: auto;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan table thead th {
+		background-color: #f8f9fa;
+		border-bottom: 2px solid #dee2e6;
+		padding: 0.5rem !important;
+		text-align: center;
+		font-weight: 600;
+		cursor: pointer;
+		user-select: none;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting::after,
+	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_asc::after,
+	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_desc::after {
+		margin-left: 0.5rem;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan table tbody td {
+		padding: 0.5rem !important;
+		border-bottom: 1px solid #dee2e6;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan table tbody tr:hover {
+		background-color: #f8f9fa;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate {
+		padding-top: 0.5rem;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button {
+		padding: 0.25rem 0.5rem;
+		margin: 0 2px;
+		border: 1px solid #dee2e6;
+		border-radius: 0.25rem;
+		background: white;
+		cursor: pointer;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button:hover {
+		background: #e9ecef;
+		border-color: #adb5bd;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.current {
+		background: #007bff;
+		color: white;
+		border-color: #007bff;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan .dataTables_info {
+		padding: 0.5rem 0;
+		font-size: 0.875rem;
+		color: #6c757d;
 	}
 </style>
 <div class="content-wrapper">
@@ -795,9 +859,22 @@ window.initDataTablePilihBarang = function() {
             lengthChange: true,
             info: true,
             autoWidth: false,
+            orderCellsTop: true,
             order: [[5, 'asc']],
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            columnDefs: [
+                {
+                    targets: [0, 1, 9],
+                    orderable: false,
+                    searchable: false
+                },
+                {
+                    targets: '_all',
+                    orderable: true,
+                    searchable: true
+                }
+            ],
             dom: '<"row align-items-center mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-5"i><"col-sm-7"p>>',
             language: {
                 search: 'Cari:',
