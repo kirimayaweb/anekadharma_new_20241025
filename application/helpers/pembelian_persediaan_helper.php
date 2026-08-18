@@ -20992,7 +20992,7 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 		: '';
 
 	$sql = "SELECT
-			b.`tgl_po`,
+			MAX(b.`tgl_po`) AS tgl_po,
 			p.`id` AS id,
 			p.`uuid_persediaan_lama`,
 			p.`uuid_persediaan`,
@@ -21042,9 +21042,11 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 			p.`pecah_satuan` AS pecah_satuan_persediaan,
 			p.`bahan_produksi`{$unit_cols_sql}
 		FROM `persediaan` p
-		INNER JOIN `tbl_pembelian_jasa` b
+		LEFT JOIN `tbl_pembelian_jasa` b
 			ON p.`uuid_persediaan` = b.`uuid_persediaan`
 		WHERE TRIM(COALESCE(p.`namabarang`, '')) <> ''
+		AND MONTH(p.`tanggal_beli`) = ?
+		AND YEAR(p.`tanggal_beli`) = ?
 		AND MONTH(b.`tgl_po`) = ?
 		AND YEAR(b.`tgl_po`) = ?
 		AND b.`tgl_po` IS NOT NULL
@@ -21052,9 +21054,12 @@ function penjualan_get_stock_persediaan_jasa_rows($CI, $tgl_jual = null, $uuid_u
 		AND p.`total_10` > 0
 		{$jasa_filter}
 		{$beli_condition}
-		ORDER BY b.`tgl_po` ASC, p.`tanggal_beli` ASC";
+		GROUP BY p.`namabarang`
+		ORDER BY p.`namabarang` ASC, p.`tanggal_beli` ASC";
 
 	$query = $CI->db->query($sql, array(
+		$bulan,
+		$tahun,
 		$bulan,
 		$tahun,
 	));
