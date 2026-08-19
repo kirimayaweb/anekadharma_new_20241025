@@ -1215,10 +1215,20 @@ class Tbl_penjualan_jasa extends CI_Controller
 	// public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
 	public function kasir_penjualan($uuid_penjualan)
 	{
+		$uuid_penjualan = trim((string) $uuid_penjualan);
+		if ($uuid_penjualan === '' || strtolower($uuid_penjualan) === 'new') {
+			redirect(site_url('tbl_penjualan_jasa/create'));
+			return;
+		}
 
 		// Get tgl_jual dan nmrkirim dari uuid_penjualan
 
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+		if (!$data_penjualan_per_uuid_penjualan) {
+			$this->session->set_flashdata('message', 'Data penjualan tidak ditemukan.');
+			redirect(site_url('tbl_penjualan_jasa'));
+			return;
+		}
 
 		$tgl_jual_X = date("Y-m-d", strtotime($data_penjualan_per_uuid_penjualan->tgl_jual));
 
@@ -1227,7 +1237,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
 
 		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
-		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
+		$data_penjualan_per_uuid_penjualan_first_row = $data_penjualan_per_uuid_penjualan;
 
 		$tgl_jual_kasir = $data_penjualan_per_uuid_penjualan_first_row->tgl_jual;
 		$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual_kasir);
