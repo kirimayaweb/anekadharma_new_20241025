@@ -610,6 +610,7 @@ class Persediaan extends CI_Controller
 			'url_analisa_recalculate_persediaan' => site_url('Persediaan/ajax_analisa_recalculate_persediaan'),
 			'url_recalculate_persediaan_batch' => site_url('Persediaan/ajax_recalculate_persediaan_batch'),
 			'url_generate_recalculate_batch' => site_url('Persediaan/ajax_generate_recalculate_batch'),
+			'url_generate_copy_bulan_sebelumnya' => site_url('Persediaan/ajax_generate_copy_bulan_sebelumnya'),
 			'url_generate_proses_persediaan_view' => site_url('Persediaan/ajax_generate_proses_persediaan_view'),
 			'url_generate_proses_pembelian_view' => site_url('Persediaan/ajax_generate_proses_pembelian_view'),
 			'url_generate_proses_produksi_view' => site_url('Persediaan/ajax_generate_proses_produksi_view'),
@@ -636,6 +637,7 @@ class Persediaan extends CI_Controller
 			'url_excel_rekonsiliasi_transaksi' => site_url('Persediaan/excel_rekonsiliasi_transaksi'),
 			'url_recalculate_excel' => site_url('Persediaan/excel_recalculate'),
 			'url_excel_persediaan' => site_url('Persediaan/excel'),
+			'url_excel_draft_bulan_referensi' => site_url('Persediaan/excel_draft_bulan_referensi'),
 			'url_compare_tabel_list' => site_url('Persediaan/ajax_compare_tabel_list'),
 			'url_compare_tabel_run' => site_url('Persediaan/ajax_compare_tabel_run'),
 			'url_compare_tabel_excel' => site_url('Persediaan/excel_compare_tabel'),
@@ -651,6 +653,8 @@ class Persediaan extends CI_Controller
 			'can_generate_persediaan' => $this->persediaan_user_can_generate(),
 			'can_compare_persediaan' => $this->persediaan_user_can_compare(),
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
+			'Persediaan_data_draft_referensi' => $this->get_persediaan_draft_bulan_referensi_by_target($bulan),
+			'draft_referensi_bulan_sumber' => $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan),
 		);
 	}
 
@@ -3573,6 +3577,638 @@ class Persediaan extends CI_Controller
 		} catch (Throwable $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		}
+	}
+
+	/**
+	 * Fase awal Generate & Recalculate (untuk verifikasi):
+	 * 1) hapus persediaan bulan/tahun terpilih (tanggal_beli)
+	 * 2) perbaiki total_10 bulan sebelumnya, lalu copy record total_10 > 0 ke bulan target
+	 * 3) kembalikan data bulan sebelumnya untuk DataTable
+	 */
+	public function ajax_generate_copy_bulan_sebelumnya()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '1024M');
+		@ignore_user_abort(true);
+
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Generate &amp; Recalculate'),
+				));
+				return;
+			}
+
+			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => 'Format bulan tidak valid (YYYY-MM).',
+				));
+				return;
+			}
+
+			$db_debug = $this->db->db_debug;
+			$this->db->db_debug = false;
+			$result = $this->proses_generate_copy_bulan_sebelumnya($bulan);
+			$this->db->db_debug = $db_debug;
+
+			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		} catch (Throwable $e) {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * Hapus bulan target → (opsional) perbaiki total_10 sumber → copy record total_10 > 0.
+	 *
+	 * Khusus target Januari 2026 (sumber Desember 2025 = data dasar):
+	 * - TIDAK menghitung ulang total_10 dengan rumus sa+beli-(penjualan+pecah+bahan)
+	 * - Copy paste apa adanya jika total_10 > 0
+	 * - tanggal_beli pada record baru = tanggal 1 bulan/tahun terpilih (2026-01-01)
+	 * - field tanggal (tanggal_persediaan) = tanggal 1 bulan/tahun terpilih
+	 *
+	 * Untuk target setelah Januari 2026: tetap koreksi total_10 dengan rumus, lalu copy.
+	 */
+	private function proses_generate_copy_bulan_sebelumnya($bulan_target)
+	{
+		$ts_target = strtotime($bulan_target . '-01');
+		if ($ts_target === false) {
+			return array('ok' => false, 'message' => 'Bulan target tidak valid.');
+		}
+
+		$tanggal_beli_target = date('Y-m-01', $ts_target);
+		$tahun_target = (int) date('Y', $ts_target);
+		$bulan_target_num = (int) date('m', $ts_target);
+		$ts_sumber = strtotime('-1 month', $ts_target);
+		$tanggal_beli_sumber = date('Y-m-01', $ts_sumber);
+		$tahun_sumber = (int) date('Y', $ts_sumber);
+		$bulan_sumber_num = (int) date('m', $ts_sumber);
+		$bulan_sumber_key = date('Y-m', $ts_sumber);
+		$tanggal_tampil_target = date('d/m/Y', $ts_target);
+
+		// Mode data dasar: generate Januari 2026 dari Desember 2025
+		$is_mode_data_dasar_des2025 = ($bulan_target === '2026-01');
+
+		$nama_bulan = array(
+			1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+			5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+			9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+		);
+		$label_sumber = (isset($nama_bulan[$bulan_sumber_num]) ? $nama_bulan[$bulan_sumber_num] : $bulan_sumber_num)
+			. ' ' . $tahun_sumber;
+		$label_target = (isset($nama_bulan[$bulan_target_num]) ? $nama_bulan[$bulan_target_num] : $bulan_target_num)
+			. ' ' . $tahun_target;
+
+		// 1) Hapus data persediaan bulan & tahun terpilih (berdasarkan tanggal_beli)
+		$deleted = $this->generate_hapus_persediaan_bulan_tahun($tahun_target, $bulan_target_num);
+
+		// Ambil semua record bulan sebelumnya (referensi tanggal_beli)
+		$rows_sumber = $this->db->query(
+			"SELECT * FROM `persediaan`
+			WHERE YEAR(`tanggal_beli`) = ?
+			  AND MONTH(`tanggal_beli`) = ?
+			ORDER BY `id` ASC",
+			array($tahun_sumber, $bulan_sumber_num)
+		)->result();
+
+		if (empty($rows_sumber)) {
+			return array(
+				'ok' => false,
+				'message' => 'Tidak ada data persediaan di bulan sebelumnya (' . $label_sumber . ').',
+				'deleted' => $deleted,
+				'bulan_target' => $bulan_target,
+				'bulan_sumber' => $bulan_sumber_key,
+				'label_sumber' => $label_sumber,
+				'label_target' => $label_target,
+				'mode_data_dasar' => $is_mode_data_dasar_des2025,
+				'rows' => array(),
+			);
+		}
+
+		$row_max = $this->db->query("SELECT MAX(`id`) AS max_id FROM `persediaan`")->row();
+		$next_id = ($row_max && $row_max->max_id) ? ((int) $row_max->max_id + 1) : 1;
+		$fields = $this->db->list_fields('persediaan');
+		$has_tanggal_persediaan = in_array('tanggal_persediaan', $fields, true);
+
+		$updated_total10 = 0;
+		$copied = 0;
+		$skipped = 0;
+		$rows_preview = array();
+		$no = 0;
+
+		foreach ($rows_sumber as $row) {
+			$total_10_db = $this->parse_angka_persediaan(isset($row->total_10) ? $row->total_10 : 0);
+			$ket_fix = '';
+			$total_10_hitung = $total_10_db;
+			$total_10_final = $total_10_db;
+
+			if ($is_mode_data_dasar_des2025) {
+				// Desember 2025 = data dasar: JANGAN hitung ulang / update total_10.
+				// Copy paste apa adanya jika total_10 > 0.
+				$total_10_final = $total_10_db;
+				$total_10_hitung = $total_10_db;
+				$ket_fix = 'mode data dasar DES 2025: copy apa adanya (tanpa rumus)';
+			} else {
+				$sa = $this->parse_angka_persediaan(isset($row->sa) ? $row->sa : 0);
+				$beli = $this->parse_angka_persediaan(isset($row->beli) ? $row->beli : 0);
+				$penjualan = $this->parse_angka_persediaan(isset($row->penjualan) ? $row->penjualan : 0);
+				$pecah_satuan = $this->parse_angka_persediaan(isset($row->pecah_satuan) ? $row->pecah_satuan : 0);
+				$bahan_produksi = $this->parse_angka_persediaan(isset($row->bahan_produksi) ? $row->bahan_produksi : 0);
+
+				// total_10 = sa + beli - (penjualan + pecah_satuan + bahan_produksi)
+				$total_10_hitung = $sa + $beli - ($penjualan + $pecah_satuan + $bahan_produksi);
+				$total_10_final = $total_10_db;
+
+				if ($total_10_hitung > 0) {
+					if (abs($total_10_hitung - $total_10_db) > 0.0001) {
+						$total_10_tampil = $this->format_angka_persediaan($total_10_hitung);
+						$this->db->where('id', (int) $row->id);
+						$this->db->update('persediaan', array('total_10' => $total_10_tampil));
+						$row->total_10 = $total_10_tampil;
+						$total_10_final = $total_10_hitung;
+						$updated_total10++;
+						$ket_fix = 'total_10 dikoreksi: ' . $this->format_angka_persediaan($total_10_db)
+							. ' → ' . $total_10_tampil;
+					} else {
+						$total_10_final = $total_10_hitung;
+					}
+				}
+			}
+
+			$no++;
+			$will_copy = ($total_10_final > 0);
+			$rows_preview[] = array(
+				'no' => $no,
+				'id' => isset($row->id) ? (int) $row->id : 0,
+				'uuid_persediaan' => isset($row->uuid_persediaan) ? (string) $row->uuid_persediaan : '',
+				'namabarang' => isset($row->namabarang) ? (string) $row->namabarang : '',
+				'satuan' => isset($row->satuan) ? (string) $row->satuan : '',
+				'hpp' => isset($row->hpp) ? (string) $row->hpp : '',
+				'sa' => isset($row->sa) ? (string) $row->sa : '0',
+				'beli' => isset($row->beli) ? (string) $row->beli : '0',
+				'penjualan' => isset($row->penjualan) ? (string) $row->penjualan : '0',
+				'pecah_satuan' => isset($row->pecah_satuan) ? (string) $row->pecah_satuan : '0',
+				'bahan_produksi' => isset($row->bahan_produksi) ? (string) $row->bahan_produksi : '0',
+				'total_10_lama' => $this->format_angka_persediaan($total_10_db),
+				'total_10_hitung' => $this->format_angka_persediaan($total_10_hitung),
+				'total_10' => $this->format_angka_persediaan($total_10_final),
+				'tanggal_beli' => isset($row->tanggal_beli) ? (string) $row->tanggal_beli : '',
+				'status_copy' => $will_copy ? 'COPIED' : 'SKIP',
+				'keterangan' => $ket_fix,
+			);
+
+			// Copy hanya jika total_10 > 0
+			if (!$will_copy) {
+				$skipped++;
+				continue;
+			}
+
+			$data_insert = array();
+			foreach ($fields as $field) {
+				if ($field === 'id') {
+					continue;
+				}
+				$data_insert[$field] = isset($row->$field) ? $row->$field : null;
+			}
+
+			$data_insert['id'] = $next_id++;
+			$data_insert['total_10'] = $this->format_angka_persediaan($total_10_final);
+
+			$tgl_sumber = isset($row->tanggal_beli) ? trim((string) $row->tanggal_beli) : '';
+			if ($tgl_sumber === '' || $tgl_sumber === '0000-00-00' || $tgl_sumber === '0000-00-00 00:00:00') {
+				$tgl_sumber = $tanggal_beli_sumber;
+			}
+
+			if ($is_mode_data_dasar_des2025) {
+				// Sumber diambil dari record tanggal_beli bulan referensi (DES 2025).
+				// Record baru untuk Januari 2026:
+				// - tanggal_beli = tanggal 1 bulan/tahun terpilih (agar masuk filter Januari 2026)
+				// - tanggal / tanggal_persediaan = tanggal 1 bulan/tahun terpilih
+				$data_insert['tanggal_beli'] = $tanggal_beli_target;
+				if ($has_tanggal_persediaan) {
+					$data_insert['tanggal_persediaan'] = $tanggal_beli_target;
+				}
+				if (array_key_exists('tanggal', $data_insert)) {
+					$data_insert['tanggal'] = $tanggal_tampil_target;
+				}
+			} else {
+				$data_insert['tanggal_beli'] = $tanggal_beli_target;
+				if ($has_tanggal_persediaan) {
+					$data_insert['tanggal_persediaan'] = $tanggal_beli_target;
+				}
+				if (array_key_exists('tanggal', $data_insert)) {
+					$data_insert['tanggal'] = $tanggal_tampil_target;
+				}
+			}
+
+			if (!$this->db->insert('persediaan', $data_insert)) {
+				$db_err = $this->db->error();
+				$pesan_db = isset($db_err['message']) ? trim((string) $db_err['message']) : 'Gagal insert persediaan.';
+				throw new Exception($pesan_db . ' (sumber id=' . (isset($row->id) ? $row->id : '?') . ')');
+			}
+			$copied++;
+		}
+
+		$mode_msg = $is_mode_data_dasar_des2025
+			? 'Mode data dasar DES 2025→JAN 2026 (copy apa adanya, tanpa rumus). '
+			: 'Mode normal (koreksi total_10 dengan rumus). ';
+
+		$draft_saved = $this->simpan_persediaan_draft_bulan_referensi(
+			$bulan_target,
+			$bulan_sumber_key,
+			$rows_sumber,
+			$rows_preview
+		);
+
+		$rekon = $this->rekon_nilai_persediaan_sumber_vs_target(
+			$tahun_sumber,
+			$bulan_sumber_num,
+			$tahun_target,
+			$bulan_target_num,
+			$is_mode_data_dasar_des2025
+		);
+
+		$rekon_ok = !empty($rekon['ok']);
+		$msg_rekon = '';
+		if ($rekon_ok) {
+			$msg_rekon = ' Rekon nilai_persediaan: SAMA (sumber '
+				. $this->format_angka_persediaan(isset($rekon['sum_nilai_sumber']) ? $rekon['sum_nilai_sumber'] : 0)
+				. ' = target '
+				. $this->format_angka_persediaan(isset($rekon['sum_nilai_target']) ? $rekon['sum_nilai_target'] : 0)
+				. ').';
+		} else {
+			$msg_rekon = ' PERINGATAN REKON: nilai_persediaan BERBEDA. Selisih '
+				. $this->format_angka_persediaan(isset($rekon['selisih_nilai']) ? $rekon['selisih_nilai'] : 0)
+				. ' | sumber='
+				. $this->format_angka_persediaan(isset($rekon['sum_nilai_sumber']) ? $rekon['sum_nilai_sumber'] : 0)
+				. ' | target='
+				. $this->format_angka_persediaan(isset($rekon['sum_nilai_target']) ? $rekon['sum_nilai_target'] : 0)
+				. ' | baris bermasalah='
+				. (isset($rekon['count_masalah']) ? (int) $rekon['count_masalah'] : 0)
+				. '.';
+		}
+
+		return array(
+			'ok' => true,
+			'rekon_ok' => $rekon_ok,
+			'message' => $mode_msg . 'Fase copy selesai. Hapus target: ' . $deleted
+				. ', koreksi total_10: ' . $updated_total10
+				. ', copy: ' . $copied
+				. ', skip (total_10<=0): ' . $skipped
+				. ', history draft: ' . (int) $draft_saved . '.'
+				. $msg_rekon,
+			'deleted' => $deleted,
+			'updated_total10' => $updated_total10,
+			'copied' => $copied,
+			'skipped' => $skipped,
+			'draft_saved' => (int) $draft_saved,
+			'total_sumber' => count($rows_sumber),
+			'bulan_target' => $bulan_target,
+			'bulan_sumber' => $bulan_sumber_key,
+			'label_sumber' => $label_sumber,
+			'label_target' => $label_target,
+			'tanggal_beli_target' => $tanggal_beli_target,
+			'tanggal_beli_sumber' => $tanggal_beli_sumber,
+			'mode_data_dasar' => $is_mode_data_dasar_des2025,
+			'rekon' => $rekon,
+			'rows' => $rows_preview,
+		);
+	}
+
+	/**
+	 * Rekonsiliasi total nilai_persediaan & total_10 sumber vs target setelah generate.
+	 * Mode data dasar: bandingkan semua record sumber total_10>0 terhadap target (match uuid_persediaan).
+	 */
+	private function rekon_nilai_persediaan_sumber_vs_target(
+		$tahun_sumber,
+		$bulan_sumber,
+		$tahun_target,
+		$bulan_target,
+		$only_total10_gt0 = true
+	) {
+		$tahun_sumber = (int) $tahun_sumber;
+		$bulan_sumber = (int) $bulan_sumber;
+		$tahun_target = (int) $tahun_target;
+		$bulan_target = (int) $bulan_target;
+
+		$sql_filter_t10 = $only_total10_gt0
+			? " AND CAST(REPLACE(REPLACE(TRIM(COALESCE(`total_10`,'0')), ',', ''), ' ', '') AS DECIMAL(20,4)) > 0"
+			: '';
+
+		$sumber = $this->db->query(
+			"SELECT * FROM `persediaan`
+			WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?" . $sql_filter_t10 . "
+			ORDER BY `id` ASC",
+			array($tahun_sumber, $bulan_sumber)
+		)->result();
+
+		$target = $this->db->query(
+			"SELECT * FROM `persediaan`
+			WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?
+			ORDER BY `id` ASC",
+			array($tahun_target, $bulan_target)
+		)->result();
+
+		$sum_nilai_sumber = 0.0;
+		$sum_nilai_target = 0.0;
+		$sum_t10_sumber = 0.0;
+		$sum_t10_target = 0.0;
+
+		$target_by_uuid = array();
+		$target_used = array();
+		foreach ($target as $trow) {
+			$sum_nilai_target += $this->parse_angka_persediaan(isset($trow->nilai_persediaan) ? $trow->nilai_persediaan : 0);
+			$sum_t10_target += $this->parse_angka_persediaan(isset($trow->total_10) ? $trow->total_10 : 0);
+			$uuid = trim((string) (isset($trow->uuid_persediaan) ? $trow->uuid_persediaan : ''));
+			$key = $uuid !== ''
+				? 'u:' . $uuid
+				: 'n:' . strtolower(trim((string) (isset($trow->namabarang) ? $trow->namabarang : '')))
+					. '|' . strtolower(trim((string) (isset($trow->satuan) ? $trow->satuan : '')))
+					. '|' . $this->parse_angka_persediaan(isset($trow->hpp) ? $trow->hpp : 0)
+					. '|' . trim((string) (isset($trow->spop) ? $trow->spop : ''));
+			if (!isset($target_by_uuid[$key])) {
+				$target_by_uuid[$key] = array();
+			}
+			$target_by_uuid[$key][] = $trow;
+		}
+
+		$masalah = array();
+		$no = 0;
+		foreach ($sumber as $srow) {
+			$nilai_s = $this->parse_angka_persediaan(isset($srow->nilai_persediaan) ? $srow->nilai_persediaan : 0);
+			$t10_s = $this->parse_angka_persediaan(isset($srow->total_10) ? $srow->total_10 : 0);
+			$sum_nilai_sumber += $nilai_s;
+			$sum_t10_sumber += $t10_s;
+
+			$uuid = trim((string) (isset($srow->uuid_persediaan) ? $srow->uuid_persediaan : ''));
+			$key = $uuid !== ''
+				? 'u:' . $uuid
+				: 'n:' . strtolower(trim((string) (isset($srow->namabarang) ? $srow->namabarang : '')))
+					. '|' . strtolower(trim((string) (isset($srow->satuan) ? $srow->satuan : '')))
+					. '|' . $this->parse_angka_persediaan(isset($srow->hpp) ? $srow->hpp : 0)
+					. '|' . trim((string) (isset($srow->spop) ? $srow->spop : ''));
+
+			$trow = null;
+			if (isset($target_by_uuid[$key]) && count($target_by_uuid[$key]) > 0) {
+				$trow = array_shift($target_by_uuid[$key]);
+				$target_used[(int) $trow->id] = true;
+			}
+
+			$masalah_tipe = array();
+			$nilai_t = 0.0;
+			$t10_t = 0.0;
+			$id_target = 0;
+
+			if (!$trow) {
+				$masalah_tipe[] = 'TIDAK_ADA_DI_TARGET';
+			} else {
+				$id_target = (int) $trow->id;
+				$nilai_t = $this->parse_angka_persediaan(isset($trow->nilai_persediaan) ? $trow->nilai_persediaan : 0);
+				$t10_t = $this->parse_angka_persediaan(isset($trow->total_10) ? $trow->total_10 : 0);
+				if (abs($nilai_s - $nilai_t) > 0.0001) {
+					$masalah_tipe[] = 'NILAI_PERSEDIAAN_BEDA';
+				}
+				if (abs($t10_s - $t10_t) > 0.0001) {
+					$masalah_tipe[] = 'TOTAL_10_BEDA';
+				}
+			}
+
+			if (!empty($masalah_tipe)) {
+				$no++;
+				$masalah[] = array(
+					'no' => $no,
+					'id_sumber' => isset($srow->id) ? (int) $srow->id : 0,
+					'id_target' => $id_target,
+					'uuid_persediaan' => $uuid,
+					'namabarang' => isset($srow->namabarang) ? (string) $srow->namabarang : '',
+					'satuan' => isset($srow->satuan) ? (string) $srow->satuan : '',
+					'hpp' => isset($srow->hpp) ? (string) $srow->hpp : '',
+					'total_10_sumber' => $this->format_angka_persediaan($t10_s),
+					'total_10_target' => $this->format_angka_persediaan($t10_t),
+					'nilai_sumber' => $this->format_angka_persediaan($nilai_s),
+					'nilai_target' => $this->format_angka_persediaan($nilai_t),
+					'selisih_nilai' => $this->format_angka_persediaan($nilai_t - $nilai_s),
+					'selisih_total_10' => $this->format_angka_persediaan($t10_t - $t10_s),
+					'masalah' => implode(', ', $masalah_tipe),
+				);
+			}
+		}
+
+		// Target ekstra yang tidak punya pasangan sumber
+		foreach ($target as $trow) {
+			$id_t = isset($trow->id) ? (int) $trow->id : 0;
+			if (isset($target_used[$id_t])) {
+				continue;
+			}
+			$no++;
+			$nilai_t = $this->parse_angka_persediaan(isset($trow->nilai_persediaan) ? $trow->nilai_persediaan : 0);
+			$t10_t = $this->parse_angka_persediaan(isset($trow->total_10) ? $trow->total_10 : 0);
+			$masalah[] = array(
+				'no' => $no,
+				'id_sumber' => 0,
+				'id_target' => $id_t,
+				'uuid_persediaan' => isset($trow->uuid_persediaan) ? (string) $trow->uuid_persediaan : '',
+				'namabarang' => isset($trow->namabarang) ? (string) $trow->namabarang : '',
+				'satuan' => isset($trow->satuan) ? (string) $trow->satuan : '',
+				'hpp' => isset($trow->hpp) ? (string) $trow->hpp : '',
+				'total_10_sumber' => '0',
+				'total_10_target' => $this->format_angka_persediaan($t10_t),
+				'nilai_sumber' => '0',
+				'nilai_target' => $this->format_angka_persediaan($nilai_t),
+				'selisih_nilai' => $this->format_angka_persediaan($nilai_t),
+				'selisih_total_10' => $this->format_angka_persediaan($t10_t),
+				'masalah' => 'EXTRA_DI_TARGET',
+			);
+		}
+
+		$selisih_nilai = $sum_nilai_target - $sum_nilai_sumber;
+		$selisih_t10 = $sum_t10_target - $sum_t10_sumber;
+		$ok = (abs($selisih_nilai) <= 0.0001)
+			&& (abs($selisih_t10) <= 0.0001)
+			&& (count($masalah) === 0)
+			&& (count($sumber) === count($target));
+
+		return array(
+			'ok' => $ok,
+			'count_sumber' => count($sumber),
+			'count_target' => count($target),
+			'sum_nilai_sumber' => $sum_nilai_sumber,
+			'sum_nilai_target' => $sum_nilai_target,
+			'selisih_nilai' => $selisih_nilai,
+			'sum_total10_sumber' => $sum_t10_sumber,
+			'sum_total10_target' => $sum_t10_target,
+			'selisih_total10' => $selisih_t10,
+			'count_masalah' => count($masalah),
+			'masalah' => $masalah,
+		);
+	}
+
+	/**
+	 * Pastikan tabel history draft referensi ada.
+	 */
+	private function ensure_persediaan_draft_bulan_referensi_table()
+	{
+		if ($this->db->table_exists('persediaan_draft_bulan_referensi')) {
+			return true;
+		}
+
+		$sql_file = FCPATH . 'database/sql/persediaan_draft_bulan_referensi.sql';
+		if (is_file($sql_file)) {
+			$sql = @file_get_contents($sql_file);
+			if (is_string($sql) && trim($sql) !== '') {
+				$this->db->query($sql);
+			}
+		}
+
+		return $this->db->table_exists('persediaan_draft_bulan_referensi');
+	}
+
+	/**
+	 * Simpan snapshot bulan sebelumnya ke history draft (replace per bulan_target).
+	 */
+	private function simpan_persediaan_draft_bulan_referensi($bulan_target, $bulan_sumber, $rows_sumber, $rows_preview)
+	{
+		if (!$this->ensure_persediaan_draft_bulan_referensi_table()) {
+			return 0;
+		}
+
+		$bulan_target = trim((string) $bulan_target);
+		$bulan_sumber = trim((string) $bulan_sumber);
+		if ($bulan_target === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			return 0;
+		}
+
+		$status_by_id = array();
+		if (is_array($rows_preview)) {
+			foreach ($rows_preview as $prev) {
+				$id_src = isset($prev['id']) ? (int) $prev['id'] : 0;
+				if ($id_src > 0) {
+					$status_by_id[$id_src] = isset($prev['status_copy']) ? (string) $prev['status_copy'] : '';
+				}
+			}
+		}
+
+		$this->db->where('bulan_target', $bulan_target);
+		$this->db->delete('persediaan_draft_bulan_referensi');
+
+		$draft_fields = $this->db->list_fields('persediaan_draft_bulan_referensi');
+		$skip_fields = array('id', 'id_sumber', 'bulan_target', 'bulan_sumber', 'status_copy', 'created_at');
+		$saved = 0;
+		$now = date('Y-m-d H:i:s');
+
+		foreach ($rows_sumber as $row) {
+			$id_sumber = isset($row->id) ? (int) $row->id : 0;
+			$total_10 = $this->parse_angka_persediaan(isset($row->total_10) ? $row->total_10 : 0);
+			// History referensi: simpan yang total_10 > 0 (dasar generate)
+			if ($total_10 <= 0) {
+				continue;
+			}
+
+			$data = array(
+				'id_sumber' => $id_sumber,
+				'bulan_target' => $bulan_target,
+				'bulan_sumber' => $bulan_sumber,
+				'status_copy' => isset($status_by_id[$id_sumber]) ? $status_by_id[$id_sumber] : 'COPIED',
+				'created_at' => $now,
+			);
+
+			foreach ($draft_fields as $field) {
+				if (in_array($field, $skip_fields, true)) {
+					continue;
+				}
+				$data[$field] = isset($row->$field) ? $row->$field : null;
+			}
+
+			if ($this->db->insert('persediaan_draft_bulan_referensi', $data)) {
+				$saved++;
+			}
+		}
+
+		return $saved;
+	}
+
+	/**
+	 * Ambil history draft referensi untuk bulan target yang sedang dilihat di tab Persediaan.
+	 */
+	private function get_persediaan_draft_bulan_referensi_by_target($bulan_target)
+	{
+		$bulan_target = trim((string) $bulan_target);
+		if ($bulan_target === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			return array();
+		}
+		if (!$this->ensure_persediaan_draft_bulan_referensi_table()) {
+			return array();
+		}
+
+		return $this->db->query(
+			"SELECT * FROM `persediaan_draft_bulan_referensi`
+			WHERE `bulan_target` = ?
+			ORDER BY `id` ASC",
+			array($bulan_target)
+		)->result();
+	}
+
+	/**
+	 * Label bulan sumber dari draft terbaru untuk bulan target.
+	 */
+	private function get_persediaan_draft_bulan_referensi_sumber_label($bulan_target)
+	{
+		$bulan_target = trim((string) $bulan_target);
+		if ($bulan_target === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			return '';
+		}
+		if (!$this->ensure_persediaan_draft_bulan_referensi_table()) {
+			return '';
+		}
+
+		$row = $this->db->query(
+			"SELECT `bulan_sumber` FROM `persediaan_draft_bulan_referensi`
+			WHERE `bulan_target` = ?
+			ORDER BY `id` DESC
+			LIMIT 1",
+			array($bulan_target)
+		)->row();
+
+		if (!$row || empty($row->bulan_sumber)) {
+			$ts = strtotime($bulan_target . '-01');
+			return ($ts !== false) ? date('Y-m', strtotime('-1 month', $ts)) : '';
+		}
+
+		return (string) $row->bulan_sumber;
+	}
+
+	/**
+	 * Hapus semua record persediaan untuk bulan+tahun tertentu (berdasarkan tanggal_beli).
+	 */
+	private function generate_hapus_persediaan_bulan_tahun($tahun, $bulan)
+	{
+		$tahun = (int) $tahun;
+		$bulan = (int) $bulan;
+		if ($tahun < 2000 || $bulan < 1 || $bulan > 12) {
+			return 0;
+		}
+
+		$row_cnt = $this->db->query(
+			"SELECT COUNT(*) AS jml FROM `persediaan`
+			WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?",
+			array($tahun, $bulan)
+		)->row();
+		$count = $row_cnt ? (int) $row_cnt->jml : 0;
+		if ($count > 0) {
+			$this->db->query(
+				"DELETE FROM `persediaan`
+				WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?",
+				array($tahun, $bulan)
+			);
+		}
+
+		return $count;
 	}
 
 	/**
@@ -6562,6 +7198,43 @@ class Persediaan extends CI_Controller
 		}
 
 		persediaan_export_excel_tab_data_output($this, $bulan, $Persediaan, $filter);
+		exit();
+	}
+
+	/**
+	 * Export Excel tab persediaan_draft_bulan_referensi (bulan sebelumnya).
+	 * Pakai nilai_persediaan & total_10 tersimpan (sama seperti DataTable draft).
+	 */
+	public function excel_draft_bulan_referensi()
+	{
+		$bulan_target = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		if ($bulan_target === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
+			$bulan_target = date('Y-m');
+		}
+
+		$this->load->helper(array('exportexcel', 'persediaan_display'));
+
+		$rows = $this->get_persediaan_draft_bulan_referensi_by_target($bulan_target);
+		$bulan_sumber = $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan_target);
+		if ($bulan_sumber === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_sumber)) {
+			$ts = strtotime($bulan_target . '-01');
+			$bulan_sumber = ($ts !== false) ? date('Y-m', strtotime('-1 month', $ts)) : $bulan_target;
+		}
+
+		$label_sumber = date('m/Y', strtotime($bulan_sumber . '-01'));
+		$label_target = date('m/Y', strtotime($bulan_target . '-01'));
+		$title = 'PERSEDIAAN DRAFT BULAN REFERENSI (BULAN SEBELUMNYA) — Sumber '
+			. $label_sumber . ' untuk Target ' . $label_target;
+
+		persediaan_export_excel_tab_data_output(
+			$this,
+			$bulan_sumber,
+			$rows,
+			'draft_referensi',
+			true,
+			$title,
+			true
+		);
 		exit();
 	}
 

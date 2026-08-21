@@ -8,8 +8,9 @@ $table_id = isset($table_id) ? (string) $table_id : 'table-persediaan';
 $bulan_tampil = isset($bulan_tampil) ? (string) $bulan_tampil : date('Y-m');
 $tab_mode = isset($tab_mode) ? (string) $tab_mode : 'barang';
 $is_jasa_tab = (strtolower(trim($tab_mode)) === 'jasa');
-$show_keluar_columns = persediaan_tab_data_show_keluar_columns($tab_mode);
-$nama_barang_header = persediaan_tab_data_nama_barang_header($tab_mode);
+$is_draft_referensi_tab = (strtolower(trim($tab_mode)) === 'draft_referensi');
+$show_keluar_columns = persediaan_tab_data_show_keluar_columns($is_draft_referensi_tab ? 'barang' : $tab_mode);
+$nama_barang_header = persediaan_tab_data_nama_barang_header($is_draft_referensi_tab ? 'barang' : $tab_mode);
 $fixed_left_columns = persediaan_tab_data_fixed_left_columns();
 $nama_col_index = 2;
 
@@ -69,8 +70,14 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 		<?php
 		$start = 0;
 		foreach ($Persediaan_rows as $persediaan) {
-			$total_10_row = persediaan_hitung_total_10_kalkulasi($persediaan);
-			$nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
+			if ($is_draft_referensi_tab) {
+				// History referensi: tampilkan nilai tersimpan apa adanya (jangan pakai rumus kalkulasi).
+				$total_10_row = persediaan_parse_angka(isset($persediaan->total_10) ? $persediaan->total_10 : 0);
+				$nilai_persediaan_row = persediaan_parse_angka(isset($persediaan->nilai_persediaan) ? $persediaan->nilai_persediaan : 0);
+			} else {
+				$total_10_row = persediaan_hitung_total_10_kalkulasi($persediaan);
+				$nilai_persediaan_row = persediaan_hitung_nilai_persediaan_row($persediaan);
+			}
 			$total_total_10 += $total_10_row;
 			$total_nilai_persediaan += $nilai_persediaan_row;
 			$total_sa += persediaan_parse_angka(isset($persediaan->sa) ? $persediaan->sa : 0);
@@ -115,7 +122,11 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
 					<td><?php
 						if ($field_tgl_total === 'total_10') {
-							echo persediaan_tampil_total_10_net_row($persediaan);
+							if ($is_draft_referensi_tab) {
+								echo persediaan_format_angka_tampil($total_10_row);
+							} else {
+								echo persediaan_tampil_total_10_net_row($persediaan);
+							}
 						} else {
 							echo persediaan_row_get($persediaan, $field_tgl_total);
 						}
@@ -124,7 +135,13 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 						<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
 					<?php } ?>
 				<?php } ?>
-				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_nilai_persediaan_row($persediaan); ?></td>
+				<td class="text-right persediaan-col-money"><?php
+					if ($is_draft_referensi_tab) {
+						echo persediaan_format_rupiah_tampil($nilai_persediaan_row, true);
+					} else {
+						echo persediaan_tampil_nilai_persediaan_row($persediaan);
+					}
+				?></td>
 				<?php if ($show_keluar_columns) { ?>
 				<td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
 				<td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>

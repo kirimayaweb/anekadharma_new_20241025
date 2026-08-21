@@ -44,10 +44,23 @@
                             $this->load->helper('persediaan_display');
                             $Persediaan_data_barang = persediaan_filter_rows_by_kategori_tab($Persediaan_data, false);
                             $Persediaan_data_jasa = persediaan_filter_rows_by_kategori_tab($Persediaan_data, true);
+                            $Persediaan_data_draft_referensi = isset($Persediaan_data_draft_referensi) && is_array($Persediaan_data_draft_referensi)
+                                ? $Persediaan_data_draft_referensi
+                                : array();
                             $bulan_tampil = isset($bulan_persediaan_selected) && $bulan_persediaan_selected !== ''
                                 ? $bulan_persediaan_selected
                                 : date('Y-m');
                             $bulan_label_tampil = htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8');
+                            $draft_referensi_bulan_sumber = isset($draft_referensi_bulan_sumber) ? trim((string) $draft_referensi_bulan_sumber) : '';
+                            if ($draft_referensi_bulan_sumber === '' || !preg_match('/^\d{4}-\d{2}$/', $draft_referensi_bulan_sumber)) {
+                                $ts_draft_src = strtotime($bulan_tampil . '-01');
+                                $draft_referensi_bulan_sumber = ($ts_draft_src !== false)
+                                    ? date('Y-m', strtotime('-1 month', $ts_draft_src))
+                                    : '';
+                            }
+                            $draft_referensi_label = ($draft_referensi_bulan_sumber !== '')
+                                ? date('m/Y', strtotime($draft_referensi_bulan_sumber . '-01'))
+                                : 'bulan sebelumnya';
                             ?>
                             <?php if ($this->session->flashdata('pesan_persediaan')): ?>
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -93,6 +106,12 @@
                                         Jasa <span class="badge badge-info" id="badge-persediaan-jasa"><?php echo count($Persediaan_data_jasa); ?></span>
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="tab-persediaan-draft-referensi" data-toggle="pill" href="#panel-persediaan-draft-referensi" role="tab" aria-controls="panel-persediaan-draft-referensi" aria-selected="false">
+                                        persediaan_draft_bulan_referensi (bulan sebelumnya)
+                                        <span class="badge badge-secondary" id="badge-persediaan-draft-referensi"><?php echo count($Persediaan_data_draft_referensi); ?></span>
+                                    </a>
+                                </li>
                             </ul>
 
                             <div class="tab-content" id="persediaan-data-subtabs-content">
@@ -124,27 +143,73 @@
                                         'tab_mode' => 'jasa',
                                     )); ?>
                                 </div>
+                                <div class="tab-pane fade" id="panel-persediaan-draft-referensi" role="tabpanel" aria-labelledby="tab-persediaan-draft-referensi">
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span class="text-muted small mr-auto">
+                                            History referensi generate dari bulan <strong><?php echo htmlspecialchars($draft_referensi_label, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                            untuk target <strong><?php echo $bulan_label_tampil; ?></strong>
+                                            (tabel <code>persediaan_draft_bulan_referensi</code>)
+                                        </span>
+                                        <button type="button" class="btn btn-primary btn-sm" id="btn-cetak-excel-draft-referensi" title="Export DataTable draft referensi ke Excel">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <?php if (empty($Persediaan_data_draft_referensi)) { ?>
+                                        <div class="alert alert-light border small mb-2">
+                                            Belum ada history draft referensi untuk bulan ini.
+                                            Jalankan <strong>Generate &amp; Recalculate</strong> di tab Generate Persediaan terlebih dahulu.
+                                        </div>
+                                    <?php } ?>
+                                    <?php $this->load->view('anekadharma/persediaan/_persediaan_tab_data_table', array(
+                                        'Persediaan_rows' => $Persediaan_data_draft_referensi,
+                                        'table_id' => 'table-persediaan-draft-referensi',
+                                        'bulan_tampil' => $draft_referensi_bulan_sumber !== '' ? $draft_referensi_bulan_sumber : $bulan_tampil,
+                                        'tab_mode' => 'draft_referensi',
+                                    )); ?>
+                                </div>
                             </div>
                             <script>
                             (function() {
                                 try {
                                     var subTab = localStorage.getItem('persediaan_active_data_subtab');
-                                    if (subTab !== 'jasa') {
+                                    if (subTab !== 'jasa' && subTab !== 'draft_referensi') {
                                         return;
                                     }
                                     var tabBarang = document.getElementById('tab-persediaan-barang');
                                     var tabJasa = document.getElementById('tab-persediaan-jasa');
+                                    var tabDraft = document.getElementById('tab-persediaan-draft-referensi');
                                     var panelBarang = document.getElementById('panel-persediaan-barang');
                                     var panelJasa = document.getElementById('panel-persediaan-jasa');
-                                    if (!tabBarang || !tabJasa || !panelBarang || !panelJasa) {
+                                    var panelDraft = document.getElementById('panel-persediaan-draft-referensi');
+                                    if (!tabBarang || !panelBarang) {
                                         return;
                                     }
                                     tabBarang.classList.remove('active');
                                     tabBarang.setAttribute('aria-selected', 'false');
-                                    tabJasa.classList.add('active');
-                                    tabJasa.setAttribute('aria-selected', 'true');
                                     panelBarang.classList.remove('show', 'active');
-                                    panelJasa.classList.add('show', 'active');
+                                    if (tabJasa) {
+                                        tabJasa.classList.remove('active');
+                                        tabJasa.setAttribute('aria-selected', 'false');
+                                    }
+                                    if (panelJasa) {
+                                        panelJasa.classList.remove('show', 'active');
+                                    }
+                                    if (tabDraft) {
+                                        tabDraft.classList.remove('active');
+                                        tabDraft.setAttribute('aria-selected', 'false');
+                                    }
+                                    if (panelDraft) {
+                                        panelDraft.classList.remove('show', 'active');
+                                    }
+                                    if (subTab === 'draft_referensi' && tabDraft && panelDraft) {
+                                        tabDraft.classList.add('active');
+                                        tabDraft.setAttribute('aria-selected', 'true');
+                                        panelDraft.classList.add('show', 'active');
+                                    } else if (tabJasa && panelJasa) {
+                                        tabJasa.classList.add('active');
+                                        tabJasa.setAttribute('aria-selected', 'true');
+                                        panelJasa.classList.add('show', 'active');
+                                    }
                                 } catch (eSubTab) {}
                             })();
                             </script>
@@ -623,10 +688,88 @@
                                 </div>
                             </div>
                             <div class="alert alert-info small mb-3" id="gen-recalc-mode-notice">
-                                <strong>Alur Generate &amp; Recalculate:</strong>
-                                verifikasi pembelian/penjualan → copy persediaan bulan sebelumnya → pembelian → produk jadi (<code>sys_unit_produk</code>)
-                                → penjualan → <strong>bahan produksi</strong> (<code>sys_unit_produk_bahan</code> → kolom <code>bahan_produksi</code> &amp; <code>total_10</code>).
-                                Cocokkan bahan: <code>uuid_persediaan_bahan</code> atau <code>nama_barang_bahan + satuan_bahan + harga_satuan_bahan</code> = <code>namabarang + satuan + hpp</code>.
+                                <strong>Alur Generate &amp; Recalculate (fase verifikasi saat ini):</strong>
+                                1) hapus data persediaan bulan/tahun terpilih,
+                                2) copy dari bulan sebelumnya yang <code>total_10 &gt; 0</code>,
+                                3) tampilkan DataTable data bulan sebelumnya.
+                                <br/>
+                                <strong>Khusus Januari 2026</strong> (sumber Desember 2025 = data dasar):
+                                <em>tanpa rumus</em> — copy paste <code>total_10</code> apa adanya.
+                                Target setelah Januari 2026: koreksi <code>total_10 = sa + beli - (penjualan + pecah_satuan + bahan_produksi)</code> dulu, lalu copy.
+                            </div>
+
+                            <div class="card card-outline card-success mb-3 d-none" id="gen-copy-sumber-wrap">
+                                <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
+                                    <h3 class="card-title mb-0" id="gen-copy-sumber-title">
+                                        Data Persediaan Bulan Sebelumnya
+                                    </h3>
+                                    <span class="badge badge-success" id="gen-copy-sumber-badge">0 record</span>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="alert alert-light border small py-2 mb-2" id="gen-copy-sumber-summary">
+                                        Hasil proses copy akan tampil di sini setelah Generate &amp; Recalculate.
+                                    </div>
+                                    <div class="gen-recalc-table-scroll" style="min-height:240px;max-height:480px;">
+                                        <table id="tbl-gen-copy-bulan-sebelumnya" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0" style="width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Nama Barang</th>
+                                                    <th>Satuan</th>
+                                                    <th>HPP</th>
+                                                    <th>SA</th>
+                                                    <th>Beli</th>
+                                                    <th>Penjualan</th>
+                                                    <th>Pecah</th>
+                                                    <th>Bahan Prod.</th>
+                                                    <th>Total 10 Lama</th>
+                                                    <th>Total 10 Hitung</th>
+                                                    <th>Total 10 Final</th>
+                                                    <th>Tgl Beli</th>
+                                                    <th>Status</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card card-outline card-info mb-3 d-none" id="gen-rekon-nilai-wrap">
+                                <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
+                                    <h3 class="card-title mb-0">
+                                        Rekon Nilai Persediaan: Bulan Sebelumnya vs Hasil Generate
+                                    </h3>
+                                    <span class="badge badge-secondary" id="gen-rekon-nilai-badge">—</span>
+                                </div>
+                                <div class="card-body p-2">
+                                    <div class="alert alert-light border small py-2 mb-2" id="gen-rekon-nilai-summary">
+                                        Ringkasan perbandingan total nilai_persediaan akan tampil di sini.
+                                    </div>
+                                    <div class="gen-recalc-table-scroll d-none" id="gen-rekon-nilai-table-wrap" style="min-height:180px;max-height:420px;">
+                                        <table id="tbl-gen-rekon-nilai" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0" style="width:100%;">
+                                            <thead>
+                                                <tr>
+                                                    <th>No</th>
+                                                    <th>Masalah</th>
+                                                    <th>Nama Barang</th>
+                                                    <th>Satuan</th>
+                                                    <th>HPP</th>
+                                                    <th>Total10 Sumber</th>
+                                                    <th>Total10 Target</th>
+                                                    <th>Selisih Total10</th>
+                                                    <th>Nilai Sumber</th>
+                                                    <th>Nilai Target</th>
+                                                    <th>Selisih Nilai</th>
+                                                    <th>ID Sumber</th>
+                                                    <th>ID Target</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="card card-outline card-primary mb-3" id="gen-history-generate-wrap">
@@ -2920,6 +3063,7 @@ window.addEventListener('load', function() {
     var urlAnalisaRecalculatePersediaan = <?php echo json_encode(isset($url_analisa_recalculate_persediaan) ? $url_analisa_recalculate_persediaan : site_url('Persediaan/ajax_analisa_recalculate_persediaan')); ?>;
     var urlRecalculatePersediaanBatch = <?php echo json_encode(isset($url_recalculate_persediaan_batch) ? $url_recalculate_persediaan_batch : site_url('Persediaan/ajax_recalculate_persediaan_batch')); ?>;
     var urlGenerateRecalculateBatch = <?php echo json_encode(isset($url_generate_recalculate_batch) ? $url_generate_recalculate_batch : site_url('Persediaan/ajax_generate_recalculate_batch')); ?>;
+    var urlGenerateCopyBulanSebelumnya = <?php echo json_encode(isset($url_generate_copy_bulan_sebelumnya) ? $url_generate_copy_bulan_sebelumnya : site_url('Persediaan/ajax_generate_copy_bulan_sebelumnya')); ?>;
     var urlGenerateProsesPersediaanView = <?php echo json_encode(isset($url_generate_proses_persediaan_view) ? $url_generate_proses_persediaan_view : site_url('Persediaan/ajax_generate_proses_persediaan_view')); ?>;
     var urlGenerateProsesPembelianView = <?php echo json_encode(isset($url_generate_proses_pembelian_view) ? $url_generate_proses_pembelian_view : site_url('Persediaan/ajax_generate_proses_pembelian_view')); ?>;
     var urlGenerateProsesProduksiView = <?php echo json_encode(isset($url_generate_proses_produksi_view) ? $url_generate_proses_produksi_view : site_url('Persediaan/ajax_generate_proses_produksi_view')); ?>;
@@ -2946,6 +3090,7 @@ window.addEventListener('load', function() {
     var urlExcelRekonsiliasiTransaksi = <?php echo json_encode(isset($url_excel_rekonsiliasi_transaksi) ? $url_excel_rekonsiliasi_transaksi : site_url('Persediaan/excel_rekonsiliasi_transaksi')); ?>;
     var urlRecalculateExcel = <?php echo json_encode(isset($url_recalculate_excel) ? $url_recalculate_excel : site_url('Persediaan/excel_recalculate')); ?>;
     var urlExcelPersediaan = <?php echo json_encode(isset($url_excel_persediaan) ? $url_excel_persediaan : site_url('Persediaan/excel')); ?>;
+    var urlExcelDraftBulanReferensi = <?php echo json_encode(isset($url_excel_draft_bulan_referensi) ? $url_excel_draft_bulan_referensi : site_url('Persediaan/excel_draft_bulan_referensi')); ?>;
     var urlCompareTabelList = <?php echo json_encode(isset($url_compare_tabel_list) ? $url_compare_tabel_list : site_url('Persediaan/ajax_compare_tabel_list')); ?>;
     var urlCompareTabelRun = <?php echo json_encode(isset($url_compare_tabel_run) ? $url_compare_tabel_run : site_url('Persediaan/ajax_compare_tabel_run')); ?>;
     var urlCompareTabelExcel = <?php echo json_encode(isset($url_compare_tabel_excel) ? $url_compare_tabel_excel : site_url('Persediaan/excel_compare_tabel')); ?>;
@@ -3300,92 +3445,308 @@ window.addEventListener('load', function() {
 
     function htmlGenRecalcConfirmMessage(bulanKey, res) {
         var countSumber = (res && typeof res.count_sumber !== 'undefined') ? res.count_sumber : '—';
+        var labelSumber = (res && res.bulan_sumber) ? res.bulan_sumber : 'bulan sebelumnya';
+        var isJan2026 = (String(bulanKey) === '2026-01');
+        var step2 = isJan2026
+            ? '2. Mode data dasar DES 2025: copy paste apa adanya (tanpa rumus), hanya total_10 &gt; 0 ('
+                + escapeHtmlGen(String(countSumber)) + ' record layak)<br/>'
+            : '2. Perbaiki <code>total_10</code> &amp; copy dari ' + escapeHtmlGen(String(labelSumber))
+                + ' (' + escapeHtmlGen(String(countSumber)) + ' record, hanya total_10 &gt; 0)<br/>';
         return '<p>Bulan target: <strong>' + escapeHtmlGen(bulanKey) + '</strong></p>'
             + '<p class="small text-muted mb-0">'
-            + '<strong>Urutan proses:</strong><br/>'
-            + '1. Verifikasi uuid_persediaan — pembelian &amp; penjualan<br/>'
-            + '2. Hapus &amp; copy persediaan dari bulan sebelumnya (' + escapeHtmlGen(String(countSumber)) + ' record)<br/>'
-            + '3. Pembelian barang/jasa → insert ke persediaan (beli)<br/>'
-            + '4. sys_unit_produk → insert ke persediaan (beli)'
+            + '<strong>Urutan proses (fase verifikasi):</strong><br/>'
+            + '1. Hapus data persediaan bulan/tahun terpilih<br/>'
+            + step2
+            + '3. Tampilkan DataTable data persediaan bulan sebelumnya'
             + '</p>';
     }
 
-    function startGenerateRecalculateAfterConfirm(bulanKey, res) {
-        var totalPhase = (res && res.count_sumber) ? res.count_sumber : 0;
-        if (res && res.can_recalc_only && totalPhase <= 0) {
-            totalPhase = Math.max((res.count_target || 0), 1);
+    var genCopySumberDt = null;
+    var genRekonNilaiDt = null;
+
+    function formatGenRekonNum(val) {
+        var n = parseFloat(val);
+        if (isNaN(n)) {
+            return String(val == null ? '' : val);
         }
-        if (!totalPhase) {
-            totalPhase = 1;
+        try {
+            return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (eFmt) {
+            return String(n);
         }
+    }
 
-        genRecalcBatchRunning = true;
-        setGenRecalcButtonBusy(true);
-        setGenRecalcButtonPhaseLabel('Proses berjalan...');
-
-        // Reset data ringan — jangan init DataTable sebelum fetch batch
-        genRecalcData = createEmptyGenRecalcData();
-        genRecalcSummaryHtml = '';
-        genRecalcV2ProsesReady = false;
-        genProsesLastLoadedBulan = null;
-        genProsesPembelianLastLoadedBulan = null;
-        genProsesProduksiLastLoadedBulan = null;
-        genProsesPecahSatuanLastLoadedBulan = null;
-        genProsesPenjualanLastLoadedBulan = null;
-        genProsesPersediaanFullLastLoadedBulan = null;
-        try { clearGenRecalcResultStorage(bulanKey); } catch (eClr) {}
-        // Generate baru: hapus data lokal lama bulan ini, lalu kosongkan box
-        try { clearGenProsesLocalBulan(bulanKey); } catch (eLoc) {}
-        try {
-            resetGenerateProsesMountsPlaceholder();
-            $('#gen-recalc-summary').html('<em>Proses berjalan...</em>');
-        } catch (ePh) {}
-
-        setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> Generate &amp; Recalculate bulan <strong>'
-            + escapeHtmlGen(bulanKey) + '</strong> sedang berjalan...');
-
-        // Tampilkan process Swal (mengganti dialog konfirmasi jika masih ada)
-        try {
-            showGenRecalcProcessSwal(htmlGenRecalcProgress({
-                phase: 'verifikasi_pembelian',
-                progress_label: 'Fase 1: Verifikasi tbl_pembelian / tbl_pembelian_jasa',
-                offset_selesai: 0,
-                total_phase: totalPhase,
-                pesan: 'Menghubungi server — memulai batch generate...'
-            }), true, true);
-        } catch (eSwal) {
-            console.warn('GenRecalc process swal:', eSwal);
+    function renderGenRekonNilaiTable(res) {
+        var $wrap = $('#gen-rekon-nilai-wrap');
+        if (!$wrap.length) {
+            return;
         }
-
-        // Langsung mulai fetch batch
-        try {
-            runGenerateRecalculateBatch(bulanKey, 0, { offset: 0, active: true, isStart: true });
-        } catch (eBatch) {
-            console.error('GenRecalc start batch:', eBatch);
-            stopGenRecalcBatchRunning();
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Gagal memulai proses',
-                    text: eBatch && eBatch.message ? eBatch.message : String(eBatch)
-                });
-            }
+        var rekon = (res && res.rekon) ? res.rekon : null;
+        if (!rekon) {
+            $wrap.addClass('d-none');
             return;
         }
 
-        // Init shell tabel di background (JANGAN reset placeholder lagi — itu mengosongkan hasil load)
-        setTimeout(function() {
-            try {
-                $('#gen-recalc-phase-produksi').addClass('d-none');
-                $('#gen-recalc-phase-penjualan').addClass('d-none');
-                $('#gen-recalc-phase-full-only').addClass('d-none');
-                initGenRecalcTableTemplateCache();
-                restoreAllGenRecalcTableShells();
-                destroyGenRecalcDataTables();
-            } catch (eInit) {
-                console.error('GenRecalc deferred init:', eInit);
+        $wrap.removeClass('d-none card-outline-success card-outline-danger card-outline-warning');
+        var ok = !!rekon.ok;
+        if (ok) {
+            $wrap.addClass('card-outline').css('border-color', '');
+            $wrap.find('.card-header').removeClass('bg-danger bg-warning').addClass('bg-success');
+            $('#gen-rekon-nilai-badge').removeClass('badge-danger badge-warning').addClass('badge-success').text('SAMA');
+        } else {
+            $wrap.find('.card-header').removeClass('bg-success').addClass('bg-danger');
+            $('#gen-rekon-nilai-badge').removeClass('badge-success badge-warning').addClass('badge-danger')
+                .text('BERBEDA (' + String(rekon.count_masalah || 0) + ')');
+        }
+
+        var labelSumber = (res && res.label_sumber) ? res.label_sumber : (res.bulan_sumber || '');
+        var labelTarget = (res && res.label_target) ? res.label_target : (res.bulan_target || '');
+        var summaryHtml = '<div class="mb-1"><strong>Sumber (' + escapeHtmlGen(labelSumber) + '):</strong> '
+            + formatGenRekonNum(rekon.sum_nilai_sumber) + ' &nbsp;|&nbsp; record: ' + escapeHtmlGen(String(rekon.count_sumber || 0))
+            + ' &nbsp;|&nbsp; Σ total_10: ' + formatGenRekonNum(rekon.sum_total10_sumber) + '</div>'
+            + '<div class="mb-1"><strong>Target (' + escapeHtmlGen(labelTarget) + '):</strong> '
+            + formatGenRekonNum(rekon.sum_nilai_target) + ' &nbsp;|&nbsp; record: ' + escapeHtmlGen(String(rekon.count_target || 0))
+            + ' &nbsp;|&nbsp; Σ total_10: ' + formatGenRekonNum(rekon.sum_total10_target) + '</div>'
+            + '<div class="mb-0"><strong>Selisih nilai_persediaan (target − sumber):</strong> '
+            + '<span class="' + (ok ? 'text-success' : 'text-danger font-weight-bold') + '">'
+            + formatGenRekonNum(rekon.selisih_nilai) + '</span>'
+            + ' &nbsp;|&nbsp; <strong>Selisih total_10:</strong> ' + formatGenRekonNum(rekon.selisih_total10)
+            + '</div>';
+        if (!ok) {
+            summaryHtml += '<div class="mt-2 text-danger small"><i class="fas fa-exclamation-triangle"></i> '
+                + 'Ditemukan <strong>' + escapeHtmlGen(String(rekon.count_masalah || 0)) + '</strong> baris bermasalah. '
+                + 'Detail ada di tabel di bawah (NILAI_PERSEDIAAN_BEDA / TOTAL_10_BEDA / TIDAK_ADA_DI_TARGET / EXTRA_DI_TARGET).</div>';
+        } else {
+            summaryHtml += '<div class="mt-2 text-success small"><i class="fas fa-check-circle"></i> '
+                + 'Total nilai_persediaan sumber dan hasil generate sama. Tidak ada selisih.</div>';
+        }
+        $('#gen-rekon-nilai-summary').html(summaryHtml);
+
+        var masalah = rekon.masalah || [];
+        var $tableWrap = $('#gen-rekon-nilai-table-wrap');
+        if (!masalah.length) {
+            $tableWrap.addClass('d-none');
+            if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-rekon-nilai')) {
+                $('#tbl-gen-rekon-nilai').DataTable().clear().draw(false);
             }
-        }, 100);
+            return;
+        }
+        $tableWrap.removeClass('d-none');
+
+        var dtRows = masalah.map(function(r) {
+            return [
+                r.no || '',
+                '<span class="badge badge-danger">' + escapeHtmlGen(String(r.masalah || '')) + '</span>',
+                r.namabarang || '',
+                r.satuan || '',
+                r.hpp || '',
+                r.total_10_sumber || '',
+                r.total_10_target || '',
+                r.selisih_total_10 || '',
+                r.nilai_sumber || '',
+                r.nilai_target || '',
+                r.selisih_nilai || '',
+                r.id_sumber || '',
+                r.id_target || ''
+            ];
+        });
+
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-rekon-nilai')) {
+            genRekonNilaiDt = $('#tbl-gen-rekon-nilai').DataTable();
+            genRekonNilaiDt.clear();
+            genRekonNilaiDt.rows.add(dtRows);
+            genRekonNilaiDt.draw(false);
+        } else if ($.fn.DataTable) {
+            genRekonNilaiDt = $('#tbl-gen-rekon-nilai').DataTable({
+                data: dtRows,
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+                order: [[0, 'asc']],
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    emptyTable: 'Tidak ada baris bermasalah',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    infoEmpty: 'Menampilkan 0 data',
+                    search: 'Cari:',
+                    lengthMenu: 'Tampil _MENU_',
+                    zeroRecords: 'Tidak ada data yang cocok',
+                    paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+                },
+                columnDefs: [
+                    { targets: [0, 5, 6, 7, 8, 9, 10, 11, 12], className: 'text-right' },
+                    { targets: [1], orderable: false }
+                ]
+            });
+        }
+    }
+
+    function renderGenCopyBulanSebelumnyaTable(res) {
+        var $wrap = $('#gen-copy-sumber-wrap');
+        if (!$wrap.length) {
+            return;
+        }
+        $wrap.removeClass('d-none');
+        var labelSumber = (res && res.label_sumber) ? res.label_sumber : ((res && res.bulan_sumber) ? res.bulan_sumber : 'Bulan Sebelumnya');
+        var labelTarget = (res && res.label_target) ? res.label_target : ((res && res.bulan_target) ? res.bulan_target : '');
+        $('#gen-copy-sumber-title').text('Data Persediaan Bulan: ' + labelSumber);
+        var rows = (res && res.rows) ? res.rows : [];
+        $('#gen-copy-sumber-badge').text(rows.length + ' record');
+        $('#gen-copy-sumber-summary').html(
+            '<strong>Target:</strong> ' + escapeHtmlGen(labelTarget)
+            + ' &nbsp;|&nbsp; <strong>Dihapus:</strong> ' + escapeHtmlGen(String(res.deleted || 0))
+            + ' &nbsp;|&nbsp; <strong>Koreksi total_10:</strong> ' + escapeHtmlGen(String(res.updated_total10 || 0))
+            + ' &nbsp;|&nbsp; <strong>Copy:</strong> ' + escapeHtmlGen(String(res.copied || 0))
+            + ' &nbsp;|&nbsp; <strong>Skip:</strong> ' + escapeHtmlGen(String(res.skipped || 0))
+            + ' &nbsp;|&nbsp; <strong>Draft history:</strong> ' + escapeHtmlGen(String(res.draft_saved || 0))
+        );
+
+        var dtRows = rows.map(function(r) {
+            var status = String(r.status_copy || '');
+            var statusHtml = status === 'COPIED'
+                ? '<span class="badge badge-success">COPIED</span>'
+                : '<span class="badge badge-secondary">SKIP</span>';
+            return [
+                r.no || '',
+                r.namabarang || '',
+                r.satuan || '',
+                r.hpp || '',
+                r.sa || '',
+                r.beli || '',
+                r.penjualan || '',
+                r.pecah_satuan || '',
+                r.bahan_produksi || '',
+                r.total_10_lama || '',
+                r.total_10_hitung || '',
+                r.total_10 || '',
+                r.tanggal_beli || '',
+                statusHtml,
+                r.keterangan || ''
+            ];
+        });
+
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-copy-bulan-sebelumnya')) {
+            genCopySumberDt = $('#tbl-gen-copy-bulan-sebelumnya').DataTable();
+            genCopySumberDt.clear();
+            genCopySumberDt.rows.add(dtRows);
+            genCopySumberDt.draw(false);
+        } else if ($.fn.DataTable) {
+            genCopySumberDt = $('#tbl-gen-copy-bulan-sebelumnya').DataTable({
+                data: dtRows,
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+                order: [[0, 'asc']],
+                scrollX: true,
+                autoWidth: false,
+                language: {
+                    emptyTable: 'Tidak ada data bulan sebelumnya',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    infoEmpty: 'Menampilkan 0 data',
+                    search: 'Cari:',
+                    lengthMenu: 'Tampil _MENU_',
+                    zeroRecords: 'Tidak ada data yang cocok',
+                    paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+                },
+                columnDefs: [
+                    { targets: [0, 4, 5, 6, 7, 8, 9, 10, 11], className: 'text-right' },
+                    { targets: [13], orderable: false }
+                ]
+            });
+        }
+
+        renderGenRekonNilaiTable(res);
+
+        try {
+            var $rekon = $('#gen-rekon-nilai-wrap');
+            var $scrollTo = ($rekon.length && !$rekon.hasClass('d-none')) ? $rekon : $wrap;
+            $('html, body').animate({ scrollTop: $scrollTo.offset().top - 80 }, 400);
+        } catch (eScroll) {}
+    }
+
+    function startGenerateRecalculateAfterConfirm(bulanKey, res) {
+        genRecalcBatchRunning = true;
+        setGenRecalcButtonBusy(true);
+        setGenRecalcButtonPhaseLabel('Copy bulan sebelumnya...');
+
+        setStatusGeneratePersediaan(
+            'info',
+            '<i class="fas fa-spinner fa-spin"></i> Memproses hapus + copy persediaan bulan sebelumnya untuk target <strong>'
+                + escapeHtmlGen(bulanKey) + '</strong>...'
+        );
+
+        showGenRecalcProcessSwal(
+            htmlGenRecalcProcessAnimWrap(
+                '<p class="mb-1 text-center"><strong>Fase verifikasi Generate</strong></p>'
+                + '<p class="mb-0 text-muted text-center small">Hapus bulan target → copy → rekon nilai_persediaan sumber vs target</p>'
+            ),
+            true,
+            true
+        );
+
+        $.ajax({
+            url: urlGenerateCopyBulanSebelumnya,
+            type: 'POST',
+            dataType: 'json',
+            timeout: 0,
+            data: { bulan: bulanKey }
+        }).done(function(resp) {
+            stopGenRecalcBatchRunning();
+            if (!resp || !resp.ok) {
+                closeGenRecalcProcessSwalThen(function() {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: (resp && resp.message) ? resp.message : 'Proses copy gagal.'
+                    });
+                }, 10);
+                setStatusGeneratePersediaan('danger', (resp && resp.message) ? resp.message : 'Proses copy gagal.');
+                return;
+            }
+
+            renderGenCopyBulanSebelumnyaTable(resp);
+            var rekonOk = (typeof resp.rekon_ok === 'undefined') ? true : !!resp.rekon_ok;
+            setStatusGeneratePersediaan(
+                rekonOk ? 'success' : 'warning',
+                '<i class="fas fa-' + (rekonOk ? 'check-circle' : 'exclamation-triangle') + '"></i> '
+                    + escapeHtmlGen(resp.message || 'Fase copy selesai.')
+                    + '<br/><small class="text-muted">Cek box <strong>Rekon Nilai Persediaan</strong> di bawah untuk detail selisih.</small>'
+            );
+            closeGenRecalcProcessSwalThen(function() {
+                var rekon = resp.rekon || {};
+                var htmlRekon = '';
+                if (resp.rekon) {
+                    htmlRekon = '<hr class="my-2"/>'
+                        + '<p class="mb-1"><strong>Rekon nilai_persediaan</strong></p>'
+                        + '<p class="small mb-1">Sumber: <strong>' + formatGenRekonNum(rekon.sum_nilai_sumber) + '</strong></p>'
+                        + '<p class="small mb-1">Target: <strong>' + formatGenRekonNum(rekon.sum_nilai_target) + '</strong></p>'
+                        + '<p class="small mb-0">Selisih: <strong class="' + (rekonOk ? 'text-success' : 'text-danger') + '">'
+                        + formatGenRekonNum(rekon.selisih_nilai) + '</strong>'
+                        + (rekonOk ? '' : ' &nbsp;|&nbsp; baris bermasalah: <strong>' + String(rekon.count_masalah || 0) + '</strong>')
+                        + '</p>';
+                }
+                Swal.fire({
+                    icon: rekonOk ? 'success' : 'warning',
+                    title: rekonOk ? 'Fase copy selesai — nilai SAMA' : 'Fase copy selesai — nilai BERBEDA',
+                    html: '<p class="mb-1">' + escapeHtmlGen(resp.message || 'Selesai.') + '</p>' + htmlRekon,
+                    confirmButtonText: 'OK',
+                    width: 640
+                });
+            }, 10);
+            try { cekGeneratePersediaanBulan(); } catch (eCek) {}
+        }).fail(function(xhr) {
+            stopGenRecalcBatchRunning();
+            var msg = 'Tidak dapat menghubungi server.';
+            if (xhr && xhr.responseText) {
+                var t = String(xhr.responseText).replace(/<[^>]+>/g, ' ').trim();
+                if (t) {
+                    msg = t.substring(0, 240);
+                }
+            }
+            closeGenRecalcProcessSwalThen(function() {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
+            }, 10);
+            setStatusGeneratePersediaan('danger', msg);
+        });
     }
 
     var PERS_JASA_DT_SEARCH_KEY = 'persediaan_jasa_dt_search';
@@ -3658,7 +4019,13 @@ window.addEventListener('load', function() {
     }
 
     function persediaanDataSubTabKeyFromHref(href) {
-        return href === '#panel-persediaan-jasa' ? 'jasa' : 'barang';
+        if (href === '#panel-persediaan-jasa') {
+            return 'jasa';
+        }
+        if (href === '#panel-persediaan-draft-referensi') {
+            return 'draft_referensi';
+        }
+        return 'barang';
     }
 
     function savePersediaanMainTabKey(key) {
@@ -3722,7 +4089,8 @@ window.addEventListener('load', function() {
     function activatePersediaanDataSubTabByKey(key) {
         var map = {
             barang: '#tab-persediaan-barang',
-            jasa: '#tab-persediaan-jasa'
+            jasa: '#tab-persediaan-jasa',
+            draft_referensi: '#tab-persediaan-draft-referensi'
         };
         var sel = map[key] || map.barang;
         if ($(sel).length) {
@@ -10988,6 +11356,7 @@ window.addEventListener('load', function() {
     try {
         initPersediaanTabDataTable('#table-persediaan-barang');
         initPersediaanTabDataTable('#table-persediaan-jasa');
+        initPersediaanTabDataTable('#table-persediaan-draft-referensi');
         setTimeout(adjustAllPersediaanDataTableAreas, 300);
     } catch (dtErr) {
         console.warn('DataTable persediaan:', dtErr);
@@ -12230,9 +12599,62 @@ window.addEventListener('load', function() {
         });
     }
 
+    function exportPersediaanDraftReferensiExcel() {
+        if (!urlExcelDraftBulanReferensi) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'URL export Excel draft referensi tidak tersedia.' });
+            return;
+        }
+        var bulan = $('#bulan_persediaan').val() || '';
+        if (!bulan) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan persediaan terlebih dahulu.' });
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('bulan_persediaan', bulan);
+
+        tampilkanSwalExcelProgress();
+
+        fetch(urlExcelDraftBulanReferensi, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: 'File Excel draft referensi berhasil diunduh.',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            if (excelProgressTimer) {
+                clearInterval(excelProgressTimer);
+                excelProgressTimer = null;
+            }
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Terjadi kesalahan saat export Excel draft referensi.'
+            });
+        });
+    }
+
     $(document).on('click', '.btn-cetak-excel-persediaan-tab', function(e) {
         e.preventDefault();
         exportPersediaanTabExcel($(this).data('filter') || 'barang');
+    });
+
+    $(document).on('click', '#btn-cetak-excel-draft-referensi', function(e) {
+        e.preventDefault();
+        exportPersediaanDraftReferensiExcel();
     });
 
     $('#btn-cetak-excel-rekap').on('click', function() {

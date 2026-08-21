@@ -1335,7 +1335,7 @@ function persediaan_filter_rows_by_kategori_tab($rows, $want_jasa = false)
 /**
  * Sel baris datatable tab Data Persediaan (nilai tampilan sama dengan view).
  */
-function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = null, $show_keluar_columns = true)
+function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = null, $show_keluar_columns = true, $use_stored_nilai = false)
 {
 	$cells = array(
 		$no,
@@ -1353,7 +1353,13 @@ function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = 
 
 	foreach (persediaan_list_fields_tgl_keluar_sampai_total_10($CI) as $field) {
 		if ($field === 'total_10') {
-			$cells[] = persediaan_tampil_total_10_net_row($row);
+			if ($use_stored_nilai) {
+				$cells[] = persediaan_format_angka_tampil(
+					persediaan_parse_angka(isset($row->total_10) ? $row->total_10 : 0)
+				);
+			} else {
+				$cells[] = persediaan_tampil_total_10_net_row($row);
+			}
 		} else {
 			$cells[] = persediaan_row_get($row, $field);
 			if (persediaan_field_has_nominal_column($field)) {
@@ -1362,7 +1368,14 @@ function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = 
 		}
 	}
 
-	$cells[] = persediaan_tampil_nilai_persediaan_row($row);
+	if ($use_stored_nilai) {
+		$cells[] = persediaan_format_rupiah_tampil(
+			persediaan_parse_angka(isset($row->nilai_persediaan) ? $row->nilai_persediaan : 0),
+			true
+		);
+	} else {
+		$cells[] = persediaan_tampil_nilai_persediaan_row($row);
+	}
 	if ($show_keluar_columns) {
 		$cells[] = isset($row->penjualan) ? $row->penjualan : 0;
 		$cells[] = isset($row->pecah_satuan) ? $row->pecah_satuan : 0;
@@ -1396,15 +1409,18 @@ function persediaan_export_write_styled_cell($row, $col, $value, $col_types, $st
 }
 
 /**
- * Export Excel tab Data Persediaan (Barang / Jasa) — tampilan selaras datatable + style tabel.
+ * Export Excel tab Data Persediaan (Barang / Jasa / Draft Referensi) — tampilan selaras datatable + style tabel.
  */
-function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kategori = 'barang', $prepare_download = true, $title_override = '')
+function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kategori = 'barang', $prepare_download = true, $title_override = '', $use_stored_nilai = false)
 {
 	$CI->load->helper('exportexcel');
 
 	$filter_kategori = strtolower(trim((string) $filter_kategori));
+	$use_stored_nilai = $use_stored_nilai || ($filter_kategori === 'draft_referensi');
 	if ($filter_kategori === 'jasa') {
 		$judul_jenis = 'Jasa';
+	} elseif ($filter_kategori === 'draft_referensi') {
+		$judul_jenis = 'Draft_Referensi_Bulan_Sebelumnya';
 	} elseif ($filter_kategori === 'barang') {
 		$judul_jenis = 'Barang';
 	} else {
@@ -1417,7 +1433,9 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		? date('m/Y', strtotime($bulan . '-01'))
 		: $bagian_bulan;
 
-	$show_keluar_columns = persediaan_tab_data_show_keluar_columns($filter_kategori);
+	$show_keluar_columns = persediaan_tab_data_show_keluar_columns(
+		($filter_kategori === 'draft_referensi') ? 'barang' : $filter_kategori
+	);
 
 	$styleHeader = 4;
 	$styleBorder = 3;
@@ -1425,8 +1443,16 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$styleLeft = 7;
 	$styleFooter = 5;
 
-	$headers = persediaan_tab_data_export_headers($CI, $show_keluar_columns, $filter_kategori);
-	$col_types = persediaan_tab_data_export_column_types($CI, $show_keluar_columns, $filter_kategori);
+	$headers = persediaan_tab_data_export_headers(
+		$CI,
+		$show_keluar_columns,
+		($filter_kategori === 'draft_referensi') ? 'barang' : $filter_kategori
+	);
+	$col_types = persediaan_tab_data_export_column_types(
+		$CI,
+		$show_keluar_columns,
+		($filter_kategori === 'draft_referensi') ? 'barang' : $filter_kategori
+	);
 	$col_count = count($headers);
 
 	$widths = array(5, 10, 28, 8, 10, 8, 12, 8, 8, 12, 8);
@@ -1458,7 +1484,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	xlsSetColumnWidths($widths);
 	$title_line = ($title_override !== '')
 		? (string) $title_override
-		: ('DATA PERSEDIAAN — ' . strtoupper($judul_jenis) . ' — Bulan ' . $bulan_label);
+		: ('DATA PERSEDIAAN — ' . strtoupper(str_replace('_', ' ', $judul_jenis)) . ' — Bulan ' . $bulan_label);
 	xlsWriteLabelBold14(0, 0, $title_line);
 	xlsWriteLabel(1, 0, 'Dicetak: ' . date('d/m/Y H:i:s') . ' | Total baris: ' . count($rows));
 
@@ -1471,8 +1497,13 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$no = 0;
 	foreach ($rows as $data) {
 		$no++;
-		$total_total_10 += persediaan_hitung_total_10_kalkulasi($data);
-		$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+		if ($use_stored_nilai) {
+			$total_total_10 += persediaan_parse_angka(isset($data->total_10) ? $data->total_10 : 0);
+			$total_nilai_persediaan += persediaan_parse_angka(isset($data->nilai_persediaan) ? $data->nilai_persediaan : 0);
+		} else {
+			$total_total_10 += persediaan_hitung_total_10_kalkulasi($data);
+			$total_nilai_persediaan += persediaan_hitung_nilai_persediaan_row($data);
+		}
 		$total_sa += persediaan_parse_angka(isset($data->sa) ? $data->sa : persediaan_row_get($data, 'sa'));
 		$total_sa_nominal += persediaan_hitung_sa_nominal_row($data);
 		$total_beli += persediaan_parse_angka(isset($data->beli) ? $data->beli : persediaan_row_get($data, 'beli'));
@@ -1486,7 +1517,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 			$total_bahan_produksi += persediaan_parse_angka(isset($data->bahan_produksi) ? $data->bahan_produksi : 0);
 		}
 
-		$cells = persediaan_tab_data_display_cells($data, $no, $bulan, $CI, $show_keluar_columns);
+		$cells = persediaan_tab_data_display_cells($data, $no, $bulan, $CI, $show_keluar_columns, $use_stored_nilai);
 		$col = 0;
 		foreach ($cells as $cell) {
 			if ($col === 0) {
