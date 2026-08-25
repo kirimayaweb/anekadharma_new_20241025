@@ -698,44 +698,6 @@
                                 Target setelah Januari 2026: koreksi <code>total_10 = sa + beli - (penjualan + pecah_satuan + bahan_produksi)</code> dulu, lalu copy.
                             </div>
 
-                            <div class="card card-outline card-success mb-3 d-none" id="gen-copy-sumber-wrap">
-                                <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
-                                    <h3 class="card-title mb-0" id="gen-copy-sumber-title">
-                                        Data Persediaan Bulan Sebelumnya
-                                    </h3>
-                                    <span class="badge badge-success" id="gen-copy-sumber-badge">0 record</span>
-                                </div>
-                                <div class="card-body p-2">
-                                    <div class="alert alert-light border small py-2 mb-2" id="gen-copy-sumber-summary">
-                                        Hasil proses copy akan tampil di sini setelah Generate &amp; Recalculate.
-                                    </div>
-                                    <div class="gen-recalc-table-scroll" style="min-height:240px;max-height:480px;">
-                                        <table id="tbl-gen-copy-bulan-sebelumnya" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0" style="width:100%;">
-                                            <thead>
-                                                <tr>
-                                                    <th>No</th>
-                                                    <th>Nama Barang</th>
-                                                    <th>Satuan</th>
-                                                    <th>HPP</th>
-                                                    <th>SA</th>
-                                                    <th>Beli</th>
-                                                    <th>Penjualan</th>
-                                                    <th>Pecah</th>
-                                                    <th>Bahan Prod.</th>
-                                                    <th>Total 10 Lama</th>
-                                                    <th>Total 10 Hitung</th>
-                                                    <th>Total 10 Final</th>
-                                                    <th>Tgl Beli</th>
-                                                    <th>Status</th>
-                                                    <th>Keterangan</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="card card-outline card-info mb-3 d-none" id="gen-rekon-nilai-wrap">
                                 <div class="card-header py-2 d-flex flex-wrap align-items-center justify-content-between">
                                     <h3 class="card-title mb-0">
@@ -812,7 +774,55 @@
                                     </div>
 
                                     <div id="gen-proses-persediaan-mount" class="gen-proses-persediaan-mount">
-                                        <p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Hasil proses generate akan muncul di sini setelah selesai.</p>
+                                        <div class="d-none" id="gen-copy-sumber-wrap">
+                                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                <h5 class="mb-0" id="gen-copy-sumber-title">Data Persediaan Bulan Sebelumnya</h5>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="badge badge-success mr-2" id="gen-copy-sumber-badge">0 record</span>
+                                                    <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-copy-bulan-sebelumnya" data-filename="Persediaan_Bulan_Sebelumnya">
+                                                        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="alert alert-light border small py-2 mb-2" id="gen-copy-sumber-summary">
+                                                Hasil proses copy akan tampil di sini setelah Generate &amp; Recalculate.
+                                            </div>
+                                            <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                <table id="tbl-gen-copy-bulan-sebelumnya" class="table table-sm table-bordered table-striped table-hover gen-recalc-dt display nowrap" style="width:100%;">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>No</th>
+                                                            <th>Nama Barang</th>
+                                                            <th>Satuan</th>
+                                                            <th>HPP</th>
+                                                            <th>SA</th>
+                                                            <th>Beli</th>
+                                                            <th>Penjualan</th>
+                                                            <th>Pecah</th>
+                                                            <th>Bahan Prod.</th>
+                                                            <th>Total 10 Lama</th>
+                                                            <th>Total 10 Hitung</th>
+                                                            <th>Total 10 Final</th>
+                                                            <th>Tgl Beli</th>
+                                                            <th>Status</th>
+                                                            <th>Keterangan</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody></tbody>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th>TOTAL</th>
+                                                            <th></th><th></th><th></th><th></th><th></th>
+                                                            <th></th><th></th><th></th><th></th><th></th>
+                                                            <th></th><th></th><th></th><th></th>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <p class="text-muted text-center py-4 mb-0" id="gen-proses-persediaan-placeholder">
+                                            <i class="fas fa-info-circle mr-1"></i>Hasil proses generate akan muncul di sini setelah selesai.
+                                        </p>
                                     </div>
 
                                     <div class="card card-outline card-primary mt-4" id="gen-proses-pembelian-wrap">
@@ -821,7 +831,174 @@
                                         </div>
                                         <div class="card-body gen-proses-pembelian-card-body">
                                             <div id="gen-proses-pembelian-mount" class="gen-proses-pembelian-mount">
-                                                <p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi pembelian akan muncul di sini setelah proses pembelian selesai.</p>
+                                                <div class="alert alert-light border small py-2 mb-2" id="gen-pembelian-barang-summary">
+                                                    Data <code>tbl_pembelian</code> hasil generate akan tampil di tab di bawah.
+                                                </div>
+                                                <ul class="nav nav-pills gen-proses-subtabs mb-2" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="tab-gen-pem-barang-match" data-toggle="pill" href="#panel-gen-pem-barang-match" role="tab">
+                                                            Pembelian di persediaan <span class="badge badge-light" id="badge-gen-pem-barang-match">0</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="tab-gen-pem-barang-unmatch" data-toggle="pill" href="#panel-gen-pem-barang-unmatch" role="tab">
+                                                            Pembelian tidak ada di persediaan <span class="badge badge-light" id="badge-gen-pem-barang-unmatch">0</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane fade show active" id="panel-gen-pem-barang-match" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pembelian-barang-matched" data-filename="Pembelian_Barang_Di_Persediaan">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-pembelian-barang-matched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl PO</th>
+                                                                        <th>SPOP</th>
+                                                                        <th>Uraian</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Harga Satuan</th>
+                                                                        <th>Harga Total</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>ID Persediaan</th>
+                                                                        <th>Beli Baru</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="panel-gen-pem-barang-unmatch" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pembelian-barang-unmatched" data-filename="Pembelian_Barang_Belum_Ada">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-pembelian-barang-unmatched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl PO</th>
+                                                                        <th>SPOP</th>
+                                                                        <th>Uraian</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Harga Satuan</th>
+                                                                        <th>Harga Total</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>Keterangan</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="card card-outline card-info mt-4" id="gen-proses-pembelian-jasa-wrap">
+                                        <div class="card-header bg-gradient-info">
+                                            <h3 class="card-title text-white mb-0"><i class="fas fa-concierge-bell mr-2"></i>Proses Pembelian Jasa</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="gen-proses-pembelian-jasa-mount">
+                                                <div class="alert alert-light border small py-2 mb-2" id="gen-pembelian-jasa-summary">
+                                                    Data <code>tbl_pembelian_jasa</code> hasil generate akan tampil di tab di bawah.
+                                                </div>
+                                                <ul class="nav nav-pills gen-proses-subtabs mb-2" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="tab-gen-pem-jasa-match" data-toggle="pill" href="#panel-gen-pem-jasa-match" role="tab">
+                                                            Pembelian jasa di persediaan <span class="badge badge-light" id="badge-gen-pem-jasa-match">0</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="tab-gen-pem-jasa-unmatch" data-toggle="pill" href="#panel-gen-pem-jasa-unmatch" role="tab">
+                                                            Pembelian jasa tidak ada di persediaan <span class="badge badge-light" id="badge-gen-pem-jasa-unmatch">0</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane fade show active" id="panel-gen-pem-jasa-match" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pembelian-jasa-matched" data-filename="Pembelian_Jasa_Di_Persediaan">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-pembelian-jasa-matched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl PO</th>
+                                                                        <th>SPOP</th>
+                                                                        <th>Uraian</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Harga Satuan</th>
+                                                                        <th>Harga Total</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>ID Persediaan</th>
+                                                                        <th>Beli Baru</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="panel-gen-pem-jasa-unmatch" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pembelian-jasa-unmatched" data-filename="Pembelian_Jasa_Belum_Ada">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-pembelian-jasa-unmatched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl PO</th>
+                                                                        <th>SPOP</th>
+                                                                        <th>Uraian</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Harga Satuan</th>
+                                                                        <th>Harga Total</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>Keterangan</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -832,7 +1009,93 @@
                                         </div>
                                         <div class="card-body gen-proses-produksi-card-body">
                                             <div id="gen-proses-produksi-mount" class="gen-proses-produksi-mount">
-                                                <p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi produksi akan muncul di sini setelah proses sys_unit_produk selesai.</p>
+                                                <ul class="nav nav-pills mb-3" id="tabs-gen-produksi" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="tab-gen-prod-hasil" data-toggle="pill" href="#panel-gen-prod-hasil" role="tab">
+                                                            Produksi (sys_unit_produk → persediaan) <span class="badge badge-light" id="badge-gen-prod-hasil">0</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="tab-gen-prod-bahan" data-toggle="pill" href="#panel-gen-prod-bahan" role="tab">
+                                                            Bahan produksi <span class="badge badge-light" id="badge-gen-prod-bahan">0</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane fade show active" id="panel-gen-prod-hasil" role="tabpanel">
+                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                            <div class="alert alert-light border small py-2 mb-0 flex-grow-1 mr-2" id="gen-produksi-summary">
+                                                                Hasil insert produksi dari <code>sys_unit_produk</code> akan tampil di sini setelah Generate &amp; Recalculate.
+                                                            </div>
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-produksi-insert" data-filename="Produksi_Persediaan">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-produksi-insert" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl Transaksi</th>
+                                                                        <th>Nama Barang</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>HPP</th>
+                                                                        <th>SA</th>
+                                                                        <th>Total 10</th>
+                                                                        <th>Nilai Persediaan</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>ID Persediaan</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="panel-gen-prod-bahan" role="tabpanel">
+                                                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                            <div class="alert alert-light border small py-2 mb-0 flex-grow-1 mr-2" id="gen-bahan-produksi-summary">
+                                                                Update bahan produksi dari <code>sys_unit_produk_bahan</code> akan tampil di sini setelah Generate &amp; Recalculate.
+                                                            </div>
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-bahan-produksi" data-filename="Bahan_Produksi_Persediaan">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-bahan-produksi" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl Transaksi</th>
+                                                                        <th>Nama Bahan</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Jumlah Bahan</th>
+                                                                        <th>Bahan Produksi</th>
+                                                                        <th>Total 10</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>ID Persediaan</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -843,7 +1106,45 @@
                                         </div>
                                         <div class="card-body gen-proses-pecah-satuan-card-body">
                                             <div id="gen-proses-pecah-satuan-mount" class="gen-proses-pecah-satuan-mount">
-                                                <p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi pecah satuan akan muncul di sini setelah proses tbl_pembelian_pecah_satuan selesai.</p>
+                                                <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+                                                    <h5 class="mb-0">Pecah Satuan (tbl_pembelian_pecah_satuan → persediaan)</h5>
+                                                    <div class="d-flex align-items-center">
+                                                        <span class="badge badge-purple mr-2" id="gen-pecah-badge" style="background:#6f42c1;">0 record</span>
+                                                        <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pecah-satuan" data-filename="Pecah_Satuan_Persediaan">
+                                                            <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="alert alert-light border small py-2 mb-2" id="gen-pecah-summary">
+                                                    Hasil update pecah satuan dari <code>tbl_pembelian_pecah_satuan</code> akan tampil di sini setelah Generate &amp; Recalculate.
+                                                </div>
+                                                <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                    <table id="tbl-gen-pecah-satuan" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>No</th>
+                                                                <th>Tgl PO</th>
+                                                                <th>Uraian</th>
+                                                                <th>Satuan</th>
+                                                                <th>Jumlah</th>
+                                                                <th>Pecah Satuan</th>
+                                                                <th>Total 10</th>
+                                                                <th>SPOP</th>
+                                                                <th>UUID Persediaan</th>
+                                                                <th>ID Persediaan</th>
+                                                                <th>Status</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody></tbody>
+                                                        <tfoot>
+                                                            <tr>
+                                                                <th>TOTAL</th>
+                                                                <th></th><th></th><th></th><th></th>
+                                                                <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -854,7 +1155,92 @@
                                         </div>
                                         <div class="card-body gen-proses-penjualan-card-body">
                                             <div id="gen-proses-penjualan-mount" class="gen-proses-penjualan-mount">
-                                                <p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi penjualan akan muncul di sini setelah proses tbl_penjualan selesai.</p>
+                                                <div class="alert alert-light border small py-2 mb-2" id="gen-penjualan-summary">
+                                                    Hasil proses <code>tbl_penjualan</code> akan tampil di sini setelah Generate &amp; Recalculate.
+                                                </div>
+                                                <ul class="nav nav-pills mb-3" id="tabs-gen-penjualan" role="tablist">
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active" id="tab-gen-pj-match" data-toggle="pill" href="#panel-gen-pj-match" role="tab">
+                                                            Penjualan terproses ke persediaan <span class="badge badge-light" id="badge-gen-pj-match">0</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="nav-item">
+                                                        <a class="nav-link" id="tab-gen-pj-unmatch" data-toggle="pill" href="#panel-gen-pj-unmatch" role="tab">
+                                                            Belum terproses <span class="badge badge-light" id="badge-gen-pj-unmatch">0</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                                <div class="tab-content">
+                                                    <div class="tab-pane fade show active" id="panel-gen-pj-match" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-penjualan-matched" data-filename="Penjualan_Terproses_Persediaan">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-penjualan-matched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl Jual</th>
+                                                                        <th>Nama Barang</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Konsumen</th>
+                                                                        <th>Kolom Unit</th>
+                                                                        <th>Penjualan</th>
+                                                                        <th>Total 10</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>ID Persediaan</th>
+                                                                        <th>Status</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <div class="tab-pane fade" id="panel-gen-pj-unmatch" role="tabpanel">
+                                                        <div class="d-flex justify-content-end mb-2">
+                                                            <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-penjualan-unmatched" data-filename="Penjualan_Belum_Terproses">
+                                                                <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
+                                                            </button>
+                                                        </div>
+                                                        <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">
+                                                            <table id="tbl-gen-penjualan-unmatched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>No</th>
+                                                                        <th>Tgl Jual</th>
+                                                                        <th>Nama Barang</th>
+                                                                        <th>Satuan</th>
+                                                                        <th>Jumlah</th>
+                                                                        <th>Konsumen</th>
+                                                                        <th>Unit</th>
+                                                                        <th>UUID Persediaan</th>
+                                                                        <th>Keterangan</th>
+                                                                        <th>Status</th>
+                                                                        <th>Referensi</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody></tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <th>TOTAL</th>
+                                                                        <th></th><th></th><th></th><th></th>
+                                                                        <th></th><th></th><th></th><th></th><th></th><th></th>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1398,6 +1784,33 @@
                                         </div>
                                         <div class="modal-footer py-2">
                                             <button type="button" class="btn btn-primary btn-sm" id="btn-gen-pj-solusi-proses" disabled><i class="fas fa-check"></i> Proses ke Record Terpilih</button>
+                                            <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="modal-gen-pj-referensi" tabindex="-1" role="dialog" aria-labelledby="modalGenPjReferensiLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-xl" role="document" style="max-width:96%;">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-info text-white py-2">
+                                            <h5 class="modal-title" id="modalGenPjReferensiLabel"><i class="fas fa-link"></i> Referensi Persediaan</h5>
+                                            <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                                        </div>
+                                        <div class="modal-body pb-2">
+                                            <div id="gen-pj-referensi-alert" class="mb-2"></div>
+                                            <p class="text-muted small mb-2" id="gen-pj-referensi-meta"></p>
+                                            <div id="gen-pj-referensi-loading" class="text-center py-4 text-muted d-none"><i class="fas fa-spinner fa-spin"></i> Memuat persediaan bulan terpilih...</div>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered table-striped mb-0" id="tbl-gen-pj-referensi-persediaan" style="width:100%;">
+                                                    <thead class="thead-light"><tr>
+                                                        <th>Referensi</th><th>ID</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SA</th><th>Beli</th><th>Penjualan</th><th>Total 10</th><th>UUID</th>
+                                                    </tr></thead>
+                                                    <tbody></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer py-2">
                                             <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Tutup</button>
                                         </div>
                                     </div>
@@ -3064,6 +3477,8 @@ window.addEventListener('load', function() {
     var urlRecalculatePersediaanBatch = <?php echo json_encode(isset($url_recalculate_persediaan_batch) ? $url_recalculate_persediaan_batch : site_url('Persediaan/ajax_recalculate_persediaan_batch')); ?>;
     var urlGenerateRecalculateBatch = <?php echo json_encode(isset($url_generate_recalculate_batch) ? $url_generate_recalculate_batch : site_url('Persediaan/ajax_generate_recalculate_batch')); ?>;
     var urlGenerateCopyBulanSebelumnya = <?php echo json_encode(isset($url_generate_copy_bulan_sebelumnya) ? $url_generate_copy_bulan_sebelumnya : site_url('Persediaan/ajax_generate_copy_bulan_sebelumnya')); ?>;
+    var urlGeneratePenjualanReferensiList = <?php echo json_encode(isset($url_generate_penjualan_referensi_list) ? $url_generate_penjualan_referensi_list : site_url('Persediaan/ajax_generate_penjualan_referensi_list')); ?>;
+    var urlGeneratePenjualanRefered = <?php echo json_encode(isset($url_generate_penjualan_refered) ? $url_generate_penjualan_refered : site_url('Persediaan/ajax_generate_penjualan_refered')); ?>;
     var urlGenerateProsesPersediaanView = <?php echo json_encode(isset($url_generate_proses_persediaan_view) ? $url_generate_proses_persediaan_view : site_url('Persediaan/ajax_generate_proses_persediaan_view')); ?>;
     var urlGenerateProsesPembelianView = <?php echo json_encode(isset($url_generate_proses_pembelian_view) ? $url_generate_proses_pembelian_view : site_url('Persediaan/ajax_generate_proses_pembelian_view')); ?>;
     var urlGenerateProsesProduksiView = <?php echo json_encode(isset($url_generate_proses_produksi_view) ? $url_generate_proses_produksi_view : site_url('Persediaan/ajax_generate_proses_produksi_view')); ?>;
@@ -3463,6 +3878,286 @@ window.addEventListener('load', function() {
 
     var genCopySumberDt = null;
     var genRekonNilaiDt = null;
+    var genPemDtStore = {};
+    var lastGenVerifyResult = null;
+
+    function destroyGenVerifyDataTables() {
+        var sels = [
+            '#tbl-gen-copy-bulan-sebelumnya',
+            '#tbl-gen-pembelian-barang-matched',
+            '#tbl-gen-pembelian-barang-unmatched',
+            '#tbl-gen-pembelian-jasa-matched',
+            '#tbl-gen-pembelian-jasa-unmatched',
+            '#tbl-gen-produksi-insert',
+            '#tbl-gen-bahan-produksi',
+            '#tbl-gen-pecah-satuan',
+            '#tbl-gen-penjualan-matched',
+            '#tbl-gen-penjualan-unmatched'
+        ];
+        if (!$.fn.DataTable) {
+            return;
+        }
+        sels.forEach(function(sel) {
+            if ($.fn.DataTable.isDataTable(sel)) {
+                try { $(sel).DataTable().destroy(); } catch (eD) {}
+            }
+            if (genPemDtStore[sel]) {
+                delete genPemDtStore[sel];
+            }
+        });
+        genCopySumberDt = null;
+    }
+
+    function htmlGenVerifyPersediaanMount() {
+        return ''
+            + '<div id="gen-copy-sumber-wrap">'
+            + '  <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">'
+            + '    <h5 class="mb-0" id="gen-copy-sumber-title">Data Persediaan Bulan Sebelumnya</h5>'
+            + '    <div class="d-flex align-items-center">'
+            + '      <span class="badge badge-success mr-2" id="gen-copy-sumber-badge">0 record</span>'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-copy-bulan-sebelumnya" data-filename="Persediaan_Bulan_Sebelumnya">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel'
+            + '      </button>'
+            + '    </div>'
+            + '  </div>'
+            + '  <div class="alert alert-light border small py-2 mb-2" id="gen-copy-sumber-summary">Hasil proses copy akan tampil di sini.</div>'
+            + '  <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '    <table id="tbl-gen-copy-bulan-sebelumnya" class="table table-sm table-bordered table-striped table-hover gen-recalc-dt display nowrap" style="width:100%;">'
+            + '      <thead><tr>'
+            + '        <th>No</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SA</th><th>Beli</th>'
+            + '        <th>Penjualan</th><th>Pecah</th><th>Bahan Prod.</th><th>Total 10 Lama</th>'
+            + '        <th>Total 10 Hitung</th><th>Total 10 Final</th><th>Tgl Beli</th><th>Status</th><th>Keterangan</th>'
+            + '      </tr></thead><tbody></tbody>'
+            + '      <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '    </table>'
+            + '  </div>'
+            + '</div>'
+            + '<p class="text-muted text-center py-4 mb-0 d-none" id="gen-proses-persediaan-placeholder">'
+            + '  <i class="fas fa-info-circle mr-1"></i>Hasil proses generate akan muncul di sini setelah selesai.'
+            + '</p>';
+    }
+
+    function htmlGenVerifyPembelianTabs(prefix, titleMatch, titleUnmatch) {
+        // prefix: barang | jasa
+        var idMatch = 'panel-gen-pem-' + prefix + '-match';
+        var idUnmatch = 'panel-gen-pem-' + prefix + '-unmatch';
+        var tblM = 'tbl-gen-pembelian-' + prefix + '-matched';
+        var tblU = 'tbl-gen-pembelian-' + prefix + '-unmatched';
+        var badgeM = 'badge-gen-pem-' + prefix + '-match';
+        var badgeU = 'badge-gen-pem-' + prefix + '-unmatch';
+        var sumId = 'gen-pembelian-' + prefix + '-summary';
+        var fileM = prefix === 'jasa' ? 'Pembelian_Jasa_Di_Persediaan' : 'Pembelian_Barang_Di_Persediaan';
+        var fileU = prefix === 'jasa' ? 'Pembelian_Jasa_Belum_Ada' : 'Pembelian_Barang_Belum_Ada';
+        return ''
+            + '<div class="alert alert-light border small py-2 mb-2" id="' + sumId + '">Data hasil generate akan tampil di tab di bawah.</div>'
+            + '<ul class="nav nav-pills gen-proses-subtabs mb-2" role="tablist">'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link active" data-toggle="pill" href="#' + idMatch + '" role="tab">'
+            + titleMatch + ' <span class="badge badge-light" id="' + badgeM + '">0</span></a>'
+            + '  </li>'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link" data-toggle="pill" href="#' + idUnmatch + '" role="tab">'
+            + titleUnmatch + ' <span class="badge badge-light" id="' + badgeU + '">0</span></a>'
+            + '  </li>'
+            + '</ul>'
+            + '<div class="tab-content">'
+            + '  <div class="tab-pane fade show active" id="' + idMatch + '" role="tabpanel">'
+            + '    <div class="d-flex justify-content-end mb-2">'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#' + tblM + '" data-filename="' + fileM + '">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="' + tblM + '" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl PO</th><th>SPOP</th><th>Uraian</th><th>Jumlah</th><th>Satuan</th>'
+            + '          <th>Harga Satuan</th><th>Harga Total</th><th>UUID Persediaan</th><th>ID Persediaan</th><th>Beli Baru</th><th>Status</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '  <div class="tab-pane fade" id="' + idUnmatch + '" role="tabpanel">'
+            + '    <div class="d-flex justify-content-end mb-2">'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#' + tblU + '" data-filename="' + fileU + '">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="' + tblU + '" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl PO</th><th>SPOP</th><th>Uraian</th><th>Jumlah</th><th>Satuan</th>'
+            + '          <th>Harga Satuan</th><th>Harga Total</th><th>UUID Persediaan</th><th>Keterangan</th><th>Status</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '</div>';
+    }
+
+    function ensureGenVerifyUiStructure() {
+        var needPersediaan = !$('#tbl-gen-copy-bulan-sebelumnya').length;
+        var needBarang = !$('#tbl-gen-pembelian-barang-matched').length;
+        var needJasa = !$('#tbl-gen-pembelian-jasa-matched').length;
+        var needProduksi = !$('#tbl-gen-produksi-insert').length || !$('#tbl-gen-bahan-produksi').length;
+        var needPecah = !$('#tbl-gen-pecah-satuan').length;
+        var needPenjualan = !$('#tbl-gen-penjualan-matched').length;
+
+        if (!needPersediaan && !needBarang && !needJasa && !needProduksi && !needPecah && !needPenjualan) {
+            $('#gen-copy-sumber-wrap').removeClass('d-none');
+            $('#gen-proses-persediaan-placeholder').addClass('d-none');
+            return;
+        }
+
+        destroyGenVerifyDataTables();
+
+        if (needPersediaan && $('#gen-proses-persediaan-mount').length) {
+            $('#gen-proses-persediaan-mount').html(htmlGenVerifyPersediaanMount());
+        } else {
+            $('#gen-copy-sumber-wrap').removeClass('d-none');
+            $('#gen-proses-persediaan-placeholder').addClass('d-none');
+        }
+
+        if (needBarang && $('#gen-proses-pembelian-mount').length) {
+            $('#gen-proses-pembelian-mount').html(
+                htmlGenVerifyPembelianTabs('barang', 'Pembelian di persediaan', 'Pembelian tidak ada di persediaan')
+            );
+        }
+
+        if (needJasa && $('#gen-proses-pembelian-jasa-mount').length) {
+            $('#gen-proses-pembelian-jasa-mount').html(
+                htmlGenVerifyPembelianTabs('jasa', 'Pembelian jasa di persediaan', 'Pembelian jasa tidak ada di persediaan')
+            );
+        }
+
+        if (needProduksi && $('#gen-proses-produksi-mount').length) {
+            $('#gen-proses-produksi-mount').html(htmlGenVerifyProduksiMount());
+        }
+
+        if (needPecah && $('#gen-proses-pecah-satuan-mount').length) {
+            $('#gen-proses-pecah-satuan-mount').html(htmlGenVerifyPecahSatuanMount());
+        }
+
+        if (needPenjualan && $('#gen-proses-penjualan-mount').length) {
+            $('#gen-proses-penjualan-mount').html(htmlGenVerifyPenjualanMount());
+        }
+    }
+
+    function htmlGenVerifyProduksiMount() {
+        return ''
+            + '<ul class="nav nav-pills mb-3" id="tabs-gen-produksi" role="tablist">'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link active" id="tab-gen-prod-hasil" data-toggle="pill" href="#panel-gen-prod-hasil" role="tab">'
+            + '      Produksi (sys_unit_produk → persediaan) <span class="badge badge-light" id="badge-gen-prod-hasil">0</span></a>'
+            + '  </li>'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link" id="tab-gen-prod-bahan" data-toggle="pill" href="#panel-gen-prod-bahan" role="tab">'
+            + '      Bahan produksi <span class="badge badge-light" id="badge-gen-prod-bahan">0</span></a>'
+            + '  </li>'
+            + '</ul>'
+            + '<div class="tab-content">'
+            + '  <div class="tab-pane fade show active" id="panel-gen-prod-hasil" role="tabpanel">'
+            + '    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">'
+            + '      <div class="alert alert-light border small py-2 mb-0 flex-grow-1 mr-2" id="gen-produksi-summary">Hasil insert produksi akan tampil di sini.</div>'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-produksi-insert" data-filename="Produksi_Persediaan">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="tbl-gen-produksi-insert" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl Transaksi</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th>'
+            + '          <th>SA</th><th>Total 10</th><th>Nilai Persediaan</th><th>UUID Persediaan</th><th>ID Persediaan</th><th>Status</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '  <div class="tab-pane fade" id="panel-gen-prod-bahan" role="tabpanel">'
+            + '    <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">'
+            + '      <div class="alert alert-light border small py-2 mb-0 flex-grow-1 mr-2" id="gen-bahan-produksi-summary">Update bahan produksi akan tampil di sini.</div>'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-bahan-produksi" data-filename="Bahan_Produksi_Persediaan">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="tbl-gen-bahan-produksi" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl Transaksi</th><th>Nama Bahan</th><th>Satuan</th><th>Jumlah Bahan</th>'
+            + '          <th>Bahan Produksi</th><th>Total 10</th><th>UUID Persediaan</th><th>ID Persediaan</th><th>Status</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '</div>';
+    }
+
+    function htmlGenVerifyPecahSatuanMount() {
+        return ''
+            + '<div class="d-flex flex-wrap align-items-center justify-content-between mb-2">'
+            + '  <h5 class="mb-0">Pecah Satuan (tbl_pembelian_pecah_satuan → persediaan)</h5>'
+            + '  <div class="d-flex align-items-center">'
+            + '    <span class="badge mr-2" id="gen-pecah-badge" style="background:#6f42c1;color:#fff;">0 record</span>'
+            + '    <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-pecah-satuan" data-filename="Pecah_Satuan_Persediaan">'
+            + '      <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '  </div>'
+            + '</div>'
+            + '<div class="alert alert-light border small py-2 mb-2" id="gen-pecah-summary">Hasil update pecah satuan akan tampil di sini.</div>'
+            + '<div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '  <table id="tbl-gen-pecah-satuan" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '    <thead><tr>'
+            + '      <th>No</th><th>Tgl PO</th><th>Uraian</th><th>Satuan</th><th>Jumlah</th><th>Pecah Satuan</th>'
+            + '      <th>Total 10</th><th>SPOP</th><th>UUID Persediaan</th><th>ID Persediaan</th><th>Status</th>'
+            + '    </tr></thead><tbody></tbody>'
+            + '    <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '  </table>'
+            + '</div>';
+    }
+
+    function htmlGenVerifyPenjualanMount() {
+        return ''
+            + '<div class="alert alert-light border small py-2 mb-2" id="gen-penjualan-summary">Hasil proses tbl_penjualan akan tampil di sini.</div>'
+            + '<ul class="nav nav-pills mb-3" id="tabs-gen-penjualan" role="tablist">'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link active" id="tab-gen-pj-match" data-toggle="pill" href="#panel-gen-pj-match" role="tab">'
+            + '      Penjualan terproses ke persediaan <span class="badge badge-light" id="badge-gen-pj-match">0</span></a>'
+            + '  </li>'
+            + '  <li class="nav-item">'
+            + '    <a class="nav-link" id="tab-gen-pj-unmatch" data-toggle="pill" href="#panel-gen-pj-unmatch" role="tab">'
+            + '      Belum terproses <span class="badge badge-light" id="badge-gen-pj-unmatch">0</span></a>'
+            + '  </li>'
+            + '</ul>'
+            + '<div class="tab-content">'
+            + '  <div class="tab-pane fade show active" id="panel-gen-pj-match" role="tabpanel">'
+            + '    <div class="d-flex justify-content-end mb-2">'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-penjualan-matched" data-filename="Penjualan_Terproses_Persediaan">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="tbl-gen-penjualan-matched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl Jual</th><th>Nama Barang</th><th>Satuan</th><th>Jumlah</th>'
+            + '          <th>Konsumen</th><th>Kolom Unit</th><th>Penjualan</th><th>Total 10</th>'
+            + '          <th>UUID Persediaan</th><th>ID Persediaan</th><th>Status</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '  <div class="tab-pane fade" id="panel-gen-pj-unmatch" role="tabpanel">'
+            + '    <div class="d-flex justify-content-end mb-2">'
+            + '      <button type="button" class="btn btn-sm btn-success btn-cetak-excel-gen-verify" data-table="#tbl-gen-penjualan-unmatched" data-filename="Penjualan_Belum_Terproses">'
+            + '        <i class="fas fa-file-excel mr-1"></i> Cetak ke Excel</button>'
+            + '    </div>'
+            + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
+            + '      <table id="tbl-gen-penjualan-unmatched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
+            + '        <thead><tr>'
+            + '          <th>No</th><th>Tgl Jual</th><th>Nama Barang</th><th>Satuan</th><th>Jumlah</th>'
+            + '          <th>Konsumen</th><th>Unit</th><th>UUID Persediaan</th><th>Keterangan</th><th>Status</th><th>Referensi</th>'
+            + '        </tr></thead><tbody></tbody>'
+            + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+            + '      </table>'
+            + '    </div>'
+            + '  </div>'
+            + '</div>';
+    }
 
     function formatGenRekonNum(val) {
         var n = parseFloat(val);
@@ -3582,11 +4277,16 @@ window.addEventListener('load', function() {
     }
 
     function renderGenCopyBulanSebelumnyaTable(res) {
+        ensureGenVerifyUiStructure();
         var $wrap = $('#gen-copy-sumber-wrap');
         if (!$wrap.length) {
+            console.warn('gen-copy-sumber-wrap tidak ditemukan setelah ensureGenVerifyUiStructure');
             return;
         }
         $wrap.removeClass('d-none');
+        $('#gen-proses-persediaan-placeholder').addClass('d-none');
+        lastGenVerifyResult = res;
+
         var labelSumber = (res && res.label_sumber) ? res.label_sumber : ((res && res.bulan_sumber) ? res.bulan_sumber : 'Bulan Sebelumnya');
         var labelTarget = (res && res.label_target) ? res.label_target : ((res && res.bulan_target) ? res.bulan_target : '');
         $('#gen-copy-sumber-title').text('Data Persediaan Bulan: ' + labelSumber);
@@ -3626,16 +4326,22 @@ window.addEventListener('load', function() {
         });
 
         if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-copy-bulan-sebelumnya')) {
-            genCopySumberDt = $('#tbl-gen-copy-bulan-sebelumnya').DataTable();
-            genCopySumberDt.clear();
-            genCopySumberDt.rows.add(dtRows);
-            genCopySumberDt.draw(false);
-        } else if ($.fn.DataTable) {
+            try { $('#tbl-gen-copy-bulan-sebelumnya').DataTable().destroy(); } catch (eDestCopy) {}
+        }
+        if ($.fn.DataTable && $('#tbl-gen-copy-bulan-sebelumnya').length) {
+            if (!$('#tbl-gen-copy-bulan-sebelumnya tfoot').length) {
+                $('#tbl-gen-copy-bulan-sebelumnya').append(
+                    '<tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
+                );
+            }
             genCopySumberDt = $('#tbl-gen-copy-bulan-sebelumnya').DataTable({
                 data: dtRows,
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
                 order: [[0, 'asc']],
+                ordering: true,
+                searching: true,
+                paging: true,
                 scrollX: true,
                 autoWidth: false,
                 language: {
@@ -3650,18 +4356,559 @@ window.addEventListener('load', function() {
                 columnDefs: [
                     { targets: [0, 4, 5, 6, 7, 8, 9, 10, 11], className: 'text-right' },
                     { targets: [13], orderable: false }
-                ]
+                ],
+                footerCallback: genVerifyFooterSumCols([11])
             });
         }
 
-        renderGenRekonNilaiTable(res);
+        $('#gen-recalc-summary').removeClass('text-muted').html(
+            '<i class="fas fa-check-circle text-success mr-1"></i>Generate selesai untuk target <strong>'
+            + escapeHtmlGen(labelTarget) + '</strong>. Data bulan sebelumnya, pembelian &amp; produksi tampil di bawah.'
+        );
+
+        try { renderGenRekonNilaiTable(res); } catch (eRekon) { console.warn('render rekon:', eRekon); }
+        try { renderGenPembelianApplyTables(res); } catch (ePem) { console.warn('render pembelian:', ePem); }
+        try { renderGenProduksiTables(res); } catch (eProd) { console.warn('render produksi:', eProd); }
+        try { renderGenPecahSatuanTables(res); } catch (ePecah) { console.warn('render pecah satuan:', ePecah); }
+        try { renderGenPenjualanTables(res); } catch (ePj) { console.warn('render penjualan:', ePj); }
+
+        setTimeout(function() {
+            try {
+                if (genCopySumberDt) { genCopySumberDt.columns.adjust(); }
+                Object.keys(genPemDtStore).forEach(function(sel) {
+                    if (genPemDtStore[sel]) {
+                        try { genPemDtStore[sel].columns.adjust(); } catch (eA) {}
+                    }
+                });
+            } catch (eAdjV) {}
+        }, 120);
 
         try {
-            var $rekon = $('#gen-rekon-nilai-wrap');
-            var $scrollTo = ($rekon.length && !$rekon.hasClass('d-none')) ? $rekon : $wrap;
-            $('html, body').animate({ scrollTop: $scrollTo.offset().top - 80 }, 400);
+            var $scrollTo = $('#gen-recalc-result-wrap');
+            if ($scrollTo.length) {
+                $('html, body').animate({ scrollTop: $scrollTo.offset().top - 70 }, 400);
+            }
         } catch (eScroll) {}
     }
+
+    function genPembelianDtCommonOpts(emptyMsg) {
+        return {
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            order: [[0, 'asc']],
+            ordering: true,
+            searching: true,
+            paging: true,
+            scrollX: true,
+            autoWidth: false,
+            language: {
+                emptyTable: emptyMsg || 'Tidak ada data',
+                info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                infoEmpty: 'Menampilkan 0 data',
+                search: 'Cari:',
+                lengthMenu: 'Tampil _MENU_',
+                zeroRecords: 'Tidak ada data yang cocok',
+                paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+            }
+        };
+    }
+
+    function genPemStatusBadge(r) {
+        var st = String((r && r.status) || 'MATCH');
+        if (st === 'MATCH_SYNC_UUID') {
+            return '<span class="badge badge-info" title="' + escapeHtmlGen(String(r.keterangan || '')) + '">MATCH SYNC UUID</span>';
+        }
+        if (st === 'INSERT_BARU') {
+            return '<span class="badge badge-primary" title="' + escapeHtmlGen(String(r.keterangan || '')) + '">INSERT BARU</span>';
+        }
+        if (st === 'BELUM ADA') {
+            return '<span class="badge badge-warning">BELUM ADA</span>';
+        }
+        return '<span class="badge badge-success">MATCH</span>';
+    }
+
+    function genPemMatchedRow(r, no) {
+        return [
+            no,
+            r.tgl_po || '',
+            r.spop || '',
+            r.uraian || '',
+            r.jumlah || '',
+            r.satuan || '',
+            r.harga_satuan || '',
+            r.harga_total || '',
+            r.uuid_persediaan || '',
+            r.id_persediaan || '',
+            r.beli_baru || '',
+            genPemStatusBadge(r)
+        ];
+    }
+
+    function genPemUnmatchedRow(r, no) {
+        return [
+            no,
+            r.tgl_po || '',
+            r.spop || '',
+            r.uraian || '',
+            r.jumlah || '',
+            r.satuan || '',
+            r.harga_satuan || '',
+            r.harga_total || '',
+            r.uuid_persediaan || '',
+            r.keterangan || '',
+            genPemStatusBadge(r)
+        ];
+    }
+
+    function parseGenVerifyNum(val) {
+        if (val == null || val === '') {
+            return 0;
+        }
+        var s = String(val).replace(/<[^>]+>/g, '').trim().replace(/\s/g, '');
+        if (s === '' || s === '-') {
+            return 0;
+        }
+        if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) {
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else if (s.indexOf(',') >= 0) {
+            s = s.replace(',', '.');
+        }
+        var n = parseFloat(s);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function formatGenVerifyNum(n) {
+        try {
+            if (Math.floor(n) === n) {
+                return n.toLocaleString('id-ID');
+            }
+            return n.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (eF) {
+            return String(n);
+        }
+    }
+
+    function genVerifyFooterSumCols(sumCols) {
+        sumCols = sumCols || [];
+        return function() {
+            var api = this.api();
+            var $ths = $(api.table().footer()).find('th');
+            $ths.each(function(i) {
+                if (i === 0) {
+                    $(this).html('<strong>TOTAL</strong>');
+                } else if (sumCols.indexOf(i) >= 0) {
+                    var total = api.column(i, { search: 'applied' }).data().reduce(function(a, b) {
+                        return a + parseGenVerifyNum(b);
+                    }, 0);
+                    $(this).html('<strong>' + formatGenVerifyNum(total) + '</strong>');
+                } else {
+                    $(this).html('');
+                }
+            });
+        };
+    }
+
+    function fillOrInitGenPemDt(sel, rows, emptyMsg, rightCols, noOrderCols, footerSumCols) {
+        if (!$.fn.DataTable || !$(sel).length) {
+            return;
+        }
+        if ($.fn.DataTable.isDataTable(sel)) {
+            try { $(sel).DataTable().destroy(); } catch (eDes) {}
+            if (genPemDtStore[sel]) {
+                delete genPemDtStore[sel];
+            }
+        }
+        // Pastikan tfoot ada
+        var $tbl = $(sel);
+        if (!$tbl.find('tfoot').length) {
+            var colCount = $tbl.find('thead th').length;
+            var tds = '';
+            for (var c = 0; c < colCount; c++) {
+                tds += '<th></th>';
+            }
+            $tbl.append('<tfoot><tr>' + tds + '</tr></tfoot>');
+        }
+        var opts = genPembelianDtCommonOpts(emptyMsg);
+        opts.data = rows || [];
+        opts.columnDefs = [
+            { targets: rightCols || [], className: 'text-right' },
+            { targets: noOrderCols || [], orderable: false }
+        ];
+        if (footerSumCols && footerSumCols.length) {
+            opts.footerCallback = genVerifyFooterSumCols(footerSumCols);
+        }
+        genPemDtStore[sel] = $(sel).DataTable(opts);
+    }
+
+    function renderGenPembelianApplyTables(res) {
+        ensureGenVerifyUiStructure();
+        var apply = (res && res.pembelian_apply) ? res.pembelian_apply : {};
+        var matched = (res && res.pembelian_matched) ? res.pembelian_matched : (apply.matched || []);
+        var unmatched = (res && res.pembelian_unmatched) ? res.pembelian_unmatched : (apply.unmatched || []);
+
+        var barangMatched = [];
+        var jasaMatched = [];
+        var barangUnmatched = [];
+        var jasaUnmatched = [];
+
+        matched.forEach(function(r) {
+            if (r && r.sumber_tabel === 'tbl_pembelian_jasa') {
+                jasaMatched.push(r);
+            } else {
+                barangMatched.push(r);
+            }
+        });
+        unmatched.forEach(function(r) {
+            if (r && r.sumber_tabel === 'tbl_pembelian_jasa') {
+                jasaUnmatched.push(r);
+            } else {
+                barangUnmatched.push(r);
+            }
+        });
+
+        var sumJumlahBarang = 0;
+        var sumJumlahJasa = 0;
+        barangMatched.concat(barangUnmatched).forEach(function(r) {
+            sumJumlahBarang += parseFloat(String(r.jumlah || '0').replace(/,/g, '')) || 0;
+        });
+        jasaMatched.concat(jasaUnmatched).forEach(function(r) {
+            sumJumlahJasa += parseFloat(String(r.jumlah || '0').replace(/,/g, '')) || 0;
+        });
+
+        $('#badge-gen-pem-barang-match').text(String(barangMatched.length));
+        $('#badge-gen-pem-barang-unmatch').text(String(barangUnmatched.length));
+        $('#badge-gen-pem-jasa-match').text(String(jasaMatched.length));
+        $('#badge-gen-pem-jasa-unmatch').text(String(jasaUnmatched.length));
+
+        $('#gen-pembelian-barang-summary').html(
+            'tbl_pembelian diproses: <strong>' + escapeHtmlGen(String(barangMatched.length + barangUnmatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Di persediaan: <strong class="text-success">' + escapeHtmlGen(String(barangMatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Belum ada: <strong class="' + (barangUnmatched.length ? 'text-danger' : 'text-success') + '">' + escapeHtmlGen(String(barangUnmatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Σ jumlah: <strong>' + escapeHtmlGen(String(sumJumlahBarang)) + '</strong>'
+            + '<br/><small class="text-muted">Fase1/2/3: match uuid+uraian+satuan+hpp → sync uuid → insert baru. total_10 = sa + beli.</small>'
+        );
+        $('#gen-pembelian-jasa-summary').html(
+            'tbl_pembelian_jasa diproses: <strong>' + escapeHtmlGen(String(jasaMatched.length + jasaUnmatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Di persediaan: <strong class="text-success">' + escapeHtmlGen(String(jasaMatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Belum ada: <strong class="' + (jasaUnmatched.length ? 'text-danger' : 'text-success') + '">' + escapeHtmlGen(String(jasaUnmatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Σ jumlah: <strong>' + escapeHtmlGen(String(sumJumlahJasa)) + '</strong>'
+            + '<br/><small class="text-muted">Proses sama seperti pembelian barang (fase1/2/3).</small>'
+        );
+
+        var dtBarangM = barangMatched.map(function(r, i) { return genPemMatchedRow(r, i + 1); });
+        var dtBarangU = barangUnmatched.map(function(r, i) { return genPemUnmatchedRow(r, i + 1); });
+        var dtJasaM = jasaMatched.map(function(r, i) { return genPemMatchedRow(r, i + 1); });
+        var dtJasaU = jasaUnmatched.map(function(r, i) { return genPemUnmatchedRow(r, i + 1); });
+
+        fillOrInitGenPemDt('#tbl-gen-pembelian-barang-matched', dtBarangM, 'Tidak ada pembelian barang yang masuk persediaan', [0, 4, 6, 7, 9, 10], [11], [7, 10]);
+        fillOrInitGenPemDt('#tbl-gen-pembelian-barang-unmatched', dtBarangU, 'Semua pembelian barang sudah masuk persediaan', [0, 4, 6, 7], [9, 10]);
+        fillOrInitGenPemDt('#tbl-gen-pembelian-jasa-matched', dtJasaM, 'Tidak ada pembelian jasa yang masuk persediaan', [0, 4, 6, 7, 9, 10], [11], [4, 7, 10]);
+        fillOrInitGenPemDt('#tbl-gen-pembelian-jasa-unmatched', dtJasaU, 'Semua pembelian jasa sudah masuk persediaan', [0, 4, 6, 7], [9, 10]);
+    }
+
+    function renderGenProduksiTables(res) {
+        ensureGenVerifyUiStructure();
+        var apply = (res && res.produksi_apply) ? res.produksi_apply : {};
+        var rows = (res && res.produksi_rows) ? res.produksi_rows : (apply.rows || []);
+        var inserted = apply.inserted || rows.length;
+        var skipped = apply.skipped || 0;
+        var totalSumber = apply.total_sumber || 0;
+
+        $('#gen-produksi-badge').text(String(rows.length) + ' record');
+        $('#gen-produksi-summary').html(
+            'sys_unit_produk diproses: <strong>' + escapeHtmlGen(String(totalSumber)) + '</strong>'
+            + ' &nbsp;|&nbsp; Insert persediaan: <strong class="text-success">' + escapeHtmlGen(String(inserted)) + '</strong>'
+            + ' &nbsp;|&nbsp; Skip: <strong>' + escapeHtmlGen(String(skipped)) + '</strong>'
+            + '<br/><small class="text-muted">Mapping: jumlah_produksi→sa, total_10=sa, nilai_persediaan=total_10×hpp, kode_barang=produksi, tanggal_beli=tgl_transaksi.</small>'
+        );
+
+        var dtRows = rows.map(function(r, i) {
+            return [
+                r.no || (i + 1),
+                r.tgl_transaksi || r.tanggal_beli || '',
+                r.namabarang || '',
+                r.satuan || '',
+                r.hpp || '',
+                r.sa || '',
+                r.total_10 || '',
+                r.nilai_persediaan || '',
+                r.uuid_persediaan || '',
+                r.id_persediaan || '',
+                '<span class="badge badge-success">' + escapeHtmlGen(String(r.status || 'INSERT')) + '</span>'
+            ];
+        });
+
+        fillOrInitGenPemDt(
+            '#tbl-gen-produksi-insert',
+            dtRows,
+            'Tidak ada data produksi yang di-insert',
+            [0, 4, 5, 6, 7, 9],
+            [10],
+            [5, 6, 7]
+        );
+
+        var bahanApply = (res && res.bahan_produksi_apply) ? res.bahan_produksi_apply : {};
+        var bahanRows = (res && res.bahan_produksi_rows) ? res.bahan_produksi_rows : (bahanApply.rows || []);
+        $('#badge-gen-prod-hasil').text(String(rows.length));
+        $('#badge-gen-prod-bahan').text(String(bahanRows.length));
+        $('#gen-bahan-produksi-summary').html(
+            'sys_unit_produk_bahan diproses: <strong>' + escapeHtmlGen(String(bahanApply.total_sumber || bahanRows.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Update: <strong class="text-success">' + escapeHtmlGen(String(bahanApply.updated || 0)) + '</strong>'
+            + ' &nbsp;|&nbsp; Unmatched: <strong class="' + ((bahanApply.unmatched_count || 0) ? 'text-danger' : 'text-success') + '">'
+            + escapeHtmlGen(String(bahanApply.unmatched_count || 0)) + '</strong>'
+            + '<br/><small class="text-muted">Match uuid_persediaan → bahan_produksi=SUM(jumlah_bahan), total_10=total_10−SUM(jumlah_bahan).</small>'
+        );
+
+        var dtBahan = bahanRows.map(function(r, i) {
+            var st = String(r.status || '');
+            var badgeCls = st === 'UPDATED' ? 'badge-success' : (st === 'UNMATCHED' ? 'badge-danger' : 'badge-secondary');
+            return [
+                r.no || (i + 1),
+                r.tgl_transaksi || '',
+                r.nama_barang_bahan || '',
+                r.satuan_bahan || '',
+                r.jumlah_bahan || '',
+                r.bahan_produksi || '',
+                r.total_10 || '',
+                r.uuid_persediaan || '',
+                r.id_persediaan || '',
+                '<span class="badge ' + badgeCls + '">' + escapeHtmlGen(st || '-') + '</span>'
+            ];
+        });
+
+        fillOrInitGenPemDt(
+            '#tbl-gen-bahan-produksi',
+            dtBahan,
+            'Tidak ada data bahan produksi',
+            [0, 4, 5, 6, 8],
+            [9],
+            [6]
+        );
+    }
+
+    function renderGenPecahSatuanTables(res) {
+        ensureGenVerifyUiStructure();
+        var apply = (res && res.pecah_satuan_apply) ? res.pecah_satuan_apply : {};
+        var rows = (res && res.pecah_satuan_rows) ? res.pecah_satuan_rows : (apply.rows || []);
+
+        $('#gen-pecah-badge').text(String(rows.length) + ' record');
+        $('#gen-pecah-summary').html(
+            'tbl_pembelian_pecah_satuan diproses: <strong>' + escapeHtmlGen(String(apply.total_sumber || rows.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Update: <strong class="text-success">' + escapeHtmlGen(String(apply.updated || 0)) + '</strong>'
+            + ' &nbsp;|&nbsp; Unmatched: <strong class="' + ((apply.unmatched_count || 0) ? 'text-danger' : 'text-success') + '">'
+            + escapeHtmlGen(String(apply.unmatched_count || 0)) + '</strong>'
+            + '<br/><small class="text-muted">Match uuid_persediaan → pecah_satuan=SUM(jumlah), total_10=total_10−SUM(jumlah).</small>'
+        );
+
+        var dtRows = rows.map(function(r, i) {
+            var st = String(r.status || '');
+            var badgeCls = st === 'UPDATED' ? 'badge-success' : (st === 'UNMATCHED' ? 'badge-danger' : 'badge-secondary');
+            return [
+                r.no || (i + 1),
+                r.tgl_po || '',
+                r.uraian || '',
+                r.satuan || '',
+                r.jumlah || '',
+                r.pecah_satuan || '',
+                r.total_10 || '',
+                r.spop || '',
+                r.uuid_persediaan || '',
+                r.id_persediaan || '',
+                '<span class="badge ' + badgeCls + '">' + escapeHtmlGen(st || '-') + '</span>'
+            ];
+        });
+
+        fillOrInitGenPemDt(
+            '#tbl-gen-pecah-satuan',
+            dtRows,
+            'Tidak ada data pecah satuan',
+            [0, 4, 5, 6, 9],
+            [10],
+            [6]
+        );
+    }
+
+    function renderGenPenjualanTables(res) {
+        ensureGenVerifyUiStructure();
+        var apply = (res && res.penjualan_apply) ? res.penjualan_apply : {};
+        var matched = (res && res.penjualan_matched) ? res.penjualan_matched : (apply.matched || []);
+        var unmatched = (res && res.penjualan_unmatched) ? res.penjualan_unmatched : (apply.unmatched || []);
+
+        $('#badge-gen-pj-match').text(String(matched.length));
+        $('#badge-gen-pj-unmatch').text(String(unmatched.length));
+        $('#gen-penjualan-summary').html(
+            'tbl_penjualan diproses: <strong>' + escapeHtmlGen(String(apply.total_sumber || (matched.length + unmatched.length))) + '</strong>'
+            + ' &nbsp;|&nbsp; Terproses: <strong class="text-success">' + escapeHtmlGen(String(apply.matched_count || matched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Belum terproses: <strong class="' + ((unmatched.length) ? 'text-danger' : 'text-success') + '">'
+            + escapeHtmlGen(String(apply.unmatched_count || unmatched.length)) + '</strong>'
+            + ' &nbsp;|&nbsp; Update persediaan: <strong>' + escapeHtmlGen(String(apply.updated || 0)) + '</strong>'
+            + '<br/><small class="text-muted">Langkah 1: uuid_persediaan. Langkah 2: nama_barang + satuan. Sisa: tombol Referensi. Jumlah ke kolom unit, penjualan+=jumlah, total_10-=jumlah (stok keluar).</small>'
+        );
+
+        var dtM = matched.map(function(r, i) {
+            return [
+                r.no || (i + 1),
+                r.tgl_jual || '',
+                r.nama_barang || r.namabarang || '',
+                r.satuan || '',
+                r.jumlah || '',
+                r.konsumen_nama || '',
+                r.kolom_unit || '',
+                r.penjualan || '',
+                r.total_10 || '',
+                r.uuid_persediaan || '',
+                r.id_persediaan || '',
+                '<span class="badge badge-success">' + escapeHtmlGen(String(r.status || 'UPDATED')) + '</span>'
+            ];
+        });
+        var dtU = unmatched.map(function(r, i) {
+            var idPj = parseInt(r.id_penjualan, 10) || 0;
+            var btnRef = idPj > 0
+                ? '<button type="button" class="btn btn-xs btn-info btn-gen-pj-referensi" data-id-penjualan="' + idPj + '">Referensi</button>'
+                : '';
+            return [
+                r.no || (i + 1),
+                r.tgl_jual || '',
+                r.nama_barang || '',
+                r.satuan || '',
+                r.jumlah || '',
+                r.konsumen_nama || '',
+                r.unit || '',
+                r.uuid_persediaan || '',
+                r.keterangan || '',
+                '<span class="badge badge-danger">' + escapeHtmlGen(String(r.status || 'UNMATCHED')) + '</span>',
+                btnRef
+            ];
+        });
+
+        fillOrInitGenPemDt('#tbl-gen-penjualan-matched', dtM, 'Tidak ada penjualan yang terproses', [0, 4, 7, 8, 10], [11], [4, 7, 8]);
+        fillOrInitGenPemDt('#tbl-gen-penjualan-unmatched', dtU, 'Semua penjualan sudah terproses ke persediaan', [0, 4], [9, 10], [4]);
+    }
+
+    function exportGenVerifyTableExcel(tableSel, filename) {
+        var $table = $(tableSel);
+        if (!$table.length) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tabel tidak ditemukan.' });
+            return;
+        }
+        var headers = [];
+        $table.find('thead tr:first th').each(function() {
+            headers.push($(this).text().trim());
+        });
+        var rows = [];
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable(tableSel)) {
+            var dt = $(tableSel).DataTable();
+            dt.rows({ search: 'applied' }).every(function() {
+                var d = this.data();
+                var line = [];
+                for (var i = 0; i < headers.length; i++) {
+                    var cell = d[i];
+                    if (cell == null) {
+                        line.push('');
+                    } else {
+                        line.push(String(cell).replace(/<[^>]+>/g, '').trim());
+                    }
+                }
+                rows.push(line);
+            });
+        } else {
+            $table.find('tbody tr').each(function() {
+                var line = [];
+                $(this).find('td').each(function() {
+                    line.push($(this).text().trim());
+                });
+                if (line.length) {
+                    rows.push(line);
+                }
+            });
+        }
+
+        function escXml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        var xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>'
+            + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
+            + ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
+            + '<Worksheet ss:Name="Data"><Table>';
+        xml += '<Row>';
+        headers.forEach(function(h) {
+            xml += '<Cell><Data ss:Type="String">' + escXml(h) + '</Data></Cell>';
+        });
+        xml += '</Row>';
+        rows.forEach(function(line) {
+            xml += '<Row>';
+            line.forEach(function(c) {
+                xml += '<Cell><Data ss:Type="String">' + escXml(c) + '</Data></Cell>';
+            });
+            xml += '</Row>';
+        });
+        xml += '</Table></Worksheet></Workbook>';
+
+        var blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+        var link = document.createElement('a');
+        var objectUrl = URL.createObjectURL(blob);
+        link.href = objectUrl;
+        link.download = (filename || 'export') + '_' + (new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')) + '.xls';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
+    }
+
+    $(document).on('click', '.btn-cetak-excel-gen-verify', function(e) {
+        e.preventDefault();
+        exportGenVerifyTableExcel($(this).data('table') || '', $(this).data('filename') || 'export');
+    });
+
+    $(document).on('shown.bs.tab', '#tabs-gen-produksi a[data-toggle="pill"], #gen-proses-produksi-mount a[data-toggle="pill"]', function(e) {
+        var target = $(e.target).attr('href');
+        if (!target || !$.fn.DataTable) {
+            return;
+        }
+        setTimeout(function() {
+            $(target).find('table').each(function() {
+                var sel = '#' + this.id;
+                if ($.fn.DataTable.isDataTable(sel)) {
+                    try { $(sel).DataTable().columns.adjust(); } catch (eAdjProd) {}
+                }
+            });
+        }, 50);
+    });
+
+    $(document).on('shown.bs.tab', '#tabs-gen-penjualan a[data-toggle="pill"], #gen-proses-penjualan-mount a[data-toggle="pill"]', function(e) {
+        var target = $(e.target).attr('href');
+        if (!target || !$.fn.DataTable) {
+            return;
+        }
+        setTimeout(function() {
+            $(target).find('table').each(function() {
+                var sel = '#' + this.id;
+                if ($.fn.DataTable.isDataTable(sel)) {
+                    try { $(sel).DataTable().columns.adjust(); } catch (eAdjPj) {}
+                }
+            });
+        }, 50);
+    });
+
+    $(document).on('shown.bs.tab', '#gen-proses-pembelian-mount a[data-toggle="pill"], #gen-proses-pembelian-jasa-mount a[data-toggle="pill"]', function(e) {
+        var target = $(e.target).attr('href');
+        if (!target || !$.fn.DataTable) {
+            return;
+        }
+        setTimeout(function() {
+            $(target).find('table').each(function() {
+                var sel = '#' + this.id;
+                if ($.fn.DataTable.isDataTable(sel)) {
+                    try { $(sel).DataTable().columns.adjust(); } catch (eAdj) {}
+                }
+            });
+        }, 50);
+    });
 
     function startGenerateRecalculateAfterConfirm(bulanKey, res) {
         genRecalcBatchRunning = true;
@@ -3677,7 +4924,7 @@ window.addEventListener('load', function() {
         showGenRecalcProcessSwal(
             htmlGenRecalcProcessAnimWrap(
                 '<p class="mb-1 text-center"><strong>Fase verifikasi Generate</strong></p>'
-                + '<p class="mb-0 text-muted text-center small">Hapus bulan target → copy → rekon nilai_persediaan sumber vs target</p>'
+                + '<p class="mb-0 text-muted text-center small">Hapus → copy → isi beli dari pembelian → rekon nilai</p>'
             ),
             true,
             true
@@ -3688,7 +4935,21 @@ window.addEventListener('load', function() {
             type: 'POST',
             dataType: 'json',
             timeout: 0,
-            data: { bulan: bulanKey }
+            data: { bulan: bulanKey },
+            converters: {
+                'text json': function(text) {
+                    var t = String(text || '').trim();
+                    var i = t.indexOf('{');
+                    if (i > 0) {
+                        t = t.substring(i);
+                    }
+                    try {
+                        return JSON.parse(t);
+                    } catch (eParse) {
+                        throw new Error('Respon generate bukan JSON valid.');
+                    }
+                }
+            }
         }).done(function(resp) {
             stopGenRecalcBatchRunning();
             if (!resp || !resp.ok) {
@@ -3703,7 +4964,11 @@ window.addEventListener('load', function() {
                 return;
             }
 
-            renderGenCopyBulanSebelumnyaTable(resp);
+            try {
+                renderGenCopyBulanSebelumnyaTable(resp);
+            } catch (eRender) {
+                console.warn('renderGenCopyBulanSebelumnyaTable:', eRender);
+            }
             var rekonOk = (typeof resp.rekon_ok === 'undefined') ? true : !!resp.rekon_ok;
             setStatusGeneratePersediaan(
                 rekonOk ? 'success' : 'warning',
@@ -3713,6 +4978,7 @@ window.addEventListener('load', function() {
             );
             closeGenRecalcProcessSwalThen(function() {
                 var rekon = resp.rekon || {};
+                var apply = resp.pembelian_apply || {};
                 var htmlRekon = '';
                 if (resp.rekon) {
                     htmlRekon = '<hr class="my-2"/>'
@@ -3724,12 +4990,45 @@ window.addEventListener('load', function() {
                         + (rekonOk ? '' : ' &nbsp;|&nbsp; baris bermasalah: <strong>' + String(rekon.count_masalah || 0) + '</strong>')
                         + '</p>';
                 }
+                var htmlBeli = '<hr class="my-2"/>'
+                    + '<p class="mb-1"><strong>Pembelian → field beli</strong></p>'
+                    + '<p class="small mb-1">Cocok/proses: <strong>' + String(apply.matched_count || 0) + '</strong>'
+                    + ' (fase1: ' + String(apply.matched_fase1 || 0)
+                    + ', fase2: ' + String(apply.matched_fase2 || 0)
+                    + ', fase3 insert: ' + String(apply.inserted_fase3 || 0) + ')'
+                    + ' &nbsp;|&nbsp; Belum ada: <strong>' + String(apply.unmatched_count || 0) + '</strong></p>'
+                    + '<p class="small mb-0">SUM jumlah pembelian: <strong>' + String(apply.sum_jumlah_pembelian || 0) + '</strong>'
+                    + ' &nbsp;|&nbsp; SUM beli persediaan: <strong class="' + (apply.total_beli_ok ? 'text-success' : 'text-danger') + '">'
+                    + String(apply.sum_beli_persediaan || 0) + '</strong>'
+                    + (apply.total_beli_ok ? ' (SAMA)' : ' (BEDA)') + '</p>';
+                var prod = resp.produksi_apply || {};
+                var htmlProd = '<hr class="my-2"/>'
+                    + '<p class="mb-1"><strong>Produksi → persediaan baru</strong></p>'
+                    + '<p class="small mb-0">sys_unit_produk: <strong>' + String(prod.total_sumber || 0) + '</strong>'
+                    + ' &nbsp;|&nbsp; Insert: <strong class="text-success">' + String(prod.inserted || 0) + '</strong>'
+                    + ' &nbsp;|&nbsp; Skip: <strong>' + String(prod.skipped || 0) + '</strong></p>';
+                var pj = resp.penjualan_apply || {};
+                var htmlPj = '<hr class="my-2"/>'
+                    + '<p class="mb-1"><strong>Penjualan → persediaan</strong></p>'
+                    + '<p class="small mb-0">tbl_penjualan: <strong>' + String(pj.total_sumber || 0) + '</strong>'
+                    + ' &nbsp;|&nbsp; Terproses: <strong class="text-success">' + String(pj.matched_count || 0) + '</strong>'
+                    + ' &nbsp;|&nbsp; Belum terproses: <strong>' + String(pj.unmatched_count || 0) + '</strong></p>';
                 Swal.fire({
                     icon: rekonOk ? 'success' : 'warning',
-                    title: rekonOk ? 'Fase copy selesai — nilai SAMA' : 'Fase copy selesai — nilai BERBEDA',
-                    html: '<p class="mb-1">' + escapeHtmlGen(resp.message || 'Selesai.') + '</p>' + htmlRekon,
+                    title: rekonOk ? 'Generate selesai — nilai SAMA' : 'Generate selesai — nilai BERBEDA',
+                    html: '<p class="mb-1">' + escapeHtmlGen(resp.message || 'Selesai.') + '</p>' + htmlBeli + htmlProd + htmlPj + htmlRekon,
                     confirmButtonText: 'OK',
                     width: 640
+                }).then(function() {
+                    // Pastikan DataTable tetap tampil setelah notifikasi ditutup
+                    try {
+                        ensureGenVerifyUiStructure();
+                        if (lastGenVerifyResult || resp) {
+                            renderGenCopyBulanSebelumnyaTable(lastGenVerifyResult || resp);
+                        }
+                    } catch (eShow) {
+                        console.warn('re-render setelah OK:', eShow);
+                    }
                 });
             }, 10);
             try { cekGeneratePersediaanBulan(); } catch (eCek) {}
@@ -5399,11 +6698,13 @@ window.addEventListener('load', function() {
     }
 
     function genProsesMountHasContent() {
-        return $('#gen-proses-persediaan-mount .gen-proses-persediaan-box').length > 0;
+        return $('#gen-proses-persediaan-mount .gen-proses-persediaan-box').length > 0
+            || $('#tbl-gen-copy-bulan-sebelumnya').length > 0;
     }
 
     function genProsesPembelianMountHasContent() {
-        return $('#gen-proses-pembelian-mount .gen-proses-pembelian-box').length > 0;
+        return $('#gen-proses-pembelian-mount .gen-proses-pembelian-box').length > 0
+            || $('#tbl-gen-pembelian-barang-matched').length > 0;
     }
 
     function genProsesProduksiMountHasContent() {
@@ -5657,21 +6958,27 @@ window.addEventListener('load', function() {
         try { destroyGenerateProsesPecahSatuanTables(); } catch (e3b) {}
         try { destroyGenerateProsesPenjualanTables(); } catch (e4) {}
         try { destroyGenerateProsesPersediaanFullTables(); } catch (e5) {}
-        $('#gen-proses-persediaan-mount').html(
-            '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Hasil proses generate akan muncul di sini setelah selesai.</p>'
-        );
-        $('#gen-proses-pembelian-mount').html(
-            '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi pembelian akan muncul di sini setelah proses pembelian selesai.</p>'
-        );
-        $('#gen-proses-produksi-mount').html(
-            '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi produksi akan muncul di sini setelah proses sys_unit_produk selesai.</p>'
-        );
-        $('#gen-proses-pecah-satuan-mount').html(
-            '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi pecah satuan akan muncul di sini setelah proses tbl_pembelian_pecah_satuan selesai.</p>'
-        );
-        $('#gen-proses-penjualan-mount').html(
-            '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Data verifikasi penjualan akan muncul di sini setelah proses tbl_penjualan selesai.</p>'
-        );
+        try { destroyGenVerifyDataTables(); } catch (e6) {}
+
+        // Restore struktur UI verifikasi (jangan diganti placeholder kosong)
+        if ($('#gen-proses-persediaan-mount').length) {
+            $('#gen-proses-persediaan-mount').html(htmlGenVerifyPersediaanMount());
+            $('#gen-copy-sumber-wrap').addClass('d-none');
+            $('#gen-proses-persediaan-placeholder').removeClass('d-none');
+        }
+        if ($('#gen-proses-pembelian-mount').length) {
+            $('#gen-proses-pembelian-mount').html(
+                htmlGenVerifyPembelianTabs('barang', 'Pembelian di persediaan', 'Pembelian tidak ada di persediaan')
+            );
+        }
+        if ($('#gen-proses-pembelian-jasa-mount').length) {
+            $('#gen-proses-pembelian-jasa-mount').html(
+                htmlGenVerifyPembelianTabs('jasa', 'Pembelian jasa di persediaan', 'Pembelian jasa tidak ada di persediaan')
+            );
+        }
+        $('#gen-proses-produksi-mount').html(htmlGenVerifyProduksiMount());
+        $('#gen-proses-pecah-satuan-mount').html(htmlGenVerifyPecahSatuanMount());
+        $('#gen-proses-penjualan-mount').html(htmlGenVerifyPenjualanMount());
         $('#gen-proses-persediaan-full-mount').html(
             '<p class="text-muted text-center py-4 mb-0"><i class="fas fa-info-circle mr-1"></i>Verifikasi persediaan lengkap akan muncul di sini setelah semua proses selesai.</p>'
         );
@@ -7815,6 +9122,14 @@ window.addEventListener('load', function() {
     function loadGenerateProsesPersediaanView(bulanKey, options) {
         options = options || {};
         return new Promise(function(resolve) {
+            // Jangan timpa UI verifikasi generate (Data Persediaan Bulan Sebelumnya)
+            if ($('#tbl-gen-copy-bulan-sebelumnya').length || $('#gen-copy-sumber-wrap').length) {
+                if (lastGenVerifyResult) {
+                    try { renderGenCopyBulanSebelumnyaTable(lastGenVerifyResult); } catch (eR) {}
+                }
+                resolve({ ok: true, key: 'persediaan', skipped: true });
+                return;
+            }
             if (!bulanKey || !urlGenerateProsesPersediaanView) {
                 resolve({ ok: false, key: 'persediaan' });
                 return;
@@ -8037,6 +9352,14 @@ window.addEventListener('load', function() {
     function loadGenerateProsesPembelianView(bulanKey, options) {
         options = options || {};
         return new Promise(function(resolve) {
+            // Jangan timpa UI verifikasi generate (tab pembelian di persediaan / belum ada)
+            if ($('#tbl-gen-pembelian-barang-matched').length || $('#badge-gen-pem-barang-match').length) {
+                if (lastGenVerifyResult) {
+                    try { renderGenPembelianApplyTables(lastGenVerifyResult); } catch (eP) {}
+                }
+                resolve({ ok: true, key: 'pembelian', skipped: true });
+                return;
+            }
             if (!bulanKey || !urlGenerateProsesPembelianView) {
                 resolve({ ok: false, key: 'pembelian' });
                 return;
@@ -8150,6 +9473,14 @@ window.addEventListener('load', function() {
     function loadGenerateProsesProduksiView(bulanKey, options) {
         options = options || {};
         return new Promise(function(resolve) {
+            // Jangan timpa UI verifikasi generate (tbl-gen-produksi-insert)
+            if ($('#tbl-gen-produksi-insert').length || $('#gen-produksi-badge').length) {
+                if (lastGenVerifyResult) {
+                    try { renderGenProduksiTables(lastGenVerifyResult); } catch (ePr) {}
+                }
+                resolve({ ok: true, key: 'produksi', skipped: true });
+                return;
+            }
             if (!bulanKey || !urlGenerateProsesProduksiView) {
                 resolve({ ok: false, key: 'produksi' });
                 return;
@@ -8261,6 +9592,13 @@ window.addEventListener('load', function() {
     function loadGenerateProsesPecahSatuanView(bulanKey, options) {
         options = options || {};
         return new Promise(function(resolve) {
+            if ($('#tbl-gen-pecah-satuan').length || $('#gen-pecah-badge').length) {
+                if (lastGenVerifyResult) {
+                    try { renderGenPecahSatuanTables(lastGenVerifyResult); } catch (ePecahSkip) {}
+                }
+                resolve({ ok: true, key: 'pecah_satuan', skipped: true });
+                return;
+            }
             if (!bulanKey || !urlGenerateProsesPecahSatuanView) {
                 resolve({ ok: false, key: 'pecah_satuan' });
                 return;
@@ -8373,6 +9711,13 @@ window.addEventListener('load', function() {
     function loadGenerateProsesPenjualanView(bulanKey, options) {
         options = options || {};
         return new Promise(function(resolve) {
+            if ($('#tbl-gen-penjualan-matched').length || $('#badge-gen-pj-match').length) {
+                if (lastGenVerifyResult) {
+                    try { renderGenPenjualanTables(lastGenVerifyResult); } catch (ePjSkip) {}
+                }
+                resolve({ ok: true, key: 'penjualan', skipped: true });
+                return;
+            }
             if (!bulanKey || !urlGenerateProsesPenjualanView) {
                 resolve({ ok: false, key: 'penjualan' });
                 return;
@@ -8821,6 +10166,157 @@ window.addEventListener('load', function() {
     $(document).on('click', '.btn-gen-pj-solusi', function(e) {
         e.preventDefault();
         openGenPjSolusiModal($(this));
+    });
+
+    var genPjReferensiState = { idPenjualan: 0, bulanKey: '', row: null, dt: null };
+
+    function applyGenPjReferedToLastVerify(idPenjualan, applyRes) {
+        if (!lastGenVerifyResult) {
+            return;
+        }
+        var um = lastGenVerifyResult.penjualan_unmatched || [];
+        var found = null;
+        var rest = [];
+        um.forEach(function(r) {
+            if ((parseInt(r.id_penjualan, 10) || 0) === idPenjualan) {
+                found = r;
+            } else {
+                rest.push(r);
+            }
+        });
+        lastGenVerifyResult.penjualan_unmatched = rest;
+        if (!found) {
+            found = { id_penjualan: idPenjualan, nama_barang: '', satuan: '', jumlah: '', konsumen_nama: '' };
+        }
+        found.status = 'UPDATED';
+        found.id_persediaan = applyRes.id_persediaan || '';
+        found.penjualan = applyRes.penjualan_baru || applyRes.penjualan || '';
+        found.total_10 = applyRes.total_10 || '';
+        found.kolom_unit = applyRes.kolom_unit || found.kolom_unit || '';
+        found.keterangan = 'refered manual ke persediaan id=' + (applyRes.id_persediaan || '');
+        var matched = lastGenVerifyResult.penjualan_matched || [];
+        found.no = matched.length + 1;
+        matched.push(found);
+        lastGenVerifyResult.penjualan_matched = matched;
+        if (lastGenVerifyResult.penjualan_apply) {
+            lastGenVerifyResult.penjualan_apply.matched_count = matched.length;
+            lastGenVerifyResult.penjualan_apply.unmatched_count = rest.length;
+            lastGenVerifyResult.penjualan_apply.updated = (parseInt(lastGenVerifyResult.penjualan_apply.updated, 10) || 0) + 1;
+        }
+        rest.forEach(function(r, i) { r.no = i + 1; });
+        renderGenPenjualanTables(lastGenVerifyResult);
+    }
+
+    function openGenPjReferensiModal(idPenjualan) {
+        var bulanKey = getBulanTargetGenerateSafe();
+        genPjReferensiState.idPenjualan = idPenjualan;
+        genPjReferensiState.bulanKey = bulanKey;
+        var um = (lastGenVerifyResult && lastGenVerifyResult.penjualan_unmatched) ? lastGenVerifyResult.penjualan_unmatched : [];
+        var row = null;
+        um.forEach(function(r) {
+            if ((parseInt(r.id_penjualan, 10) || 0) === idPenjualan) {
+                row = r;
+            }
+        });
+        genPjReferensiState.row = row;
+        $('#gen-pj-referensi-alert').empty();
+        $('#gen-pj-referensi-meta').html(
+            'Penjualan ID <strong>' + idPenjualan + '</strong>'
+            + (row ? ' — ' + escapeHtmlGen(row.nama_barang || '') + ' / ' + escapeHtmlGen(row.satuan || '') + ' qty ' + escapeHtmlGen(String(row.jumlah || '')) : '')
+            + ' &nbsp;|&nbsp; Persediaan bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong>'
+        );
+        $('#gen-pj-referensi-loading').removeClass('d-none');
+        if (genPjReferensiState.dt && $.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-pj-referensi-persediaan')) {
+            try { $('#tbl-gen-pj-referensi-persediaan').DataTable().destroy(); } catch (eD) {}
+            genPjReferensiState.dt = null;
+        }
+        $('#tbl-gen-pj-referensi-persediaan tbody').empty();
+        $('#modal-gen-pj-referensi').modal('show');
+        $.ajax({
+            url: urlGeneratePenjualanReferensiList,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan: bulanKey, id_penjualan: idPenjualan }
+        }).done(function(res) {
+            $('#gen-pj-referensi-loading').addClass('d-none');
+            if (!res || !res.ok) {
+                $('#gen-pj-referensi-alert').html('<div class="alert alert-danger py-2 mb-0">' + escapeHtmlGen((res && res.message) ? res.message : 'Gagal memuat persediaan.') + '</div>');
+                return;
+            }
+            var rows = (res.rows || []).map(function(r) {
+                var idp = parseInt(r.id, 10) || 0;
+                return [
+                    '<button type="button" class="btn btn-xs btn-success btn-gen-pj-refered" data-id-persediaan="' + idp + '">Refered</button>',
+                    idp,
+                    r.namabarang || '',
+                    r.satuan || '',
+                    r.hpp || '',
+                    r.sa || '',
+                    r.beli || '',
+                    r.penjualan || '',
+                    r.total_10 || '',
+                    r.uuid_persediaan || ''
+                ];
+            });
+            genPjReferensiState.dt = $('#tbl-gen-pj-referensi-persediaan').DataTable({
+                data: rows,
+                pageLength: 25,
+                scrollX: true,
+                order: [[2, 'asc']],
+                columnDefs: [{ targets: [0], orderable: false }]
+            });
+        }).fail(function() {
+            $('#gen-pj-referensi-loading').addClass('d-none');
+            $('#gen-pj-referensi-alert').html('<div class="alert alert-danger py-2 mb-0">Gagal menghubungi server.</div>');
+        });
+    }
+
+    $(document).on('click', '.btn-gen-pj-referensi', function(e) {
+        e.preventDefault();
+        var idPj = parseInt($(this).attr('data-id-penjualan'), 10) || 0;
+        if (idPj < 1) {
+            return;
+        }
+        openGenPjReferensiModal(idPj);
+    });
+
+    $(document).on('click', '.btn-gen-pj-refered', function(e) {
+        e.preventDefault();
+        var idPers = parseInt($(this).attr('data-id-persediaan'), 10) || 0;
+        var idPj = genPjReferensiState.idPenjualan || 0;
+        var bulanKey = genPjReferensiState.bulanKey || getBulanTargetGenerateSafe();
+        if (idPers < 1 || idPj < 1 || !bulanKey) {
+            return;
+        }
+        var $btn = $(this).prop('disabled', true);
+        $.ajax({
+            url: urlGeneratePenjualanRefered,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                bulan: bulanKey,
+                id_penjualan: idPj,
+                id_persediaan: idPers
+            }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                $('#gen-pj-referensi-alert').html('<div class="alert alert-danger py-2 mb-0">' + escapeHtmlGen((res && res.message) ? res.message : 'Gagal refered.') + '</div>');
+                $btn.prop('disabled', false);
+                return;
+            }
+            $('#modal-gen-pj-referensi').modal('hide');
+            applyGenPjReferedToLastVerify(idPj, res);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Refered berhasil',
+                    text: res.message || ('Penjualan id=' + idPj + ' dimasukkan ke persediaan id=' + idPers)
+                });
+            }
+        }).fail(function() {
+            $('#gen-pj-referensi-alert').html('<div class="alert alert-danger py-2 mb-0">Gagal menghubungi server.</div>');
+            $btn.prop('disabled', false);
+        });
     });
 
     $(document).on('click', '.btn-gen-pj-penyesuaian', function(e) {
