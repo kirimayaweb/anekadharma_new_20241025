@@ -4922,7 +4922,8 @@ window.addEventListener('load', function() {
                 .replace(/"/g, '&quot;');
         }
 
-        var xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>'
+        // Pisah tag XML agar PHP short_open_tag di server tidak error parse
+        var xml = '<' + '?xml version="1.0"?>' + '<' + '?mso-application progid="Excel.Sheet"?>'
             + '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"'
             + ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'
             + '<Worksheet ss:Name="Data"><Table>';
