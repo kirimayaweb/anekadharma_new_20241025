@@ -23,8 +23,10 @@ $total_sa_nominal = 0;
 $total_beli = 0;
 $total_beli_nominal = 0;
 $total_nominal_unit = array();
+$total_qty_unit = array();
 foreach (persediaan_list_unit_columns() as $uf_total) {
 	$total_nominal_unit[$uf_total] = 0;
+	$total_qty_unit[$uf_total] = 0;
 }
 $total_terjual = 0;
 $total_pecah_satuan = 0;
@@ -86,6 +88,7 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 			$total_beli_nominal += persediaan_hitung_beli_nominal_row($persediaan);
 			foreach (persediaan_list_unit_columns() as $uf_total) {
 				$total_nominal_unit[$uf_total] += persediaan_hitung_kolom_nominal_row($persediaan, $uf_total);
+				$total_qty_unit[$uf_total] += persediaan_parse_angka(persediaan_row_get($persediaan, $uf_total));
 			}
 			if ($show_keluar_columns) {
 				$total_terjual += persediaan_parse_angka(isset($persediaan->penjualan) ? $persediaan->penjualan : 0);
@@ -153,7 +156,7 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 	<tfoot>
 		<tr>
 			<?php
-			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi);
+			$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $total_nominal_unit, null, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi, $total_qty_unit);
 			$idx_foot_total_10 = persediaan_list_col_index_total_10();
 			$idx_foot_nilai = persediaan_list_col_index_nilai_persediaan();
 			$idx_foot_sa = persediaan_list_col_index_sa();
@@ -167,6 +170,23 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 			foreach (persediaan_list_unit_columns() as $uf_foot) {
 				if (persediaan_field_has_nominal_column($uf_foot)) {
 					$idx_foot_nominal[] = persediaan_list_col_index_unit_nominal($uf_foot);
+				}
+			}
+			$idx_foot_unit_qty = array();
+			$scan_foot = persediaan_list_prefix_column_count();
+			foreach (persediaan_list_fields_tgl_keluar_sampai_total_10() as $f_scan) {
+				if ($f_scan === 'tgl_keluar') {
+					$scan_foot++;
+					continue;
+				}
+				if ($f_scan === 'total_10') {
+					$scan_foot++;
+					continue;
+				}
+				$idx_foot_unit_qty[] = $scan_foot;
+				$scan_foot++;
+				if (persediaan_field_has_nominal_column($f_scan)) {
+					$scan_foot++;
 				}
 			}
 			foreach ($footer_cells as $col_foot => $foot_val) {
@@ -185,6 +205,7 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 					|| $col_foot === $idx_foot_bahan_produksi
 					|| persediaan_tab_data_is_money_column($col_foot)
 					|| in_array($col_foot, $idx_foot_nominal, true)
+					|| in_array($col_foot, $idx_foot_unit_qty, true)
 				)) {
 					$cls = ' persediaan-foot-num';
 				}

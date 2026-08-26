@@ -14,6 +14,6 @@ if ($excel_jenis === '') {
 		class="btn btn-sm btn-success btn-gen-proses-excel shadow-sm"
 		data-jenis="<?php echo htmlspecialchars($excel_jenis, ENT_QUOTES, 'UTF-8'); ?>"
 		title="<?php echo htmlspecialchars($excel_title, ENT_QUOTES, 'UTF-8'); ?>">
-		<i class="fas fa-file-excel mr-1"></i> Excel
+		<i class="fas fa-file-excel mr-1"></i> Cetak ke Excel
 	</button>
 </div>

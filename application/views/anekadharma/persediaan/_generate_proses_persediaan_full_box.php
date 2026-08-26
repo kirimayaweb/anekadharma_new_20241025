@@ -197,7 +197,7 @@ $all_label = $all_ok ? 'Verifikasi Lengkap OK' : 'Verifikasi Lengkap BELUM SESUA
 				<i class="fas fa-database text-purple mr-2"></i>Persediaan Bulan Target — Semua Record
 				<span class="badge badge-secondary ml-2"><?php echo htmlspecialchars($bulan_target_label, ENT_QUOTES, 'UTF-8'); ?></span>
 			</h5>
-			<p class="text-muted small mb-0">Seluruh record persediaan bulan target setelah semua proses — <?php echo (int) count($rows_target_barang); ?> barang, <?php echo (int) count($rows_target_jasa); ?> jasa<?php if ($count_target_all > 0) { ?> (<?php echo (int) $count_target_all; ?> record)<?php } ?>.</p>
+			<p class="text-muted small mb-0">Sama dengan tab <strong>Persediaan</strong> (Barang / Jasa): seluruh record setelah copy, pembelian, jasa, produksi, pecah satuan, dan penjualan. <?php echo (int) count($rows_target_barang); ?> barang, <?php echo (int) count($rows_target_jasa); ?> jasa<?php if ($count_target_all > 0) { ?> (<?php echo (int) $count_target_all; ?> baris tampilan)<?php } ?>.</p>
 		</div>
 		<ul class="nav nav-pills gen-proses-subtabs mb-2" role="tablist">
 			<li class="nav-item">
