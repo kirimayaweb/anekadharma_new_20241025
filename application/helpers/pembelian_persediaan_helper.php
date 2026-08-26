@@ -14177,54 +14177,124 @@ function persediaan_generate_recalculate_batch_response_meta($state)
  * History Generate — persediaan_history_generate (+ data rekap)
  * -------------------------------------------------------------------------
  */
-function persediaan_history_generate_table_exists($CI)
+function persediaan_history_generate_ddl_header()
+{
+	return "CREATE TABLE IF NOT EXISTS `persediaan_history_generate` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bulan_target` VARCHAR(7) NOT NULL,
+  `tanggal_beli_target` DATE NOT NULL,
+  `tanggal_beli_sumber` DATE NOT NULL,
+  `tanggal_klik_generate` DATETIME NOT NULL,
+  `tanggal_selesai` DATETIME NULL DEFAULT NULL,
+  `reset_deleted_count` INT(11) NOT NULL DEFAULT 0,
+  `target_kosong_verified` TINYINT(1) NOT NULL DEFAULT 0,
+  `id_gen_recalc_log` INT(11) UNSIGNED NULL DEFAULT NULL,
+  `generate_insert` INT(11) NOT NULL DEFAULT 0,
+  `generate_update` INT(11) NOT NULL DEFAULT 0,
+  `pembelian_update` INT(11) NOT NULL DEFAULT 0,
+  `pembelian_insert` INT(11) NOT NULL DEFAULT 0,
+  `pembelian_gagal` INT(11) NOT NULL DEFAULT 0,
+  `total_pembelian` INT(11) NOT NULL DEFAULT 0,
+  `summary_json` LONGTEXT NULL,
+  `rekap_json` LONGTEXT NULL,
+  `proses_json` LONGTEXT NULL,
+  `summary_html` LONGTEXT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'proses',
+  `fase_terakhir` VARCHAR(32) NULL DEFAULT NULL,
+  `id_user` INT(11) NULL DEFAULT NULL,
+  `nama_user` VARCHAR(150) NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_hist_gen_bulan_klik` (`bulan_target`, `tanggal_klik_generate`),
+  KEY `idx_hist_gen_klik` (`tanggal_klik_generate`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
+function persediaan_history_generate_ddl_data()
+{
+	// Tanpa FOREIGN KEY agar auto-create aman di shared hosting
+	return "CREATE TABLE IF NOT EXISTS `persediaan_history_generate_data` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_history` INT(11) UNSIGNED NOT NULL,
+  `jenis` VARCHAR(64) NOT NULL,
+  `judul` VARCHAR(255) NOT NULL DEFAULT '',
+  `row_count` INT(11) NOT NULL DEFAULT 0,
+  `totals_json` TEXT NULL,
+  `data_json` LONGTEXT NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_hist_gen_data_history` (`id_history`, `jenis`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+}
+
+function persediaan_history_generate_table_exists($CI, $force_refresh = false)
 {
 	static $cache = null;
-	if ($cache !== null) {
-		return $cache;
+	if (!$force_refresh && $cache !== null) {
+		return (bool) $cache;
 	}
 	$cache = $CI->db->table_exists('persediaan_history_generate')
 		&& $CI->db->table_exists('persediaan_history_generate_data');
-	return $cache;
+	return (bool) $cache;
+}
+
+function persediaan_history_generate_run_sql_file($CI, array $sql_paths)
+{
+	foreach ($sql_paths as $path) {
+		if (!is_file($path)) {
+			continue;
+		}
+		$sql = file_get_contents($path);
+		if ($sql === false || trim($sql) === '') {
+			continue;
+		}
+		$parts = preg_split('/;\s*[\r\n]+/', $sql);
+		foreach ($parts as $stmt) {
+			$stmt = trim($stmt);
+			if ($stmt === '' || stripos($stmt, 'CREATE TABLE') === false) {
+				continue;
+			}
+			@$CI->db->query($stmt);
+		}
+		return true;
+	}
+	return false;
 }
 
 function persediaan_history_generate_ensure_tables($CI)
 {
-	// Check if tables exist
-	$exists = $CI->db->table_exists('persediaan_history_generate');
-	$exists_data = $CI->db->table_exists('persediaan_history_generate_data');
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
 
-	// If tables don't exist, create them from SQL file
-	if (!$exists || !$exists_data) {
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$need_header = !$CI->db->table_exists('persediaan_history_generate');
+	$need_data = !$CI->db->table_exists('persediaan_history_generate_data');
+
+	if ($need_header || $need_data) {
 		$sql_paths = array(
 			APPPATH . '../database/sql/persediaan_history_generate.sql',
 		);
 		if (defined('FCPATH')) {
+			$sql_paths[] = FCPATH . 'database/sql/persediaan_history_generate.sql';
 			$sql_paths[] = FCPATH . '../database/sql/persediaan_history_generate.sql';
 		}
-		foreach ($sql_paths as $path) {
-			if (!is_file($path)) {
-				continue;
-			}
-			$sql = file_get_contents($path);
-			if ($sql === false || trim($sql) === '') {
-				continue;
-			}
-			$parts = preg_split('/;\s*\n/', $sql);
-			foreach ($parts as $stmt) {
-				$stmt = trim($stmt);
-				if ($stmt === '' || stripos($stmt, 'CREATE TABLE') === false) {
-					continue;
-				}
-				$CI->db->query($stmt);
-			}
-			break;
+		persediaan_history_generate_run_sql_file($CI, $sql_paths);
+
+		if (!$CI->db->table_exists('persediaan_history_generate')) {
+			@$CI->db->query(persediaan_history_generate_ddl_header());
+		}
+		if (!$CI->db->table_exists('persediaan_history_generate_data')) {
+			@$CI->db->query(persediaan_history_generate_ddl_data());
 		}
 	}
 
-	// Ensure tables exist
 	if (!$CI->db->table_exists('persediaan_history_generate') || !$CI->db->table_exists('persediaan_history_generate_data')) {
-		return persediaan_history_generate_table_exists($CI);
+		$CI->db->db_debug = $db_debug;
+		$ensured = false;
+		log_message('error', 'persediaan_history_generate_ensure_tables: gagal membuat tabel history generate.');
+		return false;
 	}
 
 	// --- Auto-alter: add missing fields to persediaan_history_generate ---
@@ -14281,7 +14351,9 @@ function persediaan_history_generate_ensure_tables($CI)
 		}
 	}
 
-	return persediaan_history_generate_table_exists($CI);
+	$CI->db->db_debug = $db_debug;
+	$ensured = persediaan_history_generate_table_exists($CI, true);
+	return (bool) $ensured;
 }
 
 function persediaan_history_generate_rekap_jenis_definitions()

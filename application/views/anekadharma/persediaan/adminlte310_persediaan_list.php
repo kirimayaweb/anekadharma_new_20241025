@@ -7594,9 +7594,13 @@ window.addEventListener('load', function() {
                 showGenHistoryGenerateLoadingRow(msg, 'text-danger');
                 return;
             }
-            if (res.tables_ready === false) {
+			if (res.tables_ready === false) {
                 $('#gen-history-generate-intro').html(
-                    '<span class="text-warning">Tabel history belum tersedia. Jalankan SQL <code>database/sql/persediaan_history_generate.sql</code> atau klik Generate sekali agar auto-create.</span>'
+                    '<span class="text-warning">Tabel history belum tersedia di database. Refresh halaman ini sekali — tabel akan dibuat otomatis. Jika masih gagal, hubungi admin DB.</span>'
+                );
+            } else if (res.tables_created === true && (!res.items || !res.items.length)) {
+                $('#gen-history-generate-intro').html(
+                    'Tabel history sudah siap. Belum ada record untuk bulan ini — jalankan <strong>Generate &amp; Recalculate</strong> untuk menyimpan history.'
                 );
             } else {
                 var v2Count = 0;

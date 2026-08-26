@@ -566,7 +566,9 @@ class Persediaan extends CI_Controller
 
 	private function get_persediaan_list_view_data($bulan, $Persediaan)
 	{
-		$this->load->helper('persediaan_display');
+		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
+		persediaan_history_generate_ensure_tables($this);
+		generate_hasil_datatable_ensure_tables($this);
 
 		$ts_gen_default = strtotime('+1 month', strtotime(date('Y-m-01')));
 		if ($ts_gen_default === false) {
@@ -3612,6 +3614,9 @@ class Persediaan extends CI_Controller
 				));
 				return;
 			}
+
+			persediaan_history_generate_ensure_tables($this);
+			generate_hasil_datatable_ensure_tables($this);
 
 			$db_debug = $this->db->db_debug;
 			$this->db->db_debug = false;
@@ -6736,7 +6741,7 @@ class Persediaan extends CI_Controller
 			'total' => count($items),
 			'snapshot_source' => 'database',
 			'message' => !$tables_ready
-				? 'Tabel history generate belum tersedia di database. Jalankan SQL dari file <code>database/sql/persediaan_history_generate.sql</code> atau klik Generate & Recalculate agar auto-create.'
+				? 'Tabel history generate belum tersedia di database. Refresh halaman Persediaan — tabel akan dibuat otomatis oleh aplikasi.'
 				: (count($items) > 0 ? '' : 'Belum ada history generate untuk bulan ini.'),
 		));
 	}
