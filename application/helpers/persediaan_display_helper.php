@@ -503,9 +503,10 @@ function persediaan_list_col_index_bahan_produksi($CI = null)
 /**
  * Baris footer datatable / export (label Total + jumlah per kolom).
  */
-function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true, $total_sa = null, $total_beli = null, $total_sa_nominal = null, $total_beli_nominal = null, $total_terjual = null, $total_pecah_satuan = null, $total_bahan_produksi = null)
+function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit = null, $CI = null, $show_keluar_columns = true, $total_sa = null, $total_beli = null, $total_sa_nominal = null, $total_beli_nominal = null, $total_terjual = null, $total_pecah_satuan = null, $total_bahan_produksi = null, $totals_qty_unit = null)
 {
 	$totals_nominal_unit = is_array($totals_nominal_unit) ? $totals_nominal_unit : array();
+	$totals_qty_unit = is_array($totals_qty_unit) ? $totals_qty_unit : array();
 	$footer = array();
 	$prefix_count = persediaan_list_prefix_column_count();
 
@@ -534,10 +535,10 @@ function persediaan_datatable_footer_cells($total_total_10, $total_nilai_persedi
 		if ($field === 'tgl_keluar') {
 			$footer[] = '';
 		} elseif ($field === 'total_10') {
-			// Satu kolom saja (selaras header total_10, tanpa kolom nominal terpisah).
 			$footer[] = persediaan_format_angka_tampil($total_total_10);
 		} else {
-			$footer[] = '';
+			$sum_qty = isset($totals_qty_unit[$field]) ? (float) $totals_qty_unit[$field] : 0;
+			$footer[] = ($sum_qty != 0.0) ? persediaan_format_angka_tampil($sum_qty) : persediaan_format_angka_tampil(0);
 			if (persediaan_field_has_nominal_column($field)) {
 				$sum_nom = isset($totals_nominal_unit[$field]) ? (float) $totals_nominal_unit[$field] : 0;
 				$footer[] = persediaan_format_rupiah_tampil($sum_nom, true);
@@ -1470,8 +1471,10 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 	$total_pecah_satuan = 0;
 	$total_bahan_produksi = 0;
 	$totals_nominal_unit = array();
+	$totals_qty_unit = array();
 	foreach (persediaan_list_unit_columns($CI) as $uf) {
 		$totals_nominal_unit[$uf] = 0;
+		$totals_qty_unit[$uf] = 0;
 	}
 
 	if ($prepare_download) {
@@ -1510,6 +1513,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$total_beli_nominal += persediaan_hitung_beli_nominal_row($data);
 		foreach (persediaan_list_unit_columns($CI) as $uf) {
 			$totals_nominal_unit[$uf] += persediaan_hitung_kolom_nominal_row($data, $uf);
+			$totals_qty_unit[$uf] += persediaan_parse_angka(persediaan_row_get($data, $uf));
 		}
 		if ($show_keluar_columns) {
 			$total_terjual += persediaan_parse_angka(isset($data->penjualan) ? $data->penjualan : 0);
@@ -1530,7 +1534,7 @@ function persediaan_export_excel_tab_data_output($CI, $bulan, $rows, $filter_kat
 		$row_num++;
 	}
 
-	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi);
+	$footer_cells = persediaan_datatable_footer_cells($total_total_10, $total_nilai_persediaan, $totals_nominal_unit, $CI, $show_keluar_columns, $total_sa, $total_beli, $total_sa_nominal, $total_beli_nominal, $total_terjual, $total_pecah_satuan, $total_bahan_produksi, $totals_qty_unit);
 	$idx_total_10 = persediaan_list_col_index_total_10($CI);
 	$idx_nilai = persediaan_list_col_index_nilai_persediaan($CI);
 	$idx_sa = persediaan_list_col_index_sa();
@@ -3146,7 +3150,12 @@ function persediaan_gen_proses_excel_load_rows($CI, $bulan_target, $jenis, $def)
 		if (strpos($jenis, '_sumber_') !== false) {
 			$bulan_data = $bulan_sumber;
 		}
-		$rows = persediaan_gen_proses_load_rows_bulan($CI, $bulan_data);
+		$use_tab1 = ($jenis === 'proses_persediaan_full_barang' || $jenis === 'proses_persediaan_full_jasa');
+		if ($use_tab1 && method_exists($CI, 'get_persediaan_tab_rows_for_bulan')) {
+			$rows = $CI->get_persediaan_tab_rows_for_bulan($bulan_data);
+		} else {
+			$rows = persediaan_gen_proses_load_rows_bulan($CI, $bulan_data);
+		}
 		$is_jasa = isset($def['kategori']) && $def['kategori'] === 'jasa';
 		return persediaan_filter_rows_by_kategori_tab($rows, $is_jasa);
 	}

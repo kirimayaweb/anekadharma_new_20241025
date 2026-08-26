@@ -740,10 +740,10 @@
                                 </div>
                                 <div class="card-body p-2">
                                     <p class="text-muted small mb-2 px-1" id="gen-history-generate-intro">
-                                        Daftar proses generate per bulan target. Klik baris untuk menampilkan semua datatable rekap &amp; proses di bawah.
+                                        History disimpan di <strong>database server</strong> — dapat dimuat ulang kapan saja dari laptop/komputer mana pun (login yang sama). Klik baris atau tombol <strong>Muat</strong> untuk menampilkan hasil generate persis seperti saat proses selesai. Cache browser (localStorage) hanya pelengkap perangkat ini.
                                     </p>
-                                    <div class="gen-recalc-table-scroll gen-recalc-summary-scroll" style="min-height:200px;max-height:320px;">
-                                        <table id="tbl-gen-history-generate" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0">
+                                    <div class="gen-history-generate-dt-wrap table-responsive">
+                                        <table id="tbl-gen-history-generate" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0 w-100">
                                             <thead>
                                                 <tr>
                                                     <th>Tanggal Klik Generate</th>
@@ -1217,6 +1217,7 @@
                                                                 <thead>
                                                                     <tr>
                                                                         <th>No</th>
+                                                                        <th>Referensi</th>
                                                                         <th>Tgl Jual</th>
                                                                         <th>Nama Barang</th>
                                                                         <th>Satuan</th>
@@ -1226,7 +1227,6 @@
                                                                         <th>UUID Persediaan</th>
                                                                         <th>Keterangan</th>
                                                                         <th>Status</th>
-                                                                        <th>Referensi</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody></tbody>
@@ -3274,6 +3274,15 @@
     #gen-recalc-result-wrap .gen-proses-penjualan-dt-wrap .dataTables_wrapper {
         font-size: 15px;
     }
+    #gen-history-generate-wrap .gen-history-generate-dt-wrap .dataTables_wrapper {
+        font-size: 13px;
+    }
+    #gen-history-generate-wrap .gen-history-generate-dt-wrap .dataTables_filter input {
+        margin-left: 0.35em;
+    }
+    #gen-history-generate-wrap #tbl-gen-history-generate tbody tr[data-history-id] {
+        cursor: pointer;
+    }
     .gen-recalc-process-swal.swal2-popup {
         width: 34em;
         max-width: 92vw;
@@ -3993,6 +4002,74 @@ window.addEventListener('load', function() {
             + '</div>';
     }
 
+    function restoreV2VerifyFromSnapshot(verifyRes) {
+        if (!verifyRes || !verifyRes.ok) {
+            return false;
+        }
+        lastGenVerifyResult = verifyRes;
+        genRecalcV2ProsesReady = true;
+        ensureGenVerifyUiStructure();
+        try { renderGenCopyBulanSebelumnyaTable(verifyRes); } catch (eCopy) { console.warn('restore copy:', eCopy); }
+        try { renderGenPembelianApplyTables(verifyRes); } catch (ePem) { console.warn('restore pembelian:', ePem); }
+        try { renderGenProduksiTables(verifyRes); } catch (eProd) { console.warn('restore produksi:', eProd); }
+        try { renderGenPecahSatuanTables(verifyRes); } catch (ePecah) { console.warn('restore pecah:', ePecah); }
+        try { renderGenPenjualanTables(verifyRes); } catch (ePj) { console.warn('restore penjualan:', ePj); }
+        try { renderGenRekonNilaiTable(verifyRes); } catch (eRekon) { console.warn('restore rekon:', eRekon); }
+        setTimeout(function() {
+            try {
+                if (genCopySumberDt) { genCopySumberDt.columns.adjust(); }
+                Object.keys(genPemDtStore).forEach(function(sel) {
+                    if (genPemDtStore[sel]) {
+                        try { genPemDtStore[sel].columns.adjust(); } catch (eA) {}
+                    }
+                });
+            } catch (eAdj) {}
+        }, 150);
+        return true;
+    }
+
+    function syncGenTabBulanFromKey(bulanKey) {
+        if (!bulanKey || !/^\d{4}-\d{2}$/.test(bulanKey)) {
+            return;
+        }
+        var parts = bulanKey.split('-');
+        var tahun = parseInt(parts[0], 10);
+        var bulan = parseInt(parts[1], 10);
+        if (tahun && bulan >= 1 && bulan <= 12) {
+            if ($('#gen_tahun_persediaan').length) {
+                $('#gen_tahun_persediaan').val(String(tahun));
+            }
+            if ($('#gen_bulan_persediaan').length) {
+                $('#gen_bulan_persediaan').val(String(bulan));
+            }
+        }
+    }
+
+    function saveGenVerifyResultLocal(bulanKey) {
+        // Cache opsional per-browser; sumber utama history ada di database server.
+        if (!bulanKey || !lastGenVerifyResult) {
+            return;
+        }
+        try {
+            var snap = readGenProsesLocalSnapshot(bulanKey) || {
+                bulan: bulanKey,
+                savedAt: null,
+                summaryHtml: '',
+                boxes: {},
+                v2Verify: null
+            };
+            snap.v2Verify = lastGenVerifyResult;
+            snap.savedAt = new Date().toISOString();
+            if (genRecalcSummaryHtml) {
+                snap.summaryHtml = genRecalcSummaryHtml;
+            }
+            localStorage.setItem(genProsesLocalKey(bulanKey), JSON.stringify(snap));
+            rememberGenProsesLocalKey(bulanKey);
+        } catch (eSaveV) {
+            console.warn('saveGenVerifyResultLocal:', eSaveV);
+        }
+    }
+
     function ensureGenVerifyUiStructure() {
         var needPersediaan = !$('#tbl-gen-copy-bulan-sebelumnya').length;
         var needBarang = !$('#tbl-gen-pembelian-barang-matched').length;
@@ -4149,8 +4226,8 @@ window.addEventListener('load', function() {
             + '    <div class="persediaan-tab-dt-wrap gen-proses-pembelian-dt-wrap">'
             + '      <table id="tbl-gen-penjualan-unmatched" class="table table-sm table-bordered table-striped display nowrap" style="width:100%;">'
             + '        <thead><tr>'
-            + '          <th>No</th><th>Tgl Jual</th><th>Nama Barang</th><th>Satuan</th><th>Jumlah</th>'
-            + '          <th>Konsumen</th><th>Unit</th><th>UUID Persediaan</th><th>Keterangan</th><th>Status</th><th>Referensi</th>'
+            + '          <th>No</th><th>Referensi</th><th>Tgl Jual</th><th>Nama Barang</th><th>Satuan</th><th>Jumlah</th>'
+            + '          <th>Konsumen</th><th>Unit</th><th>UUID Persediaan</th><th>Keterangan</th><th>Status</th>'
             + '        </tr></thead><tbody></tbody>'
             + '        <tfoot><tr><th>TOTAL</th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>'
             + '      </table>'
@@ -4371,6 +4448,20 @@ window.addEventListener('load', function() {
         try { renderGenProduksiTables(res); } catch (eProd) { console.warn('render produksi:', eProd); }
         try { renderGenPecahSatuanTables(res); } catch (ePecah) { console.warn('render pecah satuan:', ePecah); }
         try { renderGenPenjualanTables(res); } catch (ePj) { console.warn('render penjualan:', ePj); }
+
+        var bulanFull = (res && res.bulan_target) ? res.bulan_target : (typeof getBulanTargetGenerateSafe === 'function' ? getBulanTargetGenerateSafe() : '');
+        if (bulanFull && typeof loadGenerateProsesPersediaanFullView === 'function') {
+            try {
+                loadGenerateProsesPersediaanFullView(bulanFull, { skipScroll: true, initDelay: 150 }).then(function() {
+                    saveGenVerifyResultLocal(bulanFull);
+                    saveGenProsesLocalSnapshot(bulanFull);
+                });
+            } catch (eFull) {
+                console.warn('render persediaan lengkap:', eFull);
+            }
+        } else {
+            saveGenVerifyResultLocal(bulanFull || getBulanTargetGenerateSafe());
+        }
 
         setTimeout(function() {
             try {
@@ -4768,6 +4859,7 @@ window.addEventListener('load', function() {
                 : '';
             return [
                 r.no || (i + 1),
+                btnRef,
                 r.tgl_jual || '',
                 r.nama_barang || '',
                 r.satuan || '',
@@ -4776,13 +4868,12 @@ window.addEventListener('load', function() {
                 r.unit || '',
                 r.uuid_persediaan || '',
                 r.keterangan || '',
-                '<span class="badge badge-danger">' + escapeHtmlGen(String(r.status || 'UNMATCHED')) + '</span>',
-                btnRef
+                '<span class="badge badge-danger">' + escapeHtmlGen(String(r.status || 'UNMATCHED')) + '</span>'
             ];
         });
 
         fillOrInitGenPemDt('#tbl-gen-penjualan-matched', dtM, 'Tidak ada penjualan yang terproses', [0, 4, 7, 8, 10], [11], [4, 7, 8]);
-        fillOrInitGenPemDt('#tbl-gen-penjualan-unmatched', dtU, 'Semua penjualan sudah terproses ke persediaan', [0, 4], [9, 10], [4]);
+        fillOrInitGenPemDt('#tbl-gen-penjualan-unmatched', dtU, 'Semua penjualan sudah terproses ke persediaan', [0, 5], [1, 10], [5]);
     }
 
     function exportGenVerifyTableExcel(tableSel, filename) {
@@ -4969,11 +5060,26 @@ window.addEventListener('load', function() {
             } catch (eRender) {
                 console.warn('renderGenCopyBulanSebelumnyaTable:', eRender);
             }
+            saveGenVerifyResultLocal(bulanKey);
+            if (typeof loadHistoryGenerateList === 'function') {
+                try { loadHistoryGenerateList(bulanKey); } catch (eHist) {}
+            }
             var rekonOk = (typeof resp.rekon_ok === 'undefined') ? true : !!resp.rekon_ok;
+            var histMsg = '';
+            if (resp.history_saved && resp.history_id) {
+                histMsg = '<br/><small class="text-muted"><i class="fas fa-database mr-1"></i>History tersimpan ke server (ID '
+                    + escapeHtmlGen(String(resp.history_id))
+                    + (resp.id_generate_run ? ', run #' + escapeHtmlGen(String(resp.id_generate_run)) : '')
+                    + ') di tabel <code>generate_*</code> — bisa dimuat di laptop/komputer lain via tombol <strong>Muat</strong>.</small>';
+            } else if (resp.history_saved === false) {
+                histMsg = '<br/><small class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>'
+                    + escapeHtmlGen(resp.history_save_message || 'History tidak tersimpan ke server.') + '</small>';
+            }
             setStatusGeneratePersediaan(
                 rekonOk ? 'success' : 'warning',
                 '<i class="fas fa-' + (rekonOk ? 'check-circle' : 'exclamation-triangle') + '"></i> '
                     + escapeHtmlGen(resp.message || 'Fase copy selesai.')
+                    + histMsg
                     + '<br/><small class="text-muted">Cek box <strong>Rekon Nilai Persediaan</strong> di bawah untuk detail selisih.</small>'
             );
             closeGenRecalcProcessSwalThen(function() {
@@ -5714,7 +5820,8 @@ window.addEventListener('load', function() {
         genRecalcV2ProsesReady = false;
         if (!initGenerateProsesViewsFromLocalOrEmpty(bulanKey)) {
             $('#gen-recalc-summary').html(
-                '<em>Belum ada proses untuk bulan ini. Klik <strong>Generate &amp; Recalculate</strong> atau muat dari History.</em>'
+                '<em>Belum ada proses untuk bulan ini. Klik <strong>Generate &amp; Recalculate</strong> '
+                + 'atau muat dari <strong>History Generate</strong> (data dari database server, bisa di laptop mana pun).</em>'
             );
         }
         cekGeneratePersediaanBulan();
@@ -7051,8 +7158,14 @@ window.addEventListener('load', function() {
                 return null;
             }
             var parsed = JSON.parse(raw);
-            if (!parsed || !parsed.boxes) {
+            if (!parsed) {
                 return null;
+            }
+            if (!parsed.boxes && !parsed.v2Verify) {
+                return null;
+            }
+            if (!parsed.boxes) {
+                parsed.boxes = {};
             }
             return parsed;
         } catch (eRead) {
@@ -7126,6 +7239,9 @@ window.addEventListener('load', function() {
             }
             snap.savedAt = new Date().toISOString();
             snap.bulan = bulanKey;
+            if (lastGenVerifyResult) {
+                snap.v2Verify = lastGenVerifyResult;
+            }
             localStorage.setItem(genProsesLocalKey(bulanKey), JSON.stringify(snap));
             rememberGenProsesLocalKey(bulanKey);
             return true;
@@ -7140,7 +7256,7 @@ window.addEventListener('load', function() {
         if (!snap || !snap.boxes) {
             return false;
         }
-        var hasAny = !!(snap.boxes.persediaan || snap.boxes.pembelian || snap.boxes.produksi
+        var hasAny = !!(snap.v2Verify || snap.boxes.persediaan || snap.boxes.pembelian || snap.boxes.produksi
             || snap.boxes.pecah_satuan || snap.boxes.penjualan || snap.boxes.persediaan_full);
         if (!hasAny) {
             return false;
@@ -7152,36 +7268,40 @@ window.addEventListener('load', function() {
                 $('#gen-recalc-summary').html(snap.summaryHtml);
             }
 
-            if (snap.boxes.persediaan) {
-                try { destroyGenerateProsesPersediaanTables(); } catch (e1) {}
-                $('#gen-proses-persediaan-mount').html(snap.boxes.persediaan);
-                genProsesLastLoadedBulan = bulanKey;
-                genRecalcV2ProsesReady = true;
-                initGenerateProsesPersediaanTables();
-            }
-            if (snap.boxes.pembelian) {
-                try { destroyGenerateProsesPembelianTables(); } catch (e2) {}
-                $('#gen-proses-pembelian-mount').html(snap.boxes.pembelian);
-                genProsesPembelianLastLoadedBulan = bulanKey;
-                initGenerateProsesPembelianTables();
-            }
-            if (snap.boxes.produksi) {
-                try { destroyGenerateProsesProduksiTables(); } catch (e3) {}
-                $('#gen-proses-produksi-mount').html(snap.boxes.produksi);
-                genProsesProduksiLastLoadedBulan = bulanKey;
-                initGenerateProsesProduksiTables();
-            }
-            if (snap.boxes.pecah_satuan) {
-                try { destroyGenerateProsesPecahSatuanTables(); } catch (e3b) {}
-                $('#gen-proses-pecah-satuan-mount').html(snap.boxes.pecah_satuan);
-                genProsesPecahSatuanLastLoadedBulan = bulanKey;
-                initGenerateProsesPecahSatuanTables();
-            }
-            if (snap.boxes.penjualan) {
-                try { destroyGenerateProsesPenjualanTables(); } catch (e4) {}
-                $('#gen-proses-penjualan-mount').html(snap.boxes.penjualan);
-                genProsesPenjualanLastLoadedBulan = bulanKey;
-                initGenerateProsesPenjualanTables();
+            if (snap.v2Verify && snap.v2Verify.ok) {
+                restoreV2VerifyFromSnapshot(snap.v2Verify);
+            } else {
+                if (snap.boxes.persediaan) {
+                    try { destroyGenerateProsesPersediaanTables(); } catch (e1) {}
+                    $('#gen-proses-persediaan-mount').html(snap.boxes.persediaan);
+                    genProsesLastLoadedBulan = bulanKey;
+                    genRecalcV2ProsesReady = true;
+                    initGenerateProsesPersediaanTables();
+                }
+                if (snap.boxes.pembelian) {
+                    try { destroyGenerateProsesPembelianTables(); } catch (e2) {}
+                    $('#gen-proses-pembelian-mount').html(snap.boxes.pembelian);
+                    genProsesPembelianLastLoadedBulan = bulanKey;
+                    initGenerateProsesPembelianTables();
+                }
+                if (snap.boxes.produksi) {
+                    try { destroyGenerateProsesProduksiTables(); } catch (e3) {}
+                    $('#gen-proses-produksi-mount').html(snap.boxes.produksi);
+                    genProsesProduksiLastLoadedBulan = bulanKey;
+                    initGenerateProsesProduksiTables();
+                }
+                if (snap.boxes.pecah_satuan) {
+                    try { destroyGenerateProsesPecahSatuanTables(); } catch (e3b) {}
+                    $('#gen-proses-pecah-satuan-mount').html(snap.boxes.pecah_satuan);
+                    genProsesPecahSatuanLastLoadedBulan = bulanKey;
+                    initGenerateProsesPecahSatuanTables();
+                }
+                if (snap.boxes.penjualan) {
+                    try { destroyGenerateProsesPenjualanTables(); } catch (e4) {}
+                    $('#gen-proses-penjualan-mount').html(snap.boxes.penjualan);
+                    genProsesPenjualanLastLoadedBulan = bulanKey;
+                    initGenerateProsesPenjualanTables();
+                }
             }
             if (snap.boxes.persediaan_full) {
                 try { destroyGenerateProsesPersediaanFullTables(); } catch (e5) {}
@@ -7321,6 +7441,30 @@ window.addEventListener('load', function() {
     var genHistoryGenerateSelectedId = null;
     var genHistoryGenerateListXhr = null;
     var genHistoryGenerateLoadXhr = null;
+    var genHistoryGenerateDt = null;
+    var genHistoryGenerateLastItems = [];
+
+    function destroyGenHistoryGenerateDataTable() {
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable('#tbl-gen-history-generate')) {
+            try {
+                $('#tbl-gen-history-generate').DataTable().destroy();
+            } catch (eDestHist) {
+                console.warn('destroyGenHistoryGenerateDataTable:', eDestHist);
+            }
+        }
+        genHistoryGenerateDt = null;
+    }
+
+    function highlightGenHistoryGenerateSelectedRow() {
+        var $tbody = $('#gen-history-generate-tbody');
+        if (!$tbody.length) {
+            return;
+        }
+        $tbody.find('tr[data-history-id]').removeClass('table-success');
+        if (genHistoryGenerateSelectedId) {
+            $tbody.find('tr[data-history-id="' + genHistoryGenerateSelectedId + '"]').addClass('table-success');
+        }
+    }
 
     function formatGenHistoryStatusBadge(status) {
         var s = String(status || '').toLowerCase();
@@ -7348,39 +7492,86 @@ window.addEventListener('load', function() {
         return html;
     }
 
-    function renderHistoryGenerateListRows(items) {
-        var $tbody = $('#gen-history-generate-tbody');
-        $tbody.empty();
-        if (!items || !items.length) {
-            $tbody.html('<tr><td colspan="8" class="text-muted text-center small">Belum ada history generate untuk bulan ini.</td></tr>');
-            return;
-        }
-        items.forEach(function(item) {
-            var id = parseInt(item.id, 10) || 0;
-            var isActive = genHistoryGenerateSelectedId === id;
-            var $tr = $('<tr>')
-                .attr('data-history-id', id)
-                .toggleClass('table-success', isActive)
-                .css('cursor', 'pointer');
-            $tr.append($('<td>').html('<strong>' + escapeHtmlGen(item.tanggal_klik_generate || '—') + '</strong>'));
-            $tr.append($('<td>').text(item.tanggal_selesai || '—'));
-            $tr.append($('<td class="text-center">').html(formatGenHistoryResetCell(item)));
-            $tr.append($('<td class="text-center small">').html(
-                'Ins: <strong>' + (item.generate_insert || 0) + '</strong><br/>Upd: <strong>' + (item.generate_update || 0) + '</strong>'
-            ));
-            $tr.append($('<td class="text-center small">').html(
-                'Proc: <strong>' + (item.total_pembelian || 0) + '</strong><br/>'
+    function buildGenHistoryGenerateRowData(item) {
+        var id = parseInt(item.id, 10) || 0;
+        var tanggalCell = '<strong>' + escapeHtmlGen(item.tanggal_klik_generate || '—') + '</strong>'
+            + (item.has_v2_snapshot
+                ? '<br/><span class="badge badge-info badge-sm" title="Snapshot lengkap tersimpan di server">Server ✓</span>'
+                : '<br/><span class="badge badge-secondary badge-sm" title="History lama tanpa snapshot lengkap">Legacy</span>');
+        return [
+            tanggalCell,
+            item.tanggal_selesai || '—',
+            formatGenHistoryResetCell(item),
+            'Ins: <strong>' + (item.generate_insert || 0) + '</strong><br/>Upd: <strong>' + (item.generate_update || 0) + '</strong>',
+            'Proc: <strong>' + (item.total_pembelian || 0) + '</strong><br/>'
                 + 'Upd: <strong>' + (item.pembelian_update || 0) + '</strong> / '
                 + 'Baru: <strong>' + (item.pembelian_insert || 0) + '</strong>'
-                + ((item.pembelian_gagal || 0) > 0 ? '<br/><span class="text-danger">Gagal: ' + item.pembelian_gagal + '</span>' : '')
-            ));
-            $tr.append($('<td>').html(formatGenHistoryStatusBadge(item.status) + (item.fase_terakhir ? '<br/><small class="text-muted">' + escapeHtmlGen(item.fase_terakhir) + '</small>' : '')));
-            $tr.append($('<td class="small">').text(item.nama_user || '—'));
-            $tr.append($('<td class="text-center">').html(
-                '<button type="button" class="btn btn-xs btn-outline-primary btn-load-history-generate" data-history-id="' + id + '">Muat</button>'
-            ));
-            $tbody.append($tr);
+                + ((item.pembelian_gagal || 0) > 0 ? '<br/><span class="text-danger">Gagal: ' + item.pembelian_gagal + '</span>' : ''),
+            formatGenHistoryStatusBadge(item.status)
+                + (item.fase_terakhir ? '<br/><small class="text-muted">' + escapeHtmlGen(item.fase_terakhir) + '</small>' : ''),
+            item.nama_user || '—',
+            '<button type="button" class="btn btn-xs btn-outline-primary btn-load-history-generate" data-history-id="' + id + '">Muat</button>'
+        ];
+    }
+
+    function initGenHistoryGenerateDataTable(items) {
+        genHistoryGenerateLastItems = items || [];
+        destroyGenHistoryGenerateDataTable();
+        $('#gen-history-generate-tbody').empty();
+
+        if (!$.fn.DataTable || !$('#tbl-gen-history-generate').length) {
+            return;
+        }
+
+        var dtRows = genHistoryGenerateLastItems.map(buildGenHistoryGenerateRowData);
+        genHistoryGenerateDt = $('#tbl-gen-history-generate').DataTable({
+            data: dtRows,
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            order: [[0, 'desc']],
+            ordering: true,
+            searching: true,
+            paging: true,
+            info: true,
+            autoWidth: false,
+            language: genRecalcDtLang,
+            columnDefs: [
+                { targets: [0, 1, 6], className: 'align-middle' },
+                { targets: [2, 3, 4, 5, 7], className: 'text-center align-middle small' },
+                { targets: [7], orderable: false, searchable: false }
+            ],
+            createdRow: function(row, data, dataIndex) {
+                var item = genHistoryGenerateLastItems[dataIndex];
+                if (!item) {
+                    return;
+                }
+                var id = parseInt(item.id, 10) || 0;
+                if (id > 0) {
+                    $(row).attr('data-history-id', id);
+                }
+                if (genHistoryGenerateSelectedId && genHistoryGenerateSelectedId === id) {
+                    $(row).addClass('table-success');
+                }
+                $('td:eq(0)', row).attr('data-order', item.tanggal_klik_generate || '');
+                $('td:eq(1)', row).attr('data-order', item.tanggal_selesai || '');
+                $('td:eq(2)', row).attr('data-order', String(parseInt(item.reset_deleted_count, 10) || 0));
+            },
+            drawCallback: function() {
+                highlightGenHistoryGenerateSelectedRow();
+            }
         });
+    }
+
+    function renderHistoryGenerateListRows(items) {
+        initGenHistoryGenerateDataTable(items || []);
+    }
+
+    function showGenHistoryGenerateLoadingRow(message, cssClass) {
+        destroyGenHistoryGenerateDataTable();
+        $('#gen-history-generate-tbody').html(
+            '<tr><td colspan="8" class="' + (cssClass || 'text-muted') + ' text-center small">'
+            + escapeHtmlGen(message || 'Memuat history...') + '</td></tr>'
+        );
     }
 
     function loadHistoryGenerateList(bulanKey) {
@@ -7390,7 +7581,7 @@ window.addEventListener('load', function() {
         if (genHistoryGenerateListXhr && genHistoryGenerateListXhr.readyState !== 4) {
             genHistoryGenerateListXhr.abort();
         }
-        $('#gen-history-generate-tbody').html('<tr><td colspan="8" class="text-muted text-center small">Memuat history...</td></tr>');
+        showGenHistoryGenerateLoadingRow('Memuat history...');
         genHistoryGenerateListXhr = $.ajax({
             url: urlListHistoryGenerate,
             type: 'POST',
@@ -7399,7 +7590,7 @@ window.addEventListener('load', function() {
         }).done(function(res) {
             if (!res || !res.ok) {
                 var msg = (res && res.message) ? res.message : 'Gagal memuat history generate.';
-                $('#gen-history-generate-tbody').html('<tr><td colspan="8" class="text-danger text-center small">' + escapeHtmlGen(msg) + '</td></tr>');
+                showGenHistoryGenerateLoadingRow(msg, 'text-danger');
                 return;
             }
             if (res.tables_ready === false) {
@@ -7407,13 +7598,19 @@ window.addEventListener('load', function() {
                     '<span class="text-warning">Tabel history belum tersedia. Jalankan SQL <code>database/sql/persediaan_history_generate.sql</code> atau klik Generate sekali agar auto-create.</span>'
                 );
             } else {
+                var v2Count = 0;
+                (res.items || []).forEach(function(it) {
+                    if (it.has_v2_snapshot) { v2Count++; }
+                });
                 $('#gen-history-generate-intro').html(
-                    'Daftar proses generate per bulan target. Klik baris untuk menampilkan semua datatable rekap &amp; proses di bawah.'
+                    'History disimpan di <strong>database server</strong> (' + (res.total || 0) + ' record'
+                    + (v2Count > 0 ? ', ' + v2Count + ' dengan snapshot lengkap' : '')
+                    + '). Klik baris atau <strong>Muat</strong> — tampil identik di laptop/komputer mana pun. Cache browser hanya pelengkap perangkat ini.'
                 );
             }
             renderHistoryGenerateListRows(res.items || []);
         }).fail(function() {
-            $('#gen-history-generate-tbody').html('<tr><td colspan="8" class="text-danger text-center small">Gagal memuat history generate.</td></tr>');
+            showGenHistoryGenerateLoadingRow('Gagal memuat history generate.', 'text-danger');
         });
     }
 
@@ -7428,10 +7625,7 @@ window.addEventListener('load', function() {
         }
 
         genHistoryGenerateSelectedId = parseInt(res.history_id, 10) || (res.header ? parseInt(res.header.id, 10) : 0) || null;
-        $('#gen-history-generate-tbody tr').removeClass('table-success');
-        if (genHistoryGenerateSelectedId) {
-            $('#gen-history-generate-tbody tr[data-history-id="' + genHistoryGenerateSelectedId + '"]').addClass('table-success');
-        }
+        highlightGenHistoryGenerateSelectedRow();
 
         var header = res.header || {};
         var infoHtml = '<div class="alert alert-secondary py-2 px-2 mb-2 small">'
@@ -7468,23 +7662,66 @@ window.addEventListener('load', function() {
             $('#gen-recalc-summary').html(infoHtml + '<em>Ringkasan teks tidak tersimpan di history ini.</em>');
         }
 
-        applyGenRecalcHistoryResponse(res);
-
-        // Pastikan box verifikasi ikut dimuat saat user klik History (Muat)
-        var bulanHist = getBulanTargetGenerate();
-        if (bulanHist) {
-            clearGenProsesLocalBulan(bulanHist);
-            Promise.all([
-                loadGenerateProsesPersediaanView(bulanHist, { skipScroll: true }),
-                loadGenerateProsesPembelianView(bulanHist, { skipScroll: true }),
-                loadGenerateProsesProduksiView(bulanHist, { skipScroll: true }),
-                loadGenerateProsesPecahSatuanView(bulanHist, { skipScroll: true }),
-                loadGenerateProsesPenjualanView(bulanHist, { skipScroll: true }),
-                loadGenerateProsesPersediaanFullView(bulanHist, { skipScroll: true })
-            ]).then(function() {
-                saveGenProsesLocalSnapshot(bulanHist);
-            });
+        if (res.v2_verify && res.v2_verify.ok) {
+            var bulanV2 = res.v2_verify.bulan_target
+                || (res.header && res.header.bulan_target ? res.header.bulan_target : '')
+                || getBulanTargetGenerate();
+            syncGenTabBulanFromKey(bulanV2);
+            clearGenProsesLocalBulan(bulanV2);
+            restoreV2VerifyFromSnapshot(res.v2_verify);
+            if (res.summary_html) {
+                genRecalcSummaryHtml = res.summary_html;
+            }
+            setStatusGeneratePersediaan('success',
+                '<i class="fas fa-check-circle"></i> History dimuat dari <strong>database server</strong> — snapshot V2 bulan <strong>'
+                + escapeHtmlGen(bulanV2) + '</strong>.'
+            );
+            if (bulanV2) {
+                loadGenerateProsesPersediaanFullView(bulanV2, { skipScroll: true, initDelay: 150 }).then(function() {
+                    saveGenVerifyResultLocal(bulanV2);
+                    saveGenProsesLocalSnapshot(bulanV2);
+                });
+            }
+            var $wrapV2 = $('#gen-recalc-result-wrap');
+            if ($wrapV2.length) {
+                $('html, body').animate({ scrollTop: $wrapV2.offset().top - 80 }, 300);
+            }
+            return true;
         }
+
+        if (!res.has_v2_snapshot) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Snapshot lengkap tidak tersedia',
+                html: '<p>History ini tidak memiliki snapshot datatable lengkap di server '
+                    + '(record lama sebelum update, atau gagal simpan).</p>'
+                    + '<p class="mb-0">Jalankan <strong>Generate &amp; Recalculate</strong> ulang untuk bulan ini. '
+                    + 'Setelah selesai, hasil akan tersimpan ke database dan bisa dimuat berulang dari laptop/komputer mana pun.</p>',
+                confirmButtonText: 'OK'
+            });
+            setStatusGeneratePersediaan('warning',
+                'History #' + escapeHtmlGen(String(res.history_id || '')) + ' tidak punya snapshot server lengkap — generate ulang untuk menyimpan ke database.'
+            );
+            if (res.summary_tables && res.summary_tables.ok) {
+                renderGenRecalcSummaryTables(res.summary_tables);
+                $('#gen-recalc-summary-wrap').removeClass('d-none');
+            }
+            return false;
+        }
+
+        if (res.has_v2_snapshot && (!res.v2_verify || !res.v2_verify.ok)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Snapshot server rusak',
+                html: '<p>Record history menandai snapshot ada, tetapi data tidak dapat dibaca.</p>'
+                    + '<p class="mb-0">Jalankan <strong>Generate &amp; Recalculate</strong> ulang untuk bulan ini.</p>',
+                confirmButtonText: 'OK'
+            });
+            setStatusGeneratePersediaan('danger', 'Snapshot server history #' + escapeHtmlGen(String(res.history_id || '')) + ' tidak valid.');
+            return false;
+        }
+
+        applyGenRecalcHistoryResponse(res);
 
         var $wrap = $('#gen-recalc-result-wrap');
         if ($wrap.length) {
@@ -7510,16 +7747,45 @@ window.addEventListener('load', function() {
             url: urlLoadHistoryGenerate,
             type: 'POST',
             dataType: 'json',
-            data: { id: historyId }
+            timeout: 0,
+            data: { id: historyId },
+            converters: {
+                'text json': function(text) {
+                    var t = String(text || '').trim();
+                    var i = t.indexOf('{');
+                    if (i > 0) {
+                        t = t.substring(i);
+                    }
+                    try {
+                        return JSON.parse(t);
+                    } catch (eParse) {
+                        throw new Error('Respon history bukan JSON valid. Snapshot mungkin terlalu besar atau sesi habis.');
+                    }
+                }
+            }
         }).done(function(res) {
             Swal.close();
+            if (res && res.ok === false && res.message) {
+                Swal.fire({ icon: 'error', title: 'Gagal', text: res.message });
+                return;
+            }
             applyHistoryGenerateSnapshot(res);
-        }).fail(function() {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat memuat snapshot history generate.' });
+        }).fail(function(xhr) {
+            Swal.close();
+            var msg = 'Tidak dapat memuat snapshot history generate dari server.';
+            if (xhr && xhr.responseText) {
+                var t = String(xhr.responseText).replace(/<[^>]+>/g, ' ').trim();
+                if (t.indexOf('Gagal encode JSON') !== -1) {
+                    msg = 'Snapshot terlalu besar untuk dimuat. Hubungi admin untuk menaikkan memory_limit PHP.';
+                } else if (t) {
+                    msg = t.substring(0, 280);
+                }
+            }
+            Swal.fire({ icon: 'error', title: 'Gagal', text: msg });
         });
     }
 
-    $(document).on('click', '#gen-history-generate-tbody tr[data-history-id]', function(e) {
+    $(document).on('click', '#tbl-gen-history-generate tbody tr[data-history-id]', function(e) {
         if ($(e.target).closest('.btn-load-history-generate').length) {
             return;
         }
@@ -10306,6 +10572,10 @@ window.addEventListener('load', function() {
             }
             $('#modal-gen-pj-referensi').modal('hide');
             applyGenPjReferedToLastVerify(idPj, res);
+            var bulanAfterRef = genPjReferensiState.bulanKey || (typeof getBulanTargetGenerateSafe === 'function' ? getBulanTargetGenerateSafe() : '');
+            if (bulanAfterRef && typeof loadGenerateProsesPersediaanFullView === 'function') {
+                loadGenerateProsesPersediaanFullView(bulanAfterRef, { skipScroll: true, initDelay: 80 });
+            }
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'success',
@@ -12804,12 +13074,18 @@ window.addEventListener('load', function() {
             scrollY: getDataTableScrollY($sel),
             scrollX: true,
             scrollCollapse: true,
+            paging: true,
+            searching: true,
+            ordering: true,
+            info: true,
             pageLength: 25,
             lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
             order: [[orderCol, 'asc']],
             columnDefs: columnDefs,
             language: {
                 lengthMenu: 'Tampilkan _MENU_ baris',
+                search: 'Cari:',
+                paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' },
                 info: 'Menampilkan _START_–_END_ dari _TOTAL_ baris',
                 infoEmpty: 'Tidak ada data',
                 infoFiltered: '(difilter dari _MAX_ total baris)',

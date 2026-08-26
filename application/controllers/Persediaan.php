@@ -4014,7 +4014,7 @@ class Persediaan extends CI_Controller
 			unset($penjualan_apply['unmatched']);
 		}
 
-		return array(
+		$result = array(
 			'ok' => true,
 			'rekon_ok' => $rekon_ok,
 			'message' => $mode_msg . 'Fase copy selesai. Hapus target: ' . $deleted
@@ -4053,6 +4053,34 @@ class Persediaan extends CI_Controller
 			'penjualan_matched' => $penjualan_matched,
 			'penjualan_unmatched' => $penjualan_unmatched,
 		);
+
+		$history_id = 0;
+		$save_meta = array();
+		try {
+			$history_id = persediaan_history_generate_save_v2_snapshot($this, $bulan_target, $result, $save_meta);
+		} catch (Throwable $eSaveHist) {
+			log_message('error', 'save_v2_snapshot: ' . $eSaveHist->getMessage());
+			$history_id = 0;
+			$save_meta = array('message' => $eSaveHist->getMessage());
+		}
+		if ($history_id > 0) {
+			$result['history_id'] = $history_id;
+			$result['history_saved'] = true;
+			$result['history_source'] = 'database';
+			if (!empty($save_meta['id_generate_run'])) {
+				$result['id_generate_run'] = (int) $save_meta['id_generate_run'];
+			}
+			if (!empty($save_meta['row_counts']) && is_array($save_meta['row_counts'])) {
+				$result['generate_row_counts'] = $save_meta['row_counts'];
+			}
+		} else {
+			$result['history_saved'] = false;
+			$result['history_save_message'] = !empty($save_meta['message'])
+				? $save_meta['message']
+				: 'Snapshot history tidak tersimpan ke database. Hubungi admin atau coba generate ulang.';
+		}
+
+		return $result;
 	}
 
 	/**
@@ -6326,6 +6354,11 @@ class Persediaan extends CI_Controller
 				return;
 			}
 
+			$tab_rows = $this->get_persediaan_by_bulan($bulan);
+			$package['rows_target_barang'] = persediaan_filter_rows_by_kategori_tab($tab_rows, false);
+			$package['rows_target_jasa'] = persediaan_filter_rows_by_kategori_tab($tab_rows, true);
+			$package['count_target_all'] = is_array($tab_rows) ? count($tab_rows) : 0;
+
 			$html = $this->load->view(
 				'anekadharma/persediaan/_generate_proses_persediaan_full_box',
 				$package,
@@ -6659,14 +6692,21 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
-		// Ensure history tables exist
+		// Ensure history + generate_* tables exist
 		$tables_created = persediaan_history_generate_ensure_tables($this);
+		generate_hasil_datatable_ensure_tables($this);
 
 		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
+		$history_ids = array();
+		foreach ($list as $row) {
+			$history_ids[] = (int) $row->id;
+		}
+		$v2_flags = persediaan_history_generate_v2_flags_for_ids($this, $history_ids);
 		$items = array();
 		foreach ($list as $row) {
+			$hid = (int) $row->id;
 			$items[] = array(
-				'id' => (int) $row->id,
+				'id' => $hid,
 				'bulan_target' => $row->bulan_target,
 				'tanggal_klik_generate' => $row->tanggal_klik_generate,
 				'tanggal_selesai' => $row->tanggal_selesai,
@@ -6681,6 +6721,7 @@ class Persediaan extends CI_Controller
 				'status' => $row->status,
 				'fase_terakhir' => $row->fase_terakhir,
 				'nama_user' => isset($row->nama_user) ? $row->nama_user : '',
+				'has_v2_snapshot' => !empty($v2_flags[$hid]),
 			);
 		}
 
@@ -6693,6 +6734,7 @@ class Persediaan extends CI_Controller
 			'tables_created' => $tables_created,
 			'items' => $items,
 			'total' => count($items),
+			'snapshot_source' => 'database',
 			'message' => !$tables_ready
 				? 'Tabel history generate belum tersedia di database. Jalankan SQL dari file <code>database/sql/persediaan_history_generate.sql</code> atau klik Generate & Recalculate agar auto-create.'
 				: (count($items) > 0 ? '' : 'Belum ada history generate untuk bulan ini.'),
@@ -6713,6 +6755,11 @@ class Persediaan extends CI_Controller
 			));
 			return;
 		}
+
+		@ini_set('memory_limit', '512M');
+		@set_time_limit(300);
+
+		generate_hasil_datatable_ensure_tables($this);
 
 		$id = (int) $this->input->get_post('id', TRUE);
 		if ($id < 1) {
@@ -8486,6 +8533,14 @@ class Persediaan extends CI_Controller
 		$rows = persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
 
 		return persediaan_filter_rows_tab_data($rows);
+	}
+
+	/**
+	 * Baris persediaan sama persis dengan tab Data (Barang/Jasa): GROUP BY spop+nama+satuan+hpp.
+	 */
+	public function get_persediaan_tab_rows_for_bulan($bulan)
+	{
+		return $this->get_persediaan_by_bulan($bulan);
 	}
 
 	public function json()

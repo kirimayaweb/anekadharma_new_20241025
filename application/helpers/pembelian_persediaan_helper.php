@@ -14325,25 +14325,36 @@ function persediaan_history_generate_start($CI, $ctx, $tanggal_klik_generate, &$
 	return (int) $CI->db->insert_id();
 }
 
+function persediaan_history_generate_json_encode($data)
+{
+	$flags = JSON_UNESCAPED_UNICODE;
+	if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+		$flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+	}
+	$json = json_encode($data, $flags);
+	return ($json === false) ? false : $json;
+}
+
 function persediaan_history_generate_append_data($CI, $history_id, $jenis, $judul, $rows, $totals = null)
 {
 	if ((int) $history_id < 1 || !persediaan_history_generate_table_exists($CI)) {
-		return;
+		return false;
 	}
 
-	$data_json = json_encode(is_array($rows) ? $rows : array(), JSON_UNESCAPED_UNICODE);
+	$data_json = persediaan_history_generate_json_encode(is_array($rows) ? $rows : array());
 	if ($data_json === false) {
-		$data_json = '[]';
+		log_message('error', 'persediaan_history_generate_append_data: json_encode gagal jenis=' . $jenis . ' err=' . json_last_error_msg());
+		return false;
 	}
 	$totals_json = null;
 	if (is_array($totals)) {
-		$totals_json = json_encode($totals, JSON_UNESCAPED_UNICODE);
+		$totals_json = persediaan_history_generate_json_encode($totals);
 		if ($totals_json === false) {
 			$totals_json = null;
 		}
 	}
 
-	$CI->db->insert('persediaan_history_generate_data', array(
+	$ok = $CI->db->insert('persediaan_history_generate_data', array(
 		'id_history' => (int) $history_id,
 		'jenis' => (string) $jenis,
 		'judul' => (string) $judul,
@@ -14351,6 +14362,52 @@ function persediaan_history_generate_append_data($CI, $history_id, $jenis, $judu
 		'totals_json' => $totals_json,
 		'data_json' => $data_json,
 	));
+
+	return (bool) $ok;
+}
+
+/**
+ * Cek history id mana yang punya snapshot V2 lengkap (datatable box verifikasi).
+ *
+ * @return array<int,bool> map history_id => true
+ */
+function persediaan_history_generate_v2_flags_for_ids($CI, array $history_ids)
+{
+	$flags = array();
+	if (!persediaan_history_generate_table_exists($CI) || empty($history_ids)) {
+		return $flags;
+	}
+
+	$ids = array();
+	foreach ($history_ids as $hid) {
+		$hid = (int) $hid;
+		if ($hid > 0) {
+			$ids[$hid] = $hid;
+		}
+	}
+	if (empty($ids)) {
+		return $flags;
+	}
+
+	$CI->db->select('id_history');
+	$CI->db->distinct();
+	$CI->db->from('persediaan_history_generate_data');
+	$CI->db->where('jenis', 'v2_verify_snapshot');
+	$CI->db->where_in('id_history', array_values($ids));
+	$rows = $CI->db->get()->result();
+	foreach ($rows as $row) {
+		$flags[(int) $row->id_history] = true;
+	}
+
+	// Juga cek tabel generate_run (sumber utama snapshot per datatable)
+	$gen_flags = generate_hasil_datatable_flags_for_history_ids($CI, array_values($ids));
+	foreach ($gen_flags as $hid => $ok) {
+		if ($ok) {
+			$flags[(int) $hid] = true;
+		}
+	}
+
+	return $flags;
 }
 
 function persediaan_history_generate_finish_from_batch($CI, &$state, $bulan, $summary, $summary_html = '')
@@ -14386,7 +14443,10 @@ function persediaan_history_generate_finish($CI, $history_id, $summary, $summary
 	}
 
 	$history_id = (int) $history_id;
-	$CI->db->where('id', $history_id)->delete('persediaan_history_generate_data');
+	// Jangan hapus marker snapshot V2 (sumber Muat datatable)
+	$CI->db->where('id_history', $history_id);
+	$CI->db->where('jenis !=', 'v2_verify_snapshot');
+	$CI->db->delete('persediaan_history_generate_data');
 
 	$rekap_defs = persediaan_history_generate_rekap_jenis_definitions();
 	if (is_array($summary_tables)) {
@@ -14418,17 +14478,44 @@ function persediaan_history_generate_finish($CI, $history_id, $summary, $summary
 		}
 	}
 
+	// Batasi ukuran JSON di header — data detail sudah di history_data / generate_*
+	$max_json_bytes = 1024 * 1024; // 1 MB
 	$summary_json = json_encode(is_array($summary) ? $summary : array(), JSON_UNESCAPED_UNICODE);
-	$rekap_json = json_encode(is_array($summary_tables) ? $summary_tables : array(), JSON_UNESCAPED_UNICODE);
-	$proses_json = json_encode(is_array($proses_data) ? $proses_data : array(), JSON_UNESCAPED_UNICODE);
-	if ($summary_json === false) {
-		$summary_json = null;
+	if ($summary_json === false || strlen($summary_json) > $max_json_bytes) {
+		$summary_json = json_encode(array(
+			'bulan' => isset($summary['bulan']) ? $summary['bulan'] : '',
+			'v2_flow' => !empty($summary['v2_flow']),
+			'generate_insert' => (int) (isset($summary['generate_insert']) ? $summary['generate_insert'] : 0),
+			'generate_update' => (int) (isset($summary['generate_update']) ? $summary['generate_update'] : 0),
+			'note' => 'summary dipangkas (terlalu besar)',
+		), JSON_UNESCAPED_UNICODE);
+		if ($summary_json === false) {
+			$summary_json = null;
+		}
 	}
-	if ($rekap_json === false) {
-		$rekap_json = null;
+
+	// Jangan simpan full summary_tables ke rekap_json (sering terlalu besar → update gagal)
+	$rekap_json = null;
+	if (is_array($summary_tables) && !empty($summary_tables['ok'])) {
+		$rekap_meta_only = array('ok' => true);
+		if (!empty($summary_tables['bulan'])) {
+			$rekap_meta_only['bulan'] = $summary_tables['bulan'];
+		}
+		if (!empty($summary_tables['rekap_meta'])) {
+			$rekap_meta_only['rekap_meta'] = $summary_tables['rekap_meta'];
+		}
+		$tmp = json_encode($rekap_meta_only, JSON_UNESCAPED_UNICODE);
+		if ($tmp !== false && strlen($tmp) <= $max_json_bytes) {
+			$rekap_json = $tmp;
+		}
 	}
-	if ($proses_json === false) {
-		$proses_json = null;
+
+	$proses_json = null;
+	if (is_array($proses_data) && !empty($proses_data)) {
+		$tmp = json_encode($proses_data, JSON_UNESCAPED_UNICODE);
+		if ($tmp !== false && strlen($tmp) <= $max_json_bytes) {
+			$proses_json = $tmp;
+		}
 	}
 
 	$fase = 'selesai';
@@ -14438,8 +14525,15 @@ function persediaan_history_generate_finish($CI, $history_id, $summary, $summary
 		$fase = 'generate';
 	}
 
+	$html = $summary_html !== '' ? $summary_html : persediaan_gen_recalc_build_summary_html($summary);
+	if (is_string($html) && strlen($html) > $max_json_bytes) {
+		$html = substr(strip_tags($html), 0, 2000);
+	}
+
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
 	$CI->db->where('id', $history_id);
-	$CI->db->update('persediaan_history_generate', array(
+	$ok_upd = $CI->db->update('persediaan_history_generate', array(
 		'tanggal_selesai' => date('Y-m-d H:i:s'),
 		'id_gen_recalc_log' => !empty($state['log_id']) ? (int) $state['log_id'] : null,
 		'generate_insert' => (int) (isset($summary['generate_insert']) ? $summary['generate_insert'] : 0),
@@ -14451,10 +14545,824 @@ function persediaan_history_generate_finish($CI, $history_id, $summary, $summary
 		'summary_json' => $summary_json,
 		'rekap_json' => $rekap_json,
 		'proses_json' => $proses_json,
-		'summary_html' => $summary_html !== '' ? $summary_html : persediaan_gen_recalc_build_summary_html($summary),
+		'summary_html' => $html,
 		'status' => 'selesai',
 		'fase_terakhir' => $fase,
 	));
+	if (!$ok_upd) {
+		$err = $CI->db->error();
+		log_message('error', 'persediaan_history_generate_finish update gagal id=' . $history_id . ' err=' . (isset($err['message']) ? $err['message'] : ''));
+		// Fallback minimal agar status tidak stuck "proses"
+		$CI->db->where('id', $history_id)->update('persediaan_history_generate', array(
+			'tanggal_selesai' => date('Y-m-d H:i:s'),
+			'status' => 'selesai',
+			'fase_terakhir' => $fase,
+			'generate_insert' => (int) (isset($summary['generate_insert']) ? $summary['generate_insert'] : 0),
+			'generate_update' => (int) (isset($summary['generate_update']) ? $summary['generate_update'] : 0),
+		));
+	}
+	$CI->db->db_debug = $db_debug;
+}
+
+/**
+ * Ringkasan HTML untuk history alur V2 (copy + pembelian + produksi + penjualan).
+ */
+function persediaan_history_generate_build_v2_summary_html(array $verify)
+{
+	$label_target = isset($verify['label_target']) ? (string) $verify['label_target'] : '';
+	$label_sumber = isset($verify['label_sumber']) ? (string) $verify['label_sumber'] : '';
+	$apply = isset($verify['pembelian_apply']) && is_array($verify['pembelian_apply']) ? $verify['pembelian_apply'] : array();
+	$prod = isset($verify['produksi_apply']) && is_array($verify['produksi_apply']) ? $verify['produksi_apply'] : array();
+	$pj = isset($verify['penjualan_apply']) && is_array($verify['penjualan_apply']) ? $verify['penjualan_apply'] : array();
+	$rekon_ok = !empty($verify['rekon_ok']);
+
+	return '<strong class="text-success">Generate &amp; Recalculate V2 selesai</strong><br/>'
+		. 'Bulan target: <strong>' . htmlspecialchars($label_target, ENT_QUOTES, 'UTF-8') . '</strong>'
+		. ($label_sumber !== '' ? ' (sumber: ' . htmlspecialchars($label_sumber, ENT_QUOTES, 'UTF-8') . ')' : '')
+		. '<br/>Copy: <strong>' . (int) (isset($verify['copied']) ? $verify['copied'] : 0) . '</strong>'
+		. ', Skip: <strong>' . (int) (isset($verify['skipped']) ? $verify['skipped'] : 0) . '</strong>'
+		. ', Hapus target: <strong>' . (int) (isset($verify['deleted']) ? $verify['deleted'] : 0) . '</strong><br/>'
+		. 'Pembelian terproses: <strong>' . (int) (isset($apply['matched_count']) ? $apply['matched_count'] : 0) . '</strong>'
+		. ', belum ada: <strong>' . (int) (isset($apply['unmatched_count']) ? $apply['unmatched_count'] : 0) . '</strong><br/>'
+		. 'Produksi insert: <strong>' . (int) (isset($prod['inserted']) ? $prod['inserted'] : 0) . '</strong><br/>'
+		. 'Penjualan terproses: <strong>' . (int) (isset($pj['matched_count']) ? $pj['matched_count'] : 0) . '</strong>'
+		. ', belum terproses: <strong>' . (int) (isset($pj['unmatched_count']) ? $pj['unmatched_count'] : 0) . '</strong><br/>'
+		. '<span class="' . ($rekon_ok ? 'text-success' : 'text-danger') . '">Rekon nilai: '
+		. ($rekon_ok ? 'SAMA' : 'BERBEDA') . '</span>';
+}
+
+/**
+ * Definisi tabel hasil generate per datatable (prefix generate_).
+ * Key = nama tabel DB; value = label + cara ekstrak status_data dari row.
+ */
+function generate_hasil_datatable_definitions()
+{
+	return array(
+		'generate_persediaan_copy_bulan_sebelumnya' => array(
+			'label' => 'Persediaan — Copy bulan sebelumnya',
+			'status_field' => 'status_copy',
+			'default_status' => 'COPIED',
+		),
+		'generate_pembelian_barang_matched' => array(
+			'label' => 'Pembelian barang — matched',
+			'status_field' => 'status',
+			'default_status' => 'MATCHED',
+		),
+		'generate_pembelian_barang_unmatched' => array(
+			'label' => 'Pembelian barang — unmatched',
+			'status_field' => 'status',
+			'default_status' => 'UNMATCHED',
+		),
+		'generate_pembelian_jasa_matched' => array(
+			'label' => 'Pembelian jasa — matched',
+			'status_field' => 'status',
+			'default_status' => 'MATCHED',
+		),
+		'generate_pembelian_jasa_unmatched' => array(
+			'label' => 'Pembelian jasa — unmatched',
+			'status_field' => 'status',
+			'default_status' => 'UNMATCHED',
+		),
+		'generate_produksi_insert' => array(
+			'label' => 'Produksi — insert',
+			'status_field' => 'status',
+			'default_status' => 'INSERTED',
+		),
+		'generate_produksi_bahan' => array(
+			'label' => 'Produksi — bahan',
+			'status_field' => 'status',
+			'default_status' => 'PROCESSED',
+		),
+		'generate_pecah_satuan_proses' => array(
+			'label' => 'Pecah satuan — proses',
+			'status_field' => 'status',
+			'default_status' => 'PROCESSED',
+		),
+		'generate_penjualan_matched' => array(
+			'label' => 'Penjualan — matched',
+			'status_field' => 'status',
+			'default_status' => 'MATCHED',
+		),
+		'generate_penjualan_unmatched' => array(
+			'label' => 'Penjualan — unmatched',
+			'status_field' => 'status',
+			'default_status' => 'UNMATCHED',
+		),
+		'generate_rekon_nilai' => array(
+			'label' => 'Rekon nilai',
+			'status_field' => 'status',
+			'default_status' => 'REKON',
+		),
+	);
+}
+
+function generate_hasil_datatable_ddl_detail($table_name)
+{
+	$table_name = preg_replace('/[^a-z0-9_]/', '', strtolower((string) $table_name));
+	if ($table_name === '' || strpos($table_name, 'generate_') !== 0) {
+		return '';
+	}
+
+	return "CREATE TABLE IF NOT EXISTS `{$table_name}` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_generate_run` INT(11) UNSIGNED NOT NULL,
+  `id_history` INT(11) UNSIGNED NULL DEFAULT NULL,
+  `bulan_target` VARCHAR(7) NOT NULL,
+  `waktu_proses` DATETIME NOT NULL,
+  `id_user` INT(11) NULL DEFAULT NULL,
+  `nama_user` VARCHAR(150) NULL DEFAULT NULL,
+  `status_data` VARCHAR(64) NOT NULL DEFAULT '',
+  `row_no` INT(11) NOT NULL DEFAULT 0,
+  `payload_json` LONGTEXT NOT NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_run` (`id_generate_run`),
+  KEY `idx_history` (`id_history`),
+  KEY `idx_bulan` (`bulan_target`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+}
+
+/**
+ * Pastikan tabel generate_run + semua generate_* ada; buat jika belum.
+ */
+function generate_hasil_datatable_ensure_tables($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	// Coba jalankan SQL file jika ada
+	$sql_paths = array(
+		APPPATH . '../database/sql/generate_hasil_datatable.sql',
+	);
+	if (defined('FCPATH')) {
+		$sql_paths[] = FCPATH . 'database/sql/generate_hasil_datatable.sql';
+		$sql_paths[] = FCPATH . '../database/sql/generate_hasil_datatable.sql';
+	}
+	foreach ($sql_paths as $path) {
+		if (!is_file($path)) {
+			continue;
+		}
+		$sql = file_get_contents($path);
+		if ($sql === false || trim($sql) === '') {
+			continue;
+		}
+		$parts = preg_split('/;\s*[\r\n]+/', $sql);
+		foreach ($parts as $stmt) {
+			$stmt = trim($stmt);
+			if ($stmt === '' || stripos($stmt, 'CREATE TABLE') === false) {
+				continue;
+			}
+			@$CI->db->query($stmt);
+		}
+		break;
+	}
+
+	if (!$CI->db->table_exists('generate_run')) {
+		@$CI->db->query(
+			"CREATE TABLE IF NOT EXISTS `generate_run` (
+  `id` INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_history` INT(11) UNSIGNED NULL DEFAULT NULL,
+  `bulan_target` VARCHAR(7) NOT NULL,
+  `bulan_sumber` VARCHAR(7) NULL DEFAULT NULL,
+  `waktu_mulai` DATETIME NOT NULL,
+  `waktu_selesai` DATETIME NULL DEFAULT NULL,
+  `id_user` INT(11) NULL DEFAULT NULL,
+  `nama_user` VARCHAR(150) NULL DEFAULT NULL,
+  `status` VARCHAR(20) NOT NULL DEFAULT 'proses',
+  `rekon_ok` TINYINT(1) NOT NULL DEFAULT 0,
+  `row_counts_json` LONGTEXT NULL,
+  `meta_json` LONGTEXT NULL,
+  `summary_html` LONGTEXT NULL,
+  `created_at` DATETIME NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_generate_run_history` (`id_history`),
+  KEY `idx_generate_run_bulan` (`bulan_target`),
+  KEY `idx_generate_run_waktu` (`waktu_selesai`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+		);
+	}
+
+	foreach (array_keys(generate_hasil_datatable_definitions()) as $tbl) {
+		if (!$CI->db->table_exists($tbl)) {
+			$ddl = generate_hasil_datatable_ddl_detail($tbl);
+			if ($ddl !== '') {
+				@$CI->db->query($ddl);
+			}
+		}
+	}
+
+	$CI->db->db_debug = $db_debug;
+
+	// Hapus tabel lama ber-prefix "__" (kosong) yang membuat phpMyAdmin tampak rusak/terkelompok
+	$legacy_double = array(
+		'generate_persediaan__copy_bulan_sebelumnya',
+		'generate_pembelian__barang_matched',
+		'generate_pembelian__barang_unmatched',
+		'generate_pembelian__jasa_matched',
+		'generate_pembelian__jasa_unmatched',
+		'generate_produksi__insert',
+		'generate_produksi__bahan',
+		'generate_pecah_satuan__proses',
+		'generate_penjualan__matched',
+		'generate_penjualan__unmatched',
+		'generate_rekon__nilai',
+	);
+	foreach ($legacy_double as $legacy_tbl) {
+		if ($CI->db->table_exists($legacy_tbl)) {
+			@$CI->db->query('DROP TABLE IF EXISTS `' . $legacy_tbl . '`');
+		}
+	}
+
+	$ensured = $CI->db->table_exists('generate_run');
+	return (bool) $ensured;
+}
+
+/**
+ * Ambil 1 baris aman — hindari "Call to a member function row() on bool".
+ */
+function generate_hasil_datatable_safe_row($query)
+{
+	if ($query === false || $query === null) {
+		return null;
+	}
+	if (!is_object($query) || !method_exists($query, 'row')) {
+		return null;
+	}
+	return $query->row();
+}
+
+function generate_hasil_datatable_status_from_row(array $row, $status_field, $default_status)
+{
+	if ($status_field !== '' && isset($row[$status_field]) && (string) $row[$status_field] !== '') {
+		return substr((string) $row[$status_field], 0, 64);
+	}
+	foreach (array('status_copy', 'status', 'status_data', 'status_persediaan', 'fase') as $k) {
+		if (isset($row[$k]) && (string) $row[$k] !== '') {
+			return substr((string) $row[$k], 0, 64);
+		}
+	}
+	return substr((string) $default_status, 0, 64);
+}
+
+/**
+ * Insert batch baris hasil generate ke satu tabel detail (fallback insert satu-satu).
+ *
+ * @return int jumlah baris berhasil disiapkan/insert
+ */
+function generate_hasil_datatable_insert_rows($CI, $table_name, $id_run, $id_history, $bulan_target, $waktu_proses, $id_user, $nama_user, array $rows, $status_field, $default_status)
+{
+	if (!generate_hasil_datatable_ensure_tables($CI) || !$CI->db->table_exists($table_name) || (int) $id_run < 1) {
+		return 0;
+	}
+	if (empty($rows)) {
+		return 0;
+	}
+
+	$batch = array();
+	$n = 0;
+	$created_at = date('Y-m-d H:i:s');
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	foreach ($rows as $idx => $row) {
+		if (!is_array($row)) {
+			continue;
+		}
+		$payload = persediaan_history_generate_json_encode($row);
+		if ($payload === false) {
+			$payload = '{}';
+		}
+		$row_no = isset($row['no']) ? (int) $row['no'] : ((int) $idx + 1);
+		$batch[] = array(
+			'id_generate_run' => (int) $id_run,
+			'id_history' => ((int) $id_history > 0) ? (int) $id_history : null,
+			'bulan_target' => $bulan_target,
+			'waktu_proses' => $waktu_proses,
+			'id_user' => ($id_user > 0) ? $id_user : null,
+			'nama_user' => ($nama_user !== '') ? $nama_user : null,
+			'status_data' => generate_hasil_datatable_status_from_row($row, $status_field, $default_status),
+			'row_no' => $row_no,
+			'payload_json' => $payload,
+			'created_at' => $created_at,
+		);
+		$n++;
+		if (count($batch) >= 50) {
+			$ok_batch = @$CI->db->insert_batch($table_name, $batch);
+			if ($ok_batch === false) {
+				foreach ($batch as $one) {
+					@$CI->db->insert($table_name, $one);
+				}
+			}
+			$batch = array();
+		}
+	}
+	if (!empty($batch)) {
+		$ok_batch = @$CI->db->insert_batch($table_name, $batch);
+		if ($ok_batch === false) {
+			foreach ($batch as $one) {
+				@$CI->db->insert($table_name, $one);
+			}
+		}
+	}
+
+	$CI->db->db_debug = $db_debug;
+	return $n;
+}
+
+/**
+ * Simpan seluruh hasil datatable generate ke tabel generate_* (per baris).
+ *
+ * @return array{ok:bool,id_generate_run:int,row_counts:array,message:string}
+ */
+function generate_hasil_datatable_save_from_verify($CI, $id_history, $bulan_target, array $verify_result)
+{
+	if (empty($verify_result['ok']) || !generate_hasil_datatable_ensure_tables($CI)) {
+		return array('ok' => false, 'id_generate_run' => 0, 'row_counts' => array(), 'message' => 'Tabel generate_* tidak siap.');
+	}
+
+	$bulan_target = trim((string) $bulan_target);
+	$waktu = date('Y-m-d H:i:s');
+	$id_user = (int) $CI->session->userdata('sess_iduser');
+	$nama_user = trim((string) $CI->session->userdata('sess_username'));
+	$defs = generate_hasil_datatable_definitions();
+
+	$pembelian_matched = isset($verify_result['pembelian_matched']) && is_array($verify_result['pembelian_matched'])
+		? $verify_result['pembelian_matched'] : array();
+	$pembelian_unmatched = isset($verify_result['pembelian_unmatched']) && is_array($verify_result['pembelian_unmatched'])
+		? $verify_result['pembelian_unmatched'] : array();
+
+	$barang_matched = array();
+	$jasa_matched = array();
+	$barang_unmatched = array();
+	$jasa_unmatched = array();
+	foreach ($pembelian_matched as $r) {
+		if (!is_array($r)) {
+			continue;
+		}
+		if (isset($r['sumber_tabel']) && $r['sumber_tabel'] === 'tbl_pembelian_jasa') {
+			$jasa_matched[] = $r;
+		} else {
+			$barang_matched[] = $r;
+		}
+	}
+	foreach ($pembelian_unmatched as $r) {
+		if (!is_array($r)) {
+			continue;
+		}
+		if (isset($r['sumber_tabel']) && $r['sumber_tabel'] === 'tbl_pembelian_jasa') {
+			$jasa_unmatched[] = $r;
+		} else {
+			$barang_unmatched[] = $r;
+		}
+	}
+
+	$rekon_rows = array();
+	if (!empty($verify_result['rekon']) && is_array($verify_result['rekon'])) {
+		$rekon = $verify_result['rekon'];
+		if (!empty($rekon['rows_masalah']) && is_array($rekon['rows_masalah'])) {
+			$rekon_rows = $rekon['rows_masalah'];
+		} elseif (!empty($rekon['detail']) && is_array($rekon['detail'])) {
+			$rekon_rows = $rekon['detail'];
+		} else {
+			$rekon_rows[] = array(
+				'sum_nilai_sumber' => isset($rekon['sum_nilai_sumber']) ? $rekon['sum_nilai_sumber'] : 0,
+				'sum_nilai_target' => isset($rekon['sum_nilai_target']) ? $rekon['sum_nilai_target'] : 0,
+				'selisih_nilai' => isset($rekon['selisih_nilai']) ? $rekon['selisih_nilai'] : 0,
+				'count_masalah' => isset($rekon['count_masalah']) ? $rekon['count_masalah'] : 0,
+				'status' => !empty($verify_result['rekon_ok']) ? 'SAMA' : 'BERBEDA',
+			);
+		}
+	}
+
+	$map_rows = array(
+		'generate_persediaan_copy_bulan_sebelumnya' => isset($verify_result['rows']) && is_array($verify_result['rows']) ? $verify_result['rows'] : array(),
+		'generate_pembelian_barang_matched' => $barang_matched,
+		'generate_pembelian_barang_unmatched' => $barang_unmatched,
+		'generate_pembelian_jasa_matched' => $jasa_matched,
+		'generate_pembelian_jasa_unmatched' => $jasa_unmatched,
+		'generate_produksi_insert' => isset($verify_result['produksi_rows']) && is_array($verify_result['produksi_rows']) ? $verify_result['produksi_rows'] : array(),
+		'generate_produksi_bahan' => isset($verify_result['bahan_produksi_rows']) && is_array($verify_result['bahan_produksi_rows']) ? $verify_result['bahan_produksi_rows'] : array(),
+		'generate_pecah_satuan_proses' => isset($verify_result['pecah_satuan_rows']) && is_array($verify_result['pecah_satuan_rows']) ? $verify_result['pecah_satuan_rows'] : array(),
+		'generate_penjualan_matched' => isset($verify_result['penjualan_matched']) && is_array($verify_result['penjualan_matched']) ? $verify_result['penjualan_matched'] : array(),
+		'generate_penjualan_unmatched' => isset($verify_result['penjualan_unmatched']) && is_array($verify_result['penjualan_unmatched']) ? $verify_result['penjualan_unmatched'] : array(),
+		'generate_rekon_nilai' => $rekon_rows,
+	);
+
+	// Meta ringan saja (jangan simpan ulang array besar)
+	$meta = array(
+		'ok' => true,
+		'rekon_ok' => !empty($verify_result['rekon_ok']),
+		'message' => isset($verify_result['message']) ? $verify_result['message'] : '',
+		'deleted' => isset($verify_result['deleted']) ? $verify_result['deleted'] : 0,
+		'updated_total10' => isset($verify_result['updated_total10']) ? $verify_result['updated_total10'] : 0,
+		'copied' => isset($verify_result['copied']) ? $verify_result['copied'] : 0,
+		'skipped' => isset($verify_result['skipped']) ? $verify_result['skipped'] : 0,
+		'bulan_target' => isset($verify_result['bulan_target']) ? $verify_result['bulan_target'] : $bulan_target,
+		'bulan_sumber' => isset($verify_result['bulan_sumber']) ? $verify_result['bulan_sumber'] : '',
+		'label_sumber' => isset($verify_result['label_sumber']) ? $verify_result['label_sumber'] : '',
+		'label_target' => isset($verify_result['label_target']) ? $verify_result['label_target'] : '',
+		'pembelian_apply' => isset($verify_result['pembelian_apply']) && is_array($verify_result['pembelian_apply']) ? $verify_result['pembelian_apply'] : array(),
+		'produksi_apply' => isset($verify_result['produksi_apply']) && is_array($verify_result['produksi_apply']) ? $verify_result['produksi_apply'] : array(),
+		'bahan_produksi_apply' => isset($verify_result['bahan_produksi_apply']) && is_array($verify_result['bahan_produksi_apply']) ? $verify_result['bahan_produksi_apply'] : array(),
+		'pecah_satuan_apply' => isset($verify_result['pecah_satuan_apply']) && is_array($verify_result['pecah_satuan_apply']) ? $verify_result['pecah_satuan_apply'] : array(),
+		'penjualan_apply' => isset($verify_result['penjualan_apply']) && is_array($verify_result['penjualan_apply']) ? $verify_result['penjualan_apply'] : array(),
+		'rekon' => isset($verify_result['rekon']) && is_array($verify_result['rekon']) ? $verify_result['rekon'] : array(),
+	);
+	unset(
+		$meta['pembelian_apply']['matched'],
+		$meta['pembelian_apply']['unmatched'],
+		$meta['produksi_apply']['rows'],
+		$meta['bahan_produksi_apply']['rows'],
+		$meta['pecah_satuan_apply']['rows'],
+		$meta['penjualan_apply']['matched'],
+		$meta['penjualan_apply']['unmatched'],
+		$meta['rekon']['rows_masalah'],
+		$meta['rekon']['detail']
+	);
+
+	$meta_json = persediaan_history_generate_json_encode($meta);
+	if ($meta_json === false || strlen($meta_json) > 512000) {
+		$meta_json = '{"ok":true,"note":"meta dipangkas"}';
+	}
+
+	$CI->db->insert('generate_run', array(
+		'id_history' => ((int) $id_history > 0) ? (int) $id_history : null,
+		'bulan_target' => $bulan_target,
+		'bulan_sumber' => isset($verify_result['bulan_sumber']) ? $verify_result['bulan_sumber'] : null,
+		'waktu_mulai' => $waktu,
+		'waktu_selesai' => null,
+		'id_user' => ($id_user > 0) ? $id_user : null,
+		'nama_user' => ($nama_user !== '') ? $nama_user : null,
+		'status' => 'proses',
+		'rekon_ok' => !empty($verify_result['rekon_ok']) ? 1 : 0,
+		'row_counts_json' => null,
+		'meta_json' => $meta_json,
+		'summary_html' => persediaan_history_generate_build_v2_summary_html($verify_result),
+		'created_at' => $waktu,
+	));
+	$id_run = (int) $CI->db->insert_id();
+	if ($id_run < 1) {
+		$err = $CI->db->error();
+		$msg = 'Gagal insert generate_run.';
+		if (!empty($err['message'])) {
+			$msg .= ' ' . $err['message'];
+		}
+		return array('ok' => false, 'id_generate_run' => 0, 'row_counts' => array(), 'message' => $msg);
+	}
+
+	$row_counts = array();
+	foreach ($map_rows as $table_name => $rows) {
+		$def = isset($defs[$table_name]) ? $defs[$table_name] : array('status_field' => 'status', 'default_status' => 'OK');
+		$cnt = generate_hasil_datatable_insert_rows(
+			$CI,
+			$table_name,
+			$id_run,
+			$id_history,
+			$bulan_target,
+			$waktu,
+			$id_user,
+			$nama_user,
+			$rows,
+			isset($def['status_field']) ? $def['status_field'] : 'status',
+			isset($def['default_status']) ? $def['default_status'] : 'OK'
+		);
+		$row_counts[$table_name] = $cnt;
+	}
+
+	$counts_json = persediaan_history_generate_json_encode($row_counts);
+	$CI->db->where('id', $id_run)->update('generate_run', array(
+		'waktu_selesai' => date('Y-m-d H:i:s'),
+		'status' => 'selesai',
+		'row_counts_json' => ($counts_json === false) ? null : $counts_json,
+	));
+
+	// Marker ringan di history_data (bukan full snapshot) agar list/legacy tetap tahu ada snapshot server
+	if ((int) $id_history > 0) {
+		persediaan_history_generate_append_data(
+			$CI,
+			$id_history,
+			'v2_verify_snapshot',
+			'Snapshot V2 via tabel generate_* (id_run=' . $id_run . ')',
+			array(array(
+				'ok' => true,
+				'source' => 'generate_hasil_datatable',
+				'id_generate_run' => $id_run,
+				'bulan_target' => $bulan_target,
+				'row_counts' => $row_counts,
+			)),
+			null
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'id_generate_run' => $id_run,
+		'row_counts' => $row_counts,
+		'message' => 'Hasil generate tersimpan ke tabel generate_*.',
+	);
+}
+
+/**
+ * Baca payload_json dari satu tabel detail → array rows.
+ */
+function generate_hasil_datatable_load_rows($CI, $table_name, $id_run)
+{
+	$rows = array();
+	$defs = generate_hasil_datatable_definitions();
+	if ((int) $id_run < 1 || !isset($defs[$table_name]) || !$CI->db->table_exists($table_name)) {
+		return $rows;
+	}
+	$q = $CI->db->query(
+		"SELECT `payload_json`, `status_data`, `row_no`
+		FROM `{$table_name}`
+		WHERE `id_generate_run` = ?
+		ORDER BY `row_no` ASC, `id` ASC",
+		array((int) $id_run)
+	);
+	if (!$q) {
+		return $rows;
+	}
+	foreach ($q->result() as $r) {
+		$decoded = json_decode(isset($r->payload_json) ? $r->payload_json : '{}', true);
+		if (!is_array($decoded)) {
+			$decoded = array();
+		}
+		if (!isset($decoded['status_data']) && isset($r->status_data) && $r->status_data !== '') {
+			$decoded['status_data'] = $r->status_data;
+		}
+		if (!isset($decoded['no']) && isset($r->row_no)) {
+			$decoded['no'] = (int) $r->row_no;
+		}
+		$rows[] = $decoded;
+	}
+	return $rows;
+}
+
+/**
+ * Rebuild payload V2 verify dari tabel generate_* berdasarkan id_history.
+ *
+ * @return array|null
+ */
+function generate_hasil_datatable_load_verify_by_history($CI, $id_history)
+{
+	if ((int) $id_history < 1 || !generate_hasil_datatable_ensure_tables($CI)) {
+		return null;
+	}
+	if (!$CI->db->table_exists('generate_run')) {
+		return null;
+	}
+
+	$q = $CI->db->where('id_history', (int) $id_history)
+		->order_by('id', 'DESC')
+		->limit(1)
+		->get('generate_run');
+	$run = generate_hasil_datatable_safe_row($q);
+	if (!$run) {
+		return null;
+	}
+
+	return generate_hasil_datatable_build_verify_from_run($CI, $run);
+}
+
+function generate_hasil_datatable_build_verify_from_run($CI, $run)
+{
+	if (!$run || empty($run->id)) {
+		return null;
+	}
+	$id_run = (int) $run->id;
+	$meta = array();
+	if (!empty($run->meta_json)) {
+		$decoded = json_decode($run->meta_json, true);
+		if (is_array($decoded)) {
+			$meta = $decoded;
+		}
+	}
+
+	$copy_rows = generate_hasil_datatable_load_rows($CI, 'generate_persediaan_copy_bulan_sebelumnya', $id_run);
+	$pem_brg_m = generate_hasil_datatable_load_rows($CI, 'generate_pembelian_barang_matched', $id_run);
+	$pem_brg_u = generate_hasil_datatable_load_rows($CI, 'generate_pembelian_barang_unmatched', $id_run);
+	$pem_jsa_m = generate_hasil_datatable_load_rows($CI, 'generate_pembelian_jasa_matched', $id_run);
+	$pem_jsa_u = generate_hasil_datatable_load_rows($CI, 'generate_pembelian_jasa_unmatched', $id_run);
+	$prod_rows = generate_hasil_datatable_load_rows($CI, 'generate_produksi_insert', $id_run);
+	$bahan_rows = generate_hasil_datatable_load_rows($CI, 'generate_produksi_bahan', $id_run);
+	$pecah_rows = generate_hasil_datatable_load_rows($CI, 'generate_pecah_satuan_proses', $id_run);
+	$pj_m = generate_hasil_datatable_load_rows($CI, 'generate_penjualan_matched', $id_run);
+	$pj_u = generate_hasil_datatable_load_rows($CI, 'generate_penjualan_unmatched', $id_run);
+	$rekon_rows = generate_hasil_datatable_load_rows($CI, 'generate_rekon_nilai', $id_run);
+
+	$verify = $meta;
+	$verify['ok'] = true;
+	$verify['bulan_target'] = isset($run->bulan_target) ? $run->bulan_target : (isset($meta['bulan_target']) ? $meta['bulan_target'] : '');
+	$verify['bulan_sumber'] = isset($run->bulan_sumber) ? $run->bulan_sumber : (isset($meta['bulan_sumber']) ? $meta['bulan_sumber'] : '');
+	$verify['rekon_ok'] = isset($run->rekon_ok) ? ((int) $run->rekon_ok === 1) : (!empty($meta['rekon_ok']));
+	$verify['id_generate_run'] = $id_run;
+	$verify['snapshot_source'] = 'generate_hasil_datatable';
+	$verify['rows'] = $copy_rows;
+	$verify['pembelian_matched'] = array_merge($pem_brg_m, $pem_jsa_m);
+	$verify['pembelian_unmatched'] = array_merge($pem_brg_u, $pem_jsa_u);
+	$verify['produksi_rows'] = $prod_rows;
+	$verify['bahan_produksi_rows'] = $bahan_rows;
+	$verify['pecah_satuan_rows'] = $pecah_rows;
+	$verify['penjualan_matched'] = $pj_m;
+	$verify['penjualan_unmatched'] = $pj_u;
+
+	if (!isset($verify['pembelian_apply']) || !is_array($verify['pembelian_apply'])) {
+		$verify['pembelian_apply'] = array();
+	}
+	$verify['pembelian_apply']['matched_count'] = count($verify['pembelian_matched']);
+	$verify['pembelian_apply']['unmatched_count'] = count($verify['pembelian_unmatched']);
+
+	if (!isset($verify['penjualan_apply']) || !is_array($verify['penjualan_apply'])) {
+		$verify['penjualan_apply'] = array();
+	}
+	$verify['penjualan_apply']['matched_count'] = count($pj_m);
+	$verify['penjualan_apply']['unmatched_count'] = count($pj_u);
+
+	if (!isset($verify['produksi_apply']) || !is_array($verify['produksi_apply'])) {
+		$verify['produksi_apply'] = array();
+	}
+	if (!isset($verify['produksi_apply']['inserted'])) {
+		$verify['produksi_apply']['inserted'] = count($prod_rows);
+	}
+
+	if (!isset($verify['rekon']) || !is_array($verify['rekon'])) {
+		$verify['rekon'] = array();
+	}
+	if (!empty($rekon_rows)) {
+		if (count($rekon_rows) === 1 && isset($rekon_rows[0]['sum_nilai_sumber'])) {
+			$verify['rekon'] = array_merge($verify['rekon'], $rekon_rows[0]);
+		} else {
+			$verify['rekon']['rows_masalah'] = $rekon_rows;
+			$verify['rekon']['count_masalah'] = count($rekon_rows);
+		}
+	}
+
+	return $verify;
+}
+
+function generate_hasil_datatable_flags_for_history_ids($CI, array $history_ids)
+{
+	$flags = array();
+	if (!generate_hasil_datatable_ensure_tables($CI) || empty($history_ids) || !$CI->db->table_exists('generate_run')) {
+		return $flags;
+	}
+	$ids = array();
+	foreach ($history_ids as $hid) {
+		$hid = (int) $hid;
+		if ($hid > 0) {
+			$ids[$hid] = $hid;
+		}
+	}
+	if (empty($ids)) {
+		return $flags;
+	}
+	$CI->db->select('id_history');
+	$CI->db->distinct();
+	$CI->db->from('generate_run');
+	$CI->db->where_in('id_history', array_values($ids));
+	// Terima run selesai maupun proses (selama baris generate_run ada)
+	$q = $CI->db->get();
+	if ($q === false || !is_object($q) || !method_exists($q, 'result')) {
+		return $flags;
+	}
+	foreach ($q->result() as $row) {
+		if (!empty($row->id_history)) {
+			$flags[(int) $row->id_history] = true;
+		}
+	}
+	return $flags;
+}
+
+/**
+ * Simpan snapshot lengkap hasil V2 ke history + tabel generate_* per datatable.
+ *
+ * @param array|null $out_meta diisi: id_generate_run, row_counts, message
+ */
+function persediaan_history_generate_save_v2_snapshot($CI, $bulan_target, array $verify_result, &$out_meta = null)
+{
+	if (!is_array($out_meta)) {
+		$out_meta = array();
+	}
+	$out_meta['id_generate_run'] = 0;
+	$out_meta['row_counts'] = array();
+	$out_meta['message'] = '';
+
+	try {
+		if (!persediaan_history_generate_ensure_tables($CI) || empty($verify_result['ok'])) {
+			$out_meta['message'] = 'Tabel history belum siap atau hasil generate tidak ok.';
+			return 0;
+		}
+
+		if (!generate_hasil_datatable_ensure_tables($CI)) {
+			$out_meta['message'] = 'Tabel generate_* gagal dibuat/disiapkan.';
+			return 0;
+		}
+
+		$bulan_target = trim((string) $bulan_target);
+		$ts = strtotime($bulan_target . '-01');
+		if ($ts === false) {
+			$out_meta['message'] = 'Bulan target tidak valid.';
+			return 0;
+		}
+
+		$bulan_sumber = date('Y-m', strtotime('-1 month', $ts));
+		$ctx = array(
+			'bulan' => $bulan_target,
+			'tanggal_beli_target' => date('Y-m-01', $ts),
+			'tanggal_beli_sumber' => date('Y-m-01', strtotime($bulan_sumber . '-01')),
+		);
+
+		$state = array(
+			'reset_target' => (int) (isset($verify_result['deleted']) ? $verify_result['deleted'] : 0),
+			'target_kosong_verified' => 1,
+			'log_id' => null,
+		);
+
+		$history_id = persediaan_history_generate_start($CI, $ctx, date('Y-m-d H:i:s'), $state);
+		if ($history_id < 1) {
+			$out_meta['message'] = 'Gagal membuat header history generate.';
+			return 0;
+		}
+
+		$apply = isset($verify_result['pembelian_apply']) && is_array($verify_result['pembelian_apply']) ? $verify_result['pembelian_apply'] : array();
+		$pj = isset($verify_result['penjualan_apply']) && is_array($verify_result['penjualan_apply']) ? $verify_result['penjualan_apply'] : array();
+
+		$summary = array(
+			'bulan' => $bulan_target,
+			'bulan_label' => date('m/Y', $ts),
+			'bulan_sumber_label' => date('m/Y', strtotime($bulan_sumber . '-01')),
+			'v2_flow' => true,
+			'generate_insert' => (int) (isset($verify_result['copied']) ? $verify_result['copied'] : 0),
+			'generate_update' => (int) (isset($verify_result['updated_total10']) ? $verify_result['updated_total10'] : 0),
+			'generate_skip' => (int) (isset($verify_result['skipped']) ? $verify_result['skipped'] : 0),
+			'pembelian_update' => (int) (isset($apply['updated_beli']) ? $apply['updated_beli'] : 0),
+			'pembelian_insert' => (int) (isset($apply['inserted_fase3']) ? $apply['inserted_fase3'] : 0),
+			'pembelian_gagal' => (int) (isset($apply['unmatched_count']) ? $apply['unmatched_count'] : 0),
+			'total_pembelian' => (int) (isset($apply['matched_count']) ? $apply['matched_count'] : 0),
+			'penjualan_update' => (int) (isset($pj['matched_count']) ? $pj['matched_count'] : 0),
+			'reset_target' => (int) (isset($verify_result['deleted']) ? $verify_result['deleted'] : 0),
+			'target_kosong_verified' => 1,
+		);
+
+		$summary_html = persediaan_history_generate_build_v2_summary_html($verify_result);
+
+		// UTAMA: simpan datatable ke generate_* DULU (jangan digantungkan ke finish/rekap besar)
+		$saved = generate_hasil_datatable_save_from_verify($CI, $history_id, $bulan_target, $verify_result);
+		if (empty($saved['ok'])) {
+			$out_meta['message'] = isset($saved['message']) ? $saved['message'] : 'Gagal simpan ke tabel generate_*.';
+			log_message('error', 'persediaan_history_generate_save_v2_snapshot: ' . $out_meta['message'] . ' history_id=' . $history_id);
+		} else {
+			$out_meta['id_generate_run'] = (int) (isset($saved['id_generate_run']) ? $saved['id_generate_run'] : 0);
+			$out_meta['row_counts'] = isset($saved['row_counts']) && is_array($saved['row_counts']) ? $saved['row_counts'] : array();
+			$out_meta['message'] = isset($saved['message']) ? $saved['message'] : 'OK';
+		}
+
+		// Finish ringan — jangan load/encode rekap penuh (sering OOM / packet too large)
+		try {
+			persediaan_history_generate_finish(
+				$CI,
+				$history_id,
+				$summary,
+				array('ok' => true, 'bulan' => $bulan_target),
+				array(),
+				$summary_html,
+				$state
+			);
+		} catch (Exception $eFin) {
+			log_message('error', 'save_v2 finish: ' . $eFin->getMessage());
+			$CI->db->where('id', $history_id)->update('persediaan_history_generate', array(
+				'tanggal_selesai' => date('Y-m-d H:i:s'),
+				'status' => 'selesai',
+				'summary_html' => $summary_html,
+			));
+		} catch (Throwable $eFin) {
+			log_message('error', 'save_v2 finish: ' . $eFin->getMessage());
+			$CI->db->where('id', $history_id)->update('persediaan_history_generate', array(
+				'tanggal_selesai' => date('Y-m-d H:i:s'),
+				'status' => 'selesai',
+				'summary_html' => $summary_html,
+			));
+		}
+
+		if (empty($saved['ok'])) {
+			return (int) $history_id;
+		}
+
+		return (int) $history_id;
+	} catch (Exception $e) {
+		$out_meta['message'] = 'Error simpan history: ' . $e->getMessage();
+		log_message('error', 'persediaan_history_generate_save_v2_snapshot: ' . $e->getMessage());
+		return 0;
+	} catch (Throwable $e) {
+		$out_meta['message'] = 'Error simpan history: ' . $e->getMessage();
+		log_message('error', 'persediaan_history_generate_save_v2_snapshot: ' . $e->getMessage());
+		return 0;
+	}
 }
 
 function persediaan_history_generate_list_by_bulan($CI, $bulan, $limit = 50)
@@ -14498,6 +15406,7 @@ function persediaan_history_generate_load($CI, $history_id)
 
 	$summary_tables = array('ok' => true);
 	$proses_data = array();
+	$v2_verify = null;
 
 	if (!empty($header->rekap_json)) {
 		$decoded = json_decode($header->rekap_json, true);
@@ -14519,6 +15428,15 @@ function persediaan_history_generate_load($CI, $history_id)
 
 		if ($jenis === 'rekap_meta' && !empty($data[0]) && is_array($data[0])) {
 			$summary_tables['rekap_meta'] = $data[0];
+			continue;
+		}
+
+		if ($jenis === 'v2_verify_snapshot') {
+			if (!empty($data[0]) && is_array($data[0])) {
+				$v2_verify = $data[0];
+			} elseif (is_array($data) && !empty($data)) {
+				$v2_verify = $data;
+			}
 			continue;
 		}
 
@@ -14560,9 +15478,39 @@ function persediaan_history_generate_load($CI, $history_id)
 	persediaan_gen_recalc_summary_rekap_meta_normalize($CI, $summary_tables);
 	persediaan_gen_recalc_summary_tables_ensure_totals($CI, $summary_tables);
 
+	// Utama: rebuild dari tabel generate_* (per datatable). Fallback: JSON lama di history_data.
+	$id_generate_run = 0;
+	$from_generate_tables = generate_hasil_datatable_load_verify_by_history($CI, (int) $header->id);
+	if (is_array($from_generate_tables) && !empty($from_generate_tables['ok'])) {
+		$v2_verify = $from_generate_tables;
+		$id_generate_run = (int) (isset($from_generate_tables['id_generate_run']) ? $from_generate_tables['id_generate_run'] : 0);
+		$has_v2_snapshot = true;
+	} else {
+		// Abaikan marker ringan (source=generate_hasil_datatable tanpa rows)
+		if (is_array($v2_verify) && isset($v2_verify['source']) && $v2_verify['source'] === 'generate_hasil_datatable') {
+			$v2_verify = null;
+		}
+		$has_v2_snapshot = is_array($v2_verify) && !empty($v2_verify['ok'])
+			&& (
+				isset($v2_verify['rows'])
+				|| isset($v2_verify['pembelian_matched'])
+				|| isset($v2_verify['penjualan_matched'])
+			);
+	}
+
+	$summary_html_out = isset($header->summary_html) ? $header->summary_html : '';
+	if ($summary_html_out === '' && is_array($from_generate_tables) && !empty($from_generate_tables['ok'])) {
+		$run_q = $CI->db->where('id_history', (int) $header->id)->order_by('id', 'DESC')->limit(1)->get('generate_run');
+		$run_row = generate_hasil_datatable_safe_row($run_q);
+		if ($run_row && !empty($run_row->summary_html)) {
+			$summary_html_out = $run_row->summary_html;
+		}
+	}
+
 	return array(
 		'ok' => true,
 		'history_id' => (int) $header->id,
+		'id_generate_run' => $id_generate_run,
 		'header' => array(
 			'id' => (int) $header->id,
 			'bulan_target' => $header->bulan_target,
@@ -14575,9 +15523,14 @@ function persediaan_history_generate_load($CI, $history_id)
 			'nama_user' => isset($header->nama_user) ? $header->nama_user : '',
 		),
 		'summary' => $summary,
-		'summary_html' => isset($header->summary_html) ? $header->summary_html : '',
+		'summary_html' => $summary_html_out,
 		'summary_tables' => $summary_tables,
 		'proses_data' => $proses_data,
+		'v2_verify' => $v2_verify,
+		'has_v2_snapshot' => $has_v2_snapshot,
+		'snapshot_source' => $has_v2_snapshot
+			? (isset($v2_verify['snapshot_source']) ? $v2_verify['snapshot_source'] : 'database')
+			: 'none',
 		'has_history' => true,
 		'data' => $proses_data,
 		'created_at' => $header->tanggal_klik_generate,
