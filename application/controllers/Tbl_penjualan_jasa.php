@@ -1087,7 +1087,12 @@ class Tbl_penjualan_jasa extends CI_Controller
 		}
 		$kolom_unit_simpan = penjualan_resolve_kolom_persediaan_unit($this, $uuid_unit_simpan);
 		$sisa_stock_simpan = penjualan_get_sisa_stock_penjualan($data_barang, $kolom_unit_simpan);
-		if ((int) $jumlah_simpan > $sisa_stock_simpan) {
+		if ($sisa_stock_simpan < 1) {
+			$this->session->set_flashdata('message', 'Stok jasa habis, tidak dapat dipilih.');
+			redirect(site_url('tbl_penjualan_jasa/create'));
+			return;
+		}
+		if ((int) $jumlah_simpan < 1 || (int) $jumlah_simpan > $sisa_stock_simpan) {
 			$this->session->set_flashdata(
 				'message',
 				'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').'

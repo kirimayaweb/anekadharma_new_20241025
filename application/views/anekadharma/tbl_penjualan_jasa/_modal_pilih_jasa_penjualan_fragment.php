@@ -42,13 +42,12 @@ foreach ($Data_stock as $list_data) {
 	$nilai_unit = $penjualan_kolom_unit
 		? (int) floor(penjualan_get_nilai_kolom_unit($list_data, $penjualan_kolom_unit))
 		: 0;
-	$bisa_pilih = ($sisa_stock_data > 0);
+	$bisa_pilih = ($sisa_stock_data >= 1);
 
 	$ada_baris = true;
 	$no = ++$start;
 	$harga_fmt = number_format((float) $list_data->harga_satuan_persediaan, 2, ',', '.');
 	$tgl_po_fmt = '';
-	// Prioritaskan tgl_po dari tbl_pembelian_jasa (via LEFT JOIN di penjualan_get_stock_persediaan_jasa_rows)
 	if (!empty($list_data->tgl_po) && $list_data->tgl_po !== '0000-00-00' && $list_data->tgl_po !== '') {
 		$tgl_po_fmt = date('d M Y', strtotime($list_data->tgl_po));
 	} elseif (!empty($list_data->tanggal_beli) && $list_data->tanggal_beli !== '0000-00-00') {
@@ -63,18 +62,20 @@ foreach ($Data_stock as $list_data) {
 		? $action . $uuid_penjualan . '/' . $list_data->id
 		: $action . 'new/' . $list_data->id;
 	$btn_class = $bisa_pilih ? 'btn-success' : 'btn-secondary';
-	$btn_disabled = $bisa_pilih ? '' : ' disabled';
+	$btn_title = $bisa_pilih ? '' : ' title="Stok habis, tidak dapat dipilih"';
+	$btn_disabled = $bisa_pilih ? '' : ' disabled="disabled" aria-disabled="true"' . $btn_title;
 	$label_info_jumlah = 'Jumlah Maks= ' . (int) $sisa_stock_data;
 	if ($penjualan_label_unit !== '') {
 		$label_info_jumlah .= ' | Unit ' . $penjualan_label_unit . ': ' . (int) $nilai_unit;
 	}
+	$row_class = $bisa_pilih ? '' : ' class="pilih-jasa-stok-habis text-muted"';
 
 	if ($fragment_part === 'tbody') {
 		?>
-		<tr>
+		<tr<?php echo $row_class; ?>>
 			<td align="right"><?php echo $no; ?></td>
 			<td align="right">
-				<button type="button" class="btn <?php echo $btn_class; ?> btn-xs" data-toggle="modal" data-target="#modal-xl_1_<?php echo (int) $list_data->id; ?>"<?php echo $btn_disabled; ?>>PILIH JASA</button>
+				<button type="button" class="btn <?php echo $btn_class; ?> btn-xs"<?php echo $bisa_pilih ? ' data-toggle="modal" data-target="#modal-xl_1_' . (int) $list_data->id . '"' : ''; ?><?php echo $btn_disabled; ?>>PILIH JASA</button>
 			</td>
 			<td><?php echo htmlspecialchars($tgl_po_fmt, ENT_QUOTES, 'UTF-8'); ?></td>
 			<td align="left"><?php echo htmlspecialchars($list_data->spop, ENT_QUOTES, 'UTF-8'); ?></td>
@@ -82,9 +83,9 @@ foreach ($Data_stock as $list_data) {
 			<td align="left"><?php echo htmlspecialchars($list_data->nama_barang_beli, ENT_QUOTES, 'UTF-8'); ?></td>
 			<td align="right"><?php echo $harga_fmt; ?></td>
 			<td align="left"><?php echo htmlspecialchars($list_data->satuan_persediaan, ENT_QUOTES, 'UTF-8'); ?></td>
-			<td align="right"><?php echo nominal($sisa_stock_data); ?><?php if ($penjualan_label_unit !== '') { ?><br><small class="text-muted"><?php echo htmlspecialchars($penjualan_label_unit, ENT_QUOTES, 'UTF-8'); ?>: <?php echo nominal($nilai_unit); ?></small><?php } ?></td>
+			<td align="right"><?php echo nominal($sisa_stock_data); ?><?php if (!$bisa_pilih) { ?> <small class="text-muted">(habis)</small><?php } ?><?php if ($penjualan_label_unit !== '') { ?><br><small class="text-muted"><?php echo htmlspecialchars($penjualan_label_unit, ENT_QUOTES, 'UTF-8'); ?>: <?php echo nominal($nilai_unit); ?></small><?php } ?></td>
 			<td align="left">
-				<button type="button" class="btn <?php echo $btn_class; ?> btn-xs" data-toggle="modal" data-target="#modal-xl_1_<?php echo (int) $list_data->id; ?>"<?php echo $btn_disabled; ?>>PILIH JASA</button>
+				<button type="button" class="btn <?php echo $btn_class; ?> btn-xs"<?php echo $bisa_pilih ? ' data-toggle="modal" data-target="#modal-xl_1_' . (int) $list_data->id . '"' : ''; ?><?php echo $btn_disabled; ?>>PILIH JASA</button>
 			</td>
 		</tr>
 		<?php

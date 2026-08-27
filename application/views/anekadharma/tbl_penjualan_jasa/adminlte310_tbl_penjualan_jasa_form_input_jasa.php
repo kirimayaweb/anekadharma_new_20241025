@@ -44,6 +44,13 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_jasa($this, array(
 	'nmrpesan' => isset($nmrpesan) ? $nmrpesan : '',
 	'nmrkirim' => isset($nmrkirim) ? $nmrkirim : '',
 ));
+$jumlah_jasa_modal = is_array($Data_stock) ? count($Data_stock) : 0;
+if (preg_match_all('/<tr\b/i', $render_modal_pilih_barang['tbody'], $m_jasa_modal)) {
+	$jumlah_jasa_modal = count($m_jasa_modal[0]);
+	if (strpos($render_modal_pilih_barang['tbody'], 'Tidak ada jasa persediaan') !== false) {
+		$jumlah_jasa_modal = 0;
+	}
+}
 ?>
 <style>
 	/* Modal PILIH JASA: ~1 cm dari pinggir layar (kiri/kanan/atas/bawah) */
@@ -117,6 +124,14 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_jasa($this, array(
 	}
 	#container-modal-pilih-jasa-nested .modal-dialog.modal-isi-jumlah-barang {
 		max-width: min(720px, 96vw);
+	}
+	#modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis td {
+		background-color: #f4f4f4;
+	}
+	#modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis .btn[disabled] {
+		cursor: not-allowed;
+		opacity: 0.65;
+		pointer-events: none;
 	}
 	#container-modal-pilih-jasa-nested .penjualan-label-info-jumlah {
 		display: block;
@@ -628,7 +643,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_jasa($this, array(
     <div class="modal-dialog modal-pilih-jasa-wide">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">PILIH JASA <small class="text-muted" id="modal-pilih-jasa-bulan-label">(Bulan: <?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?> &mdash; kategori jasa saja)</small></h4>
+                <h4 class="modal-title">PILIH JASA <small class="text-muted" id="modal-pilih-jasa-bulan-label">(Bulan: <?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?>, <?php echo (int) $jumlah_jasa_modal; ?> jasa)</small></h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
