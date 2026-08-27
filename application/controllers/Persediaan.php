@@ -567,8 +567,7 @@ class Persediaan extends CI_Controller
 	private function get_persediaan_list_view_data($bulan, $Persediaan)
 	{
 		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
-		persediaan_history_generate_ensure_tables($this);
-		generate_hasil_datatable_ensure_tables($this);
+		persediaan_generate_schema_ensure_all($this);
 
 		$ts_gen_default = strtotime('+1 month', strtotime(date('Y-m-01')));
 		if ($ts_gen_default === false) {
@@ -3567,6 +3566,10 @@ class Persediaan extends CI_Controller
 			);
 			$start = ($this->input->get_post('start', TRUE) === '1');
 
+			if ($start) {
+				persediaan_generate_schema_ensure_all($this);
+			}
+
 			$db_debug = $this->db->db_debug;
 			$this->db->db_debug = false;
 
@@ -3615,8 +3618,7 @@ class Persediaan extends CI_Controller
 				return;
 			}
 
-			persediaan_history_generate_ensure_tables($this);
-			generate_hasil_datatable_ensure_tables($this);
+			persediaan_generate_schema_ensure_all($this);
 
 			$db_debug = $this->db->db_debug;
 			$this->db->db_debug = false;
@@ -6698,11 +6700,13 @@ class Persediaan extends CI_Controller
 		}
 
 		// Ensure history + generate_* tables exist
-		$tables_created = persediaan_history_generate_ensure_tables($this);
-		generate_hasil_datatable_ensure_tables($this);
+		persediaan_generate_schema_ensure_all($this);
 
 		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
+		$tables_ready = persediaan_history_generate_table_exists($this, true);
+		$tables_created = $tables_ready;
 		$history_ids = array();
+
 		foreach ($list as $row) {
 			$history_ids[] = (int) $row->id;
 		}
@@ -6713,6 +6717,7 @@ class Persediaan extends CI_Controller
 			$items[] = array(
 				'id' => $hid,
 				'bulan_target' => $row->bulan_target,
+				'bulan_target_label' => persediaan_history_generate_bulan_label($row->bulan_target),
 				'tanggal_klik_generate' => $row->tanggal_klik_generate,
 				'tanggal_selesai' => $row->tanggal_selesai,
 				'reset_deleted_count' => (int) $row->reset_deleted_count,
@@ -6730,11 +6735,10 @@ class Persediaan extends CI_Controller
 			);
 		}
 
-		$tables_ready = persediaan_history_generate_table_exists($this);
-
 		persediaan_ajax_json_output($this, array(
 			'ok' => true,
 			'bulan' => $bulan,
+			'bulan_label' => persediaan_history_generate_bulan_label($bulan),
 			'tables_ready' => $tables_ready,
 			'tables_created' => $tables_created,
 			'items' => $items,

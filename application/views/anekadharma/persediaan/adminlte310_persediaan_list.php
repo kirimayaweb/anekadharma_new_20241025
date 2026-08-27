@@ -746,6 +746,7 @@
                                         <table id="tbl-gen-history-generate" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0 w-100">
                                             <thead>
                                                 <tr>
+                                                    <th>Bulan Generate</th>
                                                     <th>Tanggal Klik Generate</th>
                                                     <th>Selesai</th>
                                                     <th>Hapus Target</th>
@@ -757,7 +758,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="gen-history-generate-tbody">
-                                                <tr><td colspan="8" class="text-muted text-center small">Memuat history...</td></tr>
+                                                <tr><td colspan="9" class="text-muted text-center small">Memuat history...</td></tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -7493,6 +7494,13 @@ window.addEventListener('load', function() {
         return html;
     }
 
+    function formatGenHistoryBulanCell(item) {
+        var label = item.bulan_target_label || item.bulan_target || '—';
+        var key = item.bulan_target || '';
+        return '<strong>' + escapeHtmlGen(label) + '</strong>'
+            + (key ? '<br/><small class="text-muted">' + escapeHtmlGen(key) + '</small>' : '');
+    }
+
     function buildGenHistoryGenerateRowData(item) {
         var id = parseInt(item.id, 10) || 0;
         var tanggalCell = '<strong>' + escapeHtmlGen(item.tanggal_klik_generate || '—') + '</strong>'
@@ -7500,6 +7508,7 @@ window.addEventListener('load', function() {
                 ? '<br/><span class="badge badge-info badge-sm" title="Snapshot lengkap tersimpan di server">Server ✓</span>'
                 : '<br/><span class="badge badge-secondary badge-sm" title="History lama tanpa snapshot lengkap">Legacy</span>');
         return [
+            formatGenHistoryBulanCell(item),
             tanggalCell,
             item.tanggal_selesai || '—',
             formatGenHistoryResetCell(item),
@@ -7529,7 +7538,7 @@ window.addEventListener('load', function() {
             data: dtRows,
             pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
-            order: [[0, 'desc']],
+            order: [[1, 'desc']],
             ordering: true,
             searching: true,
             paging: true,
@@ -7537,9 +7546,9 @@ window.addEventListener('load', function() {
             autoWidth: false,
             language: genRecalcDtLang,
             columnDefs: [
-                { targets: [0, 1, 6], className: 'align-middle' },
-                { targets: [2, 3, 4, 5, 7], className: 'text-center align-middle small' },
-                { targets: [7], orderable: false, searchable: false }
+                { targets: [0, 1, 2, 7], className: 'align-middle' },
+                { targets: [3, 4, 5, 6, 8], className: 'text-center align-middle small' },
+                { targets: [8], orderable: false, searchable: false }
             ],
             createdRow: function(row, data, dataIndex) {
                 var item = genHistoryGenerateLastItems[dataIndex];
@@ -7553,9 +7562,10 @@ window.addEventListener('load', function() {
                 if (genHistoryGenerateSelectedId && genHistoryGenerateSelectedId === id) {
                     $(row).addClass('table-success');
                 }
-                $('td:eq(0)', row).attr('data-order', item.tanggal_klik_generate || '');
-                $('td:eq(1)', row).attr('data-order', item.tanggal_selesai || '');
-                $('td:eq(2)', row).attr('data-order', String(parseInt(item.reset_deleted_count, 10) || 0));
+                $('td:eq(0)', row).attr('data-order', item.bulan_target || '');
+                $('td:eq(1)', row).attr('data-order', item.tanggal_klik_generate || '');
+                $('td:eq(2)', row).attr('data-order', item.tanggal_selesai || '');
+                $('td:eq(3)', row).attr('data-order', String(parseInt(item.reset_deleted_count, 10) || 0));
             },
             drawCallback: function() {
                 highlightGenHistoryGenerateSelectedRow();
@@ -7570,7 +7580,7 @@ window.addEventListener('load', function() {
     function showGenHistoryGenerateLoadingRow(message, cssClass) {
         destroyGenHistoryGenerateDataTable();
         $('#gen-history-generate-tbody').html(
-            '<tr><td colspan="8" class="' + (cssClass || 'text-muted') + ' text-center small">'
+            '<tr><td colspan="9" class="' + (cssClass || 'text-muted') + ' text-center small">'
             + escapeHtmlGen(message || 'Memuat history...') + '</td></tr>'
         );
     }
@@ -7607,10 +7617,12 @@ window.addEventListener('load', function() {
                 (res.items || []).forEach(function(it) {
                     if (it.has_v2_snapshot) { v2Count++; }
                 });
+                var bulanLabel = res.bulan_label || bulanKey;
                 $('#gen-history-generate-intro').html(
-                    'History disimpan di <strong>database server</strong> (' + (res.total || 0) + ' record'
+                    'History bulan target <strong>' + escapeHtmlGen(bulanLabel) + '</strong> (' + escapeHtmlGen(bulanKey) + ')'
+                    + ' — disimpan di <strong>database server</strong> (' + (res.total || 0) + ' record'
                     + (v2Count > 0 ? ', ' + v2Count + ' dengan snapshot lengkap' : '')
-                    + '). Klik baris atau <strong>Muat</strong> — tampil identik di laptop/komputer mana pun. Cache browser hanya pelengkap perangkat ini.'
+                    + '). Setiap klik Generate menambah 1 baris history untuk bulan tersebut. Klik baris atau <strong>Muat</strong> untuk melihat hasil generate.'
                 );
             }
             renderHistoryGenerateListRows(res.items || []);
@@ -11066,7 +11078,17 @@ window.addEventListener('load', function() {
 
         if (isV2Ready) {
             saveGenRecalcResultToStorage(bulanKey);
-            setStatusGeneratePersediaan('success', summaryHtml);
+            var histLine = '';
+            if (data.history_saved && data.history_id) {
+                histLine = '<br/><small class="text-muted"><i class="fas fa-database mr-1"></i>History tersimpan (ID '
+                    + escapeHtmlGen(String(data.history_id))
+                    + (data.id_generate_run ? ', run #' + escapeHtmlGen(String(data.id_generate_run)) : '')
+                    + ') untuk bulan <strong>' + escapeHtmlGen(data.bulan_target_label || bulanKey) + '</strong>.</small>';
+            } else if (data.history_saved === false && data.history_save_message) {
+                histLine = '<br/><small class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>'
+                    + escapeHtmlGen(data.history_save_message) + '</small>';
+            }
+            setStatusGeneratePersediaan('success', summaryHtml + histLine);
             loadHistoryGenerateList(bulanKey);
         } else if (typeof loadGenRecalcHistoryFromServer === 'function') {
             loadGenRecalcHistoryFromServer(bulanKey);

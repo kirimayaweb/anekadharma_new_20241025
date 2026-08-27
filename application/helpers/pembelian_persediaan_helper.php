@@ -13459,9 +13459,12 @@ function persediaan_generate_recalculate_batch_legacy($CI, $bulan, $offset, $lim
 		}
 
 		if ($start) {
+			persediaan_generate_schema_ensure_all($CI);
 			$hist_gen_id = persediaan_history_generate_start($CI, $ctx, $state['tanggal_klik_generate'], $state);
 			if ($hist_gen_id > 0) {
 				$state['history_generate_id'] = $hist_gen_id;
+			} else {
+				log_message('error', 'persediaan_generate batch: history_generate_start gagal bulan=' . $bulan);
 			}
 		}
 
@@ -14370,9 +14373,255 @@ function persediaan_history_generate_rekap_jenis_definitions()
 	);
 }
 
+/**
+ * Pastikan semua tabel history + generate_* siap (lokal & server).
+ */
+function persediaan_generate_schema_ensure_all($CI)
+{
+	$hist_ok = persediaan_history_generate_ensure_tables($CI);
+	$gen_ok = generate_hasil_datatable_ensure_tables($CI);
+	return (bool) ($hist_ok && $gen_ok);
+}
+
+function persediaan_history_generate_row_to_array($row)
+{
+	if (is_array($row)) {
+		return $row;
+	}
+	if (is_object($row)) {
+		$decoded = json_decode(json_encode($row), true);
+		return is_array($decoded) ? $decoded : array();
+	}
+	return array();
+}
+
+function persediaan_history_generate_rows_to_array_list($rows)
+{
+	$out = array();
+	if (!is_array($rows)) {
+		return $out;
+	}
+	$no = 0;
+	foreach ($rows as $row) {
+		$no++;
+		$item = persediaan_history_generate_row_to_array($row);
+		if (!isset($item['no'])) {
+			$item['no'] = $no;
+		}
+		$out[] = $item;
+	}
+	return $out;
+}
+
+function persediaan_history_generate_bulan_label($bulan)
+{
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return $bulan;
+	}
+	$ts = strtotime($bulan . '-01');
+	return ($ts === false) ? $bulan : date('m/Y', $ts);
+}
+
+function persediaan_history_generate_classify_pembelian_rows($CI, $tabel, $rows)
+{
+	$matched = array();
+	$unmatched = array();
+	if (empty($rows) || !is_array($rows)) {
+		return array($matched, $unmatched);
+	}
+
+	$cache = persediaan_gen_v2_build_verifikasi_cache($CI);
+	foreach ($rows as $row) {
+		$item = persediaan_gen_v2_verifikasi_pembelian_row($CI, $tabel, $row, $cache);
+		$arr = persediaan_history_generate_row_to_array($item);
+		$arr['sumber_tabel'] = $tabel;
+		$st = strtolower(trim((string) (isset($arr['status']) ? $arr['status'] : '')));
+		if ($st === '' || strpos($st, 'gagal') !== false || strpos($st, 'tidak') !== false) {
+			$unmatched[] = $arr;
+		} else {
+			$matched[] = $arr;
+		}
+	}
+
+	return array($matched, $unmatched);
+}
+
+/**
+ * Susun payload verify V2 dari package proses generate (setelah batch selesai).
+ */
+function persediaan_history_generate_build_verify_from_packages($CI, $bulan, array $summary, array $state, array $ctx = array())
+{
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return array('ok' => false, 'message' => 'Bulan tidak valid.');
+	}
+
+	$CI->load->helper('persediaan_display');
+
+	$copy_pkg = persediaan_generate_proses_package($CI, $bulan);
+	$pem_pkg = persediaan_generate_proses_pembelian_package($CI, $bulan);
+	$prod_pkg = persediaan_generate_proses_produksi_package($CI, $bulan);
+	$pecah_pkg = persediaan_generate_proses_pecah_satuan_package($CI, $bulan);
+	$penj_pkg = persediaan_generate_proses_penjualan_package($CI, $bulan);
+
+	$copy_rows = array();
+	if (!empty($copy_pkg['ok'])) {
+		foreach (array('rows_target_barang', 'rows_target_jasa') as $key) {
+			if (empty($copy_pkg[$key]) || !is_array($copy_pkg[$key])) {
+				continue;
+			}
+			foreach ($copy_pkg[$key] as $row) {
+				$item = persediaan_history_generate_row_to_array($row);
+				if (!isset($item['status_copy'])) {
+					$item['status_copy'] = 'COPIED';
+				}
+				$copy_rows[] = $item;
+			}
+		}
+	}
+	$copy_rows = persediaan_history_generate_rows_to_array_list($copy_rows);
+
+	list($pem_brg_m, $pem_brg_u) = persediaan_history_generate_classify_pembelian_rows(
+		$CI,
+		'tbl_pembelian',
+		!empty($pem_pkg['rows_pembelian_barang']) ? $pem_pkg['rows_pembelian_barang'] : array()
+	);
+	list($pem_jsa_m, $pem_jsa_u) = persediaan_history_generate_classify_pembelian_rows(
+		$CI,
+		'tbl_pembelian_jasa',
+		!empty($pem_pkg['rows_pembelian_jasa']) ? $pem_pkg['rows_pembelian_jasa'] : array()
+	);
+
+	$produksi_rows = persediaan_history_generate_rows_to_array_list(
+		!empty($prod_pkg['rows_unit_produk']) ? $prod_pkg['rows_unit_produk'] : array()
+	);
+	$bahan_rows = persediaan_history_generate_rows_to_array_list(
+		!empty($prod_pkg['rows_bahan_update']) ? $prod_pkg['rows_bahan_update'] : (
+			!empty($prod_pkg['rows_bahan']) ? $prod_pkg['rows_bahan'] : array()
+		)
+	);
+	$pecah_rows = persediaan_history_generate_rows_to_array_list(
+		!empty($pecah_pkg['rows_update']) ? $pecah_pkg['rows_update'] : (
+			!empty($pecah_pkg['rows_all']) ? $pecah_pkg['rows_all'] : array()
+		)
+	);
+	$penj_matched = persediaan_history_generate_rows_to_array_list(
+		!empty($penj_pkg['rows_masuk']) ? $penj_pkg['rows_masuk'] : array()
+	);
+	$penj_unmatched = persediaan_history_generate_rows_to_array_list(array_merge(
+		!empty($penj_pkg['rows_tidak_masuk']) ? $penj_pkg['rows_tidak_masuk'] : array(),
+		!empty($penj_pkg['rows_manual']) ? $penj_pkg['rows_manual'] : array()
+	));
+
+	$bulan_sumber = !empty($copy_pkg['bulan_sumber'])
+		? $copy_pkg['bulan_sumber']
+		: date('Y-m', strtotime('-1 month', strtotime($bulan . '-01')));
+
+	$verify = array(
+		'ok' => true,
+		'bulan_target' => $bulan,
+		'bulan_sumber' => $bulan_sumber,
+		'label_target' => persediaan_history_generate_bulan_label($bulan),
+		'label_sumber' => persediaan_history_generate_bulan_label($bulan_sumber),
+		'copied' => (int) (isset($summary['generate_insert']) ? $summary['generate_insert'] : 0),
+		'updated_total10' => (int) (isset($summary['generate_update']) ? $summary['generate_update'] : 0),
+		'deleted' => (int) (isset($summary['reset_target']) ? $summary['reset_target'] : 0),
+		'rows' => $copy_rows,
+		'pembelian_matched' => array_merge($pem_brg_m, $pem_jsa_m),
+		'pembelian_unmatched' => array_merge($pem_brg_u, $pem_jsa_u),
+		'produksi_rows' => $produksi_rows,
+		'bahan_produksi_rows' => $bahan_rows,
+		'pecah_satuan_rows' => $pecah_rows,
+		'penjualan_matched' => $penj_matched,
+		'penjualan_unmatched' => $penj_unmatched,
+		'rekon_ok' => true,
+		'rekon' => array(),
+		'pembelian_apply' => array(
+			'matched_count' => count($pem_brg_m) + count($pem_jsa_m),
+			'unmatched_count' => count($pem_brg_u) + count($pem_jsa_u),
+			'updated_beli' => (int) (isset($summary['pembelian_update']) ? $summary['pembelian_update'] : 0),
+			'inserted_fase3' => (int) (isset($summary['pembelian_insert']) ? $summary['pembelian_insert'] : 0),
+		),
+		'penjualan_apply' => array(
+			'matched_count' => count($penj_matched),
+			'unmatched_count' => count($penj_unmatched),
+		),
+		'produksi_apply' => array(
+			'inserted' => (int) (isset($summary['produksi_insert']) ? $summary['produksi_insert'] : count($produksi_rows)),
+		),
+		'snapshot_source' => 'batch_packages',
+		'tanggal_klik_generate' => isset($state['tanggal_klik_generate']) ? $state['tanggal_klik_generate'] : date('Y-m-d H:i:s'),
+	);
+
+	return $verify;
+}
+
+/**
+ * Simpan snapshot generate_* + selesaikan header history setelah batch V2.
+ *
+ * @return array{history_id:int,id_generate_run:int,history_saved:bool,message:string}
+ */
+function persediaan_history_generate_finalize_batch($CI, $bulan, array &$state, array $summary, array $ctx = array())
+{
+	$out = array(
+		'history_id' => 0,
+		'id_generate_run' => 0,
+		'history_saved' => false,
+		'message' => '',
+	);
+
+	if (!persediaan_generate_schema_ensure_all($CI)) {
+		$out['message'] = 'Tabel history/generate_* gagal disiapkan.';
+		return $out;
+	}
+
+	$history_id = (int) (isset($state['history_generate_id']) ? $state['history_generate_id'] : 0);
+	if ($history_id < 1) {
+		$ctx_start = array(
+			'bulan' => $bulan,
+			'tanggal_beli_target' => isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : date('Y-m-01', strtotime($bulan . '-01')),
+			'tanggal_beli_sumber' => isset($ctx['tanggal_beli_sumber']) ? $ctx['tanggal_beli_sumber'] : date('Y-m-01', strtotime('-1 month', strtotime($bulan . '-01'))),
+		);
+		$klik = !empty($state['tanggal_klik_generate']) ? $state['tanggal_klik_generate'] : date('Y-m-d H:i:s');
+		$history_id = persediaan_history_generate_start($CI, $ctx_start, $klik, $state);
+		if ($history_id > 0) {
+			$state['history_generate_id'] = $history_id;
+		}
+	}
+
+	if ($history_id < 1) {
+		$out['message'] = 'Gagal membuat header history generate.';
+		return $out;
+	}
+
+	$verify = persediaan_history_generate_build_verify_from_packages($CI, $bulan, $summary, $state, $ctx);
+	if (empty($verify['ok'])) {
+		$out['history_id'] = $history_id;
+		$out['message'] = isset($verify['message']) ? $verify['message'] : 'Gagal menyusun snapshot verify.';
+	} else {
+		$saved = generate_hasil_datatable_save_from_verify($CI, $history_id, $bulan, $verify);
+		if (!empty($saved['ok'])) {
+			$out['id_generate_run'] = (int) (isset($saved['id_generate_run']) ? $saved['id_generate_run'] : 0);
+			$state['id_generate_run'] = $out['id_generate_run'];
+			$out['history_saved'] = true;
+		} else {
+			$out['message'] = isset($saved['message']) ? $saved['message'] : 'Gagal simpan ke tabel generate_*.';
+		}
+	}
+
+	persediaan_history_generate_finish_from_batch($CI, $state, $bulan, $summary);
+	$out['history_id'] = $history_id;
+	if ($out['history_saved'] && $out['message'] === '') {
+		$out['message'] = 'History generate tersimpan untuk bulan ' . persediaan_history_generate_bulan_label($bulan) . '.';
+	}
+
+	return $out;
+}
+
 function persediaan_history_generate_start($CI, $ctx, $tanggal_klik_generate, &$state)
 {
-	if (!persediaan_history_generate_ensure_tables($CI)) {
+	if (!persediaan_generate_schema_ensure_all($CI)) {
 		return 0;
 	}
 
@@ -14394,7 +14643,17 @@ function persediaan_history_generate_start($CI, $ctx, $tanggal_klik_generate, &$
 		'nama_user' => $nama_user !== '' ? $nama_user : null,
 	));
 
-	return (int) $CI->db->insert_id();
+	$insert_id = (int) $CI->db->insert_id();
+	if ($insert_id < 1) {
+		$err = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_history_generate_start gagal insert bulan=' . (isset($ctx['bulan']) ? $ctx['bulan'] : '')
+			. ' err=' . (isset($err['message']) ? $err['message'] : '')
+		);
+	}
+
+	return $insert_id;
 }
 
 function persediaan_history_generate_json_encode($data)
@@ -15325,7 +15584,7 @@ function persediaan_history_generate_save_v2_snapshot($CI, $bulan_target, array 
 	$out_meta['message'] = '';
 
 	try {
-		if (!persediaan_history_generate_ensure_tables($CI) || empty($verify_result['ok'])) {
+		if (!persediaan_generate_schema_ensure_all($CI) || empty($verify_result['ok'])) {
 			$out_meta['message'] = 'Tabel history belum siap atau hasil generate tidak ok.';
 			return 0;
 		}
@@ -25986,9 +26245,16 @@ function persediaan_gen_v2_finish($CI, $bulan, $ctx, &$state, $state_key, $batch
 		'verifikasi_penjualan_aman' => (int) (isset($stats['verifikasi_penjualan_aman']) ? $stats['verifikasi_penjualan_aman'] : 0),
 		'verifikasi_penjualan_skip' => (int) (isset($stats['verifikasi_penjualan_skip']) ? $stats['verifikasi_penjualan_skip'] : 0),
 		'generate_insert' => (int) (isset($stats['generate_insert']) ? $stats['generate_insert'] : 0),
+		'generate_update' => (int) (isset($stats['generate_update']) ? $stats['generate_update'] : 0),
+		'pembelian_update' => (int) (isset($stats['verifikasi_pembelian_update']) ? $stats['verifikasi_pembelian_update'] : 0)
+			+ (int) (isset($stats['pembelian_barang_insert']) ? $stats['pembelian_barang_insert'] : 0)
+			+ (int) (isset($stats['pembelian_jasa_insert']) ? $stats['pembelian_jasa_insert'] : 0),
+		'pembelian_insert' => (int) (isset($stats['pembelian_insert']) ? $stats['pembelian_insert'] : 0),
+		'pembelian_gagal' => (int) (isset($stats['verifikasi_pembelian_gagal']) ? $stats['verifikasi_pembelian_gagal'] : 0),
+		'total_pembelian' => (int) (isset($stats['count_pembelian_barang']) ? $stats['count_pembelian_barang'] : 0)
+			+ (int) (isset($stats['count_pembelian_jasa']) ? $stats['count_pembelian_jasa'] : 0),
 		'pembelian_barang_insert' => (int) (isset($stats['pembelian_barang_insert']) ? $stats['pembelian_barang_insert'] : 0),
 		'pembelian_jasa_insert' => (int) (isset($stats['pembelian_jasa_insert']) ? $stats['pembelian_jasa_insert'] : 0),
-		'pembelian_insert' => (int) (isset($stats['pembelian_insert']) ? $stats['pembelian_insert'] : 0),
 		'pembelian_skip' => (int) (isset($stats['pembelian_skip']) ? $stats['pembelian_skip'] : 0),
 		'count_pembelian_barang' => (int) (isset($stats['count_pembelian_barang']) ? $stats['count_pembelian_barang'] : 0),
 		'count_pembelian_jasa' => (int) (isset($stats['count_pembelian_jasa']) ? $stats['count_pembelian_jasa'] : 0),
@@ -26013,9 +26279,8 @@ function persediaan_gen_v2_finish($CI, $bulan, $ctx, &$state, $state_key, $batch
 	if (persediaan_gen_recalc_table_exists($CI) && !empty($state['log_id'])) {
 		persediaan_gen_recalc_batch_finish_history($CI, $state, $summary_done);
 	}
-	if (!empty($state['history_generate_id'])) {
-		persediaan_history_generate_finish_from_batch($CI, $state, $bulan, $summary_done);
-	}
+
+	$hist_finalize = persediaan_history_generate_finalize_batch($CI, $bulan, $state, $summary_done, $ctx);
 
 	if (!empty($state['gen_proses_copy_rekap']) && is_array($state['gen_proses_copy_rekap'])) {
 		persediaan_gen_v2_save_copy_rekap(
@@ -26036,6 +26301,12 @@ function persediaan_gen_v2_finish($CI, $bulan, $ctx, &$state, $state_key, $batch
 		'done' => true,
 		'v2_ready' => true,
 		'generate_only' => true,
+		'history_id' => (int) (isset($hist_finalize['history_id']) ? $hist_finalize['history_id'] : 0),
+		'history_saved' => !empty($hist_finalize['history_saved']),
+		'history_save_message' => isset($hist_finalize['message']) ? $hist_finalize['message'] : '',
+		'id_generate_run' => (int) (isset($hist_finalize['id_generate_run']) ? $hist_finalize['id_generate_run'] : 0),
+		'bulan_target' => $bulan,
+		'bulan_target_label' => persediaan_history_generate_bulan_label($bulan),
 		'skip_pecah_satuan' => !empty($state['skip_pecah_satuan']),
 		'skip_penjualan' => !empty($state['skip_penjualan']),
 		'offset_selesai' => 0,
@@ -26228,9 +26499,12 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 		}
 
 		if ($start) {
+			persediaan_generate_schema_ensure_all($CI);
 			$hist_gen_id = persediaan_history_generate_start($CI, $ctx, $state['tanggal_klik_generate'], $state);
 			if ($hist_gen_id > 0) {
 				$state['history_generate_id'] = $hist_gen_id;
+			} else {
+				log_message('error', 'persediaan_generate batch: history_generate_start gagal bulan=' . $bulan);
 			}
 		}
 	}
