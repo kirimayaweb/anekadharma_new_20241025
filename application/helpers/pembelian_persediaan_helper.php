@@ -551,6 +551,85 @@ function penjualan_sql_bukan_kategori_jasa($CI, $alias = 'persediaan')
 }
 
 /**
+ * True jika baris tbl_penjualan dianggap jasa (bukan barang).
+ * Cek field barang_jasa, kode_barang, dan kata "jasa" pada nama_barang.
+ */
+function penjualan_row_is_jasa($row)
+{
+	if (!is_object($row) && !is_array($row)) {
+		return false;
+	}
+	$val = function ($key) use ($row) {
+		if (is_object($row)) {
+			return isset($row->$key) ? (string) $row->$key : '';
+		}
+		return isset($row[$key]) ? (string) $row[$key] : '';
+	};
+
+	if (strtolower(trim($val('barang_jasa'))) === 'jasa') {
+		return true;
+	}
+	$kode = strtolower(trim($val('kode_barang')));
+	if ($kode === 'jasa' || strpos($kode, 'jasa') !== false) {
+		return true;
+	}
+	$nama = strtolower($val('nama_barang'));
+	if (strpos($nama, 'jasa') !== false) {
+		return true;
+	}
+	return false;
+}
+
+function penjualan_filter_rows_bukan_jasa($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+	return array_values(array_filter($rows, function ($row) {
+		return !penjualan_row_is_jasa($row);
+	}));
+}
+
+function penjualan_filter_rows_jasa($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+	return array_values(array_filter($rows, 'penjualan_row_is_jasa'));
+}
+
+/**
+ * Scope query builder: hanya penjualan jasa.
+ */
+function penjualan_db_scope_hanya_jasa($CI, $alias = '')
+{
+	$p = ($alias !== '') ? $alias . '.' : '';
+	$parts = array();
+	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) = 'jasa')";
+	}
+	$parts[] = "(LOWER(TRIM(COALESCE({$p}kode_barang, ''))) = 'jasa')";
+	$parts[] = "(LOWER(TRIM(COALESCE({$p}kode_barang, ''))) LIKE '%jasa%')";
+	$parts[] = "(LOWER(COALESCE({$p}nama_barang, '')) LIKE '%jasa%')";
+	$CI->db->where('(' . implode(' OR ', $parts) . ')', null, false);
+}
+
+/**
+ * Scope query builder: hanya penjualan barang (bukan jasa).
+ */
+function penjualan_db_scope_hanya_barang($CI, $alias = '')
+{
+	$p = ($alias !== '') ? $alias . '.' : '';
+	$parts = array();
+	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) <> 'jasa')";
+	}
+	$parts[] = "(LOWER(TRIM(COALESCE({$p}kode_barang, ''))) NOT LIKE '%jasa%')";
+	$parts[] = "(LOWER(COALESCE({$p}nama_barang, '')) NOT LIKE '%jasa%')";
+	$CI->db->where('(' . implode(' AND ', $parts) . ')', null, false);
+}
+
+/**
  * Ekspresi uuid barang efektif (uuid_barang → uuid_persediaan → id).
  */
 function penjualan_sql_uuid_barang_expr($alias = 'persediaan')
@@ -4143,7 +4222,7 @@ function persediaan_ensure_asal_generate_column($CI)
 
 /**
  * Pastikan kolom verified_persediaan ada di tbl_penjualan.
- * Nilai: 'refered' = sudah terproses ke persediaan; kosong = belum terproses.
+ * Nilai: 'refered' = otomatis; 'refered manual' = manual; kosong = belum terproses.
  *
  * @return bool true jika kolom siap dipakai
  */
@@ -4178,7 +4257,7 @@ function tbl_penjualan_ensure_verified_persediaan_column($CI)
 		"ALTER TABLE `tbl_penjualan`
 		ADD COLUMN `verified_persediaan` VARCHAR(32) NULL DEFAULT NULL"
 		. $after
-		. " COMMENT 'refered=sudah ke persediaan; kosong=belum terproses'"
+		. " COMMENT 'refered=otomatis; refered manual=manual; kosong=belum terproses'"
 	);
 
 	$CI->db->db_debug = $db_debug;
@@ -4198,9 +4277,103 @@ function tbl_penjualan_verified_persediaan_refered_value()
 }
 
 /**
+ * Nilai verified_persediaan: terverifikasi manual (tombol Refered di tab Belum ke Persediaan).
+ */
+function tbl_penjualan_verified_persediaan_manual_value()
+{
+	return 'refered manual';
+}
+
+/**
+ * Nilai legacy verified_persediaan manual (sebelum pakai "refered manual").
+ */
+function tbl_penjualan_verified_persediaan_manual_legacy_value()
+{
+	return 'manual';
+}
+
+/**
+ * Ambil nilai verified_persediaan dari row object/array.
+ */
+function tbl_penjualan_get_verified_persediaan_value($row)
+{
+	if (is_object($row) && isset($row->verified_persediaan)) {
+		return trim((string) $row->verified_persediaan);
+	}
+	if (is_array($row) && isset($row['verified_persediaan'])) {
+		return trim((string) $row['verified_persediaan']);
+	}
+	return '';
+}
+
+/**
+ * Apakah baris penjualan belum terproses ke persediaan (untuk tab filter).
+ */
+function tbl_penjualan_is_belum_verified_persediaan($row)
+{
+	return (tbl_penjualan_get_verified_persediaan_value($row) === '');
+}
+
+/**
+ * Terverifikasi manual (refered dari modal Referensi Persediaan).
+ */
+function tbl_penjualan_is_manual_verified_persediaan($row)
+{
+	$v = strtolower(tbl_penjualan_get_verified_persediaan_value($row));
+	return ($v === tbl_penjualan_verified_persediaan_manual_value()
+		|| $v === tbl_penjualan_verified_persediaan_manual_legacy_value());
+}
+
+/**
+ * Verifikasi otomatis (input penjualan / generate & recalculate).
+ */
+function tbl_penjualan_is_auto_verified_persediaan($row)
+{
+	$v = strtolower(tbl_penjualan_get_verified_persediaan_value($row));
+	if ($v === tbl_penjualan_verified_persediaan_manual_value()
+		|| $v === tbl_penjualan_verified_persediaan_manual_legacy_value()) {
+		return false;
+	}
+	return ($v === tbl_penjualan_verified_persediaan_refered_value() || $v === 'auto' || $v === 'otomatis');
+}
+
+/**
+ * Filter rows: hanya yang belum refered ke persediaan.
+ */
+function tbl_penjualan_filter_belum_verified_persediaan($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+	return array_values(array_filter($rows, 'tbl_penjualan_is_belum_verified_persediaan'));
+}
+
+/**
+ * Filter rows: terverifikasi manual ke persediaan.
+ */
+function tbl_penjualan_filter_manual_verified_persediaan($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+	return array_values(array_filter($rows, 'tbl_penjualan_is_manual_verified_persediaan'));
+}
+
+/**
+ * Filter rows: verifikasi otomatis ke persediaan.
+ */
+function tbl_penjualan_filter_auto_verified_persediaan($rows)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+	return array_values(array_filter($rows, 'tbl_penjualan_is_auto_verified_persediaan'));
+}
+
+/**
  * Update verified_persediaan satu baris penjualan.
  *
- * @param string|null $value 'refered' atau '' / null untuk belum terproses
+ * @param string|null $value 'refered'|'refered manual' atau '' / null untuk belum terproses
  */
 function tbl_penjualan_set_verified_persediaan($CI, $id_penjualan, $value)
 {
@@ -4236,28 +4409,359 @@ function tbl_penjualan_reset_verified_persediaan_bulan($CI, $tgl_awal, $tgl_akhi
 }
 
 /**
- * Apakah baris penjualan belum terproses ke persediaan (untuk tab filter).
+ * Sinkronisasi verified_persediaan sesuai hasil Proses Penjualan Generate
+ * (logika sama Terproses / Belum terproses: uuid → nama+satuan).
+ * masuk/terproses → 'refered'; sisanya → NULL.
+ *
+ * @return array{ok:bool,refered:int,belum:int,skip:int,total:int,message:string}
  */
-function tbl_penjualan_is_belum_verified_persediaan($row)
+function tbl_penjualan_sync_verified_persediaan_range($CI, $tgl_awal, $tgl_akhir)
 {
-	$v = '';
-	if (is_object($row) && isset($row->verified_persediaan)) {
-		$v = trim((string) $row->verified_persediaan);
-	} elseif (is_array($row) && isset($row['verified_persediaan'])) {
-		$v = trim((string) $row['verified_persediaan']);
+	$out = array(
+		'ok' => false,
+		'refered' => 0,
+		'belum' => 0,
+		'skip' => 0,
+		'total' => 0,
+		'message' => '',
+	);
+
+	if (!tbl_penjualan_ensure_verified_persediaan_column($CI)) {
+		$out['message'] = 'Kolom verified_persediaan tidak siap.';
+		return $out;
 	}
-	return ($v === '' || strtolower($v) !== 'refered');
+
+	$tgl_awal = trim((string) $tgl_awal);
+	$tgl_akhir = trim((string) $tgl_akhir);
+	$ts_a = strtotime($tgl_awal);
+	$ts_b = strtotime($tgl_akhir);
+	if ($ts_a === false || $ts_b === false) {
+		$out['message'] = 'Format tanggal tidak valid.';
+		return $out;
+	}
+	$tgl_awal_d = date('Y-m-d', $ts_a);
+	$tgl_akhir_d = date('Y-m-d', $ts_b);
+	$tahun = (int) date('Y', $ts_a);
+	$bulan = (int) date('n', $ts_a);
+
+	if (!$CI->db->table_exists('tbl_penjualan') || !$CI->db->table_exists('persediaan')) {
+		$out['message'] = 'Tabel tbl_penjualan / persediaan tidak tersedia.';
+		return $out;
+	}
+
+	if (!function_exists('persediaan_parse_angka')) {
+		$CI->load->helper('persediaan_display');
+	}
+
+	$sumber_rows = $CI->db->query(
+		"SELECT `id`, `uuid_persediaan`, `nama_barang`, `satuan`, `jumlah`, `verified_persediaan`
+		 FROM `tbl_penjualan`
+		 WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
+		   AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		 ORDER BY `id` ASC",
+		array($tgl_awal_d, $tgl_akhir_d)
+	)->result();
+
+	$pers_rows = $CI->db->query(
+		"SELECT `id`, `uuid_persediaan`, `namabarang`, `satuan`
+		 FROM `persediaan`
+		 WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?",
+		array($tahun, $bulan)
+	)->result();
+
+	$by_uuid = array();
+	$by_nama_satuan = array();
+	foreach ($pers_rows as $prow) {
+		$u = trim((string) (isset($prow->uuid_persediaan) ? $prow->uuid_persediaan : ''));
+		if ($u !== '') {
+			$by_uuid[$u] = true;
+		}
+		$n = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($prow->namabarang) ? $prow->namabarang : ''))));
+		$s = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($prow->satuan) ? $prow->satuan : ''))));
+		if ($n !== '' && $s !== '') {
+			$by_nama_satuan[$n . '|' . $s] = true;
+		}
+	}
+
+	$ids_refered = array();
+	$ids_belum = array();
+	$refered_val = tbl_penjualan_verified_persediaan_refered_value();
+
+	foreach ($sumber_rows as $r) {
+		$id = isset($r->id) ? (int) $r->id : 0;
+		if ($id < 1) {
+			continue;
+		}
+		// Jangan timpa verifikasi manual dari tombol Refered
+		$existing_vp = strtolower(trim((string) (isset($r->verified_persediaan) ? $r->verified_persediaan : '')));
+		if ($existing_vp === tbl_penjualan_verified_persediaan_manual_value()
+			|| $existing_vp === tbl_penjualan_verified_persediaan_manual_legacy_value()) {
+			continue;
+		}
+		$out['total']++;
+		$uuid = isset($r->uuid_persediaan) ? trim((string) $r->uuid_persediaan) : '';
+		$jumlah_raw = isset($r->jumlah) ? $r->jumlah : 0;
+		$jumlah = function_exists('persediaan_parse_angka')
+			? persediaan_parse_angka($jumlah_raw)
+			: (float) str_replace(array('.', ','), array('', '.'), (string) $jumlah_raw);
+
+		$matched = false;
+		if ($jumlah > 0) {
+			if ($uuid !== '' && !empty($by_uuid[$uuid])) {
+				$matched = true;
+			} else {
+				$n = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($r->nama_barang) ? $r->nama_barang : ''))));
+				$s = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($r->satuan) ? $r->satuan : ''))));
+				$key = ($n !== '' && $s !== '') ? ($n . '|' . $s) : '';
+				if ($key !== '' && !empty($by_nama_satuan[$key])) {
+					$matched = true;
+				}
+			}
+		} else {
+			$out['skip']++;
+		}
+
+		if ($matched) {
+			$ids_refered[] = $id;
+			$out['refered']++;
+		} else {
+			$ids_belum[] = $id;
+			$out['belum']++;
+		}
+	}
+
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$chunk = 200;
+	for ($i = 0; $i < count($ids_refered); $i += $chunk) {
+		$part = array_slice($ids_refered, $i, $chunk);
+		if (empty($part)) {
+			continue;
+		}
+		$CI->db->where_in('id', $part);
+		$CI->db->update('tbl_penjualan', array('verified_persediaan' => $refered_val));
+	}
+	for ($i = 0; $i < count($ids_belum); $i += $chunk) {
+		$part = array_slice($ids_belum, $i, $chunk);
+		if (empty($part)) {
+			continue;
+		}
+		$CI->db->where_in('id', $part);
+		$CI->db->update('tbl_penjualan', array('verified_persediaan' => null));
+	}
+
+	$CI->db->db_debug = $db_debug;
+
+	$out['ok'] = true;
+	$out['message'] = 'Sync verified_persediaan: refered=' . $out['refered']
+		. ', belum=' . $out['belum'] . ' (total=' . $out['total'] . ').';
+	return $out;
 }
 
 /**
- * Filter rows: hanya yang belum refered ke persediaan.
+ * Sync verified_persediaan untuk satu bulan YYYY-MM.
  */
-function tbl_penjualan_filter_belum_verified_persediaan($rows)
+function tbl_penjualan_sync_verified_persediaan_bulan($CI, $bulan)
 {
-	if (!is_array($rows)) {
-		return array();
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return array('ok' => false, 'refered' => 0, 'belum' => 0, 'skip' => 0, 'total' => 0, 'message' => 'Bulan tidak valid.');
 	}
-	return array_values(array_filter($rows, 'tbl_penjualan_is_belum_verified_persediaan'));
+	$ts = strtotime($bulan . '-01');
+	return tbl_penjualan_sync_verified_persediaan_range(
+		$CI,
+		date('Y-m-01', $ts),
+		date('Y-m-t', $ts)
+	);
+}
+
+/**
+ * Enrich baris belum ke persediaan dengan keterangan sama box Proses Penjualan (Belum terproses).
+ *
+ * @param array $rows hasil filter belum verified
+ * @return array list of stdClass/array siap tampil (object)
+ */
+function tbl_penjualan_enrich_belum_persediaan_display_rows($CI, $rows, $tgl_awal, $tgl_akhir, $want_jasa = false)
+{
+	$out = array();
+	if (!is_array($rows) || empty($rows)) {
+		return $out;
+	}
+
+	$ts_a = strtotime(trim((string) $tgl_awal));
+	if ($ts_a === false) {
+		$ts_a = time();
+	}
+	$tahun = (int) date('Y', $ts_a);
+	$bulan = (int) date('n', $ts_a);
+
+	$by_uuid = array();
+	if ($CI->db->table_exists('persediaan')) {
+		$pers_rows = $CI->db->query(
+			"SELECT `uuid_persediaan`, `namabarang`, `satuan`, `kategori`
+			 FROM `persediaan`
+			 WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?",
+			array($tahun, $bulan)
+		)->result();
+		if ($want_jasa) {
+			$CI->load->helper('persediaan_display');
+			$pers_rows = persediaan_filter_rows_by_kategori_tab($pers_rows, true);
+		} else {
+			$CI->load->helper('persediaan_display');
+			$pers_rows = persediaan_filter_rows_by_kategori_tab($pers_rows, false);
+		}
+		foreach ($pers_rows as $prow) {
+			$u = trim((string) (isset($prow->uuid_persediaan) ? $prow->uuid_persediaan : ''));
+			if ($u !== '') {
+				$by_uuid[$u] = true;
+			}
+		}
+	}
+
+	if (!function_exists('persediaan_parse_angka')) {
+		$CI->load->helper('persediaan_display');
+	}
+
+	$no = 0;
+	foreach ($rows as $r) {
+		$no++;
+		$id = is_object($r) ? (isset($r->id) ? (int) $r->id : 0) : (int) (isset($r['id']) ? $r['id'] : 0);
+		$uuid = is_object($r)
+			? trim((string) (isset($r->uuid_persediaan) ? $r->uuid_persediaan : ''))
+			: trim((string) (isset($r['uuid_persediaan']) ? $r['uuid_persediaan'] : ''));
+		$nama = is_object($r)
+			? (isset($r->nama_barang) ? (string) $r->nama_barang : '')
+			: (isset($r['nama_barang']) ? (string) $r['nama_barang'] : '');
+		$satuan = is_object($r)
+			? (isset($r->satuan) ? (string) $r->satuan : '')
+			: (isset($r['satuan']) ? (string) $r['satuan'] : '');
+		$jumlah_raw = is_object($r) ? (isset($r->jumlah) ? $r->jumlah : 0) : (isset($r['jumlah']) ? $r['jumlah'] : 0);
+		$jumlah = function_exists('persediaan_parse_angka')
+			? persediaan_parse_angka($jumlah_raw)
+			: (float) $jumlah_raw;
+		$tgl_jual = is_object($r)
+			? (isset($r->tgl_jual) ? (string) $r->tgl_jual : '')
+			: (isset($r['tgl_jual']) ? (string) $r['tgl_jual'] : '');
+		$konsumen = is_object($r)
+			? (isset($r->konsumen_nama) ? (string) $r->konsumen_nama : '')
+			: (isset($r['konsumen_nama']) ? (string) $r['konsumen_nama'] : '');
+		$unit = is_object($r)
+			? (isset($r->unit) ? (string) $r->unit : '')
+			: (isset($r['unit']) ? (string) $r['unit'] : '');
+
+		if ($jumlah <= 0) {
+			$ket = 'jumlah <= 0';
+		} elseif ($uuid !== '' && empty($by_uuid[$uuid])) {
+			$ket = 'uuid_persediaan tidak ditemukan di persediaan bulan target; nama_barang+satuan tidak ditemukan di persediaan bulan target';
+		} elseif ($uuid === '') {
+			$ket = 'uuid_persediaan kosong; nama_barang+satuan tidak ditemukan di persediaan bulan target';
+		} else {
+			$ket = 'nama_barang+satuan tidak ditemukan di persediaan bulan target';
+		}
+
+		$jumlah_disp = (abs($jumlah - round($jumlah)) < 0.0001)
+			? (string) (int) round($jumlah)
+			: (string) $jumlah;
+
+		$row = is_object($r) ? clone $r : (object) $r;
+		$row->id_penjualan = $id;
+		$row->no = $no;
+		$row->status = 'UNMATCHED';
+		$row->keterangan = $ket;
+		$row->jumlah_display = $jumlah_disp;
+		$row->tgl_jual_display = $tgl_jual !== '' && $tgl_jual !== '0000-00-00'
+			? date('Y-m-d', strtotime($tgl_jual))
+			: $tgl_jual;
+		$row->konsumen_nama = $konsumen;
+		$row->unit = $unit;
+		$row->nama_barang = $nama;
+		$row->satuan = $satuan;
+		$row->uuid_persediaan = $uuid;
+		$out[] = $row;
+	}
+
+	return $out;
+}
+
+/**
+ * Enrich baris terverifikasi (manual / otomatis) untuk datatable tab Persediaan.
+ *
+ * @param string $mode 'manual'|'auto'
+ */
+function tbl_penjualan_enrich_verified_persediaan_display_rows($rows, $mode = 'auto')
+{
+	$out = array();
+	if (!is_array($rows) || empty($rows)) {
+		return $out;
+	}
+
+	if (!function_exists('persediaan_parse_angka')) {
+		$CI = function_exists('get_instance') ? get_instance() : null;
+		if ($CI) {
+			$CI->load->helper('persediaan_display');
+		}
+	}
+
+	$mode = strtolower(trim((string) $mode));
+	$status_label = ($mode === 'manual') ? 'REFERED MANUAL' : 'REFERED';
+	$ket_default = ($mode === 'manual')
+		? 'Terverifikasi manual (verified_persediaan=refered manual) via tombol Refered (Referensi Persediaan)'
+		: 'Verifikasi otomatis (verified_persediaan=refered) — input penjualan / generate & recalculate';
+
+	$no = 0;
+	foreach ($rows as $r) {
+		$no++;
+		$id = is_object($r) ? (isset($r->id) ? (int) $r->id : 0) : (int) (isset($r['id']) ? $r['id'] : 0);
+		$uuid = is_object($r)
+			? trim((string) (isset($r->uuid_persediaan) ? $r->uuid_persediaan : ''))
+			: trim((string) (isset($r['uuid_persediaan']) ? $r['uuid_persediaan'] : ''));
+		$nama = is_object($r)
+			? (isset($r->nama_barang) ? (string) $r->nama_barang : '')
+			: (isset($r['nama_barang']) ? (string) $r['nama_barang'] : '');
+		$satuan = is_object($r)
+			? (isset($r->satuan) ? (string) $r->satuan : '')
+			: (isset($r['satuan']) ? (string) $r['satuan'] : '');
+		$jumlah_raw = is_object($r) ? (isset($r->jumlah) ? $r->jumlah : 0) : (isset($r['jumlah']) ? $r['jumlah'] : 0);
+		$jumlah = function_exists('persediaan_parse_angka')
+			? persediaan_parse_angka($jumlah_raw)
+			: (float) $jumlah_raw;
+		$tgl_jual = is_object($r)
+			? (isset($r->tgl_jual) ? (string) $r->tgl_jual : '')
+			: (isset($r['tgl_jual']) ? (string) $r['tgl_jual'] : '');
+		$konsumen = is_object($r)
+			? (isset($r->konsumen_nama) ? (string) $r->konsumen_nama : '')
+			: (isset($r['konsumen_nama']) ? (string) $r['konsumen_nama'] : '');
+		$unit = is_object($r)
+			? (isset($r->unit) ? (string) $r->unit : '')
+			: (isset($r['unit']) ? (string) $r['unit'] : '');
+		$vp = is_object($r)
+			? trim((string) (isset($r->verified_persediaan) ? $r->verified_persediaan : ''))
+			: trim((string) (isset($r['verified_persediaan']) ? $r['verified_persediaan'] : ''));
+
+		$jumlah_disp = (abs($jumlah - round($jumlah)) < 0.0001)
+			? (string) (int) round($jumlah)
+			: (string) $jumlah;
+
+		$row = is_object($r) ? clone $r : (object) $r;
+		$row->id_penjualan = $id;
+		$row->no = $no;
+		$row->status = $status_label;
+		$row->keterangan = $ket_default;
+		$row->jumlah_display = $jumlah_disp;
+		$row->tgl_jual_display = $tgl_jual !== '' && $tgl_jual !== '0000-00-00'
+			? date('Y-m-d', strtotime($tgl_jual))
+			: $tgl_jual;
+		$row->konsumen_nama = $konsumen;
+		$row->unit = $unit;
+		$row->nama_barang = $nama;
+		$row->satuan = $satuan;
+		$row->uuid_persediaan = $uuid;
+		$row->verified_persediaan = $vp;
+		$out[] = $row;
+	}
+
+	return $out;
 }
 
 function persediaan_row_apply_asal_generate_flag(&$data, $is_generate, $CI = null)
@@ -27521,6 +28025,8 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 		if ($done_penjualan) {
 			persediaan_generate_recalculate_refresh_nilai_persediaan_bulan($CI, $tanggal_beli_target);
+			// Pastikan flag verified_persediaan selaras klasifikasi box Proses Penjualan
+			tbl_penjualan_sync_verified_persediaan_range($CI, $tgl_awal, $tgl_akhir);
 			if (!empty($items_penjualan) && !empty($state['log_id'])) {
 				persediaan_gen_recalc_history_save_batch(
 					$CI,
@@ -27964,6 +28470,11 @@ function persediaan_gen_v2_apply_penjualan_ke_persediaan($CI, $bulan, $id_penjua
 
 	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
 
+	// Flag agar tab Belum ke Persediaan / Belum terproses ikut ter-update
+	if (function_exists('tbl_penjualan_set_verified_persediaan')) {
+		tbl_penjualan_set_verified_persediaan($CI, $id_penjualan, tbl_penjualan_verified_persediaan_refered_value());
+	}
+
 	return array(
 		'ok' => true,
 		'message' => 'Penjualan id=' . $id_penjualan . ' berhasil diproses ke persediaan id=' . $id_persediaan
@@ -27973,7 +28484,259 @@ function persediaan_gen_v2_apply_penjualan_ke_persediaan($CI, $bulan, $id_penjua
 		'penjualan_baru' => isset($upd['penjualan_baru']) ? $upd['penjualan_baru'] : '',
 		'total_10' => $row_baru ? $row_baru->total_10 : '',
 		'kolom_unit' => isset($upd['kolom_unit']) ? $upd['kolom_unit'] : '',
+		'verified_persediaan' => function_exists('tbl_penjualan_verified_persediaan_refered_value')
+			? tbl_penjualan_verified_persediaan_refered_value()
+			: 'refered',
 	);
+}
+
+/**
+ * Bandingkan satuan penjualan vs persediaan.
+ * Kolom persediaan.satuan varchar(5) sering memotong ("lembar" → "lemba").
+ */
+function persediaan_satuan_cocok_referensi($sat_a, $sat_b)
+{
+	$a = strtolower(preg_replace('/\s+/', ' ', trim((string) $sat_a)));
+	$b = strtolower(preg_replace('/\s+/', ' ', trim((string) $sat_b)));
+	if ($a === '' || $b === '') {
+		return true;
+	}
+	if ($a === $b) {
+		return true;
+	}
+	$n = min(strlen($a), strlen($b));
+	if ($n >= 3 && substr($a, 0, $n) === substr($b, 0, $n)) {
+		return true;
+	}
+	if (strpos($a, $b) === 0 || strpos($b, $a) === 0) {
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @param float|null $jumlah_input null = pakai qty penjualan penuh
+ * @param bool $force lewati peringatan uuid sinkron pembelian↔persediaan
+ */
+function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bulan, $id_penjualan, $id_persediaan, $jumlah_input = null, $force = false)
+{
+	$CI->load->helper('persediaan_display');
+
+	$ctx = persediaan_gen_v2_penjualan_ctx($bulan);
+	if (empty($ctx['ok'])) {
+		return $ctx;
+	}
+
+	$id_penjualan = (int) $id_penjualan;
+	$id_persediaan = (int) $id_persediaan;
+	if ($id_penjualan <= 0 || $id_persediaan <= 0) {
+		return array('ok' => false, 'message' => 'ID penjualan atau persediaan tidak valid.');
+	}
+
+	$row_pen = $CI->db->where('id', $id_penjualan)->limit(1)->get('tbl_penjualan')->row();
+	if (!$row_pen) {
+		return array('ok' => false, 'message' => 'Record tbl_penjualan tidak ditemukan.');
+	}
+
+	$row_pers = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
+	if (!$row_pers) {
+		return array('ok' => false, 'message' => 'Record persediaan tidak ditemukan.');
+	}
+
+	$ts_pers = strtotime(isset($row_pers->tanggal_beli) ? $row_pers->tanggal_beli : '');
+	$bulan_pers = ($ts_pers !== false) ? date('Y-m', $ts_pers) : '';
+	if ($bulan_pers !== $ctx['bulan']) {
+		return array('ok' => false, 'message' => 'Persediaan bukan milik bulan target ' . $ctx['bulan_label'] . '.');
+	}
+
+	$sat_pen_raw = isset($row_pen->satuan) ? $row_pen->satuan : '';
+	$sat_pers_raw = isset($row_pers->satuan) ? $row_pers->satuan : '';
+	if (!persediaan_satuan_cocok_referensi($sat_pen_raw, $sat_pers_raw)) {
+		return array(
+			'ok' => false,
+			'message' => 'Ditolak: satuan berbeda (penjualan: "'
+				. $sat_pen_raw
+				. '" vs persediaan: "'
+				. $sat_pers_raw
+				. '").',
+		);
+	}
+
+	$qty_pen = persediaan_recalculate_parse_jumlah_penjualan(isset($row_pen->jumlah) ? $row_pen->jumlah : 0);
+	$jumlah = ($jumlah_input === null || $jumlah_input === '')
+		? $qty_pen
+		: max(0, (float) persediaan_parse_angka($jumlah_input));
+	$jumlah = (int) floor($jumlah);
+	if ($jumlah <= 0) {
+		return array('ok' => false, 'message' => 'Jumlah harus lebih dari 0.');
+	}
+	if ($qty_pen > 0 && $jumlah > $qty_pen) {
+		return array('ok' => false, 'message' => 'Jumlah tidak boleh melebihi qty penjualan (' . $qty_pen . ').');
+	}
+
+	$total_10_stok = persediaan_referensi_penjualan_stok_angka($row_pers);
+	$want_jasa_ref = penjualan_row_is_jasa($row_pen);
+	$tab_row = persediaan_referensi_penjualan_find_tab_row_by_id($CI, $ctx['bulan'], $id_persediaan, $want_jasa_ref);
+	if ($tab_row) {
+		$total_10_stok = persediaan_referensi_penjualan_stok_angka($tab_row);
+	}
+	if ($total_10_stok < $jumlah) {
+		return array(
+			'ok' => false,
+			'message' => 'Ditolak: stok persediaan (total_10=' . $total_10_stok . ') kurang dari jumlah yang diisi (' . $jumlah . ').',
+		);
+	}
+
+	$tahun = (int) date('Y', strtotime($ctx['bulan'] . '-01'));
+	$bulan_num = (int) date('n', strtotime($ctx['bulan'] . '-01'));
+	$uuid_selected = isset($row_pers->uuid_persediaan) ? trim((string) $row_pers->uuid_persediaan) : '';
+	$uuid_pen = isset($row_pen->uuid_persediaan) ? trim((string) $row_pen->uuid_persediaan) : '';
+
+	$hint = persediaan_gen_v2_referensi_cek_uuid_sinkron_pembelian($CI, $tahun, $bulan_num, $uuid_selected, $uuid_pen, $id_persediaan);
+	if (!empty($hint['need_redirect']) && !$force) {
+		return array(
+			'ok' => false,
+			'need_confirm_uuid' => true,
+			'message' => $hint['message'],
+			'suggested_id_persediaan' => isset($hint['suggested_id']) ? (int) $hint['suggested_id'] : 0,
+			'suggested_uuid' => isset($hint['suggested_uuid']) ? $hint['suggested_uuid'] : '',
+			'suggested_namabarang' => isset($hint['suggested_nama']) ? $hint['suggested_nama'] : '',
+		);
+	}
+
+	$pen_upd = array();
+	$uuid_pers = isset($row_pers->uuid_persediaan) ? trim((string) $row_pers->uuid_persediaan) : '';
+	if ($uuid_pers !== '' && $CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')) {
+		$pen_upd['uuid_persediaan'] = $uuid_pers;
+		$row_pen->uuid_persediaan = $uuid_pers;
+	}
+	if ($CI->db->field_exists('id_persediaan_barang', 'tbl_penjualan')) {
+		$pen_upd['id_persediaan_barang'] = $id_persediaan;
+		$row_pen->id_persediaan_barang = $id_persediaan;
+	}
+	if (!empty($pen_upd)) {
+		$CI->db->where('id', $id_penjualan)->update('tbl_penjualan', $pen_upd);
+	}
+
+	$unit_txt = isset($row_pen->unit) ? trim((string) $row_pen->unit) : '';
+	$konsumen_txt = isset($row_pen->konsumen_nama) ? trim((string) $row_pen->konsumen_nama) : '';
+	if ($unit_txt === '' && $konsumen_txt !== '') {
+		$row_pen->unit = $konsumen_txt;
+	}
+
+	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $row_pers, $jumlah, $row_pen);
+	persediaan_gen_recalc_ensure_total_10_persediaan($CI, $id_persediaan);
+	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
+
+	if (function_exists('tbl_penjualan_set_verified_persediaan')) {
+		tbl_penjualan_set_verified_persediaan($CI, $id_penjualan, tbl_penjualan_verified_persediaan_manual_value());
+	}
+
+	$ket_unit = '';
+	if (!empty($upd['kolom_unit'])) {
+		$ket_unit = ' Kolom unit persediaan `' . $upd['kolom_unit'] . '` +=' . $jumlah
+			. (!empty($konsumen_txt) ? ' (konsumen: ' . $konsumen_txt . ')' : '') . '.';
+	}
+
+	return array(
+		'ok' => true,
+		'message' => 'Berhasil referensi: persediaan id=' . $id_persediaan
+			. ' (penjualan+=' . $jumlah . ', total_10-=' . $jumlah . ').'
+			. $ket_unit
+			. ' Penjualan dipindah ke Terverifikasi Manual.',
+		'id_penjualan' => $id_penjualan,
+		'id_persediaan' => $id_persediaan,
+		'jumlah_diproses' => $jumlah,
+		'penjualan_baru' => isset($upd['penjualan_baru']) ? $upd['penjualan_baru'] : '',
+		'total_10' => $row_baru ? $row_baru->total_10 : '',
+		'kolom_unit' => isset($upd['kolom_unit']) ? $upd['kolom_unit'] : '',
+		'konsumen_nama' => $konsumen_txt,
+		'verified_persediaan' => tbl_penjualan_verified_persediaan_manual_value(),
+		'uuid_hint' => $hint,
+	);
+}
+
+/**
+ * Cek apakah ada uuid yang sinkron di tbl_pembelian + persediaan bulan yang sama,
+ * lalu arahkan user ke record itu jika pilihan saat ini berbeda.
+ */
+function persediaan_gen_v2_referensi_cek_uuid_sinkron_pembelian($CI, $tahun, $bulan_num, $uuid_selected, $uuid_pen, $id_persediaan_selected)
+{
+	$out = array(
+		'need_redirect' => false,
+		'message' => '',
+		'suggested_id' => 0,
+		'suggested_uuid' => '',
+		'suggested_nama' => '',
+		'selected_uuid_in_pembelian' => false,
+	);
+
+	if (!$CI->db->table_exists('tbl_pembelian') || !$CI->db->field_exists('uuid_persediaan', 'tbl_pembelian')) {
+		return $out;
+	}
+
+	$date_col = $CI->db->field_exists('tgl_po', 'tbl_pembelian') ? 'tgl_po' : ($CI->db->field_exists('tanggal', 'tbl_pembelian') ? 'tanggal' : '');
+	if ($date_col === '') {
+		return $out;
+	}
+
+	$uuid_check = ($uuid_pen !== '') ? $uuid_pen : $uuid_selected;
+	if ($uuid_check === '') {
+		return $out;
+	}
+
+	$pemb = $CI->db->query(
+		"SELECT `uuid_persediaan` FROM `tbl_pembelian`
+		 WHERE `uuid_persediaan` = ?
+		   AND YEAR(`{$date_col}`) = ? AND MONTH(`{$date_col}`) = ?
+		 LIMIT 1",
+		array($uuid_check, $tahun, $bulan_num)
+	)->row();
+
+	if (!$pemb) {
+		// Coba uuid selected di pembelian
+		if ($uuid_selected !== '' && $uuid_selected !== $uuid_check) {
+			$pemb = $CI->db->query(
+				"SELECT `uuid_persediaan` FROM `tbl_pembelian`
+				 WHERE `uuid_persediaan` = ?
+				   AND YEAR(`{$date_col}`) = ? AND MONTH(`{$date_col}`) = ?
+				 LIMIT 1",
+				array($uuid_selected, $tahun, $bulan_num)
+			)->row();
+			if ($pemb) {
+				$out['selected_uuid_in_pembelian'] = true;
+			}
+		}
+		return $out;
+	}
+
+	$uuid_sync = trim((string) $pemb->uuid_persediaan);
+	$pers_sync = $CI->db->query(
+		"SELECT `id`, `uuid_persediaan`, `namabarang`, `satuan`, `total_10`
+		 FROM `persediaan`
+		 WHERE `uuid_persediaan` = ?
+		   AND YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?
+		 ORDER BY `id` ASC LIMIT 1",
+		array($uuid_sync, $tahun, $bulan_num)
+	)->row();
+
+	if (!$pers_sync) {
+		return $out;
+	}
+
+	$out['selected_uuid_in_pembelian'] = ($uuid_selected !== '' && $uuid_selected === $uuid_sync);
+	$sid = (int) $pers_sync->id;
+	if ($sid > 0 && $sid !== (int) $id_persediaan_selected) {
+		$out['need_redirect'] = true;
+		$out['suggested_id'] = $sid;
+		$out['suggested_uuid'] = $uuid_sync;
+		$out['suggested_nama'] = isset($pers_sync->namabarang) ? (string) $pers_sync->namabarang : '';
+		$out['message'] = 'UUID `' . $uuid_sync . '` ada di tbl_pembelian dan persediaan bulan ini. '
+			. 'Referensikan ke record persediaan ID ' . $sid
+			. ' (' . $out['suggested_nama'] . ') agar uuid_persediaan sinkron antara pembelian, persediaan, dan penjualan.';
+	}
+
+	return $out;
 }
 
 /**

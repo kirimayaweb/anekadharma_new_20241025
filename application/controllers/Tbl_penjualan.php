@@ -137,7 +137,12 @@ class Tbl_penjualan extends CI_Controller
 	 */
 	private function _get_penjualan_active_tab()
 	{
-		$allowed = array('tab-penjualan-semua', 'tab-penjualan-belum-bayar', 'tab-penjualan-terbayar');
+		$allowed = array(
+			'tab-penjualan-semua',
+			'tab-penjualan-belum-bayar',
+			'tab-penjualan-terbayar',
+			'tab-penjualan-belum-persediaan',
+		);
 		$tab = trim((string) $this->input->get_post('penjualan_active_tab', TRUE));
 		if ($tab === '' || !in_array($tab, $allowed, true)) {
 			$tab = trim((string) $this->session->userdata('filter_tbl_penjualan_active_tab'));
@@ -308,10 +313,68 @@ class Tbl_penjualan extends CI_Controller
 		return count($this->_filter_penjualan_proses_bayar($rows, $filter));
 	}
 
+	private function _filter_penjualan_belum_persediaan($rows)
+	{
+		return tbl_penjualan_filter_belum_verified_persediaan($rows);
+	}
+
+	private function _penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $skip_filter_restore = false)
+	{
+		tbl_penjualan_ensure_verified_persediaan_column($this);
+
+		// Samakan verified_persediaan dengan Terproses/Belum terproses (uuid → nama+satuan)
+		$sync_info = tbl_penjualan_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir);
+
+		// Reload data agar flag terbaru terbaca di tab
+		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
+
+		$belum_persediaan = $this->_filter_penjualan_belum_persediaan($Tbl_penjualan_data);
+		$manual_persediaan = tbl_penjualan_filter_manual_verified_persediaan($Tbl_penjualan_data);
+		$auto_persediaan = tbl_penjualan_filter_auto_verified_persediaan($Tbl_penjualan_data);
+
+		$belum_persediaan_display = tbl_penjualan_enrich_belum_persediaan_display_rows(
+			$this,
+			$belum_persediaan,
+			$Get_date_awal,
+			$Get_date_akhir
+		);
+		$manual_persediaan_display = tbl_penjualan_enrich_verified_persediaan_display_rows($manual_persediaan, 'manual');
+		$auto_persediaan_display = tbl_penjualan_enrich_verified_persediaan_display_rows($auto_persediaan, 'auto');
+
+		$bulan_referensi = '';
+		$ts_bulan = strtotime($Get_date_awal);
+		if ($ts_bulan !== false) {
+			$bulan_referensi = date('Y-m', $ts_bulan);
+		}
+
+		return array(
+			'Tbl_penjualan_data' => $Tbl_penjualan_data,
+			'Tbl_penjualan_data_belum_bayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'Tbl_penjualan_data_terbayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'Tbl_penjualan_data_belum_persediaan' => $belum_persediaan_display,
+			'Tbl_penjualan_data_persediaan_manual' => $manual_persediaan_display,
+			'Tbl_penjualan_data_persediaan_otomatis' => $auto_persediaan_display,
+			'penjualan_count_belum_bayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
+			'penjualan_count_terbayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
+			'penjualan_count_belum_persediaan' => count($belum_persediaan_display),
+			'penjualan_count_persediaan_manual' => count($manual_persediaan_display),
+			'penjualan_count_persediaan_otomatis' => count($auto_persediaan_display),
+			'penjualan_verified_sync' => $sync_info,
+			'penjualan_bulan_referensi' => $bulan_referensi,
+			'url_penjualan_referensi_list' => site_url('Tbl_penjualan/ajax_referensi_persediaan_list'),
+			'url_penjualan_referensi_apply' => site_url('Tbl_penjualan/ajax_referensi_persediaan_apply'),
+			'penjualan_active_tab' => $this->_get_penjualan_active_tab(),
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+			'skip_filter_restore' => $skip_filter_restore,
+		);
+	}
+
 	private function _get_penjualan_between($date_awal, $date_akhir, $order_field = null)
 	{
 		$this->db->where('tgl_jual >=', $date_awal);
 		$this->db->where('tgl_jual <=', $date_akhir);
+		penjualan_db_scope_hanya_barang($this);
 		if ($order_field) {
 			$this->db->order_by($order_field, 'ASC');
 			$this->db->order_by('tgl_jual', 'ASC');
@@ -321,7 +384,7 @@ class Tbl_penjualan extends CI_Controller
 			$this->db->order_by('nmrkirim', 'ASC');
 			$this->db->order_by('id', 'ASC');
 		}
-		return $this->db->get('tbl_penjualan')->result();
+		return penjualan_filter_rows_bukan_jasa($this->db->get('tbl_penjualan')->result());
 	}
 
 	private function _penjualan_filter_query_string($tgl_awal_display, $tgl_akhir_display)
@@ -336,26 +399,9 @@ class Tbl_penjualan extends CI_Controller
 
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $Tbl_penjualan_data);
-		$penjualan_active_tab = $this->_get_penjualan_active_tab();
 
-		$data = array(
-			'Tbl_penjualan_data' => $Tbl_penjualan_data,
-			'Tbl_penjualan_data_belum_bayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
-			'Tbl_penjualan_data_terbayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
-			'penjualan_count_belum_bayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
-			'penjualan_count_terbayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
-			'penjualan_active_tab' => $penjualan_active_tab,
-			// 'q' => $q,
-			// 'pagination' => $this->pagination->create_links(),
-			// 'total_rows' => $config['total_rows'],
-			// 'start' => $start,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'skip_filter_restore' => false,
-		);
+		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, false);
 
-
-		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list', $data);
 	}
 
@@ -368,27 +414,85 @@ class Tbl_penjualan extends CI_Controller
 		penjualan_set_list_bulan_context($this, $tgl_awal_raw, $tgl_akhir_raw);
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, $Tbl_penjualan_data);
-		$penjualan_active_tab = $this->_get_penjualan_active_tab();
 
-		$data = array(
-			'Tbl_penjualan_data' => $Tbl_penjualan_data,
-			'Tbl_penjualan_data_belum_bayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
-			'Tbl_penjualan_data_terbayar' => $this->_filter_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
-			'penjualan_count_belum_bayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'belum_bayar'),
-			'penjualan_count_terbayar' => $this->_count_penjualan_proses_bayar($Tbl_penjualan_data, 'terbayar'),
-			'penjualan_active_tab' => $penjualan_active_tab,
-			// 'q' => $q,
-			// 'pagination' => $this->pagination->create_links(),
-			// 'total_rows' => $config['total_rows'],
-			// 'start' => $start,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'skip_filter_restore' => true,
-		);
+		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, true);
 
-
-		// $this->load->view('anekadharma/tbl_penjualan/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list', $data);
+	}
+
+	/**
+	 * AJAX: daftar persediaan bulan target untuk modal Referensi (tab Belum ke Persediaan).
+	 */
+	public function ajax_referensi_persediaan_list()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false) {
+			echo json_encode(array('ok' => false, 'message' => 'Bulan tidak valid.'));
+			return;
+		}
+
+		if (!$this->db->table_exists('persediaan')) {
+			echo json_encode(array('ok' => false, 'message' => 'Tabel persediaan tidak tersedia.'));
+			return;
+		}
+
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan);
+
+		$out = array();
+		foreach ($rows as $r) {
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $out,
+			'count' => count($out),
+			'bulan' => $bulan,
+		));
+	}
+
+	/**
+	 * AJAX: apply referensi — update stok persediaan saja (qty dari modal Isi Jumlah).
+	 */
+	public function ajax_referensi_persediaan_apply()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_penjualan = (int) $this->input->post('id_penjualan', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$jumlah_input = $this->input->post('jumlah', TRUE);
+		$force = ((string) $this->input->post('force', TRUE) === '1');
+
+		$result = persediaan_gen_v2_referensi_penjualan_update_persediaan_only(
+			$this,
+			$bulan,
+			$id_penjualan,
+			$id_persediaan,
+			$jumlah_input,
+			$force
+		);
+		echo json_encode($result);
 	}
 
 	public function RekapPenjualanPerBarang()

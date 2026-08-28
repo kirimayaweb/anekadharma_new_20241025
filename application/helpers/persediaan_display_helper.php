@@ -1334,6 +1334,96 @@ function persediaan_filter_rows_by_kategori_tab($rows, $want_jasa = false)
 }
 
 /**
+ * Baris persediaan tab Barang — sama dengan persediaan/search tab 1 (GROUP BY + filter).
+ *
+ * @return array
+ */
+function persediaan_referensi_penjualan_load_rows_bulan($CI, $bulan, $want_jasa = false)
+{
+	$bulan = trim((string) $bulan);
+	if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+		return array();
+	}
+
+	$CI->load->helper('pembelian_persediaan');
+	if (method_exists($CI, 'get_persediaan_tab_rows_for_bulan')) {
+		$rows = $CI->get_persediaan_tab_rows_for_bulan($bulan);
+	} else {
+		$ts = strtotime($bulan . '-01');
+		if ($ts === false || !$CI->db->table_exists('persediaan')) {
+			return array();
+		}
+		$tahun = (int) date('Y', $ts);
+		$bulan_num = (int) date('n', $ts);
+		$rows = $CI->db->query(
+			"SELECT * FROM `persediaan`
+			 WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?
+			 ORDER BY `namabarang` ASC, `satuan` ASC, `id` ASC",
+			array($tahun, $bulan_num)
+		)->result();
+		$rows = persediaan_filter_rows_tab_data($rows);
+	}
+
+	return persediaan_filter_rows_by_kategori_tab($rows, (bool) $want_jasa);
+}
+
+/**
+ * Cari baris tab persediaan (aggregated) berdasarkan id tampilan (MIN id per grup).
+ */
+function persediaan_referensi_penjualan_find_tab_row_by_id($CI, $bulan, $id_persediaan, $want_jasa = false)
+{
+	$id_persediaan = (int) $id_persediaan;
+	if ($id_persediaan <= 0) {
+		return null;
+	}
+	foreach (persediaan_referensi_penjualan_load_rows_bulan($CI, $bulan, $want_jasa) as $row) {
+		if ((int) (isset($row->id) ? $row->id : 0) === $id_persediaan) {
+			return $row;
+		}
+	}
+	return null;
+}
+
+/**
+ * Stok total_10 untuk referensi penjualan — rumus sama tab Barang persediaan/search.
+ */
+function persediaan_referensi_penjualan_stok_angka($row)
+{
+	return persediaan_hitung_total_10_kalkulasi($row);
+}
+
+/**
+ * Payload satu baris untuk modal Referensi Persediaan (Tbl_penjualan).
+ */
+function persediaan_referensi_penjualan_row_payload($row)
+{
+	$total_stok = persediaan_referensi_penjualan_stok_angka($row);
+	$total_tampil = persediaan_tampil_total_10_stock_row($row);
+	if ($total_tampil === '' && $total_stok === 0) {
+		$total_tampil = '0';
+	}
+
+	return array(
+		'id' => (int) (isset($row->id) ? $row->id : 0),
+		'namabarang' => isset($row->namabarang) ? (string) $row->namabarang : '',
+		'satuan' => isset($row->satuan) ? (string) $row->satuan : '',
+		'hpp' => persediaan_tampil_hpp_row($row),
+		'sa' => persediaan_export_blank_if_zero(isset($row->sa) ? $row->sa : ''),
+		'beli' => persediaan_export_blank_if_zero(isset($row->beli) ? $row->beli : ''),
+		'penjualan' => persediaan_export_blank_if_zero(isset($row->penjualan) ? $row->penjualan : ''),
+		'pecah_satuan' => persediaan_export_blank_if_zero(isset($row->pecah_satuan) ? $row->pecah_satuan : ''),
+		'bahan_produksi' => persediaan_export_blank_if_zero(isset($row->bahan_produksi) ? $row->bahan_produksi : ''),
+		'total_10' => $total_tampil,
+		'total_10_stok' => $total_stok,
+		'total_10_db' => isset($row->total_10) ? (string) $row->total_10 : '',
+		'uuid_persediaan' => isset($row->uuid_persediaan) ? (string) $row->uuid_persediaan : '',
+		'tanggal_beli' => isset($row->tanggal_beli) ? (string) $row->tanggal_beli : '',
+		'kode_barang' => isset($row->kode_barang) ? (string) $row->kode_barang : '',
+		'spop' => isset($row->spop) ? (string) $row->spop : '',
+	);
+}
+
+/**
  * Sel baris datatable tab Data Persediaan (nilai tampilan sama dengan view).
  */
 function persediaan_tab_data_display_cells($row, $no, $bulan_filter = '', $CI = null, $show_keluar_columns = true, $use_stored_nilai = false)
@@ -2854,18 +2944,31 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 	foreach ($rows_all as $row_pen) {
 		$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $map, $cache_pembelian);
 		$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
+		$id_pen = isset($row_pen->id) ? (int) $row_pen->id : (isset($cls->id) ? (int) $cls->id : 0);
 
 		if ($kat === 'masuk') {
 			$count_masuk++;
 			$rows_masuk[] = $cls;
+			if ($id_pen > 0) {
+				tbl_penjualan_set_verified_persediaan($CI, $id_pen, tbl_penjualan_verified_persediaan_refered_value());
+			}
 		} elseif ($kat === 'manual') {
 			$count_manual++;
 			$rows_manual[] = persediaan_gen_v2_penjualan_enrich_masalah_row($CI, $ctx, $row_pen, $map, $cache_pembelian, $cls);
+			if ($id_pen > 0) {
+				tbl_penjualan_set_verified_persediaan($CI, $id_pen, null);
+			}
 		} elseif ($kat === 'skip') {
 			$count_skip++;
+			if ($id_pen > 0) {
+				tbl_penjualan_set_verified_persediaan($CI, $id_pen, null);
+			}
 		} else {
 			$count_tidak_masuk++;
 			$rows_tidak_masuk[] = persediaan_gen_v2_penjualan_enrich_masalah_row($CI, $ctx, $row_pen, $map, $cache_pembelian, $cls);
+			if ($id_pen > 0) {
+				tbl_penjualan_set_verified_persediaan($CI, $id_pen, null);
+			}
 		}
 	}
 
@@ -2886,6 +2989,8 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 		'rows_tidak_masuk' => $rows_tidak_masuk,
 		'rows_manual' => $rows_manual,
 		'rekap' => $rekap,
+		'verified_refered' => $count_masuk,
+		'verified_belum' => $count_tidak_masuk + $count_manual + $count_skip,
 	);
 }
 

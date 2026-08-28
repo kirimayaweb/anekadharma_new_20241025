@@ -3656,29 +3656,12 @@ class Persediaan extends CI_Controller
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Bulan tidak valid.'));
 			return;
 		}
-		$tahun = (int) date('Y', $ts);
-		$bulan_num = (int) date('m', $ts);
 
-		$rows = $this->db->query(
-			"SELECT * FROM `persediaan`
-			 WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?
-			 ORDER BY `namabarang` ASC, `satuan` ASC, `id` ASC",
-			array($tahun, $bulan_num)
-		)->result();
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan);
 
 		$out = array();
 		foreach ($rows as $r) {
-			$out[] = array(
-				'id' => (int) $r->id,
-				'namabarang' => isset($r->namabarang) ? (string) $r->namabarang : '',
-				'satuan' => isset($r->satuan) ? (string) $r->satuan : '',
-				'hpp' => isset($r->hpp) ? (string) $r->hpp : '',
-				'sa' => isset($r->sa) ? (string) $r->sa : '',
-				'beli' => isset($r->beli) ? (string) $r->beli : '',
-				'penjualan' => isset($r->penjualan) ? (string) $r->penjualan : '',
-				'total_10' => isset($r->total_10) ? (string) $r->total_10 : '',
-				'uuid_persediaan' => isset($r->uuid_persediaan) ? (string) $r->uuid_persediaan : '',
-			);
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
 		}
 
 		persediaan_ajax_json_output($this, array(
@@ -5416,6 +5399,21 @@ class Persediaan extends CI_Controller
 			$matched[] = $base;
 		}
 
+		// Set verified_persediaan: matched=refered, unmatched=kosong (sama tab Belum ke Persediaan)
+		tbl_penjualan_ensure_verified_persediaan_column($this);
+		foreach ($matched as $mrow) {
+			$id_pj = isset($mrow['id_penjualan']) ? (int) $mrow['id_penjualan'] : 0;
+			if ($id_pj > 0) {
+				tbl_penjualan_set_verified_persediaan($this, $id_pj, tbl_penjualan_verified_persediaan_refered_value());
+			}
+		}
+		foreach ($unmatched as $urow) {
+			$id_pj = isset($urow['id_penjualan']) ? (int) $urow['id_penjualan'] : 0;
+			if ($id_pj > 0) {
+				tbl_penjualan_set_verified_persediaan($this, $id_pj, null);
+			}
+		}
+
 		return array(
 			'ok' => true,
 			'matched' => $matched,
@@ -6679,7 +6677,8 @@ class Persediaan extends CI_Controller
 	}
 
 	/**
-	 * AJAX: daftar history generate (persediaan_history_generate) per bulan target.
+	 * AJAX: daftar history generate (semua bulan, atau filter 1 bulan).
+	 * Param: scope=all (default) | bulan=YYYY-MM
 	 */
 	public function ajax_list_history_generate()
 	{
@@ -6693,18 +6692,26 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
+		$scope = strtolower(trim((string) $this->input->get_post('scope', TRUE)));
 		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
-		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
-			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+		// Default: tampilkan SEMUA bulan agar Jan–Agu terlihat sekaligus
+		if ($scope === '' || $scope === 'all' || $bulan === '' || strtolower($bulan) === 'all') {
+			$bulan_filter = null;
+			$scope = 'all';
+		} elseif (preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			$bulan_filter = $bulan;
+			$scope = 'bulan';
+		} else {
+			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM) atau scope=all.'));
 			return;
 		}
 
-		// Ensure history + generate_* tables exist
 		persediaan_generate_schema_ensure_all($this);
 
-		$list = persediaan_history_generate_list_by_bulan($this, $bulan, 100);
+		$list = persediaan_history_generate_list($this, $bulan_filter, 300);
 		$tables_ready = persediaan_history_generate_table_exists($this, true);
 		$tables_created = $tables_ready;
+		$count_by_bulan = persediaan_history_generate_count_by_bulan($this);
 		$history_ids = array();
 
 		foreach ($list as $row) {
@@ -6735,10 +6742,14 @@ class Persediaan extends CI_Controller
 			);
 		}
 
+		$bulan_aktif = preg_match('/^\d{4}-\d{2}$/', $bulan) ? $bulan : '';
 		persediaan_ajax_json_output($this, array(
 			'ok' => true,
-			'bulan' => $bulan,
-			'bulan_label' => persediaan_history_generate_bulan_label($bulan),
+			'scope' => $scope,
+			'bulan' => $bulan_aktif,
+			'bulan_label' => $bulan_aktif !== '' ? persediaan_history_generate_bulan_label($bulan_aktif) : '',
+			'count_by_bulan' => $count_by_bulan,
+			'bulan_tersedia' => array_keys($count_by_bulan),
 			'tables_ready' => $tables_ready,
 			'tables_created' => $tables_created,
 			'items' => $items,
@@ -6746,7 +6757,7 @@ class Persediaan extends CI_Controller
 			'snapshot_source' => 'database',
 			'message' => !$tables_ready
 				? 'Tabel history generate belum tersedia di database. Refresh halaman Persediaan — tabel akan dibuat otomatis oleh aplikasi.'
-				: (count($items) > 0 ? '' : 'Belum ada history generate untuk bulan ini.'),
+				: (count($items) > 0 ? '' : 'Belum ada history generate. Jalankan Generate & Recalculate per bulan agar tersimpan.'),
 		));
 	}
 

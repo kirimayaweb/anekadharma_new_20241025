@@ -23,6 +23,20 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
 		$label_pb = htmlspecialchars((string) $proses_bayar, ENT_QUOTES, 'UTF-8');
 		echo '<span class="penjualan-badge-bayar penjualan-badge-bayar-l" title="Terbayarkan / proses: ' . $label_pb . '">L</span>';
 	}
+
+	function tbl_penjualan_render_badge_verified_persediaan($verified)
+	{
+		$v = strtolower(trim((string) $verified));
+		if ($v === 'refered manual' || $v === 'manual') {
+			echo ' <span class="badge badge-info" title="verified_persediaan=refered manual — terverifikasi manual via Refered">refered manual</span>';
+			return;
+		}
+		if ($v === 'refered' || $v === 'auto' || $v === 'otomatis') {
+			echo ' <span class="badge badge-success" title="verified_persediaan=refered — verifikasi otomatis ke persediaan">refered</span>';
+			return;
+		}
+		echo ' <span class="badge badge-warning" title="verified_persediaan kosong — belum terproses ke tabel persediaan">belum persediaan</span>';
+	}
 }
 ?>
                         <table id="<?php echo htmlspecialchars($penjualan_table_id, ENT_QUOTES, 'UTF-8'); ?>" class="display nowrap penjualan-list-table" style="width:100%">
@@ -167,6 +181,11 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                             <td class="col-tgl-jual-penjualan">
                                                 <?php
                                                 tbl_penjualan_render_tgl_dan_badge_bayar($list_data->tgl_jual, isset($list_data->proses_bayar) ? $list_data->proses_bayar : '');
+                                                if (isset($penjualan_table_id) && $penjualan_table_id === 'tglSPOPFreezeBelumPersediaan') {
+                                                    tbl_penjualan_render_badge_verified_persediaan(isset($list_data->verified_persediaan) ? $list_data->verified_persediaan : '');
+                                                } elseif (property_exists($list_data, 'verified_persediaan') && function_exists('tbl_penjualan_is_belum_verified_persediaan') && tbl_penjualan_is_belum_verified_persediaan($list_data)) {
+                                                    tbl_penjualan_render_badge_verified_persediaan(isset($list_data->verified_persediaan) ? $list_data->verified_persediaan : '');
+                                                }
                                                 $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
                                                 ?>
                                             </td>
@@ -304,6 +323,11 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                             <td class="col-tgl-jual-penjualan">
                                                 <?php
                                                 tbl_penjualan_render_tgl_dan_badge_bayar($list_data->tgl_jual, isset($list_data->proses_bayar) ? $list_data->proses_bayar : '');
+                                                if (isset($penjualan_table_id) && $penjualan_table_id === 'tglSPOPFreezeBelumPersediaan') {
+                                                    tbl_penjualan_render_badge_verified_persediaan(isset($list_data->verified_persediaan) ? $list_data->verified_persediaan : '');
+                                                } elseif (property_exists($list_data, 'verified_persediaan') && function_exists('tbl_penjualan_is_belum_verified_persediaan') && tbl_penjualan_is_belum_verified_persediaan($list_data)) {
+                                                    tbl_penjualan_render_badge_verified_persediaan(isset($list_data->verified_persediaan) ? $list_data->verified_persediaan : '');
+                                                }
                                                 $date_tgl_jual = date("Y-m-d", strtotime($list_data->tgl_jual));
                                                 ?>
                                             </td>

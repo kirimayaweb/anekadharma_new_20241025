@@ -66,7 +66,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 
 	private function _scope_db_penjualan_jasa()
 	{
-		$this->db->where('barang_jasa', 'jasa');
+		penjualan_db_scope_hanya_jasa($this);
 	}
 
 	private function _sql_penjualan_jasa_and($alias = '')
@@ -247,7 +247,78 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$this->db->order_by('nmrkirim', 'ASC');
 			$this->db->order_by('id', 'ASC');
 		}
-		return $this->db->get('tbl_penjualan')->result();
+		return penjualan_filter_rows_jasa($this->db->get('tbl_penjualan')->result());
+	}
+
+	private function _get_penjualan_active_tab()
+	{
+		$allowed = array(
+			'tab-penjualan-jasa-semua',
+			'tab-penjualan-jasa-belum-persediaan',
+		);
+		$tab = trim((string) $this->input->get_post('penjualan_active_tab', TRUE));
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = trim((string) $this->session->userdata('filter_tbl_penjualan_jasa_active_tab'));
+		}
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = 'tab-penjualan-jasa-semua';
+		}
+		$this->session->set_userdata('filter_tbl_penjualan_jasa_active_tab', $tab);
+		return $tab;
+	}
+
+	private function _filter_penjualan_belum_persediaan($rows)
+	{
+		return tbl_penjualan_filter_belum_verified_persediaan($rows);
+	}
+
+	private function _penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $skip_filter_restore = false)
+	{
+		tbl_penjualan_ensure_verified_persediaan_column($this);
+
+		$sync_info = tbl_penjualan_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir);
+
+		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
+
+		$belum_persediaan = $this->_filter_penjualan_belum_persediaan($Tbl_penjualan_data);
+		$manual_persediaan = tbl_penjualan_filter_manual_verified_persediaan($Tbl_penjualan_data);
+		$auto_persediaan = tbl_penjualan_filter_auto_verified_persediaan($Tbl_penjualan_data);
+
+		$belum_persediaan_display = tbl_penjualan_enrich_belum_persediaan_display_rows(
+			$this,
+			$belum_persediaan,
+			$Get_date_awal,
+			$Get_date_akhir,
+			true
+		);
+		$manual_persediaan_display = tbl_penjualan_enrich_verified_persediaan_display_rows($manual_persediaan, 'manual');
+		$auto_persediaan_display = tbl_penjualan_enrich_verified_persediaan_display_rows($auto_persediaan, 'auto');
+
+		$bulan_referensi = '';
+		$ts_bulan = strtotime($Get_date_awal);
+		if ($ts_bulan !== false) {
+			$bulan_referensi = date('Y-m', $ts_bulan);
+		}
+
+		return array(
+			'Tbl_penjualan_data' => $Tbl_penjualan_data,
+			'Tbl_penjualan_data_belum_persediaan' => $belum_persediaan_display,
+			'Tbl_penjualan_data_persediaan_manual' => $manual_persediaan_display,
+			'Tbl_penjualan_data_persediaan_otomatis' => $auto_persediaan_display,
+			'penjualan_count_belum_persediaan' => count($belum_persediaan_display),
+			'penjualan_count_persediaan_manual' => count($manual_persediaan_display),
+			'penjualan_count_persediaan_otomatis' => count($auto_persediaan_display),
+			'penjualan_verified_sync' => $sync_info,
+			'penjualan_bulan_referensi' => $bulan_referensi,
+			'url_penjualan_referensi_list' => site_url('Tbl_penjualan_jasa/ajax_referensi_persediaan_list'),
+			'url_penjualan_referensi_apply' => site_url('Tbl_penjualan_jasa/ajax_referensi_persediaan_apply'),
+			'penjualan_active_tab' => $this->_get_penjualan_active_tab(),
+			'date_awal' => $Get_date_awal,
+			'date_akhir' => $Get_date_akhir,
+			'tgl_awal_display' => $disp_awal,
+			'tgl_akhir_display' => $disp_akhir,
+			'skip_filter_restore' => $skip_filter_restore,
+		);
 	}
 
 	private function _penjualan_filter_query_string($tgl_awal_display, $tgl_akhir_display)
@@ -263,21 +334,8 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $Tbl_penjualan_data);
 
-		$data = array(
-			'Tbl_penjualan_data' => $Tbl_penjualan_data,
-			// 'q' => $q,
-			// 'pagination' => $this->pagination->create_links(),
-			// 'total_rows' => $config['total_rows'],
-			// 'start' => $start,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'tgl_awal_display' => $disp_awal,
-			'tgl_akhir_display' => $disp_akhir,
-			'skip_filter_restore' => false,
-		);
+		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, false);
 
-
-		// $this->load->view('anekadharma/tbl_penjualan_jasa/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan_jasa/adminlte310_tbl_penjualan_list', $data);
 	}
 
@@ -291,24 +349,90 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, $Tbl_penjualan_data);
 
-		$data = array(
-			'Tbl_penjualan_data' => $Tbl_penjualan_data,
-			// 'q' => $q,
-			// 'pagination' => $this->pagination->create_links(),
-			// 'total_rows' => $config['total_rows'],
-			// 'start' => $start,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'tgl_awal_display' => $tgl_awal_raw,
-			'tgl_akhir_display' => $tgl_akhir_raw,
-			'skip_filter_restore' => true,
-		);
+		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, true);
 
-
-		// $this->load->view('anekadharma/tbl_penjualan_jasa/tbl_penjualan_list', $data);		
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan_jasa/adminlte310_tbl_penjualan_list', $data);
 	}
 
+	/**
+	 * AJAX: daftar persediaan jasa bulan target untuk modal Referensi.
+	 */
+	public function ajax_referensi_persediaan_list()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		if (strtotime($bulan . '-01') === false) {
+			echo json_encode(array('ok' => false, 'message' => 'Bulan tidak valid.'));
+			return;
+		}
+
+		if (!$this->db->table_exists('persediaan')) {
+			echo json_encode(array('ok' => false, 'message' => 'Tabel persediaan tidak tersedia.'));
+			return;
+		}
+
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan, true);
+		$out = array();
+		foreach ($rows as $r) {
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $out,
+			'count' => count($out),
+			'bulan' => $bulan,
+			'kategori' => 'jasa',
+		));
+	}
+
+	/**
+	 * AJAX: apply referensi jasa — update stok persediaan + verified_persediaan.
+	 */
+	public function ajax_referensi_persediaan_apply()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$id_penjualan = (int) $this->input->post('id_penjualan', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$jumlah_input = $this->input->post('jumlah', TRUE);
+		$force = ((string) $this->input->post('force', TRUE) === '1');
+
+		$row_pen = $this->db->where('id', $id_penjualan)->limit(1)->get('tbl_penjualan')->row();
+		if (!$row_pen || !penjualan_row_is_jasa($row_pen)) {
+			echo json_encode(array('ok' => false, 'message' => 'Record penjualan jasa tidak ditemukan.'));
+			return;
+		}
+
+		$result = persediaan_gen_v2_referensi_penjualan_update_persediaan_only(
+			$this,
+			$bulan,
+			$id_penjualan,
+			$id_persediaan,
+			$jumlah_input,
+			$force
+		);
+		echo json_encode($result);
+	}
 
 	public function RekapPenjualanPerBarang()
 	{

@@ -47,6 +47,22 @@
         }
         $excel_export_ids_str = implode(',', $excel_export_ids);
 
+        if (!isset($Tbl_penjualan_data_belum_persediaan) || !is_array($Tbl_penjualan_data_belum_persediaan)) {
+            $Tbl_penjualan_data_belum_persediaan = array();
+        }
+        if (!isset($Tbl_penjualan_data_persediaan_manual) || !is_array($Tbl_penjualan_data_persediaan_manual)) {
+            $Tbl_penjualan_data_persediaan_manual = array();
+        }
+        if (!isset($Tbl_penjualan_data_persediaan_otomatis) || !is_array($Tbl_penjualan_data_persediaan_otomatis)) {
+            $Tbl_penjualan_data_persediaan_otomatis = array();
+        }
+        if (!isset($penjualan_count_belum_persediaan)) {
+            $penjualan_count_belum_persediaan = count($Tbl_penjualan_data_belum_persediaan);
+        }
+        if (!isset($penjualan_active_tab) || $penjualan_active_tab === '') {
+            $penjualan_active_tab = 'tab-penjualan-jasa-semua';
+        }
+
         ?>
 
 
@@ -79,6 +95,12 @@
                                 ?>
 
                                 <form id="form-cari-penjualan" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <input type="hidden" name="penjualan_active_tab" id="penjualan_active_tab_input" value="<?php echo htmlspecialchars($penjualan_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
+                                    <div class="row mb-1">
+                                        <div class="col-12">
+                                            <small class="text-muted">Halaman ini menampilkan <strong>penjualan jasa</strong> saja (<code>barang_jasa=jasa</code>, <code>kode_barang=jasa</code>, atau nama mengandung &quot;jasa&quot;).</small>
+                                        </div>
+                                    </div>
                                     <div class="row">
 
                                         <div class="col-md-4" text-align="right">
@@ -136,6 +158,27 @@
 
 
                     <div class="card-body">
+
+                        <style>
+                            #penjualan-jasa-tabs .nav-link { color: #212529; font-weight: 500; }
+                            #penjualan-jasa-tabs .nav-link.active { color: #fff !important; font-weight: 700; background: linear-gradient(180deg, #2b7cff 0%, #0056d6 100%) !important; border: 2px solid #ffc107 !important; }
+                            #jasa-persediaan-subtabs .nav-link.active { color: #fff !important; font-weight: 700; background: #0b3d91 !important; border: 2px solid #ffc107 !important; }
+                            table.penjualan-persediaan-dt-table tfoot .pj-persediaan-total-row th { background-color: #fff3cd; font-weight: 700; border-top: 2px solid #ffc107; }
+                            table.penjualan-persediaan-dt-table tfoot .pj-persediaan-foot-jumlah,
+                            table.penjualan-persediaan-dt-table tfoot .pj-persediaan-foot-harga-total { color: #c82333; font-family: Consolas, Monaco, monospace; }
+                        </style>
+
+                        <ul class="nav nav-tabs mb-3" id="penjualan-jasa-tabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-semua') ? ' active' : ''; ?>" data-toggle="tab" href="#tab-penjualan-jasa-semua" role="tab">Penjualan Jasa <span class="badge badge-secondary badge-count"><?php echo count($Tbl_penjualan_data); ?></span></a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-belum-persediaan') ? ' active' : ''; ?>" id="tab-penjualan-jasa-belum-persediaan-link" data-toggle="tab" href="#tab-penjualan-jasa-belum-persediaan" role="tab">Belum ke Persediaan <span class="badge badge-warning badge-count"><?php echo (int) $penjualan_count_belum_persediaan; ?></span></a>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="penjualan-jasa-tabs-content">
+                            <div class="tab-pane fade<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-semua') ? ' show active' : ''; ?>" id="tab-penjualan-jasa-semua" role="tabpanel">
 
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
@@ -670,12 +713,32 @@
                             </tfoot>
 
                         </table>
+
+                            </div>
+                            <div class="tab-pane fade<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-belum-persediaan') ? ' show active' : ''; ?>" id="tab-penjualan-jasa-belum-persediaan" role="tabpanel">
+                                <div class="alert alert-warning py-2 px-3 small mb-3">
+                                    <strong>Verifikasi Persediaan Jasa</strong> — sub-tab:
+                                    <strong>Belum Terverifikasi</strong> (<code>verified_persediaan</code> kosong),
+                                    <strong>Terverifikasi Manual</strong> (<code>refered manual</code>),
+                                    <strong>Verifikasi Otomatis</strong> (<code>refered</code>).
+                                    Referensi persediaan dari tab <strong>Jasa</strong> di menu Persediaan.
+                                </div>
+                                <?php
+                                $persediaan_subtab_ns = 'jasa';
+                                $persediaan_table_prefix = 'Jasa';
+                                include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_tbl_penjualan_belum_persediaan_fragment.php';
+                                ?>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
             </div>
         </div>
     </section>
+
+<?php include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_penjualan_belum_persediaan_referensi_modals.php'; ?>
+
 </div>
 
 
@@ -962,6 +1025,36 @@
         restoreFilterTanggalDariSession();
     }
 
+    function getActiveTabIdFromDomJasa() {
+        var activeTab = document.querySelector('#penjualan-jasa-tabs .nav-link.active');
+        if (activeTab) {
+            var href = activeTab.getAttribute('href') || '';
+            if (href.charAt(0) === '#') {
+                return href.substring(1);
+            }
+        }
+        var tabInput = document.getElementById('penjualan_active_tab_input');
+        return tabInput && tabInput.value ? tabInput.value : 'tab-penjualan-jasa-semua';
+    }
+
+    function setPenjualanActiveTabInput(tabId) {
+        var tabInput = document.getElementById('penjualan_active_tab_input');
+        if (tabInput && tabId) {
+            tabInput.value = tabId;
+        }
+    }
+
+    function initPenjualanJasaTabs() {
+        if (!window.jQuery) {
+            return;
+        }
+        jQuery('#penjualan-jasa-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+            var href = e.target.getAttribute('href') || '';
+            var tabId = href.charAt(0) === '#' ? href.substring(1) : href;
+            setPenjualanActiveTabInput(tabId);
+        });
+    }
+
     var formCariPenjualan = document.getElementById('form-cari-penjualan');
     if (formCariPenjualan) {
         formCariPenjualan.addEventListener('submit', function() {
@@ -969,20 +1062,37 @@
             if (tgl.awal && tgl.akhir) {
                 saveFilterTanggalSession(tgl.awal, tgl.akhir);
             }
+            setPenjualanActiveTabInput(getActiveTabIdFromDomJasa());
         });
     }
 
     if (document.readyState === 'complete') {
         initAutoCariPenjualan();
         initLinkInputPenjualanBaru();
+        initPenjualanJasaTabs();
     } else {
         window.addEventListener('load', function() {
             initAutoCariPenjualan();
             initLinkInputPenjualanBaru();
+            initPenjualanJasaTabs();
         });
     }
 })();
 </script>
+
+<?php
+$pj_ref_cfg = array(
+    'table_sel' => '#tglSPOPFreezeJasaBelumPersediaan',
+    'subtabs_content' => '#jasa-persediaan-subtabs-content',
+    'subtabs_ul' => '#jasa-persediaan-subtabs',
+    'main_tab_href' => '#tab-penjualan-jasa-belum-persediaan',
+    'main_tabs' => '#penjualan-jasa-tabs',
+    'badge_link' => '#tab-penjualan-jasa-belum-persediaan-link',
+    'session_subtab_key' => 'pj_jasa_persediaan_subtab',
+    'subtab_manual_id' => 'jasa-persediaan-manual',
+);
+include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_penjualan_belum_persediaan_referensi_init.php';
+?>
 
 
 
