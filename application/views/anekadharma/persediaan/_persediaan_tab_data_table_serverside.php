@@ -96,7 +96,7 @@ $persediaan_fields_tgl_total = persediaan_list_fields_tgl_keluar_sampai_total_10
 			}
 		},
 		columns: columns,
-		pageLength: 25,
+		pageLength: 10,
 		lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
 		order: [[2, 'asc']],
 		scrollX: true,

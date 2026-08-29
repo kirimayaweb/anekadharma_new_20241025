@@ -1,4 +1,4 @@
-﻿<div class="content-wrapper">
+<div class="content-wrapper">
 
     <div class="content-header">
         <div class="container-fluid">
@@ -736,11 +736,11 @@
 
                             <div class="card card-outline card-primary mb-3" id="gen-history-generate-wrap">
                                 <div class="card-header py-2">
-                                    <h3 class="card-title mb-0">History Generate — Klik tanggal untuk muat rekap</h3>
+                                    <h3 class="card-title mb-0">History Generate — Semua bulan (klik Muat untuk cek hasil)</h3>
                                 </div>
                                 <div class="card-body p-2">
                                     <p class="text-muted small mb-2 px-1" id="gen-history-generate-intro">
-                                        History disimpan di <strong>database server</strong> — dapat dimuat ulang kapan saja dari laptop/komputer mana pun (login yang sama). Klik baris atau tombol <strong>Muat</strong> untuk menampilkan hasil generate persis seperti saat proses selesai. Cache browser (localStorage) hanya pelengkap perangkat ini.
+                                        History <strong>semua bulan</strong> disimpan di database server. Setiap klik Generate &amp; Recalculate menambah 1 baris dengan kolom <strong>Bulan Generate</strong>. Gunakan kolom Cari untuk filter bulan (contoh: <code>2026-01</code>). Klik <strong>Muat</strong> untuk menampilkan hasil generate (termasuk yang belum masuk persediaan).
                                     </p>
                                     <div class="gen-history-generate-dt-wrap table-responsive">
                                         <table id="tbl-gen-history-generate" class="table table-sm table-bordered table-hover gen-recalc-dt mb-0 w-100">
@@ -4332,7 +4332,7 @@ window.addEventListener('load', function() {
         } else if ($.fn.DataTable) {
             genRekonNilaiDt = $('#tbl-gen-rekon-nilai').DataTable({
                 data: dtRows,
-                pageLength: 25,
+                pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
                 order: [[0, 'asc']],
                 scrollX: true,
@@ -4414,7 +4414,7 @@ window.addEventListener('load', function() {
             }
             genCopySumberDt = $('#tbl-gen-copy-bulan-sebelumnya').DataTable({
                 data: dtRows,
-                pageLength: 25,
+                pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
                 order: [[0, 'asc']],
                 ordering: true,
@@ -4485,7 +4485,7 @@ window.addEventListener('load', function() {
 
     function genPembelianDtCommonOpts(emptyMsg) {
         return {
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             order: [[0, 'asc']],
             ordering: true,
@@ -7497,8 +7497,16 @@ window.addEventListener('load', function() {
     function formatGenHistoryBulanCell(item) {
         var label = item.bulan_target_label || item.bulan_target || '—';
         var key = item.bulan_target || '';
-        return '<strong>' + escapeHtmlGen(label) + '</strong>'
-            + (key ? '<br/><small class="text-muted">' + escapeHtmlGen(key) + '</small>' : '');
+        var parts = key ? String(key).split('-') : [];
+        var tahun = parts.length === 2 ? parts[0] : '';
+        var html = '<strong class="text-primary">' + escapeHtmlGen(label) + '</strong>';
+        if (key) {
+            html += '<br/><small class="text-muted">' + escapeHtmlGen(key) + '</small>';
+        }
+        if (tahun) {
+            html += '<br/><span class="badge badge-light border">Tahun ' + escapeHtmlGen(tahun) + '</span>';
+        }
+        return html;
     }
 
     function buildGenHistoryGenerateRowData(item) {
@@ -7516,7 +7524,7 @@ window.addEventListener('load', function() {
             'Proc: <strong>' + (item.total_pembelian || 0) + '</strong><br/>'
                 + 'Upd: <strong>' + (item.pembelian_update || 0) + '</strong> / '
                 + 'Baru: <strong>' + (item.pembelian_insert || 0) + '</strong>'
-                + ((item.pembelian_gagal || 0) > 0 ? '<br/><span class="text-danger">Gagal: ' + item.pembelian_gagal + '</span>' : ''),
+                + ((item.pembelian_gagal || 0) > 0 ? '<br/><span class="text-danger">Gagal/belum masuk: ' + item.pembelian_gagal + '</span>' : ''),
             formatGenHistoryStatusBadge(item.status)
                 + (item.fase_terakhir ? '<br/><small class="text-muted">' + escapeHtmlGen(item.fase_terakhir) + '</small>' : ''),
             item.nama_user || '—',
@@ -7559,8 +7567,15 @@ window.addEventListener('load', function() {
                 if (id > 0) {
                     $(row).attr('data-history-id', id);
                 }
+                if (item.bulan_target) {
+                    $(row).attr('data-bulan-target', item.bulan_target);
+                }
                 if (genHistoryGenerateSelectedId && genHistoryGenerateSelectedId === id) {
                     $(row).addClass('table-success');
+                }
+                var bulanAktif = (typeof getBulanTargetGenerate === 'function') ? getBulanTargetGenerate() : '';
+                if (bulanAktif && item.bulan_target === bulanAktif) {
+                    $(row).addClass('table-warning');
                 }
                 $('td:eq(0)', row).attr('data-order', item.bulan_target || '');
                 $('td:eq(1)', row).attr('data-order', item.tanggal_klik_generate || '');
@@ -7586,49 +7601,71 @@ window.addEventListener('load', function() {
     }
 
     function loadHistoryGenerateList(bulanKey) {
-        if (!bulanKey || !userCanGeneratePersediaan || !urlListHistoryGenerate) {
+        if (!userCanGeneratePersediaan || !urlListHistoryGenerate) {
             return;
         }
         if (genHistoryGenerateListXhr && genHistoryGenerateListXhr.readyState !== 4) {
             genHistoryGenerateListXhr.abort();
         }
-        showGenHistoryGenerateLoadingRow('Memuat history...');
+        showGenHistoryGenerateLoadingRow('Memuat history semua bulan...');
         genHistoryGenerateListXhr = $.ajax({
             url: urlListHistoryGenerate,
             type: 'POST',
             dataType: 'json',
-            data: { bulan: bulanKey }
+            // scope=all: tampilkan Jan–Des sekaligus; kolom Bulan Generate membedakan tiap record
+            data: { scope: 'all', bulan: bulanKey || '' }
         }).done(function(res) {
             if (!res || !res.ok) {
                 var msg = (res && res.message) ? res.message : 'Gagal memuat history generate.';
                 showGenHistoryGenerateLoadingRow(msg, 'text-danger');
                 return;
             }
-			if (res.tables_ready === false) {
+            if (res.tables_ready === false) {
                 $('#gen-history-generate-intro').html(
                     '<span class="text-warning">Tabel history belum tersedia di database. Refresh halaman ini sekali — tabel akan dibuat otomatis. Jika masih gagal, hubungi admin DB.</span>'
                 );
-            } else if (res.tables_created === true && (!res.items || !res.items.length)) {
+            } else if (!res.items || !res.items.length) {
                 $('#gen-history-generate-intro').html(
-                    'Tabel history sudah siap. Belum ada record untuk bulan ini — jalankan <strong>Generate &amp; Recalculate</strong> untuk menyimpan history.'
+                    'Belum ada history generate. Jalankan <strong>Generate &amp; Recalculate</strong> untuk tiap bulan (Jan–Agu) — setiap klik menambah 1 baris dengan kolom <strong>Bulan Generate</strong>.'
                 );
             } else {
                 var v2Count = 0;
+                var bulanSet = {};
                 (res.items || []).forEach(function(it) {
                     if (it.has_v2_snapshot) { v2Count++; }
+                    if (it.bulan_target) { bulanSet[it.bulan_target] = true; }
                 });
-                var bulanLabel = res.bulan_label || bulanKey;
+                var bulanList = Object.keys(bulanSet).sort();
+                var countMap = res.count_by_bulan || {};
+                var ringkasParts = bulanList.map(function(b) {
+                    var n = countMap[b] || 1;
+                    var lab = (typeof persediaanHistoryBulanLabelClient === 'function')
+                        ? persediaanHistoryBulanLabelClient(b)
+                        : b;
+                    return '<strong>' + escapeHtmlGen(lab) + '</strong> (' + n + ')';
+                });
+                var bulanAktif = bulanKey || '';
                 $('#gen-history-generate-intro').html(
-                    'History bulan target <strong>' + escapeHtmlGen(bulanLabel) + '</strong> (' + escapeHtmlGen(bulanKey) + ')'
-                    + ' — disimpan di <strong>database server</strong> (' + (res.total || 0) + ' record'
-                    + (v2Count > 0 ? ', ' + v2Count + ' dengan snapshot lengkap' : '')
-                    + '). Setiap klik Generate menambah 1 baris history untuk bulan tersebut. Klik baris atau <strong>Muat</strong> untuk melihat hasil generate.'
+                    'History <strong>semua bulan</strong> di database server: <strong>' + (res.total || 0) + '</strong> record'
+                    + (v2Count > 0 ? ' (' + v2Count + ' snapshot lengkap)' : '')
+                    + (ringkasParts.length ? ' — ' + ringkasParts.join(', ') : '')
+                    + '. Setiap klik Generate menambah 1 baris. Kolom <strong>Bulan Generate</strong> = bulan/tahun yang diproses.'
+                    + (bulanAktif ? ' Baris kuning = bulan tab aktif <strong>' + escapeHtmlGen(bulanAktif) + '</strong>.' : '')
+                    + ' Cari misalnya <code>2026-01</code>. Klik <strong>Muat</strong> untuk cek hasil (termasuk yang belum masuk persediaan).'
                 );
             }
             renderHistoryGenerateListRows(res.items || []);
         }).fail(function() {
             showGenHistoryGenerateLoadingRow('Gagal memuat history generate.', 'text-danger');
         });
+    }
+
+    function persediaanHistoryBulanLabelClient(ym) {
+        if (!ym || !/^\d{4}-\d{2}$/.test(ym)) {
+            return ym || '';
+        }
+        var p = String(ym).split('-');
+        return p[1] + '/' + p[0];
     }
 
     function applyHistoryGenerateSnapshot(res) {
@@ -7645,8 +7682,16 @@ window.addEventListener('load', function() {
         highlightGenHistoryGenerateSelectedRow();
 
         var header = res.header || {};
+        var bulanHist = (header.bulan_target || (res.v2_verify && res.v2_verify.bulan_target) || '');
+        var bulanHistLabel = bulanHist
+            ? (typeof persediaanHistoryBulanLabelClient === 'function' ? persediaanHistoryBulanLabelClient(bulanHist) : bulanHist)
+            : '';
         var infoHtml = '<div class="alert alert-secondary py-2 px-2 mb-2 small">'
-            + '<strong>History Generate</strong> — Klik: <strong>' + escapeHtmlGen(header.tanggal_klik_generate || res.created_at || '') + '</strong>';
+            + '<strong>History Generate</strong>'
+            + (bulanHistLabel
+                ? ' — Bulan: <strong class="text-primary">' + escapeHtmlGen(bulanHistLabel) + '</strong> (' + escapeHtmlGen(bulanHist) + ')'
+                : '')
+            + '<br/>Klik: <strong>' + escapeHtmlGen(header.tanggal_klik_generate || res.created_at || '') + '</strong>';
         if (header.tanggal_selesai) {
             infoHtml += ' | Selesai: <strong>' + escapeHtmlGen(header.tanggal_selesai) + '</strong>';
         }
@@ -8643,7 +8688,7 @@ window.addEventListener('load', function() {
         }
         genRecalcDt[sel] = $(sel).DataTable($.extend({
             data: rows,
-            pageLength: 25,
+            pageLength: 10,
             order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
             language: genRecalcDtLang,
             autoWidth: true,
@@ -9565,7 +9610,7 @@ window.addEventListener('load', function() {
             scrollY: GEN_PROSES_DT_SCROLL_Y,
             scrollCollapse: true,
             autoWidth: false,
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             columnDefs: [
                 { targets: '_all', defaultContent: '' }
@@ -10543,7 +10588,7 @@ window.addEventListener('load', function() {
             });
             genPjReferensiState.dt = $('#tbl-gen-pj-referensi-persediaan').DataTable({
                 data: rows,
-                pageLength: 25,
+                pageLength: 10,
                 scrollX: true,
                 order: [[2, 'asc']],
                 columnDefs: [{ targets: [0], orderable: false }]
@@ -12261,7 +12306,7 @@ window.addEventListener('load', function() {
             scrollY: getDataTableScrollY($table, 220),
             scrollCollapse: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             order: [],
             language: compareDtLang,
             autoWidth: false,
@@ -12588,7 +12633,7 @@ window.addEventListener('load', function() {
             scrollX: true,
             scrollCollapse: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
             columnDefs: [{ targets: 0, orderable: false }],
             language: compareDtLang,
@@ -13105,8 +13150,8 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             info: true,
-            pageLength: 25,
-            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, 250, -1], [10, 25, 50, 100, 250, 'Semua']],
             order: [[orderCol, 'asc']],
             columnDefs: columnDefs,
             language: {
@@ -13275,7 +13320,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '320px',
@@ -13348,7 +13393,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',
@@ -13406,7 +13451,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',
@@ -13466,7 +13511,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',
@@ -13525,7 +13570,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',
@@ -13584,7 +13629,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',
@@ -13642,7 +13687,7 @@ window.addEventListener('load', function() {
             searching: true,
             ordering: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: true,
             scrollX: true,
             scrollY: '360px',

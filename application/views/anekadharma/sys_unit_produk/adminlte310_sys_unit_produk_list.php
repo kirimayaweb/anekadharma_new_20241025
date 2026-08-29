@@ -1209,7 +1209,7 @@ window.addEventListener('load', function() {
             scrollY: 700,
             scrollX: true,
             scrollCollapse: true,
-            pageLength: 25,
+            pageLength: 10,
             language: {
                 emptyTable: 'Belum ada data produksi pada bulan ini',
                 info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',

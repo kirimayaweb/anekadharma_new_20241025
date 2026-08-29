@@ -212,7 +212,7 @@
                 scrollY: '48vh',
                 scrollCollapse: true,
                 paging: true,
-                pageLength: 25,
+                pageLength: 10,
                 ordering: true,
                 info: true
             });
@@ -594,7 +594,7 @@
                     scrollY: '50vh',
                     scrollCollapse: true,
                     paging: true,
-                    pageLength: 25,
+                    pageLength: 10,
                     ordering: true,
                     info: true
                 });

@@ -202,7 +202,7 @@ window.addEventListener('load', function() {
             scrollY: 500,
             scrollX: true,
             scrollCollapse: true,
-            pageLength: 25,
+            pageLength: 10,
             order: [[3, 'asc']],
             columnDefs: [
                 { targets: 0, orderable: false },

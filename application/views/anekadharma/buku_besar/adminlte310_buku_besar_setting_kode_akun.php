@@ -108,7 +108,7 @@ $url_json = isset($url_json) ? $url_json : site_url('Buku_besar_setting_kode_aku
         var $t = jQuery('#table-bb-ska-values');
         if (!$t.length || jQuery.fn.DataTable.isDataTable($t)) return;
         $t.DataTable({
-            pageLength: 50,
+            pageLength: 10,
             order: [[1, 'asc']],
             language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }
         });

@@ -520,8 +520,8 @@
             scrollX: false,
             autoWidth: false,
             paging: true,
-            pageLength: 25,
-            lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "Semua"]],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Semua"]],
             order: [[1, 'desc'], [2, 'desc']],
             columnDefs: [
                 { orderable: false, targets: [0, 3] },
@@ -541,7 +541,7 @@
             scrollY: "520px",
             scrollCollapse: true,
             paging: true,
-            pageLength: 15,
+            pageLength: 10,
             lengthMenu: [[15, 25, 50, -1], [15, 25, 50, "Semua"]],
             // columnDefs: [
             //     { orderable: false, targets: 0 },

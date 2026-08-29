@@ -490,7 +490,7 @@ $compare_sections = array(
 
         var mainDt = jQuery('#table-jurnal-penyesuaian-data').DataTable({
             scrollX: true, scrollY: '450px', scrollCollapse: true,
-            paging: true, searching: true, ordering: true, pageLength: 50,
+            paging: true, searching: true, ordering: true, pageLength: 10,
             order: [[1, 'asc']],
             language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
         });
@@ -777,7 +777,7 @@ $compare_sections = array(
             $t.find('tbody').empty();
             var dt = $t.DataTable({
                 data: buildRows(items), paging: true, searching: true, ordering: true, scrollX: true, scrollY: '280px', scrollCollapse: true,
-                pageLength: 25, order: [[1, 'asc']], autoWidth: false,
+                pageLength: 10, order: [[1, 'asc']], autoWidth: false,
                 language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
@@ -887,7 +887,7 @@ $compare_sections = array(
                 $t.find('tbody').empty();
                 $t.DataTable({
                     data: buildTabelDetailRows(items, tabelDetailColumns),
-                    paging: true, searching: true, ordering: true, scrollX: true, pageLength: 25,
+                    paging: true, searching: true, ordering: true, scrollX: true, pageLength: 10,
                     order: [[1, 'asc']], autoWidth: false,
                     language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                     drawCallback: function() {

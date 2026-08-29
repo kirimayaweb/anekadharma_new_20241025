@@ -762,7 +762,7 @@
                 scrollX: true,
                 scrollCollapse: true,
                 autoWidth: false,
-                pageLength: 12,
+                pageLength: 10,
                 lengthMenu: [[6, 12, 24, -1], [6, 12, 24, 'Semua']],
                 order: [[2, 'desc']],
                 columnDefs: [

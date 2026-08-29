@@ -306,7 +306,7 @@ window.bbUnitSkaInitPanel = function() {
             if (!$t.length) return;
             window.bbUnitSkaDestroyDt();
             $t.DataTable({
-                pageLength: 25,
+                pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
                 order: [[2, 'asc']],
                 scrollX: true,

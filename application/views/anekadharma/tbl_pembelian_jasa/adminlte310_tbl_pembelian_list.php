@@ -622,8 +622,8 @@
         jQuery(tableSel).DataTable({
             deferRender: true,
             processing: true,
-            pageLength: 50,
-            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, 250, -1], [10, 25, 50, 100, 250, 'Semua']],
             scrollY: 520,
             scrollX: true,
             scrollCollapse: true,

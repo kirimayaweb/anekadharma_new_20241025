@@ -386,7 +386,7 @@
             "scrollY": 900,
             "scrollX": true,
             "scrollCollapse": true,
-            "pageLength": 25,
+            "pageLength": 10,
             "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]]
         });
     });

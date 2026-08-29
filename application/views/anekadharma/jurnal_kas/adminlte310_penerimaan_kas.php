@@ -1077,7 +1077,7 @@ window.addEventListener('load', function() {
 
     dt = $table.DataTable({
         paging: true,
-        pageLength: 25,
+        pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
         ordering: true,
         order: [],
@@ -1523,7 +1523,7 @@ window.addEventListener('load', function() {
                 ordering: true,
                 info: true,
                 scrollX: true,
-                pageLength: 25,
+                pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
                 language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
@@ -1604,7 +1604,7 @@ window.addEventListener('load', function() {
         $t.find('tbody').empty();
         var dt = $t.DataTable({
             data: buildRows(items), paging: true, searching: true, ordering: true, info: true,
-            scrollX: true, scrollY: '280px', scrollCollapse: true, pageLength: 25,
+            scrollX: true, scrollY: '280px', scrollCollapse: true, pageLength: 10,
             order: [[1, 'asc']], autoWidth: false,
             language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
             drawCallback: function() {
@@ -1770,7 +1770,7 @@ window.addEventListener('load', function() {
             var rows = (res.rows || []).map(function(r) { return cols.map(function(c) { return r[c] != null ? r[c] : ''; }); });
             var $t = jQuery('#table-compare-penerimaan-csv-preview');
             if (jQuery.fn.DataTable.isDataTable($t)) $t.DataTable().destroy();
-            $t.DataTable({ data: rows, scrollX: true, pageLength: 25 });
+            $t.DataTable({ data: rows, scrollX: true, pageLength: 10 });
         });
     });
     if (jQuery('#tab-compare-penerimaan-kas').hasClass('active')) {

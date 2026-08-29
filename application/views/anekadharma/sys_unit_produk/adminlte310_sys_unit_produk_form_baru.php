@@ -1476,7 +1476,7 @@ window.addEventListener('load', function() {
             scrollCollapse: true,
             autoWidth: false,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthChange: false,
             searching: true,
             info: true,

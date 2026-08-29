@@ -1704,8 +1704,8 @@ window.addEventListener('load', function() {
 
     var jkDt = $table.DataTable({
         paging: true,
-        pageLength: 50,
-        lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, 250, -1], [10, 25, 50, 100, 250, 'Semua']],
         searching: true,
         ordering: true,
         order: [],
@@ -1813,7 +1813,7 @@ window.addEventListener('load', function() {
 
         jkSourceDt = $jkSourceTable.DataTable({
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             searching: true,
             ordering: true,
@@ -2478,7 +2478,7 @@ window.addEventListener('load', function() {
                 ordering: true,
                 info: true,
                 scrollX: true,
-                pageLength: 25,
+                pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
                 language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
@@ -2646,7 +2646,7 @@ window.addEventListener('load', function() {
         $t.find('tbody').empty();
         var dtOpts = {
             data: buildRows(items), paging: true, searching: true, ordering: true, info: true,
-            scrollX: true, scrollY: '300px', scrollCollapse: true, pageLength: 25,
+            scrollX: true, scrollY: '300px', scrollCollapse: true, pageLength: 10,
             order: [[1, 'asc']], autoWidth: false,
             language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
         };
@@ -2960,7 +2960,7 @@ window.addEventListener('load', function() {
             $t.DataTable({
                 data: rows,
                 scrollX: true,
-                pageLength: 25,
+                pageLength: 10,
                 drawCallback: function() {
                     $tfoot.find('.csv-preview-total-debet').text(td > 0 ? td.toLocaleString('id-ID') : '—');
                     $tfoot.find('.csv-preview-total-kredit').text(tk > 0 ? tk.toLocaleString('id-ID') : '—');

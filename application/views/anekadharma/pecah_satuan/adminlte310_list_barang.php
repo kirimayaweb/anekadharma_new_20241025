@@ -627,8 +627,8 @@ window.addEventListener('load', function() {
             scrollY: '500px',
             scrollX: true,
             scrollCollapse: true,
-            pageLength: 25,
-            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, 250, -1], [10, 25, 50, 100, 250, 'Semua']],
             order: [[3, 'asc']],
             columnDefs: [
                 { targets: 0, orderable: false }
@@ -649,8 +649,8 @@ window.addEventListener('load', function() {
             scrollY: '500px',
             scrollX: true,
             scrollCollapse: true,
-            pageLength: 25,
-            lengthMenu: [[25, 50, 100, 250, -1], [25, 50, 100, 250, 'Semua']],
+            pageLength: 10,
+            lengthMenu: [[10, 25, 50, 100, 250, -1], [10, 25, 50, 100, 250, 'Semua']],
             order: [[1, 'desc']],
             columnDefs: [
                 { targets: 0, orderable: false }

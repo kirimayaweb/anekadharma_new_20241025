@@ -53,7 +53,7 @@
 
         function kaDtOptions(zeroRecords) {
             return {
-                pageLength: 15,
+                pageLength: 10,
                 lengthMenu: [[10, 15, 25, 50], [10, 15, 25, 50]],
                 order: [[0, 'asc']],
                 deferRender: true,
@@ -339,7 +339,7 @@
                 }
 
                 dtTrx = $('#tblLabarugiTransaksiUnit').DataTable({
-                    pageLength: 15,
+                    pageLength: 10,
                     deferRender: true,
                     autoWidth: false,
                     destroy: true,

@@ -1980,7 +1980,7 @@
                 scrollY: '320px',
                 scrollCollapse: true,
                 autoWidth: false,
-                pageLength: 25,
+                pageLength: 10,
                 lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
                 order: [[1, 'asc'], [2, 'asc']],
                 columnDefs: [
@@ -2239,7 +2239,7 @@
                     $table.find('tbody').empty();
                     cols.forEach(function(c) { $table.find('thead tr').append(jQuery('<th>').text(c)); });
                     var dtRows = rows.map(function(r) { return cols.map(function(c) { return (r && r[c] != null) ? String(r[c]) : ''; }); });
-                    $table.DataTable({ data: dtRows, scrollX: true, pageLength: 25 });
+                    $table.DataTable({ data: dtRows, scrollX: true, pageLength: 10 });
                     jQuery('#compare-penjualan-csv-preview-meta').text('Tabel: ' + table + ' | Total: ' + ((res && res.total) ? res.total : rows.length));
                 });
         });

@@ -307,7 +307,7 @@
                 info: true,
                 scrollX: true,
                 autoWidth: false,
-                pageLength: 25,
+                pageLength: 10,
                 columnDefs: [
                     { targets: 5, className: 'text-wrap', width: '280px' }
                 ],
@@ -438,7 +438,7 @@
                 scrollY: 400,
                 scrollCollapse: true,
                 paging: true,
-                pageLength: 25,
+                pageLength: 10,
                 order: [],
                 autoWidth: false,
                 deferRender: true,

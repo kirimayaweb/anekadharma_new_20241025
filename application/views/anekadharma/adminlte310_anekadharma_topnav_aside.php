@@ -633,15 +633,6 @@ scratch. This page gets rid of all links and provides the needed markup only.
         scrollY: "400px",
         scrollCollapse: true,
         paging: true,
-        // columnDefs: [
-        //     { orderable: false, targets: 0 },
-        //      { orderable: false, targets: -1 }
-        //  ],
-        //  ordering: [[ 1, 'asc' ]],
-        // colReorder: {
-        //     fixedColumnsLeft: 1,
-        //      fixedColumnsRight: 1
-        // }
       });
 
       if ($.fn.dataTable && $.fn.dataTable.FixedColumns) {
@@ -650,6 +641,8 @@ scratch. This page gets rid of all links and provides the needed markup only.
         });
       }
     });
+
+    // Tab Belum ke Persediaan di-init di view list (format Proses Penjualan) — jangan double-init di sini.
 
     $(document).ready(function() {
       if (!$('#exampleFreeze').length || !$.fn.DataTable) return;

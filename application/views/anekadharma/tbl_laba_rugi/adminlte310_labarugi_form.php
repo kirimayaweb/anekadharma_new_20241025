@@ -2047,7 +2047,7 @@
 				function initDataTable() {
 					ketDataTable = $('#tblLabarugiKeterangan').DataTable({
 						paging: true,
-						pageLength: 15,
+						pageLength: 10,
 						lengthChange: true,
 						searching: true,
 						ordering: false,

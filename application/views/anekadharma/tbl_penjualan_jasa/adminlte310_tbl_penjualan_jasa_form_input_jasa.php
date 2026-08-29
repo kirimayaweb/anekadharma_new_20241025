@@ -876,7 +876,7 @@ window.initDataTablePilihBarang = function() {
             autoWidth: false,
             orderCellsTop: true,
             order: [[5, 'asc']],
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             columnDefs: [
                 {

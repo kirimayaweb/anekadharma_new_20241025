@@ -250,7 +250,7 @@ window.bbSkaBoot = window.bbSkaBoot || function() {
             destroyRecordDt(table);
             if (jQuery.fn.DataTable) {
                 recordDts[slug] = $table.DataTable({
-                    pageLength: 25,
+                    pageLength: 10,
                     order: [[0, 'asc']],
                     scrollX: true,
                     language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }
@@ -405,7 +405,7 @@ window.bbSkaBoot = window.bbSkaBoot || function() {
             }
             if (jQuery.fn.DataTable) {
                 pilihDt = jQuery('#table-bb-ska-pilih-tabel').DataTable({
-                    pageLength: 25,
+                    pageLength: 10,
                     order: [[1, 'asc']],
                     columnDefs: [{ orderable: false, targets: 0 }],
                     language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }

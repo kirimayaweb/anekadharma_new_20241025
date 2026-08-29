@@ -165,7 +165,7 @@ window.PENGELUARAN_KAS_CFG = {
             scrollY: '550px',
             scrollCollapse: true,
             paging: true,
-            pageLength: 25,
+            pageLength: 10,
             lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
             ordering: false,
             searching: true,
