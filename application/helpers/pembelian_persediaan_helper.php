@@ -4261,7 +4261,8 @@ function tbl_penjualan_ensure_verified_persediaan_column($CI)
 	);
 
 	$CI->db->db_debug = $db_debug;
-	$ensured = $CI->db->field_exists('verified_persediaan', 'tbl_penjualan');
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+	$ensured = tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'verified_persediaan');
 	if (!$ensured) {
 		log_message('error', 'tbl_penjualan_ensure_verified_persediaan_column: gagal ADD COLUMN verified_persediaan');
 	}
@@ -4389,6 +4390,236 @@ function tbl_penjualan_set_verified_persediaan($CI, $id_penjualan, $value)
 
 	$CI->db->where('id', $id_penjualan);
 	return (bool) $CI->db->update('tbl_penjualan', array('verified_persediaan' => $val));
+}
+
+/**
+ * Kosongkan cache field CI setelah ALTER TABLE agar field_exists akurat.
+ *
+ * @param string $table
+ */
+function tbl_penjualan_clear_schema_field_cache($CI, $table = 'tbl_penjualan')
+{
+	if (!isset($CI->db) || !isset($CI->db->data_cache) || !is_array($CI->db->data_cache)) {
+		return;
+	}
+	if (isset($CI->db->data_cache['field_names'][$table])) {
+		unset($CI->db->data_cache['field_names'][$table]);
+	}
+}
+
+/**
+ * Cek kolom langsung ke DB (tanpa cache CI field_exists).
+ *
+ * @param string $table
+ * @param string $column
+ * @return bool
+ */
+function tbl_penjualan_db_has_column($CI, $table, $column)
+{
+	if (!$CI->db->table_exists($table)) {
+		return false;
+	}
+	$table = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $table);
+	$column = preg_replace('/[^a-zA-Z0-9_]/', '', (string) $column);
+	if ($table === '' || $column === '') {
+		return false;
+	}
+	$q = $CI->db->query('SHOW COLUMNS FROM `' . $table . '` LIKE ' . $CI->db->escape($column));
+	return ($q && $q->num_rows() > 0);
+}
+
+/**
+ * Daftar kolom jejak refered manual di tbl_penjualan.
+ *
+ * @return array<string,string> nama kolom => definisi SQL (tanpa COMMENT, kompatibel MariaDB lama)
+ */
+function tbl_penjualan_refered_manual_audit_column_defs()
+{
+	return array(
+		'uuid_persediaan_refered_manual' => 'VARCHAR(255) NULL DEFAULT NULL',
+		'nama_barang_refered_manual' => 'TEXT NULL DEFAULT NULL',
+		'satuan_refered_manual' => 'VARCHAR(32) NULL DEFAULT NULL',
+		'hpp_refered_manual' => 'VARCHAR(32) NULL DEFAULT NULL',
+	);
+}
+
+/**
+ * Cek apakah semua kolom audit refered manual sudah ada.
+ *
+ * @return bool
+ */
+function tbl_penjualan_refered_manual_audit_columns_ready($CI)
+{
+	if (!$CI->db->table_exists('tbl_penjualan')) {
+		return false;
+	}
+	foreach (array_keys(tbl_penjualan_refered_manual_audit_column_defs()) as $col) {
+		if (!tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * Pastikan kolom jejak refered manual ada di tbl_penjualan (runut ke record persediaan).
+ * Dipanggil sebelum update saat SIMPAN refered manual — buat kolom jika belum ada.
+ *
+ * @return bool true jika keempat kolom siap dipakai
+ */
+function tbl_penjualan_ensure_refered_manual_audit_columns($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+
+	if (!$CI->db->table_exists('tbl_penjualan')) {
+		return false;
+	}
+
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+
+	if (tbl_penjualan_refered_manual_audit_columns_ready($CI)) {
+		$ensured = true;
+		return true;
+	}
+
+	$cols = tbl_penjualan_refered_manual_audit_column_defs();
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$after = '';
+	if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'verified_persediaan')) {
+		$after = ' AFTER `verified_persediaan`';
+	} elseif (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'uuid_persediaan')) {
+		$after = ' AFTER `uuid_persediaan`';
+	}
+
+	$last_db_error = '';
+	foreach ($cols as $col => $def) {
+		if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col)) {
+			continue;
+		}
+
+		$sql = 'ALTER TABLE `tbl_penjualan` ADD COLUMN `' . $col . '` ' . $def . $after;
+		$ok = @$CI->db->query($sql);
+		if (!$ok) {
+			$err = $CI->db->error();
+			if (!empty($err['message'])) {
+				$last_db_error = trim((string) $err['message']);
+			}
+			@$CI->db->query('ALTER TABLE `tbl_penjualan` ADD COLUMN `' . $col . '` ' . $def);
+		}
+
+		tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+
+		if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col) && $after !== '') {
+			$after = ' AFTER `' . $col . '`';
+		}
+	}
+
+	$CI->db->db_debug = $db_debug;
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+
+	if (!tbl_penjualan_refered_manual_audit_columns_ready($CI)) {
+		$err = $CI->db->error();
+		if (!empty($err['message'])) {
+			$last_db_error = trim((string) $err['message']);
+		}
+		$log_msg = 'tbl_penjualan_ensure_refered_manual_audit_columns: gagal ADD COLUMN audit refered manual';
+		if ($last_db_error !== '') {
+			$log_msg .= ' — ' . $last_db_error;
+		}
+		log_message('error', $log_msg);
+		return false;
+	}
+
+	$ensured = true;
+	return true;
+}
+
+/**
+ * Payload update kolom audit refered manual dari row persediaan terpilih.
+ *
+ * @param object $row_pers
+ * @return array<string,mixed>
+ */
+function tbl_penjualan_refered_manual_audit_payload_from_persediaan($row_pers)
+{
+	$uuid = ($row_pers && isset($row_pers->uuid_persediaan)) ? trim((string) $row_pers->uuid_persediaan) : '';
+	$nama = ($row_pers && isset($row_pers->namabarang)) ? trim((string) $row_pers->namabarang) : '';
+	$satuan = ($row_pers && isset($row_pers->satuan)) ? trim((string) $row_pers->satuan) : '';
+	$hpp = ($row_pers && isset($row_pers->hpp)) ? trim((string) $row_pers->hpp) : '';
+
+	return array(
+		'uuid_persediaan_refered_manual' => ($uuid !== '') ? $uuid : null,
+		'nama_barang_refered_manual' => ($nama !== '') ? $nama : null,
+		'satuan_refered_manual' => ($satuan !== '') ? $satuan : null,
+		'hpp_refered_manual' => ($hpp !== '') ? $hpp : null,
+	);
+}
+
+/**
+ * Simpan jejak persediaan yang dipilih saat Refered manual.
+ * Memastikan kolom ada dulu, baru update data.
+ *
+ * @param object $row_pers Row persediaan terpilih
+ * @return bool
+ */
+function tbl_penjualan_set_refered_manual_audit($CI, $id_penjualan, $row_pers)
+{
+	$id_penjualan = (int) $id_penjualan;
+	if ($id_penjualan < 1 || !$row_pers) {
+		return false;
+	}
+	if (!tbl_penjualan_ensure_refered_manual_audit_columns($CI)) {
+		return false;
+	}
+
+	$data = tbl_penjualan_refered_manual_audit_payload_from_persediaan($row_pers);
+	$CI->db->where('id', $id_penjualan);
+	return (bool) $CI->db->update('tbl_penjualan', $data);
+}
+
+/**
+ * Ambil row persediaan target refered manual: prioritas uuid_persediaan (+ bulan), fallback id.
+ *
+ * @param object $row_pers Row dari pilihan modal (id + uuid)
+ * @return object|null
+ */
+function persediaan_referensi_manual_resolve_row($CI, $row_pers, $bulan_ym)
+{
+	if (!$row_pers || !$CI->db->table_exists('persediaan')) {
+		return null;
+	}
+
+	$id_pers = isset($row_pers->id) ? (int) $row_pers->id : 0;
+	$uuid_pers = isset($row_pers->uuid_persediaan) ? trim((string) $row_pers->uuid_persediaan) : '';
+
+	if ($uuid_pers !== '' && $CI->db->field_exists('uuid_persediaan', 'persediaan')) {
+		$CI->db->where('uuid_persediaan', $uuid_pers);
+		if ($bulan_ym !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+			$start = $bulan_ym . '-01';
+			$end = date('Y-m-t', strtotime($start));
+			$CI->db->where('DATE(tanggal_beli) >=', $start);
+			$CI->db->where('DATE(tanggal_beli) <=', $end);
+		}
+		if ($id_pers > 0) {
+			$CI->db->where('id', $id_pers);
+		}
+		$CI->db->limit(1);
+		$row = $CI->db->get('persediaan')->row();
+		if ($row) {
+			return $row;
+		}
+	}
+
+	if ($id_pers > 0) {
+		return $CI->db->where('id', $id_pers)->limit(1)->get('persediaan')->row();
+	}
+
+	return null;
 }
 
 /**
@@ -4716,6 +4947,18 @@ function tbl_penjualan_enrich_verified_persediaan_display_rows($rows, $mode = 'a
 		$uuid = is_object($r)
 			? trim((string) (isset($r->uuid_persediaan) ? $r->uuid_persediaan : ''))
 			: trim((string) (isset($r['uuid_persediaan']) ? $r['uuid_persediaan'] : ''));
+		$ref_uuid = is_object($r)
+			? trim((string) (isset($r->uuid_persediaan_refered_manual) ? $r->uuid_persediaan_refered_manual : ''))
+			: trim((string) (isset($r['uuid_persediaan_refered_manual']) ? $r['uuid_persediaan_refered_manual'] : ''));
+		$ref_nama = is_object($r)
+			? trim((string) (isset($r->nama_barang_refered_manual) ? $r->nama_barang_refered_manual : ''))
+			: trim((string) (isset($r['nama_barang_refered_manual']) ? $r['nama_barang_refered_manual'] : ''));
+		$ref_satuan = is_object($r)
+			? trim((string) (isset($r->satuan_refered_manual) ? $r->satuan_refered_manual : ''))
+			: trim((string) (isset($r['satuan_refered_manual']) ? $r['satuan_refered_manual'] : ''));
+		$ref_hpp = is_object($r)
+			? trim((string) (isset($r->hpp_refered_manual) ? $r->hpp_refered_manual : ''))
+			: trim((string) (isset($r['hpp_refered_manual']) ? $r['hpp_refered_manual'] : ''));
 		$nama = is_object($r)
 			? (isset($r->nama_barang) ? (string) $r->nama_barang : '')
 			: (isset($r['nama_barang']) ? (string) $r['nama_barang'] : '');
@@ -4743,11 +4986,22 @@ function tbl_penjualan_enrich_verified_persediaan_display_rows($rows, $mode = 'a
 			? (string) (int) round($jumlah)
 			: (string) $jumlah;
 
+		$ket = $ket_default;
+		if ($mode === 'manual' && $ref_nama !== '') {
+			$ket = 'Refered manual → persediaan: '
+				. $ref_nama
+				. ' / ' . ($ref_satuan !== '' ? $ref_satuan : '-')
+				. ' / HPP ' . ($ref_hpp !== '' ? $ref_hpp : '-');
+			if ($ref_uuid !== '') {
+				$ket .= ' | uuid=' . $ref_uuid;
+			}
+		}
+
 		$row = is_object($r) ? clone $r : (object) $r;
 		$row->id_penjualan = $id;
 		$row->no = $no;
 		$row->status = $status_label;
-		$row->keterangan = $ket_default;
+		$row->keterangan = $ket;
 		$row->jumlah_display = $jumlah_disp;
 		$row->tgl_jual_display = $tgl_jual !== '' && $tgl_jual !== '0000-00-00'
 			? date('Y-m-d', strtotime($tgl_jual))
@@ -4756,7 +5010,7 @@ function tbl_penjualan_enrich_verified_persediaan_display_rows($rows, $mode = 'a
 		$row->unit = $unit;
 		$row->nama_barang = $nama;
 		$row->satuan = $satuan;
-		$row->uuid_persediaan = $uuid;
+		$row->uuid_persediaan = ($mode === 'manual' && $ref_uuid !== '') ? $ref_uuid : $uuid;
 		$row->verified_persediaan = $vp;
 		$out[] = $row;
 	}
@@ -10866,6 +11120,10 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 	}
 
 	$CI->db->where('id', (int) $row->id);
+	$uuid_pers_upd = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
+	if ($uuid_pers_upd !== '' && $CI->db->field_exists('uuid_persediaan', 'persediaan')) {
+		$CI->db->where('uuid_persediaan', $uuid_pers_upd);
+	}
 	$CI->db->update('persediaan', $update);
 
 	return array(
@@ -28538,10 +28796,28 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 		return array('ok' => false, 'message' => 'Record tbl_penjualan tidak ditemukan.');
 	}
 
+	if (!tbl_penjualan_ensure_refered_manual_audit_columns($CI)) {
+		$err = $CI->db->error();
+		$detail = (!empty($err['message'])) ? trim((string) $err['message']) : '';
+		return array(
+			'ok' => false,
+			'message' => 'Gagal menyiapkan kolom audit refered manual di tbl_penjualan.'
+				. ($detail !== '' ? ' (' . $detail . ')' : ' Periksa hak ALTER TABLE database.'),
+		);
+	}
+	tbl_penjualan_ensure_verified_persediaan_column($CI);
+
 	$row_pers = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
 	if (!$row_pers) {
 		return array('ok' => false, 'message' => 'Record persediaan tidak ditemukan.');
 	}
+
+	$row_pers_resolved = persediaan_referensi_manual_resolve_row($CI, $row_pers, $ctx['bulan']);
+	if (!$row_pers_resolved) {
+		return array('ok' => false, 'message' => 'Record persediaan tidak ditemukan via uuid_persediaan / id.');
+	}
+	$row_pers = $row_pers_resolved;
+	$id_persediaan = (int) $row_pers->id;
 
 	$ts_pers = strtotime(isset($row_pers->tanggal_beli) ? $row_pers->tanggal_beli : '');
 	$bulan_pers = ($ts_pers !== false) ? date('Y-m', $ts_pers) : '';
@@ -28604,20 +28880,6 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 		);
 	}
 
-	$pen_upd = array();
-	$uuid_pers = isset($row_pers->uuid_persediaan) ? trim((string) $row_pers->uuid_persediaan) : '';
-	if ($uuid_pers !== '' && $CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')) {
-		$pen_upd['uuid_persediaan'] = $uuid_pers;
-		$row_pen->uuid_persediaan = $uuid_pers;
-	}
-	if ($CI->db->field_exists('id_persediaan_barang', 'tbl_penjualan')) {
-		$pen_upd['id_persediaan_barang'] = $id_persediaan;
-		$row_pen->id_persediaan_barang = $id_persediaan;
-	}
-	if (!empty($pen_upd)) {
-		$CI->db->where('id', $id_penjualan)->update('tbl_penjualan', $pen_upd);
-	}
-
 	$unit_txt = isset($row_pen->unit) ? trim((string) $row_pen->unit) : '';
 	$konsumen_txt = isset($row_pen->konsumen_nama) ? trim((string) $row_pen->konsumen_nama) : '';
 	if ($unit_txt === '' && $konsumen_txt !== '') {
@@ -28628,24 +28890,43 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 	persediaan_gen_recalc_ensure_total_10_persediaan($CI, $id_persediaan);
 	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
 
-	if (function_exists('tbl_penjualan_set_verified_persediaan')) {
-		tbl_penjualan_set_verified_persediaan($CI, $id_penjualan, tbl_penjualan_verified_persediaan_manual_value());
-	}
-
 	$ket_unit = '';
 	if (!empty($upd['kolom_unit'])) {
 		$ket_unit = ' Kolom unit persediaan `' . $upd['kolom_unit'] . '` +=' . $jumlah
 			. (!empty($konsumen_txt) ? ' (konsumen: ' . $konsumen_txt . ')' : '') . '.';
 	}
 
+	$pen_upd = array();
+	$uuid_pers = isset($row_pers->uuid_persediaan) ? trim((string) $row_pers->uuid_persediaan) : '';
+	if ($uuid_pers !== '' && $CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')) {
+		$pen_upd['uuid_persediaan'] = $uuid_pers;
+		$row_pen->uuid_persediaan = $uuid_pers;
+	}
+	if ($CI->db->field_exists('id_persediaan_barang', 'tbl_penjualan')) {
+		$pen_upd['id_persediaan_barang'] = $id_persediaan;
+		$row_pen->id_persediaan_barang = $id_persediaan;
+	}
+
+	$pen_upd = array_merge($pen_upd, tbl_penjualan_refered_manual_audit_payload_from_persediaan($row_pers));
+	$pen_upd['verified_persediaan'] = tbl_penjualan_verified_persediaan_manual_value();
+
+	if (!empty($pen_upd)) {
+		$CI->db->where('id', $id_penjualan)->update('tbl_penjualan', $pen_upd);
+	}
+
 	return array(
 		'ok' => true,
 		'message' => 'Berhasil referensi: persediaan id=' . $id_persediaan
+			. ($uuid_pers !== '' ? ' uuid=' . $uuid_pers : '')
 			. ' (penjualan+=' . $jumlah . ', total_10-=' . $jumlah . ').'
 			. $ket_unit
 			. ' Penjualan dipindah ke Terverifikasi Manual.',
 		'id_penjualan' => $id_penjualan,
 		'id_persediaan' => $id_persediaan,
+		'uuid_persediaan_refered_manual' => $uuid_pers,
+		'nama_barang_refered_manual' => isset($row_pers->namabarang) ? (string) $row_pers->namabarang : '',
+		'satuan_refered_manual' => isset($row_pers->satuan) ? (string) $row_pers->satuan : '',
+		'hpp_refered_manual' => isset($row_pers->hpp) ? (string) $row_pers->hpp : '',
 		'jumlah_diproses' => $jumlah,
 		'penjualan_baru' => isset($upd['penjualan_baru']) ? $upd['penjualan_baru'] : '',
 		'total_10' => $row_baru ? $row_baru->total_10 : '',
