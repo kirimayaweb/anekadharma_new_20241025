@@ -14676,7 +14676,7 @@ window.addEventListener('load', function() {
         function escXml(s) {
             return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-        var xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Verifikasi"><Table>';
+        var xml = '<' + '?xml version="1.0"?>' + '<' + '?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Verifikasi"><Table>';
         xml += '<Row>'; headers.forEach(function(h) { xml += '<Cell><Data ss:Type="String">' + escXml(h) + '</Data></Cell>'; }); xml += '</Row>';
         rows.forEach(function(line) {
             xml += '<Row>'; line.forEach(function(c) { xml += '<Cell><Data ss:Type="String">' + escXml(c) + '</Data></Cell>'; }); xml += '</Row>';
