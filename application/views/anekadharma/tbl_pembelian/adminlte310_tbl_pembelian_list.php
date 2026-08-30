@@ -57,6 +57,45 @@
     }
     $excel_export_ids_str = implode(',', $excel_export_ids);
 
+    if (!isset($Tbl_pembelian_data_belum_persediaan)) {
+        $Tbl_pembelian_data_belum_persediaan = array();
+    }
+    if (!isset($Tbl_pembelian_data_persediaan_manual)) {
+        $Tbl_pembelian_data_persediaan_manual = array();
+    }
+    if (!isset($Tbl_pembelian_data_persediaan_otomatis)) {
+        $Tbl_pembelian_data_persediaan_otomatis = array();
+    }
+    if (!isset($pembelian_count_belum_persediaan)) {
+        $pembelian_count_belum_persediaan = count($Tbl_pembelian_data_belum_persediaan);
+    }
+    if (!isset($pembelian_count_persediaan_manual)) {
+        $pembelian_count_persediaan_manual = count($Tbl_pembelian_data_persediaan_manual);
+    }
+    if (!isset($pembelian_count_persediaan_otomatis)) {
+        $pembelian_count_persediaan_otomatis = count($Tbl_pembelian_data_persediaan_otomatis);
+    }
+    if (!isset($pembelian_active_tab) || $pembelian_active_tab === '') {
+        $pembelian_active_tab = 'tab-pembelian-data';
+    }
+
+    $pembelian_main_tabs = array(
+        array(
+            'tab_id' => 'tab-pembelian-data',
+            'link_id' => 'tab-pembelian-data-link',
+            'label' => 'Data Pembelian',
+            'count' => count($Tbl_pembelian_data),
+            'badge_class' => 'badge-secondary',
+        ),
+        array(
+            'tab_id' => 'tab-pembelian-verifikasi',
+            'link_id' => 'tab-pembelian-verifikasi-link',
+            'label' => 'Data Verifikasi',
+            'count' => (int) $pembelian_count_belum_persediaan,
+            'badge_class' => 'badge-warning',
+        ),
+    );
+
     ?>
 
         <div class="box box-warning box-solid">
@@ -80,6 +119,7 @@
                             ?>
 
                                 <form id="form-cari-pembelian" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <input type="hidden" name="pembelian_active_tab" id="pembelian_active_tab_input" value="<?php echo htmlspecialchars($pembelian_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
                                     <div class="row">
 
                                         <div class="col-md-1" text-align="right" align="right"></div>
@@ -132,6 +172,42 @@
 
 
                     <div class="card-body">
+
+                        <style type="text/css">
+                            #pembelian-main-tabs .nav-link.active {
+                                font-weight: 700;
+                                border-bottom: 3px solid #dc3545;
+                            }
+                            #pembelian-persediaan-subtabs .nav-link.active {
+                                color: #fff !important;
+                                font-weight: 700;
+                                background: #0b3d91 !important;
+                                border: 2px solid #ffc107 !important;
+                            }
+                            table.pembelian-persediaan-dt-table tfoot .pem-persediaan-total-row th {
+                                background-color: #fff3cd;
+                                font-weight: 700;
+                                border-top: 2px solid #ffc107;
+                            }
+                            #modal-pem-isi-jumlah-refered { z-index: 1065 !important; }
+                        </style>
+
+                        <ul class="nav nav-tabs mb-3" id="pembelian-main-tabs" role="tablist">
+                            <?php foreach ($pembelian_main_tabs as $tab_cfg) :
+                                $tab_nav_active = ($pembelian_active_tab === $tab_cfg['tab_id']) ? ' active' : '';
+                            ?>
+                                <li class="nav-item">
+                                    <a class="nav-link<?php echo $tab_nav_active; ?>" id="<?php echo htmlspecialchars($tab_cfg['link_id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-toggle="tab" href="#<?php echo htmlspecialchars($tab_cfg['tab_id'], ENT_QUOTES, 'UTF-8'); ?>" role="tab">
+                                        <?php echo htmlspecialchars($tab_cfg['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <span class="badge <?php echo htmlspecialchars($tab_cfg['badge_class'], ENT_QUOTES, 'UTF-8'); ?> badge-count ml-1"><?php echo (int) $tab_cfg['count']; ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="tab-content" id="pembelian-main-tabs-content">
+                            <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-data') ? ' show active' : ''; ?>" id="tab-pembelian-data" role="tabpanel">
 
                         <table id="tglSPOPFreeze" class="display nowrap" style="width:100%">
                             <thead>
@@ -563,12 +639,41 @@
                             </tfoot>
 
                         </table>
+
+                            </div>
+                            <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-verifikasi') ? ' show active' : ''; ?>" id="tab-pembelian-verifikasi" role="tabpanel">
+                                <div class="alert alert-warning py-2 px-3 small mb-3">
+                                    <strong>Verifikasi Persediaan Pembelian</strong> — sub-tab:
+                                    <strong>Belum Terverifikasi</strong> (<code>verified_persediaan</code> kosong),
+                                    <strong>Terverifikasi Manual</strong> (<code>refered manual</code>),
+                                    <strong>Verifikasi Otomatis</strong> (<code>refered</code>).
+                                    Klik <strong>Referensi</strong> untuk hubungkan ke persediaan bulan filter (menambah <code>beli</code> &amp; <code>total_10</code>).
+                                    <?php
+                                    if (!empty($pembelian_verified_sync) && is_array($pembelian_verified_sync) && !empty($pembelian_verified_sync['ok'])) {
+                                        echo ' <span class="text-muted">Sync otomatis: refered='
+                                            . (int) (isset($pembelian_verified_sync['refered']) ? $pembelian_verified_sync['refered'] : 0)
+                                            . ', belum='
+                                            . (int) (isset($pembelian_verified_sync['belum']) ? $pembelian_verified_sync['belum'] : 0)
+                                            . '.</span>';
+                                    }
+                                    ?>
+                                </div>
+                                <?php
+                                $pembelian_verifikasi_ns = 'pembelian';
+                                $pembelian_table_prefix = '';
+                                include __DIR__ . '/_adminlte310_tbl_pembelian_verifikasi_persediaan_fragment.php';
+                                ?>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
             </div>
         </div>
     </section>
+
+<?php include __DIR__ . '/_adminlte310_pembelian_verifikasi_referensi_modals.php'; ?>
+
 </div>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
@@ -680,4 +785,24 @@
             window.addEventListener('load', initAutoCariPembelian);
         }
     })();
+
+    (function() {
+        function syncPembelianActiveTabInput() {
+            var tabInput = document.getElementById('pembelian_active_tab_input');
+            if (!tabInput || !window.jQuery) return;
+            jQuery('#pembelian-main-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var href = jQuery(e.target).attr('href') || '';
+                if (href.charAt(0) === '#') {
+                    tabInput.value = href.slice(1);
+                }
+            });
+        }
+        if (document.readyState === 'complete') {
+            syncPembelianActiveTabInput();
+        } else {
+            window.addEventListener('load', syncPembelianActiveTabInput);
+        }
+    })();
 </script>
+
+<?php include __DIR__ . '/_adminlte310_pembelian_verifikasi_referensi_init.php'; ?>

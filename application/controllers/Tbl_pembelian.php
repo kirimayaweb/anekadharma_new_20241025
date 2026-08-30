@@ -83,12 +83,7 @@ class Tbl_pembelian extends CI_Controller
 		$Tbl_pembelian = $this->_get_pembelian_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian, $disp_awal, $disp_akhir);
 
-		$data = array(
-			'Tbl_pembelian_data' => $Tbl_pembelian,
-			'date_awal' => $Get_date_awal,
-			'date_akhir' => $Get_date_akhir,
-			'start' => 0,
-		);
+		$data = $this->_pembelian_list_data_payload($Tbl_pembelian, $Get_date_awal, $Get_date_akhir);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}
 
@@ -121,13 +116,125 @@ class Tbl_pembelian extends CI_Controller
 		$Tbl_pembelian = $this->_get_pembelian_between($Get_date_awal, $Get_date_akhir);
 		$this->_set_filter_session_pembelian($Get_date_awal, $Get_date_akhir, $Tbl_pembelian, $disp_awal, $disp_akhir);
 
-		$data = array(
-			'Tbl_pembelian_data' => $Tbl_pembelian,
+		$data = $this->_pembelian_list_data_payload($Tbl_pembelian, $Get_date_awal, $Get_date_akhir);
+		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
+	}
+
+	private function _get_pembelian_active_tab()
+	{
+		$allowed = array('tab-pembelian-data', 'tab-pembelian-verifikasi');
+		$tab = trim((string) $this->input->get_post('pembelian_active_tab', TRUE));
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = trim((string) $this->session->userdata('filter_tbl_pembelian_active_tab'));
+		}
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = 'tab-pembelian-data';
+		}
+		$this->session->set_userdata('filter_tbl_pembelian_active_tab', $tab);
+		return $tab;
+	}
+
+	private function _pembelian_list_data_payload($Tbl_pembelian_data, $Get_date_awal, $Get_date_akhir)
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+		tbl_pembelian_ensure_refered_manual_audit_columns($this, 'tbl_pembelian');
+
+		$sync_info = tbl_pembelian_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
+		$Tbl_pembelian_data = $this->_get_pembelian_between($Get_date_awal, $Get_date_akhir);
+
+		$belum = tbl_penjualan_filter_belum_verified_persediaan($Tbl_pembelian_data);
+		$manual = tbl_penjualan_filter_manual_verified_persediaan($Tbl_pembelian_data);
+		$otomatis = tbl_penjualan_filter_auto_verified_persediaan($Tbl_pembelian_data);
+
+		$belum_display = tbl_pembelian_enrich_belum_persediaan_display_rows($this, $belum, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
+		$manual_display = tbl_pembelian_enrich_verified_persediaan_display_rows($manual, 'manual');
+		$otomatis_display = tbl_pembelian_enrich_verified_persediaan_display_rows($otomatis, 'auto');
+
+		$bulan_referensi = '';
+		$ts_bulan = strtotime($Get_date_awal);
+		if ($ts_bulan !== false) {
+			$bulan_referensi = date('Y-m', $ts_bulan);
+		}
+
+		return array(
+			'Tbl_pembelian_data' => $Tbl_pembelian_data,
+			'Tbl_pembelian_data_belum_persediaan' => $belum_display,
+			'Tbl_pembelian_data_persediaan_manual' => $manual_display,
+			'Tbl_pembelian_data_persediaan_otomatis' => $otomatis_display,
+			'pembelian_count_belum_persediaan' => count($belum_display),
+			'pembelian_count_persediaan_manual' => count($manual_display),
+			'pembelian_count_persediaan_otomatis' => count($otomatis_display),
+			'pembelian_verified_sync' => $sync_info,
+			'pembelian_bulan_referensi' => $bulan_referensi,
+			'pembelian_tabel_referensi' => 'tbl_pembelian',
+			'pembelian_want_jasa_referensi' => false,
+			'url_pembelian_referensi_list' => site_url('Tbl_pembelian/ajax_pembelian_referensi_persediaan_list'),
+			'url_pembelian_referensi_apply' => site_url('Tbl_pembelian/ajax_pembelian_referensi_persediaan_apply'),
+			'pembelian_active_tab' => $this->_get_pembelian_active_tab(),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
 			'start' => 0,
 		);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
+	}
+
+	public function ajax_pembelian_referensi_persediaan_list()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$want_jasa = ((string) $this->input->get_post('want_jasa', TRUE) === '1');
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan, $want_jasa);
+		$out = array();
+		foreach ($rows as $r) {
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $out,
+			'count' => count($out),
+			'bulan' => $bulan,
+		));
+	}
+
+	public function ajax_pembelian_referensi_persediaan_apply()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		$id_pembelian = (int) $this->input->post('id_pembelian', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$jumlah = trim((string) $this->input->post('jumlah', TRUE));
+		$force = ((string) $this->input->post('force', TRUE) === '1');
+		$tabel = tbl_pembelian_resolve_table($this->input->post('tabel', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$result = persediaan_gen_v2_referensi_pembelian_update_persediaan_only(
+			$this,
+			$bulan,
+			$id_pembelian,
+			$id_persediaan,
+			$tabel,
+			($jumlah === '' ? null : $jumlah),
+			$force
+		);
+		echo json_encode($result);
 	}
 
 	private function _set_filter_session_pembelian($date_awal, $date_akhir, $rows = null, $tgl_awal_display = null, $tgl_akhir_display = null)

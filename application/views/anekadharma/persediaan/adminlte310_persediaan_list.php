@@ -44,6 +44,7 @@
                             $this->load->helper('persediaan_display');
                             $Persediaan_data_barang = persediaan_filter_rows_by_kategori_tab($Persediaan_data, false);
                             $Persediaan_data_jasa = persediaan_filter_rows_by_kategori_tab($Persediaan_data, true);
+                            $Persediaan_data_verifikasi = persediaan_filter_rows_verifikasi_tanpa_sumber($Persediaan_data);
                             $Persediaan_data_draft_referensi = isset($Persediaan_data_draft_referensi) && is_array($Persediaan_data_draft_referensi)
                                 ? $Persediaan_data_draft_referensi
                                 : array();
@@ -88,7 +89,8 @@
                                         <span class="ml-2 text-muted small" id="info-jumlah-persediaan-bulan">
                                             Bulan <?php echo $bulan_label_tampil; ?> —
                                             Barang: <strong><?php echo count($Persediaan_data_barang); ?></strong> baris,
-                                            Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris
+                                            Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris,
+                                            Verifikasi: <strong class="text-danger"><?php echo count($Persediaan_data_verifikasi); ?></strong> anomali
                                             (total <?php echo count($Persediaan_data); ?> baris)
                                         </span>
                                     </div>
@@ -110,6 +112,12 @@
                                     <a class="nav-link" id="tab-persediaan-draft-referensi" data-toggle="pill" href="#panel-persediaan-draft-referensi" role="tab" aria-controls="panel-persediaan-draft-referensi" aria-selected="false">
                                         persediaan_draft_bulan_referensi (bulan sebelumnya)
                                         <span class="badge badge-secondary" id="badge-persediaan-draft-referensi"><?php echo count($Persediaan_data_draft_referensi); ?></span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="tab-persediaan-verifikasi" data-toggle="pill" href="#panel-persediaan-verifikasi" role="tab" aria-controls="panel-persediaan-verifikasi" aria-selected="false">
+                                        Verifikasi Data
+                                        <span class="badge badge-danger" id="badge-persediaan-verifikasi"><?php echo count($Persediaan_data_verifikasi); ?></span>
                                     </a>
                                 </li>
                             </ul>
@@ -167,20 +175,49 @@
                                         'tab_mode' => 'draft_referensi',
                                     )); ?>
                                 </div>
+                                <div class="tab-pane fade" id="panel-persediaan-verifikasi" role="tabpanel" aria-labelledby="tab-persediaan-verifikasi">
+                                    <div class="alert alert-danger py-2 px-3 small mb-2">
+                                        <strong>Verifikasi Data — Tanpa Sumber Stok</strong><br>
+                                        Menampilkan baris dengan <code>SA = 0</code> dan <code>Beli = 0</code>, tetapi ada
+                                        <code>total_10 &gt; 0</code> atau <code>penjualan &gt; 0</code> atau <code>pecah_satuan &gt; 0</code> atau <code>bahan_produksi &gt; 0</code>.
+                                        Rumus normal: <code>total_10 = (SA + Beli) − (Penjualan + Pecah Satuan + Bahan Produksi)</code>.
+                                        Baris kuning = selisih antara nilai <strong>total_10 DB</strong> vs <strong>kalkulasi</strong>.
+                                    </div>
+                                    <div class="d-flex align-items-center flex-wrap mb-2">
+                                        <span class="text-muted small mr-auto">
+                                            Ditemukan <strong class="text-danger"><?php echo count($Persediaan_data_verifikasi); ?></strong> baris kemungkinan tidak normal (Barang + Jasa).
+                                        </span>
+                                        <button type="button" class="btn btn-primary btn-sm btn-cetak-excel-persediaan-tab" data-filter="verifikasi" data-table="#table-persediaan-verifikasi">
+                                            <i class="fas fa-file-excel"></i> Cetak ke Excel
+                                        </button>
+                                    </div>
+                                    <?php if (empty($Persediaan_data_verifikasi)) { ?>
+                                        <div class="alert alert-success border small mb-2">
+                                            Tidak ada data anomali untuk bulan <?php echo $bulan_label_tampil; ?> — semua baris dengan SA=0 &amp; Beli=0 tidak memiliki stok/keluar.
+                                        </div>
+                                    <?php } ?>
+                                    <?php $this->load->view('anekadharma/persediaan/_persediaan_tab_verifikasi_data_table', array(
+                                        'Persediaan_rows' => $Persediaan_data_verifikasi,
+                                        'table_id' => 'table-persediaan-verifikasi',
+                                        'bulan_tampil' => $bulan_tampil,
+                                    )); ?>
+                                </div>
                             </div>
                             <script>
                             (function() {
                                 try {
                                     var subTab = localStorage.getItem('persediaan_active_data_subtab');
-                                    if (subTab !== 'jasa' && subTab !== 'draft_referensi') {
+                                    if (subTab !== 'jasa' && subTab !== 'draft_referensi' && subTab !== 'verifikasi') {
                                         return;
                                     }
                                     var tabBarang = document.getElementById('tab-persediaan-barang');
                                     var tabJasa = document.getElementById('tab-persediaan-jasa');
                                     var tabDraft = document.getElementById('tab-persediaan-draft-referensi');
+                                    var tabVerifikasi = document.getElementById('tab-persediaan-verifikasi');
                                     var panelBarang = document.getElementById('panel-persediaan-barang');
                                     var panelJasa = document.getElementById('panel-persediaan-jasa');
                                     var panelDraft = document.getElementById('panel-persediaan-draft-referensi');
+                                    var panelVerifikasi = document.getElementById('panel-persediaan-verifikasi');
                                     if (!tabBarang || !panelBarang) {
                                         return;
                                     }
@@ -201,10 +238,21 @@
                                     if (panelDraft) {
                                         panelDraft.classList.remove('show', 'active');
                                     }
+                                    if (tabVerifikasi) {
+                                        tabVerifikasi.classList.remove('active');
+                                        tabVerifikasi.setAttribute('aria-selected', 'false');
+                                    }
+                                    if (panelVerifikasi) {
+                                        panelVerifikasi.classList.remove('show', 'active');
+                                    }
                                     if (subTab === 'draft_referensi' && tabDraft && panelDraft) {
                                         tabDraft.classList.add('active');
                                         tabDraft.setAttribute('aria-selected', 'true');
                                         panelDraft.classList.add('show', 'active');
+                                    } else if (subTab === 'verifikasi' && tabVerifikasi && panelVerifikasi) {
+                                        tabVerifikasi.classList.add('active');
+                                        tabVerifikasi.setAttribute('aria-selected', 'true');
+                                        panelVerifikasi.classList.add('show', 'active');
                                     } else if (tabJasa && panelJasa) {
                                         tabJasa.classList.add('active');
                                         tabJasa.setAttribute('aria-selected', 'true');
@@ -3481,6 +3529,7 @@ window.addEventListener('load', function() {
     var urlGetPersediaanJasa = <?php echo json_encode(isset($url_get_persediaan_jasa) ? $url_get_persediaan_jasa : site_url('Persediaan/ajax_get_persediaan_jasa')); ?>;
     var urlUpdatePersediaanJasa = <?php echo json_encode(isset($url_update_persediaan_jasa) ? $url_update_persediaan_jasa : site_url('Persediaan/ajax_update_persediaan_jasa')); ?>;
     var urlHapusPersediaanJasa = <?php echo json_encode(isset($url_hapus_persediaan_jasa) ? $url_hapus_persediaan_jasa : site_url('Persediaan/ajax_hapus_persediaan_jasa')); ?>;
+    var urlHapusPersediaanVerifikasi = <?php echo json_encode(isset($url_hapus_persediaan_verifikasi) ? $url_hapus_persediaan_verifikasi : site_url('Persediaan/ajax_hapus_persediaan_verifikasi')); ?>;
     var urlCekGeneratePersediaan = <?php echo json_encode(isset($url_cek_generate_persediaan) ? $url_cek_generate_persediaan : site_url('Persediaan/ajax_cek_generate_persediaan_bulan')); ?>;
     var urlAnalisaGeneratePersediaan = <?php echo json_encode(isset($url_analisa_generate_persediaan) ? $url_analisa_generate_persediaan : site_url('Persediaan/ajax_analisa_generate_persediaan_bulan')); ?>;
     var urlAnalisaRecalculatePersediaan = <?php echo json_encode(isset($url_analisa_recalculate_persediaan) ? $url_analisa_recalculate_persediaan : site_url('Persediaan/ajax_analisa_recalculate_persediaan')); ?>;
@@ -5342,6 +5391,72 @@ window.addEventListener('load', function() {
 
     bindPersediaanJasaRowActions();
 
+    function reloadPersediaanHalamanVerifikasi() {
+        savePersediaanMainTabKey('data');
+        savePersediaanDataSubTabKey('verifikasi');
+        saveCurrentPersediaanTabs();
+        $('#form-persediaan-bulan').submit();
+    }
+
+    function hapusPersediaanVerifikasiById(id, namabarang) {
+        var label = namabarang ? (' "' + namabarang + '"') : '';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Hapus ke Arsip?',
+            html: 'Record persediaan ID <strong>' + id + '</strong>' + label
+                + ' akan dipindahkan ke tabel <code>persediaan_hapus</code> (ID asli dipertahankan) lalu dihapus dari persediaan aktif.',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#d33'
+        }).then(function(result) {
+            if (!result.isConfirmed) {
+                return;
+            }
+            var formData = new FormData();
+            formData.append('id', String(id));
+            fetch(urlHapusPersediaanVerifikasi, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(res) {
+                if (res && (res.ok || res.success)) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: res.message || 'Record dipindahkan ke persediaan_hapus.',
+                        confirmButtonText: 'OK'
+                    }).then(function() {
+                        reloadPersediaanHalamanVerifikasi();
+                    });
+                    return;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: (res && res.message) ? res.message : 'Gagal menghapus record.'
+                });
+            })
+            .catch(function() {
+                Swal.fire({ icon: 'error', title: 'Kesalahan', text: 'Terjadi kesalahan saat menghapus data.' });
+            });
+        });
+    }
+
+    $(document).on('click', '.btn-hapus-persediaan-verifikasi', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = parseInt($(this).attr('data-id') || '0', 10) || 0;
+        if (id <= 0) {
+            return;
+        }
+        var nama = $(this).attr('data-namabarang') || '';
+        hapusPersediaanVerifikasiById(id, nama);
+    });
+
     $('#ubah_jasa_hpp, #ubah_jasa_nilai_persediaan').on('input keyup paste', function() {
         var el = this;
         setTimeout(function() { formatAngkaInputField(el); }, 0);
@@ -5432,6 +5547,9 @@ window.addEventListener('load', function() {
         if (href === '#panel-persediaan-draft-referensi') {
             return 'draft_referensi';
         }
+        if (href === '#panel-persediaan-verifikasi') {
+            return 'verifikasi';
+        }
         return 'barang';
     }
 
@@ -5497,7 +5615,8 @@ window.addEventListener('load', function() {
         var map = {
             barang: '#tab-persediaan-barang',
             jasa: '#tab-persediaan-jasa',
-            draft_referensi: '#tab-persediaan-draft-referensi'
+            draft_referensi: '#tab-persediaan-draft-referensi',
+            verifikasi: '#tab-persediaan-verifikasi'
         };
         var sel = map[key] || map.barang;
         if ($(sel).length) {
@@ -13164,6 +13283,28 @@ window.addEventListener('load', function() {
                 zeroRecords: 'Tidak ada data persediaan untuk bulan ini'
             }
         };
+        if (selector === '#table-persediaan-verifikasi') {
+            dtOpts.footerCallback = function() {
+                var api = this.api();
+                var sumHpp = 0;
+                var sumT10 = 0;
+                var sumNom = 0;
+                api.rows({ search: 'applied' }).every(function() {
+                    var node = this.node();
+                    if (!node) {
+                        return;
+                    }
+                    var $row = $(node);
+                    sumHpp += parseFloat($row.find('td.pv-col-hpp').attr('data-num') || 0) || 0;
+                    sumT10 += parseFloat($row.find('td.pv-col-total10').attr('data-num') || 0) || 0;
+                    sumNom += parseFloat($row.find('td.pv-col-nominal').attr('data-num') || 0) || 0;
+                });
+                var $foot = $(api.table().footer());
+                $foot.find('.pv-foot-hpp').html(genProsesDtFormatNom(sumHpp));
+                $foot.find('.pv-foot-total10').html(genProsesDtFormatQty(sumT10));
+                $foot.find('.pv-foot-nominal').html(genProsesDtFormatNom(sumNom));
+            };
+        }
         var dt = $sel.DataTable(dtOpts);
         if (fixedLeft > 0 && $.fn.dataTable && $.fn.dataTable.FixedColumns) {
             try {
@@ -13201,6 +13342,7 @@ window.addEventListener('load', function() {
         initPersediaanTabDataTable('#table-persediaan-barang');
         initPersediaanTabDataTable('#table-persediaan-jasa');
         initPersediaanTabDataTable('#table-persediaan-draft-referensi');
+        initPersediaanTabDataTable('#table-persediaan-verifikasi');
         setTimeout(adjustAllPersediaanDataTableAreas, 300);
     } catch (dtErr) {
         console.warn('DataTable persediaan:', dtErr);
@@ -14493,8 +14635,61 @@ window.addEventListener('load', function() {
 
     $(document).on('click', '.btn-cetak-excel-persediaan-tab', function(e) {
         e.preventDefault();
-        exportPersediaanTabExcel($(this).data('filter') || 'barang');
+        var filter = $(this).data('filter') || 'barang';
+        if (filter === 'verifikasi') {
+            exportPersediaanVerifikasiTabExcel($(this).data('table') || '#table-persediaan-verifikasi');
+            return;
+        }
+        exportPersediaanTabExcel(filter);
     });
+
+    function exportPersediaanVerifikasiTabExcel(tableSel) {
+        var $table = $(tableSel);
+        if (!$table.length) {
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tabel verifikasi tidak ditemukan.' });
+            return;
+        }
+        var headers = [];
+        $table.find('thead tr:first th').each(function() {
+            headers.push($(this).text().trim());
+        });
+        var rows = [];
+        if ($.fn.DataTable && $.fn.DataTable.isDataTable(tableSel)) {
+            $(tableSel).DataTable().rows({ search: 'applied' }).every(function() {
+                var node = this.node();
+                if (!node) return;
+                var line = [];
+                $(node).find('td').each(function() {
+                    line.push($(this).text().replace(/\s+/g, ' ').trim());
+                });
+                rows.push(line);
+            });
+        } else {
+            $table.find('tbody tr').each(function() {
+                var line = [];
+                $(this).find('td').each(function() {
+                    line.push($(this).text().replace(/\s+/g, ' ').trim());
+                });
+                if (line.length) rows.push(line);
+            });
+        }
+        function escXml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+        var xml = '<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Verifikasi"><Table>';
+        xml += '<Row>'; headers.forEach(function(h) { xml += '<Cell><Data ss:Type="String">' + escXml(h) + '</Data></Cell>'; }); xml += '</Row>';
+        rows.forEach(function(line) {
+            xml += '<Row>'; line.forEach(function(c) { xml += '<Cell><Data ss:Type="String">' + escXml(c) + '</Data></Cell>'; }); xml += '</Row>';
+        });
+        xml += '</Table></Worksheet></Workbook>';
+        var blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Persediaan_Verifikasi_' + ($('#bulan_persediaan').val() || 'bulan') + '.xls';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 
     $(document).on('click', '#btn-cetak-excel-draft-referensi', function(e) {
         e.preventDefault();

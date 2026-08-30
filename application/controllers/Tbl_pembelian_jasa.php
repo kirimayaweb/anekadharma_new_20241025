@@ -176,6 +176,10 @@ class Tbl_pembelian_jasa extends CI_Controller
 
 	private function _build_pembelian_jasa_list_data($Get_date_awal, $Get_date_akhir)
 	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+		tbl_pembelian_ensure_refered_manual_audit_columns($this, 'tbl_pembelian_jasa');
+
+		$sync_info = tbl_pembelian_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian_jasa');
 		$Tbl_pembelian = $this->_get_pembelian_jasa_between($Get_date_awal, $Get_date_akhir);
 
 		$uuid_spop_list = array();
@@ -205,8 +209,35 @@ class Tbl_pembelian_jasa extends CI_Controller
 			}
 		}
 
+		$belum = tbl_penjualan_filter_belum_verified_persediaan($Tbl_pembelian);
+		$manual = tbl_penjualan_filter_manual_verified_persediaan($Tbl_pembelian);
+		$otomatis = tbl_penjualan_filter_auto_verified_persediaan($Tbl_pembelian);
+
+		$belum_display = tbl_pembelian_enrich_belum_persediaan_display_rows($this, $belum, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian_jasa');
+		$manual_display = tbl_pembelian_enrich_verified_persediaan_display_rows($manual, 'manual');
+		$otomatis_display = tbl_pembelian_enrich_verified_persediaan_display_rows($otomatis, 'auto');
+
+		$bulan_referensi = '';
+		$ts_bulan = strtotime($Get_date_awal);
+		if ($ts_bulan !== false) {
+			$bulan_referensi = date('Y-m', $ts_bulan);
+		}
+
 		return array(
 			'Tbl_pembelian_data' => $Tbl_pembelian,
+			'Tbl_pembelian_data_belum_persediaan' => $belum_display,
+			'Tbl_pembelian_data_persediaan_manual' => $manual_display,
+			'Tbl_pembelian_data_persediaan_otomatis' => $otomatis_display,
+			'pembelian_count_belum_persediaan' => count($belum_display),
+			'pembelian_count_persediaan_manual' => count($manual_display),
+			'pembelian_count_persediaan_otomatis' => count($otomatis_display),
+			'pembelian_verified_sync' => $sync_info,
+			'pembelian_bulan_referensi' => $bulan_referensi,
+			'pembelian_tabel_referensi' => 'tbl_pembelian_jasa',
+			'pembelian_want_jasa_referensi' => true,
+			'url_pembelian_referensi_list' => site_url('Tbl_pembelian_jasa/ajax_pembelian_referensi_persediaan_list'),
+			'url_pembelian_referensi_apply' => site_url('Tbl_pembelian_jasa/ajax_pembelian_referensi_persediaan_apply'),
+			'pembelian_active_tab' => $this->_get_pembelian_jasa_active_tab(),
 			'pengajuan_by_uuid_spop' => $pengajuan_by_uuid_spop,
 			'pengajuan_sum_by_uuid_spop' => $pengajuan_sum_by_uuid_spop,
 			'excel_export_ids_str' => implode(',', $excel_export_ids),
@@ -215,6 +246,82 @@ class Tbl_pembelian_jasa extends CI_Controller
 			'date_akhir' => $Get_date_akhir,
 			'start' => 0,
 		);
+	}
+
+	private function _get_pembelian_jasa_active_tab()
+	{
+		$allowed = array('tab-pembelian-jasa-data', 'tab-pembelian-jasa-verifikasi');
+		$tab = trim((string) $this->input->get_post('pembelian_active_tab', TRUE));
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = trim((string) $this->session->userdata('filter_tbl_pembelian_jasa_active_tab'));
+		}
+		if ($tab === '' || !in_array($tab, $allowed, true)) {
+			$tab = 'tab-pembelian-jasa-data';
+		}
+		$this->session->set_userdata('filter_tbl_pembelian_jasa_active_tab', $tab);
+		return $tab;
+	}
+
+	public function ajax_pembelian_referensi_persediaan_list()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan, true);
+		$out = array();
+		foreach ($rows as $r) {
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $out,
+			'count' => count($out),
+			'bulan' => $bulan,
+		));
+	}
+
+	public function ajax_pembelian_referensi_persediaan_apply()
+	{
+		$this->output->set_content_type('application/json');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		$id_pembelian = (int) $this->input->post('id_pembelian', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$jumlah = trim((string) $this->input->post('jumlah', TRUE));
+		$force = ((string) $this->input->post('force', TRUE) === '1');
+		$tabel = tbl_pembelian_resolve_table($this->input->post('tabel', TRUE));
+		if ($tabel !== 'tbl_pembelian_jasa') {
+			$tabel = 'tbl_pembelian_jasa';
+		}
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$result = persediaan_gen_v2_referensi_pembelian_update_persediaan_only(
+			$this,
+			$bulan,
+			$id_pembelian,
+			$id_persediaan,
+			$tabel,
+			($jumlah === '' ? null : $jumlah),
+			$force
+		);
+		echo json_encode($result);
 	}
 
 	private function _get_barang_dari_persediaan($uuid_barang)

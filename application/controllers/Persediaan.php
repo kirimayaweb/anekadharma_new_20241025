@@ -604,6 +604,7 @@ class Persediaan extends CI_Controller
 			'url_get_persediaan_jasa' => site_url('Persediaan/ajax_get_persediaan_jasa'),
 			'url_update_persediaan_jasa' => site_url('Persediaan/ajax_update_persediaan_jasa'),
 			'url_hapus_persediaan_jasa' => site_url('Persediaan/ajax_hapus_persediaan_jasa'),
+			'url_hapus_persediaan_verifikasi' => site_url('Persediaan/ajax_hapus_persediaan_verifikasi'),
 			'url_cek_generate_persediaan' => site_url('Persediaan/ajax_cek_generate_persediaan_bulan'),
 			'url_analisa_generate_persediaan' => site_url('Persediaan/ajax_analisa_generate_persediaan_bulan'),
 			'url_generate_persediaan_base' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN'),
@@ -1279,6 +1280,40 @@ class Persediaan extends CI_Controller
 			'message' => 'Data jasa berhasil dihapus.',
 			'id' => $id,
 		));
+	}
+
+	/**
+	 * AJAX: arsipkan record persediaan (tab Verifikasi) ke persediaan_hapus.
+	 */
+	public function ajax_hapus_persediaan_verifikasi()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+
+		header('Content-Type: application/json; charset=UTF-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$id = (int) $this->input->post('id', TRUE);
+		if ($id <= 0) {
+			echo json_encode(array('ok' => false, 'message' => 'ID persediaan tidak valid.'));
+			return;
+		}
+
+		$alasan = trim((string) $this->input->post('alasan', TRUE));
+		if ($alasan === '') {
+			$alasan = 'Hapus dari tab Verifikasi Data — tanpa sumber stok (SA=0, Beli=0)';
+		}
+
+		$row = $this->Persediaan_model->get_by_id($id);
+		if (!$row) {
+			echo json_encode(array('ok' => false, 'message' => 'Data persediaan tidak ditemukan.'));
+			return;
+		}
+
+		$result = persediaan_hapus_move_by_id($this, $id, $alasan, $this->persediaan_current_user_email());
+		echo json_encode($result);
 	}
 
 	private function get_rekap_total_steps()

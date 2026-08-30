@@ -49,6 +49,45 @@
             $row_count = !empty($Tbl_pembelian_data) ? count($Tbl_pembelian_data) : 0;
         }
 
+        if (!isset($Tbl_pembelian_data_belum_persediaan)) {
+            $Tbl_pembelian_data_belum_persediaan = array();
+        }
+        if (!isset($Tbl_pembelian_data_persediaan_manual)) {
+            $Tbl_pembelian_data_persediaan_manual = array();
+        }
+        if (!isset($Tbl_pembelian_data_persediaan_otomatis)) {
+            $Tbl_pembelian_data_persediaan_otomatis = array();
+        }
+        if (!isset($pembelian_count_belum_persediaan)) {
+            $pembelian_count_belum_persediaan = count($Tbl_pembelian_data_belum_persediaan);
+        }
+        if (!isset($pembelian_count_persediaan_manual)) {
+            $pembelian_count_persediaan_manual = count($Tbl_pembelian_data_persediaan_manual);
+        }
+        if (!isset($pembelian_count_persediaan_otomatis)) {
+            $pembelian_count_persediaan_otomatis = count($Tbl_pembelian_data_persediaan_otomatis);
+        }
+        if (!isset($pembelian_active_tab) || $pembelian_active_tab === '') {
+            $pembelian_active_tab = 'tab-pembelian-jasa-data';
+        }
+
+        $pembelian_jasa_main_tabs = array(
+            array(
+                'tab_id' => 'tab-pembelian-jasa-data',
+                'link_id' => 'tab-pembelian-jasa-data-link',
+                'label' => 'Data Pembelian Jasa',
+                'count' => (int) $row_count,
+                'badge_class' => 'badge-secondary',
+            ),
+            array(
+                'tab_id' => 'tab-pembelian-jasa-verifikasi',
+                'link_id' => 'tab-pembelian-jasa-verifikasi-link',
+                'label' => 'Data Verifikasi',
+                'count' => (int) $pembelian_count_belum_persediaan,
+                'badge_class' => 'badge-warning',
+            ),
+        );
+
         ?>
 
         <div class="box box-warning box-solid">
@@ -72,6 +111,7 @@
                                 ?>
 
                                 <form id="form-cari-pembelian-jasa" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                    <input type="hidden" name="pembelian_active_tab" id="pembelian_jasa_active_tab_input" value="<?php echo htmlspecialchars($pembelian_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
                                     <div class="row">
 
                                         <div class="col-md-1" text-align="right" align="right"></div>
@@ -128,6 +168,23 @@
                             <i class="fa fa-spinner fa-spin fa-2x text-danger"></i>
                             <p class="mt-2 mb-0">Memuat data pembelian jasa...</p>
                         </div>
+
+                        <ul class="nav nav-tabs mb-3" id="pembelian-jasa-main-tabs" role="tablist">
+                            <?php foreach ($pembelian_jasa_main_tabs as $tab_cfg) :
+                                $tab_nav_active = ($pembelian_active_tab === $tab_cfg['tab_id']) ? ' active' : '';
+                            ?>
+                                <li class="nav-item">
+                                    <a class="nav-link<?php echo $tab_nav_active; ?>" id="<?php echo htmlspecialchars($tab_cfg['link_id'], ENT_QUOTES, 'UTF-8'); ?>"
+                                        data-toggle="tab" href="#<?php echo htmlspecialchars($tab_cfg['tab_id'], ENT_QUOTES, 'UTF-8'); ?>" role="tab">
+                                        <?php echo htmlspecialchars($tab_cfg['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                        <span class="badge <?php echo htmlspecialchars($tab_cfg['badge_class'], ENT_QUOTES, 'UTF-8'); ?> badge-count ml-1"><?php echo (int) $tab_cfg['count']; ?></span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="tab-content" id="pembelian-jasa-main-tabs-content">
+                            <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-jasa-data') ? ' show active' : ''; ?>" id="tab-pembelian-jasa-data" role="tabpanel">
                         <p class="text-muted mb-2"><small>Menampilkan <strong><?php echo (int) $row_count; ?></strong> baris data.</small></p>
 
                         <table id="tblPembelianJasaList" class="display nowrap" style="width:100%">
@@ -530,12 +587,38 @@
                             </tfoot>
 
                         </table>
+
+                            </div>
+                            <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-jasa-verifikasi') ? ' show active' : ''; ?>" id="tab-pembelian-jasa-verifikasi" role="tabpanel">
+                                <div class="alert alert-warning py-2 px-3 small mb-3">
+                                    <strong>Verifikasi Persediaan Jasa</strong> — sub-tab Belum / Manual / Otomatis.
+                                    Referensi persediaan dari tab <strong>Jasa</strong> di menu Persediaan.
+                                    <?php
+                                    if (!empty($pembelian_verified_sync) && is_array($pembelian_verified_sync) && !empty($pembelian_verified_sync['ok'])) {
+                                        echo ' <span class="text-muted">Sync: refered='
+                                            . (int) (isset($pembelian_verified_sync['refered']) ? $pembelian_verified_sync['refered'] : 0)
+                                            . ', belum='
+                                            . (int) (isset($pembelian_verified_sync['belum']) ? $pembelian_verified_sync['belum'] : 0)
+                                            . '.</span>';
+                                    }
+                                    ?>
+                                </div>
+                                <?php
+                                $pembelian_verifikasi_ns = 'pembelian-jasa';
+                                $pembelian_table_prefix = 'Jasa';
+                                include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_tbl_pembelian_verifikasi_persediaan_fragment.php';
+                                ?>
+                            </div>
+                        </div>
                     </div>
                     <!-- /.card-body -->
                 </div>
             </div>
         </div>
     </section>
+
+<?php include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_pembelian_verifikasi_referensi_modals.php'; ?>
+
 </div>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
@@ -716,4 +799,39 @@
             window.addEventListener('load', initAutoCariPembelianJasa);
         }
     })();
+
+    (function() {
+        function syncPembelianJasaActiveTabInput() {
+            var tabInput = document.getElementById('pembelian_jasa_active_tab_input');
+            if (!tabInput || !window.jQuery) return;
+            jQuery('#pembelian-jasa-main-tabs a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+                var href = jQuery(e.target).attr('href') || '';
+                if (href.charAt(0) === '#') {
+                    tabInput.value = href.slice(1);
+                }
+            });
+        }
+        if (document.readyState === 'complete') {
+            syncPembelianJasaActiveTabInput();
+        } else {
+            window.addEventListener('load', syncPembelianJasaActiveTabInput);
+        }
+    })();
 </script>
+
+<?php
+$pem_ref_cfg = array(
+    'table_sel' => '#tglSPOPFreezeJasaBelumPersediaan',
+    'subtabs_content' => '#pembelian-jasa-persediaan-subtabs-content',
+    'subtabs_ul' => '#pembelian-jasa-persediaan-subtabs',
+    'main_tab_href' => '#tab-pembelian-jasa-verifikasi',
+    'main_tabs' => '#pembelian-jasa-main-tabs',
+    'main_data_tab_href' => '#tab-pembelian-jasa-data',
+    'badge_link' => '#tab-pembelian-jasa-verifikasi-link',
+    'session_subtab_key' => 'pem_jasa_persediaan_subtab',
+    'subtab_manual_id' => 'pembelian-jasa-persediaan-manual',
+    'tabel' => 'tbl_pembelian_jasa',
+    'want_jasa' => '1',
+);
+include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_pembelian_verifikasi_referensi_init.php';
+?>
