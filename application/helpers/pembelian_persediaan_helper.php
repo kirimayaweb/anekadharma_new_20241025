@@ -5931,6 +5931,9 @@ function persediaan_recalculate_flush_accum_to_db($CI, $accum)
 		$beli = max(0, (int) floor(persediaan_parse_angka(isset($cur->beli) ? $cur->beli : 0)));
 		$hpp = persediaan_parse_angka(isset($cur->hpp) ? $cur->hpp : 0);
 		$penj = max(0, (int) floor(isset($data['penjualan']) ? $data['penjualan'] : 0));
+		if (persediaan_row_tanpa_sumber_stok_masuk($cur)) {
+			$penj = 0;
+		}
 		$pecah = max(0, (int) floor(persediaan_parse_angka(isset($cur->pecah_satuan) ? $cur->pecah_satuan : 0)));
 		$produksi = max(0, (int) floor(persediaan_parse_angka(isset($cur->bahan_produksi) ? $cur->bahan_produksi : 0)));
 		$gross = $sa + $beli;
@@ -5943,6 +5946,9 @@ function persediaan_recalculate_flush_accum_to_db($CI, $accum)
 		$nilai = (int) floor($total_10 * $hpp);
 
 		$units = isset($data['units']) && is_array($data['units']) ? $data['units'] : array();
+		if (persediaan_row_tanpa_sumber_stok_masuk($cur)) {
+			$units = array();
+		}
 		$sum_unit = 0;
 		foreach ($units as $nilai_unit) {
 			$sum_unit += max(0, (int) floor($nilai_unit));
@@ -6177,8 +6183,9 @@ function persediaan_generate_recalculate_finalize_keluar_per_persediaan_bulan($C
 		$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : 0);
 		$gross = $sa + $beli;
 
-		$penj = 0;
-		if (isset($accum[$pers_id]['penjualan'])) {
+		if (persediaan_row_tanpa_sumber_stok_masuk($row)) {
+			$penj = 0;
+		} elseif (isset($accum[$pers_id]['penjualan'])) {
 			$penj = max(0, (int) floor($accum[$pers_id]['penjualan']));
 		} elseif (isset($keluar_agg[$pers_id]['penjualan'])) {
 			$penj = max(0, (int) floor($keluar_agg[$pers_id]['penjualan']));
@@ -6410,6 +6417,10 @@ function persediaan_recalculate_flush_penjualan_accum_net_bulan($CI, $accum)
 			continue;
 		}
 
+		if (persediaan_row_tanpa_sumber_stok_masuk($cur)) {
+			continue;
+		}
+
 		$penj = max(0, (int) floor(isset($data['penjualan']) ? $data['penjualan'] : 0));
 		if ($penj <= 0) {
 			continue;
@@ -6505,14 +6516,18 @@ function persediaan_recalculate_refresh_total_10_penjualan_bulan($CI, $ctx)
 		$pecah = max(0, (int) floor(persediaan_parse_angka(isset($row->pecah_satuan) ? $row->pecah_satuan : 0)));
 		$produksi = max(0, (int) floor(persediaan_parse_angka(isset($row->bahan_produksi) ? $row->bahan_produksi : 0)));
 
-		$jml_field = max(0, (int) floor(persediaan_parse_angka($row->penjualan)));
-		$jml_tbl = persediaan_recalculate_sum_penjualan_for_row(
-			$CI,
-			$ctx['tgl_awal'],
-			$ctx['tgl_akhir'],
-			$row
-		);
-		$jml_penjualan = max($jml_field, $jml_tbl);
+		if (persediaan_row_tanpa_sumber_stok_masuk($row)) {
+			$jml_penjualan = 0;
+		} else {
+			$jml_field = max(0, (int) floor(persediaan_parse_angka($row->penjualan)));
+			$jml_tbl = persediaan_recalculate_sum_penjualan_for_row(
+				$CI,
+				$ctx['tgl_awal'],
+				$ctx['tgl_akhir'],
+				$row
+			);
+			$jml_penjualan = max($jml_field, $jml_tbl);
+		}
 
 		if ($jml_penjualan > 0) {
 			$stats['with_penjualan']++;
@@ -7057,6 +7072,24 @@ function persediaan_recalculate_penjualan_phase_once($CI, $ctx)
 		$kolom_unit = penjualan_resolve_kolom_persediaan_unit_dari_penjualan($CI, $row_penjualan, false);
 		$pers_row = $match['row'];
 		$pers_id = (int) $pers_row->id;
+
+		if (persediaan_row_tanpa_sumber_stok_masuk($pers_row)) {
+			$batch_skip++;
+			if ($row_penjualan->id > 0 && function_exists('tbl_penjualan_set_verified_persediaan')) {
+				tbl_penjualan_set_verified_persediaan($CI, (int) $row_penjualan->id, null);
+			}
+			if (count($batch_items) < 20) {
+				$batch_items[] = array(
+					'status' => 'SKIP',
+					'fase' => 'penjualan',
+					'id_penjualan' => (int) $row_penjualan->id,
+					'id_persediaan' => $pers_id,
+					'nama_barang' => $row_penjualan->nama_barang,
+					'keterangan' => 'Lewati update penjualan: persediaan SA=0 & Beli=0 — verifikasi manual',
+				);
+			}
+			continue;
+		}
 
 		if (!isset($accum[$pers_id])) {
 			$cur = $CI->db->where('id', $pers_id)->limit(1)->get('persediaan')->row();
@@ -10371,6 +10404,10 @@ function persediaan_generate_recalculate_accum_tambah_penjualan($CI, &$accum, $r
 		return 0;
 	}
 
+	if (persediaan_row_tanpa_sumber_stok_masuk($row)) {
+		return 0;
+	}
+
 	$stok = persediaan_generate_recalculate_stok_tersedia_accum($row, $accum, $use_net_stock);
 	if ($stok <= 0) {
 		return 0;
@@ -11095,8 +11132,27 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 
 	$tambah = max(0, (int) floor(persediaan_parse_angka($tambah_jumlah)));
 	$penjualan_lama = max(0, (int) floor(persediaan_parse_angka(isset($row->penjualan) ? $row->penjualan : 0)));
-	$penjualan_baru = $penjualan_lama + $tambah;
 	$total_10_lama = max(0, (int) floor(persediaan_parse_angka(isset($row->total_10) ? $row->total_10 : 0)));
+	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : 0);
+
+	if (persediaan_row_tanpa_sumber_stok_masuk($row)) {
+		return array(
+			'skipped' => true,
+			'penjualan_lama' => (string) (int) floor($penjualan_lama),
+			'penjualan_baru' => (string) (int) floor($penjualan_lama),
+			'total_10_lama' => (string) (int) floor($total_10_lama),
+			'total_10' => (string) (int) floor($total_10_lama),
+			'sisa_stock' => (string) (int) floor($total_10_lama),
+			'nilai_persediaan' => (string) (int) floor($total_10_lama * $hpp),
+			'kolom_unit' => '',
+			'nama_unit' => isset($row_penjualan->unit) ? trim((string) $row_penjualan->unit) : '',
+			'unit_lama' => '0',
+			'unit_baru' => '0',
+			'tambah' => '0',
+		);
+	}
+
+	$penjualan_baru = $penjualan_lama + $tambah;
 	$total_10 = max(0, $total_10_lama - $tambah);
 	$hpp = persediaan_parse_angka(isset($row->hpp) ? $row->hpp : 0);
 	$nilai = (int) floor($total_10 * $hpp);
@@ -11325,6 +11381,25 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 			'satuan' => $satuan,
 			'jumlah_penjualan' => (string) $jumlah,
 			'keterangan' => 'Record persediaan tidak ditemukan setelah cocokkan ' . ($match_via !== '' ? $match_via : 'lookup'),
+		);
+	}
+
+	if (persediaan_row_tanpa_sumber_stok_masuk($existing)) {
+		if ($id > 0 && function_exists('tbl_penjualan_set_verified_persediaan')) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array(
+			'fase' => 'penjualan',
+			'aksi' => 'TIDAK_COCOK',
+			'id_penjualan' => $id,
+			'id_persediaan' => (int) $existing->id,
+			'namabarang' => $nama,
+			'satuan' => $satuan,
+			'hpp' => $harga,
+			'spop' => $spop,
+			'uuid_persediaan' => $uuid_p,
+			'jumlah_penjualan' => (string) $jumlah,
+			'keterangan' => 'Lewati update penjualan: persediaan SA=0 & Beli=0 (tanpa sumber stok) — verifikasi/referensi manual di tab penjualan',
 		);
 	}
 
@@ -27522,6 +27597,18 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 			'aksi' => 'GAGAL',
 			'kategori' => 'tidak_masuk',
 			'keterangan' => 'Record persediaan hilang setelah lookup',
+		));
+	}
+
+	if (persediaan_row_tanpa_sumber_stok_masuk($existing)) {
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'TIDAK_MASUK',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => 'Lewati update penjualan: persediaan SA=0 & Beli=0 (tanpa sumber stok) — verifikasi/referensi manual di tab penjualan',
 		));
 	}
 

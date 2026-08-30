@@ -224,6 +224,18 @@ function persediaan_filter_rows_tab_data($rows)
 }
 
 /**
+ * Record tanpa sumber stok masuk (SA=0 dan Beli=0).
+ * Generate/recalculate tidak boleh mengisi field penjualan pada kondisi ini.
+ */
+function persediaan_row_tanpa_sumber_stok_masuk($row)
+{
+	$sa = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'sa'))));
+	$beli = max(0, (int) floor(persediaan_parse_angka(persediaan_row_get($row, 'beli'))));
+
+	return ($sa <= 0 && $beli <= 0);
+}
+
+/**
  * Record tanpa sumber stok (SA=0 dan Beli=0) tetapi ada stok/keluar — kemungkinan tidak normal.
  */
 function persediaan_row_is_verifikasi_tanpa_sumber($row)

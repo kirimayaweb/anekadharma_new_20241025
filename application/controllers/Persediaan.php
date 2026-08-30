@@ -5309,6 +5309,12 @@ class Persediaan extends CI_Controller
 				continue;
 			}
 
+			if (persediaan_row_tanpa_sumber_stok_masuk($pers)) {
+				$base['keterangan'] = 'Lewati update penjualan: persediaan SA=0 & Beli=0 — verifikasi manual di tab penjualan';
+				$pending[] = $base;
+				continue;
+			}
+
 			$pid = (int) $pers->id;
 			if (!isset($agg[$pid])) {
 				$agg[$pid] = array(
@@ -5343,6 +5349,9 @@ class Persediaan extends CI_Controller
 		foreach ($agg as $pid => $info) {
 			$pers = isset($by_id[$pid]) ? $by_id[$pid] : null;
 			if (!$pers) {
+				continue;
+			}
+			if (persediaan_row_tanpa_sumber_stok_masuk($pers)) {
 				continue;
 			}
 			$penjualan_baru = $info['penjualan_lama'] + $info['jumlah'];
@@ -5480,6 +5489,10 @@ class Persediaan extends CI_Controller
 		$id_persediaan = (int) $id_persediaan;
 		$pers = $this->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
 		if (!$pers) {
+			return null;
+		}
+		$this->load->helper('persediaan_display');
+		if (persediaan_row_tanpa_sumber_stok_masuk($pers)) {
 			return null;
 		}
 		$jumlah = (float) $jumlah;
