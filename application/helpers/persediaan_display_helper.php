@@ -2482,6 +2482,11 @@ function persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awa
 		if (!empty($row->match_persediaan)) {
 			continue;
 		}
+		$CI->load->helper('pembelian_persediaan');
+		if (function_exists('sys_unit_produk_bahan_is_manual_verified_persediaan')
+			&& sys_unit_produk_bahan_is_manual_verified_persediaan($row)) {
+			continue;
+		}
 		$jumlah = isset($row->jumlah_bahan_num) ? (float) $row->jumlah_bahan_num : 0;
 		if ($jumlah <= 0) {
 			continue;

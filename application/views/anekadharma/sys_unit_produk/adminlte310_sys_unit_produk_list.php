@@ -3,6 +3,22 @@ $bulan_tampil = isset($bulan_produksi_selected) && $bulan_produksi_selected !== 
     ? $bulan_produksi_selected
     : date('Y-m');
 $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bulan : site_url('Sys_unit_produk/ajax_list_by_bulan');
+$url_ajax_verifikasi_persediaan_by_bulan = isset($url_ajax_verifikasi_persediaan_by_bulan)
+    ? $url_ajax_verifikasi_persediaan_by_bulan
+    : site_url('Sys_unit_produk/ajax_verifikasi_persediaan_by_bulan');
+$produksi_verifikasi_persediaan = isset($produksi_verifikasi_persediaan) && is_array($produksi_verifikasi_persediaan)
+    ? $produksi_verifikasi_persediaan
+    : array();
+$count_verifikasi_bahan = isset($produksi_verifikasi_persediaan['count_bahan_belum'])
+    ? (int) $produksi_verifikasi_persediaan['count_bahan_belum']
+    : (isset($produksi_verifikasi_persediaan['count_bahan_tidak_ada'])
+        ? (int) $produksi_verifikasi_persediaan['count_bahan_tidak_ada']
+        : 0);
+$produksi_active_tab = isset($produksi_active_tab) && $produksi_active_tab !== ''
+    ? $produksi_active_tab
+    : 'tab-produksi-data';
+$tab_verifikasi_active = ($produksi_active_tab === 'tab-produksi-verifikasi');
+$tab_data_active = ($produksi_active_tab === 'tab-produksi-data');
 ?>
 <div class="content-wrapper">
 
@@ -54,15 +70,11 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
                             <div class="col-auto d-flex align-items-center flex-wrap">
                                 <label for="bulan_produksi" class="mb-0 mr-2">Bulan:</label>
                                 <input type="month" id="bulan_produksi" name="bulan_produksi" class="form-control d-inline-block" style="width:auto;" value="<?php echo htmlspecialchars($bulan_tampil, ENT_QUOTES, 'UTF-8'); ?>">
-                                <span class="ml-2 small" id="info-jumlah-produksi-bulan">
+                                <span class="ml-2 small d-none" id="info-jumlah-produksi-bulan">
                                     Menampilkan <?php echo count($Sys_unit_produk_data); ?> data — bulan <?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?>
                                 </span>
                             </div>
                         </div>
-
-
-
-
                     </div>
                     <!-- <br /> -->
 
@@ -82,11 +94,44 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
                         <div class="row">
                             <div class="col-12 col-sm-12">
                                 <div class="card card-primary card-tabs">
+                                    <div class="card-header p-0 pt-1">
+                                        <ul class="nav nav-tabs" id="produksi-main-tabs" role="tablist">
+                                            <li class="nav-item">
+                                                <a class="nav-link<?php echo $tab_data_active ? ' active' : ''; ?>"
+                                                    id="tab-produksi-data-link"
+                                                    data-toggle="tab"
+                                                    href="#tab-produksi-data"
+                                                    role="tab"
+                                                    aria-controls="tab-produksi-data"
+                                                    aria-selected="<?php echo $tab_data_active ? 'true' : 'false'; ?>">
+                                                    Data Produksi
+                                                    <span class="badge badge-secondary ml-1" id="badge-count-data-produksi"><?php echo count($Sys_unit_produk_data); ?></span>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a class="nav-link<?php echo $tab_verifikasi_active ? ' active' : ''; ?>"
+                                                    id="tab-produksi-verifikasi-link"
+                                                    data-toggle="tab"
+                                                    href="#tab-produksi-verifikasi"
+                                                    role="tab"
+                                                    aria-controls="tab-produksi-verifikasi"
+                                                    aria-selected="<?php echo $tab_verifikasi_active ? 'true' : 'false'; ?>">
+                                                    Verifikasi Persediaan
+                                                    <span class="badge badge-warning ml-1" id="badge-count-verifikasi-bahan"><?php echo (int) $count_verifikasi_bahan; ?></span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
 
                                     <div class="card-body">
-                                        <div class="tab-content" id="custom-tabs-one-tabContent">
-                                            <div class="tab-pane fade show active" id="custom-tabs-one-home" role="tabpanel" aria-labelledby="custom-tabs-one-home-tab">
-
+                                        <div class="tab-content" id="produksi-main-tabs-content">
+                                            <div class="tab-pane fade<?php echo $tab_data_active ? ' show active' : ''; ?>"
+                                                id="tab-produksi-data"
+                                                role="tabpanel"
+                                                aria-labelledby="tab-produksi-data-link">
+                                                <div class="small text-muted mb-2" id="info-jumlah-produksi-bulan-tab">
+                                                    Menampilkan <?php echo count($Sys_unit_produk_data); ?> data — bulan <?php echo htmlspecialchars(date('m/Y', strtotime($bulan_tampil . '-01')), ENT_QUOTES, 'UTF-8'); ?>
+                                                </div>
                                                 <table id="example" class="display nowrap" style="width:100%">
                                                     <thead>
                                                         <tr>
@@ -188,10 +233,19 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
 
 
                                                 </table>
-
-
                                             </div>
 
+                                            <div class="tab-pane fade<?php echo $tab_verifikasi_active ? ' show active' : ''; ?>"
+                                                id="tab-produksi-verifikasi"
+                                                role="tabpanel"
+                                                aria-labelledby="tab-produksi-verifikasi-link">
+                                                <div id="produksi-verifikasi-container">
+                                                    <?php $this->load->view(
+                                                        'anekadharma/sys_unit_produk/_adminlte310_sys_unit_produk_verifikasi_persediaan_fragment',
+                                                        $produksi_verifikasi_persediaan
+                                                    ); ?>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <!-- /.card -->
@@ -435,6 +489,7 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
 
 <!-- END OF MODAL EXTRA LARGE -->
 
+<?php $this->load->view('anekadharma/sys_unit_produk/_adminlte310_produksi_verifikasi_referensi_modals'); ?>
 
 
 
@@ -694,6 +749,26 @@ $url_ajax_list_by_bulan = isset($url_ajax_list_by_bulan) ? $url_ajax_list_by_bul
             background: #ffecee;
         }
     }
+    /* Nested modal referensi produksi — pastikan tombol SIMPAN bisa diklik */
+    #modal-prod-referensi-persediaan {
+        z-index: 1050 !important;
+    }
+    #modal-prod-isi-jumlah-refered {
+        z-index: 1065 !important;
+    }
+    .modal-backdrop.prod-refered-jumlah-backdrop {
+        z-index: 1060 !important;
+    }
+    #modal-prod-isi-jumlah-refered .prod-isi-jumlah-detail-table th {
+        width: 38%;
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+    .prod-ref-manual-diff {
+        background-color: #fff3cd !important;
+        color: #856404;
+        font-weight: 600;
+    }
 </style>
 
 <script>
@@ -704,6 +779,7 @@ window.addEventListener('load', function() {
     }
     var $ = window.jQuery;
     var urlAjaxListByBulan = <?php echo json_encode($url_ajax_list_by_bulan); ?>;
+    var urlAjaxVerifikasiPersediaanByBulan = <?php echo json_encode($url_ajax_verifikasi_persediaan_by_bulan); ?>;
     var urlAjaxDeleteProduksi = <?php echo json_encode(isset($url_ajax_delete_produksi) ? $url_ajax_delete_produksi : site_url('Sys_unit_produk/ajax_delete_produksi')); ?>;
     var urlAjaxCekProduksiHapus = <?php echo json_encode(isset($url_ajax_cek_produksi_hapus) ? $url_ajax_cek_produksi_hapus : site_url('Sys_unit_produk/ajax_cek_produksi_hapus')); ?>;
     var urlAjaxListPenjualanSoldOut = <?php echo json_encode(isset($url_ajax_list_penjualan_sold_out) ? $url_ajax_list_penjualan_sold_out : site_url('Sys_unit_produk/ajax_list_penjualan_sold_out')); ?>;
@@ -712,7 +788,10 @@ window.addEventListener('load', function() {
     var bulanProduksiAktif = <?php echo json_encode($bulan_tampil); ?>;
     var urlListProduksi = <?php echo json_encode(site_url('Sys_unit_produk')); ?>;
     var dtProduksi = null;
+    var dtVerifikasiBahan = null;
     var dtSoldOutPenjualan = null;
+    var produksiDataTableInitialized = false;
+    var verifikasiDataTableInitialized = false;
 
     function updateLinkInputProduksi(bulanYm) {
         var href = urlCreateProduksiBase + (urlCreateProduksiBase.indexOf('?') >= 0 ? '&' : '?') + 'bulan=' + encodeURIComponent(bulanYm);
@@ -1196,6 +1275,116 @@ window.addEventListener('load', function() {
         });
     }
 
+    function destroyDataTableVerifikasiBahan() {
+        $('.produksi-verifikasi-dt-table').each(function() {
+            var sel = '#' + $(this).attr('id');
+            if ($.fn.DataTable.isDataTable(sel)) {
+                $(sel).DataTable().destroy();
+            }
+        });
+        dtVerifikasiBahan = null;
+    }
+
+    function initDataTableVerifikasiBahan() {
+        destroyDataTableVerifikasiBahan();
+        var $activePane = $('#produksi-persediaan-subtabs-content .tab-pane.active');
+        var $tables = $activePane.length
+            ? $activePane.find('table.produksi-verifikasi-dt-table')
+            : $('table.produksi-verifikasi-dt-table');
+        if (!$tables.length) {
+            $tables = $('#table-produksi-verifikasi-belum');
+        }
+        $tables.each(function() {
+            var sel = '#' + $(this).attr('id');
+            if (!$(sel).length || $.fn.DataTable.isDataTable(sel)) {
+                return;
+            }
+            var hasAksi = $(sel + ' thead th').filter(function() {
+                return $(this).text().trim() === 'Aksi';
+            }).length > 0;
+            var orderCol = hasAksi ? 2 : 1;
+            $(sel).DataTable({
+                scrollY: 550,
+                scrollX: true,
+                scrollCollapse: true,
+                pageLength: 10,
+                order: [[orderCol, 'asc']],
+                language: {
+                    emptyTable: 'Tidak ada data',
+                    info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ data',
+                    infoEmpty: 'Menampilkan 0 sampai 0 dari 0 data',
+                    infoFiltered: '(disaring dari _MAX_ total data)',
+                    lengthMenu: 'Tampilkan _MENU_ data',
+                    search: 'Cari:',
+                    zeroRecords: 'Tidak ada data yang cocok',
+                    paginate: { first: 'Awal', last: 'Akhir', next: 'Berikutnya', previous: 'Sebelumnya' }
+                }
+            });
+        });
+        dtVerifikasiBahan = true;
+    }
+
+    function updateInfoVerifikasi(res, bulanLabel) {
+        var cBelum = res && res.count_belum != null ? parseInt(res.count_belum, 10) : (res && res.count != null ? parseInt(res.count, 10) : 0);
+        var cManual = res && res.count_manual != null ? parseInt(res.count_manual, 10) : 0;
+        var cOtomatis = res && res.count_otomatis != null ? parseInt(res.count_otomatis, 10) : 0;
+        if (isNaN(cBelum)) cBelum = 0;
+        if (isNaN(cManual)) cManual = 0;
+        if (isNaN(cOtomatis)) cOtomatis = 0;
+        $('#info-jumlah-verifikasi-bulan').text(
+            'Belum: ' + cBelum + ' | Manual: ' + cManual + ' | Otomatis: ' + cOtomatis + ' — bulan ' + bulanLabel
+        );
+        $('#badge-count-verifikasi-bahan').text(cBelum);
+        $('.prod-verifikasi-count-belum').text(cBelum);
+        $('.prod-verifikasi-count-manual').text(cManual);
+        $('.prod-verifikasi-count-otomatis').text(cOtomatis);
+    }
+
+    function loadVerifikasiByBulan(bulanYm) {
+        if (!bulanYm) {
+            return;
+        }
+        destroyDataTableVerifikasiBahan();
+        $('#produksi-verifikasi-container').html(
+            '<div class="text-center text-muted py-4">Memuat data verifikasi persediaan...</div>'
+        );
+        $.ajax({
+            url: urlAjaxVerifikasiPersediaanByBulan,
+            type: 'GET',
+            data: { bulan: bulanYm },
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).done(function(res) {
+            var bulanLabel = (res && res.bulan_label) ? res.bulan_label : bulanYm.replace(/^(\d{4})-(\d{2})$/, '$2/$1');
+            if (!res || !res.ok) {
+                var msg = res && res.message ? res.message : 'Gagal memuat data verifikasi persediaan.';
+                $('#produksi-verifikasi-container').html(
+                    '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>'
+                );
+                updateInfoVerifikasi(null, bulanLabel);
+                return;
+            }
+            $('#produksi-verifikasi-container').html(res.html || '');
+            updateInfoVerifikasi(res, bulanLabel);
+            verifikasiDataTableInitialized = false;
+            if ($('#tab-produksi-verifikasi').hasClass('active')) {
+                initDataTableVerifikasiBahan();
+                verifikasiDataTableInitialized = true;
+            }
+        }).fail(function() {
+            $('#produksi-verifikasi-container').html(
+                '<div class="alert alert-danger mb-0">Gagal memuat data verifikasi persediaan.</div>'
+            );
+            updateInfoVerifikasi(null, bulanYm.replace(/^(\d{4})-(\d{2})$/, '$2/$1'));
+        });
+    }
+
+    $('#produksi-persediaan-subtabs a[data-toggle="tab"]').on('shown.bs.tab', function() {
+        setTimeout(function() {
+            initDataTableVerifikasiBahan();
+        }, 60);
+    });
+
     function destroyDataTableProduksi() {
         if ($.fn.DataTable.isDataTable('#example')) {
             $('#example').DataTable().destroy();
@@ -1225,7 +1414,10 @@ window.addEventListener('load', function() {
 
     function updateInfoJumlah(rows, bulanLabel) {
         var jumlah = Array.isArray(rows) ? rows.length : 0;
-        $('#info-jumlah-produksi-bulan').text('Menampilkan ' + jumlah + ' data — bulan ' + bulanLabel);
+        var teks = 'Menampilkan ' + jumlah + ' data — bulan ' + bulanLabel;
+        $('#info-jumlah-produksi-bulan').text(teks);
+        $('#info-jumlah-produksi-bulan-tab').text(teks);
+        $('#badge-count-data-produksi').text(jumlah);
     }
 
     function renderProduksiRows(rows, bulanLabel) {
@@ -1276,6 +1468,22 @@ window.addEventListener('load', function() {
         bulanProduksiAktif = bulan;
         updateLinkInputProduksi(bulan);
         loadProduksiByBulan(bulan);
+        loadVerifikasiByBulan(bulan);
+    });
+
+    $('a[data-toggle="tab"][href="#tab-produksi-verifikasi"]').on('shown.bs.tab', function() {
+        if (!verifikasiDataTableInitialized) {
+            initDataTableVerifikasiBahan();
+            verifikasiDataTableInitialized = true;
+        } else if (dtVerifikasiBahan) {
+            dtVerifikasiBahan.columns.adjust().draw(false);
+        }
+    });
+
+    $('a[data-toggle="tab"][href="#tab-produksi-data"]').on('shown.bs.tab', function() {
+        if (dtProduksi) {
+            dtProduksi.columns.adjust().draw(false);
+        }
     });
 
     $(document).on('click', '.btn-hapus-produksi', function() {
@@ -1386,5 +1594,9 @@ window.addEventListener('load', function() {
 
     updateLinkInputProduksi(bulanProduksiAktif);
     initDataTableProduksi();
+    produksiDataTableInitialized = true;
+    window.loadVerifikasiByBulan = loadVerifikasiByBulan;
 });
 </script>
+
+<?php $this->load->view('anekadharma/sys_unit_produk/_adminlte310_produksi_verifikasi_referensi_init'); ?>

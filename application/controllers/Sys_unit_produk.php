@@ -30,17 +30,23 @@ class Sys_unit_produk extends CI_Controller
         foreach ($Sys_unit_produk_data as $row_produk) {
             $row_produk->sudah_terjual = $this->is_produk_sudah_terjual($row_produk);
         }
+        $verifikasi_persediaan = $this->_produksi_verifikasi_persediaan_view_data($bulan_selected);
 
         $data = array(
             'action' => site_url('Sys_unit_produk/simpan_produk_baru'),
             'Sys_unit_produk_data' => $Sys_unit_produk_data,
             'bulan_produksi_selected' => $bulan_selected,
             'url_ajax_list_by_bulan' => site_url('Sys_unit_produk/ajax_list_by_bulan'),
+            'url_ajax_verifikasi_persediaan_by_bulan' => site_url('Sys_unit_produk/ajax_verifikasi_persediaan_by_bulan'),
+            'url_produksi_referensi_list' => site_url('Sys_unit_produk/ajax_referensi_persediaan_list'),
+            'url_produksi_referensi_apply' => site_url('Sys_unit_produk/ajax_referensi_persediaan_apply'),
             'url_create_produksi' => site_url('Sys_unit_produk/create_produksi'),
             'url_create_produksi_tanpa_bahan' => site_url('Sys_unit_produk/create_produksi_tanpa_bahan'),
             'url_ajax_delete_produksi' => site_url('Sys_unit_produk/ajax_delete_produksi'),
             'url_ajax_cek_produksi_hapus' => site_url('Sys_unit_produk/ajax_cek_produksi_hapus'),
             'url_ajax_list_penjualan_sold_out' => site_url('Sys_unit_produk/ajax_list_penjualan_sold_out'),
+            'produksi_verifikasi_persediaan' => $verifikasi_persediaan,
+            'produksi_active_tab' => 'tab-produksi-data',
         );
         $this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/sys_unit_produk/adminlte310_sys_unit_produk_list', $data);
     }
@@ -67,6 +73,110 @@ class Sys_unit_produk extends CI_Controller
             'bulan_label' => date('m/Y', strtotime($bulan_ym . '-01')),
             'rows' => $this->_produksi_list_rows($Sys_unit_produk_data),
         ));
+    }
+
+    public function ajax_verifikasi_persediaan_by_bulan()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        $bulan_ym = trim((string) $this->input->get('bulan', TRUE));
+        if (!$bulan_ym || !preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+            echo json_encode(array(
+                'ok' => false,
+                'message' => 'Format bulan tidak valid (YYYY-MM).',
+            ));
+            return;
+        }
+        $this->session->set_userdata('bulan_produksi_selected', $bulan_ym);
+        $view_data = $this->_produksi_verifikasi_persediaan_view_data($bulan_ym);
+        echo json_encode(array(
+            'ok' => true,
+            'bulan_label' => isset($view_data['bulan_label']) ? $view_data['bulan_label'] : date('m/Y', strtotime($bulan_ym . '-01')),
+            'count' => isset($view_data['count_bahan_belum']) ? (int) $view_data['count_bahan_belum'] : 0,
+            'count_belum' => isset($view_data['count_bahan_belum']) ? (int) $view_data['count_bahan_belum'] : 0,
+            'count_manual' => isset($view_data['count_bahan_manual']) ? (int) $view_data['count_bahan_manual'] : 0,
+            'count_otomatis' => isset($view_data['count_bahan_otomatis']) ? (int) $view_data['count_bahan_otomatis'] : 0,
+            'html' => $this->load->view(
+                'anekadharma/sys_unit_produk/_adminlte310_sys_unit_produk_verifikasi_persediaan_fragment',
+                $view_data,
+                true
+            ),
+        ));
+    }
+
+    public function ajax_referensi_persediaan_list()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        $this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+        $bulan = trim((string) $this->input->get_post('bulan', TRUE));
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+            return;
+        }
+
+        if (!$this->db->table_exists('persediaan')) {
+            echo json_encode(array('ok' => false, 'message' => 'Tabel persediaan tidak tersedia.'));
+            return;
+        }
+
+        $rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan, false);
+        $out = array();
+        foreach ($rows as $r) {
+            $out[] = persediaan_referensi_penjualan_row_payload($r);
+        }
+
+        echo json_encode(array(
+            'ok' => true,
+            'rows' => $out,
+            'count' => count($out),
+            'bulan' => $bulan,
+        ));
+    }
+
+    public function ajax_referensi_persediaan_apply()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+            return;
+        }
+        header('Content-Type: application/json; charset=utf-8');
+        $this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+        if (strtolower($this->input->method()) !== 'post') {
+            echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+            return;
+        }
+
+        $bulan = trim((string) $this->input->post('bulan', TRUE));
+        if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+            return;
+        }
+
+        $id_bahan = (int) $this->input->post('id_bahan', TRUE);
+        $id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+        $jumlah_input = $this->input->post('jumlah', TRUE);
+        $force = ((string) $this->input->post('force', TRUE) === '1');
+        $is_update = ((string) $this->input->post('is_update', TRUE) === '1');
+
+        $result = persediaan_gen_v2_referensi_produksi_bahan_update_persediaan_only(
+            $this,
+            $bulan,
+            $id_bahan,
+            $id_persediaan,
+            $jumlah_input,
+            $force,
+            $is_update
+        );
+        echo json_encode($result);
     }
 
     public function ajax_stock_persediaan_by_bulan()
@@ -131,6 +241,33 @@ class Sys_unit_produk extends CI_Controller
             );
         }
         return $rows;
+    }
+
+    private function _produksi_verifikasi_persediaan_view_data($bulan_ym)
+    {
+        $bulan_ym = trim((string) $bulan_ym);
+        if (!$bulan_ym || !preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+            $bulan_ym = date('Y-m');
+        }
+        $this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
+        $data = sys_unit_produk_bahan_verifikasi_persediaan_data($this, $bulan_ym);
+        if (empty($data['ok'])) {
+            return array(
+                'bulan_produksi_selected' => $bulan_ym,
+                'bulan_label' => date('m/Y', strtotime($bulan_ym . '-01')),
+                'rows_bahan_belum' => array(),
+                'rows_bahan_manual' => array(),
+                'rows_bahan_otomatis' => array(),
+                'count_bahan_belum' => 0,
+                'count_bahan_manual' => 0,
+                'count_bahan_otomatis' => 0,
+                'rows_bahan_tidak_ada' => array(),
+                'count_bahan_tidak_ada' => 0,
+                'rekap' => array(),
+                'message' => isset($data['message']) ? (string) $data['message'] : 'Gagal memuat data verifikasi persediaan.',
+            );
+        }
+        return $data;
     }
 
 
