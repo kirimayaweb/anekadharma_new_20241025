@@ -5887,8 +5887,11 @@ class Tbl_pembelian extends CI_Controller
 		if ($tab === '') {
 			$tab = trim((string) $this->input->get('tab_aktif', TRUE));
 		}
-		if (!in_array($tab, array('data-barang', 'history-pecah-satuan'), true)) {
+		if (!in_array($tab, array('data-barang', 'pecah-satuan', 'verifikasi-persediaan', 'history-pecah-satuan'), true)) {
 			$tab = 'data-barang';
+		}
+		if ($tab === 'history-pecah-satuan') {
+			$tab = 'verifikasi-persediaan';
 		}
 		return $tab;
 	}
@@ -6024,18 +6027,192 @@ class Tbl_pembelian extends CI_Controller
 
 		// print_r($Data_stock);
 
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+		$verifikasi_pecah = tbl_pembelian_pecah_satuan_verifikasi_persediaan_data($this, $bulan);
+
 		$data = array(
 			'action_cari_gudang' => site_url('Tbl_pembelian/pecah_satuan'),
 			'Data_stock' => $Data_stock,
 			'Data_history_pecah_satuan' => $this->_get_pecah_satuan_history_by_bulan($bulan),
 			'bulan_persediaan_selected' => $bulan,
 			'tab_aktif' => $tab_aktif,
+			'url_ajax_pecah_verifikasi_by_bulan' => site_url('Tbl_pembelian/ajax_pecah_verifikasi_by_bulan'),
+			'url_pecah_referensi_list' => site_url('Tbl_pembelian/ajax_pecah_referensi_persediaan_list'),
+			'url_pecah_referensi_apply' => site_url('Tbl_pembelian/ajax_pecah_referensi_persediaan_apply'),
+			'url_pecah_auto_verifikasi' => site_url('Tbl_pembelian/ajax_pecah_auto_verifikasi_bulan'),
+			'pecah_verifikasi_persediaan' => !empty($verifikasi_pecah['ok']) ? $verifikasi_pecah : array(
+				'rows_belum' => array(),
+				'rows_manual' => array(),
+				'rows_otomatis' => array(),
+				'count_belum' => 0,
+				'count_manual' => 0,
+				'count_otomatis' => 0,
+				'bulan_label' => date('m/Y', strtotime($bulan . '-01')),
+				'rekap' => array(),
+				'message' => isset($verifikasi_pecah['message']) ? $verifikasi_pecah['message'] : '',
+			),
 		);
 
 
 		// print_r($data);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/pecah_satuan/adminlte310_list_barang', $data);
+	}
+
+	public function ajax_pecah_verifikasi_by_bulan()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+		$bulan_ym = trim((string) $this->input->get('bulan', TRUE));
+		if (!$bulan_ym || !preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+		$view_data = tbl_pembelian_pecah_satuan_verifikasi_persediaan_data($this, $bulan_ym);
+		if (empty($view_data['ok'])) {
+			echo json_encode($view_data);
+			return;
+		}
+		echo json_encode(array(
+			'ok' => true,
+			'bulan_label' => isset($view_data['bulan_label']) ? $view_data['bulan_label'] : date('m/Y', strtotime($bulan_ym . '-01')),
+			'count_belum' => isset($view_data['count_belum']) ? (int) $view_data['count_belum'] : 0,
+			'count_manual' => isset($view_data['count_manual']) ? (int) $view_data['count_manual'] : 0,
+			'count_otomatis' => isset($view_data['count_otomatis']) ? (int) $view_data['count_otomatis'] : 0,
+			'html' => $this->load->view(
+				'anekadharma/pecah_satuan/_adminlte310_pecah_satuan_verifikasi_fragment',
+				$view_data,
+				true
+			),
+		));
+	}
+
+	public function ajax_pecah_referensi_persediaan_list()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		if (!$this->db->table_exists('persediaan')) {
+			echo json_encode(array('ok' => false, 'message' => 'Tabel persediaan tidak tersedia.'));
+			return;
+		}
+
+		// Tampilkan semua baris persediaan bulan ini (sama seperti referensi produksi/penjualan)
+		// agar user bisa memilih sumber mana pun — nama/satuan/HPP boleh berbeda dari data pecah.
+		$rows = persediaan_referensi_penjualan_load_rows_bulan($this, $bulan, false);
+		$out = array();
+		foreach ($rows as $r) {
+			$out[] = persediaan_referensi_penjualan_row_payload($r);
+		}
+
+		$pecah_meta = null;
+		$id_pecah = (int) $this->input->get_post('id_pecah_satuan', TRUE);
+		if ($id_pecah > 0 && $this->db->table_exists('tbl_pembelian_pecah_satuan')) {
+			$row_pecah = $this->db->where('id', $id_pecah)->limit(1)->get('tbl_pembelian_pecah_satuan')->row();
+			if ($row_pecah) {
+				$pecah_meta = array(
+					'id' => (int) $row_pecah->id,
+					'uraian' => isset($row_pecah->uraian) ? (string) $row_pecah->uraian : '',
+					'satuan' => isset($row_pecah->satuan) ? (string) $row_pecah->satuan : '',
+					'jumlah' => isset($row_pecah->jumlah) ? (string) $row_pecah->jumlah : '',
+					'nama_barang_baru' => isset($row_pecah->nama_barang_baru) ? (string) $row_pecah->nama_barang_baru : '',
+				);
+			}
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'rows' => $out,
+			'count' => count($out),
+			'bulan' => $bulan,
+			'pecah' => $pecah_meta,
+		));
+	}
+
+	public function ajax_pecah_referensi_persediaan_apply()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		$id_pecah = (int) $this->input->post('id_pecah_satuan', TRUE);
+		$id_persediaan = (int) $this->input->post('id_persediaan', TRUE);
+		$is_update = ((string) $this->input->post('is_update', TRUE) === '1');
+		$jumlah = trim((string) $this->input->post('jumlah', TRUE));
+
+		if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$result = pecah_satuan_verifikasi_apply_referensi_sumber($this, $bulan, $id_pecah, $id_persediaan, $is_update, $jumlah);
+		echo json_encode($result);
+	}
+
+	public function ajax_pecah_auto_verifikasi_bulan()
+	{
+		if (!$this->input->is_ajax_request()) {
+			show_404();
+			return;
+		}
+		header('Content-Type: application/json; charset=utf-8');
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (strtolower($this->input->method()) !== 'post') {
+			echo json_encode(array('ok' => false, 'message' => 'Method tidak valid.'));
+			return;
+		}
+
+		$bulan_ym = trim((string) $this->input->post('bulan', TRUE));
+		if (!$bulan_ym || !preg_match('/^\d{4}-\d{2}$/', $bulan_ym)) {
+			echo json_encode(array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
+			return;
+		}
+
+		$result = tbl_pembelian_pecah_satuan_auto_verifikasi_apply_bulan($this, $bulan_ym);
+		if (empty($result['ok'])) {
+			echo json_encode($result);
+			return;
+		}
+
+		echo json_encode(array(
+			'ok' => true,
+			'message' => isset($result['message']) ? $result['message'] : 'Proses otomatis selesai.',
+			'bulan_label' => isset($result['bulan_label']) ? $result['bulan_label'] : date('m/Y', strtotime($bulan_ym . '-01')),
+			'count_belum' => isset($result['count_belum']) ? (int) $result['count_belum'] : 0,
+			'count_manual' => isset($result['count_manual']) ? (int) $result['count_manual'] : 0,
+			'count_otomatis' => isset($result['count_otomatis']) ? (int) $result['count_otomatis'] : 0,
+			'synced' => isset($result['synced']) ? (int) $result['synced'] : 0,
+			'reapply' => isset($result['reapply']) ? $result['reapply'] : array(),
+			'html' => $this->load->view(
+				'anekadharma/pecah_satuan/_adminlte310_pecah_satuan_verifikasi_fragment',
+				$result,
+				true
+			),
+		));
 	}
 
 	public function pecah_satuan_action($uuid_persediaan)
@@ -6311,12 +6488,16 @@ class Tbl_pembelian extends CI_Controller
 
 		// Simpan ke tabel pecah satuan
 
+		$this->load->helper('pembelian_persediaan');
+		tbl_pembelian_pecah_satuan_ensure_refered_manual_audit_columns($this);
+
 		$data_Tbl_pembelian_pecah_satuan = array(
 
 			'proses_input' => date("Y-m-d H:i:s"),
 			// 'uuid_pembelian' => $Data_Barang->uuid_pembelian,
 			'uuid_barang' => $Data_Barang->uuid_barang,
 			'uuid_persediaan' => $uuid_persediaan,
+			'id_persediaan_barang' => (int) $Data_Barang->id,
 			'tgl_po' => date("Y-m-d H:i:s"),
 			// 'nmrsj' => $Data_Barang->nmrsj,
 			// 'nmrfakturkwitansi' => $Data_Barang->nmrfakturkwitansi,

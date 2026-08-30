@@ -3084,7 +3084,8 @@ function persediaan_gen_proses_pecah_satuan_load_rows($CI, $bulan_target)
 			$o->status_keterangan = 'Jumlah pecah atau barang baru = 0';
 		} else {
 			$pick_src = persediaan_generate_recalculate_find_persediaan_for_pecah_source($row, $map);
-			$pick_tgt = persediaan_generate_recalculate_find_persediaan_for_pecah_target($row, $map);
+			$exclude_src = $pick_src ? (int) $pick_src->id : 0;
+			$pick_tgt = persediaan_generate_recalculate_find_persediaan_for_pecah_target($row, $map, $exclude_src);
 			if ($pick_src && $pick_tgt) {
 				$o->status_label = 'Update';
 				$o->status_kategori = 'update';

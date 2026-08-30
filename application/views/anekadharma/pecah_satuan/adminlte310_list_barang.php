@@ -4,11 +4,18 @@ $bulan_tampil = isset($bulan_persediaan_selected) && $bulan_persediaan_selected 
     : date('Y-m');
 $Data_stock = isset($Data_stock) && is_array($Data_stock) ? $Data_stock : array();
 $Data_history_pecah_satuan = isset($Data_history_pecah_satuan) && is_array($Data_history_pecah_satuan) ? $Data_history_pecah_satuan : array();
-$tab_aktif = isset($tab_aktif) && in_array($tab_aktif, array('data-barang', 'history-pecah-satuan'), true) ? $tab_aktif : 'data-barang';
+$tab_aktif = isset($tab_aktif) && in_array($tab_aktif, array('data-barang', 'pecah-satuan', 'verifikasi-persediaan', 'history-pecah-satuan'), true)
+    ? $tab_aktif
+    : 'data-barang';
+if ($tab_aktif === 'history-pecah-satuan') {
+    $tab_aktif = 'verifikasi-persediaan';
+}
 $tab_barang_active = ($tab_aktif === 'data-barang') ? ' active' : '';
-$tab_history_active = ($tab_aktif === 'history-pecah-satuan') ? ' active' : '';
+$tab_pecah_active = ($tab_aktif === 'pecah-satuan') ? ' active' : '';
+$tab_verifikasi_active = ($tab_aktif === 'verifikasi-persediaan') ? ' active' : '';
 $panel_barang_show = ($tab_aktif === 'data-barang') ? ' show active' : '';
-$panel_history_show = ($tab_aktif === 'history-pecah-satuan') ? ' show active' : '';
+$panel_pecah_show = ($tab_aktif === 'pecah-satuan') ? ' show active' : '';
+$panel_verifikasi_show = ($tab_aktif === 'verifikasi-persediaan') ? ' show active' : '';
 $nama_bulan_id = array(
     1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
     5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
@@ -18,6 +25,17 @@ $ts_bulan_tampil = strtotime($bulan_tampil . '-01');
 $bulan_angka_tampil = ($ts_bulan_tampil !== false) ? (int) date('n', $ts_bulan_tampil) : (int) date('n');
 $tahun_tampil = ($ts_bulan_tampil !== false) ? date('Y', $ts_bulan_tampil) : date('Y');
 $nama_bulan_tampil = isset($nama_bulan_id[$bulan_angka_tampil]) ? $nama_bulan_id[$bulan_angka_tampil] : date('m', $ts_bulan_tampil);
+$pecah_verifikasi_persediaan = isset($pecah_verifikasi_persediaan) && is_array($pecah_verifikasi_persediaan)
+    ? $pecah_verifikasi_persediaan
+    : array('count_belum' => 0, 'count_manual' => 0, 'count_otomatis' => 0);
+$count_pecah_verifikasi_belum = isset($pecah_verifikasi_persediaan['count_belum']) ? (int) $pecah_verifikasi_persediaan['count_belum'] : 0;
+$count_pecah_satuan_bulan = count($Data_history_pecah_satuan);
+$url_ajax_pecah_verifikasi_by_bulan = isset($url_ajax_pecah_verifikasi_by_bulan)
+    ? $url_ajax_pecah_verifikasi_by_bulan
+    : site_url('Tbl_pembelian/ajax_pecah_verifikasi_by_bulan');
+$url_pecah_auto_verifikasi = isset($url_pecah_auto_verifikasi)
+    ? $url_pecah_auto_verifikasi
+    : site_url('Tbl_pembelian/ajax_pecah_auto_verifikasi_bulan');
 
 if (!function_exists('pecah_satuan_list_parse_angka')) {
     function pecah_satuan_list_parse_angka($nilai)
@@ -83,8 +101,15 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                                 <a class="nav-link<?php echo $tab_barang_active; ?>" id="tab-data-barang" data-toggle="pill" href="#panel-data-barang" role="tab" aria-controls="panel-data-barang" aria-selected="<?php echo ($tab_aktif === 'data-barang') ? 'true' : 'false'; ?>">Data Barang</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link<?php echo $tab_history_active; ?>" id="tab-history-pecah-satuan" data-toggle="pill" href="#panel-history-pecah-satuan" role="tab" aria-controls="panel-history-pecah-satuan" aria-selected="<?php echo ($tab_aktif === 'history-pecah-satuan') ? 'true' : 'false'; ?>">
-                                    <span id="tab-history-pecah-satuan-label">Data Pecah Satuan bulan <?php echo htmlspecialchars($nama_bulan_tampil, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($tahun_tampil, ENT_QUOTES, 'UTF-8'); ?></span>
+                                <a class="nav-link<?php echo $tab_pecah_active; ?>" id="tab-pecah-satuan-bulan" data-toggle="pill" href="#panel-pecah-satuan" role="tab" aria-controls="panel-pecah-satuan" aria-selected="<?php echo ($tab_aktif === 'pecah-satuan') ? 'true' : 'false'; ?>">
+                                    <span id="tab-pecah-satuan-bulan-label">Pecah Satuan <?php echo htmlspecialchars($nama_bulan_tampil, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($tahun_tampil, ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <span class="badge badge-primary ml-1" id="badge-count-pecah-satuan-bulan"><?php echo (int) $count_pecah_satuan_bulan; ?></span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link<?php echo $tab_verifikasi_active; ?>" id="tab-verifikasi-persediaan" data-toggle="pill" href="#panel-verifikasi-persediaan" role="tab" aria-controls="panel-verifikasi-persediaan" aria-selected="<?php echo ($tab_aktif === 'verifikasi-persediaan') ? 'true' : 'false'; ?>">
+                                    <span id="tab-verifikasi-persediaan-label">Verifikasi Persediaan</span>
+                                    <span class="badge badge-warning ml-1" id="badge-count-pecah-verifikasi-belum"><?php echo (int) $count_pecah_verifikasi_belum; ?></span>
                                 </a>
                             </li>
                         </ul>
@@ -411,11 +436,11 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                         </div>
                         </div>
 
-                        <div class="tab-pane fade<?php echo $panel_history_show; ?>" id="panel-history-pecah-satuan" role="tabpanel" aria-labelledby="tab-history-pecah-satuan">
+                        <div class="tab-pane fade<?php echo $panel_pecah_show; ?>" id="panel-pecah-satuan" role="tabpanel" aria-labelledby="tab-pecah-satuan-bulan">
                             <p class="mb-2">
                                 Riwayat pecah satuan yang sudah terproses pada bulan
                                 <strong><?php echo htmlspecialchars($nama_bulan_tampil, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($tahun_tampil, ENT_QUOTES, 'UTF-8'); ?></strong>
-                                — menampilkan <?php echo count($Data_history_pecah_satuan); ?> transaksi.
+                                — menampilkan <?php echo (int) $count_pecah_satuan_bulan; ?> transaksi dari <code>tbl_pembelian_pecah_satuan</code>.
                             </p>
                             <div class="pecah-satuan-dt-wrap pecah-satuan-dt-wrap-history">
                             <table id="table-history-pecah-satuan" class="display nowrap table table-bordered table-striped" style="width:100%">
@@ -473,6 +498,12 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
                             </div>
                         </div>
 
+                        <div class="tab-pane fade<?php echo $panel_verifikasi_show; ?>" id="panel-verifikasi-persediaan" role="tabpanel" aria-labelledby="tab-verifikasi-persediaan">
+                            <div id="pecah-verifikasi-container">
+                                <?php $this->load->view('anekadharma/pecah_satuan/_adminlte310_pecah_satuan_verifikasi_fragment', $pecah_verifikasi_persediaan); ?>
+                            </div>
+                        </div>
+
                         </div>
                     </div>
                     <!-- /.card-body -->
@@ -481,6 +512,8 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
         </div>
     </section>
 </div>
+
+<?php $this->load->view('anekadharma/pecah_satuan/_adminlte310_pecah_verifikasi_referensi_modals'); ?>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
@@ -532,6 +565,18 @@ if (!function_exists('pecah_satuan_list_parse_angka')) {
         color: #FFFFFF;
         text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
     }
+    .pecah-ref-manual-diff {
+        background-color: #fff3cd !important;
+        color: #856404;
+        font-weight: 600;
+    }
+    #modal-pecah-referensi-persediaan {
+        z-index: 1065 !important;
+    }
+    .pecah-verifikasi-dt-wrap .dataTables_wrapper {
+        width: 100%;
+        margin: 0 auto;
+    }
     @media (max-width: 767.98px) {
         #form-pecah-satuan-bulan {
             margin-left: 0 !important;
@@ -556,9 +601,12 @@ window.addEventListener('load', function() {
     }
     var $ = window.jQuery;
     var bulanPecahSatuanAktif = <?php echo json_encode($bulan_tampil); ?>;
+    var urlAjaxPecahVerifikasiByBulan = <?php echo json_encode($url_ajax_pecah_verifikasi_by_bulan); ?>;
+    var urlPecahAutoVerifikasi = <?php echo json_encode($url_pecah_auto_verifikasi); ?>;
     var namaBulanId = <?php echo json_encode(array_values($nama_bulan_id)); ?>;
     var dtBarang = null;
     var dtHistory = null;
+    var pecahVerifikasiDtInitialized = false;
 
     var dtLanguageUmum = {
         lengthMenu: 'Tampilkan _MENU_ baris',
@@ -590,8 +638,148 @@ window.addEventListener('load', function() {
         var namaBulan = namaBulanId[bulanNum - 1] || parts[1];
         $('#label-nama-bulan').text(namaBulan);
         $('#label-tahun').text(tahun);
-        $('#tab-history-pecah-satuan-label').text('Data Pecah Satuan bulan ' + namaBulan + ' ' + tahun);
+        $('#tab-pecah-satuan-bulan-label').text('Pecah Satuan ' + namaBulan + ' ' + tahun);
     }
+
+    function destroyPecahVerifikasiDt() {
+        $('.pecah-verifikasi-dt-table').each(function() {
+            var sel = '#' + $(this).attr('id');
+            if ($.fn.DataTable.isDataTable(sel)) {
+                $(sel).DataTable().destroy();
+            }
+        });
+    }
+
+    function initPecahVerifikasiDt() {
+        destroyPecahVerifikasiDt();
+        var $activePane = $('#pecah-persediaan-subtabs-content .tab-pane.active');
+        var $tables = $activePane.length
+            ? $activePane.find('table.pecah-verifikasi-dt-table')
+            : $('table.pecah-verifikasi-dt-table');
+        if (!$tables.length) {
+            $tables = $('#table-pecah-verifikasi-belum');
+        }
+        $tables.each(function() {
+            var sel = '#' + $(this).attr('id');
+            if (!$(sel).length || $.fn.DataTable.isDataTable(sel)) {
+                return;
+            }
+            var hasAksi = $(sel + ' thead th').filter(function() {
+                return $(this).text().trim() === 'Aksi';
+            }).length > 0;
+            var orderCol = hasAksi ? 2 : 1;
+            $(sel).DataTable({
+                scrollY: 450,
+                scrollX: true,
+                scrollCollapse: true,
+                pageLength: 10,
+                order: [[orderCol, 'desc']],
+                language: $.extend({}, dtLanguageUmum, { emptyTable: 'Tidak ada data' }),
+                columnDefs: [{ targets: 0, orderable: false }]
+            });
+        });
+        pecahVerifikasiDtInitialized = true;
+    }
+
+    function updateInfoPecahVerifikasi(res) {
+        var cBelum = res && res.count_belum != null ? parseInt(res.count_belum, 10) : 0;
+        var cManual = res && res.count_manual != null ? parseInt(res.count_manual, 10) : 0;
+        var cOtomatis = res && res.count_otomatis != null ? parseInt(res.count_otomatis, 10) : 0;
+        $('#info-jumlah-pecah-verifikasi-bulan').text(
+            'Belum: ' + cBelum + ' | Manual: ' + cManual + ' | Otomatis: ' + cOtomatis
+            + ' — bulan ' + (res && res.bulan_label ? res.bulan_label : '')
+        );
+        $('#badge-count-pecah-verifikasi-belum').text(cBelum);
+        $('.pecah-verifikasi-count-belum').text(cBelum);
+        $('.pecah-verifikasi-count-manual').text(cManual);
+        $('.pecah-verifikasi-count-otomatis').text(cOtomatis);
+    }
+
+    function loadPecahVerifikasiByBulan(bulanYm) {
+        if (!bulanYm) return;
+        destroyPecahVerifikasiDt();
+        $('#pecah-verifikasi-container').html('<div class="text-center text-muted py-4">Memuat verifikasi pecah satuan...</div>');
+        $.ajax({
+            url: urlAjaxPecahVerifikasiByBulan,
+            type: 'GET',
+            data: { bulan: bulanYm },
+            dataType: 'json',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                $('#pecah-verifikasi-container').html('<div class="alert alert-danger mb-0">' + (res && res.message ? res.message : 'Gagal memuat.') + '</div>');
+                return;
+            }
+            $('#pecah-verifikasi-container').html(res.html || '');
+            updateInfoPecahVerifikasi(res);
+            pecahVerifikasiDtInitialized = false;
+            if ($('#panel-verifikasi-persediaan').hasClass('active')) {
+                initPecahVerifikasiDt();
+            }
+        }).fail(function() {
+            $('#pecah-verifikasi-container').html('<div class="alert alert-danger mb-0">Gagal memuat verifikasi pecah satuan.</div>');
+        });
+    }
+    window.loadPecahVerifikasiByBulan = loadPecahVerifikasiByBulan;
+
+    $(document).on('click', '#btn-pecah-auto-verifikasi-bulan', function() {
+        var bulanYm = $('#bulan_persediaan').val() || bulanPecahSatuanAktif || '';
+        if (!bulanYm) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Perhatian', 'Pilih bulan persediaan terlebih dahulu.', 'warning');
+            } else {
+                alert('Pilih bulan persediaan terlebih dahulu.');
+            }
+            return;
+        }
+        var doProses = function() {
+            var $btn = $('#btn-pecah-auto-verifikasi-bulan');
+            $btn.prop('disabled', true);
+            destroyPecahVerifikasiDt();
+            $('#pecah-verifikasi-container').html('<div class="text-center text-muted py-4">Memproses verifikasi otomatis pecah satuan...</div>');
+            $.ajax({
+                url: urlPecahAutoVerifikasi,
+                type: 'POST',
+                data: { bulan: bulanYm },
+                dataType: 'json',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            }).done(function(res) {
+                $btn.prop('disabled', false);
+                if (!res || !res.ok) {
+                    $('#pecah-verifikasi-container').html('<div class="alert alert-danger mb-0">' + (res && res.message ? res.message : 'Gagal memproses otomatis.') + '</div>');
+                    return;
+                }
+                $('#pecah-verifikasi-container').html(res.html || '');
+                updateInfoPecahVerifikasi(res);
+                pecahVerifikasiDtInitialized = false;
+                if ($('#panel-verifikasi-persediaan').hasClass('active')) {
+                    initPecahVerifikasiDt();
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Selesai', res.message || 'Proses otomatis selesai.', 'success');
+                }
+            }).fail(function() {
+                $btn.prop('disabled', false);
+                $('#pecah-verifikasi-container').html('<div class="alert alert-danger mb-0">Gagal memproses verifikasi otomatis pecah satuan.</div>');
+            });
+        };
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Proses Otomatis Semua?',
+                html: 'Akan sinkronkan link pecah satuan ke persediaan bulan <strong>' + bulanYm + '</strong>, terapkan efek stok (sumber &amp; target), dan tandai verifikasi otomatis.<br/>Record refered manual tidak diubah.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Proses',
+                cancelButtonText: 'Batal'
+            }).then(function(r) {
+                if (r.isConfirmed) {
+                    doProses();
+                }
+            });
+        } else if (confirm('Proses otomatis verifikasi pecah satuan bulan ' + bulanYm + '?')) {
+            doProses();
+        }
+    });
 
     $('#pecah-satuan-tabs a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
         var panelId = $(e.target).attr('href') || '';
@@ -599,11 +787,26 @@ window.addEventListener('load', function() {
         if (tabKey) {
             $('#tab_aktif').val(tabKey);
         }
-        if (panelId === '#panel-history-pecah-satuan') {
+        if (panelId === '#panel-verifikasi-persediaan') {
+            if (!pecahVerifikasiDtInitialized) {
+                initPecahVerifikasiDt();
+            } else {
+                $('.pecah-verifikasi-dt-table').each(function() {
+                    var sel = '#' + $(this).attr('id');
+                    if ($.fn.DataTable.isDataTable(sel)) {
+                        adjustDataTableScroll($(sel).DataTable());
+                    }
+                });
+            }
+        } else if (panelId === '#panel-pecah-satuan') {
             adjustDataTableScroll(dtHistory);
         } else if (panelId === '#panel-data-barang') {
             adjustDataTableScroll(dtBarang);
         }
+    });
+
+    $(document).on('shown.bs.tab', '#pecah-persediaan-subtabs a[data-toggle="tab"]', function() {
+        setTimeout(function() { initPecahVerifikasiDt(); }, 60);
     });
 
     $('#bulan_persediaan').on('change', function() {
@@ -665,10 +868,13 @@ window.addEventListener('load', function() {
         console.warn('DataTable history pecah satuan:', dtErrHistory);
     }
 
-    if ($('#panel-history-pecah-satuan').hasClass('active')) {
+    if ($('#panel-verifikasi-persediaan').hasClass('active')) {
+        initPecahVerifikasiDt();
+    } else if ($('#panel-pecah-satuan').hasClass('active')) {
         adjustDataTableScroll(dtHistory);
     } else {
         adjustDataTableScroll(dtBarang);
     }
 });
 </script>
+<?php $this->load->view('anekadharma/pecah_satuan/_adminlte310_pecah_verifikasi_referensi_init'); ?>
