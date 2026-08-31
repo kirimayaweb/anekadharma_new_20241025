@@ -5230,15 +5230,19 @@ class Persediaan extends CI_Controller
 		$tgl_awal = date('Y-m-01', $ts);
 		$tgl_akhir = date('Y-m-t', $ts);
 
+		$barang_sql = penjualan_sql_where_hanya_barang($this, 'tbl_penjualan');
 		$sumber_rows = $this->db->query(
 			"SELECT `id`, `tgl_jual`, `uuid_persediaan`, `uuid_unit`, `unit`, `uuid_konsumen`,
-				`konsumen_nama`, `nama_barang`, `jumlah`, `satuan`, `nmrkirim`, `nmrpesan`
+				`konsumen_nama`, `nama_barang`, `jumlah`, `satuan`, `nmrkirim`, `nmrpesan`,
+				`barang_jasa`, `kode_barang`, `harga_satuan`, `verified_persediaan`
 			 FROM `tbl_penjualan`
 			 WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 			   AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+			   AND {$barang_sql}
 			 ORDER BY `tgl_jual` ASC, `id` ASC",
 			array($tgl_awal, $tgl_akhir)
 		)->result();
+		$sumber_rows = penjualan_filter_rows_bukan_jasa($sumber_rows);
 
 		$pers_rows = $this->db->query(
 			"SELECT * FROM `persediaan`
@@ -5443,29 +5447,19 @@ class Persediaan extends CI_Controller
 			$matched[] = $base;
 		}
 
-		// Set verified_persediaan: matched=refered, unmatched=kosong (sama tab Belum ke Persediaan)
+		// Samakan verified_persediaan dengan klasifikasi box Proses Penjualan (hanya barang)
 		tbl_penjualan_ensure_verified_persediaan_column($this);
-		foreach ($matched as $mrow) {
-			$id_pj = isset($mrow['id_penjualan']) ? (int) $mrow['id_penjualan'] : 0;
-			if ($id_pj > 0) {
-				tbl_penjualan_set_verified_persediaan($this, $id_pj, tbl_penjualan_verified_persediaan_refered_value());
-			}
-		}
-		foreach ($unmatched as $urow) {
-			$id_pj = isset($urow['id_penjualan']) ? (int) $urow['id_penjualan'] : 0;
-			if ($id_pj > 0) {
-				tbl_penjualan_set_verified_persediaan($this, $id_pj, null);
-			}
-		}
+		$sync_info = tbl_penjualan_sync_verified_persediaan_range($this, $tgl_awal, $tgl_akhir);
 
 		return array(
 			'ok' => true,
 			'matched' => $matched,
 			'unmatched' => $unmatched,
-			'matched_count' => count($matched),
-			'unmatched_count' => count($unmatched),
+			'matched_count' => isset($sync_info['refered']) ? (int) $sync_info['refered'] : count($matched),
+			'unmatched_count' => isset($sync_info['belum']) ? (int) $sync_info['belum'] : count($unmatched),
 			'updated' => $updated,
 			'total_sumber' => count($sumber_rows),
+			'sync_verified' => $sync_info,
 			'tgl_awal' => $tgl_awal,
 			'tgl_akhir' => $tgl_akhir,
 		);

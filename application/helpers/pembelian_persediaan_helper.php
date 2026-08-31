@@ -630,6 +630,43 @@ function penjualan_db_scope_hanya_barang($CI, $alias = '')
 }
 
 /**
+ * Fragment SQL WHERE: hanya penjualan barang (bukan jasa) — untuk query raw.
+ */
+function penjualan_sql_where_hanya_barang($CI, $alias = '')
+{
+	$p = ($alias !== '') ? rtrim($alias, '.') . '.' : '';
+	$parts = array();
+	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) <> 'jasa')";
+	}
+	if ($CI->db->field_exists('kode_barang', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}kode_barang, ''))) NOT LIKE '%jasa%')";
+	}
+	if ($CI->db->field_exists('nama_barang', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(COALESCE({$p}nama_barang, '')) NOT LIKE '%jasa%')";
+	}
+	if (empty($parts)) {
+		return '1=1';
+	}
+	return '(' . implode(' AND ', $parts) . ')';
+}
+
+/**
+ * Jalankan query SELECT dan kembalikan result(); aman jika query gagal.
+ *
+ * @return array
+ */
+function pembelian_db_query_result_rows($CI, $sql, $binds = null)
+{
+	$q = is_array($binds) ? $CI->db->query($sql, $binds) : $CI->db->query($sql);
+	if ($q === false || !is_object($q)) {
+		log_message('error', 'pembelian_db_query_result_rows gagal | SQL: ' . $sql);
+		return array();
+	}
+	return $q->result();
+}
+
+/**
  * Ekspresi uuid barang efektif (uuid_barang → uuid_persediaan → id).
  */
 function penjualan_sql_uuid_barang_expr($alias = 'persediaan')
@@ -4215,8 +4252,8 @@ function persediaan_ensure_asal_generate_column($CI)
 	$after = $CI->db->field_exists('spop', 'persediaan') ? ' AFTER `spop`' : '';
 	$CI->db->query(
 		'ALTER TABLE `persediaan` ADD COLUMN `asal_generate` TINYINT(1) NOT NULL DEFAULT 0'
-		. $after
 		. " COMMENT '1=saldo awal hasil generate bulan lalu'"
+		. $after
 	);
 }
 
@@ -4256,8 +4293,8 @@ function tbl_penjualan_ensure_verified_persediaan_column($CI)
 	$ok = @$CI->db->query(
 		"ALTER TABLE `tbl_penjualan`
 		ADD COLUMN `verified_persediaan` VARCHAR(32) NULL DEFAULT NULL"
-		. $after
 		. " COMMENT 'refered=otomatis; refered manual=manual; kosong=belum terproses'"
+		. $after
 	);
 
 	$CI->db->db_debug = $db_debug;
@@ -4635,6 +4672,7 @@ function tbl_penjualan_reset_verified_persediaan_bulan($CI, $tgl_awal, $tgl_akhi
 	$CI->db->where("tgl_jual <> '0000-00-00'", null, false);
 	$CI->db->where('DATE(tgl_jual) >=', $tgl_awal);
 	$CI->db->where('DATE(tgl_jual) <=', $tgl_akhir);
+	penjualan_db_scope_hanya_barang($CI);
 	$CI->db->update('tbl_penjualan', array('verified_persediaan' => null));
 	return (int) $CI->db->affected_rows();
 }
@@ -4672,8 +4710,6 @@ function tbl_penjualan_sync_verified_persediaan_range($CI, $tgl_awal, $tgl_akhir
 	}
 	$tgl_awal_d = date('Y-m-d', $ts_a);
 	$tgl_akhir_d = date('Y-m-d', $ts_b);
-	$tahun = (int) date('Y', $ts_a);
-	$bulan = (int) date('n', $ts_a);
 
 	if (!$CI->db->table_exists('tbl_penjualan') || !$CI->db->table_exists('persediaan')) {
 		$out['message'] = 'Tabel tbl_penjualan / persediaan tidak tersedia.';
@@ -4684,35 +4720,26 @@ function tbl_penjualan_sync_verified_persediaan_range($CI, $tgl_awal, $tgl_akhir
 		$CI->load->helper('persediaan_display');
 	}
 
-	$sumber_rows = $CI->db->query(
-		"SELECT `id`, `uuid_persediaan`, `nama_barang`, `satuan`, `jumlah`, `verified_persediaan`
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
+	$sumber_rows = pembelian_db_query_result_rows(
+		$CI,
+		"SELECT *
 		 FROM `tbl_penjualan`
 		 WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 		   AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		   AND {$barang_sql}
 		 ORDER BY `id` ASC",
 		array($tgl_awal_d, $tgl_akhir_d)
-	)->result();
+	);
+	$sumber_rows = penjualan_filter_rows_bukan_jasa($sumber_rows);
 
-	$pers_rows = $CI->db->query(
-		"SELECT `id`, `uuid_persediaan`, `namabarang`, `satuan`
-		 FROM `persediaan`
-		 WHERE YEAR(`tanggal_beli`) = ? AND MONTH(`tanggal_beli`) = ?",
-		array($tahun, $bulan)
-	)->result();
-
-	$by_uuid = array();
-	$by_nama_satuan = array();
-	foreach ($pers_rows as $prow) {
-		$u = trim((string) (isset($prow->uuid_persediaan) ? $prow->uuid_persediaan : ''));
-		if ($u !== '') {
-			$by_uuid[$u] = true;
-		}
-		$n = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($prow->namabarang) ? $prow->namabarang : ''))));
-		$s = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($prow->satuan) ? $prow->satuan : ''))));
-		if ($n !== '' && $s !== '') {
-			$by_nama_satuan[$n . '|' . $s] = true;
-		}
-	}
+	$ctx = array(
+		'tgl_awal' => $tgl_awal_d,
+		'tgl_akhir' => $tgl_akhir_d,
+		'tanggal_beli_target' => $tgl_awal_d,
+	);
+	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal_d, $tgl_akhir_d);
+	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
 
 	$ids_refered = array();
 	$ids_belum = array();
@@ -4729,33 +4756,18 @@ function tbl_penjualan_sync_verified_persediaan_range($CI, $tgl_awal, $tgl_akhir
 			|| $existing_vp === tbl_penjualan_verified_persediaan_manual_legacy_value()) {
 			continue;
 		}
+
 		$out['total']++;
-		$uuid = isset($r->uuid_persediaan) ? trim((string) $r->uuid_persediaan) : '';
-		$jumlah_raw = isset($r->jumlah) ? $r->jumlah : 0;
-		$jumlah = function_exists('persediaan_parse_angka')
-			? persediaan_parse_angka($jumlah_raw)
-			: (float) str_replace(array('.', ','), array('', '.'), (string) $jumlah_raw);
+		$cls = persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $r, $map, $cache_pembelian);
+		$kat = isset($cls->status_kategori) ? $cls->status_kategori : 'tidak_masuk';
 
-		$matched = false;
-		if ($jumlah > 0) {
-			if ($uuid !== '' && !empty($by_uuid[$uuid])) {
-				$matched = true;
-			} else {
-				$n = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($r->nama_barang) ? $r->nama_barang : ''))));
-				$s = strtolower(preg_replace('/\s+/', ' ', trim((string) (isset($r->satuan) ? $r->satuan : ''))));
-				$key = ($n !== '' && $s !== '') ? ($n . '|' . $s) : '';
-				if ($key !== '' && !empty($by_nama_satuan[$key])) {
-					$matched = true;
-				}
-			}
-		} else {
-			$out['skip']++;
-		}
-
-		if ($matched) {
+		if ($kat === 'masuk') {
 			$ids_refered[] = $id;
 			$out['refered']++;
 		} else {
+			if ($kat === 'skip') {
+				$out['skip']++;
+			}
 			$ids_belum[] = $id;
 			$out['belum']++;
 		}
@@ -5901,7 +5913,9 @@ function persediaan_recalculate_penjualan_context($CI, $bulan)
 	)->row();
 	$row_j = $CI->db->query(
 		"SELECT COUNT(*) AS jml FROM `tbl_penjualan`
-		WHERE DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?",
+		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
+		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND " . penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan'),
 		array($tgl_awal, $tgl_akhir)
 	)->row();
 
@@ -10931,13 +10945,16 @@ function persediaan_generate_recalculate_reapply_penjualan_bulan($CI, $ctx)
 	$tanggal_beli = isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $ctx['tanggal_beli'];
 	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
 
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
 	$list = $CI->db->query(
 		"SELECT * FROM `tbl_penjualan`
 		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND {$barang_sql}
 		ORDER BY `id` ASC",
 		array($ctx['tgl_awal'], $ctx['tgl_akhir'])
 	)->result();
+	$list = penjualan_filter_rows_bukan_jasa($list);
 
 	$accum = array();
 	$matched = 0;
@@ -11097,14 +11114,17 @@ function persediaan_generate_recalculate_build_penjualan_queue($CI, $ctx)
 		? 'TRIM(COALESCE(`uuid_persediaan`, \'\')) AS uuid_persediaan'
 		: "'' AS uuid_persediaan";
 
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
 	$list = $CI->db->query(
 		"SELECT `id`, `nama_barang`, `satuan`, `harga_satuan`, `jumlah`, `uuid_unit`, `unit`, {$spop_sql}, {$uuid_sql}
 		FROM `tbl_penjualan`
 		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND {$barang_sql}
 		ORDER BY `nama_barang` ASC, `id` ASC",
 		array($ctx['tgl_awal'], $ctx['tgl_akhir'])
 	)->result();
+	$list = penjualan_filter_rows_bukan_jasa($list);
 
 	$queue = array();
 	foreach ($list as $row) {
@@ -11331,6 +11351,21 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 			'uuid_persediaan' => $uuid_p,
 			'jumlah_penjualan' => '0',
 			'keterangan' => 'Lewati: jumlah penjualan 0',
+		);
+	}
+
+	if (penjualan_row_is_jasa($row)) {
+		return array(
+			'fase' => 'penjualan',
+			'aksi' => 'SKIP',
+			'id_penjualan' => $id,
+			'namabarang' => $nama,
+			'satuan' => $satuan,
+			'hpp' => $harga,
+			'spop' => $spop,
+			'uuid_persediaan' => $uuid_p,
+			'jumlah_penjualan' => (string) $jumlah,
+			'keterangan' => 'Penjualan jasa — tidak diproses ke persediaan barang',
 		);
 	}
 
@@ -26632,6 +26667,18 @@ function persediaan_gen_v2_resolve_uuid_from_sys_unit_produk($CI, $nama_barang, 
 function persediaan_gen_v2_verifikasi_penjualan_row($CI, $row, &$cache)
 {
 	$id = isset($row->id) ? (int) $row->id : 0;
+	if (penjualan_row_is_jasa($row)) {
+		return array(
+			'fase' => 'verifikasi_penjualan',
+			'aksi' => 'SKIP',
+			'id' => $id,
+			'nama_barang' => isset($row->nama_barang) ? trim((string) $row->nama_barang) : '',
+			'satuan' => isset($row->satuan) ? trim((string) $row->satuan) : '',
+			'uuid_persediaan' => isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '',
+			'keterangan' => 'Penjualan jasa — lewati verifikasi persediaan barang',
+		);
+	}
+
 	$uuid_lama = isset($row->uuid_persediaan) ? trim((string) $row->uuid_persediaan) : '';
 	$nama = isset($row->nama_barang) ? trim((string) $row->nama_barang) : '';
 	$satuan = isset($row->satuan) ? trim((string) $row->satuan) : '';
@@ -27294,10 +27341,12 @@ function persediaan_gen_v2_count_penjualan_bulan($CI, $tgl_awal, $tgl_akhir)
 		return 0;
 	}
 
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
 	$row = $CI->db->query(
 		"SELECT COUNT(*) AS jml FROM `tbl_penjualan`
 		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
-		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?",
+		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND {$barang_sql}",
 		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
 	)->row();
 
@@ -27310,11 +27359,13 @@ function persediaan_gen_v2_sum_jumlah_penjualan_bulan($CI, $tgl_awal, $tgl_akhir
 		return 0.0;
 	}
 
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
 	$jumlah_expr = persediaan_generate_recalculate_sql_cast_decimal('jumlah');
 	$row = $CI->db->query(
 		"SELECT COALESCE(SUM({$jumlah_expr}), 0) AS jml FROM `tbl_penjualan`
 		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
-		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?",
+		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND {$barang_sql}",
 		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
 	)->row();
 
@@ -27327,10 +27378,12 @@ function persediaan_gen_v2_sum_penjualan_persediaan_bulan($CI, $tgl_awal, $tgl_a
 		return 0.0;
 	}
 
+	$bukan_jasa_sql = penjualan_sql_bukan_kategori_jasa($CI, 'persediaan');
 	$penj_expr = persediaan_generate_recalculate_sql_cast_decimal('penjualan');
 	$row = $CI->db->query(
 		"SELECT COALESCE(SUM({$penj_expr}), 0) AS jml FROM `persediaan`
 		WHERE DATE(`tanggal_beli`) >= ? AND DATE(`tanggal_beli`) <= ?
+		AND {$bukan_jasa_sql}
 		AND {$penj_expr} > 0",
 		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
 	)->row();
@@ -27344,13 +27397,18 @@ function persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir)
 		return array();
 	}
 
-	return $CI->db->query(
+	$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
+	$rows = pembelian_db_query_result_rows(
+		$CI,
 		"SELECT * FROM `tbl_penjualan`
 		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		AND {$barang_sql}
 		ORDER BY `tgl_jual` ASC, `nama_barang` ASC, `id` ASC",
 		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
-	)->result();
+	);
+
+	return penjualan_filter_rows_bukan_jasa($rows);
 }
 
 function persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir)
@@ -27470,6 +27528,14 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 		'unit' => $unit_txt,
 		'jumlah_penjualan' => (string) $jumlah,
 	);
+
+	if (penjualan_row_is_jasa($row_penjualan)) {
+		return array_merge($base, array(
+			'aksi' => 'SKIP',
+			'kategori' => 'skip',
+			'keterangan' => 'Penjualan jasa — tidak diproses ke persediaan barang',
+		));
+	}
 
 	if ($jumlah <= 0) {
 		if ($id > 0) {
@@ -27679,6 +27745,13 @@ function persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $
 	$row->match_via = '';
 
 	if ($jumlah <= 0) {
+		return $row;
+	}
+
+	if (penjualan_row_is_jasa($row_pen)) {
+		$row->status_kategori = 'skip';
+		$row->status_label = 'Lewati';
+		$row->status_keterangan = 'Penjualan jasa — tidak diproses ke persediaan barang';
 		return $row;
 	}
 
@@ -28204,9 +28277,12 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 		$count_penjualan = 0;
 		if ($CI->db->table_exists('tbl_penjualan')) {
+			$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
 			$row_pen = $CI->db->query(
 				"SELECT COUNT(*) AS jml FROM `tbl_penjualan`
-				WHERE DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?",
+				WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
+				AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+				AND {$barang_sql}",
 				array($tgl_awal, $tgl_akhir)
 			)->row();
 			$count_penjualan = $row_pen ? (int) $row_pen->jml : 0;
@@ -28472,13 +28548,18 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 		$list_batch = array();
 		if ($CI->db->table_exists('tbl_penjualan') && $count_penjualan > 0) {
-			$list_batch = $CI->db->query(
+			$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
+			$list_batch = pembelian_db_query_result_rows(
+				$CI,
 				"SELECT `id`, `uuid_persediaan`, `nama_barang`, `satuan`, `harga_satuan`, `tgl_jual`
 				FROM `tbl_penjualan`
-				WHERE DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+				WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
+				AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+				AND {$barang_sql}
 				ORDER BY `id` ASC LIMIT " . (int) $limit . ' OFFSET ' . (int) $offset,
 				array($tgl_awal, $tgl_akhir)
-			)->result();
+			);
+			$list_batch = penjualan_filter_rows_bukan_jasa($list_batch);
 		}
 
 		foreach ($list_batch as $row_pen) {
@@ -29054,14 +29135,18 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 		$list_batch = array();
 		if ($CI->db->table_exists('tbl_penjualan') && $total_penjualan > 0) {
-			$list_batch = $CI->db->query(
+			$barang_sql = penjualan_sql_where_hanya_barang($CI, 'tbl_penjualan');
+			$list_batch = pembelian_db_query_result_rows(
+				$CI,
 				"SELECT * FROM `tbl_penjualan`
 				WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
 				AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+				AND {$barang_sql}
 				ORDER BY `tgl_jual` ASC, `nama_barang` ASC, `id` ASC
 				LIMIT " . (int) $limit . ' OFFSET ' . (int) $offset,
 				array($tgl_awal, $tgl_akhir)
-			)->result();
+			);
+			$list_batch = penjualan_filter_rows_bukan_jasa($list_batch);
 		}
 
 		$map = persediaan_generate_recalculate_get_map_cached(

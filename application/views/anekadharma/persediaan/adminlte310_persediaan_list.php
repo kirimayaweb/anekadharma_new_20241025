@@ -4878,7 +4878,7 @@ window.addEventListener('load', function() {
         $('#badge-gen-pj-match').text(String(matched.length));
         $('#badge-gen-pj-unmatch').text(String(unmatched.length));
         $('#gen-penjualan-summary').html(
-            'tbl_penjualan diproses: <strong>' + escapeHtmlGen(String(apply.total_sumber || (matched.length + unmatched.length))) + '</strong>'
+            'tbl_penjualan barang diproses: <strong>' + escapeHtmlGen(String(apply.total_sumber || (matched.length + unmatched.length))) + '</strong>'
             + ' &nbsp;|&nbsp; Terproses: <strong class="text-success">' + escapeHtmlGen(String(apply.matched_count || matched.length)) + '</strong>'
             + ' &nbsp;|&nbsp; Belum terproses: <strong class="' + ((unmatched.length) ? 'text-danger' : 'text-success') + '">'
             + escapeHtmlGen(String(apply.unmatched_count || unmatched.length)) + '</strong>'
@@ -5167,7 +5167,7 @@ window.addEventListener('load', function() {
                 var pj = resp.penjualan_apply || {};
                 var htmlPj = '<hr class="my-2"/>'
                     + '<p class="mb-1"><strong>Penjualan → persediaan</strong></p>'
-                    + '<p class="small mb-0">tbl_penjualan: <strong>' + String(pj.total_sumber || 0) + '</strong>'
+                    + '<p class="small mb-0">tbl_penjualan barang: <strong>' + String(pj.total_sumber || 0) + '</strong>'
                     + ' &nbsp;|&nbsp; Terproses: <strong class="text-success">' + String(pj.matched_count || 0) + '</strong>'
                     + ' &nbsp;|&nbsp; Belum terproses: <strong>' + String(pj.unmatched_count || 0) + '</strong></p>';
                 Swal.fire({
