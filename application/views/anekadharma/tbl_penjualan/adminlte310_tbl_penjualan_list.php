@@ -24,25 +24,8 @@
         // echo $date_awal; 
         // echo "<br/>";
 
-        if (date("Y", strtotime($date_awal)) < 2020) {
-            $Get_date_awal = date("d-m-Y");
-        } else {
-            $Get_date_awal = date("d-m-Y", strtotime($date_awal));
-        }
-
-        // echo $Get_date_awal;
-        // echo "<br/>";
-        // echo "<br/>";
-
-
-        // echo $date_akhir; 
-        // echo "<br/>";
-
-        if (date("Y", strtotime($date_akhir)) < 2020) {
-            $Get_date_akhir = date("d-m-Y");
-        } else {
-            $Get_date_akhir = date("d-m-Y", strtotime($date_akhir));
-        }
+        $Get_date_awal = penjualan_format_bulan_input(isset($date_awal) ? $date_awal : '');
+        $Get_date_akhir = penjualan_format_bulan_input(isset($date_akhir) ? $date_akhir : '');
 
         // echo $Get_date_akhir;
         // echo "<br/>";
@@ -144,94 +127,87 @@
                     <div class="card-header">
                         <div class="row">
                         </div>
-                        <div class="row">
-                            <div class="col-md-2">
-                                <div class="row">
-                                    <!-- <div class="col-5" text-align="center"> <strong>DATA PENJUALAN</strong></div> -->
-                                    <div class="col-12" text-align="center"> <strong><a href="<?php echo site_url('tbl_penjualan/create'); ?>" id="btn-input-penjualan-baru" class="btn btn-danger">Input PENJUALAN BARU</a></strong></div>
-
-                                </div>
-
-
-                            </div>
-                            <div class="col-md-5">
-
-                                <?php
-                                // $action_cari_between_date="cari_between_date" ;
-                                $action_cari_between_date = site_url('Tbl_penjualan/cari_between_date');
-
-                                ?>
-
-                                <form id="form-cari-penjualan" action="<?php echo $action_cari_between_date; ?>" method="post">
-                                    <input type="hidden" name="penjualan_active_tab" id="penjualan_active_tab_input" value="<?php echo htmlspecialchars($penjualan_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
-                                    <div class="row mb-1">
-                                        <div class="col-12">
-                                            <small class="text-muted">Halaman ini menampilkan <strong>penjualan barang</strong> saja (bukan jasa). Data jasa diproses di menu Penjualan Jasa.</small>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-
-                                        <div class="col-md-4" text-align="right">
-                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                        <div class="col-md-4" text-align="left" align="left">
-                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-3" text-align="left" align="left">
-                                            <strong>
-                                                <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                            </strong>
-                                        </div>
-
-                                    </div>
-                                </form>
-
+                        <style>
+                            .penjualan-header-toolbar {
+                                display: grid;
+                                grid-template-columns: 1fr auto 1fr;
+                                align-items: center;
+                                column-gap: 1.5rem;
+                            }
+                            .penjualan-header-input {
+                                justify-self: start;
+                            }
+                            .penjualan-header-filter {
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                flex-wrap: nowrap;
+                                gap: 0.4rem;
+                            }
+                            .penjualan-header-filter input[type="month"] {
+                                width: 254px;
+                                max-width: 254px;
+                            }
+                            .penjualan-header-filter .btn {
+                                min-width: 72px;
+                                padding-left: 0.85rem;
+                                padding-right: 0.85rem;
+                            }
+                            .penjualan-header-actions {
+                                display: flex;
+                                align-items: center;
+                                justify-content: flex-end;
+                                flex-wrap: wrap;
+                                gap: 0.75rem;
+                            }
+                            .penjualan-header-actions .btn-rekap-data {
+                                min-width: 120px;
+                            }
+                            .penjualan-header-actions .btn-cetak-excel {
+                                white-space: nowrap;
+                            }
+                            @media (max-width: 767.98px) {
+                                .penjualan-header-toolbar {
+                                    grid-template-columns: 1fr;
+                                    row-gap: 0.75rem;
+                                }
+                                .penjualan-header-input,
+                                .penjualan-header-actions {
+                                    justify-self: stretch;
+                                }
+                                .penjualan-header-actions {
+                                    justify-content: flex-start;
+                                }
+                            }
+                        </style>
+                        <div class="penjualan-header-toolbar">
+                            <div class="penjualan-header-input">
+                                <strong><a href="<?php echo site_url('tbl_penjualan/create'); ?>" id="btn-input-penjualan-baru" class="btn btn-danger">Input PENJUALAN BARU</a></strong>
                             </div>
 
-                            <div class="col-md-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerBarang'), 'Rekap Penjualan Per Barang', 'class="btn btn-success"'); 
-                                ?>
+                            <?php
+                            $action_cari_between_date = site_url('Tbl_penjualan/cari_between_date');
+                            ?>
 
+                            <form id="form-cari-penjualan" class="penjualan-header-filter" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                <input type="hidden" name="penjualan_active_tab" id="penjualan_active_tab_input" value="<?php echo htmlspecialchars($penjualan_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
+                                <input type="hidden" name="tgl_awal" id="bulan_awal_hidden" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" />
+                                <input type="month" class="form-control" id="bulan_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
+                                <strong>
+                                    <button type="submit" class="btn btn-danger btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
+                                </strong>
+                            </form>
 
-                            </div>
-
-                            <div class="col-md-2">
-                                <?php //echo anchor(site_url('tbl_penjualan/RekapPenjualanPerKonsumen'), 'Rekap Penjualan Per Konsumen', 'class="btn btn-success"'); 
-                                ?>
-
-                                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#modal-xl-select-unit">
+                            <div class="penjualan-header-actions">
+                                <button type="button" class="btn btn-warning btn-rekap-data" data-toggle="modal" data-target="#modal-xl-select-unit">
                                     REKAP DATA
                                 </button>
-
-                            </div>
-
-                            <div class="col-md-1">
                                 <input type="hidden" id="excel-export-source" value="tbl_penjualan" />
                                 <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
-                                <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPenjualan(); return false;">
+                                <button type="button" class="btn btn-success btn-cetak-excel" onclick="cetakExcelPenjualan(); return false;">
                                     <i class="fa fa-file-excel-o" aria-hidden="true"></i> Cetak ke Excel (.xlsx)
                                 </button>
                             </div>
-
-
                         </div>
 
 
@@ -660,10 +636,10 @@
     function cetakExcelPenjualan() {
         var tglAwalEl = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
         var tglAkhirEl = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
-        var tglAwal = tglAwalEl ? tglAwalEl.value : '';
         var tglAkhir = tglAkhirEl ? tglAkhirEl.value : '';
-        if (!tglAwal || !tglAkhir) {
-            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+        var tglAwal = tglAwalEl && tglAwalEl.value ? tglAwalEl.value : tglAkhir;
+        if (!tglAkhir) {
+            alert('Pilih bulan terlebih dahulu.');
             return;
         }
 
@@ -683,7 +659,7 @@
         }
 
         if (!ids.length) {
-            alert('Tidak ada data penjualan untuk diekspor. Periksa filter/search DataTable atau rentang tanggal.');
+            alert('Tidak ada data penjualan untuk diekspor. Periksa filter/search DataTable atau bulan yang dipilih.');
             return;
         }
 
@@ -709,34 +685,52 @@
 
     (function() {
         var baseRekapUrl = <?php echo json_encode(site_url('Tbl_penjualan/RekapData/')); ?>;
-        var FILTER_STORAGE_KEY = 'anekadharma_tbl_penjualan_list_state';
+        var FILTER_STORAGE_KEY = 'anekadharma_tbl_penjualan_list_state_bulan';
         var filterRestoreAttempted = false;
         var skipFilterRestore = <?php echo (isset($skip_filter_restore) && $skip_filter_restore) ? 'true' : 'false'; ?>;
 
-        function parseTanggalInputKey(val) {
+        function toMonthValue(val) {
             if (!val) {
-                return null;
+                return '';
             }
-            var parts = String(val).trim().split(/[-/.]/);
-            if (parts.length !== 3) {
-                return null;
+            var s = String(val).trim();
+            if (/^\d{4}-\d{2}$/.test(s)) {
+                return s;
             }
-            var d = parseInt(parts[0], 10);
-            var m = parseInt(parts[1], 10);
-            var y = parseInt(parts[2], 10);
-            if (isNaN(d) || isNaN(m) || isNaN(y) || d <= 0 || m <= 0) {
-                return null;
+            var parts = s.split(/[-/.]/);
+            if (parts.length === 3) {
+                var y;
+                var m;
+                if (parts[0].length === 4) {
+                    y = parseInt(parts[0], 10);
+                    m = parseInt(parts[1], 10);
+                } else {
+                    m = parseInt(parts[1], 10);
+                    y = parseInt(parts[2], 10);
+                }
+                if (y < 100) {
+                    y += 2000;
+                }
+                if (isNaN(y) || isNaN(m) || m < 1 || m > 12) {
+                    return '';
+                }
+                return y + '-' + (m < 10 ? '0' + m : String(m));
             }
-            if (y < 100) {
-                y += 2000;
+            if (parts.length === 2 && parts[0].length === 4) {
+                var yy = parseInt(parts[0], 10);
+                var mm = parseInt(parts[1], 10);
+                if (isNaN(yy) || isNaN(mm) || mm < 1 || mm > 12) {
+                    return '';
+                }
+                return yy + '-' + (mm < 10 ? '0' + mm : String(mm));
             }
-            return (y * 10000) + (m * 100) + d;
+            return '';
         }
 
-        function tanggalInputSama(a, b) {
-            var keyA = parseTanggalInputKey(a);
-            var keyB = parseTanggalInputKey(b);
-            return keyA !== null && keyB !== null && keyA === keyB;
+        function bulanInputSama(a, b) {
+            var keyA = toMonthValue(a);
+            var keyB = toMonthValue(b);
+            return keyA !== '' && keyB !== '' && keyA === keyB;
         }
 
         function getActiveTabIdFromDom() {
@@ -795,6 +789,16 @@
             return null;
         }
 
+        function syncBulanFilterDariAkhir() {
+            var inpAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
+            var inpAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
+            if (!inpAkhir || !inpAwal || !inpAkhir.value) {
+                return inpAkhir ? inpAkhir.value : '';
+            }
+            inpAwal.value = inpAkhir.value;
+            return inpAkhir.value;
+        }
+
         function restorePenjualanListStateDariSession() {
             if (filterRestoreAttempted || skipFilterRestore) {
                 return;
@@ -809,16 +813,18 @@
             var inpAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
             var inpAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
             var form = document.getElementById('form-cari-penjualan');
-            if (!inpAwal || !inpAkhir || !form) {
+            if (!inpAkhir || !form) {
                 return;
             }
 
-            var tanggalBerbeda = !tanggalInputSama(inpAwal.value, stored.tgl_awal) ||
-                !tanggalInputSama(inpAkhir.value, stored.tgl_akhir);
+            var storedAkhir = toMonthValue(stored.tgl_akhir || stored.tgl_awal);
+            var tanggalBerbeda = !bulanInputSama(inpAkhir.value, storedAkhir);
 
-            if (tanggalBerbeda) {
-                inpAwal.value = stored.tgl_awal;
-                inpAkhir.value = stored.tgl_akhir;
+            if (tanggalBerbeda && storedAkhir) {
+                inpAkhir.value = storedAkhir;
+                if (inpAwal) {
+                    inpAwal.value = storedAkhir;
+                }
                 if (stored.active_tab) {
                     setPenjualanActiveTabInput(stored.active_tab);
                 }
@@ -843,11 +849,10 @@
         }
 
         function getTanggalFilterPenjualan() {
-            var tglAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
-            var tglAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
+            var bulan = syncBulanFilterDariAkhir();
             return {
-                awal: tglAwal ? tglAwal.value : '',
-                akhir: tglAkhir ? tglAkhir.value : ''
+                awal: bulan,
+                akhir: bulan
             };
         }
 
@@ -873,7 +878,7 @@
                 var tgl = getTanggalFilterPenjualan();
                 if (!tgl.awal || !tgl.akhir) {
                     e.preventDefault();
-                    alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+                    alert('Pilih bulan terlebih dahulu.');
                 }
             });
         }
@@ -897,9 +902,9 @@
             var info = document.getElementById('rekap-modal-periode-info');
             if (info) {
                 if (tgl.awal && tgl.akhir) {
-                    info.textContent = 'Periode: ' + tgl.awal + ' s/d ' + tgl.akhir;
+                    info.textContent = 'Periode: ' + tgl.akhir;
                 } else {
-                    info.textContent = 'Pilih tanggal awal dan tanggal akhir terlebih dahulu.';
+                    info.textContent = 'Pilih bulan terlebih dahulu.';
                 }
             }
             document.querySelectorAll('.btn-rekap-penjualan').forEach(function(btn) {
@@ -924,7 +929,7 @@
                 var tgl = getTanggalFilterPenjualan();
                 if (!tgl.awal || !tgl.akhir) {
                     e.preventDefault();
-                    alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+                    alert('Pilih bulan terlebih dahulu.');
                     return;
                 }
                 var field = btn.getAttribute('data-field');
@@ -958,26 +963,17 @@
             if (!form) {
                 return;
             }
-            form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
+            form.querySelectorAll('input[name="tgl_akhir"]').forEach(function(el) {
                 el.addEventListener('change', function() {
+                    syncBulanFilterDariAkhir();
                     updateRekapModalLinks();
                     var tgl = getTanggalFilterPenjualan();
-                    if (tgl.awal && tgl.akhir) {
-                        savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
+                    if (tgl.akhir) {
+                        savePenjualanListState(tgl.akhir, tgl.akhir, getActiveTabIdFromDom());
                     }
                     submitCariPenjualanOtomatis();
                 });
             });
-            if (window.jQuery) {
-                jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', function() {
-                    updateRekapModalLinks();
-                    var tgl = getTanggalFilterPenjualan();
-                    if (tgl.awal && tgl.akhir) {
-                        savePenjualanListState(tgl.awal, tgl.akhir, getActiveTabIdFromDom());
-                    }
-                    submitCariPenjualanOtomatis();
-                });
-            }
             var tglInit = getTanggalFilterPenjualan();
             if (tglInit.awal && tglInit.akhir) {
                 savePenjualanListState(tglInit.awal, tglInit.akhir, getActiveTabIdFromDom());

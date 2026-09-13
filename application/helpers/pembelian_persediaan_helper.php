@@ -415,14 +415,77 @@ function penjualan_sync_filter_bulan_from_tgl_jual($CI, $tgl_jual)
 	$tgl = penjualan_get_filter_tgl_jual($CI, $tgl_jual);
 	$awal = $tgl['awal'] . ' 00:00:00';
 	$akhir = $tgl['akhir'] . ' 23:59:59';
-	$disp_awal = date('j-n-Y', strtotime($awal));
-	$disp_akhir = date('j-n-Y', strtotime($akhir));
+	$disp_awal = date('Y-m', strtotime($awal));
+	$disp_akhir = date('Y-m', strtotime($akhir));
 	$CI->session->set_userdata('filter_tbl_penjualan_date_awal', $awal);
 	$CI->session->set_userdata('filter_tbl_penjualan_date_akhir', $akhir);
 	$CI->session->set_userdata('filter_tbl_penjualan_tgl_awal_display', $disp_awal);
 	$CI->session->set_userdata('filter_tbl_penjualan_tgl_akhir_display', $disp_akhir);
 	$CI->session->set_userdata('filter_penjualan_create_tgl_jual', trim((string) $tgl_jual));
 	return $tgl;
+}
+
+/**
+ * True jika nilai filter berupa bulan (YYYY-MM).
+ */
+function penjualan_input_is_bulan($value)
+{
+	return (bool) preg_match('/^\d{4}-\d{1,2}$/', trim((string) $value));
+}
+
+/**
+ * Timestamp tanggal 1 dari input bulan (YYYY-MM) atau tanggal harian.
+ */
+function penjualan_parse_bulan_bound($input)
+{
+	$input = trim((string) $input);
+	if ($input === '') {
+		return false;
+	}
+
+	if (preg_match('/^(\d{4})-(\d{1,2})$/', $input, $m)) {
+		$year = (int) $m[1];
+		$month = (int) $m[2];
+		if ($month < 1 || $month > 12 || $year < 1970) {
+			return false;
+		}
+		return mktime(0, 0, 0, $month, 1, $year);
+	}
+
+	$ts = pembelian_parse_tanggal_po($input);
+	if ($ts === false) {
+		$ts = strtotime(str_replace('/', '-', $input));
+	}
+	if ($ts === false) {
+		return false;
+	}
+
+	return mktime(0, 0, 0, (int) date('n', $ts), 1, (int) date('Y', $ts));
+}
+
+/**
+ * Nilai input type=month (YYYY-MM) dari tanggal atau bulan.
+ */
+function penjualan_format_bulan_input($value)
+{
+	$value = trim((string) $value);
+	if ($value === '') {
+		return date('Y-m');
+	}
+	if (preg_match('/^(\d{4})-(\d{1,2})$/', $value, $m)) {
+		$month = (int) $m[2];
+		if ($month < 1 || $month > 12) {
+			return date('Y-m');
+		}
+		return sprintf('%04d-%02d', (int) $m[1], $month);
+	}
+
+	$ts = penjualan_parse_bulan_bound($value);
+	if ($ts === false || (int) date('Y', $ts) < 2020) {
+		return date('Y-m');
+	}
+
+	return date('Y-m', $ts);
 }
 
 /**
@@ -487,8 +550,8 @@ function penjualan_build_redirect_list_url($CI, $tgl_jual)
 {
 	$filter = penjualan_get_filter_tgl_jual($CI, $tgl_jual);
 	penjualan_sync_filter_bulan_from_tgl_jual($CI, $tgl_jual);
-	$tgl_awal_disp = date('j-n-Y', strtotime($filter['awal']));
-	$tgl_akhir_disp = date('j-n-Y', strtotime($filter['akhir']));
+	$tgl_awal_disp = date('Y-m', strtotime($filter['awal']));
+	$tgl_akhir_disp = date('Y-m', strtotime($filter['akhir']));
 	return site_url('tbl_penjualan')
 		. '?tgl_awal=' . rawurlencode($tgl_awal_disp)
 		. '&tgl_akhir=' . rawurlencode($tgl_akhir_disp);
@@ -526,9 +589,17 @@ function penjualan_sql_tanggal_persediaan_expr($alias = 'persediaan')
  */
 function penjualan_format_tgl_jual_tampil($tgl_jual)
 {
-	$ts = pembelian_parse_tanggal_po($tgl_jual);
+	$raw = trim((string) $tgl_jual);
+	if (preg_match('/^(\d{4})-(\d{1,2})$/', $raw, $m)) {
+		$ts_bulan = mktime(0, 0, 0, (int) $m[2], 1, (int) $m[1]);
+		if ($ts_bulan !== false) {
+			return date('d-m-Y', strtotime(date('Y-m-t', $ts_bulan)));
+		}
+	}
+
+	$ts = pembelian_parse_tanggal_po($raw);
 	if ($ts === false) {
-		$ts = strtotime(str_replace('/', '-', trim((string) $tgl_jual)));
+		$ts = strtotime(str_replace('/', '-', $raw));
 	}
 	return ($ts !== false) ? date('d-m-Y', $ts) : date('d-m-Y');
 }
@@ -565,6 +636,14 @@ function penjualan_row_is_jasa($row)
 		}
 		return isset($row[$key]) ? (string) $row[$key] : '';
 	};
+
+	$kategori = strtolower(trim($val('kategori')));
+	if ($kategori === 'jasa') {
+		return true;
+	}
+	if ($kategori === 'barang') {
+		return false;
+	}
 
 	if (strtolower(trim($val('barang_jasa'))) === 'jasa') {
 		return true;
@@ -605,6 +684,9 @@ function penjualan_db_scope_hanya_jasa($CI, $alias = '')
 {
 	$p = ($alias !== '') ? $alias . '.' : '';
 	$parts = array();
+	if ($CI->db->field_exists('kategori', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}kategori, ''))) = 'jasa')";
+	}
 	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
 		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) = 'jasa')";
 	}
@@ -621,6 +703,9 @@ function penjualan_db_scope_hanya_barang($CI, $alias = '')
 {
 	$p = ($alias !== '') ? $alias . '.' : '';
 	$parts = array();
+	if ($CI->db->field_exists('kategori', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}kategori, ''))) <> 'jasa')";
+	}
 	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
 		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) <> 'jasa')";
 	}
@@ -636,6 +721,9 @@ function penjualan_sql_where_hanya_barang($CI, $alias = '')
 {
 	$p = ($alias !== '') ? rtrim($alias, '.') . '.' : '';
 	$parts = array();
+	if ($CI->db->field_exists('kategori', 'tbl_penjualan')) {
+		$parts[] = "(LOWER(TRIM(COALESCE({$p}kategori, ''))) <> 'jasa')";
+	}
 	if ($CI->db->field_exists('barang_jasa', 'tbl_penjualan')) {
 		$parts[] = "(LOWER(TRIM(COALESCE({$p}barang_jasa, ''))) <> 'jasa')";
 	}
@@ -2239,10 +2327,7 @@ function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit =
  */
 function penjualan_get_bulan_key_from_tgl($tgl_jual)
 {
-	$ts = pembelian_parse_tanggal_po($tgl_jual);
-	if ($ts === false) {
-		$ts = strtotime(str_replace('/', '-', trim((string) $tgl_jual)));
-	}
+	$ts = penjualan_parse_bulan_bound($tgl_jual);
 	return ($ts !== false) ? date('Y-m', $ts) : '';
 }
 
@@ -4307,6 +4392,85 @@ function tbl_penjualan_ensure_verified_persediaan_column($CI)
 }
 
 /**
+ * Pastikan kolom kategori ada di tbl_penjualan (sebelum kode_barang).
+ */
+function tbl_penjualan_ensure_kategori_column($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+
+	if (!$CI->db->table_exists('tbl_penjualan')) {
+		$ensured = false;
+		return false;
+	}
+
+	if ($CI->db->field_exists('kategori', 'tbl_penjualan')) {
+		$ensured = true;
+		return true;
+	}
+
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$position = '';
+	if ($CI->db->field_exists('kode_barang', 'tbl_penjualan')) {
+		$position = ' BEFORE `kode_barang`';
+	} elseif ($CI->db->field_exists('nama_barang', 'tbl_penjualan')) {
+		$position = ' BEFORE `nama_barang`';
+	}
+
+	$ok = @$CI->db->query(
+		"ALTER TABLE `tbl_penjualan`
+		ADD COLUMN `kategori` VARCHAR(32) NULL DEFAULT NULL"
+		. " COMMENT 'jasa=penjualan jasa; barang/kosong=penjualan barang'"
+		. $position
+	);
+
+	$CI->db->db_debug = $db_debug;
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+	$ensured = tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'kategori');
+	if (!$ensured) {
+		log_message('error', 'tbl_penjualan_ensure_kategori_column: gagal ADD COLUMN kategori');
+	}
+	return (bool) $ensured;
+}
+
+/**
+ * Set kategori=jasa untuk semua record tbl_penjualan yang nama_barang mengandung "jasa".
+ *
+ * @return int jumlah baris ter-update
+ */
+function tbl_penjualan_sync_kategori_jasa_all($CI)
+{
+	if (!tbl_penjualan_ensure_kategori_column($CI)) {
+		return 0;
+	}
+	if (!$CI->db->field_exists('nama_barang', 'tbl_penjualan')) {
+		return 0;
+	}
+
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$ok = @$CI->db->query(
+		"UPDATE `tbl_penjualan`
+		SET `kategori` = 'jasa'
+		WHERE LOWER(COALESCE(`nama_barang`, '')) LIKE '%jasa%'
+		AND ( `kategori` IS NULL OR TRIM(`kategori`) = '' OR LOWER(TRIM(`kategori`)) <> 'jasa' )"
+	);
+
+	$CI->db->db_debug = $db_debug;
+	if ($ok === false) {
+		log_message('error', 'tbl_penjualan_sync_kategori_jasa_all: gagal UPDATE kategori=jasa');
+		return 0;
+	}
+
+	return (int) $CI->db->affected_rows();
+}
+
+/**
  * Nilai konstanta verified_persediaan.
  */
 function tbl_penjualan_verified_persediaan_refered_value()
@@ -4617,6 +4781,636 @@ function tbl_penjualan_set_refered_manual_audit($CI, $id_penjualan, $row_pers)
 	$data = tbl_penjualan_refered_manual_audit_payload_from_persediaan($row_pers);
 	$CI->db->where('id', $id_penjualan);
 	return (bool) $CI->db->update('tbl_penjualan', $data);
+}
+
+/**
+ * Kolom jejak sumber barang penjualan (pembelian / produksi / pecah / jasa).
+ */
+function tbl_penjualan_source_referensi_column_defs()
+{
+	return array(
+		'uuid_pembelian_referensi' => 'VARCHAR(255) NULL DEFAULT NULL',
+		'uuid_produksi_referensi' => 'VARCHAR(255) NULL DEFAULT NULL',
+		'uuid_pecah_satuan_referensi' => 'VARCHAR(255) NULL DEFAULT NULL',
+		'uuid_pembelian_jasa_referensi' => 'VARCHAR(255) NULL DEFAULT NULL',
+		'nama_barang_referensi' => 'TEXT NULL DEFAULT NULL',
+		'satuan_referensi' => 'VARCHAR(64) NULL DEFAULT NULL',
+		'harga_satuan_referensi' => 'VARCHAR(32) NULL DEFAULT NULL',
+		'tabel_source_referensi' => 'VARCHAR(32) NULL DEFAULT NULL',
+	);
+}
+
+function tbl_penjualan_source_referensi_columns_ready($CI)
+{
+	if (!$CI->db->table_exists('tbl_penjualan')) {
+		return false;
+	}
+	foreach (array_keys(tbl_penjualan_source_referensi_column_defs()) as $col) {
+		if (!tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/**
+ * Pastikan kolom referensi sumber ada di tbl_penjualan.
+ */
+function tbl_penjualan_ensure_source_referensi_columns($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+	if (!$CI->db->table_exists('tbl_penjualan')) {
+		$ensured = false;
+		return false;
+	}
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+	if (tbl_penjualan_source_referensi_columns_ready($CI)) {
+		$ensured = true;
+		return true;
+	}
+
+	tbl_penjualan_ensure_refered_manual_audit_columns($CI);
+	$cols = tbl_penjualan_source_referensi_column_defs();
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+
+	$after = '';
+	if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'hpp_refered_manual')) {
+		$after = ' AFTER `hpp_refered_manual`';
+	} elseif (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'kategori')) {
+		$after = ' AFTER `kategori`';
+	} elseif (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', 'uuid_persediaan')) {
+		$after = ' AFTER `uuid_persediaan`';
+	}
+
+	foreach ($cols as $col => $def) {
+		if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col)) {
+			continue;
+		}
+		@$CI->db->query('ALTER TABLE `tbl_penjualan` ADD COLUMN `' . $col . '` ' . $def . $after);
+		tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+		if (tbl_penjualan_db_has_column($CI, 'tbl_penjualan', $col)) {
+			$after = ' AFTER `' . $col . '`';
+		}
+	}
+
+	$CI->db->db_debug = $db_debug;
+	tbl_penjualan_clear_schema_field_cache($CI, 'tbl_penjualan');
+	$ensured = tbl_penjualan_source_referensi_columns_ready($CI);
+	if (!$ensured) {
+		log_message('error', 'tbl_penjualan_ensure_source_referensi_columns: gagal ADD COLUMN referensi sumber');
+	}
+	return (bool) $ensured;
+}
+
+function tbl_penjualan_empty_source_referensi_payload()
+{
+	return array(
+		'uuid_pembelian_referensi' => null,
+		'uuid_produksi_referensi' => null,
+		'uuid_pecah_satuan_referensi' => null,
+		'uuid_pembelian_jasa_referensi' => null,
+		'nama_barang_referensi' => null,
+		'satuan_referensi' => null,
+		'harga_satuan_referensi' => null,
+		'tabel_source_referensi' => null,
+	);
+}
+
+function tbl_penjualan_source_referensi_row_val($row, $key)
+{
+	if (is_object($row)) {
+		return isset($row->$key) ? trim((string) $row->$key) : '';
+	}
+	if (is_array($row)) {
+		return isset($row[$key]) ? trim((string) $row[$key]) : '';
+	}
+	return '';
+}
+
+/**
+ * Nama / satuan / harga dari baris tabel sumber.
+ */
+function tbl_penjualan_source_referensi_display_from_source_row($row, $source_type)
+{
+	$source_type = strtolower(trim((string) $source_type));
+	$nama = '';
+	$satuan = '';
+	$harga = '';
+
+	if ($source_type === 'pecah satuan') {
+		$nama = tbl_penjualan_source_referensi_row_val($row, 'nama_barang_baru');
+		if ($nama === '') {
+			$nama = tbl_penjualan_source_referensi_row_val($row, 'uraian');
+		}
+		$satuan = tbl_penjualan_source_referensi_row_val($row, 'satuan_barang_baru');
+		if ($satuan === '') {
+			$satuan = tbl_penjualan_source_referensi_row_val($row, 'satuan');
+		}
+		$harga = tbl_penjualan_source_referensi_row_val($row, 'harga_satuan_barang_baru');
+		if ($harga === '') {
+			$harga = tbl_penjualan_source_referensi_row_val($row, 'harga_satuan');
+		}
+	} elseif ($source_type === 'produksi') {
+		$nama = tbl_penjualan_source_referensi_row_val($row, 'nama_barang');
+		if ($nama === '') {
+			$nama = tbl_penjualan_source_referensi_row_val($row, 'nama_barang_jadi');
+		}
+		$satuan = tbl_penjualan_source_referensi_row_val($row, 'satuan');
+		$harga = tbl_penjualan_source_referensi_row_val($row, 'hpp');
+		if ($harga === '') {
+			$harga = tbl_penjualan_source_referensi_row_val($row, 'harga_satuan');
+		}
+	} else {
+		$nama = tbl_penjualan_source_referensi_row_val($row, 'uraian');
+		if ($nama === '') {
+			$nama = tbl_penjualan_source_referensi_row_val($row, 'nama_barang');
+		}
+		$satuan = tbl_penjualan_source_referensi_row_val($row, 'satuan');
+		$harga = tbl_penjualan_source_referensi_row_val($row, 'harga_satuan');
+		if ($harga === '') {
+			$harga = tbl_penjualan_source_referensi_row_val($row, 'hpp');
+		}
+	}
+
+	return array(
+		'nama' => $nama,
+		'satuan' => $satuan,
+		'harga' => $harga,
+	);
+}
+
+/**
+ * Payload update kolom referensi sumber dari baris tabel sumber.
+ */
+function tbl_penjualan_source_referensi_payload_from_source_row($row, $source_type)
+{
+	$payload = tbl_penjualan_empty_source_referensi_payload();
+	if (!$row) {
+		return $payload;
+	}
+
+	$source_type = strtolower(trim((string) $source_type));
+	$disp = tbl_penjualan_source_referensi_display_from_source_row($row, $source_type);
+	$payload['nama_barang_referensi'] = ($disp['nama'] !== '') ? $disp['nama'] : null;
+	$payload['satuan_referensi'] = ($disp['satuan'] !== '') ? $disp['satuan'] : null;
+	$payload['harga_satuan_referensi'] = ($disp['harga'] !== '') ? $disp['harga'] : null;
+	$payload['tabel_source_referensi'] = ($source_type !== '') ? $source_type : null;
+
+	if ($source_type === 'pembelian') {
+		$uuid = tbl_penjualan_source_referensi_row_val($row, 'uuid_pembelian');
+		$payload['uuid_pembelian_referensi'] = ($uuid !== '') ? $uuid : null;
+	} elseif ($source_type === 'jasa') {
+		$uuid = tbl_penjualan_source_referensi_row_val($row, 'uuid_persediaan');
+		$payload['uuid_pembelian_jasa_referensi'] = ($uuid !== '') ? $uuid : null;
+	} elseif ($source_type === 'produksi') {
+		$uuid = tbl_penjualan_source_referensi_row_val($row, 'uuid_persediaan');
+		$payload['uuid_produksi_referensi'] = ($uuid !== '') ? $uuid : null;
+	} elseif ($source_type === 'pecah satuan') {
+		$uuid = tbl_penjualan_source_referensi_row_val($row, 'uuid_pecah_satuan');
+		$payload['uuid_pecah_satuan_referensi'] = ($uuid !== '') ? $uuid : null;
+	}
+
+	return $payload;
+}
+
+function tbl_penjualan_find_pembelian_jasa_source_by_uuid($CI, $uuid_persediaan)
+{
+	if (!$CI->db->table_exists('tbl_pembelian_jasa') || !$CI->db->field_exists('uuid_persediaan', 'tbl_pembelian_jasa')) {
+		return null;
+	}
+	return $CI->db->query(
+		"SELECT * FROM `tbl_pembelian_jasa`
+		WHERE TRIM(COALESCE(`uuid_persediaan`, '')) = ?
+		ORDER BY `id` DESC LIMIT 1",
+		array(trim((string) $uuid_persediaan))
+	)->row();
+}
+
+function tbl_penjualan_find_pecah_satuan_source_by_uuid($CI, $uuid_persediaan)
+{
+	if (!$CI->db->table_exists('tbl_pembelian_pecah_satuan') || trim((string) $uuid_persediaan) === '') {
+		return null;
+	}
+	$uuid = trim((string) $uuid_persediaan);
+	$parts = array();
+	$binds = array();
+	if ($CI->db->field_exists('uuid_persediaan_baru', 'tbl_pembelian_pecah_satuan')) {
+		$parts[] = 'TRIM(COALESCE(`uuid_persediaan_baru`, \'\')) = ?';
+		$binds[] = $uuid;
+	}
+	if (empty($parts)) {
+		return null;
+	}
+	return $CI->db->query(
+		'SELECT * FROM `tbl_pembelian_pecah_satuan` WHERE (' . implode(' OR ', $parts) . ') ORDER BY `id` DESC LIMIT 1',
+		$binds
+	)->row();
+}
+
+function tbl_penjualan_find_produksi_source_by_uuid($CI, $uuid_persediaan)
+{
+	if (!$CI->db->table_exists('sys_unit_produk') || !$CI->db->field_exists('uuid_persediaan', 'sys_unit_produk')) {
+		return null;
+	}
+	return $CI->db->query(
+		"SELECT * FROM `sys_unit_produk`
+		WHERE TRIM(COALESCE(`uuid_persediaan`, '')) = ?
+		ORDER BY `id` DESC LIMIT 1",
+		array(trim((string) $uuid_persediaan))
+	)->row();
+}
+
+function tbl_penjualan_find_pembelian_source_by_uuid($CI, $uuid_persediaan)
+{
+	if (!$CI->db->table_exists('tbl_pembelian') || !$CI->db->field_exists('uuid_persediaan', 'tbl_pembelian')) {
+		return null;
+	}
+	return $CI->db->query(
+		"SELECT * FROM `tbl_pembelian`
+		WHERE TRIM(COALESCE(`uuid_persediaan`, '')) = ?
+		ORDER BY `id` DESC LIMIT 1",
+		array(trim((string) $uuid_persediaan))
+	)->row();
+}
+
+/**
+ * Tentukan tabel sumber & payload referensi dari uuid_persediaan penjualan/persediaan.
+ *
+ * @return array{type:string,row:object|null,payload:array}
+ */
+function tbl_penjualan_resolve_source_referensi_match($CI, $uuid_persediaan, $row_penjualan = null)
+{
+	$out = array('type' => '', 'row' => null, 'payload' => tbl_penjualan_empty_source_referensi_payload());
+	$uuid = trim((string) $uuid_persediaan);
+	if ($uuid === '') {
+		return $out;
+	}
+
+	$is_jasa_pen = ($row_penjualan && penjualan_row_is_jasa($row_penjualan));
+
+	if ($is_jasa_pen) {
+		$row = tbl_penjualan_find_pembelian_jasa_source_by_uuid($CI, $uuid);
+		if ($row) {
+			$out['type'] = 'jasa';
+			$out['row'] = $row;
+			$out['payload'] = tbl_penjualan_source_referensi_payload_from_source_row($row, 'jasa');
+			return $out;
+		}
+	}
+
+	$row_pecah = tbl_penjualan_find_pecah_satuan_source_by_uuid($CI, $uuid);
+	if ($row_pecah) {
+		$out['type'] = 'pecah satuan';
+		$out['row'] = $row_pecah;
+		$out['payload'] = tbl_penjualan_source_referensi_payload_from_source_row($row_pecah, 'pecah satuan');
+		return $out;
+	}
+
+	$row_prod = tbl_penjualan_find_produksi_source_by_uuid($CI, $uuid);
+	if ($row_prod) {
+		$out['type'] = 'produksi';
+		$out['row'] = $row_prod;
+		$out['payload'] = tbl_penjualan_source_referensi_payload_from_source_row($row_prod, 'produksi');
+		return $out;
+	}
+
+	$row_beli = tbl_penjualan_find_pembelian_source_by_uuid($CI, $uuid);
+	if ($row_beli) {
+		$out['type'] = 'pembelian';
+		$out['row'] = $row_beli;
+		$out['payload'] = tbl_penjualan_source_referensi_payload_from_source_row($row_beli, 'pembelian');
+		return $out;
+	}
+
+	$row_jasa = tbl_penjualan_find_pembelian_jasa_source_by_uuid($CI, $uuid);
+	if ($row_jasa) {
+		$out['type'] = 'jasa';
+		$out['row'] = $row_jasa;
+		$out['payload'] = tbl_penjualan_source_referensi_payload_from_source_row($row_jasa, 'jasa');
+		return $out;
+	}
+
+	return $out;
+}
+
+/**
+ * Resolve payload referensi sumber untuk satu baris penjualan.
+ */
+function tbl_penjualan_resolve_source_referensi_payload($CI, $row_penjualan, $row_persediaan = null)
+{
+	$uuid = '';
+	if ($row_penjualan) {
+		$eff = persediaan_source_row_effective_match_ref($row_penjualan, array('nama_keys' => array('nama_barang')));
+		$uuid = $eff['uuid_persediaan'];
+	}
+	if ($uuid === '' && $row_persediaan) {
+		$uuid = tbl_penjualan_source_referensi_row_val($row_persediaan, 'uuid_persediaan');
+	}
+	$match = tbl_penjualan_resolve_source_referensi_match($CI, $uuid, $row_penjualan);
+	return isset($match['payload']) && is_array($match['payload']) ? $match['payload'] : tbl_penjualan_empty_source_referensi_payload();
+}
+
+/**
+ * Simpan referensi sumber ke tbl_penjualan.
+ */
+function tbl_penjualan_set_source_referensi($CI, $id_penjualan, $payload)
+{
+	$id_penjualan = (int) $id_penjualan;
+	if ($id_penjualan < 1 || !is_array($payload) || empty($payload)) {
+		return false;
+	}
+	if (!tbl_penjualan_ensure_source_referensi_columns($CI)) {
+		return false;
+	}
+	$data = array();
+	foreach (array_keys(tbl_penjualan_source_referensi_column_defs()) as $col) {
+		if (array_key_exists($col, $payload)) {
+			$data[$col] = $payload[$col];
+		}
+	}
+	if (empty($data)) {
+		return false;
+	}
+	$CI->db->where('id', $id_penjualan);
+	return (bool) $CI->db->update('tbl_penjualan', $data);
+}
+
+/**
+ * Terapkan referensi sumber dari uuid_persediaan / persediaan terpilih.
+ */
+function tbl_penjualan_apply_source_referensi_for_row($CI, $id_penjualan, $row_penjualan = null, $row_persediaan = null)
+{
+	$id_penjualan = (int) $id_penjualan;
+	if ($id_penjualan < 1) {
+		return false;
+	}
+	if (!$row_penjualan) {
+		$row_penjualan = $CI->db->where('id', $id_penjualan)->limit(1)->get('tbl_penjualan')->row();
+	}
+	if (!$row_penjualan) {
+		return false;
+	}
+	$payload = tbl_penjualan_resolve_source_referensi_payload($CI, $row_penjualan, $row_persediaan);
+	if (empty($payload['tabel_source_referensi'])) {
+		return false;
+	}
+	return tbl_penjualan_set_source_referensi($CI, $id_penjualan, $payload);
+}
+
+/**
+ * Backfill referensi sumber penjualan per rentang tgl_jual.
+ *
+ * @return int jumlah baris ter-update
+ */
+function tbl_penjualan_sync_source_referensi_bulan($CI, $tgl_awal, $tgl_akhir)
+{
+	if (!tbl_penjualan_ensure_source_referensi_columns($CI)) {
+		return 0;
+	}
+	$rows = pembelian_db_query_result_rows(
+		$CI,
+		"SELECT * FROM `tbl_penjualan`
+		WHERE `tgl_jual` IS NOT NULL AND `tgl_jual` <> '0000-00-00'
+		AND DATE(`tgl_jual`) >= ? AND DATE(`tgl_jual`) <= ?
+		ORDER BY `id` ASC",
+		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
+	);
+
+	$cnt = 0;
+	foreach ($rows as $row) {
+		if (penjualan_row_is_jasa($row)) {
+			continue;
+		}
+		$payload = tbl_penjualan_resolve_source_referensi_payload($CI, $row, null);
+		if (empty($payload['tabel_source_referensi'])) {
+			continue;
+		}
+		if (tbl_penjualan_set_source_referensi($CI, (int) $row->id, $payload)) {
+			$cnt++;
+		}
+	}
+	return $cnt;
+}
+
+/**
+ * Definisi kolom audit refered manual (dipakai semua tabel sumber transaksi).
+ */
+function persediaan_refered_manual_audit_column_defs()
+{
+	return tbl_penjualan_refered_manual_audit_column_defs();
+}
+
+/**
+ * Ambil uuid/nama/satuan/hpp efektif dari baris sumber: prioritas *_refered_manual, fallback field utama.
+ *
+ * @param object|array $row
+ * @param array $opts nama_keys, uuid_key, satuan_key, hpp_keys
+ * @return array{uuid_persediaan:string,nama_barang:string,satuan:string,hpp:string,via:string}
+ */
+function persediaan_source_row_effective_match_ref($row, $opts = array())
+{
+	$get = function ($key) use ($row) {
+		if (is_object($row)) {
+			return isset($row->$key) ? trim((string) $row->$key) : '';
+		}
+		return isset($row[$key]) ? trim((string) $row[$key]) : '';
+	};
+
+	$uuid_ref = $get('uuid_persediaan_refered_manual');
+	$nama_ref = $get('nama_barang_refered_manual');
+	$satuan_ref = $get('satuan_refered_manual');
+	$hpp_ref = $get('hpp_refered_manual');
+
+	$uuid = $uuid_ref !== '' ? $uuid_ref : $get(isset($opts['uuid_key']) ? $opts['uuid_key'] : 'uuid_persediaan');
+
+	$nama_keys = isset($opts['nama_keys']) && is_array($opts['nama_keys'])
+		? $opts['nama_keys']
+		: array('nama_barang', 'uraian', 'namabarang', 'nama_barang_jadi');
+	$nama = $nama_ref;
+	if ($nama === '') {
+		foreach ($nama_keys as $nk) {
+			$v = $get($nk);
+			if ($v !== '') {
+				$nama = $v;
+				break;
+			}
+		}
+	}
+
+	$satuan_key = isset($opts['satuan_key']) ? $opts['satuan_key'] : 'satuan';
+	$satuan = $satuan_ref !== '' ? $satuan_ref : $get($satuan_key);
+
+	$hpp_keys = isset($opts['hpp_keys']) && is_array($opts['hpp_keys'])
+		? $opts['hpp_keys']
+		: array('hpp_refered_manual', 'harga_satuan', 'hpp', 'harga_satuan_bahan');
+	$hpp = $hpp_ref;
+	if ($hpp === '') {
+		foreach ($hpp_keys as $hk) {
+			if ($hk === 'hpp_refered_manual') {
+				continue;
+			}
+			$v = $get($hk);
+			if ($v !== '') {
+				$hpp = $v;
+				break;
+			}
+		}
+	}
+
+	$via = ($uuid_ref !== '' || $nama_ref !== '' || $satuan_ref !== '' || $hpp_ref !== '')
+		? 'refered_manual'
+		: 'field_utama';
+
+	return array(
+		'uuid_persediaan' => $uuid,
+		'nama_barang' => $nama,
+		'satuan' => $satuan,
+		'hpp' => $hpp,
+		'via' => $via,
+	);
+}
+
+/**
+ * Pastikan kolom audit refered manual ada di semua tabel sumber generate.
+ */
+function persediaan_generate_ensure_all_refered_manual_audit_columns($CI)
+{
+	tbl_penjualan_ensure_refered_manual_audit_columns($CI);
+	tbl_pembelian_ensure_refered_manual_audit_columns($CI, 'tbl_pembelian');
+	tbl_pembelian_ensure_refered_manual_audit_columns($CI, 'tbl_pembelian_jasa');
+	tbl_pembelian_pecah_satuan_ensure_refered_manual_audit_columns($CI);
+	sys_unit_produk_ensure_refered_manual_audit_columns($CI);
+	sys_unit_produk_bahan_ensure_refered_manual_audit_columns($CI);
+	return true;
+}
+
+/**
+ * True jika bulan target sudah punya data persediaan (mode preserve UUID).
+ */
+function persediaan_gen_v2_target_bulan_has_persediaan($CI, $tgl_awal, $tgl_akhir)
+{
+	if (!$CI->db->table_exists('persediaan')) {
+		return false;
+	}
+	$row = $CI->db->query(
+		"SELECT COUNT(*) AS jml FROM `persediaan`
+		WHERE DATE(`tanggal_beli`) >= ? AND DATE(`tanggal_beli`) <= ?",
+		array(trim((string) $tgl_awal), trim((string) $tgl_akhir))
+	)->row();
+	return ($row && (int) $row->jml > 0);
+}
+
+/**
+ * Isi kolom *_refered_manual dari persediaan bulan target jika uuid_persediaan cocok.
+ *
+ * @return array{updated:int,tables:array<string,int>}
+ */
+function persediaan_generate_backfill_refered_manual_bulan($CI, $tgl_awal, $tgl_akhir)
+{
+	$out = array('updated' => 0, 'tables' => array());
+	if (!$CI->db->table_exists('persediaan')) {
+		return $out;
+	}
+
+	persediaan_generate_ensure_all_refered_manual_audit_columns($CI);
+	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
+	$by_uuid = isset($map['by_uuid_pers']) && is_array($map['by_uuid_pers']) ? $map['by_uuid_pers'] : array();
+
+	$backfill_table = function ($table, $date_col, $date_from, $date_to, $nama_keys) use ($CI, $by_uuid, &$out) {
+		if (!$CI->db->table_exists($table) || !tbl_penjualan_db_has_column($CI, $table, 'uuid_persediaan')) {
+			return;
+		}
+		if (!tbl_penjualan_db_has_column($CI, $table, 'uuid_persediaan_refered_manual')) {
+			return;
+		}
+
+		$rows = pembelian_db_query_result_rows(
+			$CI,
+			"SELECT * FROM `{$table}`
+			WHERE `{$date_col}` IS NOT NULL AND `{$date_col}` <> '0000-00-00'
+			AND DATE(`{$date_col}`) >= ? AND DATE(`{$date_col}`) <= ?",
+			array($date_from, $date_to)
+		);
+
+		$cnt = 0;
+		foreach ($rows as $r) {
+			$uuid = isset($r->uuid_persediaan) ? trim((string) $r->uuid_persediaan) : '';
+			if ($uuid === '' || empty($by_uuid[$uuid])) {
+				continue;
+			}
+			$ref_uuid = isset($r->uuid_persediaan_refered_manual) ? trim((string) $r->uuid_persediaan_refered_manual) : '';
+			if ($ref_uuid !== '') {
+				continue;
+			}
+			$pers = persediaan_recalculate_pick_best_persediaan_row($by_uuid[$uuid], null);
+			if (!$pers) {
+				$pers = $by_uuid[$uuid][0];
+			}
+			$data = tbl_penjualan_refered_manual_audit_payload_from_persediaan($pers);
+			$CI->db->where('id', (int) $r->id);
+			if ($CI->db->update($table, $data)) {
+				$cnt++;
+			}
+		}
+		$out['tables'][$table] = $cnt;
+		$out['updated'] += $cnt;
+	};
+
+	$tgl_awal_d = trim((string) $tgl_awal);
+	$tgl_akhir_d = trim((string) $tgl_akhir);
+	$awal_dt = $tgl_awal_d . ' 00:00:00';
+	$akhir_dt = $tgl_akhir_d . ' 23:59:59';
+
+	$backfill_table('tbl_penjualan', 'tgl_jual', $tgl_awal_d, $tgl_akhir_d, array('nama_barang'));
+	$backfill_table('tbl_pembelian', 'tgl_po', $tgl_awal_d, $tgl_akhir_d, array('uraian'));
+	$backfill_table('tbl_pembelian_jasa', 'tgl_po', $tgl_awal_d, $tgl_akhir_d, array('uraian'));
+	$backfill_table('tbl_pembelian_pecah_satuan', 'tgl_po', $tgl_awal_d, $tgl_akhir_d, array('uraian'));
+	$backfill_table('sys_unit_produk', 'tgl_transaksi', $awal_dt, $akhir_dt, array('nama_barang'));
+	$backfill_table('sys_unit_produk_bahan', 'tgl_transaksi', $awal_dt, $akhir_dt, array('nama_barang'));
+
+	return $out;
+}
+
+/**
+ * Lewati hapus+copy persediaan — lanjut proses pembelian (preserve uuid bulan target).
+ */
+function persediaan_gen_v2_transition_preserve_skip_reset_copy($CI, &$state, $state_key, $ctx, $batch_items, $pesan_extra = '')
+{
+	$state['preserve_target_persediaan'] = 1;
+	$state['reset_target'] = 0;
+	$state['target_kosong_verified'] = 0;
+	$state['phase'] = 'proses_pembelian';
+	$state['proses_pembelian_tabel'] = 'tbl_pembelian';
+	persediaan_gen_v2_save_batch_state($CI, $state_key, $state);
+
+	$label = 'Data persediaan bulan ' . $ctx['bulan_label'] . ' dipertahankan (uuid tidak di-reset)'
+		. ($pesan_extra !== '' ? ' — ' . $pesan_extra : '')
+		. ' — memulai proses pembelian';
+
+	$count_pembelian = (int) (isset($state['stats']['count_pembelian_barang']) ? $state['stats']['count_pembelian_barang'] : 0)
+		+ (int) (isset($state['stats']['count_pembelian_jasa']) ? $state['stats']['count_pembelian_jasa'] : 0);
+	if ($count_pembelian < 1 && !empty($state['ctx_counts'])) {
+		$count_pembelian = (int) (isset($state['ctx_counts']['count_pembelian']) ? $state['ctx_counts']['count_pembelian'] : 0)
+			+ (int) (isset($state['ctx_counts']['count_pembelian_jasa']) ? $state['ctx_counts']['count_pembelian_jasa'] : 0);
+	}
+
+	$transition = persediaan_generate_recalculate_phase_transition_response(
+		$CI,
+		$state,
+		$state_key,
+		$ctx,
+		$batch_items,
+		'proses_pembelian',
+		$count_pembelian,
+		$label
+	);
+	$transition['preserve_target_persediaan'] = true;
+	$transition['copy_persediaan_skipped'] = true;
+	return $transition;
 }
 
 /**
@@ -15136,20 +15930,33 @@ function persediaan_generate_recalculate_batch_legacy($CI, $bulan, $offset, $lim
 		$cleanup_spop_kosong = array('deleted' => 0, 'groups' => 0);
 		if ($start) {
 			$tanggal_klik_generate = date('Y-m-d H:i:s');
-			$reset_target_info = persediaan_generate_recalculate_kosongkan_bulan_target($CI, $tanggal_beli_target);
-			if (empty($reset_target_info['verified_empty'])) {
-				return array(
-					'ok' => false,
-					'message' => 'Gagal mengosongkan data persediaan bulan target (tanggal_beli = '
-						. $tanggal_beli_target . '). Masih tersisa '
-						. (int) (isset($reset_target_info['remaining']) ? $reset_target_info['remaining'] : 0)
-						. ' record. Proses generate dibatalkan.',
-					'reset_target' => (int) (isset($reset_target_info['deleted']) ? $reset_target_info['deleted'] : 0),
-					'target_kosong_verified' => 0,
-					'tanggal_klik_generate' => $tanggal_klik_generate,
+			$preserve_legacy = persediaan_gen_v2_target_bulan_has_persediaan($CI, $tgl_awal, $tgl_akhir);
+			if ($preserve_legacy) {
+				persediaan_generate_ensure_all_refered_manual_audit_columns($CI);
+				persediaan_generate_backfill_refered_manual_bulan($CI, $tgl_awal, $tgl_akhir);
+				$reset_target_info = array(
+					'deleted' => 0,
+					'remaining' => 0,
+					'verified_empty' => false,
+					'preserve' => true,
 				);
+				$reset_target_count = 0;
+			} else {
+				$reset_target_info = persediaan_generate_recalculate_kosongkan_bulan_target($CI, $tanggal_beli_target);
+				if (empty($reset_target_info['verified_empty'])) {
+					return array(
+						'ok' => false,
+						'message' => 'Gagal mengosongkan data persediaan bulan target (tanggal_beli = '
+							. $tanggal_beli_target . '). Masih tersisa '
+							. (int) (isset($reset_target_info['remaining']) ? $reset_target_info['remaining'] : 0)
+							. ' record. Proses generate dibatalkan.',
+						'reset_target' => (int) (isset($reset_target_info['deleted']) ? $reset_target_info['deleted'] : 0),
+						'target_kosong_verified' => 0,
+						'tanggal_klik_generate' => $tanggal_klik_generate,
+					);
+				}
+				$reset_target_count = (int) (isset($reset_target_info['deleted']) ? $reset_target_info['deleted'] : 0);
 			}
-			$reset_target_count = (int) (isset($reset_target_info['deleted']) ? $reset_target_info['deleted'] : 0);
 			$hapus_nol_target = 0;
 			$hapus_duplikat_target = 0;
 			$cleanup_spop_kosong = array('deleted' => 0, 'groups' => 0);
@@ -15159,7 +15966,8 @@ function persediaan_generate_recalculate_batch_legacy($CI, $bulan, $offset, $lim
 		$state = array(
 			'phase' => 'generate',
 			'tanggal_klik_generate' => isset($tanggal_klik_generate) ? $tanggal_klik_generate : date('Y-m-d H:i:s'),
-			'target_kosong_verified' => isset($reset_target_info) && !empty($reset_target_info['verified_empty']) ? 1 : 0,
+			'preserve_target_persediaan' => !empty($preserve_legacy) ? 1 : 0,
+			'target_kosong_verified' => !empty($preserve_legacy) ? 0 : (isset($reset_target_info) && !empty($reset_target_info['verified_empty']) ? 1 : 0),
 			'stop_after_generate' => persediaan_generate_recalculate_stop_after_generate() ? 1 : 0,
 			'stop_after_pembelian' => persediaan_generate_recalculate_stop_after_pembelian() ? 1 : 0,
 			'next_id' => $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1,
@@ -16130,6 +16938,10 @@ function persediaan_generate_schema_ensure_all($CI)
 	$hist_ok = persediaan_history_generate_ensure_tables($CI);
 	$gen_ok = generate_hasil_datatable_ensure_tables($CI);
 	tbl_penjualan_ensure_verified_persediaan_column($CI);
+	tbl_penjualan_ensure_kategori_column($CI);
+	tbl_penjualan_sync_kategori_jasa_all($CI);
+	tbl_penjualan_ensure_source_referensi_columns($CI);
+	persediaan_generate_ensure_all_refered_manual_audit_columns($CI);
 	return (bool) ($hist_ok && $gen_ok);
 }
 
@@ -27511,10 +28323,11 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 	$CI->load->helper('persediaan_display');
 
 	$id = isset($row_penjualan->id) ? (int) $row_penjualan->id : 0;
-	$uuid_p = isset($row_penjualan->uuid_persediaan) ? trim((string) $row_penjualan->uuid_persediaan) : '';
-	$nama = isset($row_penjualan->nama_barang) ? trim((string) $row_penjualan->nama_barang) : '';
-	$satuan = isset($row_penjualan->satuan) ? trim((string) $row_penjualan->satuan) : '';
-	$harga = isset($row_penjualan->harga_satuan) ? $row_penjualan->harga_satuan : '';
+	$eff = persediaan_source_row_effective_match_ref($row_penjualan, array('nama_keys' => array('nama_barang')));
+	$uuid_p = $eff['uuid_persediaan'];
+	$nama = $eff['nama_barang'];
+	$satuan = $eff['satuan'];
+	$harga = $eff['hpp'] !== '' ? $eff['hpp'] : (isset($row_penjualan->harga_satuan) ? $row_penjualan->harga_satuan : '');
 	$unit_txt = isset($row_penjualan->unit) ? trim((string) $row_penjualan->unit) : '';
 	$jumlah = persediaan_recalculate_parse_jumlah_penjualan(isset($row_penjualan->jumlah) ? $row_penjualan->jumlah : 0);
 
@@ -27580,6 +28393,7 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 		&& is_array($cache_pembelian)
 		&& !empty($cache_pembelian['uuid_persediaan'][$uuid_p])
 		&& empty($map['by_uuid_pers'][$uuid_p])
+		&& empty($ctx['preserve_target_persediaan'])
 	) {
 		$row_src = persediaan_gen_v2_find_persediaan_by_uuid_any($CI, $uuid_p);
 		if ($row_src) {
@@ -27714,6 +28528,10 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 
 	if ($id > 0) {
 		tbl_penjualan_set_verified_persediaan($CI, $id, tbl_penjualan_verified_persediaan_refered_value());
+		if ($existing) {
+			tbl_penjualan_set_refered_manual_audit($CI, $id, $existing);
+			tbl_penjualan_apply_source_referensi_for_row($CI, $id, $row_penjualan, $existing);
+		}
 	}
 
 	return array_merge($base, array(
@@ -27738,6 +28556,17 @@ function persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $
 	$satuan = isset($row_pen->satuan) ? trim((string) $row_pen->satuan) : '';
 	$jumlah = persediaan_recalculate_parse_jumlah_penjualan(isset($row_pen->jumlah) ? $row_pen->jumlah : 0);
 
+	$eff = persediaan_source_row_effective_match_ref($row_pen, array('nama_keys' => array('nama_barang')));
+	if ($eff['uuid_persediaan'] !== '') {
+		$uuid_p = $eff['uuid_persediaan'];
+	}
+	if ($eff['nama_barang'] !== '') {
+		$nama = $eff['nama_barang'];
+	}
+	if ($eff['satuan'] !== '') {
+		$satuan = $eff['satuan'];
+	}
+
 	$row = is_object($row_pen) ? clone $row_pen : $row_pen;
 	$row->status_kategori = 'skip';
 	$row->status_label = 'Lewati';
@@ -27757,7 +28586,8 @@ function persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $
 
 	$tgl_awal = isset($ctx['tgl_awal']) ? $ctx['tgl_awal'] : '';
 	$tgl_akhir = isset($ctx['tgl_akhir']) ? $ctx['tgl_akhir'] : '';
-	$ref = (object) array('nama_barang' => $nama, 'satuan' => $satuan, 'harga_satuan' => isset($row_pen->harga_satuan) ? $row_pen->harga_satuan : '');
+	$harga_eff = $eff['hpp'] !== '' ? $eff['hpp'] : (isset($row_pen->harga_satuan) ? $row_pen->harga_satuan : '');
+	$ref = (object) array('nama_barang' => $nama, 'satuan' => $satuan, 'harga_satuan' => $harga_eff);
 
 	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref);
 	$existing = isset($lookup['row']) ? $lookup['row'] : null;
@@ -28315,10 +29145,19 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 		'total_sumber_all' => $count_sumber_all,
 	);
 
+	$preserve_target = persediaan_gen_v2_target_bulan_has_persediaan($CI, $tgl_awal, $tgl_akhir);
+	$ctx['preserve_target_persediaan'] = $preserve_target ? 1 : 0;
+
 	$state = $CI->session->userdata($state_key);
 	if ($start) {
 		$CI->session->unset_userdata($state_key);
 		$state = null;
+		if ($preserve_target) {
+			persediaan_generate_ensure_all_refered_manual_audit_columns($CI);
+			$ctx['refered_manual_backfill'] = persediaan_generate_backfill_refered_manual_bulan($CI, $tgl_awal, $tgl_akhir);
+		}
+	} elseif (is_array($state) && !empty($state['preserve_target_persediaan'])) {
+		$ctx['preserve_target_persediaan'] = 1;
 	}
 
 	if (!is_array($state)) {
@@ -28337,6 +29176,7 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 			'phase' => 'verifikasi_pembelian',
 			'verifikasi_pembelian_tabel' => 'tbl_pembelian',
 			'tanggal_klik_generate' => $tanggal_klik_generate,
+			'preserve_target_persediaan' => $preserve_target ? 1 : 0,
 			'target_kosong_verified' => 0,
 			'reset_target' => 0,
 			'next_id' => $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1,
@@ -28541,6 +29381,16 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 	// --- Fase 2: Verifikasi tbl_penjualan ---
 	if ($state['phase'] === 'verifikasi_penjualan') {
+		if (empty($state['kategori_jasa_synced'])) {
+			tbl_penjualan_ensure_kategori_column($CI);
+			$state['kategori_jasa_synced'] = tbl_penjualan_sync_kategori_jasa_all($CI);
+			$state['stats']['kategori_jasa_updated'] = (int) $state['kategori_jasa_synced'];
+		}
+		if (empty($state['source_referensi_synced'])) {
+			tbl_penjualan_ensure_source_referensi_columns($CI);
+			$state['source_referensi_synced'] = tbl_penjualan_sync_source_referensi_bulan($CI, $tgl_awal, $tgl_akhir);
+			$state['stats']['source_referensi_updated'] = (int) $state['source_referensi_synced'];
+		}
 		if (empty($state['verifikasi_cache']) || !is_array($state['verifikasi_cache'])) {
 			$state['verifikasi_cache'] = persediaan_gen_v2_build_verifikasi_cache($CI);
 		}
@@ -28615,8 +29465,19 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 		), persediaan_generate_recalculate_batch_response_meta($state));
 	}
 
-	// --- Fase 3: Kosongkan bulan target ---
+	// --- Fase 3: Kosongkan bulan target (lewati jika preserve — data & uuid dipertahankan) ---
 	if ($state['phase'] === 'reset_target') {
+		if (!empty($state['preserve_target_persediaan']) || !empty($ctx['preserve_target_persediaan'])) {
+			return persediaan_gen_v2_transition_preserve_skip_reset_copy(
+				$CI,
+				$state,
+				$state_key,
+				$ctx,
+				array('progress_label' => 'Preserve persediaan ' . $ctx['bulan_label']),
+				'lewati hapus & copy dari bulan sumber'
+			);
+		}
+
 		$reset_target_info = persediaan_generate_recalculate_kosongkan_bulan_target($CI, $tanggal_beli_target);
 		if (empty($reset_target_info['verified_empty'])) {
 			return array(
@@ -28655,6 +29516,17 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 
 	// --- Fase 4: Copy persediaan dari bulan sumber ---
 	if ($state['phase'] === 'copy_persediaan') {
+		if (!empty($state['preserve_target_persediaan']) || !empty($ctx['preserve_target_persediaan'])) {
+			return persediaan_gen_v2_transition_preserve_skip_reset_copy(
+				$CI,
+				$state,
+				$state_key,
+				$ctx,
+				array('items_persediaan' => $items_persediaan),
+				'copy dari bulan sumber dilewati'
+			);
+		}
+
 		if (!isset($state['copy_total_layak'])) {
 			$sa_expr = persediaan_generate_recalculate_sql_cast_decimal('sa');
 			$total_expr = persediaan_generate_recalculate_sql_cast_decimal('total_10');
@@ -29838,6 +30710,7 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 	}
 
 	$pen_upd = array_merge($pen_upd, tbl_penjualan_refered_manual_audit_payload_from_persediaan($row_pers));
+	$pen_upd = array_merge($pen_upd, tbl_penjualan_resolve_source_referensi_payload($CI, $row_pen, $row_pers));
 	$pen_upd['verified_persediaan'] = tbl_penjualan_verified_persediaan_manual_value();
 
 	if (!empty($pen_upd)) {
@@ -29865,6 +30738,102 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 		'verified_persediaan' => tbl_penjualan_verified_persediaan_manual_value(),
 		'uuid_hint' => $hint,
 	);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * sys_unit_produk — verified_persediaan & audit refered manual (produksi)
+ * -------------------------------------------------------------------------
+ */
+function sys_unit_produk_table_name()
+{
+	return 'sys_unit_produk';
+}
+
+function sys_unit_produk_refered_manual_audit_column_defs()
+{
+	return persediaan_refered_manual_audit_column_defs();
+}
+
+function sys_unit_produk_refered_manual_audit_columns_ready($CI)
+{
+	$table = sys_unit_produk_table_name();
+	if (!$CI->db->table_exists($table)) {
+		return false;
+	}
+	foreach (array_keys(sys_unit_produk_refered_manual_audit_column_defs()) as $col) {
+		if (!tbl_penjualan_db_has_column($CI, $table, $col)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function sys_unit_produk_ensure_verified_persediaan_column($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+	$table = sys_unit_produk_table_name();
+	if (!$CI->db->table_exists($table)) {
+		return false;
+	}
+	tbl_penjualan_clear_schema_field_cache($CI, $table);
+	if (tbl_penjualan_db_has_column($CI, $table, 'verified_persediaan')) {
+		$ensured = true;
+		return true;
+	}
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+	$after = tbl_penjualan_db_has_column($CI, $table, 'uuid_persediaan')
+		? ' AFTER `uuid_persediaan`'
+		: '';
+	$CI->db->query(
+		'ALTER TABLE `' . $table . '` ADD COLUMN `verified_persediaan` VARCHAR(32) NULL DEFAULT NULL' . $after
+	);
+	$CI->db->db_debug = $db_debug;
+	tbl_penjualan_clear_schema_field_cache($CI, $table);
+	$ensured = tbl_penjualan_db_has_column($CI, $table, 'verified_persediaan');
+	return $ensured;
+}
+
+function sys_unit_produk_ensure_refered_manual_audit_columns($CI)
+{
+	static $ensured = null;
+	if ($ensured === true) {
+		return true;
+	}
+	$table = sys_unit_produk_table_name();
+	if (!$CI->db->table_exists($table)) {
+		return false;
+	}
+	tbl_penjualan_clear_schema_field_cache($CI, $table);
+	if (sys_unit_produk_refered_manual_audit_columns_ready($CI)) {
+		$ensured = true;
+		return true;
+	}
+	sys_unit_produk_ensure_verified_persediaan_column($CI);
+	$cols = sys_unit_produk_refered_manual_audit_column_defs();
+	$db_debug = isset($CI->db->db_debug) ? $CI->db->db_debug : false;
+	$CI->db->db_debug = false;
+	$after = tbl_penjualan_db_has_column($CI, $table, 'verified_persediaan')
+		? ' AFTER `verified_persediaan`'
+		: (tbl_penjualan_db_has_column($CI, $table, 'uuid_persediaan')
+			? ' AFTER `uuid_persediaan`'
+			: '');
+	foreach ($cols as $name => $def) {
+		if (tbl_penjualan_db_has_column($CI, $table, $name)) {
+			continue;
+		}
+		$CI->db->query('ALTER TABLE `' . $table . '` ADD COLUMN `' . $name . '` ' . $def . $after);
+		$after = ' AFTER `' . $name . '`';
+		tbl_penjualan_clear_schema_field_cache($CI, $table);
+	}
+	$CI->db->db_debug = $db_debug;
+	tbl_penjualan_clear_schema_field_cache($CI, $table);
+	$ensured = sys_unit_produk_refered_manual_audit_columns_ready($CI);
+	return $ensured;
 }
 
 /**

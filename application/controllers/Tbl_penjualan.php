@@ -25,6 +25,31 @@ class Tbl_penjualan extends CI_Controller
 
 	private function _parse_cari_between_dates($tgl_awal_input, $tgl_akhir_input)
 	{
+		$awal_is_bulan = penjualan_input_is_bulan($tgl_awal_input);
+		$akhir_is_bulan = penjualan_input_is_bulan($tgl_akhir_input);
+
+		if ($awal_is_bulan || $akhir_is_bulan) {
+			$ts_awal = penjualan_parse_bulan_bound($tgl_awal_input);
+			$ts_akhir = penjualan_parse_bulan_bound($tgl_akhir_input);
+
+			if ($ts_awal === false || date('Y', $ts_awal) < 2020) {
+				$ts_awal = strtotime(date('Y-m-01'));
+			}
+			if ($ts_akhir === false || date('Y', $ts_akhir) < 2020) {
+				$ts_akhir = strtotime(date('Y-m-01'));
+			}
+			if ($ts_awal > $ts_akhir) {
+				$tmp = $ts_awal;
+				$ts_awal = $ts_akhir;
+				$ts_akhir = $tmp;
+			}
+
+			return array(
+				date('Y-m-01 00:00:00', $ts_awal),
+				date('Y-m-t 23:59:59', $ts_akhir),
+			);
+		}
+
 		$ts_awal = pembelian_parse_tanggal_po($tgl_awal_input);
 		if ($ts_awal === false) {
 			$ts_awal = strtotime(str_replace('/', '-', trim((string) $tgl_awal_input)));
@@ -158,10 +183,22 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$tgl_awal_in = $this->input->get_post('tgl_awal', TRUE);
 		$tgl_akhir_in = $this->input->get_post('tgl_akhir', TRUE);
+		if (empty($tgl_awal_in) && !empty($tgl_akhir_in)) {
+			$tgl_awal_in = $tgl_akhir_in;
+		}
+		if (empty($tgl_akhir_in) && !empty($tgl_awal_in)) {
+			$tgl_akhir_in = $tgl_awal_in;
+		}
 		if (!empty($tgl_awal_in) && !empty($tgl_akhir_in)) {
 			list($awal, $akhir) = $this->_parse_cari_between_dates($tgl_awal_in, $tgl_akhir_in);
-			$this->_set_filter_session_penjualan($awal, $akhir, $tgl_awal_in, $tgl_akhir_in);
-			return array($awal, $akhir, $tgl_awal_in, $tgl_akhir_in);
+			$disp_awal = penjualan_input_is_bulan($tgl_awal_in)
+				? penjualan_format_bulan_input($awal)
+				: $tgl_awal_in;
+			$disp_akhir = penjualan_input_is_bulan($tgl_akhir_in)
+				? penjualan_format_bulan_input($akhir)
+				: $tgl_akhir_in;
+			$this->_set_filter_session_penjualan($awal, $akhir, $disp_awal, $disp_akhir);
+			return array($awal, $akhir, $disp_awal, $disp_akhir);
 		}
 
 		$awal = $this->session->userdata('filter_tbl_penjualan_date_awal');
@@ -170,16 +207,16 @@ class Tbl_penjualan extends CI_Controller
 		$disp_akhir = $this->session->userdata('filter_tbl_penjualan_tgl_akhir_display');
 		if ($awal && $akhir) {
 			if (!$disp_awal) {
-				$disp_awal = date('j-n-Y', strtotime($awal));
-				$disp_akhir = date('j-n-Y', strtotime($akhir));
+				$disp_awal = penjualan_format_bulan_input($awal);
+				$disp_akhir = penjualan_format_bulan_input($akhir);
 			}
 			return array($awal, $akhir, $disp_awal, $disp_akhir);
 		}
 
 		$awal = date('Y-m-01 00:00:00');
 		$akhir = date('Y-m-t 23:59:59');
-		$disp_awal = date('j-n-Y', strtotime($awal));
-		$disp_akhir = date('j-n-Y', strtotime($akhir));
+		$disp_awal = date('Y-m', strtotime($awal));
+		$disp_akhir = date('Y-m', strtotime($akhir));
 		$this->_set_filter_session_penjualan($awal, $akhir, $disp_awal, $disp_akhir);
 		return array($awal, $akhir, $disp_awal, $disp_akhir);
 	}
@@ -395,6 +432,10 @@ class Tbl_penjualan extends CI_Controller
 	public function index()
 	{
 		list($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir) = $this->_resolve_penjualan_filter_dates();
+		$bulan = penjualan_format_bulan_input($Get_date_akhir);
+		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($bulan, $bulan);
+		$disp_awal = $bulan;
+		$disp_akhir = $bulan;
 		penjualan_set_list_bulan_context($this, $disp_awal, $disp_akhir);
 
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
@@ -409,13 +450,23 @@ class Tbl_penjualan extends CI_Controller
 	{
 		$tgl_awal_raw = $this->input->post('tgl_awal', TRUE);
 		$tgl_akhir_raw = $this->input->post('tgl_akhir', TRUE);
+		if (empty($tgl_awal_raw) && !empty($tgl_akhir_raw)) {
+			$tgl_awal_raw = $tgl_akhir_raw;
+		}
+		if (empty($tgl_akhir_raw) && !empty($tgl_awal_raw)) {
+			$tgl_akhir_raw = $tgl_awal_raw;
+		}
 		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($tgl_awal_raw, $tgl_akhir_raw);
+		$bulan = penjualan_format_bulan_input($Get_date_akhir);
+		list($Get_date_awal, $Get_date_akhir) = $this->_parse_cari_between_dates($bulan, $bulan);
+		$disp_awal = $bulan;
+		$disp_akhir = $bulan;
 
-		penjualan_set_list_bulan_context($this, $tgl_awal_raw, $tgl_akhir_raw);
+		penjualan_set_list_bulan_context($this, $disp_awal, $disp_akhir);
 		$Tbl_penjualan_data = $this->_get_penjualan_between($Get_date_awal, $Get_date_akhir);
-		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, $Tbl_penjualan_data);
+		$this->_set_filter_session_penjualan($Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, $Tbl_penjualan_data);
 
-		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $tgl_awal_raw, $tgl_akhir_raw, true);
+		$data = $this->_penjualan_list_data_payload($Tbl_penjualan_data, $Get_date_awal, $Get_date_akhir, $disp_awal, $disp_akhir, true);
 
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan/adminlte310_tbl_penjualan_list', $data);
 	}
@@ -1446,6 +1497,15 @@ class Tbl_penjualan extends CI_Controller
 			'total_nominal' => $total_nominal_simpan,
 			'id_usr' => 1,
 		);
+
+		$row_pen_tmp = (object) array_merge($data, array(
+			'uuid_persediaan' => $uuid_persediaan,
+			'nama_barang' => $data['nama_barang'],
+			'satuan' => $data['satuan'],
+			'harga_satuan' => $harga_satuan_simpan,
+		));
+		tbl_penjualan_ensure_source_referensi_columns($this);
+		$data = array_merge($data, tbl_penjualan_resolve_source_referensi_payload($this, $row_pen_tmp, $data_barang));
 
 		if ($is_new) {
 			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
