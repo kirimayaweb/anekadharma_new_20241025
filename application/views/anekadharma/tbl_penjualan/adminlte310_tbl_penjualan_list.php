@@ -357,20 +357,7 @@
                                 <div class="tab-pane fade<?php echo $tab_active_class; ?>" id="<?php echo htmlspecialchars($tab_cfg['tab_id'], ENT_QUOTES, 'UTF-8'); ?>" role="tabpanel">
                                     <?php if ($tab_cfg['tab_id'] === 'tab-penjualan-belum-persediaan') : ?>
                                         <div class="alert alert-warning py-2 px-3 small mb-3">
-                                            <strong>Verifikasi Persediaan</strong> — pilih sub-tab:
-                                            <strong>Belum Terverifikasi</strong> (<code>verified_persediaan</code> kosong),
-                                            <strong>Terverifikasi Manual</strong> (<code>refered manual</code>), atau
-                                            <strong>Verifikasi Otomatis</strong> (<code>refered</code>).
-                                            Badge tab utama = jumlah belum terverifikasi.
-                                            <?php
-                                            if (!empty($penjualan_verified_sync) && is_array($penjualan_verified_sync) && !empty($penjualan_verified_sync['ok'])) {
-                                                echo ' <span class="text-muted">Last sync otomatis: refered='
-                                                    . (int) (isset($penjualan_verified_sync['refered']) ? $penjualan_verified_sync['refered'] : 0)
-                                                    . ', belum='
-                                                    . (int) (isset($penjualan_verified_sync['belum']) ? $penjualan_verified_sync['belum'] : 0)
-                                                    . '.</span>';
-                                            }
-                                            ?>
+                                            Silahkan proses verifikasi semua data di tab: <strong>belum terverifikasi</strong> agar terproses ke tab: <strong>terverifikasi manual</strong> dan agar data penjualan terproses ke persediaan.
                                         </div>
                                         <?php include __DIR__ . '/_adminlte310_tbl_penjualan_belum_persediaan_fragment.php'; ?>
                                     <?php else : ?>
