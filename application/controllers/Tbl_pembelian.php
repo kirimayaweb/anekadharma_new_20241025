@@ -3537,6 +3537,7 @@ class Tbl_pembelian extends CI_Controller
 		$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 		$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
 		$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+		$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 		$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -3604,7 +3605,7 @@ class Tbl_pembelian extends CI_Controller
 			'kas_bank' => $row_per_uuid_spop->kas_bank,
 
 
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'uuid_barang' => $get_uuid_barang_simpan,
 			'kode_barang' => $get_kode_barang,
 			'uraian' => $get_nama_barang,
 
@@ -3796,6 +3797,9 @@ class Tbl_pembelian extends CI_Controller
 		$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 		$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 		$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+		$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+		$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+		$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 		$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -3831,7 +3835,7 @@ class Tbl_pembelian extends CI_Controller
 		$data = array(
 			'date_input' => date("Y-m-d H:i:s"),
 
-			'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+			'uuid_barang' => $get_uuid_barang_simpan,
 			'kode_barang' => $get_kode_barang,
 			'uraian' => $get_nama_barang,
 
@@ -3906,6 +3910,7 @@ class Tbl_pembelian extends CI_Controller
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
 			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
 			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
 			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
@@ -3968,7 +3973,7 @@ class Tbl_pembelian extends CI_Controller
 				'kas_bank' => $row_per_uuid_spop->kas_bank,
 
 
-				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'uuid_barang' => $get_uuid_barang_simpan,
 				'kode_barang' => $get_kode_barang,
 				'uraian' => $get_nama_barang,
 
@@ -4034,6 +4039,9 @@ class Tbl_pembelian extends CI_Controller
 			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -4088,7 +4096,7 @@ class Tbl_pembelian extends CI_Controller
 
 				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
 
-				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'uuid_barang' => $get_uuid_barang_simpan,
 				'kode_barang' => $get_kode_barang,
 				'uraian' => $get_nama_barang,
 
@@ -4235,6 +4243,9 @@ class Tbl_pembelian extends CI_Controller
 			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 			$jumlah_x = preg_replace("/[^0-9]/", "", $this->input->post('jumlah', TRUE));
 
@@ -4300,7 +4311,7 @@ class Tbl_pembelian extends CI_Controller
 				'statuslu' => $row_per_uuid_spop->statuslu,
 				'kas_bank' => $row_per_uuid_spop->kas_bank,
 
-				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'uuid_barang' => $get_uuid_barang_simpan,
 				'kode_barang' => $get_kode_barang,
 				'uraian' => $get_nama_barang,
 
@@ -4377,6 +4388,7 @@ class Tbl_pembelian extends CI_Controller
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
 			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
 			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -4433,7 +4445,7 @@ class Tbl_pembelian extends CI_Controller
 
 				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
 
-				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'uuid_barang' => $get_uuid_barang_simpan,
 				'kode_barang' => $get_kode_barang,
 				'uraian' => $get_nama_barang,
 
@@ -4836,6 +4848,9 @@ class Tbl_pembelian extends CI_Controller
 			$row_barang_persediaan = $this->_get_barang_dari_persediaan($GET_uuid_barang);
 			$get_kode_barang = $row_barang_persediaan ? $row_barang_persediaan->kode_barang : '';
 			$get_nama_barang = $row_barang_persediaan ? $row_barang_persediaan->nama_barang : '';
+			$get_id_persediaan_ref = $row_barang_persediaan ? (int) $row_barang_persediaan->id : 0;
+			$get_uuid_persediaan_ref = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_persediaan) : '';
+			$get_uuid_barang_simpan = $row_barang_persediaan ? trim((string) $row_barang_persediaan->uuid_barang) : trim((string) $GET_uuid_barang);
 
 			// print_r($GET_uuid_barang);
 			// print_r("<br/>");
@@ -4916,7 +4931,7 @@ class Tbl_pembelian extends CI_Controller
 
 				'nmrfakturkwitansi' => $this->input->post('nmrfakturkwitansi', TRUE),
 
-				'uuid_barang' => $this->input->post('uuid_barang', TRUE),
+				'uuid_barang' => $get_uuid_barang_simpan,
 				'kode_barang' => $get_kode_barang,
 				'uraian' => $get_nama_barang,
 

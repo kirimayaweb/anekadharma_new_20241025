@@ -188,7 +188,27 @@ function pembelian_get_barang_by_uuid($CI, $uuid_barang)
 		ORDER BY `id` DESC
 		LIMIT 1";
 
-	return $CI->db->query($sql, array($uuid_barang, $uuid_barang, $tgl['awal'], $tgl['akhir']))->row();
+	$row = $CI->db->query($sql, array($uuid_barang, $uuid_barang, $tgl['awal'], $tgl['akhir']))->row();
+	if ($row) {
+		return $row;
+	}
+
+	// Fallback: combobox modal create menampilkan seluruh persediaan (tanpa filter bulan).
+	// Tanpa fallback ini, uuid terpilih sering tidak ketemu di bulan filter → uraian/namabarang kosong.
+	$sql_any = "SELECT
+			`id`,
+			`uuid_persediaan`,
+			COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
+			`kode` AS kode_barang,
+			`namabarang` AS nama_barang,
+			`satuan`,
+			`hpp` AS harga_satuan
+		FROM `persediaan`
+		WHERE (`uuid_barang` = ? OR `uuid_persediaan` = ?)
+		ORDER BY `id` DESC
+		LIMIT 1";
+
+	return $CI->db->query($sql_any, array($uuid_barang, $uuid_barang))->row();
 }
 
 function pembelian_normalize_nama_barang($nama_barang)

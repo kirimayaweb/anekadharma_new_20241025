@@ -673,12 +673,16 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                         <!-- <option value="">Pilih Barang</option> -->
                                         <?php
 
-                                        foreach (pembelian_get_barang_list_rows($this) as $m) {
-                                            $kategori_barang = '';
+                                        foreach (pembelian_get_barang_combobox_modal_rows($this) as $m) {
                                             $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : '';
-                                            $label_barang = strtoupper($m->nama_barang);
-                                            echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
-                                            echo ">  " . $label_barang  . "</option>";
+                                            $opt_uuid = !empty($m->uuid_persediaan) ? trim((string) $m->uuid_persediaan) : trim((string) $m->uuid_barang);
+                                            $label_barang = pembelian_format_barang_combobox_label(
+                                                $m->nama_barang,
+                                                $m->satuan,
+                                                $harga_satuan_barang
+                                            );
+                                            echo "<option value='" . htmlspecialchars($opt_uuid, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
+                                            echo ">  " . htmlspecialchars($label_barang, ENT_QUOTES, 'UTF-8') . "</option>";
                                         }
                                         ?>
                                     </select>
@@ -814,12 +818,16 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                                     <!-- <option value="">Pilih Barang</option> -->
                                     <?php
 
-                                    foreach (pembelian_get_barang_list_rows($this) as $m) {
-                                        $kategori_barang = '';
+                                    foreach (pembelian_get_barang_combobox_modal_rows($this) as $m) {
                                         $harga_satuan_barang = isset($m->harga_satuan) ? $m->harga_satuan : '';
-                                        $label_barang = strtoupper($m->nama_barang);
-                                        echo "<option value='" . htmlspecialchars($m->uuid_barang, ENT_QUOTES, 'UTF-8') . "' data-kategori='" . htmlspecialchars($kategori_barang, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
-                                        echo ">  " . $label_barang  . "</option>";
+                                        $opt_uuid = !empty($m->uuid_persediaan) ? trim((string) $m->uuid_persediaan) : trim((string) $m->uuid_barang);
+                                        $label_barang = pembelian_format_barang_combobox_label(
+                                            $m->nama_barang,
+                                            $m->satuan,
+                                            $harga_satuan_barang
+                                        );
+                                        echo "<option value='" . htmlspecialchars($opt_uuid, ENT_QUOTES, 'UTF-8') . "' data-satuan='" . htmlspecialchars($m->satuan, ENT_QUOTES, 'UTF-8') . "' data-harga-satuan='" . htmlspecialchars($harga_satuan_barang, ENT_QUOTES, 'UTF-8') . "' ";
+                                        echo ">  " . htmlspecialchars($label_barang, ENT_QUOTES, 'UTF-8') . "</option>";
                                     }
                                     ?>
                                 </select>
@@ -1119,7 +1127,7 @@ foreach ($data_ALL_per_SPOP as $list_data) {
             }
 
             return $.ajax({
-                url: "<?php echo site_url('sys_nama_barang/list_barang_ajax'); ?>",
+                url: "<?php echo site_url('persediaan/list_barang_combobox_modal_ajax'); ?>",
                 type: 'GET',
                 dataType: 'json',
                 cache: false,
@@ -1142,14 +1150,19 @@ foreach ($data_ALL_per_SPOP as $list_data) {
                 }));
 
                 $.each(res.data || [], function(_, row) {
-                    var kategori = row.kategori || '';
-                    var namaBarang = (row.nama_barang || '').toUpperCase();
-                    var optionText = kategori ? '[' + kategori.toUpperCase() + '] ' + namaBarang : namaBarang;
+                    var optUuid = (row.uuid_persediaan && String(row.uuid_persediaan).trim() !== '')
+                        ? row.uuid_persediaan : row.uuid_barang;
+                    var optionText = row.label_barang || '';
+                    if (!optionText) {
+                        var nama = String(row.nama_barang || '').toUpperCase();
+                        var satuan = row.satuan || '';
+                        var harga = row.harga_satuan || '';
+                        optionText = nama + ' ( satuan : ' + satuan + ', harga satuan : ' + harga + ' )';
+                    }
                     select.append($('<option>', {
-                        value: row.uuid_barang,
+                        value: optUuid,
                         text: optionText
                     }).attr({
-                        'data-kategori': kategori,
                         'data-satuan': row.satuan || '',
                         'data-harga-satuan': row.harga_satuan || ''
                     }));
