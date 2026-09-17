@@ -131,10 +131,10 @@
                                 $Get_date_awal_hidden = date('d-m-Y', strtotime(date('Y-m-01', $__ts_filter_bulan)));
                                 $Get_date_akhir_hidden = date('d-m-Y', strtotime(date('Y-m-t', $__ts_filter_bulan)));
                                 ?>
-                                <form id="form-cari-pembelian" action="<?php echo $action_cari_between_date; ?>" method="post" class="mb-0" style="width: 100%; max-width: 280px;">
+                                <form id="form-cari-pembelian" action="<?php echo $action_cari_between_date; ?>" method="post" class="mb-0" style="width: 100%; max-width: 360px;">
                                     <input type="hidden" name="pembelian_active_tab" id="pembelian_active_tab_input" value="<?php echo htmlspecialchars($pembelian_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
                                     <div class="d-flex align-items-center justify-content-center">
-                                        <div class="input-group date" id="filter_bulan" data-target-input="nearest" style="width: 50%; min-width: 120px;">
+                                        <div class="input-group date" id="filter_bulan" data-target-input="nearest" style="width: 70%; min-width: 168px;">
                                             <input type="text" class="form-control datetimepicker-input" data-target="#filter_bulan" id="filter_bulan_input" name="filter_bulan" value="<?php echo htmlspecialchars($Get_filter_bulan, ENT_QUOTES, 'UTF-8'); ?>" placeholder="MM/YYYY" required autocomplete="off" />
                                             <div class="input-group-append" data-target="#filter_bulan" data-toggle="datetimepicker">
                                                 <div class="input-group-text">
