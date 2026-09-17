@@ -96,61 +96,51 @@
                 <div class="card card-primary pembelian-jasa-data-card">
                     <div class="card-header">
 
-                        <div class="row">
-                            <div class="col-md-2" text-align="left"> <strong>DATA PEMBELIAN JASA</strong></div>
-                            <div class="col-md-2" text-align="left" align="left">
+                        <div class="row align-items-center">
+                            <div class="col-md-2" text-align="left">
+                                <strong>DATA PEMBELIAN JASA</strong>
+                            </div>
+
+                            <div class="col-md-4" text-align="left" align="left">
                                 <?php echo anchor(site_url('tbl_pembelian_jasa/create'), 'Input Pembelian Jasa', 'class="btn btn-danger"'); ?>
                             </div>
 
-                            <div class="col-md-6">
-
+                            <div class="col-md-4 text-center">
                                 <?php
-                                // $action_cari_between_date="cari_between_date" ;
                                 $action_cari_between_date = site_url('tbl_pembelian_jasa/cari_between_date');
-
+                                $__ts_filter_bulan = false;
+                                if (!empty($date_awal)) {
+                                    $__ts_filter_bulan = strtotime($date_awal);
+                                } elseif (!empty($Get_date_awal)) {
+                                    $__ts_filter_bulan = strtotime(str_replace('/', '-', $Get_date_awal));
+                                }
+                                if ($__ts_filter_bulan === false) {
+                                    $__ts_filter_bulan = time();
+                                }
+                                $Get_date_awal_hidden = date('d-m-Y', strtotime(date('Y-m-01', $__ts_filter_bulan)));
+                                $Get_date_akhir_hidden = date('d-m-Y', strtotime(date('Y-m-t', $__ts_filter_bulan)));
                                 ?>
-
-                                <form id="form-cari-pembelian-jasa" action="<?php echo $action_cari_between_date; ?>" method="post">
+                                <form id="form-cari-pembelian-jasa" action="<?php echo $action_cari_between_date; ?>" method="post" class="mb-0" style="display: inline-block; width: 100%; max-width: 360px;">
                                     <input type="hidden" name="pembelian_active_tab" id="pembelian_jasa_active_tab_input" value="<?php echo htmlspecialchars($pembelian_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
-                                    <div class="row">
-
-                                        <div class="col-md-1" text-align="right" align="right"></div>
-
-                                        <div class="col-md-3" text-align="right">
-                                            <div class="input-group date" id="tgl_awal" name="tgl_awal" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_awal" id="tgl_awal" name="tgl_awal" value="<?php echo $Get_date_awal; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_awal" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
+                                    <div class="d-flex align-items-center justify-content-center">
+                                        <div class="input-group date mr-2" id="filter_bulan" data-target-input="nearest" style="width: 170px;">
+                                            <input type="text" class="form-control datetimepicker-input" data-target="#filter_bulan" id="filter_bulan_input" name="filter_bulan" value="<?php echo htmlspecialchars(date('m/Y', $__ts_filter_bulan), ENT_QUOTES, 'UTF-8'); ?>" placeholder="MM/YYYY" required autocomplete="off" />
+                                            <div class="input-group-append" data-target="#filter_bulan" data-toggle="datetimepicker">
+                                                <div class="input-group-text">
+                                                    <i class="fa fa-calendar"></i>
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <div class="col-md-1" text-align="center" align="center">s/d</div>
-
-                                        <div class="col-md-3" text-align="left" align="left">
-                                            <div class="input-group date" id="tgl_akhir" name="tgl_akhir" data-target-input="nearest">
-                                                <input type="text" class="form-control datetimepicker-input" data-target="#tgl_akhir" id="tgl_akhir" name="tgl_akhir" value="<?php echo $Get_date_akhir; ?>" required />
-                                                <div class="input-group-append" data-target="#tgl_akhir" data-toggle="datetimepicker">
-                                                    <div class="input-group-text">
-                                                        <i class="fa fa-calendar"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-2" text-align="left" align="left">
-                                            <strong>
-                                                <button type="submit" class="btn btn-danger btn-block btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
-                                            </strong>
-                                        </div>
-
+                                        <input type="hidden" name="tgl_awal" id="tgl_awal_hidden" value="<?php echo htmlspecialchars($Get_date_awal_hidden, ENT_QUOTES, 'UTF-8'); ?>" />
+                                        <input type="hidden" name="tgl_akhir" id="tgl_akhir_hidden" value="<?php echo htmlspecialchars($Get_date_akhir_hidden, ENT_QUOTES, 'UTF-8'); ?>" />
+                                        <button type="submit" class="btn btn-danger btn-flat">
+                                            <i class="fa fa-sign-in" aria-hidden="true"></i> Cari
+                                        </button>
                                     </div>
                                 </form>
                             </div>
 
-                            <div class="col-md-2" text-align="right" align="right">
+                            <div class="col-md-2 text-right" align="right">
                                 <input type="hidden" id="excel-export-source" value="tbl_pembelian_jasa" />
                                 <input type="hidden" id="excel-export-ids" value="<?php echo htmlspecialchars($excel_export_ids_str, ENT_QUOTES, 'UTF-8'); ?>" />
                                 <button type="button" class="btn btn-success btn-block" onclick="cetakExcelPembelianJasa(); return false;">
@@ -738,10 +728,13 @@
     }
 
     function cetakExcelPembelianJasa() {
-        var tglAwal = document.querySelector('input[name="tgl_awal"]').value;
-        var tglAkhir = document.querySelector('input[name="tgl_akhir"]').value;
+        if (window.syncFilterBulanHiddenDates) { window.syncFilterBulanHiddenDates(); }
+        var tglAwalEl = document.querySelector('#form-cari-pembelian-jasa input[name="tgl_awal"]');
+        var tglAkhirEl = document.querySelector('#form-cari-pembelian-jasa input[name="tgl_akhir"]');
+        var tglAwal = tglAwalEl ? tglAwalEl.value : '';
+        var tglAkhir = tglAkhirEl ? tglAkhirEl.value : '';
         if (!tglAwal || !tglAkhir) {
-            alert('Pilih tanggal awal dan tanggal akhir terlebih dahulu.');
+            alert('Pilih bulan terlebih dahulu.');
             return;
         }
         var sourceEl = document.getElementById('excel-export-source');
@@ -751,54 +744,6 @@
         var url = '<?php echo site_url('Tbl_pembelian_jasa/excel'); ?>?source=' + encodeURIComponent(source) + '&ids=' + encodeURIComponent(ids) + '&tgl_awal=' + encodeURIComponent(tglAwal) + '&tgl_akhir=' + encodeURIComponent(tglAkhir);
         window.location.href = url;
     }
-
-    (function() {
-        var submitTimer = null;
-
-        function submitCariPembelianJasaOtomatis() {
-            clearTimeout(submitTimer);
-            submitTimer = setTimeout(function() {
-                var form = document.getElementById('form-cari-pembelian-jasa');
-                if (!form) {
-                    return;
-                }
-                var tglAwal = form.querySelector('input[name="tgl_awal"]');
-                var tglAkhir = form.querySelector('input[name="tgl_akhir"]');
-                if (tglAwal && tglAkhir && tglAwal.value && tglAkhir.value) {
-                    var loader = document.getElementById('pembelian-jasa-loading');
-                    if (loader) {
-                        loader.style.display = 'block';
-                    }
-                    form.submit();
-                }
-            }, 400);
-        }
-
-        function initAutoCariPembelianJasa() {
-            var form = document.getElementById('form-cari-pembelian-jasa');
-            if (!form) {
-                return;
-            }
-            form.addEventListener('submit', function() {
-                var loader = document.getElementById('pembelian-jasa-loading');
-                if (loader) {
-                    loader.style.display = 'block';
-                }
-            });
-            form.querySelectorAll('input[name="tgl_awal"], input[name="tgl_akhir"]').forEach(function(el) {
-                el.addEventListener('change', submitCariPembelianJasaOtomatis);
-            });
-            if (window.jQuery) {
-                jQuery('#tgl_awal, #tgl_akhir').on('change.datetimepicker hide.datetimepicker', submitCariPembelianJasaOtomatis);
-            }
-        }
-
-        if (document.readyState === 'complete') {
-            initAutoCariPembelianJasa();
-        } else {
-            window.addEventListener('load', initAutoCariPembelianJasa);
-        }
-    })();
 
     (function() {
         function syncPembelianJasaActiveTabInput() {
@@ -835,3 +780,77 @@ $pem_ref_cfg = array(
 );
 include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_pembelian_verifikasi_referensi_init.php';
 ?>
+<script>
+(function() {
+    function parseBulanToRange(bulanStr) {
+        var s = String(bulanStr || '').trim();
+        var m = s.match(/^(\d{1,2})[\/\-](\d{4})$/);
+        if (!m) return null;
+        var month = parseInt(m[1], 10);
+        var year = parseInt(m[2], 10);
+        if (month < 1 || month > 12 || year < 2000) return null;
+        var lastDay = new Date(year, month, 0).getDate();
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        return {
+            awal: pad(1) + '-' + pad(month) + '-' + year,
+            akhir: pad(lastDay) + '-' + pad(month) + '-' + year,
+            label: pad(month) + '/' + year
+        };
+    }
+    function syncHiddenFromBulan() {
+        var form = document.getElementById('form-cari-pembelian-jasa');
+        if (!form) return null;
+        var inpBulan = form.querySelector('input[name="filter_bulan"]');
+        var inpAwal = form.querySelector('input[name="tgl_awal"]');
+        var inpAkhir = form.querySelector('input[name="tgl_akhir"]');
+        if (!inpBulan || !inpAwal || !inpAkhir) return null;
+        var range = parseBulanToRange(inpBulan.value);
+        if (!range) return null;
+        inpAwal.value = range.awal;
+        inpAkhir.value = range.akhir;
+        return range;
+    }
+    window.syncFilterBulanHiddenDates = syncHiddenFromBulan;
+    var submitTimer = null;
+    function submitCariPembelianJasaOtomatis() {
+        clearTimeout(submitTimer);
+        submitTimer = setTimeout(function() {
+            var form = document.getElementById('form-cari-pembelian-jasa');
+            if (!form) return;
+            if (!syncHiddenFromBulan()) return;
+            form.submit();
+        }, 350);
+    }
+    window.submitCariPembelianJasaOtomatis = submitCariPembelianJasaOtomatis;
+    function initFilterBulanPicker() {
+        var form = document.getElementById('form-cari-pembelian-jasa');
+        if (!form || !window.jQuery || !jQuery.fn.datetimepicker) return;
+        var $picker = jQuery('#filter_bulan');
+        if (!$picker.length) return;
+        if ($picker.data('DateTimePicker') || $picker.data('datetimepicker')) {
+            try { $picker.datetimepicker('destroy'); } catch (e) {}
+        }
+        $picker.datetimepicker({
+            format: 'MM/YYYY',
+            viewMode: 'months',
+            minViewMode: 'months',
+            useCurrent: false
+        });
+        syncHiddenFromBulan();
+        $picker.off('change.datetimepicker.filterBulan');
+        $picker.on('change.datetimepicker.filterBulan', function(e) {
+            if (e && e.date) {
+                var m = e.date.month() + 1;
+                var y = e.date.year();
+                var pad = function(n) { return (n < 10 ? '0' : '') + n; };
+                form.querySelector('input[name="filter_bulan"]').value = pad(m) + '/' + y;
+            }
+            submitCariPembelianJasaOtomatis();
+        });
+        var inp = form.querySelector('input[name="filter_bulan"]');
+        if (inp) inp.addEventListener('change', submitCariPembelianJasaOtomatis);
+    }
+    if (document.readyState === 'complete') initFilterBulanPicker();
+    else window.addEventListener('load', initFilterBulanPicker);
+})();
+</script>
