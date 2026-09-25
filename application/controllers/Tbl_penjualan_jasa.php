@@ -1003,7 +1003,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 	/**
 	 * AJAX: daftar persediaan modal Pilih Barang (filter bulan Tgl Jual).
 	 */
-	public function list_persediaan_penjualan_jasa_ajax()
+	public function list_persediaan_penjualan_jasa_ajax_X()
 	{
 		try {
 			$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
@@ -1068,6 +1068,97 @@ class Tbl_penjualan_jasa extends CI_Controller
 			));
 		}
 	}
+
+	/**
+	 * AJAX: daftar persediaan modal Pilih Barang (filter bulan Tgl Jual dari tbl_pembelian_jasa).
+	 */
+	public function list_persediaan_penjualan_jasa_ajax()
+	{
+		try {
+			$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
+			if ($tgl_jual === '') {
+				penjualan_json_response($this, array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
+				return;
+			}
+
+			// 1. Ambil tahun dan bulan dari tgl_jual untuk filter
+			$tahun_bulan = date('Y-m', strtotime($tgl_jual));
+			$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
+
+			// 2. Query mengambil data dari tbl_pembelian_jasa di-JOIN dengan total yang sudah terjual di tbl_penjualan
+			// Ditambahkan alias 'jumlah_sediaan' dan 'total_10' agar sesuai dengan variabel pengecekan stok di file view baris 85.
+			// 2. Query mengambil data dari tbl_pembelian_jasa di-JOIN dengan total yang sudah terjual di tbl_penjualan
+			// Ditambahkan alias 'p.satuan AS satuan_persediaan' agar sesuai dengan kebutuhan variabel di file view baris 85.
+			$sql_jasa_ready = "
+				SELECT 
+					p.id,
+					p.uuid_persediaan,
+					p.tgl_po,
+					p.spop,
+					p.uraian AS nama_barang_beli, 
+					p.jumlah AS jumlah_beli,
+					p.satuan,
+					p.satuan AS satuan_persediaan,             -- Diubah di sini menambahkan alias satuan
+					p.harga_satuan AS harga_satuan_persediaan,
+					COALESCE(SUM(j.jumlah), 0) AS jumlah_terjual,
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok,
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS jumlah_sediaan, 
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS total_10         
+				FROM tbl_pembelian_jasa p
+				LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND j.barang_jasa = 'jasa'
+				WHERE DATE_FORMAT(p.tgl_po, '%Y-%m') = ?
+				GROUP BY p.id
+				HAVING sisa_stok > 0
+				ORDER BY p.tgl_po ASC, p.uraian ASC
+			";
+
+
+
+
+			$Data_stock = $this->db->query($sql_jasa_ready, array($tahun_bulan))->result();
+			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
+
+			// 3. Siapkan payload view data untuk modal rendering
+			$view_data = array(
+				'Data_stock' => $Data_stock,
+				'tgl_jual' => $tgl_jual,
+				'tgl_jual_X' => $tgl_jual_X,
+				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
+				'action' => site_url('tbl_penjualan_jasa/create_action_simpan_jasa/'),
+				'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
+				'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
+				'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
+				'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
+			);
+
+			// Memanggil fungsi penampil modal bawaan sistem Anda
+			$render = penjualan_render_modal_pilih_jasa($this, $view_data);
+
+			$jumlah_tampil = count($Data_stock);
+
+			penjualan_json_response($this, array(
+				'ok' => true,
+				'bulan_label' => $filter['bulan_label'],
+				'bulan_key' => $tahun_bulan,
+				'tgl_awal' => $filter['awal'],
+				'tgl_akhir' => $filter['akhir'],
+				'tbody' => $render['tbody'],
+				'modals' => $render['modals'],
+				'jumlah' => $jumlah_tampil,
+				'jumlah_tampil' => $jumlah_tampil,
+				'kolom_unit' => '',
+				'kolom_unit_created' => false,
+			));
+		} catch (Exception $e) {
+			penjualan_json_response($this, array(
+				'ok' => false,
+				'message' => 'Gagal memuat persediaan jasa: ' . $e->getMessage(),
+			));
+		}
+	}
+
+
+
 
 	/**
 	 * AJAX: hapus semua barang penjualan saat Tgl Jual pindah ke bulan lain.
@@ -2712,7 +2803,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$periode_awal = $this->input->get('tgl_awal', TRUE);
 		$periode_akhir = $this->input->get('tgl_akhir', TRUE);
 		if (empty($periode_awal) || empty($periode_akhir)) {
-			list(, , $disp_awal, $disp_akhir) = $this->_resolve_penjualan_filter_dates();
+			list(,, $disp_awal, $disp_akhir) = $this->_resolve_penjualan_filter_dates();
 			if (empty($periode_awal)) {
 				$periode_awal = $disp_awal;
 			}
