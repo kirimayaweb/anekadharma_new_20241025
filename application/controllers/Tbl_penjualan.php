@@ -1209,112 +1209,51 @@ class Tbl_penjualan extends CI_Controller
 				return;
 			}
 
-			// 1. Ambil tahun-bulan dari tgl_jual untuk filter bulan sesuai parameter datepicker (misal: 2026-07)
 			$tahun_bulan = date('Y-m', strtotime($tgl_jual));
-			$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
+			$filter = function_exists('penjualan_get_filter_tgl_jual')
+				? penjualan_get_filter_tgl_jual($this, $tgl_jual)
+				: array(
+					'bulan_label' => $tahun_bulan,
+					'awal' => $tahun_bulan . '-01 00:00:00',
+					'akhir' => date('Y-m-t 23:59:59', strtotime($tahun_bulan . '-01')),
+				);
 
 			$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
-			$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
-			if (empty($hasil_kolom_unit['ok'])) {
-				echo json_encode(array(
-					'ok' => false,
-					'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
-				));
-				return;
-			}
-
-			// 2. Query Utama: Mengambil data barang masuk dari tbl_pembelian pada bulan terpilih
-			$sql_beli = "
-				SELECT 
-					id, uuid_pembelian, uuid_barang, kode_barang, spop, tgl_po,
-					uraian AS nama_barang_beli, satuan, harga_satuan, jumlah
-				FROM tbl_pembelian
-				WHERE DATE_FORMAT(tgl_po, '%Y-%m') = ?
-				ORDER BY tgl_po ASC, id ASC
-			";
-			$list_pembelian = $this->db->query($sql_beli, array($tahun_bulan))->result();
-
-			// 3. Ambil rangkuman total kuantitas yang terjual di tbl_penjualan pada bulan tersebut berdasarkan nama & satuan
-			$sql_jual = "
-				SELECT LOWER(TRIM(nama_barang)) AS key_nama, LOWER(TRIM(satuan)) AS key_satuan, SUM(jumlah) AS total_terjual
-				FROM tbl_penjualan
-				WHERE DATE_FORMAT(tgl_jual, '%Y-%m') = ?
-				AND (barang_jasa != 'jasa' OR barang_jasa IS NULL)
-				GROUP BY LOWER(TRIM(nama_barang)), LOWER(TRIM(satuan))
-			";
-			$list_penjualan = $this->db->query($sql_jual, array($tahun_bulan))->result();
-
-			// Petakan total penjualan ke dalam array map untuk mempermudah perhitungan stok FIFO berkelanjutan
-			$map_terjual = array();
-			foreach ($list_penjualan as $jual) {
-				$key = trim((string)$jual->key_nama) . '|' . trim((string)$jual->key_satuan);
-				$map_terjual[$key] = (int)$jual->total_terjual;
-			}
-
-			// 4. Kalkulasi sisa stok secara adil per baris record pembelian (Metode Pengurangan Akumulatif)
-			$Data_stock = array();
-			foreach ($list_pembelian as $beli) {
-				// Memperbaiki fungsi penanganan string PHP menggunakan strtolower & trim bawaan PHP asli
-				$key_barang = strtolower(trim((string)$beli->nama_barang_beli)) . '|' . strtolower(trim((string)$beli->satuan));
-
-				// Ambil sisa kuantitas penjualan yang belum dialokasikan untuk memotong stok pembelian ini
-				$total_terjual_global = isset($map_terjual[$key_barang]) ? $map_terjual[$key_barang] : 0;
-				$jumlah_beli = (int)$beli->jumlah; // Menggunakan properti kolom 'jumlah' yang benar sesuai select query
-
-				if ($total_terjual_global > 0) {
-					if ($total_terjual_global >= $jumlah_beli) {
-						$sisa_stok = 0;
-						$map_terjual[$key_barang] -= $jumlah_beli;
-					} else {
-						$sisa_stok = $jumlah_beli - $total_terjual_global;
-						$map_terjual[$key_barang] = 0;
-					}
-				} else {
-					$sisa_stok = $jumlah_beli;
+			if (function_exists('penjualan_ensure_persediaan_kolom_unit')) {
+				$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
+				if (empty($hasil_kolom_unit['ok'])) {
+					echo json_encode(array(
+						'ok' => false,
+						'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
+					));
+					return;
 				}
-
-				// Saring agar hanya menampilkan item yang sisa stoknya benar-benar masih ada (> 0)
-				if ($sisa_stok > 0) {
-					$beli->id_persediaan_barang = (int)$beli->id;
-					$beli->uuid_persediaan = $beli->uuid_pembelian;
-					$beli->namabarang = $beli->nama_barang_beli;
-					$beli->satuan_persediaan = $beli->satuan;
-					$beli->hpp = $beli->harga_satuan;
-					$beli->harga_satuan_persediaan = $beli->harga_satuan;
-					$beli->jumlah_beli = $jumlah_beli;
-					$beli->sisa_stok = $sisa_stok;
-					$beli->jumlah_sediaan = $sisa_stok;
-					$beli->total_10 = $sisa_stok;
-
-					$Data_stock[] = $beli;
-				}
+			} else {
+				$hasil_kolom_unit = array('ok' => true, 'kolom' => '', 'created' => false);
 			}
 
-			// 5. Masukkan hasil array stock yang sudah dikurangi ke modal generator
-			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
-			$view_data = array(
-				'Data_stock' => $Data_stock,
-				'tgl_jual' => $tgl_jual,
-				'tgl_jual_X' => $tgl_jual_X,
+			// Load helper modal Pilih Barang (4 sumber: tbl_pembelian, persediaan, sys_unit_produk, tbl_pembelian_pecah_satuan)
+			$this->load->helper('penjualan_modal');
+
+			$Data_stock = penjualan_modal_load_stock_rows($this, $tahun_bulan);
+			$render = penjualan_modal_render_tbody($Data_stock, array(
 				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
-				'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
-				'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
-				'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
-				'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
-			);
+				'uuid_unit' => $uuid_unit_ajax,
+				'uuid_konsumen' => trim((string) $this->input->get_post('uuid_konsumen', TRUE)),
+				'nmrpesan' => trim((string) $this->input->get_post('nmrpesan', TRUE)),
+				'nmrkirim' => trim((string) $this->input->get_post('nmrkirim', TRUE)),
+			));
 
-			$render = penjualan_render_modal_pilih_barang($this, $view_data);
-			$jumlah_tampil = count($Data_stock);
+			$jumlah_tampil = isset($render['jumlah']) ? (int) $render['jumlah'] : count($Data_stock);
 
 			echo json_encode(array(
 				'ok' => true,
-				'bulan_label' => $filter['bulan_label'],
+				'bulan_label' => isset($filter['bulan_label']) ? $filter['bulan_label'] : $tahun_bulan,
 				'bulan_key' => $tahun_bulan,
-				'tgl_awal' => $filter['awal'],
-				'tgl_akhir' => $filter['akhir'],
-				'tbody' => $render['tbody'],
-				'modals' => $render['modals'],
+				'tgl_awal' => isset($filter['awal']) ? $filter['awal'] : '',
+				'tgl_akhir' => isset($filter['akhir']) ? $filter['akhir'] : '',
+				'tbody' => isset($render['tbody']) ? $render['tbody'] : '',
+				'modals' => isset($render['modals']) ? $render['modals'] : '',
 				'jumlah' => $jumlah_tampil,
 				'jumlah_tampil' => $jumlah_tampil,
 				'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
@@ -1329,11 +1268,6 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 
-
-
-	/**
-	 * AJAX: hapus semua barang penjualan saat Tgl Jual pindah ke bulan lain.
-	 */
 	public function ajax_ganti_bulan_tgl_jual()
 	{
 		$this->output->set_content_type('application/json');
