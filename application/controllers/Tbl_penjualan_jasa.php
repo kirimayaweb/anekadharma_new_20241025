@@ -17,6 +17,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 		$this->load->helper(array('nominal', 'pembelian_persediaan'));
 		$this->Tbl_penjualan_model = $this->Tbl_penjualan_jasa_model;
 		// $this->load->helper('number');
+		
 	}
 
 
