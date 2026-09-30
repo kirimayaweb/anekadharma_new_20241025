@@ -164,6 +164,8 @@ class Tbl_penjualan_jasa_model extends CI_Model
 
     function get_ROW_by_uuid_penjualan_first_row($uuid_penjualan = null)
     {
+
+
         $this->db->where($this->uuid_penjualan, $uuid_penjualan);
         $this->db->order_by($this->id, $this->orderASC);
         $this->_scope_jasa();

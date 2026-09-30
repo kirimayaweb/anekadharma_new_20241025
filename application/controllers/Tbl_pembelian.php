@@ -5917,9 +5917,15 @@ class Tbl_pembelian extends CI_Controller
 		if ($bulan === '') {
 			$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
 		}
+		// Fallback: pilihan terakhir di session (setelah simpan pecah satuan, dll)
+		if ($bulan === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+			$bulan = trim((string) $this->session->userdata('filter_pecah_satuan_bulan_persediaan'));
+		}
 		if ($bulan === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan)) {
 			$bulan = date('Y-m');
 		}
+		// Simpan sebagai pilihan terakhir
+		$this->session->set_userdata('filter_pecah_satuan_bulan_persediaan', $bulan);
 		return $bulan;
 	}
 
@@ -6619,7 +6625,7 @@ class Tbl_pembelian extends CI_Controller
 			// 'uuid_pembelian' => $Data_Barang->uuid_pembelian,
 			'uuid_barang' => $Data_Barang->uuid_barang,
 			'uuid_persediaan' => $uuid_persediaan,
-			'id_persediaan_barang' => (int) $Data_Barang->id,
+			// id_persediaan_barang tidak ada di tbl_pembelian_pecah_satuan
 			'tgl_po' => date("Y-m-d H:i:s"),
 			// 'nmrsj' => $Data_Barang->nmrsj,
 			// 'nmrfakturkwitansi' => $Data_Barang->nmrfakturkwitansi,
@@ -6660,6 +6666,7 @@ class Tbl_pembelian extends CI_Controller
 		// print_r("<br/>");
 		// die;
 
+		unset($data_Tbl_pembelian_pecah_satuan['id_persediaan_barang']);
 		$this->Tbl_pembelian_pecah_satuan_model->insert($data_Tbl_pembelian_pecah_satuan);
 
 		// die;
@@ -6674,13 +6681,15 @@ class Tbl_pembelian extends CI_Controller
 		// die;
 
 
-		$bulan_redirect = date('Y-m', strtotime($tanggal_beli_bulan));
+				$bulan_redirect = date('Y-m', strtotime($tanggal_beli_bulan));
+		$this->session->set_userdata('filter_pecah_satuan_bulan_persediaan', $bulan_redirect);
 		$this->session->set_flashdata(
-			'pesan_persediaan',
-			'Pecah satuan berhasil. Stok barang baru tersedia di persediaan bulan ' . date('m/Y', strtotime($tanggal_beli_bulan)) . '.'
+			'pesan_pecah_satuan',
+			'Pecah satuan berhasil. Stok barang baru tersedia di bulan ' . date('m/Y', strtotime($tanggal_beli_bulan)) . '.'
 		);
-		redirect(site_url('persediaan/index?bulan_persediaan=' . $bulan_redirect));
+		redirect(site_url('tbl_pembelian/pecah_satuan?bulan_persediaan=' . rawurlencode($bulan_redirect) . '&tab_aktif=data-barang'));
 	}
+
 
 
 

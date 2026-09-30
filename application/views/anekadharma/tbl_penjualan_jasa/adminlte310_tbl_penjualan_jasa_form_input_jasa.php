@@ -3,213 +3,243 @@
 <?php
 $this->load->helper('pembelian_persediaan');
 if (!isset($filter_bulan_penjualan)) {
-	$filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, isset($tgl_jual) ? $tgl_jual : null);
+    $filter_bulan_penjualan = penjualan_sync_filter_bulan_from_tgl_jual($this, isset($tgl_jual) ? $tgl_jual : null);
 }
 if (!isset($Data_stock)) {
-	$Data_stock = penjualan_get_stock_persediaan_jasa_rows(
-		$this,
-		isset($tgl_jual) ? $tgl_jual : null,
-		isset($uuid_unit) ? $uuid_unit : null
-	);
+    $Data_stock = penjualan_get_stock_persediaan_jasa_rows(
+        $this,
+        isset($tgl_jual) ? $tgl_jual : null,
+        isset($uuid_unit) ? $uuid_unit : null
+    );
 }
 if (!isset($jumlah_jasa_penjualan)) {
-	$jumlah_jasa_penjualan = 0;
+    $jumlah_jasa_penjualan = 0;
 }
 if (!isset($penjualan_bulan_key)) {
-	$penjualan_bulan_key = penjualan_get_bulan_key_from_tgl(isset($tgl_jual) ? $tgl_jual : null);
+    $penjualan_bulan_key = penjualan_get_bulan_key_from_tgl(isset($tgl_jual) ? $tgl_jual : null);
 }
 if (!isset($uuid_penjualan)) {
-	$uuid_penjualan = '';
+    $uuid_penjualan = '';
 }
 if (!isset($penjualan_list_bulan_key)) {
-	$list_ctx_penjualan = penjualan_get_list_bulan_context($this);
-	$penjualan_list_bulan_key = $list_ctx_penjualan['bulan_key'];
-	$penjualan_list_bulan_label = $list_ctx_penjualan['bulan_label'];
+    $list_ctx_penjualan = penjualan_get_list_bulan_context($this);
+    $penjualan_list_bulan_key = $list_ctx_penjualan['bulan_key'];
+    $penjualan_list_bulan_label = $list_ctx_penjualan['bulan_label'];
 }
 if (!isset($penjualan_list_bulan_label)) {
-	$penjualan_list_bulan_label = penjualan_get_bulan_label_from_key(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : '');
+    $penjualan_list_bulan_label = penjualan_get_bulan_label_from_key(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : '');
 }
 if (!isset($penjualan_redirect_list_url)) {
-	$penjualan_redirect_list_url = penjualan_build_redirect_list_url($this, isset($tgl_jual) ? $tgl_jual : null);
+    $penjualan_redirect_list_url = penjualan_build_redirect_list_url($this, isset($tgl_jual) ? $tgl_jual : null);
 }
 $tgl_jual_X_modal = isset($tgl_jual) ? penjualan_format_tgl_jual_tampil($tgl_jual) : date('d-m-Y');
 $render_modal_pilih_barang = penjualan_render_modal_pilih_jasa($this, array(
-	'Data_stock' => $Data_stock,
-	'tgl_jual' => isset($tgl_jual) ? $tgl_jual : null,
-	'tgl_jual_X' => $tgl_jual_X_modal,
-	'uuid_penjualan' => $uuid_penjualan,
-	'action' => isset($action) ? $action : site_url('tbl_penjualan_jasa/create_action_simpan_jasa/'),
-	'uuid_unit' => isset($uuid_unit) ? $uuid_unit : '',
-	'uuid_konsumen' => isset($uuid_konsumen) ? $uuid_konsumen : '',
-	'nmrpesan' => isset($nmrpesan) ? $nmrpesan : '',
-	'nmrkirim' => isset($nmrkirim) ? $nmrkirim : '',
+    'Data_stock' => $Data_stock,
+    'tgl_jual' => isset($tgl_jual) ? $tgl_jual : null,
+    'tgl_jual_X' => $tgl_jual_X_modal,
+    'uuid_penjualan' => $uuid_penjualan,
+    'action' => isset($action) ? $action : site_url('tbl_penjualan_jasa/create_action_simpan_jasa/'),
+    'uuid_unit' => isset($uuid_unit) ? $uuid_unit : '',
+    'uuid_konsumen' => isset($uuid_konsumen) ? $uuid_konsumen : '',
+    'nmrpesan' => isset($nmrpesan) ? $nmrpesan : '',
+    'nmrkirim' => isset($nmrkirim) ? $nmrkirim : '',
 ));
 $jumlah_jasa_modal = is_array($Data_stock) ? count($Data_stock) : 0;
 if (preg_match_all('/<tr\b/i', $render_modal_pilih_barang['tbody'], $m_jasa_modal)) {
-	$jumlah_jasa_modal = count($m_jasa_modal[0]);
-	if (strpos($render_modal_pilih_barang['tbody'], 'Tidak ada jasa persediaan') !== false) {
-		$jumlah_jasa_modal = 0;
-	}
+    $jumlah_jasa_modal = count($m_jasa_modal[0]);
+    if (strpos($render_modal_pilih_barang['tbody'], 'Tidak ada jasa persediaan') !== false) {
+        $jumlah_jasa_modal = 0;
+    }
 }
 ?>
 <style>
-	/* Modal PILIH JASA: ~1 cm dari pinggir layar (kiri/kanan/atas/bawah) */
-	#modal-xl.modal-pilih-jasa-penjualan {
-		padding: 1cm !important;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .modal-dialog.modal-pilih-jasa-wide {
-		max-width: calc(100vw - 2cm);
-		width: calc(100vw - 2cm);
-		max-height: calc(100vh - 2cm);
-		height: calc(100vh - 2cm);
-		margin: 0 auto;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .modal-content {
-		height: 100%;
-		max-height: 100%;
-		display: flex;
-		flex-direction: column;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .modal-header {
-		flex: 0 0 auto;
-		padding: 0.5rem 0.75rem;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .modal-body {
-		flex: 1 1 auto;
-		min-height: 0;
-		overflow: auto;
-		padding: 0.5rem 0.65rem;
-		display: flex;
-		flex-direction: column;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .modal-pilih-jasa-table-wrap {
-		flex: 1 1 auto;
-		min-height: 0;
-		overflow: auto;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan #table-pilih-jasa-penjualan {
-		width: 100% !important;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_wrapper {
-		width: 100%;
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_wrapper .row:first-child {
-		flex: 0 0 auto;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_filter {
-		text-align: right;
-		width: 100%;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_filter label {
-		font-weight: 600;
-		margin-bottom: 0;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_filter input {
-		display: inline-block;
-		width: min(320px, 55vw);
-		margin-left: 0.35rem;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_length select {
-		min-width: 4.5rem;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan div.dataTables_scrollBody {
-		max-height: none !important;
-		overflow: auto !important;
-	}
-	#container-modal-pilih-jasa-nested .modal {
-		z-index: 1065;
-	}
-	#container-modal-pilih-jasa-nested .modal-dialog.modal-isi-jumlah-barang {
-		max-width: min(720px, 96vw);
-	}
-	#modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis td {
-		background-color: #f4f4f4;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis .btn[disabled] {
-		cursor: not-allowed;
-		opacity: 0.65;
-		pointer-events: none;
-	}
-	#container-modal-pilih-jasa-nested .penjualan-label-info-jumlah {
-		display: block;
-		width: 100%;
-		min-width: 0;
-		margin-bottom: 0.4rem;
-		padding: 0;
-		color: #dc3545 !important;
-		font-size: 0.95rem;
-		font-weight: 600;
-		line-height: 1.35;
-		white-space: nowrap;
-		overflow-x: auto;
-		overflow-y: hidden;
-	}
-	/* DataTable Styling untuk Modal PILIH JASA */
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_filter input[type="search"] {
-		border: 1px solid #ced4da;
-		border-radius: 0.25rem;
-		padding: 0.375rem 0.75rem;
-		height: auto;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_length select {
-		border: 1px solid #ced4da;
-		border-radius: 0.25rem;
-		padding: 0.375rem 0.75rem;
-		height: auto;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan table thead th {
-		background-color: #f8f9fa;
-		border-bottom: 2px solid #dee2e6;
-		padding: 0.5rem !important;
-		text-align: center;
-		font-weight: 600;
-		cursor: pointer;
-		user-select: none;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting::after,
-	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_asc::after,
-	#modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_desc::after {
-		margin-left: 0.5rem;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan table tbody td {
-		padding: 0.5rem !important;
-		border-bottom: 1px solid #dee2e6;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan table tbody tr:hover {
-		background-color: #f8f9fa;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate {
-		padding-top: 0.5rem;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button {
-		padding: 0.25rem 0.5rem;
-		margin: 0 2px;
-		border: 1px solid #dee2e6;
-		border-radius: 0.25rem;
-		background: white;
-		cursor: pointer;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button:hover {
-		background: #e9ecef;
-		border-color: #adb5bd;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.current {
-		background: #007bff;
-		color: white;
-		border-color: #007bff;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-	#modal-xl.modal-pilih-jasa-penjualan .dataTables_info {
-		padding: 0.5rem 0;
-		font-size: 0.875rem;
-		color: #6c757d;
-	}
+    /* Modal PILIH JASA: ~1 cm dari pinggir layar (kiri/kanan/atas/bawah) */
+    #modal-xl.modal-pilih-jasa-penjualan {
+        padding: 1cm !important;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .modal-dialog.modal-pilih-jasa-wide {
+        max-width: calc(100vw - 2cm);
+        width: calc(100vw - 2cm);
+        max-height: calc(100vh - 2cm);
+        height: calc(100vh - 2cm);
+        margin: 0 auto;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .modal-content {
+        height: 100%;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .modal-header {
+        flex: 0 0 auto;
+        padding: 0.5rem 0.75rem;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 0.5rem 0.65rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .modal-pilih-jasa-table-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan #table-pilih-jasa-penjualan {
+        width: 100% !important;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_wrapper .row:first-child {
+        flex: 0 0 auto;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_filter {
+        text-align: right;
+        width: 100%;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_filter label {
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_filter input {
+        display: inline-block;
+        width: min(320px, 55vw);
+        margin-left: 0.35rem;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_length select {
+        min-width: 4.5rem;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan div.dataTables_scrollBody {
+        max-height: none !important;
+        overflow: auto !important;
+    }
+
+    #container-modal-pilih-jasa-nested .modal {
+        z-index: 1065;
+    }
+
+    #container-modal-pilih-jasa-nested .modal-dialog.modal-isi-jumlah-barang {
+        max-width: min(720px, 96vw);
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis td {
+        background-color: #f4f4f4;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan tr.pilih-jasa-stok-habis .btn[disabled] {
+        cursor: not-allowed;
+        opacity: 0.65;
+        pointer-events: none;
+    }
+
+    #container-modal-pilih-jasa-nested .penjualan-label-info-jumlah {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        margin-bottom: 0.4rem;
+        padding: 0;
+        color: #dc3545 !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.35;
+        white-space: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    /* DataTable Styling untuk Modal PILIH JASA */
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_filter input[type="search"] {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        height: auto;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_length select {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        padding: 0.375rem 0.75rem;
+        height: auto;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        padding: 0.5rem !important;
+        text-align: center;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan table thead th.sorting::after,
+    #modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_asc::after,
+    #modal-xl.modal-pilih-jasa-penjualan table thead th.sorting_desc::after {
+        margin-left: 0.5rem;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan table tbody td {
+        padding: 0.5rem !important;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate {
+        padding-top: 0.5rem;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button {
+        padding: 0.25rem 0.5rem;
+        margin: 0 2px;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        background: white;
+        cursor: pointer;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.current {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_paginate .paginate_button.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    #modal-xl.modal-pilih-jasa-penjualan .dataTables_info {
+        padding: 0.5rem 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
 </style>
 <div class="content-wrapper">
 
@@ -302,9 +332,9 @@ if (preg_match_all('/<tr\b/i', $render_modal_pilih_barang['tbody'], $m_jasa_moda
                                     &mdash; mengikuti <em>Tgl Jual</em>, hanya <strong>kategori jasa</strong>
                                 </small>
                                 <?php if ((int) $jumlah_jasa_penjualan > 0) { ?>
-                                <small class="text-danger d-block mt-1" id="info-tgl-jual-terkunci">
-                                    Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data jasa penjualan pada bulan ini. Hapus semua barang terlebih dahulu jika ingin memindahkan transaksi ke bulan persediaan lain.
-                                </small>
+                                    <small class="text-danger d-block mt-1" id="info-tgl-jual-terkunci">
+                                        Tgl Jual tidak boleh diubah ke bulan lain karena sudah ada data jasa penjualan pada bulan ini. Hapus semua barang terlebih dahulu jika ingin memindahkan transaksi ke bulan persediaan lain.
+                                    </small>
                                 <?php } ?>
 
                             </div>
@@ -312,64 +342,76 @@ if (preg_match_all('/<tr\b/i', $render_modal_pilih_barang['tbody'], $m_jasa_moda
                             <div class="form-group">
                                 <div class="row">
 
-                                    <!-- Unit -->
-                                    <div class="col-3">
-                                        <label for="unit_nama">Unit <?php echo form_error('unit') ?></label>
+                                    <!-- 1. Komponen Unit -->
+                                    <div class="col-md-3 col-sm-6 col-12">
+                                        <label for="uuid_unit">Unit <?php echo form_error('unit') ?></label>
                                         <select name="uuid_unit" id="uuid_unit" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="<?php echo $uuid_unit ?>"><?php echo $unit ?></option>
+                                            <option value="">-- Pilih Unit --</option>
                                             <?php
-
                                             $sql = "select * from sys_unit order by nama_unit ASC ";
                                             foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_unit' ";
-                                                echo ">  " . strtoupper($m->nama_unit)  . "</option>";
+                                                // Pengecekan multi-kondisi: cocokkan berdasarkan UUID ATAU cocokkan berdasarkan Nama Teks (contoh: ATK_RSUD)
+                                                $selected = '';
+                                                if (isset($unit) && trim(strtoupper((string)$unit)) === trim(strtoupper((string)$m->nama_unit))) {
+                                                    $selected = 'selected';
+                                                } elseif (isset($uuid_unit) && trim((string)$uuid_unit) === trim((string)$m->uuid_unit)) {
+                                                    $selected = 'selected';
+                                                }
+                                                echo "<option value='" . htmlspecialchars($m->uuid_unit, ENT_QUOTES, 'UTF-8') . "' $selected>" . strtoupper($m->nama_unit) . "</option>";
                                             }
-
                                             ?>
                                         </select>
-
-
                                     </div>
 
-                                    <!-- Konsumen -->
-                                    <div class="col-3">
-                                        <label for="konsumen_nama">Konsumen <?php echo form_error('konsumen_nama') ?></label>
+                                    <!-- 2. Komponen Konsumen -->
+                                    <div class="col-md-3 col-sm-6 col-12">
+                                        <label for="uuid_konsumen">Konsumen <?php echo form_error('konsumen_nama') ?></label>
                                         <select name="uuid_konsumen" id="uuid_konsumen" class="form-control select2" style="width: 100%; height: 40px;" required>
-                                            <option value="<?php echo $uuid_konsumen ?>"><?php echo $nama_konsumen ?></option>
+                                            <option value="">-- Pilih Konsumen --</option>
                                             <?php
-
-                                            // Data Unit
-                                            $sql = "select * from sys_unit order by nama_unit ASC ";
-                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_unit' ";
-                                                echo ">  " . strtoupper($m->nama_unit)  . "  ==> [UNIT] </option>";
+                                            // A. Ambil Data Unit sebagai opsi Konsumen
+                                            $sql_unit = "select * from sys_unit order by nama_unit ASC ";
+                                            foreach ($this->db->query($sql_unit)->result() as $m) {
+                                                $selected = '';
+                                                if (isset($nama_konsumen) && trim(strtoupper((string)$nama_konsumen)) === trim(strtoupper((string)$m->nama_unit))) {
+                                                    $selected = 'selected';
+                                                } elseif (isset($uuid_konsumen) && trim((string)$uuid_konsumen) === trim((string)$m->uuid_unit)) {
+                                                    $selected = 'selected';
+                                                }
+                                                echo "<option value='" . htmlspecialchars($m->uuid_unit, ENT_QUOTES, 'UTF-8') . "' $selected>" . strtoupper($m->nama_unit) . " ==> [UNIT] </option>";
                                             }
-                                            // Data Sys_konsumen
-                                            $sql = "select * from sys_konsumen order by nama_konsumen ASC ";
-                                            foreach ($this->db->query($sql)->result() as $m) {
-                                                echo "<option value='$m->uuid_konsumen' ";
-                                                echo ">  " . strtoupper($m->nama_konsumen) . strtoupper($m->nmr_kontak_konsumen) . strtoupper($m->alamat_konsumen) . "</option>";
+
+                                            // B. Ambil Data dari Tabel Konsumen Murni
+                                            $sql_konsumen = "select * from sys_konsumen order by nama_konsumen ASC ";
+                                            foreach ($this->db->query($sql_konsumen)->result() as $m) {
+                                                $selected = '';
+                                                if (isset($nama_konsumen) && trim(strtoupper((string)$nama_konsumen)) === trim(strtoupper((string)$m->nama_konsumen))) {
+                                                    $selected = 'selected';
+                                                } elseif (isset($uuid_konsumen) && trim((string)$uuid_konsumen) === trim((string)$m->uuid_konsumen)) {
+                                                    $selected = 'selected';
+                                                }
+                                                echo "<option value='" . htmlspecialchars($m->uuid_konsumen, ENT_QUOTES, 'UTF-8') . "' $selected>" . strtoupper($m->nama_konsumen) . " " . strtoupper($m->nmr_kontak_konsumen) . " " . strtoupper($m->alamat_konsumen) . "</option>";
                                             }
                                             ?>
                                         </select>
-
-
                                     </div>
 
-                                    <div class="col-3">
+                                    <!-- 3. Komponen Nomor Pesan -->
+                                    <div class="col-md-3 col-sm-6 col-12">
                                         <label for="nmrpesan">Nomor Pesan <?php echo form_error('nmrpesan') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="nmrpesan" id="nmrpesan" value="<?php echo $nmrpesan ?>" placeholder="nmrpesan">
+                                        <input type="text" class="form-control" name="nmrpesan" id="nmrpesan" value="<?php echo htmlspecialchars($nmrpesan, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Nomor Pesan">
                                     </div>
 
-                                    <div class="col-3">
+                                    <!-- 4. Komponen Nomor Kirim -->
+                                    <div class="col-md-3 col-sm-6 col-12">
                                         <label for="nmrkirim">Nomor Kirim <?php echo form_error('nmrkirim') ?></label>
-                                        <input type="text" class="form-control" rows="3" name="nmrkirim" id="nmrkirim" value="<?php echo $nmrkirim ?>" placeholder="nmrkirim">
+                                        <input type="text" class="form-control" name="nmrkirim" id="nmrkirim" value="<?php echo htmlspecialchars($nmrkirim, ENT_QUOTES, 'UTF-8'); ?>" placeholder="Nomor Kirim">
                                     </div>
-
 
                                 </div>
-
                             </div>
+
+
 
 
                             <div class="form-group">
@@ -695,115 +737,115 @@ if (preg_match_all('/<tr\b/i', $render_modal_pilih_barang['tbody'], $m_jasa_moda
 <?php
 
 if (isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uuid_penjualan)) {
-foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
+    foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 ?>
-    <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-    <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post">
-        <div class="modal fade" id="modal-xl-input-barang_<?php echo $list_data->id ?>">
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h4 class="modal-title">Update Barang <?php echo $list_data->id
-                                                                ?></h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+        <!-- MODAL EXTRA LARGE UPDATE PER ID -->
+        <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post">
+            <div class="modal fade" id="modal-xl-input-barang_<?php echo $list_data->id ?>">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title">Update Barang <?php echo $list_data->id
+                                                                    ?></h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
 
-                    <?php
-                    $row_data_barang_jual = $list_data;
-                    $id_persediaan_barang = (int) $list_data->id_persediaan_barang;
-                    $penjualan_kolom_unit_modal = penjualan_resolve_kolom_persediaan_unit($this, isset($uuid_unit) ? $uuid_unit : '');
-                    $row_persediaan = null;
+                        <?php
+                        $row_data_barang_jual = $list_data;
+                        $id_persediaan_barang = (int) $list_data->id_persediaan_barang;
+                        $penjualan_kolom_unit_modal = penjualan_resolve_kolom_persediaan_unit($this, isset($uuid_unit) ? $uuid_unit : '');
+                        $row_persediaan = null;
 
-                    if ($id_persediaan_barang > 0 && !empty($Data_stock)) {
-                        foreach ($Data_stock as $stock_row) {
-                            if ((int) $stock_row->id === $id_persediaan_barang) {
-                                $row_persediaan = $stock_row;
-                                break;
+                        if ($id_persediaan_barang > 0 && !empty($Data_stock)) {
+                            foreach ($Data_stock as $stock_row) {
+                                if ((int) $stock_row->id === $id_persediaan_barang) {
+                                    $row_persediaan = $stock_row;
+                                    break;
+                                }
                             }
                         }
-                    }
-                    if ($row_persediaan === null && $id_persediaan_barang > 0) {
-                        $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan_barang);
-                    }
-                    if ($row_persediaan === null && !empty($list_data->uuid_persediaan)) {
-                        $row_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($list_data->uuid_persediaan);
-                    }
+                        if ($row_persediaan === null && $id_persediaan_barang > 0) {
+                            $row_persediaan = $this->Persediaan_model->get_by_id($id_persediaan_barang);
+                        }
+                        if ($row_persediaan === null && !empty($list_data->uuid_persediaan)) {
+                            $row_persediaan = $this->Persediaan_model->get_by_uuid_persediaan($list_data->uuid_persediaan);
+                        }
 
-                    $jumlah_jual_saat_ini = (int) $row_data_barang_jual->jumlah;
-                    if ($row_persediaan !== null) {
-                        $Get_stock_di_persediaan = penjualan_get_sisa_stock_penjualan($row_persediaan, $penjualan_kolom_unit_modal) + $jumlah_jual_saat_ini;
-                    } else {
-                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
-                    }
-                    if ($Get_stock_di_persediaan < 1) {
-                        $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
-                    }
+                        $jumlah_jual_saat_ini = (int) $row_data_barang_jual->jumlah;
+                        if ($row_persediaan !== null) {
+                            $Get_stock_di_persediaan = penjualan_get_sisa_stock_penjualan($row_persediaan, $penjualan_kolom_unit_modal) + $jumlah_jual_saat_ini;
+                        } else {
+                            $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                        }
+                        if ($Get_stock_di_persediaan < 1) {
+                            $Get_stock_di_persediaan = max($jumlah_jual_saat_ini, 1);
+                        }
 
-                    // `id`, `uuid_penjualan_proses`, `uuid_penjualan`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`, `tgl_input`, `tgl_jual`, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, `umpphpsl22`, `piutang`, `penjualandpp`, `utangppn`, `cetak_bukti_penjualan`, `id_usr`, ``, ``, ``, ``, ``, ``
+                        // `id`, `uuid_penjualan_proses`, `uuid_penjualan`, `uuid_persediaan`, `id_persediaan_barang`, `uuid_barang`, `tgl_input`, `tgl_jual`, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, ``, `umpphpsl22`, `piutang`, `penjualandpp`, `utangppn`, `cetak_bukti_penjualan`, `id_usr`, ``, ``, ``, ``, ``, ``
 
 
-                    ?>
+                        ?>
 
-                    <div class="modal-body">
+                        <div class="modal-body">
 
-                        <div class="form-group">
-                            <div class="row">
-                                <div class="col-12">
-                                    <label for="konsumen_nama">Barang</label>
-                                    <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $row_data_barang_jual->nama_barang ?>" disabled>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label for="konsumen_nama">Barang</label>
+                                        <input type="text" class="form-control" rows="3" name="nama_barang" id="nama_barang" placeholder="nama_barang" value="<?php echo $row_data_barang_jual->nama_barang ?>" disabled>
+                                    </div>
                                 </div>
-                            </div>
 
 
 
-                            <div class="row">
-                                <div class="col-4">
-                                    <label for="nmrpesan">Harga Satuan </label>
-                                    <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php // echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); 
-                                                                                                                                                    ?>" placeholder="<?php // echo nominal($list_data->harga_satuan_persediaan);  echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
-                                                                                                                                                                        ?>"> -->
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="nmrpesan">Harga Satuan </label>
+                                        <!-- <input type="text" class="form-control" rows="3" name="harga_satuan_beli" id="harga_satuan_beli" value="<?php // echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); 
+                                                                                                                                                        ?>" placeholder="<?php // echo nominal($list_data->harga_satuan_persediaan);  echo number_format($list_data->harga_satuan_persediaan, 2, ',', '.'); 
+                                                                                                                                                                            ?>"> -->
+                                    </div>
+                                    <div class="col-4">
+                                        <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $Get_stock_di_persediaan; ?></label>
+                                    </div>
                                 </div>
-                                <div class="col-4">
-                                    <label style="color:red" for="nmrkirim">Jumlah Maks= <?php echo $Get_stock_di_persediaan; ?></label>
-                                </div>
-                            </div>
-                            <div class="row">
+                                <div class="row">
 
 
-                                <div class="col-4">
-                                    <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" value="
+                                    <div class="col-4">
+                                        <input type="text" class="form-control" rows="3" name="harga_satuan" id="harga_satuan" value="
                                     <?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>" placeholder="<?php echo number_format($row_data_barang_jual->harga_satuan, 2, ',', '.'); ?>">
-                                </div>
-                                <div class="col-4">
-                                    <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
-                                    <input type="number" class="form-control" id="jumlah" name="jumlah" value="<?php echo $row_data_barang_jual->jumlah; ?>" min="1" max="<?php echo $Get_stock_di_persediaan ?>">
+                                    </div>
+                                    <div class="col-4">
+                                        <!-- <input type="text" class="form-control" rows="3" name="jumlah" id="jumlah" min="1" max="5" placeholder="jumlah"> -->
+                                        <input type="number" class="form-control" id="jumlah" name="jumlah" value="<?php echo $row_data_barang_jual->jumlah; ?>" min="1" max="<?php echo $Get_stock_di_persediaan ?>">
+
+                                    </div>
 
                                 </div>
 
                             </div>
+
 
                         </div>
 
 
+                        <div class="modal-footer justify-content-between">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
+                            <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        </div>
                     </div>
-
-
-                    <div class="modal-footer justify-content-between">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Batal</button>
-                        <!-- <button type="button" class="btn btn-primary">Simpan</button> -->
-                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                    </div>
+                    <!-- /.modal-content -->
                 </div>
-                <!-- /.modal-content -->
+                <!-- /.modal-dialog -->
             </div>
-            <!-- /.modal-dialog -->
-        </div>
-    </form>
-    <!-- END OF MODAL EXTRA LARGE -->
+        </form>
+        <!-- END OF MODAL EXTRA LARGE -->
 <?php
-}
+    }
 }
 ?>
 
@@ -819,523 +861,561 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 </style>
 
 <script>
-/* Inisialisasi setelah jQuery layout (AdminLTE) dimuat */
-window.penjualanDtPilihBarang = null;
-window.penjualanTablePilihBarangId = '#table-pilih-jasa-penjualan';
-
-window.destroyDataTablePilihBarang = function() {
-    var $ = window.jQuery;
-    if (!$ || !$.fn.DataTable) {
-        return;
-    }
-    var $table = $(window.penjualanTablePilihBarangId);
-    if ($table.length && $.fn.DataTable.isDataTable($table)) {
-        try {
-            $table.DataTable().clear().destroy();
-        } catch (e1) {
-            try {
-                $table.DataTable().destroy();
-            } catch (e2) {}
-        }
-    }
+    /* Inisialisasi setelah jQuery layout (AdminLTE) dimuat */
     window.penjualanDtPilihBarang = null;
-};
+    window.penjualanTablePilihBarangId = '#table-pilih-jasa-penjualan';
 
-window.hitungScrollYPilihBarangPenjualan = function() {
-    var $modal = $('#modal-xl.modal-pilih-jasa-penjualan');
-    if (!$modal.length) {
-        return Math.max(360, Math.floor(window.innerHeight * 0.62));
-    }
-    var tinggiModal = $modal.find('.modal-dialog').innerHeight() || (window.innerHeight - Math.round(2 * 37.8));
-    var headerH = $modal.find('.modal-header').outerHeight(true) || 52;
-    var toolH = 72;
-    var footDt = 56;
-    return Math.max(340, Math.floor(tinggiModal - headerH - toolH - footDt - 18));
-};
-
-window.initDataTablePilihBarang = function() {
-    var $ = window.jQuery;
-    if (!$ || !$.fn.DataTable) {
-        return;
-    }
-    window.destroyDataTablePilihBarang();
-    var $table = $(window.penjualanTablePilihBarangId);
-    if (!$table.length) {
-        return;
-    }
-    try {
-        window.penjualanDtPilihBarang = $table.DataTable({
-            scrollY: window.hitungScrollYPilihBarangPenjualan(),
-            scrollX: true,
-            scrollCollapse: true,
-            destroy: true,
-            paging: true,
-            searching: true,
-            lengthChange: true,
-            info: true,
-            autoWidth: false,
-            orderCellsTop: true,
-            order: [[5, 'asc']],
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
-            columnDefs: [
-                {
-                    targets: [0, 1, 9],
-                    orderable: false,
-                    searchable: false
-                },
-                {
-                    targets: '_all',
-                    orderable: true,
-                    searchable: true
-                }
-            ],
-            dom: '<"row align-items-center mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-5"i><"col-sm-7"p>>',
-            language: {
-                search: 'Cari:',
-                searchPlaceholder: 'NAMA JASA, SPOP, kategori...',
-                lengthMenu: 'Tampil _MENU_ baris',
-                info: 'Baris _START_â€“_END_ dari _TOTAL_ barang',
-                infoEmpty: 'Tidak ada data',
-                infoFiltered: '(filter dari _MAX_ barang)',
-                zeroRecords: 'Tidak ada barang yang cocok',
-                paginate: {
-                    first: 'Awal',
-                    last: 'Akhir',
-                    next: 'â€º',
-                    previous: 'â€¹'
-                }
-            }
-        });
-    } catch (errDt) {
-        console.error('DataTable PILIH JASA:', errDt);
-    }
-};
-
-window.sesuaikanDataTablePilihBarang = function() {
-    if (!window.penjualanDtPilihBarang) {
-        window.initDataTablePilihBarang();
-        return;
-    }
-    try {
-        var y = window.hitungScrollYPilihBarangPenjualan();
-        window.penjualanDtPilihBarang.columns.adjust();
-        if (window.penjualanDtPilihBarang.settings()[0].oScroll) {
-            $(window.penjualanDtPilihBarang.table().container())
-                .find('div.dataTables_scrollBody')
-                .css({ 'max-height': y + 'px', 'height': y + 'px', 'overflow': 'auto' });
+    window.destroyDataTablePilihBarang = function() {
+        var $ = window.jQuery;
+        if (!$ || !$.fn.DataTable) {
+            return;
         }
-        window.penjualanDtPilihBarang.draw(false);
-    } catch (eAdj) {
-        console.warn('Sesuaikan DataTable PILIH JASA:', eAdj);
-    }
-};
-
-function penjualanAlertPesan(judul, pesan, icon) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({ icon: icon || 'info', title: judul, text: pesan });
-    } else {
-        alert(judul + (pesan ? '\n' + pesan : ''));
-    }
-}
-
-function penjualanInitInputBarangScript() {
-    var $ = window.jQuery;
-    if (!$) {
-        setTimeout(penjualanInitInputBarangScript, 80);
-        return;
-    }
-
-(function($) {
-    var cfg = {
-        urlListPersediaan: <?php echo json_encode(site_url('tbl_penjualan_jasa/list_persediaan_penjualan_jasa_ajax')); ?>,
-        bulanKeyAwal: <?php echo json_encode($penjualan_bulan_key); ?>,
-        bulanLabelAwal: <?php echo json_encode(isset($filter_bulan_penjualan['bulan_label']) ? $filter_bulan_penjualan['bulan_label'] : ''); ?>,
-        listBulanKey: <?php echo json_encode(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : ''); ?>,
-        listBulanLabel: <?php echo json_encode(isset($penjualan_list_bulan_label) ? $penjualan_list_bulan_label : ''); ?>,
-        redirectListBase: <?php echo json_encode(site_url('tbl_penjualan_jasa')); ?>,
-        jumlahBarang: <?php echo (int) $jumlah_jasa_penjualan; ?>,
-        uuidPenjualan: <?php echo json_encode($uuid_penjualan); ?>
+        var $table = $(window.penjualanTablePilihBarangId);
+        if ($table.length && $.fn.DataTable.isDataTable($table)) {
+            try {
+                $table.DataTable().clear().destroy();
+            } catch (e1) {
+                try {
+                    $table.DataTable().destroy();
+                } catch (e2) {}
+            }
+        }
+        window.penjualanDtPilihBarang = null;
     };
 
-    var tglJualTimer = null;
-    var tglJualBulanKey = cfg.bulanKeyAwal;
-    var tglJualNilaiAktif = '';
-    var sedangBlokirBulan = false;
-
-    function getInputTglJual() {
-        var $el = $('#input_tgl_jual_penjualan');
-        if ($el.length) {
-            return $el;
+    window.hitungScrollYPilihBarangPenjualan = function() {
+        var $modal = $('#modal-xl.modal-pilih-jasa-penjualan');
+        if (!$modal.length) {
+            return Math.max(360, Math.floor(window.innerHeight * 0.62));
         }
-        return $('#form_update_nmrkirim input[name="tgl_jual"]').first();
-    }
+        var tinggiModal = $modal.find('.modal-dialog').innerHeight() || (window.innerHeight - Math.round(2 * 37.8));
+        var headerH = $modal.find('.modal-header').outerHeight(true) || 52;
+        var toolH = 72;
+        var footDt = 56;
+        return Math.max(340, Math.floor(tinggiModal - headerH - toolH - footDt - 18));
+    };
 
-    function getTglJualVal() {
-        return $.trim(getInputTglJual().val() || '');
-    }
-
-    function parseBulanKey(tglStr) {
-        var p = tglStr.split(/[-\/\.]/);
-        if (p.length === 3) {
-            var d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
-            if (y < 100) {
-                y += 2000;
-            }
-            if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
-                return y + '-' + ('0' + m).slice(-2);
-            }
+    window.initDataTablePilihBarang = function() {
+        var $ = window.jQuery;
+        if (!$ || !$.fn.DataTable) {
+            return;
         }
-        return '';
-    }
-
-    function bulanLabelFromKey(bulanKey) {
-        var parts = String(bulanKey || '').split('-');
-        if (parts.length === 2) {
-            return parts[1] + '/' + parts[0];
-        }
-        return bulanKey || '';
-    }
-
-    function buildRedirectListUrlDariTglJual(tglStr) {
-        var bulanKey = parseBulanKey(tglStr);
-        if (!bulanKey) {
-            return cfg.redirectListBase;
-        }
-        var parts = bulanKey.split('-');
-        var y = parseInt(parts[0], 10);
-        var m = parseInt(parts[1], 10);
-        var lastDay = new Date(y, m, 0).getDate();
-        var awal = '1-' + m + '-' + y;
-        var akhir = lastDay + '-' + m + '-' + y;
-        return cfg.redirectListBase
-            + '?tgl_awal=' + encodeURIComponent(awal)
-            + '&tgl_akhir=' + encodeURIComponent(akhir);
-    }
-
-    function navigasiKembaliKeHalamanPenjualan() {
-        var tgl = getTglJualVal();
-        var url = buildRedirectListUrlDariTglJual(tgl);
-        var bulanInput = parseBulanKey(tgl);
-        var bulanList = cfg.listBulanKey || '';
-
-        if (bulanList && bulanInput && bulanInput !== bulanList) {
-            var labelList = cfg.listBulanLabel || bulanLabelFromKey(bulanList);
-            var labelInput = bulanLabelFromKey(bulanInput);
-            var pesan = 'Bekerja di halaman penjualan bulan <strong>' + labelList + '</strong>, '
-                + 'tetapi input DATA PENJUALAN JASA pada bulan <strong>' + labelInput + '</strong>.<br><br>'
-                + 'DATA PENJUALAN JASA akan ditampilkan sesuai bulan Tgl Jual (<strong>' + labelInput + '</strong>). Lanjutkan?';
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Perbedaan bulan penjualan',
-                    html: pesan,
-                    showCancelButton: true,
-                    confirmButtonText: 'OK, tampilkan data',
-                    cancelButtonText: 'Batal'
-                }).then(function(result) {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
-                    }
-                });
-                return;
-            }
-            if (!confirm('Bulan halaman penjualan (' + labelList + ') berbeda dengan Tgl Jual (' + labelInput + '). Lanjutkan?')) {
-                return;
-            }
-        }
-
-        window.location.href = url;
-    }
-
-    function updateInfoBulan(label) {
-        $('#info-bulan-persediaan-penjualan').html(
-            'Daftar jasa (persediaan) bulan: <strong>' + label + '</strong> &mdash; mengikuti <em>Tgl Jual</em>, hanya <strong>kategori jasa</strong>'
-        );
-        $('#modal-pilih-jasa-bulan-label').text('(Bulan: ' + label + ' — kategori jasa saja)');
-    }
-
-    function tbodySudahAdaDataJasa() {
-        var $rows = $('#tbody-pilih-barang-penjualan tr');
-        if (!$rows.length) {
-            return false;
-        }
-        if ($rows.length === 1) {
-            var teks = $.trim($rows.first().text());
-            if (teks.indexOf('Tidak ada jasa persediaan') !== -1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function tampilkanModalPilihJasaDariDataAda() {
         window.destroyDataTablePilihBarang();
-        window.initDataTablePilihBarang();
-        setTimeout(function() {
-            window.sesuaikanDataTablePilihBarang();
-        }, 80);
-    }
+        var $table = $(window.penjualanTablePilihBarangId);
+        if (!$table.length) {
+            return;
+        }
+        try {
+            window.penjualanDtPilihBarang = $table.DataTable({
+                scrollY: window.hitungScrollYPilihBarangPenjualan(),
+                scrollX: true,
+                scrollCollapse: true,
+                destroy: true,
+                paging: true,
+                searching: true,
+                lengthChange: true,
+                info: true,
+                autoWidth: false,
+                orderCellsTop: true,
+                order: [
+                    [5, 'asc']
+                ],
+                pageLength: 10,
+                lengthMenu: [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, 'Semua']
+                ],
+                columnDefs: [{
+                        targets: [0, 1, 9],
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: '_all',
+                        orderable: true,
+                        searchable: true
+                    }
+                ],
+                dom: '<"row align-items-center mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-5"i><"col-sm-7"p>>',
+                language: {
+                    search: 'Cari:',
+                    searchPlaceholder: 'NAMA JASA, SPOP, kategori...',
+                    lengthMenu: 'Tampil _MENU_ baris',
+                    info: 'Baris _START_â€“_END_ dari _TOTAL_ barang',
+                    infoEmpty: 'Tidak ada data',
+                    infoFiltered: '(filter dari _MAX_ barang)',
+                    zeroRecords: 'Tidak ada barang yang cocok',
+                    paginate: {
+                        first: 'Awal',
+                        last: 'Akhir',
+                        next: 'â€º',
+                        previous: 'â€¹'
+                    }
+                }
+            });
+        } catch (errDt) {
+            console.error('DataTable PILIH JASA:', errDt);
+        }
+    };
 
-    function syncReloadFormFields() {
-        $('#reload_penjualan_tgl_jual').val(getTglJualVal());
-        $('#reload_penjualan_uuid_unit').val($('#uuid_unit').val() || '');
-        $('#reload_penjualan_uuid_konsumen').val($('#uuid_konsumen').val() || '');
-        $('#reload_penjualan_nmrpesan').val($('#nmrpesan').val() || '');
-        $('#reload_penjualan_nmrkirim').val($('#nmrkirim').val() || '');
-    }
-
-    function submitReloadHalaman() {
-        syncReloadFormFields();
-        $('#form-reload-penjualan-inisiasi').submit();
-    }
-
-    function muatModalPilihBarang(callback, onFinish) {
-        var tgl = getTglJualVal();
-        if (!tgl) {
-            penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
-            if (typeof onFinish === 'function') {
-                onFinish();
+    window.sesuaikanDataTablePilihBarang = function() {
+        if (!window.penjualanDtPilihBarang) {
+            window.initDataTablePilihBarang();
+            return;
+        }
+        try {
+            var y = window.hitungScrollYPilihBarangPenjualan();
+            window.penjualanDtPilihBarang.columns.adjust();
+            if (window.penjualanDtPilihBarang.settings()[0].oScroll) {
+                $(window.penjualanDtPilihBarang.table().container())
+                    .find('div.dataTables_scrollBody')
+                    .css({
+                        'max-height': y + 'px',
+                        'height': y + 'px',
+                        'overflow': 'auto'
+                    });
             }
+            window.penjualanDtPilihBarang.draw(false);
+        } catch (eAdj) {
+            console.warn('Sesuaikan DataTable PILIH JASA:', eAdj);
+        }
+    };
+
+    function penjualanAlertPesan(judul, pesan, icon) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: icon || 'info',
+                title: judul,
+                text: pesan
+            });
+        } else {
+            alert(judul + (pesan ? '\n' + pesan : ''));
+        }
+    }
+
+    function penjualanInitInputBarangScript() {
+        var $ = window.jQuery;
+        if (!$) {
+            setTimeout(penjualanInitInputBarangScript, 80);
             return;
         }
 
-        $('#modal-pilih-jasa-loading').removeClass('d-none');
-        $.ajax({
-            url: cfg.urlListPersediaan,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                tgl_jual: tgl,
-                uuid_penjualan: cfg.uuidPenjualan,
-                uuid_unit: $('#uuid_unit').val() || '',
-                uuid_konsumen: $('#uuid_konsumen').val() || '',
-                nmrpesan: $('#nmrpesan').val() || '',
-                nmrkirim: $('#nmrkirim').val() || ''
+        (function($) {
+            var cfg = {
+                urlListPersediaan: <?php echo json_encode(site_url('tbl_penjualan_jasa/list_persediaan_penjualan_jasa_ajax')); ?>,
+                bulanKeyAwal: <?php echo json_encode($penjualan_bulan_key); ?>,
+                bulanLabelAwal: <?php echo json_encode(isset($filter_bulan_penjualan['bulan_label']) ? $filter_bulan_penjualan['bulan_label'] : ''); ?>,
+                listBulanKey: <?php echo json_encode(isset($penjualan_list_bulan_key) ? $penjualan_list_bulan_key : ''); ?>,
+                listBulanLabel: <?php echo json_encode(isset($penjualan_list_bulan_label) ? $penjualan_list_bulan_label : ''); ?>,
+                redirectListBase: <?php echo json_encode(site_url('tbl_penjualan_jasa')); ?>,
+                jumlahBarang: <?php echo (int) $jumlah_jasa_penjualan; ?>,
+                uuidPenjualan: <?php echo json_encode($uuid_penjualan); ?>
+            };
+
+            var tglJualTimer = null;
+            var tglJualBulanKey = cfg.bulanKeyAwal;
+            var tglJualNilaiAktif = '';
+            var sedangBlokirBulan = false;
+
+            function getInputTglJual() {
+                var $el = $('#input_tgl_jual_penjualan');
+                if ($el.length) {
+                    return $el;
+                }
+                return $('#form_update_nmrkirim input[name="tgl_jual"]').first();
             }
-        }).done(function(res) {
-            $('#modal-pilih-jasa-loading').addClass('d-none');
-            if (!res || !res.ok) {
-                penjualanAlertPesan('Gagal memuat data', (res && res.message) ? res.message : 'Terjadi kesalahan.', 'error');
-                return;
+
+            function getTglJualVal() {
+                return $.trim(getInputTglJual().val() || '');
             }
-            window.destroyDataTablePilihBarang();
-            $('#tbody-pilih-barang-penjualan').html(res.tbody || '');
-            $('#container-modal-pilih-jasa-nested').html(res.modals || '');
-            if (res.bulan_label) {
-                updateInfoBulan(res.bulan_label);
-                cfg.bulanLabelAwal = res.bulan_label;
-            }
-            if (res.bulan_key) {
-                tglJualBulanKey = res.bulan_key;
-            }
-            tglJualNilaiAktif = getTglJualVal();
-            $('#modal-pilih-jasa-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' jasa)');
-            window.initDataTablePilihBarang();
-            setTimeout(function() {
-                window.sesuaikanDataTablePilihBarang();
-            }, 80);
-            if (typeof callback === 'function') {
-                callback(res);
-            }
-        }).fail(function(xhr) {
-            $('#modal-pilih-jasa-loading').addClass('d-none');
-            var msg = 'Tidak dapat memuat daftar persediaan.';
-            if (xhr && xhr.responseText) {
-                try {
-                    var j = JSON.parse(xhr.responseText);
-                    if (j && j.message) {
-                        msg = j.message;
+
+            function parseBulanKey(tglStr) {
+                var p = tglStr.split(/[-\/\.]/);
+                if (p.length === 3) {
+                    var d = parseInt(p[0], 10),
+                        m = parseInt(p[1], 10),
+                        y = parseInt(p[2], 10);
+                    if (y < 100) {
+                        y += 2000;
                     }
-                } catch (eJson) {
-                    if (xhr.responseText.indexOf('Database Error') !== -1) {
-                        msg = 'Error database saat memuat persediaan. Periksa kolom unit di tabel persediaan.';
+                    if (m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+                        return y + '-' + ('0' + m).slice(-2);
+                    }
+                }
+                return '';
+            }
+
+            function bulanLabelFromKey(bulanKey) {
+                var parts = String(bulanKey || '').split('-');
+                if (parts.length === 2) {
+                    return parts[1] + '/' + parts[0];
+                }
+                return bulanKey || '';
+            }
+
+            function buildRedirectListUrlDariTglJual(tglStr) {
+                var bulanKey = parseBulanKey(tglStr);
+                if (!bulanKey) {
+                    return cfg.redirectListBase;
+                }
+                var parts = bulanKey.split('-');
+                var y = parseInt(parts[0], 10);
+                var m = parseInt(parts[1], 10);
+                var lastDay = new Date(y, m, 0).getDate();
+                var awal = '1-' + m + '-' + y;
+                var akhir = lastDay + '-' + m + '-' + y;
+                return cfg.redirectListBase +
+                    '?tgl_awal=' + encodeURIComponent(awal) +
+                    '&tgl_akhir=' + encodeURIComponent(akhir);
+            }
+
+            function navigasiKembaliKeHalamanPenjualan() {
+                var tgl = getTglJualVal();
+                var url = buildRedirectListUrlDariTglJual(tgl);
+                var bulanInput = parseBulanKey(tgl);
+                var bulanList = cfg.listBulanKey || '';
+
+                if (bulanList && bulanInput && bulanInput !== bulanList) {
+                    var labelList = cfg.listBulanLabel || bulanLabelFromKey(bulanList);
+                    var labelInput = bulanLabelFromKey(bulanInput);
+                    var pesan = 'Bekerja di halaman penjualan bulan <strong>' + labelList + '</strong>, ' +
+                        'tetapi input DATA PENJUALAN JASA pada bulan <strong>' + labelInput + '</strong>.<br><br>' +
+                        'DATA PENJUALAN JASA akan ditampilkan sesuai bulan Tgl Jual (<strong>' + labelInput + '</strong>). Lanjutkan?';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Perbedaan bulan penjualan',
+                            html: pesan,
+                            showCancelButton: true,
+                            confirmButtonText: 'OK, tampilkan data',
+                            cancelButtonText: 'Batal'
+                        }).then(function(result) {
+                            if (result.isConfirmed) {
+                                window.location.href = url;
+                            }
+                        });
+                        return;
+                    }
+                    if (!confirm('Bulan halaman penjualan (' + labelList + ') berbeda dengan Tgl Jual (' + labelInput + '). Lanjutkan?')) {
+                        return;
+                    }
+                }
+
+                window.location.href = url;
+            }
+
+            function updateInfoBulan(label) {
+                $('#info-bulan-persediaan-penjualan').html(
+                    'Daftar jasa (persediaan) bulan: <strong>' + label + '</strong> &mdash; mengikuti <em>Tgl Jual</em>, hanya <strong>kategori jasa</strong>'
+                );
+                $('#modal-pilih-jasa-bulan-label').text('(Bulan: ' + label + ' — kategori jasa saja)');
+            }
+
+            function tbodySudahAdaDataJasa() {
+                var $rows = $('#tbody-pilih-barang-penjualan tr');
+                if (!$rows.length) {
+                    return false;
+                }
+                if ($rows.length === 1) {
+                    var teks = $.trim($rows.first().text());
+                    if (teks.indexOf('Tidak ada jasa persediaan') !== -1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function tampilkanModalPilihJasaDariDataAda() {
+                window.destroyDataTablePilihBarang();
+                window.initDataTablePilihBarang();
+                setTimeout(function() {
+                    window.sesuaikanDataTablePilihBarang();
+                }, 80);
+            }
+
+            function syncReloadFormFields() {
+                $('#reload_penjualan_tgl_jual').val(getTglJualVal());
+                $('#reload_penjualan_uuid_unit').val($('#uuid_unit').val() || '');
+                $('#reload_penjualan_uuid_konsumen').val($('#uuid_konsumen').val() || '');
+                $('#reload_penjualan_nmrpesan').val($('#nmrpesan').val() || '');
+                $('#reload_penjualan_nmrkirim').val($('#nmrkirim').val() || '');
+            }
+
+            function submitReloadHalaman() {
+                syncReloadFormFields();
+                $('#form-reload-penjualan-inisiasi').submit();
+            }
+
+            function muatModalPilihBarang(callback, onFinish) {
+                var tgl = getTglJualVal();
+                if (!tgl) {
+                    penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
+                    if (typeof onFinish === 'function') {
+                        onFinish();
+                    }
+                    return;
+                }
+
+                $('#modal-pilih-jasa-loading').removeClass('d-none');
+                $.ajax({
+                    url: cfg.urlListPersediaan,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        tgl_jual: tgl,
+                        uuid_penjualan: cfg.uuidPenjualan,
+                        uuid_unit: $('#uuid_unit').val() || '',
+                        uuid_konsumen: $('#uuid_konsumen').val() || '',
+                        nmrpesan: $('#nmrpesan').val() || '',
+                        nmrkirim: $('#nmrkirim').val() || ''
+                    }
+                }).done(function(res) {
+                    $('#modal-pilih-jasa-loading').addClass('d-none');
+                    if (!res || !res.ok) {
+                        penjualanAlertPesan('Gagal memuat data', (res && res.message) ? res.message : 'Terjadi kesalahan.', 'error');
+                        return;
+                    }
+                    window.destroyDataTablePilihBarang();
+                    $('#tbody-pilih-barang-penjualan').html(res.tbody || '');
+                    $('#container-modal-pilih-jasa-nested').html(res.modals || '');
+                    if (res.bulan_label) {
+                        updateInfoBulan(res.bulan_label);
+                        cfg.bulanLabelAwal = res.bulan_label;
+                    }
+                    if (res.bulan_key) {
+                        tglJualBulanKey = res.bulan_key;
+                    }
+                    tglJualNilaiAktif = getTglJualVal();
+                    $('#modal-pilih-jasa-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' jasa)');
+                    window.initDataTablePilihBarang();
+                    setTimeout(function() {
+                        window.sesuaikanDataTablePilihBarang();
+                    }, 80);
+                    if (typeof callback === 'function') {
+                        callback(res);
+                    }
+                }).fail(function(xhr) {
+                    $('#modal-pilih-jasa-loading').addClass('d-none');
+                    var msg = 'Tidak dapat memuat daftar persediaan.';
+                    if (xhr && xhr.responseText) {
+                        try {
+                            var j = JSON.parse(xhr.responseText);
+                            if (j && j.message) {
+                                msg = j.message;
+                            }
+                        } catch (eJson) {
+                            if (xhr.responseText.indexOf('Database Error') !== -1) {
+                                msg = 'Error database saat memuat persediaan. Periksa kolom unit di tabel persediaan.';
+                            }
+                        }
+                    }
+                    penjualanAlertPesan('Gagal memuat data', msg, 'error');
+                }).always(function() {
+                    if (typeof onFinish === 'function') {
+                        onFinish();
+                    }
+                });
+            }
+
+            function getPickerTglJual() {
+                return $('#dt_tgl_jual_penjualan');
+            }
+
+            function initDatepickerTglJualPenjualan() {
+                var $picker = getPickerTglJual();
+                if (!$picker.length) {
+                    return;
+                }
+                if ($picker.data('DateTimePicker')) {
+                    return;
+                }
+                $picker.datetimepicker({
+                    format: 'D-M-YYYY',
+                    useCurrent: false
+                });
+            }
+
+            function revertTglJualPicker() {
+                getInputTglJual().val(tglJualNilaiAktif);
+                var $picker = getPickerTglJual();
+                if ($picker.length && $picker.data('DateTimePicker') && typeof moment !== 'undefined') {
+                    var m = moment(tglJualNilaiAktif, 'D-M-YYYY', true);
+                    if (!m.isValid()) {
+                        m = moment(tglJualNilaiAktif, 'DD-MM-YYYY', true);
+                    }
+                    if (m.isValid()) {
+                        $picker.datetimepicker('date', m);
                     }
                 }
             }
-            penjualanAlertPesan('Gagal memuat data', msg, 'error');
-        }).always(function() {
-            if (typeof onFinish === 'function') {
-                onFinish();
+
+            function tampilkanBlokirUbahBulan() {
+                var labelBulan = cfg.bulanLabelAwal || tglJualBulanKey;
+                var pesan = 'Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data jasa penjualan pada bulan <strong>' + labelBulan + '</strong>.<br><br>' +
+                    'Data persediaan berbeda per bulan dan transaksi penjualan harus sesuai bulan persediaan yang dipakai.<br><br>' +
+                    'Hapus semua barang di Detail Barang terlebih dahulu jika ingin bertransaksi di bulan lain.';
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Tgl Jual tidak dapat diubah',
+                        html: pesan
+                    });
+                } else {
+                    alert('Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data jasa penjualan pada bulan ini.');
+                }
             }
-        });
-    }
 
-    function getPickerTglJual() {
-        return $('#dt_tgl_jual_penjualan');
-    }
-
-    function initDatepickerTglJualPenjualan() {
-        var $picker = getPickerTglJual();
-        if (!$picker.length) {
-            return;
-        }
-        if ($picker.data('DateTimePicker')) {
-            return;
-        }
-        $picker.datetimepicker({
-            format: 'D-M-YYYY',
-            useCurrent: false
-        });
-    }
-
-    function revertTglJualPicker() {
-        getInputTglJual().val(tglJualNilaiAktif);
-        var $picker = getPickerTglJual();
-        if ($picker.length && $picker.data('DateTimePicker') && typeof moment !== 'undefined') {
-            var m = moment(tglJualNilaiAktif, 'D-M-YYYY', true);
-            if (!m.isValid()) {
-                m = moment(tglJualNilaiAktif, 'DD-MM-YYYY', true);
+            function setKunciTglJual(terkunci) {
+                var $input = getInputTglJual();
+                var $picker = getPickerTglJual();
+                $input.prop('readonly', !!terkunci);
+                if ($picker.length && $picker.data('DateTimePicker')) {
+                    if (terkunci) {
+                        $picker.datetimepicker('disable');
+                    } else {
+                        $picker.datetimepicker('enable');
+                    }
+                }
+                $picker.find('[data-toggle="datetimepicker"]').css('pointer-events', terkunci ? 'none' : '');
             }
-            if (m.isValid()) {
-                $picker.datetimepicker('date', m);
+
+            function onTglJualBerubah() {
+                if (sedangBlokirBulan) {
+                    return;
+                }
+                var tglBaru = getTglJualVal();
+                if (!tglBaru) {
+                    return;
+                }
+                var bulanKeyBaru = parseBulanKey(tglBaru);
+                if (!bulanKeyBaru || bulanKeyBaru === tglJualBulanKey) {
+                    return;
+                }
+
+                if (cfg.jumlahBarang > 0) {
+                    sedangBlokirBulan = true;
+                    revertTglJualPicker();
+                    tampilkanBlokirUbahBulan();
+                    setTimeout(function() {
+                        sedangBlokirBulan = false;
+                    }, 300);
+                    return;
+                }
+
+                tglJualBulanKey = bulanKeyBaru;
+                tglJualNilaiAktif = tglBaru;
+                var parts = bulanKeyBaru.split('-');
+                if (parts.length === 2) {
+                    updateInfoBulan(parts[1] + '/' + parts[0]);
+                }
             }
-        }
-    }
 
-    function tampilkanBlokirUbahBulan() {
-        var labelBulan = cfg.bulanLabelAwal || tglJualBulanKey;
-        var pesan = 'Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data jasa penjualan pada bulan <strong>' + labelBulan + '</strong>.<br><br>' +
-            'Data persediaan berbeda per bulan dan transaksi penjualan harus sesuai bulan persediaan yang dipakai.<br><br>' +
-            'Hapus semua barang di Detail Barang terlebih dahulu jika ingin bertransaksi di bulan lain.';
+            function initPenjualanInputBarang() {
+                initDatepickerTglJualPenjualan();
+                tglJualNilaiAktif = getTglJualVal();
+                getInputTglJual().off('change.penjualanTgl hide.penjualanTgl')
+                    .on('change.datetimepicker.penjualanTgl hide.datetimepicker.penjualanTgl change.penjualanTgl', function() {
+                        clearTimeout(tglJualTimer);
+                        tglJualTimer = setTimeout(onTglJualBerubah, 400);
+                    });
+                getPickerTglJual().off('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp')
+                    .on('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp', function() {
+                        clearTimeout(tglJualTimer);
+                        tglJualTimer = setTimeout(onTglJualBerubah, 400);
+                    });
 
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Tgl Jual tidak dapat diubah',
-                html: pesan
-            });
-        } else {
-            alert('Tidak boleh mengubah Tgl Jual ke bulan lain karena sudah ada data jasa penjualan pada bulan ini.');
-        }
-    }
-
-    function setKunciTglJual(terkunci) {
-        var $input = getInputTglJual();
-        var $picker = getPickerTglJual();
-        $input.prop('readonly', !!terkunci);
-        if ($picker.length && $picker.data('DateTimePicker')) {
-            if (terkunci) {
-                $picker.datetimepicker('disable');
-            } else {
-                $picker.datetimepicker('enable');
+                if (cfg.jumlahBarang > 0) {
+                    setKunciTglJual(true);
+                }
             }
-        }
-        $picker.find('[data-toggle="datetimepicker"]').css('pointer-events', terkunci ? 'none' : '');
-    }
 
-    function onTglJualBerubah() {
-        if (sedangBlokirBulan) {
-            return;
-        }
-        var tglBaru = getTglJualVal();
-        if (!tglBaru) {
-            return;
-        }
-        var bulanKeyBaru = parseBulanKey(tglBaru);
-        if (!bulanKeyBaru || bulanKeyBaru === tglJualBulanKey) {
-            return;
-        }
-
-        if (cfg.jumlahBarang > 0) {
-            sedangBlokirBulan = true;
-            revertTglJualPicker();
-            tampilkanBlokirUbahBulan();
-            setTimeout(function() {
-                sedangBlokirBulan = false;
-            }, 300);
-            return;
-        }
-
-        tglJualBulanKey = bulanKeyBaru;
-        tglJualNilaiAktif = tglBaru;
-        var parts = bulanKeyBaru.split('-');
-        if (parts.length === 2) {
-            updateInfoBulan(parts[1] + '/' + parts[0]);
-        }
-    }
-
-    function initPenjualanInputBarang() {
-        initDatepickerTglJualPenjualan();
-        tglJualNilaiAktif = getTglJualVal();
-        getInputTglJual().off('change.penjualanTgl hide.penjualanTgl')
-            .on('change.datetimepicker.penjualanTgl hide.datetimepicker.penjualanTgl change.penjualanTgl', function() {
-                clearTimeout(tglJualTimer);
-                tglJualTimer = setTimeout(onTglJualBerubah, 400);
-            });
-        getPickerTglJual().off('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp')
-            .on('change.datetimepicker.penjualanTglDp hide.datetimepicker.penjualanTglDp', function() {
-                clearTimeout(tglJualTimer);
-                tglJualTimer = setTimeout(onTglJualBerubah, 400);
+            $('#modal-xl.modal-pilih-jasa-penjualan').on('shown.bs.modal', function() {
+                setTimeout(function() {
+                    window.sesuaikanDataTablePilihBarang();
+                }, 60);
             });
 
-        if (cfg.jumlahBarang > 0) {
-            setKunciTglJual(true);
-        }
-    }
-
-    $('#modal-xl.modal-pilih-jasa-penjualan').on('shown.bs.modal', function() {
-        setTimeout(function() {
-            window.sesuaikanDataTablePilihBarang();
-        }, 60);
-    });
-
-    $(window).on('resize.penjualanPilihBarang', function() {
-        if ($('#modal-xl.modal-pilih-jasa-penjualan').hasClass('show')) {
-            window.sesuaikanDataTablePilihBarang();
-        }
-    });
-
-    $(document).on('click', '#btn-input-detail-barang-penjualan', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $btn = $(this);
-        if ($btn.prop('disabled')) {
-            return;
-        }
-
-        var tgl = getTglJualVal();
-        if (!tgl) {
-            penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
-            return;
-        }
-
-        $btn.prop('disabled', true);
-        $('#modal-xl').modal('show');
-
-        // Selalu muat ulang data dari server agar DataTable selalu fresh
-        $('#modal-pilih-jasa-loading').removeClass('d-none');
-        muatModalPilihBarang(function() {
-            /* data sudah dimuat di dalam modal */
-        }, function() {
-            $btn.prop('disabled', false);
-        });
-    });
-
-    initPenjualanInputBarang();
-
-    $(document).on('click', '#btn-kembali-halaman-penjualan', function(e) {
-        e.preventDefault();
-        navigasiKembaliKeHalamanPenjualan();
-    });
-})(jQuery);
-
-    if ($('#example1').length && $.fn.DataTable && !$.fn.DataTable.isDataTable('#example1')) {
-        try {
-            $('#example1').DataTable({
-                scrollY: 500,
-                scrollX: true
+            $(window).on('resize.penjualanPilihBarang', function() {
+                if ($('#modal-xl.modal-pilih-jasa-penjualan').hasClass('show')) {
+                    window.sesuaikanDataTablePilihBarang();
+                }
             });
-        } catch (eEx1) {}
-    }
-}
 
-if (document.readyState === 'complete') {
-    penjualanInitInputBarangScript();
-} else {
-    window.addEventListener('load', penjualanInitInputBarangScript);
-}
+            $(document).on('click', '#btn-input-detail-barang-penjualan', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var $btn = $(this);
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                var tgl = getTglJualVal();
+                if (!tgl) {
+                    penjualanAlertPesan('Tgl Jual belum diisi', 'Isi tanggal jual terlebih dahulu.', 'warning');
+                    return;
+                }
+
+                $btn.prop('disabled', true);
+                $('#modal-xl').modal('show');
+
+                // Selalu muat ulang data dari server agar DataTable selalu fresh
+                $('#modal-pilih-jasa-loading').removeClass('d-none');
+                muatModalPilihBarang(function() {
+                    /* data sudah dimuat di dalam modal */
+                }, function() {
+                    $btn.prop('disabled', false);
+                });
+            });
+
+            initPenjualanInputBarang();
+
+            $(document).on('click', '#btn-kembali-halaman-penjualan', function(e) {
+                e.preventDefault();
+                navigasiKembaliKeHalamanPenjualan();
+            });
+        })(jQuery);
+
+        if ($('#example1').length && $.fn.DataTable && !$.fn.DataTable.isDataTable('#example1')) {
+            try {
+                $('#example1').DataTable({
+                    scrollY: 500,
+                    scrollX: true
+                });
+            } catch (eEx1) {}
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        penjualanInitInputBarangScript();
+    } else {
+        window.addEventListener('load', penjualanInitInputBarangScript);
+    }
+
+
+    //isi combobox unit dan konsumen
+
+    $(document).ready(function() {
+        // 1. Jalankan inisialisasi ulang komponen Select2 bawaan AdminLTE
+        if ($.fn.select2) {
+            $('.select2').select2({
+                theme: 'bootstrap4',
+                placeholder: function() {
+                    return $(this).data('placeholder');
+                },
+                allowClear: false
+            });
+
+            // 2. FORCE BINDING VALUE: Paksa Select2 membaca value default pilihan pertama HTML
+            var unitVal = $('#uuid_unit').val();
+            if (unitVal) {
+                $('#uuid_unit').val(unitVal).trigger('change');
+            }
+
+            var konsumenVal = $('#uuid_konsumen').val();
+            if (konsumenVal) {
+                $('#uuid_konsumen').val(konsumenVal).trigger('change');
+            }
+        }
+    });
 </script>
-
-
-

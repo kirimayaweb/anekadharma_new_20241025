@@ -1089,28 +1089,31 @@ class Tbl_penjualan_jasa extends CI_Controller
 			// Ditambahkan alias 'jumlah_sediaan' dan 'total_10' agar sesuai dengan variabel pengecekan stok di file view baris 85.
 			// 2. Query mengambil data dari tbl_pembelian_jasa di-JOIN dengan total yang sudah terjual di tbl_penjualan
 			// Ditambahkan alias 'p.satuan AS satuan_persediaan' agar sesuai dengan kebutuhan variabel di file view baris 85.
+			// baris 614 di Tbl_penjualan_jasa.php
 			$sql_jasa_ready = "
-				SELECT 
-					p.id,
-					p.uuid_persediaan,
-					p.tgl_po,
-					p.spop,
-					p.uraian AS nama_barang_beli, 
-					p.jumlah AS jumlah_beli,
-					p.satuan,
-					p.satuan AS satuan_persediaan,             -- Diubah di sini menambahkan alias satuan
-					p.harga_satuan AS harga_satuan_persediaan,
-					COALESCE(SUM(j.jumlah), 0) AS jumlah_terjual,
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok,
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS jumlah_sediaan, 
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS total_10         
-				FROM tbl_pembelian_jasa p
-				LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND j.barang_jasa = 'jasa'
-				WHERE DATE_FORMAT(p.tgl_po, '%Y-%m') = ?
-				GROUP BY p.id
-				HAVING sisa_stok > 0
-				ORDER BY p.tgl_po ASC, p.uraian ASC
-			";
+    SELECT 
+        p.id,
+        p.uuid_persediaan,
+        p.uuid_persediaan AS uuid_barang,           -- Tambahkan baris alias ini untuk mengatasi Notice Line 128
+        p.tgl_po,
+        p.spop,
+        p.uraian AS nama_barang_beli, 
+        p.jumlah AS jumlah_beli,
+        p.satuan,
+        p.satuan AS satuan_persediaan,             
+        p.harga_satuan AS harga_satuan_persediaan,
+        COALESCE(SUM(j.jumlah), 0) AS jumlah_terjual,
+        (p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok,
+        (p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS jumlah_sediaan, 
+        (p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS total_10         
+    FROM tbl_pembelian_jasa p
+    LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND j.barang_jasa = 'jasa'
+    WHERE DATE_FORMAT(p.tgl_po, '%Y-%m') = ?
+    GROUP BY p.id
+    HAVING sisa_stok > 0
+    ORDER BY p.tgl_po ASC, p.uraian ASC
+";
+
 
 
 
@@ -1201,7 +1204,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 	}
 
 
-	public function create_action_simpan_jasa($uuid_penjualan = null, $id_persediaan_barang = null)
+	public function create_action_simpan_jasa_X($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 
 		// AMBIL DATA DARI PERSEDIAAN (filter id + uuid_barang)
@@ -1432,6 +1435,129 @@ class Tbl_penjualan_jasa extends CI_Controller
 		redirect(site_url('tbl_penjualan_jasa/kasir_penjualan/' . $uuid_penjualan));
 	}
 
+	public function create_action_simpan_jasa($uuid_penjualan = null, $id_persediaan_barang = null)
+	{
+		// Ambil string uuid_penjualan dari input POST jika parameter URL bernilai "new" atau kosong
+		if (empty($uuid_penjualan) || $uuid_penjualan === 'new') {
+			$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan_proses', TRUE));
+		}
+		if (empty($uuid_penjualan)) {
+			$uuid_penjualan = 'new';
+		}
+
+		// AMBIL DATA DARI PERSEDIAAN / PEMBELIAN JASA
+		$id_persediaan_barang = (int) $id_persediaan_barang;
+
+		// Sesuaikan pencarian sediaan dari tabel master pembelian jasa Anda
+		$data_barang = $this->db->where('id', $id_persediaan_barang)->get('tbl_pembelian_jasa')->row();
+
+		if (empty($data_barang)) {
+			$this->session->set_flashdata('message', 'Jasa persediaan tidak ditemukan.');
+			// JIKA ERROR: Kembalikan ke halaman kasir penjualan berjalan, bukan ke /create kosong
+			if ($uuid_penjualan === 'new') {
+				$this->session->set_flashdata('message', 'Sesi awal penjualan tidak valid.');
+				redirect(site_url('tbl_penjualan_jasa/create'));
+			} else {
+				redirect(site_url('tbl_penjualan_jasa/kasir_penjualan/' . $uuid_penjualan));
+			}
+			return;
+		}
+
+		// ... [Tetap pertahankan kode penyiapan data Unit & Konsumen Anda yang sudah ada] ...
+
+		$jumlah_simpan = preg_replace('/[^0-9]/', '', $this->input->post('jumlah', TRUE));
+		if ((int) $jumlah_simpan <= 0) {
+			$this->session->set_flashdata('message', 'Jumlah jasa wajib diisi dan lebih dari 0.');
+			redirect(site_url('tbl_penjualan_jasa/kasir_penjualan/' . $uuid_penjualan));
+			return;
+		}
+
+		// Perhitungan Sisa Stok berdasarkan data transaksi pembelian jasa
+		$sql_cek_stok = "SELECT (p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok 
+                     FROM tbl_pembelian_jasa p 
+                     LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND j.barang_jasa = 'jasa'
+                     WHERE p.id = ? GROUP BY p.id";
+		$res_stok = $this->db->query($sql_cek_stok, array($id_persediaan_barang))->row();
+		$sisa_stock_simpan = $res_stok ? (int)$res_stok->sisa_stok : 0;
+
+		if ($sisa_stock_simpan < 1 || (int)$jumlah_simpan > $sisa_stock_simpan) {
+			$this->session->set_flashdata('message', 'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').');
+			if ($uuid_penjualan === 'new') {
+				// Jika baru item pertama gagal, redirect balik ke form inisiasi baru
+				redirect(site_url('tbl_penjualan_jasa/create'));
+			} else {
+				redirect(site_url('tbl_penjualan_jasa/kasir_penjualan/' . $uuid_penjualan));
+			}
+			return;
+		}
+
+		// ========= PROSES SIMPAN DATA Penjualan =========
+		$tgl_jual_X = date("Y-m-d", strtotime($this->input->post('tgl_jual', TRUE)));
+
+		if ($uuid_penjualan === "new") {
+			$data = array(
+				'tgl_input' => date("Y-m-d H:i:s"),
+				'tgl_jual' => $tgl_jual_X,
+				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+				'uuid_unit' => $Get_uuid_unit,
+				'unit' => $Get_nama_unit,
+				'uuid_konsumen' => $uuid_konsumen,
+				'konsumen_nama' => $data_nama_konsumen,
+				'uuid_persediaan' => $data_barang->uuid_persediaan,
+				'id_persediaan_barang' => $id_persediaan_barang,
+				'uuid_barang' => $data_barang->uuid_persediaan,
+				'kode_barang' => isset($data_barang->kode_barang) ? $data_barang->kode_barang : '',
+				'nama_barang' => $data_barang->uraian, // mengambil uraian dari tbl_pembelian_jasa
+				'proses_bayar' => "belum_bayar",
+				'barang_jasa' => "jasa",
+				'jumlah' => $jumlah_simpan,
+				'satuan' => $data_barang->satuan,
+				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'total_nominal' => $jumlah_simpan * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'id_usr' => 1,
+			);
+
+			// Menghasilkan hash/UUID penjualan baru untuk transaksi kelompok ini
+			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
+		} else {
+			$data = array(
+				'tgl_input' => date("Y-m-d H:i:s"),
+				'tgl_jual' => $tgl_jual_X,
+				'uuid_penjualan' => $uuid_penjualan,
+				'nmrpesan' => $this->input->post('nmrpesan', TRUE),
+				'nmrkirim' => $this->input->post('nmrkirim', TRUE),
+				'uuid_unit' => $Get_uuid_unit,
+				'unit' => $Get_nama_unit,
+				'uuid_konsumen' => $uuid_konsumen,
+				'konsumen_nama' => $data_nama_konsumen,
+				'uuid_persediaan' => $data_barang->uuid_persediaan,
+				'id_persediaan_barang' => $id_persediaan_barang,
+				'uuid_barang' => $data_barang->uuid_persediaan,
+				'kode_barang' => isset($data_barang->kode_barang) ? $data_barang->kode_barang : '',
+				'nama_barang' => $data_barang->uraian,
+				'proses_bayar' => "belum_bayar",
+				'barang_jasa' => "jasa",
+				'jumlah' => $jumlah_simpan,
+				'satuan' => $data_barang->satuan,
+				'harga_satuan' => str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'total_nominal' => $jumlah_simpan * str_replace(",", ".", str_replace(".", "", $this->input->post('harga_satuan_beli', TRUE))),
+				'id_usr' => 1,
+			);
+
+			$this->Tbl_penjualan_model->insert_add_barang($data);
+		}
+
+		// Pastikan jika ada fungsi update log/stok internal dibungkus agar tidak me-redirect paksa ke halaman salah
+		@penjualan_update_persediaan_saat_jual($this, $id_persediaan_barang, $uuid_unit_simpan, $jumlah_simpan, 'tambah');
+
+		$this->session->set_flashdata('message', 'Jasa berhasil ditambahkan ke dalam nota.');
+
+		// REDIRECT UTAMA: Selalu arahkan ke Kasir Penjualan menggunakan UUID kelompok nota berjalan!
+		redirect(site_url('tbl_penjualan_jasa/kasir_penjualan/' . $uuid_penjualan));
+	}
+
+
 	// public function kasir_penjualan($uuid_penjualan, $tgl_jual, $nmrkirim)
 	public function kasir_penjualan($uuid_penjualan)
 	{
@@ -1443,7 +1569,10 @@ class Tbl_penjualan_jasa extends CI_Controller
 
 		// Get tgl_jual dan nmrkirim dari uuid_penjualan
 
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_jasa_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
+
+		// print_r($data_penjualan_per_uuid_penjualan);
+
 		if (!$data_penjualan_per_uuid_penjualan) {
 			$this->session->set_flashdata('message', 'Data penjualan tidak ditemukan.');
 			redirect(site_url('tbl_penjualan_jasa'));
@@ -1454,7 +1583,9 @@ class Tbl_penjualan_jasa extends CI_Controller
 
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
 		// $data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
-		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_jasa_model->get_all_by_uuid_penjualan($uuid_penjualan);
+
+
 
 		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
@@ -1473,6 +1604,7 @@ class Tbl_penjualan_jasa extends CI_Controller
 			$data_penjualan_per_uuid_penjualan_first_row->uuid_unit
 		);
 
+		// Cari baris array $data di dalam fungsi kasir_penjualan()
 		$data = array(
 			'data_penjualan_per_uuid_penjualan' => $data_penjualan_per_uuid_penjualan,
 			'button' => 'Simpan',
@@ -1481,10 +1613,13 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'tgl_jual' => $tgl_jual_kasir,
 			'nmrpesan' => $data_penjualan_per_uuid_penjualan_first_row->nmrpesan,
 			'nmrkirim' => $data_penjualan_per_uuid_penjualan_first_row->nmrkirim,
+
+			// Pastikan variabel di bawah ini diambil langsung dari record database yang aktif berjalan
 			'uuid_unit' => $data_penjualan_per_uuid_penjualan_first_row->uuid_unit,
-			'unit' => $data_penjualan_per_uuid_penjualan_first_row->unit,
+			'unit' => $data_penjualan_per_uuid_penjualan_first_row->unit, // Berisi teks seperti 'ATK_RSUD'
 			'uuid_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->uuid_konsumen,
-			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama,
+			'nama_konsumen' => $data_penjualan_per_uuid_penjualan_first_row->konsumen_nama, // Pastikan namanya 'nama_konsumen'
+
 			'uuid_penjualan' => $uuid_penjualan,
 			'action_ubah_per_id' => site_url('tbl_penjualan_jasa/create_action_nmrkirim_update_per_id_penjualan/'),
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan_jasa/action_ubah_detail_nomor_kirim/' . $data_penjualan_per_uuid_penjualan_first_row->nmrkirim . '/' . $uuid_penjualan),
@@ -1493,10 +1628,18 @@ class Tbl_penjualan_jasa extends CI_Controller
 			'jumlah_jasa_penjualan' => is_array($data_penjualan_per_uuid_penjualan) ? count($data_penjualan_per_uuid_penjualan) : 0,
 			'penjualan_bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual_kasir),
 		);
+
+
+
+
+
 		$list_ctx = penjualan_get_list_bulan_context($this);
 		$data['penjualan_list_bulan_key'] = $list_ctx['bulan_key'];
 		$data['penjualan_list_bulan_label'] = $list_ctx['bulan_label'];
 		$data['penjualan_redirect_list_url'] = penjualan_build_redirect_list_url($this, $tgl_jual_kasir);
+
+
+		
 
 		// $this->load->view('anekadharma/tbl_penjualan_jasa/tbl_penjualan_form', $data);
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_penjualan_jasa/adminlte310_tbl_penjualan_jasa_form_input_jasa', $data);
