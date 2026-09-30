@@ -2281,6 +2281,8 @@ function penjualan_hitung_jumlah_maks_ubah_barang($CI, $row_penjualan, $data_sto
 /**
  * Daftar stock persediaan untuk modal Pilih Barang penjualan (filter bulan Tgl Jual).
  */
+
+
 function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit = null)
 {
 	$tgl_jual = trim((string) $tgl_jual);
@@ -2288,20 +2290,22 @@ function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit =
 		return array();
 	}
 
-	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual);
+	$tgl = pembelian_get_filter_tanggal($CI, $tgl_jual); 
 	$has_kategori = $CI->db->field_exists('kategori', 'persediaan');
-	$kategori_sql = $has_kategori ? 'persediaan.kategori AS kategori_barang' : "'' AS kategori_barang";
+	$kategori_sql = $has_kategori ? "persediaan.kategori AS kategori_barang" : "'' AS kategori_barang";
 	$bukan_jasa_sql = penjualan_sql_bukan_kategori_jasa($CI, 'persediaan');
 	$uuid_barang_sql = penjualan_sql_uuid_barang_expr('persediaan');
 	$bulan_where_sql = penjualan_sql_filter_bulan_persediaan_where('persediaan');
 
 	$unit_cols_sql = '';
 	foreach (penjualan_persediaan_kolom_unit_existing($CI) as $kolom) {
-		$unit_cols_sql .= ",\n\t\t\tpersediaan.`{$kolom}` AS `{$kolom}`";
+		$unit_cols_sql .= ",persediaan.`{$kolom}` AS `{$kolom}`";
 	}
 
+	// PERBAIKAN UTAMA: JOIN murni tbl_pembelian.id = persediaan.id agar field tgl_po ikut terbaca
 	$sql = "SELECT persediaan.id AS id,
 			COALESCE(NULLIF(tbl_pembelian.tgl_po, ''), persediaan.tanggal_beli) AS tanggal_beli,
+			COALESCE(NULLIF(tbl_pembelian.tgl_po, ''), persediaan.tanggal_beli) AS tgl_po,
 			persediaan.tanggal AS tanggal,
 			persediaan.uuid_spop AS uuid_spop,
 			persediaan.spop AS spop,
@@ -2319,28 +2323,30 @@ function penjualan_get_stock_persediaan_rows($CI, $tgl_jual = null, $uuid_unit =
 			persediaan.penjualan AS penjualan{$unit_cols_sql},
 			{$kategori_sql}
 		FROM persediaan
-		LEFT JOIN tbl_pembelian ON tbl_pembelian.uuid_persediaan = persediaan.uuid_persediaan
+		LEFT JOIN tbl_pembelian ON tbl_pembelian.id = persediaan.id
 		WHERE TRIM(COALESCE(persediaan.namabarang, '')) <> ''
 		AND {$bulan_where_sql}
 		AND {$bukan_jasa_sql}
 		ORDER BY persediaan.namabarang ASC, persediaan.id ASC";
 
-	$bulan_ym = date('Y-m', strtotime($tgl['awal']));
-	$query = $CI->db->query($sql, array(
-		$tgl['awal'],
-		$tgl['akhir'],
-		$tgl['awal'],
-		$tgl['akhir'],
-		$bulan_ym,
-	));
-	if ($query === false) {
-		$err = $CI->db->error();
-		$pesan = isset($err['message']) ? $err['message'] : 'Query persediaan gagal.';
-		throw new Exception($pesan);
-	}
+	$bulan_ym = date('Y-m', strtotime($tgl['awal'])); 
+$query = $CI->db->query($sql, array(
+	$tgl['awal'],
+	$tgl['akhir'],
+	$tgl['awal'],
+	$tgl['akhir'],
+	$bulan_ym
+));
+
+if ($query === false) {
+	$err = $CI->db->error();
+	$pesan = isset($err['message']) ? $err['message'] : 'Query persediaan gagal.';
+	throw new Exception($pesan);
+}
 
 	return $query->result();
 }
+
 
 /**
  * Kunci bulan (Y-m) dari Tgl Jual untuk perbandingan perubahan datepicker.

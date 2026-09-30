@@ -1193,6 +1193,12 @@ class Tbl_penjualan extends CI_Controller
 	/**
 	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan Nama & Satuan).
 	 */
+	/**
+	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan baris data).
+	 */
+	/**
+	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan baris data).
+	 */
 	public function list_persediaan_penjualan_ajax()
 	{
 		// Membersihkan output buffer untuk memastikan hanya JSON murni yang terkirim
@@ -1209,6 +1215,7 @@ class Tbl_penjualan extends CI_Controller
 				return;
 			}
 
+			// 1. Ambil format tahun-bulan terpilih (Contoh: '2026-08')
 			$tahun_bulan = date('Y-m', strtotime($tgl_jual));
 			$filter = function_exists('penjualan_get_filter_tgl_jual')
 				? penjualan_get_filter_tgl_jual($this, $tgl_jual)
@@ -1232,19 +1239,87 @@ class Tbl_penjualan extends CI_Controller
 				$hasil_kolom_unit = array('ok' => true, 'kolom' => '', 'created' => false);
 			}
 
-			// Load helper modal Pilih Barang (4 sumber: tbl_pembelian, persediaan, sys_unit_produk, tbl_pembelian_pecah_satuan)
-			$this->load->helper('penjualan_modal');
+			// 2. QUERY UTAMA: Mengambil data barang dari tbl_pembelian dikurangi yang sudah terjual di tbl_penjualan
+			// Menyertakan alias 'jumlah_sediaan', 'total_10', 'uuid_barang' agar klop dengan pengecekan baris di view fragment Anda.
+			$sql_pembelian_ready = "
+				SELECT 
+					p.id,
+					p.uuid_pembelian AS uuid_persediaan,
+					p.uuid_pembelian AS uuid_barang,                   
+					p.tgl_po,                                           
+					p.spop,
+					p.uraian AS nama_barang_beli, 
+					p.jumlah AS jumlah_beli,
+					p.satuan,
+					p.satuan AS satuan_persediaan,             
+					p.harga_satuan AS harga_satuan_persediaan,
+					COALESCE(SUM(j.jumlah), 0) AS jumlah_terjual,
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok,
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS jumlah_sediaan, 
+					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS total_10         
+				FROM tbl_pembelian p
+				LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND (j.barang_jasa != 'jasa' OR j.barang_jasa IS NULL)
+				WHERE DATE_FORMAT(p.tgl_po, '%Y-%m') = ?
+				GROUP BY p.id
+				HAVING sisa_stok > 0
+				ORDER BY p.tgl_po ASC, p.uraian ASC
+			";
 
-			$Data_stock = penjualan_modal_load_stock_rows($this, $tahun_bulan);
-			$render = penjualan_modal_render_tbody($Data_stock, array(
+			$Data_stock = $this->db->query($sql_pembelian_ready, array($tahun_bulan))->result();
+
+			// === INJEKSI MULTI-FIELD AGAR COCOK DENGAN CODES DI HELPER RENDER MODAL ===
+			if (is_array($Data_stock)) {
+				foreach ($Data_stock as $row_stock) {
+					// Ambil nilai tanggal mentah dari baris record database (pembelian/persediaan)
+					$raw_date = '';
+					if (!empty($row_stock->tgl_po) && $row_stock->tgl_po !== '0000-00-00 00:00:00') {
+						$raw_date = $row_stock->tgl_po;
+					} elseif (!empty($row_stock->tanggal_beli) && $row_stock->tanggal_beli !== '0000-00-00 00:00:00') {
+						$raw_date = $row_stock->tanggal_beli;
+					} elseif (!empty($row_stock->tanggal) && $row_stock->tanggal !== '0000-00-00 00:00:00') {
+						$raw_date = $row_stock->tanggal;
+					}
+
+					if ($raw_date !== '') {
+						$formatted_date = date('d-m-Y', strtotime($raw_date));
+
+						// Suntikkan nilai ke semua kemungkinan nama field pembangun td di helper view Anda
+						$row_stock->tgl_po         = $formatted_date;
+						$row_stock->tgl_po_X       = $formatted_date;
+						$row_stock->tanggal_po     = $formatted_date;
+						$row_stock->tanggal        = $formatted_date;
+						$row_stock->tanggal_beli   = $formatted_date;
+						$row_stock->tgl_po_tampil  = $formatted_date;
+					} else {
+						$row_stock->tgl_po         = '-';
+						$row_stock->tgl_po_X       = '-';
+						$row_stock->tanggal_po     = '-';
+						$row_stock->tanggal        = '-';
+						$row_stock->tanggal_beli   = '-';
+						$row_stock->tgl_po_tampil  = '-';
+					}
+				}
+			}
+
+
+			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
+
+
+			// 3. Render output modal datatable bawaan sistem Anda
+			$view_data = array(
+				'Data_stock' => $Data_stock,
+				'tgl_jual' => $tgl_jual,
+				'tgl_jual_X' => $tgl_jual_X,
 				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
+				'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
 				'uuid_unit' => $uuid_unit_ajax,
 				'uuid_konsumen' => trim((string) $this->input->get_post('uuid_konsumen', TRUE)),
 				'nmrpesan' => trim((string) $this->input->get_post('nmrpesan', TRUE)),
 				'nmrkirim' => trim((string) $this->input->get_post('nmrkirim', TRUE)),
-			));
+			);
 
-			$jumlah_tampil = isset($render['jumlah']) ? (int) $render['jumlah'] : count($Data_stock);
+			$render = penjualan_render_modal_pilih_barang($this, $view_data);
+			$jumlah_tampil = count($Data_stock);
 
 			echo json_encode(array(
 				'ok' => true,
@@ -1266,6 +1341,8 @@ class Tbl_penjualan extends CI_Controller
 			));
 		}
 	}
+
+
 
 
 	public function ajax_ganti_bulan_tgl_jual()
@@ -1748,7 +1825,6 @@ class Tbl_penjualan extends CI_Controller
 		$total_nominal_simpan = ((int) $jumlah_simpan) * (float) $harga_satuan_simpan;
 
 		// 6. Penyusunan payload array untuk di-insert ke tbl_penjualan
-		// Bagian pelacak source referensi lama dilewati/dihapus agar tidak memicu error dari helper lama
 		$data = array(
 			'tgl_input' => date('Y-m-d H:i:s'),
 			'tgl_jual' => $tgl_jual_X,
@@ -1769,7 +1845,7 @@ class Tbl_penjualan extends CI_Controller
 			'harga_satuan' => $harga_satuan_simpan,
 			'total_nominal' => $total_nominal_simpan,
 			'barang_jasa' => 'barang',
-			'tabel_source_referensi' => 'tbl_pembelian', // Set manual penanda asal tabel
+			'tabel_source_referensi' => 'tbl_pembelian',
 			'nama_barang_referensi' => isset($data_barang->uraian) ? $data_barang->uraian : '',
 			'satuan_referensi' => isset($data_barang->satuan) ? $data_barang->satuan : '',
 			'harga_satuan_referensi' => isset($data_barang->harga_satuan) ? $data_barang->harga_satuan : 0,
