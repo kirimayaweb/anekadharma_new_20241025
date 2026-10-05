@@ -45,6 +45,9 @@
                             $Persediaan_data_barang = persediaan_filter_rows_by_kategori_tab($Persediaan_data, false);
                             $Persediaan_data_jasa = persediaan_filter_rows_by_kategori_tab($Persediaan_data, true);
                             $Persediaan_data_verifikasi = persediaan_filter_rows_verifikasi_tanpa_sumber($Persediaan_data);
+                            if (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) {
+                                $Persediaan_data_barang = $Persediaan_data_barang_stock;
+                            }
                             $Persediaan_data_draft_referensi = isset($Persediaan_data_draft_referensi) && is_array($Persediaan_data_draft_referensi)
                                 ? $Persediaan_data_draft_referensi
                                 : array();
@@ -88,10 +91,10 @@
                                         <button type="submit" class="btn btn-danger ml-1 btn-cari-persediaan">Cari</button>
                                         <span class="ml-2 text-muted small" id="info-jumlah-persediaan-bulan">
                                             Bulan <?php echo $bulan_label_tampil; ?> —
-                                            Barang: <strong><?php echo count($Persediaan_data_barang); ?></strong> baris,
+                                            <?php echo (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) ? 'Stok siap jual' : 'Barang'; ?>:
+                                            <strong><?php echo count($Persediaan_data_barang); ?></strong> baris,
                                             Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris,
                                             Verifikasi: <strong class="text-danger"><?php echo count($Persediaan_data_verifikasi); ?></strong> anomali
-                                            (total <?php echo count($Persediaan_data); ?> baris)
                                         </span>
                                     </div>
                                 </div>
@@ -100,7 +103,8 @@
                             <ul class="nav nav-pills mb-2" id="persediaan-data-subtabs" role="tablist">
                                 <li class="nav-item">
                                     <a class="nav-link active" id="tab-persediaan-barang" data-toggle="pill" href="#panel-persediaan-barang" role="tab" aria-controls="panel-persediaan-barang" aria-selected="true">
-                                        Barang <span class="badge badge-primary" id="badge-persediaan-barang"><?php echo count($Persediaan_data_barang); ?></span>
+                                        <?php echo (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) ? 'Stok Siap Jual' : 'Barang'; ?>
+                                        <span class="badge badge-primary" id="badge-persediaan-barang"><?php echo count($Persediaan_data_barang); ?></span>
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -125,7 +129,13 @@
                             <div class="tab-content" id="persediaan-data-subtabs-content">
                                 <div class="tab-pane fade show active" id="panel-persediaan-barang" role="tabpanel" aria-labelledby="tab-persediaan-barang">
                                     <div class="d-flex align-items-center flex-wrap mb-2">
-                                        <span class="text-muted small mr-auto">Data persediaan kategori <strong>bukan Jasa</strong></span>
+                                        <span class="text-muted small mr-auto">
+                                            <?php if (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) { ?>
+                                                Data stok dari modal Pilih Barang (Januari 2026 sampai akhir bulan terpilih), dengan baris dan jumlah yang sama; kolom lanjutan berisi rincian tabel persediaan.
+                                            <?php } else { ?>
+                                                Data persediaan kategori <strong>bukan Jasa</strong>
+                                            <?php } ?>
+                                        </span>
                                         <button type="button" class="btn btn-primary btn-sm btn-cetak-excel-persediaan-tab" data-filter="barang">
                                             <i class="fas fa-file-excel"></i> Cetak ke Excel
                                         </button>
@@ -134,7 +144,7 @@
                                         'Persediaan_rows' => $Persediaan_data_barang,
                                         'table_id' => 'table-persediaan-barang',
                                         'bulan_tampil' => $bulan_tampil,
-                                        'tab_mode' => 'barang',
+                                        'tab_mode' => (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) ? 'stock_barang' : 'barang',
                                     )); ?>
                                 </div>
                                 <div class="tab-pane fade" id="panel-persediaan-jasa" role="tabpanel" aria-labelledby="tab-persediaan-jasa">
@@ -14640,13 +14650,19 @@ window.addEventListener('load', function() {
             exportPersediaanVerifikasiTabExcel($(this).data('table') || '#table-persediaan-verifikasi');
             return;
         }
+        if (filter === 'barang' && $('#table-persediaan-barang').attr('data-stock-table') === '1') {
+            exportPersediaanVerifikasiTabExcel('#table-persediaan-barang', 'Persediaan Barang', 'Persediaan_Barang_Stok');
+            return;
+        }
         exportPersediaanTabExcel(filter);
     });
 
-    function exportPersediaanVerifikasiTabExcel(tableSel) {
+    function exportPersediaanVerifikasiTabExcel(tableSel, sheetName, filePrefix) {
+        sheetName = sheetName || 'Verifikasi';
+        filePrefix = filePrefix || 'Persediaan_Verifikasi';
         var $table = $(tableSel);
         if (!$table.length) {
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tabel verifikasi tidak ditemukan.' });
+            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tabel persediaan tidak ditemukan.' });
             return;
         }
         var headers = [];
@@ -14676,7 +14692,7 @@ window.addEventListener('load', function() {
         function escXml(s) {
             return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
-        var xml = '<' + '?xml version="1.0"?>' + '<' + '?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Verifikasi"><Table>';
+        var xml = '<' + '?xml version="1.0"?>' + '<' + '?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="' + escXml(sheetName) + '"><Table>';
         xml += '<Row>'; headers.forEach(function(h) { xml += '<Cell><Data ss:Type="String">' + escXml(h) + '</Data></Cell>'; }); xml += '</Row>';
         rows.forEach(function(line) {
             xml += '<Row>'; line.forEach(function(c) { xml += '<Cell><Data ss:Type="String">' + escXml(c) + '</Data></Cell>'; }); xml += '</Row>';
@@ -14685,7 +14701,7 @@ window.addEventListener('load', function() {
         var blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'Persediaan_Verifikasi_' + ($('#bulan_persediaan').val() || 'bulan') + '.xls';
+        link.download = filePrefix + '_' + ($('#bulan_persediaan').val() || 'bulan') + '.xls';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

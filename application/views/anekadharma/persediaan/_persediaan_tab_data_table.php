@@ -9,6 +9,7 @@ $bulan_tampil = isset($bulan_tampil) ? (string) $bulan_tampil : date('Y-m');
 $tab_mode = isset($tab_mode) ? (string) $tab_mode : 'barang';
 $is_jasa_tab = (strtolower(trim($tab_mode)) === 'jasa');
 $is_draft_referensi_tab = (strtolower(trim($tab_mode)) === 'draft_referensi');
+$is_stock_tab = (strtolower(trim($tab_mode)) === 'stock_barang');
 $show_id_column = (!$is_jasa_tab && !$is_draft_referensi_tab);
 $show_keluar_nominal_columns = $show_id_column;
 $col_offset = $show_id_column ? 1 : 0;
@@ -57,23 +58,40 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 	));
 } ?>
 <div class="persediaan-tab-dt-wrap">
-<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:16px;" data-money-cols="<?php echo htmlspecialchars(json_encode(array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo (int) $fixed_left_columns; ?>" data-order-col="<?php echo (int) $nama_col_index; ?>">
+<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped persediaan-tab-dt<?php echo $is_jasa_tab ? ' persediaan-jasa-dt' : ''; ?>" style="width:100%;font-size:16px;" data-stock-table="<?php echo $is_stock_tab ? '1' : '0'; ?>" data-money-cols="<?php echo htmlspecialchars(json_encode($is_stock_tab ? array() : array_values($money_col_indexes)), ENT_QUOTES, 'UTF-8'); ?>" data-fixed-left="<?php echo $is_stock_tab ? 6 : (int) $fixed_left_columns; ?>" data-order-col="<?php echo $is_stock_tab ? 2 : (int) $nama_col_index; ?>">
 	<thead>
 		<tr>
 			<th width="50px">No</th>
 			<?php if ($show_id_column) : ?><th width="70px">ID</th><?php endif; ?>
 			<th>Tanggal</th>
-			<th><?php echo htmlspecialchars($nama_barang_header, ENT_QUOTES, 'UTF-8'); ?></th>
-			<th>Satuan</th>
-			<th class="text-right persediaan-col-money">Hpp</th>
+			<?php if ($is_stock_tab) { ?>
+				<th>SPOP</th>
+				<th>Kategori</th>
+				<th>Nama Barang</th>
+				<th class="text-right persediaan-col-money">HPP</th>
+				<th>Satuan</th>
+				<th class="text-right">Stok Tersedia</th>
+			<?php } else { ?>
+				<th><?php echo htmlspecialchars($nama_barang_header, ENT_QUOTES, 'UTF-8'); ?></th>
+				<th>Satuan</th>
+				<th class="text-right persediaan-col-money">Hpp</th>
+			<?php } ?>
+			<?php if (!$is_stock_tab) { ?>
 			<th>Sa</th>
 			<th class="text-right persediaan-col-money">Sa. Nominal</th>
 			<th>Spop</th>
 			<th>Beli</th>
 			<th class="text-right persediaan-col-money">Beli Nmnl</th>
 			<th>Tuj</th>
+			<?php } else { ?>
+				<th>Sa</th>
+				<th class="text-right persediaan-col-money">Sa. Nominal</th>
+				<th>Beli</th>
+				<th class="text-right persediaan-col-money">Beli Nmnl</th>
+				<th>Tuj</th>
+			<?php } ?>
 			<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
-				<th><?php echo htmlspecialchars(persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
+				<th><?php echo htmlspecialchars($is_stock_tab && $field_tgl_total === 'total_10' ? 'Total 10 (DB)' : persediaan_field_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
 				<?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
 					<th class="text-right persediaan-col-money"><?php echo htmlspecialchars(persediaan_field_nominal_header_label($field_tgl_total), ENT_QUOTES, 'UTF-8'); ?></th>
 				<?php } ?>
@@ -133,8 +151,19 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<?php if ($show_id_column) : ?>
 					<td><?php echo (int) $persediaan->id; ?></td>
 				<?php endif; ?>
-				<td class="<?php echo $is_jasa_tab ? 'persediaan-jasa-col-tanggal' : ''; ?>">
-					<div class="persediaan-tanggal-text"><?php echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil); ?></div>
+				<td class="<?php echo $is_jasa_tab ? 'persediaan-jasa-col-tanggal' : ''; ?>"<?php
+					if ($is_stock_tab && !empty($persediaan->tanggal_urut)) {
+						echo ' data-order="' . htmlspecialchars((string) $persediaan->tanggal_urut, ENT_QUOTES, 'UTF-8') . '"';
+					}
+				?>>
+					<div class="persediaan-tanggal-text"><?php
+						if ($is_stock_tab && !empty($persediaan->tanggal_urut)) {
+							$tanggal_stock_ts = strtotime($persediaan->tanggal_urut);
+							echo $tanggal_stock_ts !== false ? date('d/m/Y', $tanggal_stock_ts) : htmlspecialchars((string) $persediaan->tanggal_urut, ENT_QUOTES, 'UTF-8');
+						} else {
+							echo persediaan_format_bulan_tahun($persediaan, $bulan_tampil);
+						}
+					?></div>
 					<?php if ($is_jasa_tab) {
 						$jasa_nama = isset($persediaan->namabarang) ? (string) $persediaan->namabarang : '';
 					?>
@@ -148,6 +177,19 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 					</div>
 					<?php } ?>
 				</td>
+				<?php if ($is_stock_tab) { ?>
+					<td><?php echo htmlspecialchars(isset($persediaan->spop) ? (string) $persediaan->spop : '', ENT_QUOTES, 'UTF-8'); ?></td>
+					<td><?php echo htmlspecialchars(isset($persediaan->kategori) ? (string) $persediaan->kategori : '', ENT_QUOTES, 'UTF-8'); ?></td>
+					<td><?php echo htmlspecialchars(isset($persediaan->namabarang) ? (string) $persediaan->namabarang : '', ENT_QUOTES, 'UTF-8'); ?></td>
+					<td class="text-right persediaan-col-money"><?php echo number_format((float) $persediaan->hpp, 0, ',', '.'); ?></td>
+					<td><?php echo htmlspecialchars(isset($persediaan->satuan) ? (string) $persediaan->satuan : '', ENT_QUOTES, 'UTF-8'); ?></td>
+					<td class="text-right"><?php echo persediaan_format_angka_tampil(isset($persediaan->stok_tersedia) ? $persediaan->stok_tersedia : 0); ?></td>
+					<td><?php echo persediaan_row_get($persediaan, 'sa'); ?></td>
+					<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_sa_nominal_row($persediaan); ?></td>
+					<td><?php echo persediaan_row_get($persediaan, 'beli'); ?></td>
+					<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_beli_nominal_row($persediaan); ?></td>
+					<td><?php echo persediaan_row_get($persediaan, 'tuj'); ?></td>
+				<?php } else { ?>
 				<td><?php echo $persediaan->namabarang ?></td>
 				<td><?php echo $persediaan->satuan ?></td>
 				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_hpp_row($persediaan); ?></td>
@@ -157,10 +199,13 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<td><?php echo $persediaan->beli ?></td>
 				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_beli_nominal_row($persediaan); ?></td>
 				<td><?php echo $persediaan->tuj ?></td>
+				<?php } ?>
 				<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
 					<td><?php
 						if ($field_tgl_total === 'total_10') {
-							if ($is_draft_referensi_tab) {
+							if ($is_stock_tab) {
+								echo persediaan_row_get($persediaan, 'total_10');
+							} elseif ($is_draft_referensi_tab) {
 								echo persediaan_format_angka_tampil($total_10_row);
 							} else {
 								echo persediaan_tampil_total_10_net_row($persediaan);
@@ -197,6 +242,7 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 			</tr>
 		<?php } ?>
 	</tbody>
+	<?php if (!$is_stock_tab) { ?>
 	<tfoot>
 		<tr>
 			<?php
@@ -283,5 +329,6 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 			?>
 		</tr>
 	</tfoot>
+	<?php } ?>
 </table>
 </div>

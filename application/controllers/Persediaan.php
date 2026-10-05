@@ -568,6 +568,19 @@ class Persediaan extends CI_Controller
 	{
 		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
 		persediaan_generate_schema_ensure_all($this);
+		$Persediaan_data_barang_stock = null;
+		$bulan = trim((string) $bulan);
+		if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan) && $bulan >= '2026-01') {
+			$this->load->helper('penjualan_modal');
+			$akhir_bulan_ts = strtotime($bulan . '-01');
+			$tgl_akhir_bulan = date('d-m-Y', strtotime(date('Y-m-t', $akhir_bulan_ts)));
+			$stock_result = penjualan_modal_datatable_persediaan($this, array(
+				'all_records' => '1',
+				'bulan_persediaan' => $bulan,
+				'tgl_jual' => $tgl_akhir_bulan,
+			));
+			$Persediaan_data_barang_stock = $stock_result['rows'];
+		}
 
 		$ts_gen_default = strtotime('+1 month', strtotime(date('Y-m-01')));
 		if ($ts_gen_default === false) {
@@ -576,6 +589,7 @@ class Persediaan extends CI_Controller
 
 		return array(
 			'Persediaan_data' => $Persediaan,
+			'Persediaan_data_barang_stock' => $Persediaan_data_barang_stock,
 			'action_cari' => site_url('persediaan/search'),
 			'bulan_persediaan_selected' => $bulan,
 			'url_rekap_ajax' => site_url('Persediaan/ajax_rekap_bulan'),

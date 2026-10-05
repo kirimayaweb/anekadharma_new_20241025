@@ -46,22 +46,15 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 
 		$tanggal_expr = penjualan_sql_tanggal_persediaan_expr('p');
 		$kategori_sql = $CI->db->field_exists('kategori', 'persediaan') ? 'p.kategori' : "''";
+		$filter_non_jasa = "LOWER(TRIM(COALESCE({$kategori_sql}, ''))) <> 'jasa'";
 		if ($all_records) {
 			$CI->load->helper('persediaan_display');
 			$stok_mentah_expr = "CAST(NULLIF(REPLACE(TRIM(COALESCE(p.total_10, '')), ',', '.'), '') AS DECIMAL(20,4))";
-			$stock_fields = array();
-			foreach (array('sa', 'beli', 'penjualan', 'pecah_satuan', 'bahan_produksi') as $field) {
-				$stock_fields[] = $CI->db->field_exists($field, 'persediaan')
-					? 'p.' . $CI->db->escape_identifiers($field)
-					: '0 AS ' . $CI->db->escape_identifiers($field);
-			}
-			$sql = "SELECT p.id, p.uuid_persediaan, p.uuid_barang,
-					p.kode_barang, p.spop, {$tanggal_expr} AS tanggal_urut,
-					{$tanggal_expr} AS tanggal_beli,
-					{$kategori_sql} AS kategori, p.namabarang, p.satuan,
-					p.hpp, p.total_10, " . implode(', ', $stock_fields) . "
+			$sql = "SELECT p.*, {$tanggal_expr} AS tanggal_urut,
+					{$tanggal_expr} AS tanggal_beli
 				FROM persediaan p
 				WHERE COALESCE({$stok_mentah_expr}, 0) > 0
+				AND {$filter_non_jasa}
 				AND {$tanggal_expr} >= '2026-01-01'
 				AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
 				ORDER BY p.namabarang ASC, tanggal_urut ASC, p.id ASC";
@@ -130,6 +123,7 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 			GROUP BY TRIM(COALESCE(terpilih.uuid_persediaan, '')), LOWER(TRIM(COALESCE(terpilih.namabarang, '')))
 		";
 		$where = "WHERE COALESCE({$stok_expr}, 0) > 0
+			AND {$filter_non_jasa}
 			AND {$tanggal_expr} >= '2026-01-01'
 			AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
 			AND (
