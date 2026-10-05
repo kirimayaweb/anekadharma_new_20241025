@@ -167,7 +167,23 @@ class Sys_unit_model extends CI_Model
         $this->db->delete($this->table);
     }
 
-}
+
+    function get_active_ordered_by_name()
+    {
+        if (!$this->db->table_exists($this->table)) {
+            return array();
+        }
+
+        if ($this->db->field_exists('hapus_unit', $this->table)) {
+            $this->db->where('(hapus_unit IS NULL OR hapus_unit = 0)', null, false);
+        }
+        $this->db->order_by('nama_unit', 'ASC');
+        return $this->db->get($this->table)->result();
+    }
+
+
+
+    }
 
 /* End of file Sys_unit_model.php */
 /* Location: ./application/models/Sys_unit_model.php */
