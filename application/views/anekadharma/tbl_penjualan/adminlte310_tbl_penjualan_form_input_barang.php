@@ -34,6 +34,12 @@ if (!isset($penjualan_redirect_list_url)) {
 if (!isset($action_ubah_detail_nomor_kirim) || trim((string) $action_ubah_detail_nomor_kirim) === '') {
 	$action_ubah_detail_nomor_kirim = site_url('tbl_penjualan/action_ubah_detail_nomor_kirim');
 }
+if (!isset($action_hapus_group_penjualan)) {
+	$action_hapus_group_penjualan = site_url('tbl_penjualan/hapus_group_detail_penjualan');
+}
+if (!isset($action_ubah_group_penjualan)) {
+	$action_ubah_group_penjualan = site_url('tbl_penjualan/ubah_group_detail_penjualan/');
+}
 $tgl_jual_X_modal = isset($tgl_jual) ? penjualan_format_tgl_jual_tampil($tgl_jual) : date('d-m-Y');
 $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 	'Data_stock' => $Data_stock,
@@ -234,8 +240,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1" id="info-bulan-persediaan-penjualan">
-                                    Daftar barang (persediaan) bulan: <strong><?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?></strong>
-                                    — mengikuti <em>Tgl Jual</em>, hanya <strong>barang</strong> (kategori jasa tidak ditampilkan)
+                                    Persediaan <strong>total_10 &gt; 0</strong> sejak 01/01/2026; duplikat UUID dan nama memakai record terlama, urutan nama lalu Tgl PO.
                                 </small>
                                 <?php if ((int) $jumlah_barang_penjualan > 0) { ?>
                                 <small class="text-danger d-block mt-1" id="info-tgl-jual-terkunci">
@@ -353,6 +358,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                             <tr>
                                                 <th style="text-align:center">No</th>
                                                 <th style="text-align:center">Update</th>
+                                                <th style="text-align:left">Tgl Persediaan</th>
                                                 <th style="text-align:left">Tgl Jual</th>
                                                 <th style="text-align:center">Nama Barang</th>
                                                 <!-- <th style="text-align:center">Unit</th> -->
@@ -383,13 +389,13 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                                             Ubah Barang <?php //echo $list_data->id; 
                                                                         ?>
                                                         </button> -->
-                                                        <?php
-                                                        echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id . '/' . $list_data->uuid_penjualan), 'Hapus DATA', 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"');
-
-                                                        // echo anchor(site_url('tbl_penjualan/delete/' . $list_data->id . '/' . $list_data->uuid_penjualan), 'onclick="javascript: return confirm(\'Anda Yakin akan Menghapus Penjualan Barang ini ?\')"', '<i class="btn btn-outline-info btn-block btn-flat" aria-hidden="true">Hapus</i>', 'class="btn btn-block btn-flat"  ');
-
-                                                        ?>
-
+                                                        <form action="<?php echo $action_hapus_group_penjualan; ?>" method="post" class="d-inline" onsubmit="return confirm('Anda yakin akan menghapus seluruh jumlah pada kelompok barang ini?');">
+                                                            <input type="hidden" name="uuid_penjualan" value="<?php echo htmlspecialchars($uuid_penjualan, ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <?php foreach ($list_data->group_ids as $group_id) { ?>
+                                                                <input type="hidden" name="group_ids[]" value="<?php echo (int) $group_id; ?>">
+                                                            <?php } ?>
+                                                            <button type="submit" class="btn btn-danger btn-xs">HAPUS</button>
+                                                        </form>
 
                                                         <button type="button" class="btn btn-warning btn-xs" data-toggle="modal" data-target="#modal-xl-input-barang_<?php echo $list_data->id ?>">
                                                             UBAH <?php //echo $list_data->id 
@@ -400,6 +406,17 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                                                                                                                                                 ?></button> -->
                                                     </td>
 
+
+                                                    <td data-order="<?php echo !empty($list_data->tgl_persediaan) ? htmlspecialchars($list_data->tgl_persediaan, ENT_QUOTES, 'UTF-8') : ''; ?>">
+                                                        <?php
+                                                        if (!empty($list_data->tgl_persediaan)) {
+                                                            $ts_tgl_persediaan = strtotime($list_data->tgl_persediaan);
+                                                            echo $ts_tgl_persediaan !== false ? date('d M Y', $ts_tgl_persediaan) : htmlspecialchars($list_data->tgl_persediaan, ENT_QUOTES, 'UTF-8');
+                                                        } else {
+                                                            echo '-';
+                                                        }
+                                                        ?>
+                                                    </td>
 
                                                     <td>
                                                         <?php
@@ -462,6 +479,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                             <tr>
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:left"></th>
+                                                <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
 
@@ -541,14 +559,27 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
     <div class="modal-dialog modal-pilih-barang-wide">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Pilih Barang <small class="text-muted" id="modal-pilih-barang-bulan-label">(Bulan: <?php echo htmlspecialchars($filter_bulan_penjualan['bulan_label'], ENT_QUOTES, 'UTF-8'); ?> — barang saja, tanpa jasa)</small></h4>
+                <h4 class="modal-title">Pilih Barang <small class="text-muted" id="modal-pilih-barang-bulan-label">(Persediaan: total_10 &gt; 0, sejak 01/01/2026)</small></h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <div id="modal-pilih-barang-loading" class="text-center text-muted py-3 d-none">Memuat data persediaan...</div>
                 <div class="modal-pilih-barang-table-wrap card-body p-0">
+                    <div id="modal-pilih-barang-loading" class="penjualan-stock-loading d-none" role="status" aria-live="polite">
+                        <span class="penjualan-stock-loading-spinner"></span>
+                        <span>Memuat data persediaan...</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-2 px-2 pt-2">
+                        <div class="d-flex align-items-center flex-wrap">
+                            <label for="filter-bulan-persediaan-penjualan" class="mb-0 mr-2">Bulan persediaan:</label>
+                            <input type="month" id="filter-bulan-persediaan-penjualan" class="form-control form-control-sm mr-3" style="width:180px">
+                            <small class="text-muted" id="modal-pilih-barang-cache-status">Data diambil langsung dari tabel persediaan.</small>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btn-refresh-pilih-barang">
+                            <i class="fas fa-sync-alt"></i> Refresh data terbaru
+                        </button>
+                    </div>
 
                     <table id="table-pilih-barang-penjualan" class="display nowrap table table-bordered table-sm" style="width:100%">
                         <!-- <table id="example" class="display nowrap" style="width:100%"> -->
@@ -568,14 +599,13 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                             </tr>
                         </thead>
                         <tbody id="tbody-pilih-barang-penjualan">
-                            <?php echo $render_modal_pilih_barang['tbody']; ?>
                         </tbody>
 
 
 
                     </table>
                 </div>
-                <div id="container-modal-pilih-barang-nested"><?php echo $render_modal_pilih_barang['modals']; ?></div>
+                <div id="container-modal-pilih-barang-nested"></div>
 
             </div>
 
@@ -596,14 +626,17 @@ if (isset($data_penjualan_per_uuid_penjualan) && is_array($data_penjualan_per_uu
 foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
 ?>
     <!-- MODAL EXTRA LARGE UPDATE PER ID -->
-    <form action="<?php echo $action_ubah_per_id . $list_data->id; ?>" method="post" class="penjualan-form-ubah-barang">
+    <form action="<?php echo $action_ubah_group_penjualan; ?>" method="post" class="penjualan-form-ubah-barang">
         <input type="hidden" name="konfirmasi_ubah_harga" value="0">
+        <input type="hidden" name="uuid_penjualan" value="<?php echo htmlspecialchars($uuid_penjualan, ENT_QUOTES, 'UTF-8'); ?>">
+        <?php foreach ($list_data->group_ids as $group_id) { ?>
+            <input type="hidden" name="group_ids[]" value="<?php echo (int) $group_id; ?>">
+        <?php } ?>
         <div class="modal fade" id="modal-xl-input-barang_<?php echo $list_data->id ?>">
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title">Update Barang <?php echo $list_data->id
-                                                                ?></h4>
+                        <h4 class="modal-title">Update Kelompok Barang</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -716,12 +749,190 @@ foreach ($data_penjualan_per_uuid_penjualan as $list_data) {
         width: 100%;
         margin: 0 auto;
     }
+
+    .modal-pilih-barang-table-wrap {
+        position: relative;
+        min-height: 230px;
+    }
+
+    .penjualan-stock-loading {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 14px;
+        color: #344054;
+        font-weight: 600;
+        background: rgba(255, 255, 255, .94);
+        backdrop-filter: blur(3px);
+    }
+
+    .penjualan-stock-loading.d-none {
+        display: none !important;
+    }
+
+    .penjualan-stock-loading-spinner {
+        width: 52px;
+        height: 52px;
+        border: 4px solid #dbeafe;
+        border-top-color: #2563eb;
+        border-right-color: #7c3aed;
+        border-radius: 50%;
+        animation: penjualan-stock-spin .8s linear infinite;
+        box-shadow: 0 0 22px rgba(37, 99, 235, .2);
+    }
+
+    @keyframes penjualan-stock-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    #table-pilih-barang-penjualan_processing {
+        display: none !important;
+    }
 </style>
 
 <script>
 /* Inisialisasi setelah jQuery layout (AdminLTE) dimuat */
 window.penjualanDtPilihBarang = null;
 window.penjualanTablePilihBarangId = '#table-pilih-barang-penjualan';
+window.penjualanPilihBarangCachePrefix = 'penjualan-pilih-barang-cache-v4:';
+window.penjualanStockCacheById = {};
+window.penjualanBulanPersediaanAktif = '';
+window.penjualanPilihBarangConfig = {
+    url: <?php echo json_encode(site_url('tbl_penjualan/list_persediaan_penjualan_ajax')); ?>,
+    urlSimpanBarang: <?php echo json_encode(site_url('tbl_penjualan/create_action_simpan_barang/')); ?>,
+    uuidPenjualan: <?php echo json_encode($uuid_penjualan); ?>
+};
+
+window.clearPenjualanPilihBarangCache = function() {
+    try {
+        var storage = window.localStorage;
+        var keys = [];
+        for (var i = 0; i < storage.length; i++) {
+            var key = storage.key(i);
+            if (key && key.indexOf(window.penjualanPilihBarangCachePrefix) === 0) {
+                keys.push(key);
+            }
+        }
+        for (var keyIndex = 0; keyIndex < keys.length; keyIndex++) {
+            storage.removeItem(keys[keyIndex]);
+        }
+        return true;
+    } catch (error) {
+        console.warn('Cache persediaan tidak dapat dibersihkan:', error);
+        return false;
+    }
+};
+
+window.updatePenjualanPilihBarangRangeLabel = function(payload) {
+    var endDate = payload && payload.tanggalAkhir ? payload.tanggalAkhir : '';
+    var count = payload && payload.recordsTotal ? payload.recordsTotal : 0;
+    $('#modal-pilih-barang-bulan-label').text(
+        '(Persediaan: 01/01/2026–' + endDate + ', ' + count + ' data)'
+    );
+};
+
+window.penjualanBulanDariTanggalJual = function(tanggalJual) {
+    var match = String(tanggalJual || '').match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})$/);
+    if (!match) {
+        return '';
+    }
+    return match[3] + '-' + ('0' + parseInt(match[2], 10)).slice(-2);
+};
+
+window.penjualanHitungTanggalAkhirPersediaan = function(tanggalJual, bulanPersediaan) {
+    var saleDateMatch = String(tanggalJual || '').match(/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})$/);
+    var monthMatch = String(bulanPersediaan || '').match(/^(\d{4})-(0[1-9]|1[0-2])$/);
+    if (!saleDateMatch || !monthMatch) {
+        return '';
+    }
+    var saleDate = new Date(
+        parseInt(saleDateMatch[3], 10),
+        parseInt(saleDateMatch[2], 10) - 1,
+        parseInt(saleDateMatch[1], 10)
+    );
+    if (isNaN(saleDate.getTime())
+        || saleDate.getFullYear() !== parseInt(saleDateMatch[3], 10)
+        || saleDate.getMonth() + 1 !== parseInt(saleDateMatch[2], 10)
+        || saleDate.getDate() !== parseInt(saleDateMatch[1], 10)) {
+        return '';
+    }
+    var monthEnd = new Date(parseInt(monthMatch[1], 10), parseInt(monthMatch[2], 10), 0);
+    var effectiveEnd = saleDate < monthEnd ? saleDate : monthEnd;
+    return effectiveEnd.getFullYear() + '-' +
+        ('0' + (effectiveEnd.getMonth() + 1)).slice(-2) + '-' +
+        ('0' + effectiveEnd.getDate()).slice(-2);
+};
+
+window.penjualanEscapeHtml = function(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[character];
+    });
+};
+
+window.openPenjualanPilihBarangModal = function(id) {
+    var $ = window.jQuery;
+    var item = window.penjualanStockCacheById[String(id)];
+    if (!item || !item.sisa || item.sisa < 1) {
+        penjualanAlertPesan('Stok tidak tersedia', 'Perbarui daftar persediaan sebelum memilih barang ini.', 'warning');
+        return;
+    }
+
+    var modalId = 'modal-xl_1_' + parseInt(item.id, 10);
+    var uuid = window.penjualanPilihBarangConfig.uuidPenjualan || 'new';
+    var action = window.penjualanPilihBarangConfig.urlSimpanBarang + uuid + '/' + parseInt(item.id, 10);
+    var nama = window.penjualanEscapeHtml(item.namabarang);
+    var satuan = window.penjualanEscapeHtml(item.satuan);
+    var harga = parseFloat(item.hpp) || 0;
+    var hargaTampil = harga.toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var stok = Math.floor(parseFloat(item.sisa) || 0);
+    var labelJumlah = 'Jumlah Maks= ' + stok;
+    var labelUnit = '';
+    if (window.penjualanPilihBarangConfig.labelUnit) {
+        labelUnit = window.penjualanEscapeHtml(window.penjualanPilihBarangConfig.labelUnit);
+        labelJumlah += ' | Unit ' + labelUnit + ': ' +
+            Math.floor(parseFloat(item.nilai_unit || 0));
+    }
+    $('#' + modalId).remove();
+    var modalHtml = '<div class="modal fade" id="' + modalId + '" tabindex="-1">' +
+        '<div class="modal-dialog modal-lg modal-isi-jumlah-barang"><div class="modal-content">' +
+        '<form class="form-simpan-jumlah-barang-penjualan" action="' + action + '" method="post">' +
+        '<div class="modal-header"><h4 class="modal-title">Isi Jumlah Barang</h4>' +
+        '<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button></div>' +
+        '<div class="modal-body"><div class="form-group"><label>Barang</label>' +
+        '<input type="text" class="form-control" value="' + nama + '" disabled></div>' +
+        '<div class="row"><div class="col-md-5 col-12"><div class="form-group mb-md-0">' +
+        '<label>Harga Satuan</label><input type="text" class="form-control" name="harga_satuan_beli" value="' + hargaTampil + '">' +
+        '</div></div><div class="col-md-7 col-12"><div class="form-group mb-0">' +
+        '<label class="penjualan-label-info-jumlah d-block" for="jumlah_barang_' + item.id + '">' +
+        window.penjualanEscapeHtml(labelJumlah) + '</label>' +
+        '<input type="number" class="form-control" id="jumlah_barang_' + item.id + '" name="jumlah" min="1" max="' + stok + '" placeholder="Isi jumlah barang" required>' +
+        '</div></div></div></div><div class="modal-footer justify-content-between">' +
+        '<input type="hidden" name="ajax" value="1">' +
+        '<input type="hidden" name="tgl_jual" value="' + window.penjualanEscapeHtml($('#input_tgl_jual_penjualan').val()) + '">' +
+        '<input type="hidden" name="uuid_unit" value="' + window.penjualanEscapeHtml($('#uuid_unit').val()) + '">' +
+        '<input type="hidden" name="uuid_konsumen" value="' + window.penjualanEscapeHtml($('#uuid_konsumen').val()) + '">' +
+        '<input type="hidden" name="uuid_persediaan" value="' + window.penjualanEscapeHtml(item.uuid_persediaan) + '">' +
+        '<input type="hidden" name="id_persediaan_barang" value="' + parseInt(item.id, 10) + '">' +
+        '<input type="hidden" name="uuid_penjualan" value="' + window.penjualanEscapeHtml(uuid) + '">' +
+        '<input type="hidden" name="uuid_penjualan_proses" value="' + window.penjualanEscapeHtml(uuid) + '">' +
+        '<input type="hidden" name="nmrpesan" value="' + window.penjualanEscapeHtml($('#nmrpesan').val()) + '">' +
+        '<input type="hidden" name="nmrkirim" value="' + window.penjualanEscapeHtml($('#nmrkirim').val()) + '">' +
+        '<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>' +
+        '<button type="submit" class="btn btn-primary btn-simpan-jumlah-barang">SIMPAN</button>' +
+        '</div></form></div></div></div>';
+    $('body').append(modalHtml);
+    $('#' + modalId).modal('show');
+};
 
 window.destroyDataTablePilihBarang = function() {
     var $ = window.jQuery;
@@ -753,32 +964,183 @@ window.hitungScrollYPilihBarangPenjualan = function() {
     return Math.max(340, Math.floor(tinggiModal - headerH - toolH - footDt - 18));
 };
 
-window.initDataTablePilihBarang = function() {
+window.initDataTablePilihBarang = function(onReady, onFinish) {
     var $ = window.jQuery;
     if (!$ || !$.fn.DataTable) {
+        $('#modal-pilih-barang-loading').addClass('d-none');
+        penjualanAlertPesan('Gagal memuat data', 'Library DataTables belum siap.', 'error');
+        if (typeof onFinish === 'function') {
+            onFinish();
+        }
         return;
     }
     window.destroyDataTablePilihBarang();
     var $table = $(window.penjualanTablePilihBarangId);
     if (!$table.length) {
+        $('#modal-pilih-barang-loading').addClass('d-none');
+        penjualanAlertPesan('Gagal memuat data', 'Tabel pilih barang tidak ditemukan.', 'error');
+        if (typeof onFinish === 'function') {
+            onFinish();
+        }
         return;
     }
     try {
+        if (!$table.data('penjualan-loading-bound')) {
+            $table.on('processing.dt', function(event, settings, processing) {
+                $('#modal-pilih-barang-loading').toggleClass('d-none', !processing);
+            });
+            $table.data('penjualan-loading-bound', true);
+        }
         window.penjualanDtPilihBarang = $table.DataTable({
             scrollY: window.hitungScrollYPilihBarangPenjualan(),
             scrollX: true,
             scrollCollapse: true,
             destroy: true,
+            processing: true,
+            serverSide: false,
             paging: true,
             searching: true,
             lengthChange: true,
             info: true,
             autoWidth: false,
-            order: [[5, 'asc']],
+            order: [[5, 'asc'], [2, 'asc']],
             pageLength: 10,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Semua']],
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
             dom: '<"row align-items-center mb-2"<"col-sm-6"l><"col-sm-6"f>>rt<"row mt-2"<"col-sm-5"i><"col-sm-7"p>>',
+            ajax: function(data, callback) {
+                data.tgl_jual = $('#input_tgl_jual_penjualan').val() || '';
+                data.bulan_persediaan = $('#filter-bulan-persediaan-penjualan').val() || '';
+                data.tanggal_akhir_persediaan = window.penjualanHitungTanggalAkhirPersediaan(
+                    data.tgl_jual,
+                    data.bulan_persediaan
+                );
+                if (data.bulan_persediaan < '2026-01') {
+                    var oldDateMessage = 'Tidak ada persediaan sebelum 1 Januari 2026. Silakan pilih bulan mulai Januari 2026.';
+                    callback({
+                        draw: data.draw,
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: []
+                    });
+                    $('#modal-pilih-barang-cache-status').text(oldDateMessage);
+                    $('#modal-pilih-barang-loading').addClass('d-none');
+                    penjualanAlertPesan('Bulan persediaan tidak tersedia', oldDateMessage, 'warning');
+                    return;
+                }
+                if (!data.tanggal_akhir_persediaan) {
+                    var invalidDateMessage = 'Bulan persediaan atau tanggal input penjualan tidak valid.';
+                    callback({
+                        draw: data.draw,
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: []
+                    });
+                    $('#modal-pilih-barang-cache-status').text(invalidDateMessage);
+                    $('#modal-pilih-barang-loading').addClass('d-none');
+                    penjualanAlertPesan('Tanggal tidak valid', invalidDateMessage, 'warning');
+                    return;
+                }
+
+                window.penjualanForceRefreshPilihBarang = false;
+                $('#modal-pilih-barang-cache-status').text('Mengambil data terbaru langsung dari tabel persediaan...');
+                data.all_records = 1;
+                data.search = { value: '', regex: false };
+                data.start = 0;
+                data.length = -1;
+                data.uuid_penjualan = window.penjualanPilihBarangConfig.uuidPenjualan;
+                data.uuid_unit = $('#uuid_unit').val() || '';
+                data.uuid_konsumen = $('#uuid_konsumen').val() || '';
+                data.nmrpesan = $('#nmrpesan').val() || '';
+                data.nmrkirim = $('#nmrkirim').val() || '';
+                $.ajax({
+                    url: window.penjualanPilihBarangConfig.url,
+                    type: 'POST',
+                    dataType: 'json',
+                    data: data
+                }).done(function(json) {
+                    if (!json || json.error) {
+                        $('#modal-pilih-barang-loading').addClass('d-none');
+                        window.penjualanForceRefreshPilihBarangDone = false;
+                        var errorPayload = json || {};
+                        errorPayload.draw = data.draw;
+                        errorPayload.recordsTotal = errorPayload.recordsTotal || 0;
+                        errorPayload.recordsFiltered = errorPayload.recordsFiltered || 0;
+                        errorPayload.data = errorPayload.data || [];
+                        callback(errorPayload);
+                        var oldDateNotice = errorPayload.error &&
+                            errorPayload.error.indexOf('Tidak ada persediaan sebelum 1 Januari 2026') === 0;
+                        penjualanAlertPesan(
+                            oldDateNotice ? 'Bulan persediaan tidak tersedia' : 'Gagal memuat data',
+                            errorPayload.error || 'Tidak dapat memuat daftar persediaan.',
+                            oldDateNotice ? 'warning' : 'error'
+                        );
+                        return;
+                    }
+                    window.penjualanStockCacheById = json.stockData || {};
+                    $('#container-modal-pilih-barang-nested').empty();
+                    $('#modal-pilih-barang-cache-status').text(
+                        'Data terbaru dimuat langsung dari persediaan 01/01/2026–' + json.tanggalAkhir + '.'
+                    );
+                    window.updatePenjualanPilihBarangRangeLabel(json);
+                    json.draw = data.draw;
+                    callback(json);
+                    if (window.penjualanForceRefreshPilihBarangDone) {
+                        window.penjualanForceRefreshPilihBarangDone = false;
+                        penjualanAlertPesan('Data diperbarui', 'Daftar persediaan terbaru sudah dimuat.', 'success');
+                    }
+                }).fail(function(xhr) {
+                    $('#modal-pilih-barang-loading').addClass('d-none');
+                    var message = 'Tidak dapat memuat daftar persediaan.';
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.error) {
+                        message = xhr.responseJSON.error;
+                    }
+                    window.penjualanForceRefreshPilihBarangDone = false;
+                    var oldDateNotice = message.indexOf('Tidak ada persediaan sebelum 1 Januari 2026') === 0;
+                    penjualanAlertPesan(
+                        oldDateNotice ? 'Bulan persediaan tidak tersedia' : 'Gagal memuat data',
+                        message,
+                        oldDateNotice ? 'warning' : 'error'
+                    );
+                    $('#modal-pilih-barang-cache-status').text('Gagal memuat data terbaru dari server.');
+                    callback({
+                        draw: data.draw,
+                        recordsTotal: 0,
+                        recordsFiltered: 0,
+                        data: [],
+                        error: message
+                    });
+                    if (typeof onFinish === 'function') {
+                        onFinish();
+                    }
+                }
+                );
+            },
+            columns: [
+                { data: 0, orderable: false, searchable: false, className: 'text-center' },
+                { data: 1, orderable: false, searchable: false, className: 'text-center' },
+                {
+                    data: 2,
+                    render: function(data, type) {
+                        if (type === 'sort' || type === 'type') {
+                            var match = String(data || '').match(/data-order="([^"]*)"/);
+                            return match ? match[1] : '';
+                        }
+                        if (type === 'filter') {
+                            return $('<div>').html(data || '').text();
+                        }
+                        return data;
+                    }
+                },
+                { data: 3 },
+                { data: 4 },
+                { data: 5 },
+                { data: 6, className: 'text-right' },
+                { data: 7 },
+                { data: 8, className: 'text-right' },
+                { data: 9, orderable: false, searchable: false, className: 'text-center' }
+            ],
             language: {
+                processing: 'Memuat...',
                 search: 'Cari:',
                 searchPlaceholder: 'Nama barang, SPOP, kategori...',
                 lengthMenu: 'Tampil _MENU_ baris',
@@ -792,10 +1154,43 @@ window.initDataTablePilihBarang = function() {
                     next: '›',
                     previous: '‹'
                 }
+            },
+            initComplete: function(settings, json) {
+                $('#modal-pilih-barang-loading').addClass('d-none');
+                if (json && json.error) {
+                    penjualanAlertPesan('Gagal memuat data', json.error, 'error');
+                } else {
+                    var count = json ? json.recordsTotal : 0;
+                    $('#modal-pilih-barang-bulan-label').text(
+                        '(Persediaan: 01/01/2026–' + (json && json.tanggalAkhir ? json.tanggalAkhir : '') + ', ' + count + ' data)'
+                    );
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data siap',
+                            text: 'Daftar barang berhasil dimuat dan siap dipilih.',
+                            timer: 2000,
+                            timerProgressBar: true,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                    if (typeof onReady === 'function') {
+                        onReady(json);
+                    }
+                }
+                if (typeof onFinish === 'function') {
+                    onFinish();
+                }
             }
         });
     } catch (errDt) {
         console.error('DataTable pilih barang:', errDt);
+        $('#modal-pilih-barang-loading').addClass('d-none');
+        penjualanAlertPesan('Gagal memuat data', 'DataTable persediaan tidak dapat diinisialisasi.', 'error');
+        if (typeof onFinish === 'function') {
+            onFinish();
+        }
     }
 };
 
@@ -937,13 +1332,6 @@ function penjualanInitInputBarangScript() {
         window.location.href = url;
     }
 
-    function updateInfoBulan(label) {
-        $('#info-bulan-persediaan-penjualan').html(
-            'Daftar barang (persediaan) bulan: <strong>' + label + '</strong> — mengikuti <em>Tgl Jual</em>, hanya <strong>barang</strong> (kategori jasa tidak ditampilkan)'
-        );
-        $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + label + ' — barang saja, tanpa jasa)');
-    }
-
     function syncReloadFormFields() {
         $('#reload_penjualan_tgl_jual').val(getTglJualVal());
         $('#reload_penjualan_uuid_unit').val($('#form_update_nmrkirim select[name="uuid_unit"]').val() || '');
@@ -1046,65 +1434,22 @@ function penjualanInitInputBarangScript() {
             return;
         }
 
+        var bulanJual = window.penjualanBulanDariTanggalJual(tgl);
+        var $bulanPersediaan = $('#filter-bulan-persediaan-penjualan');
+        if (bulanJual) {
+            $bulanPersediaan.attr('max', bulanJual);
+        }
+        if (!$bulanPersediaan.val()) {
+            $bulanPersediaan.val(bulanJual || '2026-01');
+        } else if (bulanJual && $bulanPersediaan.val() > bulanJual) {
+            $bulanPersediaan.val(bulanJual);
+        }
+        window.penjualanBulanPersediaanAktif = $bulanPersediaan.val();
+
         $('#modal-pilih-barang-loading').removeClass('d-none');
-        $.ajax({
-            url: cfg.urlListPersediaan,
-            type: 'POST',
-            dataType: 'json',
-            data: {
-                tgl_jual: tgl,
-                uuid_penjualan: cfg.uuidPenjualan,
-                uuid_unit: $('#uuid_unit').val() || '',
-                uuid_konsumen: $('#uuid_konsumen').val() || '',
-                nmrpesan: $('#nmrpesan').val() || '',
-                nmrkirim: $('#nmrkirim').val() || ''
-            }
-        }).done(function(res) {
-            $('#modal-pilih-barang-loading').addClass('d-none');
-            if (!res || !res.ok) {
-                penjualanAlertPesan('Gagal memuat data', (res && res.message) ? res.message : 'Terjadi kesalahan.', 'error');
-                return;
-            }
-            window.destroyDataTablePilihBarang();
-            $('#tbody-pilih-barang-penjualan').html(res.tbody || '');
-            $('#container-modal-pilih-barang-nested').html(res.modals || '');
-            if (res.bulan_label) {
-                updateInfoBulan(res.bulan_label);
-                cfg.bulanLabelAwal = res.bulan_label;
-            }
-            if (res.bulan_key) {
-                tglJualBulanKey = res.bulan_key;
-            }
-            tglJualNilaiAktif = getTglJualVal();
-            $('#modal-pilih-barang-bulan-label').text('(Bulan: ' + (res.bulan_label || '') + ', ' + (res.jumlah_tampil || 0) + ' barang — tanpa jasa)');
-            window.initDataTablePilihBarang();
-            setTimeout(function() {
-                window.sesuaikanDataTablePilihBarang();
-            }, 80);
-            if (typeof callback === 'function') {
-                callback(res);
-            }
-        }).fail(function(xhr) {
-            $('#modal-pilih-barang-loading').addClass('d-none');
-            var msg = 'Tidak dapat memuat daftar persediaan.';
-            if (xhr && xhr.responseText) {
-                try {
-                    var j = JSON.parse(xhr.responseText);
-                    if (j && j.message) {
-                        msg = j.message;
-                    }
-                } catch (eJson) {
-                    if (xhr.responseText.indexOf('Database Error') !== -1) {
-                        msg = 'Error database saat memuat persediaan. Periksa kolom unit di tabel persediaan.';
-                    }
-                }
-            }
-            penjualanAlertPesan('Gagal memuat data', msg, 'error');
-        }).always(function() {
-            if (typeof onFinish === 'function') {
-                onFinish();
-            }
-        });
+        window.destroyDataTablePilihBarang();
+        tglJualNilaiAktif = tgl;
+        window.initDataTablePilihBarang(callback, onFinish);
     }
 
     function getPickerTglJual() {
@@ -1193,10 +1538,6 @@ function penjualanInitInputBarangScript() {
 
         tglJualBulanKey = bulanKeyBaru;
         tglJualNilaiAktif = tglBaru;
-        var parts = bulanKeyBaru.split('-');
-        if (parts.length === 2) {
-            updateInfoBulan(parts[1] + '/' + parts[0]);
-        }
     }
 
     function initPenjualanInputBarang() {
@@ -1228,6 +1569,65 @@ function penjualanInitInputBarangScript() {
         setTimeout(function() {
             window.sesuaikanDataTablePilihBarang();
         }, 60);
+    });
+
+    $(document).on('change', '#filter-bulan-persediaan-penjualan', function() {
+        var $picker = $(this);
+        var bulanBaru = $.trim($picker.val() || '');
+        var bulanJual = window.penjualanBulanDariTanggalJual(getTglJualVal());
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(bulanBaru)) {
+            return;
+        }
+        if (bulanBaru < '2026-01') {
+            var pesanTanggalLama = 'Tidak ada persediaan sebelum 1 Januari 2026. Silakan pilih bulan mulai Januari 2026.';
+            penjualanAlertPesan('Bulan persediaan tidak tersedia', pesanTanggalLama, 'warning');
+            $picker.val(window.penjualanBulanPersediaanAktif || bulanJual || '2026-01');
+            return;
+        }
+        if (bulanJual && bulanBaru > bulanJual) {
+            penjualanAlertPesan(
+                'Bulan persediaan melewati tanggal penjualan',
+                'Persediaan setelah tanggal input penjualan tidak dapat digunakan.',
+                'warning'
+            );
+            $picker.val(window.penjualanBulanPersediaanAktif || bulanJual);
+            return;
+        }
+        if (bulanBaru === window.penjualanBulanPersediaanAktif) {
+            return;
+        }
+        window.penjualanBulanPersediaanAktif = bulanBaru;
+        $('#modal-pilih-barang-loading').removeClass('d-none');
+        if (window.penjualanDtPilihBarang) {
+            window.penjualanDtPilihBarang.ajax.reload(null, true);
+        } else {
+            window.initDataTablePilihBarang();
+        }
+    });
+
+    $(document).on('click', '#btn-refresh-pilih-barang', function() {
+        var $button = $(this);
+        if ($button.prop('disabled')) {
+            return;
+        }
+        window.clearPenjualanPilihBarangCache();
+        window.penjualanForceRefreshPilihBarang = true;
+        window.penjualanForceRefreshPilihBarangDone = true;
+        $button.prop('disabled', true);
+        $('#modal-pilih-barang-loading').removeClass('d-none');
+        if (window.penjualanDtPilihBarang) {
+            window.penjualanDtPilihBarang.ajax.reload(function() {
+                $button.prop('disabled', false);
+            }, true);
+        } else {
+            window.initDataTablePilihBarang(null, function() {
+                $button.prop('disabled', false);
+            });
+        }
+    });
+
+    $(document).on('click', '#table-pilih-barang-penjualan .btn-pilih-barang-penjualan', function() {
+        window.openPenjualanPilihBarangModal($(this).attr('data-id'));
     });
 
     // Nested modal "Isi Jumlah" dipindah ke body agar submit & fokus tidak tertahan parent modal
@@ -1332,6 +1732,7 @@ function penjualanInitInputBarangScript() {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).done(function(res) {
             if (res && res.ok) {
+                window.clearPenjualanPilihBarangCache();
                 var redirectUrl = res.redirect || cfg.urlKasirPenjualan;
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({

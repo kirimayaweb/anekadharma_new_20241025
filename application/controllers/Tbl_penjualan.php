@@ -856,9 +856,14 @@ class Tbl_penjualan extends CI_Controller
 			$default_tgl_jual = penjualan_get_default_tgl_jual_dari_filter_list($this, $tgl_awal_in, $tgl_akhir_in);
 		}
 
+		$data_sys_unit = $this->Sys_unit_model->get_active_ordered_by_name();
+		$sys_unit_ready = count($data_sys_unit) > 0;
+
 		$data = array(
 			'button' => 'Simpan',
 			'action' => site_url('tbl_penjualan/create_action'),
+			'data_sys_unit' => $data_sys_unit,
+			'sys_unit_ready' => $sys_unit_ready,
 			'id' => set_value('id'),
 			'tgl_input' => set_value('tgl_input'),
 			'tgl_jual' => $default_tgl_jual,
@@ -1082,14 +1087,6 @@ class Tbl_penjualan extends CI_Controller
 			return;
 		}
 
-		try {
-			$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual_post, $Get_UUID_unit);
-		} catch (Exception $e) {
-			$this->session->set_flashdata('message', 'Gagal memuat persediaan: ' . $e->getMessage());
-			redirect(site_url('tbl_penjualan/create'));
-			return;
-		}
-
 		$data = array(
 			'button' => 'Simpan',
 			'button_detail_nomor_kirim' => 'Simpan Perubahan Detail Nomor Kirim',
@@ -1103,7 +1100,7 @@ class Tbl_penjualan extends CI_Controller
 			'unit' => $Get_nama_unit,
 			'uuid_penjualan' => '',
 			'filter_bulan_penjualan' => $filter_bulan_penjualan,
-			'Data_stock' => $Data_stock,
+			'Data_stock' => array(),
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim'),
 		);
 		// 		print_r($data);
@@ -1120,84 +1117,7 @@ class Tbl_penjualan extends CI_Controller
 	}
 
 	/**
-	 * AJAX: daftar persediaan modal Pilih Barang (filter bulan Tgl Jual).
-	 */
-	public function list_persediaan_penjualan_ajax_X()
-	{
-		$this->output->set_content_type('application/json');
-
-		try {
-			$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
-			if ($tgl_jual === '') {
-				echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
-				return;
-			}
-
-			penjualan_sync_filter_bulan_from_tgl_jual($this, $tgl_jual);
-			$filter = penjualan_get_filter_tgl_jual($this, $tgl_jual);
-			$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
-			$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
-			if (empty($hasil_kolom_unit['ok'])) {
-				echo json_encode(array(
-					'ok' => false,
-					'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
-				));
-				return;
-			}
-
-			$Data_stock = penjualan_get_stock_persediaan_rows($this, $tgl_jual, $uuid_unit_ajax);
-			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
-			$view_data = array(
-				'Data_stock' => $Data_stock,
-				'tgl_jual' => $tgl_jual,
-				'tgl_jual_X' => $tgl_jual_X,
-				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
-				'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
-				'uuid_unit' => $this->input->get_post('uuid_unit', TRUE),
-				'uuid_konsumen' => $this->input->get_post('uuid_konsumen', TRUE),
-				'nmrpesan' => $this->input->get_post('nmrpesan', TRUE),
-				'nmrkirim' => $this->input->get_post('nmrkirim', TRUE),
-			);
-
-			$render = penjualan_render_modal_pilih_barang($this, $view_data);
-
-			$jumlah_tampil = 0;
-			if (preg_match_all('/<tr\b/i', $render['tbody'], $m)) {
-				$jumlah_tampil = count($m[0]);
-				if (strpos($render['tbody'], 'Tidak ada barang persediaan') !== false) {
-					$jumlah_tampil = 0;
-				}
-			}
-
-			echo json_encode(array(
-				'ok' => true,
-				'bulan_label' => $filter['bulan_label'],
-				'bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual),
-				'tgl_awal' => $filter['awal'],
-				'tgl_akhir' => $filter['akhir'],
-				'tbody' => $render['tbody'],
-				'modals' => $render['modals'],
-				'jumlah' => count($Data_stock),
-				'jumlah_tampil' => $jumlah_tampil,
-				'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
-				'kolom_unit_created' => !empty($hasil_kolom_unit['created']),
-			));
-		} catch (Exception $e) {
-			echo json_encode(array(
-				'ok' => false,
-				'message' => 'Gagal memuat persediaan: ' . $e->getMessage(),
-			));
-		}
-	}
-
-	/**
-	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan Nama & Satuan).
-	 */
-	/**
-	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan baris data).
-	 */
-	/**
-	 * AJAX: daftar persediaan modal Pilih Barang (Stok = Pembelian - Penjualan berdasarkan baris data).
+	 * AJAX: daftar modal Pilih Barang dari persediaan dengan total_10 positif.
 	 */
 	public function list_persediaan_penjualan_ajax()
 	{
@@ -1208,136 +1128,53 @@ class Tbl_penjualan extends CI_Controller
 
 		$this->output->set_content_type('application/json', 'utf-8');
 
+		$request = $this->input->post(NULL, TRUE);
+		$draw_value = isset($request['draw']) ? $request['draw'] : 0;
+		$draw = is_scalar($draw_value) ? (int) $draw_value : 0;
 		try {
-			$tgl_jual = trim((string) $this->input->get_post('tgl_jual', TRUE));
-			if ($tgl_jual === '') {
-				echo json_encode(array('ok' => false, 'message' => 'Tgl Jual wajib diisi.'));
-				return;
-			}
-
-			// 1. Ambil format tahun-bulan terpilih (Contoh: '2026-08')
-			$tahun_bulan = date('Y-m', strtotime($tgl_jual));
-			$filter = function_exists('penjualan_get_filter_tgl_jual')
-				? penjualan_get_filter_tgl_jual($this, $tgl_jual)
-				: array(
-					'bulan_label' => $tahun_bulan,
-					'awal' => $tahun_bulan . '-01 00:00:00',
-					'akhir' => date('Y-m-t 23:59:59', strtotime($tahun_bulan . '-01')),
+			$this->load->helper('penjualan_modal');
+			$request['all_records'] = '1';
+			$result = penjualan_modal_datatable_persediaan($this, $request);
+			$data_rows = array();
+			$stock_data = array();
+			foreach ($result['rows'] as $index => $row) {
+				$stock = isset($row->stok_tersedia) ? (float) $row->stok_tersedia : 0;
+				$data_rows[] = penjualan_modal_format_datatable_row(
+					$row,
+					$index + 1,
+					$stock > 0,
+					true
 				);
-
-			$uuid_unit_ajax = trim((string) $this->input->get_post('uuid_unit', TRUE));
-			if (function_exists('penjualan_ensure_persediaan_kolom_unit')) {
-				$hasil_kolom_unit = penjualan_ensure_persediaan_kolom_unit($this, $uuid_unit_ajax);
-				if (empty($hasil_kolom_unit['ok'])) {
-					echo json_encode(array(
-						'ok' => false,
-						'message' => isset($hasil_kolom_unit['message']) ? $hasil_kolom_unit['message'] : 'Gagal menyiapkan kolom unit di persediaan.',
-					));
-					return;
-				}
-			} else {
-				$hasil_kolom_unit = array('ok' => true, 'kolom' => '', 'created' => false);
+				$stock_data[(int) $row->id] = array(
+					'id' => (int) $row->id,
+					'uuid_persediaan' => isset($row->uuid_persediaan) ? $row->uuid_persediaan : '',
+					'namabarang' => isset($row->namabarang) ? $row->namabarang : '',
+					'satuan' => isset($row->satuan) ? $row->satuan : '',
+					'hpp' => isset($row->hpp) ? $row->hpp : 0,
+					'total_10' => $stock,
+					'sisa' => $stock,
+					'kategori' => isset($row->kategori) ? $row->kategori : '',
+					'spop' => isset($row->spop) ? $row->spop : '',
+					'tanggal_beli' => isset($row->tanggal_beli) ? $row->tanggal_beli : '',
+				);
 			}
-
-			// 2. QUERY UTAMA: Mengambil data barang dari tbl_pembelian dikurangi yang sudah terjual di tbl_penjualan
-			// Menyertakan alias 'jumlah_sediaan', 'total_10', 'uuid_barang' agar klop dengan pengecekan baris di view fragment Anda.
-			$sql_pembelian_ready = "
-				SELECT 
-					p.id,
-					p.uuid_pembelian AS uuid_persediaan,
-					p.uuid_pembelian AS uuid_barang,                   
-					p.tgl_po,                                           
-					p.spop,
-					p.uraian AS nama_barang_beli, 
-					p.jumlah AS jumlah_beli,
-					p.satuan,
-					p.satuan AS satuan_persediaan,             
-					p.harga_satuan AS harga_satuan_persediaan,
-					COALESCE(SUM(j.jumlah), 0) AS jumlah_terjual,
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS sisa_stok,
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS jumlah_sediaan, 
-					(p.jumlah - COALESCE(SUM(j.jumlah), 0)) AS total_10         
-				FROM tbl_pembelian p
-				LEFT JOIN tbl_penjualan j ON j.id_persediaan_barang = p.id AND (j.barang_jasa != 'jasa' OR j.barang_jasa IS NULL)
-				WHERE DATE_FORMAT(p.tgl_po, '%Y-%m') = ?
-				GROUP BY p.id
-				HAVING sisa_stok > 0
-				ORDER BY p.tgl_po ASC, p.uraian ASC
-			";
-
-			$Data_stock = $this->db->query($sql_pembelian_ready, array($tahun_bulan))->result();
-
-			// === INJEKSI MULTI-FIELD AGAR COCOK DENGAN CODES DI HELPER RENDER MODAL ===
-			if (is_array($Data_stock)) {
-				foreach ($Data_stock as $row_stock) {
-					// Ambil nilai tanggal mentah dari baris record database (pembelian/persediaan)
-					$raw_date = '';
-					if (!empty($row_stock->tgl_po) && $row_stock->tgl_po !== '0000-00-00 00:00:00') {
-						$raw_date = $row_stock->tgl_po;
-					} elseif (!empty($row_stock->tanggal_beli) && $row_stock->tanggal_beli !== '0000-00-00 00:00:00') {
-						$raw_date = $row_stock->tanggal_beli;
-					} elseif (!empty($row_stock->tanggal) && $row_stock->tanggal !== '0000-00-00 00:00:00') {
-						$raw_date = $row_stock->tanggal;
-					}
-
-					if ($raw_date !== '') {
-						$formatted_date = date('d-m-Y', strtotime($raw_date));
-
-						// Suntikkan nilai ke semua kemungkinan nama field pembangun td di helper view Anda
-						$row_stock->tgl_po         = $formatted_date;
-						$row_stock->tgl_po_X       = $formatted_date;
-						$row_stock->tanggal_po     = $formatted_date;
-						$row_stock->tanggal        = $formatted_date;
-						$row_stock->tanggal_beli   = $formatted_date;
-						$row_stock->tgl_po_tampil  = $formatted_date;
-					} else {
-						$row_stock->tgl_po         = '-';
-						$row_stock->tgl_po_X       = '-';
-						$row_stock->tanggal_po     = '-';
-						$row_stock->tanggal        = '-';
-						$row_stock->tanggal_beli   = '-';
-						$row_stock->tgl_po_tampil  = '-';
-					}
-				}
-			}
-
-
-			$tgl_jual_X = penjualan_format_tgl_jual_tampil($tgl_jual);
-
-
-			// 3. Render output modal datatable bawaan sistem Anda
-			$view_data = array(
-				'Data_stock' => $Data_stock,
-				'tgl_jual' => $tgl_jual,
-				'tgl_jual_X' => $tgl_jual_X,
-				'uuid_penjualan' => trim((string) $this->input->get_post('uuid_penjualan', TRUE)),
-				'action' => site_url('tbl_penjualan/create_action_simpan_barang/'),
-				'uuid_unit' => $uuid_unit_ajax,
-				'uuid_konsumen' => trim((string) $this->input->get_post('uuid_konsumen', TRUE)),
-				'nmrpesan' => trim((string) $this->input->get_post('nmrpesan', TRUE)),
-				'nmrkirim' => trim((string) $this->input->get_post('nmrkirim', TRUE)),
-			);
-
-			$render = penjualan_render_modal_pilih_barang($this, $view_data);
-			$jumlah_tampil = count($Data_stock);
 
 			echo json_encode(array(
-				'ok' => true,
-				'bulan_label' => isset($filter['bulan_label']) ? $filter['bulan_label'] : $tahun_bulan,
-				'bulan_key' => $tahun_bulan,
-				'tgl_awal' => isset($filter['awal']) ? $filter['awal'] : '',
-				'tgl_akhir' => isset($filter['akhir']) ? $filter['akhir'] : '',
-				'tbody' => isset($render['tbody']) ? $render['tbody'] : '',
-				'modals' => isset($render['modals']) ? $render['modals'] : '',
-				'jumlah' => $jumlah_tampil,
-				'jumlah_tampil' => $jumlah_tampil,
-				'kolom_unit' => isset($hasil_kolom_unit['kolom']) ? $hasil_kolom_unit['kolom'] : '',
-				'kolom_unit_created' => !empty($hasil_kolom_unit['created']),
+				'draw' => $draw,
+				'recordsTotal' => $result['recordsTotal'],
+				'recordsFiltered' => $result['recordsTotal'],
+				'tanggalAwal' => '2026-01-01',
+				'tanggalAkhir' => $result['tanggalAkhir'],
+				'data' => $data_rows,
+				'stockData' => $stock_data,
 			));
 		} catch (Exception $e) {
 			echo json_encode(array(
-				'ok' => false,
-				'message' => 'Gagal memuat persediaan: ' . $e->getMessage(),
+				'draw' => $draw,
+				'recordsTotal' => 0,
+				'recordsFiltered' => 0,
+				'data' => array(),
+				'error' => 'Gagal memuat persediaan: ' . $e->getMessage(),
 			));
 		}
 	}
@@ -1442,7 +1279,7 @@ class Tbl_penjualan extends CI_Controller
 		$this->_redirect_setelah_simpan_barang($uuid_penjualan, $message);
 	}
 
-	public function create_action_simpan_barang_X($uuid_penjualan = null, $id_persediaan_barang = null)
+	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
 		$this->load->helper('pembelian_persediaan');
 
@@ -1474,18 +1311,18 @@ class Tbl_penjualan extends CI_Controller
 			}
 		}
 
-		// Ambil data barang dari tabel persediaan via uuid_persediaan (utama) / id
+		// ID dari DataTable selalu merujuk ke persediaan; UUID menjadi fallback.
 		$data_barang = null;
-		if ($uuid_persediaan_post !== '') {
-			$data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan_post);
-			if (empty($data_barang)) {
-				$data_barang = $this->db->where('uuid_persediaan', $uuid_persediaan_post)->get('persediaan')->row();
-			}
-		}
-		if (empty($data_barang) && $id_persediaan_barang > 0) {
+		if ($id_persediaan_barang > 0) {
 			$data_barang = $this->Persediaan_model->get_by_id($id_persediaan_barang);
 			if (empty($data_barang)) {
 				$data_barang = $this->db->where('id', $id_persediaan_barang)->get('persediaan')->row();
+			}
+		}
+		if (empty($data_barang) && $uuid_persediaan_post !== '') {
+			$data_barang = $this->Persediaan_model->get_by_uuid_persediaan($uuid_persediaan_post);
+			if (empty($data_barang)) {
+				$data_barang = $this->db->where('uuid_persediaan', $uuid_persediaan_post)->get('persediaan')->row();
 			}
 		}
 		if (empty($data_barang)) {
@@ -1661,6 +1498,11 @@ class Tbl_penjualan extends CI_Controller
 		tbl_penjualan_ensure_source_referensi_columns($this);
 		$data = array_merge($data, tbl_penjualan_resolve_source_referensi_payload($this, $row_pen_tmp, $data_barang));
 
+		if (!$this->db->trans_begin()) {
+			$this->_respon_simpan_barang(false, 'Transaksi database tidak dapat dimulai.', $uuid_penjualan);
+			return;
+		}
+
 		if ($is_new) {
 			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
 		} else {
@@ -1669,12 +1511,28 @@ class Tbl_penjualan extends CI_Controller
 			if (empty($uuid_hasil)) {
 				$db_err = $this->db->error();
 				$msg_db = !empty($db_err['message']) ? $db_err['message'] : 'Insert penjualan gagal.';
+				$this->db->trans_rollback();
 				$this->_respon_simpan_barang(false, $msg_db, $uuid_penjualan);
 				return;
 			}
 		}
 
+		if (!$is_new && $uuid_hasil !== $uuid_penjualan) {
+			$this->db->trans_rollback();
+			$this->_respon_simpan_barang(false, 'UUID detail penjualan tidak sesuai dengan transaksi aktif.', $uuid_penjualan);
+			return;
+		}
+
+		if ($this->db->trans_status() === false) {
+			$db_err = $this->db->error();
+			$msg_db = !empty($db_err['message']) ? $db_err['message'] : 'Insert penjualan gagal.';
+			$this->db->trans_rollback();
+			$this->_respon_simpan_barang(false, $msg_db, $uuid_penjualan);
+			return;
+		}
+
 		if ($uuid_penjualan === '' || $uuid_penjualan === null || strtolower((string) $uuid_penjualan) === 'new') {
+			$this->db->trans_rollback();
 			$this->_respon_simpan_barang(false, 'Gagal menyimpan data penjualan (UUID tidak valid).', 'new');
 			return;
 		}
@@ -1688,179 +1546,30 @@ class Tbl_penjualan extends CI_Controller
 		);
 
 		if (empty($hasil_persediaan['ok'])) {
+			$this->db->trans_rollback();
 			$this->_respon_simpan_barang(
 				false,
-				isset($hasil_persediaan['message'])
-					? ($hasil_persediaan['message'] . ' (barang penjualan sudah tersimpan; periksa stok persediaan)')
-					: 'Gagal memperbarui persediaan.',
+				isset($hasil_persediaan['message']) ? $hasil_persediaan['message'] : 'Gagal memperbarui persediaan.',
 				$uuid_penjualan
 			);
 			return;
 		}
 
+		if ($this->db->trans_status() === false) {
+			$db_err = $this->db->error();
+			$msg_db = !empty($db_err['message']) ? $db_err['message'] : 'Gagal menyimpan perubahan stok persediaan.';
+			$this->db->trans_rollback();
+			$this->_respon_simpan_barang(false, $msg_db, $uuid_penjualan);
+			return;
+		}
+		$this->db->trans_commit();
+
 		$this->_respon_simpan_barang(true, 'Barang penjualan berhasil ditambahkan.', $uuid_penjualan, array(
 			'id_persediaan_barang' => $id_persediaan_barang,
 			'jumlah' => (int) $jumlah_simpan,
 			'nama_barang' => $data['nama_barang'],
+			'sumber_data' => 'persediaan',
 		));
-	}
-
-
-	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
-	{
-		$this->load->helper('pembelian_persediaan');
-
-		$uuid_penjualan = trim((string) $uuid_penjualan);
-		if ($uuid_penjualan === '') {
-			$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
-		}
-		if ($uuid_penjualan === '') {
-			$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan_proses', TRUE));
-		}
-		if ($uuid_penjualan === '') {
-			$uuid_penjualan = 'new';
-		}
-
-		// 1. Tangkap parameter identifier ID Pembelian dari Modal Datatable
-		$id_pembelian = (int) $id_persediaan_barang;
-		if ($id_pembelian <= 0) {
-			$id_pembelian = (int) $this->input->post('id_persediaan_barang', TRUE);
-		}
-
-		$uuid_persediaan_post = trim((string) $this->input->post('uuid_persediaan', TRUE));
-
-		$is_new = (strtolower($uuid_penjualan) === 'new');
-		$row_header = null;
-		if (!$is_new) {
-			$row_header = $this->Tbl_penjualan_model->get_ROW_by_uuid_penjualan_first_row($uuid_penjualan);
-			if (empty($row_header)) {
-				$this->_respon_simpan_barang(false, 'Data penjualan (uuid) tidak ditemukan.', 'new');
-				return;
-			}
-		}
-
-		// 2. Ambil data acuan langsung dari tbl_pembelian 
-		$data_barang = null;
-		if ($id_pembelian > 0) {
-			$data_barang = $this->db->where('id', $id_pembelian)->get('tbl_pembelian')->row();
-		}
-		if (empty($data_barang) && $uuid_persediaan_post !== '') {
-			$data_barang = $this->db->where('uuid_pembelian', $uuid_persediaan_post)->get('tbl_pembelian')->row();
-		}
-
-		if (empty($data_barang)) {
-			$this->_respon_simpan_barang(false, 'Barang asal di tabel pembelian tidak ditemukan.', $uuid_penjualan);
-			return;
-		}
-
-		// Konfigurasi ulang variabel penanda ID & UUID
-		$id_pembelian = (int) $data_barang->id;
-		$uuid_persediaan = trim((string) $data_barang->uuid_pembelian);
-
-		// 3. HITUNG SISA STOK: Menghitung penjualan khusus yang terikat dengan ID baris pembelian ini saja
-		$sql_terjual = "
-			SELECT COALESCE(SUM(jumlah), 0) AS total 
-			FROM tbl_penjualan 
-			WHERE id_persediaan_barang = ? 
-			AND (barang_jasa != 'jasa' OR barang_jasa IS NULL)
-		";
-		$total_terjual = $this->db->query($sql_terjual, array($id_pembelian))->row()->total;
-
-		// Sisa stok riil per baris SPOP/ID pembelian yang dipilih
-		$sisa_stok_riil = (int)$data_barang->jumlah - (int)$total_terjual;
-
-		// 4. Validasi jumlah input dari user
-		$jumlah_simpan = preg_replace('/[^0-9]/', '', (string) $this->input->post('jumlah', TRUE));
-		if ((int) $jumlah_simpan <= 0) {
-			$this->_respon_simpan_barang(false, 'Jumlah barang wajib diisi dan lebih dari 0.', $uuid_penjualan);
-			return;
-		}
-
-		if ((int) $jumlah_simpan > $sisa_stok_riil) {
-			$this->_respon_simpan_barang(false, 'Jumlah melebihi stok pembelian yang tersedia (' . $sisa_stok_riil . ').', $uuid_penjualan);
-			return;
-		}
-
-		// 5. Olah data informasi Header Transaksi (Tanggal, Unit, Konsumen, Nomor Nota)
-		$tgl_jual_simpan = trim((string) $this->input->post('tgl_jual', TRUE));
-		$Get_uuid_unit = trim((string) $this->input->post('uuid_unit', TRUE));
-		$uuid_konsumen = trim((string) $this->input->post('uuid_konsumen', TRUE));
-		$nmrpesan = trim((string) $this->input->post('nmrpesan', TRUE));
-		$nmrkirim = trim((string) $this->input->post('nmrkirim', TRUE));
-
-		if (!$is_new && !empty($row_header)) {
-			if ($tgl_jual_simpan === '' && !empty($row_header->tgl_jual)) $tgl_jual_simpan = penjualan_format_tgl_jual_tampil($row_header->tgl_jual);
-			if ($Get_uuid_unit === '' && !empty($row_header->uuid_unit)) $Get_uuid_unit = trim((string) $row_header->uuid_unit);
-			if ($uuid_konsumen === '' && !empty($row_header->uuid_konsumen)) $uuid_konsumen = trim((string) $row_header->uuid_konsumen);
-			if ($nmrpesan === '' && isset($row_header->nmrpesan)) $nmrpesan = (string) $row_header->nmrpesan;
-			if ($nmrkirim === '' && isset($row_header->nmrkirim)) $nmrkirim = (string) $row_header->nmrkirim;
-		}
-
-		$Get_nama_unit = '';
-		if ($Get_uuid_unit !== '') {
-			$sys_unit_data = $this->db->get_where('sys_unit', array('uuid_unit' => $Get_uuid_unit));
-			if ($sys_unit_data->num_rows() > 0) {
-				$Get_nama_unit = $sys_unit_data->row_array()['nama_unit'];
-			}
-		}
-
-		$data_nama_konsumen = '';
-		if ($uuid_konsumen !== '') {
-			$data_konsumen = $this->Sys_konsumen_model->get_by_uuid_konsumen($uuid_konsumen);
-			if (!empty($data_konsumen)) {
-				$data_nama_konsumen = $data_konsumen->nama_konsumen;
-			} else {
-				$data_unit_konsumen = $this->Sys_unit_model->get_by_uuid_unit($uuid_konsumen);
-				if (!empty($data_unit_konsumen)) $data_nama_konsumen = $data_unit_konsumen->nama_unit;
-			}
-		}
-
-		$ts_jual = strtotime(str_replace('/', '-', $tgl_jual_simpan));
-		$tgl_jual_X = $ts_jual !== false ? date('Y-m-d', $ts_jual) : date('Y-m-d');
-
-		$harga_satuan_simpan = str_replace(',', '.', str_replace('.', '', (string) $this->input->post('harga_satuan_beli', TRUE)));
-		if ($harga_satuan_simpan === '' || !is_numeric($harga_satuan_simpan)) {
-			$harga_satuan_simpan = isset($data_barang->harga_satuan) ? $data_barang->harga_satuan : 0;
-		}
-		$total_nominal_simpan = ((int) $jumlah_simpan) * (float) $harga_satuan_simpan;
-
-		// 6. Penyusunan payload array untuk di-insert ke tbl_penjualan
-		$data = array(
-			'tgl_input' => date('Y-m-d H:i:s'),
-			'tgl_jual' => $tgl_jual_X,
-			'nmrpesan' => $nmrpesan,
-			'nmrkirim' => $nmrkirim,
-			'uuid_unit' => $Get_uuid_unit,
-			'unit' => $Get_nama_unit,
-			'uuid_konsumen' => $uuid_konsumen,
-			'konsumen_nama' => $data_nama_konsumen,
-			'uuid_persediaan' => $uuid_persediaan,
-			'id_persediaan_barang' => $id_pembelian,
-			'uuid_barang' => isset($data_barang->uuid_barang) ? $data_barang->uuid_barang : '',
-			'kode_barang' => isset($data_barang->kode_barang) ? $data_barang->kode_barang : '',
-			'nama_barang' => isset($data_barang->uraian) ? $data_barang->uraian : '',
-			'proses_bayar' => 'belum_bayar',
-			'jumlah' => (int) $jumlah_simpan,
-			'satuan' => isset($data_barang->satuan) ? $data_barang->satuan : '',
-			'harga_satuan' => $harga_satuan_simpan,
-			'total_nominal' => $total_nominal_simpan,
-			'barang_jasa' => 'barang',
-			'tabel_source_referensi' => 'tbl_pembelian',
-			'nama_barang_referensi' => isset($data_barang->uraian) ? $data_barang->uraian : '',
-			'satuan_referensi' => isset($data_barang->satuan) ? $data_barang->satuan : '',
-			'harga_satuan_referensi' => isset($data_barang->harga_satuan) ? $data_barang->harga_satuan : 0,
-			'id_usr' => 1,
-		);
-
-		// 7. Proses Simpan Data
-		if ($is_new) {
-			$uuid_penjualan = $this->Tbl_penjualan_model->insert_new($data);
-		} else {
-			$data['uuid_penjualan'] = $uuid_penjualan;
-			$this->Tbl_penjualan_model->insert_add_barang($data);
-		}
-
-		$this->_respon_simpan_barang(true, 'Barang penjualan berhasil ditambahkan.', $uuid_penjualan);
 	}
 
 
@@ -1883,6 +1592,81 @@ class Tbl_penjualan extends CI_Controller
 		// --------------TAMPILKAN DATA INPUT PENJUALAN SESUAI UUID_NOMOR PESAN yang barusan di inputkan ----------------------
 		// $data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan($uuid_penjualan);
+		$id_persediaan_rows = array();
+		$uuid_persediaan_rows = array();
+		foreach ($data_penjualan_per_uuid_penjualan as $row_penjualan) {
+			$id_persediaan = isset($row_penjualan->id_persediaan_barang) ? (int) $row_penjualan->id_persediaan_barang : 0;
+			if ($id_persediaan > 0) {
+				$id_persediaan_rows[$id_persediaan] = $id_persediaan;
+			}
+			$uuid_persediaan = trim((string) (isset($row_penjualan->uuid_persediaan) ? $row_penjualan->uuid_persediaan : ''));
+			if ($uuid_persediaan !== '') {
+				$uuid_persediaan_rows[$uuid_persediaan] = $uuid_persediaan;
+			}
+		}
+		if (!empty($id_persediaan_rows) || !empty($uuid_persediaan_rows)) {
+			$tanggal_persediaan_expr = penjualan_sql_tanggal_persediaan_expr('p');
+			$kondisi_persediaan = array();
+			if (!empty($id_persediaan_rows)) {
+				$kondisi_persediaan[] = 'p.id IN (' . implode(',', $id_persediaan_rows) . ')';
+			}
+			if (!empty($uuid_persediaan_rows)) {
+				$uuid_persediaan_sql = array();
+				foreach ($uuid_persediaan_rows as $uuid_persediaan) {
+					$uuid_persediaan_sql[] = $this->db->escape($uuid_persediaan);
+				}
+				$kondisi_persediaan[] = 'p.uuid_persediaan IN (' . implode(',', $uuid_persediaan_sql) . ')';
+			}
+			$rows_tanggal_persediaan = $this->db->query(
+				"SELECT p.id, p.uuid_persediaan, {$tanggal_persediaan_expr} AS tgl_persediaan
+				FROM persediaan p
+				WHERE " . implode(' OR ', $kondisi_persediaan)
+			)->result();
+			$tanggal_by_persediaan_id = array();
+			$tanggal_by_persediaan_uuid = array();
+			foreach ($rows_tanggal_persediaan as $row_persediaan) {
+				$tanggal = isset($row_persediaan->tgl_persediaan) ? $row_persediaan->tgl_persediaan : null;
+				$tanggal_by_persediaan_id[(int) $row_persediaan->id] = $tanggal;
+				$uuid_persediaan = trim((string) $row_persediaan->uuid_persediaan);
+				if ($uuid_persediaan !== '') {
+					$tanggal_by_persediaan_uuid[$uuid_persediaan] = $tanggal;
+				}
+			}
+			foreach ($data_penjualan_per_uuid_penjualan as $row_penjualan) {
+				$id_persediaan = isset($row_penjualan->id_persediaan_barang) ? (int) $row_penjualan->id_persediaan_barang : 0;
+				$uuid_persediaan = trim((string) (isset($row_penjualan->uuid_persediaan) ? $row_penjualan->uuid_persediaan : ''));
+				if (isset($tanggal_by_persediaan_id[$id_persediaan])) {
+					$row_penjualan->tgl_persediaan = $tanggal_by_persediaan_id[$id_persediaan];
+				} elseif (isset($tanggal_by_persediaan_uuid[$uuid_persediaan])) {
+					$row_penjualan->tgl_persediaan = $tanggal_by_persediaan_uuid[$uuid_persediaan];
+				} else {
+					$row_penjualan->tgl_persediaan = null;
+				}
+			}
+		}
+
+		$data_penjualan_detail_raw = $data_penjualan_per_uuid_penjualan;
+		$detail_groups = array();
+		foreach ($data_penjualan_detail_raw as $row_penjualan) {
+			$uuid_key = strtolower(trim((string) (isset($row_penjualan->uuid_persediaan) ? $row_penjualan->uuid_persediaan : '')));
+			$nama_key = strtolower(trim((string) $row_penjualan->nama_barang));
+			$satuan_key = strtolower(trim((string) $row_penjualan->satuan));
+			$harga_key = sprintf('%.4F', (float) $row_penjualan->harga_satuan);
+			$tanggal_key = trim((string) (isset($row_penjualan->tgl_persediaan) ? $row_penjualan->tgl_persediaan : ''));
+			$group_key = $uuid_key !== ''
+				? implode("\x1f", array($uuid_key, $nama_key, $satuan_key, $harga_key, $tanggal_key))
+				: 'id:' . (int) $row_penjualan->id;
+
+			if (!isset($detail_groups[$group_key])) {
+				$group = clone $row_penjualan;
+				$group->jumlah = 0;
+				$group->group_ids = array();
+				$detail_groups[$group_key] = $group;
+			}
+			$detail_groups[$group_key]->jumlah += (int) $row_penjualan->jumlah;
+			$detail_groups[$group_key]->group_ids[] = (int) $row_penjualan->id;
+		}
+		$data_penjualan_per_uuid_penjualan = array_values($detail_groups);
 
 		// $data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_tgl_jual_nmrkirim_first_row($tgl_jual_X, $data_penjualan_per_uuid_penjualan->nmrkirim);
 		$data_penjualan_per_uuid_penjualan_first_row = $this->Tbl_penjualan_model->get_all_by_uuid_penjualan_first_row($uuid_penjualan);
@@ -1913,8 +1697,11 @@ class Tbl_penjualan extends CI_Controller
 			'action_ubah_detail_nomor_kirim' => site_url('tbl_penjualan/action_ubah_detail_nomor_kirim'),
 			'filter_bulan_penjualan' => $filter_bulan_penjualan,
 			'Data_stock' => $Data_stock,
-			'jumlah_barang_penjualan' => is_array($data_penjualan_per_uuid_penjualan) ? count($data_penjualan_per_uuid_penjualan) : 0,
+			'jumlah_barang_penjualan' => is_array($data_penjualan_detail_raw) ? count($data_penjualan_detail_raw) : 0,
+			'jumlah_detail_barang_penjualan' => is_array($data_penjualan_detail_raw) ? count($data_penjualan_detail_raw) : 0,
 			'penjualan_bulan_key' => penjualan_get_bulan_key_from_tgl($tgl_jual_kasir),
+			'action_hapus_group_penjualan' => site_url('tbl_penjualan/hapus_group_detail_penjualan'),
+			'action_ubah_group_penjualan' => site_url('tbl_penjualan/ubah_group_detail_penjualan/'),
 		);
 		$list_ctx = penjualan_get_list_bulan_context($this);
 		$data['penjualan_list_bulan_key'] = $list_ctx['bulan_key'];
@@ -2135,6 +1922,197 @@ class Tbl_penjualan extends CI_Controller
 		exit;
 	}
 
+	private function _get_penjualan_detail_group_rows($uuid_penjualan, $posted_ids)
+	{
+		if (!is_array($posted_ids)) {
+			$posted_ids = explode(',', (string) $posted_ids);
+		}
+		$ids = array_values(array_unique(array_filter(array_map('intval', $posted_ids))));
+		if (empty($ids)) {
+			return array('ok' => false, 'message' => 'Daftar detail barang gabungan tidak valid.');
+		}
+
+		$rows = $this->db
+			->where('uuid_penjualan', $uuid_penjualan)
+			->where_in('id', $ids)
+			->order_by('id', 'ASC')
+			->get('tbl_penjualan')
+			->result();
+		if (count($rows) !== count($ids)) {
+			return array('ok' => false, 'message' => 'Sebagian detail barang tidak ditemukan pada transaksi ini.');
+		}
+
+		$inventory_ids = array();
+		foreach ($rows as $row) {
+			$id_inventory = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+			if ($id_inventory > 0) {
+				$inventory_ids[$id_inventory] = $id_inventory;
+			}
+		}
+		$date_by_inventory = array();
+		if (!empty($inventory_ids)) {
+			$date_expr = penjualan_sql_tanggal_persediaan_expr('p');
+			$date_rows = $this->db->query(
+				"SELECT p.id, {$date_expr} AS tanggal_persediaan
+				FROM persediaan p WHERE p.id IN (" . implode(',', $inventory_ids) . ')'
+			)->result();
+			foreach ($date_rows as $date_row) {
+				$date_by_inventory[(int) $date_row->id] = isset($date_row->tanggal_persediaan)
+					? (string) $date_row->tanggal_persediaan
+					: '';
+			}
+		}
+
+		$group_key = null;
+		foreach ($rows as $row) {
+			$inventory_id = isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0;
+			$key = implode("\x1f", array(
+				strtolower(trim((string) $row->uuid_persediaan)),
+				strtolower(trim((string) $row->nama_barang)),
+				strtolower(trim((string) $row->satuan)),
+				sprintf('%.4F', (float) $row->harga_satuan),
+				isset($date_by_inventory[$inventory_id]) ? $date_by_inventory[$inventory_id] : '',
+			));
+			if ($group_key === null) {
+				$group_key = $key;
+			} elseif ($group_key !== $key) {
+				return array('ok' => false, 'message' => 'Detail yang dipilih bukan satu kelompok barang yang sama.');
+			}
+		}
+
+		return array('ok' => true, 'rows' => $rows, 'ids' => $ids);
+	}
+
+	public function ubah_group_detail_penjualan()
+	{
+		$this->load->helper('pembelian_persediaan');
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$group = $this->_get_penjualan_detail_group_rows(
+			$uuid_penjualan,
+			$this->input->post('group_ids')
+		);
+		$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan);
+		if (empty($group['ok'])) {
+			$message = isset($group['message']) ? $group['message'] : 'Kelompok barang tidak valid.';
+			if ($this->_penjualan_respond_ubah_barang_ajax(false, $message, $redirect_url)) {
+				return;
+			}
+			$this->session->set_flashdata('message', $message);
+			redirect($redirect_url);
+			return;
+		}
+
+		$jumlah_baru = (int) preg_replace('/[^0-9]/', '', (string) $this->input->post('jumlah', TRUE));
+		if ($jumlah_baru <= 0) {
+			$message = 'Jumlah barang gabungan harus lebih dari 0.';
+			if ($this->_penjualan_respond_ubah_barang_ajax(false, $message, $redirect_url)) {
+				return;
+			}
+			$this->session->set_flashdata('message', $message);
+			redirect($redirect_url);
+			return;
+		}
+
+		$rows = $group['rows'];
+		$keeper = array_shift($rows);
+		$this->db->trans_begin();
+		try {
+			foreach ($rows as $row) {
+				if (!empty($row->id_persediaan_barang)) {
+					$result = penjualan_update_persediaan_saat_jual(
+						$this,
+						(int) $row->id_persediaan_barang,
+						isset($row->uuid_unit) ? $row->uuid_unit : '',
+						(int) $row->jumlah,
+						'kurangi'
+					);
+					if (empty($result['ok'])) {
+						throw new Exception(isset($result['message']) ? $result['message'] : 'Gagal mengembalikan stok detail duplikat.');
+					}
+				}
+				$this->Tbl_penjualan_model->delete((int) $row->id);
+				if ($this->db->trans_status() === false) {
+					throw new Exception('Gagal menghapus detail duplikat.');
+				}
+			}
+
+			$price = $this->input->post('harga_satuan', TRUE);
+			$result = penjualan_proses_ubah_barang_per_id(
+				$this,
+				(int) $keeper->id,
+				$jumlah_baru,
+				$price,
+				$this->input->post('konfirmasi_ubah_harga', TRUE) === '1'
+			);
+			if (empty($result['ok'])) {
+				throw new Exception(isset($result['message']) ? $result['message'] : 'Gagal memperbarui jumlah barang gabungan.');
+			}
+			if ($this->db->trans_status() === false) {
+				throw new Exception('Transaksi update barang gabungan gagal.');
+			}
+			$this->db->trans_commit();
+			$message = 'Jumlah barang gabungan berhasil diperbarui.';
+			if ($this->_penjualan_respond_ubah_barang_ajax(true, $message, $redirect_url)) {
+				return;
+			}
+			$this->session->set_flashdata('message', $message);
+		} catch (Exception $e) {
+			$this->db->trans_rollback();
+			log_message('error', 'ubah_group_detail_penjualan: ' . $e->getMessage());
+			if ($this->_penjualan_respond_ubah_barang_ajax(false, $e->getMessage(), $redirect_url)) {
+				return;
+			}
+			$this->session->set_flashdata('message', $e->getMessage());
+		}
+
+		redirect($redirect_url);
+	}
+
+	public function hapus_group_detail_penjualan()
+	{
+		$this->load->helper('pembelian_persediaan');
+		$uuid_penjualan = trim((string) $this->input->post('uuid_penjualan', TRUE));
+		$group = $this->_get_penjualan_detail_group_rows(
+			$uuid_penjualan,
+			$this->input->post('group_ids')
+		);
+		$redirect_url = penjualan_resolve_redirect_setelah_ubah_hapus($this, $uuid_penjualan);
+		if (empty($group['ok'])) {
+			$message = isset($group['message']) ? $group['message'] : 'Kelompok barang tidak valid.';
+			$this->session->set_flashdata('message', $message);
+			redirect($redirect_url);
+			return;
+		}
+
+		$this->db->trans_begin();
+		try {
+			foreach ($group['rows'] as $row) {
+				if (!empty($row->id_persediaan_barang)) {
+					$result = penjualan_update_persediaan_saat_jual(
+						$this,
+						(int) $row->id_persediaan_barang,
+						isset($row->uuid_unit) ? $row->uuid_unit : '',
+						(int) $row->jumlah,
+						'kurangi'
+					);
+					if (empty($result['ok'])) {
+						throw new Exception(isset($result['message']) ? $result['message'] : 'Gagal mengembalikan stok barang.');
+					}
+				}
+				$this->Tbl_penjualan_model->delete((int) $row->id);
+				if ($this->db->trans_status() === false) {
+					throw new Exception('Gagal menghapus detail barang.');
+				}
+			}
+			$this->db->trans_commit();
+			$this->session->set_flashdata('message', 'Kelompok barang berhasil dihapus.');
+		} catch (Exception $e) {
+			$this->db->trans_rollback();
+			log_message('error', 'hapus_group_detail_penjualan: ' . $e->getMessage());
+			$this->session->set_flashdata('message', $e->getMessage());
+		}
+		redirect($redirect_url);
+	}
 
 
 	// public function cetak_penjualan_per_uuid_penjualan($uuid_penjualan = null, $date_tgl_jual = null, $nmrkirim = null)

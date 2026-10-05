@@ -2,328 +2,315 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Helper modal Pilih Barang (penjualan).
- * File: application/helpers/penjualan_modal_helper.php
- *
- * Load: $this->load->helper('penjualan_modal');
- *
- * Function utama:
- * - penjualan_modal_load_stock_rows($CI, $tahun_bulan)
- * - penjualan_modal_render_tbody($Data_stock, $extra = array())
+ * Query and format the sales item picker using only rows from persediaan.
  */
-
-if (!function_exists('penjualan_modal_load_stock_rows')) {
-	/**
-	 * Ambil daftar stok untuk modal Pilih Barang dari 3 sumber (tbl_pembelian, persediaan, tbl_pembelian_pecah_satuan).
-	 * sys_unit_produk tidak ditampilkan karena datanya sudah masuk ke persediaan.
-	 *
-	 * @param object $CI instance CodeIgniter
-	 * @param string $tahun_bulan format YYYY-MM
-	 * @return array list of stdClass (properti seragam)
-	 */
-	function penjualan_modal_load_stock_rows($CI, $tahun_bulan)
+if (!function_exists('penjualan_modal_datatable_persediaan')) {
+	function penjualan_modal_datatable_persediaan($CI, $request)
 	{
-		$Data_stock = array();
-		$tahun_bulan = trim((string) $tahun_bulan);
-		if ($tahun_bulan === '' || !preg_match('/^\d{4}-\d{2}$/', $tahun_bulan)) {
-			return $Data_stock;
+		if (!$CI->db->table_exists('persediaan')) {
+			throw new Exception('Tabel persediaan tidak ditemukan.');
+		}
+		if (!$CI->db->field_exists('total_10', 'persediaan')) {
+			throw new Exception('Kolom persediaan.total_10 tidak ditemukan.');
 		}
 
-		// ----------------------------------------------------------
-		// A. tbl_pembelian (filter tgl_po)
-		//    sisa = jumlah - SUM(tbl_penjualan where id_persediaan_barang = id)
-		// ----------------------------------------------------------
-		if ($CI->db->table_exists('tbl_pembelian')) {
-			$sql_beli = "
-				SELECT id, uuid_pembelian, uuid_barang, kode_barang, spop, tgl_po,
-					uraian AS nama_barang_beli, satuan, harga_satuan, jumlah, uuid_persediaan
-				FROM tbl_pembelian
-				WHERE DATE_FORMAT(tgl_po, '%Y-%m') = ?
-				ORDER BY tgl_po ASC, id ASC
-			";
-			$list_pembelian = $CI->db->query($sql_beli, array($tahun_bulan))->result();
+		$all_records = isset($request['all_records']) && (string) $request['all_records'] === '1';
+		$bulan_persediaan = isset($request['bulan_persediaan']) && is_scalar($request['bulan_persediaan'])
+			? trim((string) $request['bulan_persediaan'])
+			: '';
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan_persediaan)) {
+			throw new Exception('Bulan persediaan tidak valid.');
+		}
+		if ($bulan_persediaan < '2026-01') {
+			throw new Exception('Tidak ada persediaan sebelum 1 Januari 2026. Silakan pilih bulan mulai Januari 2026.');
+		}
 
-			$map_terjual_by_id = array();
-			if (!empty($list_pembelian)) {
-				$ids = array();
-				foreach ($list_pembelian as $b) {
-					$ids[] = (int) $b->id;
-				}
-				$ids = array_values(array_unique(array_filter($ids)));
-				if (!empty($ids)) {
-					$sql_jual = "
-						SELECT id_persediaan_barang, COALESCE(SUM(jumlah), 0) AS total_terjual
-						FROM tbl_penjualan
-						WHERE id_persediaan_barang IN (" . implode(',', $ids) . ")
-						AND (barang_jasa != 'jasa' OR barang_jasa IS NULL)
-						GROUP BY id_persediaan_barang
-					";
-					foreach ($CI->db->query($sql_jual)->result() as $j) {
-						$map_terjual_by_id[(int) $j->id_persediaan_barang] = (float) $j->total_terjual;
-					}
-				}
+		$tgl_jual_input = isset($request['tgl_jual']) && is_scalar($request['tgl_jual'])
+			? trim((string) $request['tgl_jual'])
+			: '';
+		if (!preg_match('/^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{4})$/', $tgl_jual_input, $tanggal_match)) {
+			throw new Exception('Tanggal input penjualan tidak valid.');
+		}
+		$hari_jual = (int) $tanggal_match[1];
+		$bulan_jual = (int) $tanggal_match[2];
+		$tahun_jual = (int) $tanggal_match[3];
+		if (!checkdate($bulan_jual, $hari_jual, $tahun_jual)) {
+			throw new Exception('Tanggal input penjualan tidak valid.');
+		}
+		$tgl_jual = sprintf('%04d-%02d-%02d', $tahun_jual, $bulan_jual, $hari_jual);
+		$tgl_akhir_bulan_pilihan = date('Y-m-t', strtotime($bulan_persediaan . '-01'));
+		$tgl_akhir_filter = min($tgl_jual, $tgl_akhir_bulan_pilihan);
+		if ($tgl_akhir_filter < '2026-01-01') {
+			throw new Exception('Tidak ada persediaan sebelum 1 Januari 2026. Silakan pilih bulan mulai Januari 2026.');
+		}
+
+		$tanggal_expr = penjualan_sql_tanggal_persediaan_expr('p');
+		$kategori_sql = $CI->db->field_exists('kategori', 'persediaan') ? 'p.kategori' : "''";
+		if ($all_records) {
+			$CI->load->helper('persediaan_display');
+			$stok_mentah_expr = "CAST(NULLIF(REPLACE(TRIM(COALESCE(p.total_10, '')), ',', '.'), '') AS DECIMAL(20,4))";
+			$stock_fields = array();
+			foreach (array('sa', 'beli', 'penjualan', 'pecah_satuan', 'bahan_produksi') as $field) {
+				$stock_fields[] = $CI->db->field_exists($field, 'persediaan')
+					? 'p.' . $CI->db->escape_identifiers($field)
+					: '0 AS ' . $CI->db->escape_identifiers($field);
+			}
+			$sql = "SELECT p.id, p.uuid_persediaan, p.uuid_barang,
+					p.kode_barang, p.spop, {$tanggal_expr} AS tanggal_urut,
+					{$tanggal_expr} AS tanggal_beli,
+					{$kategori_sql} AS kategori, p.namabarang, p.satuan,
+					p.hpp, p.total_10, " . implode(', ', $stock_fields) . "
+				FROM persediaan p
+				WHERE COALESCE({$stok_mentah_expr}, 0) > 0
+				AND {$tanggal_expr} >= '2026-01-01'
+				AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
+				ORDER BY p.namabarang ASC, tanggal_urut ASC, p.id ASC";
+			$query = $CI->db->query($sql);
+			if ($query === false) {
+				$error = $CI->db->error();
+				throw new Exception(isset($error['message']) ? $error['message'] : 'Gagal mengambil data persediaan.');
 			}
 
-			foreach ($list_pembelian as $beli) {
-				$id_beli = (int) $beli->id;
-				$jumlah_beli = (float) $beli->jumlah;
-				$total_terjual = isset($map_terjual_by_id[$id_beli]) ? $map_terjual_by_id[$id_beli] : 0;
-				$sisa_stok = $jumlah_beli - $total_terjual;
-				if ($sisa_stok <= 0) {
+			$rows = array();
+			$seen = array();
+			foreach ($query->result() as $row) {
+				$stock = persediaan_hitung_sisa_stock($row);
+				if ($stock <= 0) {
 					continue;
 				}
 
-				$spop_val = trim((string) (isset($beli->spop) ? $beli->spop : ''));
-				$obj = new stdClass();
-				$obj->id_persediaan_barang = $id_beli;
-				$obj->uuid_persediaan = !empty($beli->uuid_pembelian) ? $beli->uuid_pembelian : (isset($beli->uuid_persediaan) ? $beli->uuid_persediaan : '');
-				$obj->uuid_barang = isset($beli->uuid_barang) ? $beli->uuid_barang : '';
-				$obj->kode_barang = isset($beli->kode_barang) ? $beli->kode_barang : '';
-				$obj->tgl_po = isset($beli->tgl_po) ? $beli->tgl_po : null;
-				$obj->spop = $spop_val;
-				$obj->spop_label = 'pembelian';
-				$obj->sumber_tabel = 'tbl_pembelian';
-				$obj->kategori = '';
-				$obj->namabarang = isset($beli->nama_barang_beli) ? $beli->nama_barang_beli : '';
-				$obj->satuan = isset($beli->satuan) ? $beli->satuan : '';
-				$obj->hpp = isset($beli->harga_satuan) ? $beli->harga_satuan : 0;
-				$obj->sisa_stok = $sisa_stok;
-				$obj->total_10 = $sisa_stok;
-				$obj->tabel_source_referensi = 'tbl_pembelian';
-				$Data_stock[] = $obj;
-			}
-		}
-
-		// ----------------------------------------------------------
-		// B. persediaan (filter tanggal_beli)
-		//    tgl po = tanggal_beli, spop + label "persediaan",
-		//    nama = namabarang, harga = hpp, satuan = satuan, sisa = total_10
-		// ----------------------------------------------------------
-		if ($CI->db->table_exists('persediaan')) {
-			$sql_pers = "
-				SELECT id, uuid_persediaan, uuid_barang, kode_barang, spop,
-					tanggal_beli, tanggal, tgl_persediaan,
-					kategori, namabarang, satuan, hpp, total_10
-				FROM persediaan
-				WHERE DATE_FORMAT(tanggal_beli, '%Y-%m') = ?
-				AND COALESCE(total_10, 0) > 0
-				AND (kategori IS NULL OR LOWER(TRIM(kategori)) != 'jasa')
-				ORDER BY tanggal_beli ASC, id ASC
-			";
-			foreach ($CI->db->query($sql_pers, array($tahun_bulan))->result() as $pers) {
-				$sisa_stok = (float) (isset($pers->total_10) ? $pers->total_10 : 0);
-				if ($sisa_stok <= 0) {
-					continue;
-				}
-
-				$spop_val = trim((string) (isset($pers->spop) ? $pers->spop : ''));
-				$tgl_po_val = null;
-				if (!empty($pers->tanggal_beli) && strpos((string) $pers->tanggal_beli, '0000-00-00') === false) {
-					$tgl_po_val = $pers->tanggal_beli;
-				} elseif (!empty($pers->tanggal) && strpos((string) $pers->tanggal, '0000-00-00') === false) {
-					$tgl_po_val = $pers->tanggal;
-				} elseif (!empty($pers->tgl_persediaan)) {
-					$tgl_po_val = $pers->tgl_persediaan;
-				}
-
-				$obj = new stdClass();
-				$obj->id_persediaan_barang = (int) $pers->id;
-				$obj->uuid_persediaan = isset($pers->uuid_persediaan) ? $pers->uuid_persediaan : '';
-				$obj->uuid_barang = isset($pers->uuid_barang) ? $pers->uuid_barang : '';
-				$obj->kode_barang = isset($pers->kode_barang) ? $pers->kode_barang : '';
-				$obj->tgl_po = $tgl_po_val;
-				$obj->spop = $spop_val;
-				$obj->spop_label = 'persediaan';
-				$obj->sumber_tabel = 'persediaan';
-				$obj->kategori = isset($pers->kategori) ? trim((string) $pers->kategori) : '';
-				$obj->namabarang = isset($pers->namabarang) ? $pers->namabarang : '';
-				$obj->satuan = isset($pers->satuan) ? $pers->satuan : '';
-				$obj->hpp = isset($pers->hpp) ? $pers->hpp : 0;
-				$obj->sisa_stok = $sisa_stok;
-				$obj->total_10 = $sisa_stok;
-				$obj->tabel_source_referensi = 'persediaan';
-				$Data_stock[] = $obj;
-			}
-		}
-
-		// ----------------------------------------------------------
-		// C. sys_unit_produk — TIDAK ditampilkan
-		//    Data produksi sudah masuk ke tabel persediaan.
-		// ----------------------------------------------------------
-
-		// ----------------------------------------------------------
-		// D. tbl_pembelian_pecah_satuan (filter tgl_po) — hasil pecah
-		// ----------------------------------------------------------
-		if ($CI->db->table_exists('tbl_pembelian_pecah_satuan')) {
-			$sql_pecah = "
-				SELECT id, uuid_pecah_satuan, uuid_pembelian, uuid_barang, uuid_persediaan,
-					tgl_po, spop, kode_barang, uraian, jumlah, satuan, harga_satuan,
-					nama_barang_baru, jumlah_barang_baru, satuan_barang_baru,
-					harga_satuan_barang_baru, kode_barang_baru,
-					uuid_persediaan_baru, uuid_barang_baru, id_persediaan_baru
-				FROM tbl_pembelian_pecah_satuan
-				WHERE DATE_FORMAT(tgl_po, '%Y-%m') = ?
-				ORDER BY tgl_po ASC, id ASC
-			";
-			$list_pecah = $CI->db->query($sql_pecah, array($tahun_bulan))->result();
-
-			$map_terjual_pecah = array();
-			if (!empty($list_pecah)) {
-				$ids_pecah = array();
-				foreach ($list_pecah as $p) {
-					$ids_pecah[] = (int) $p->id;
-					if (!empty($p->id_persediaan_baru)) {
-						$ids_pecah[] = (int) $p->id_persediaan_baru;
+				$uuid = trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
+				if ($uuid !== '') {
+					$key = strtolower($uuid) . "\x1f" . strtolower(trim((string) $row->namabarang));
+					if (isset($seen[$key])) {
+						continue;
 					}
+					$seen[$key] = true;
 				}
-				$ids_pecah = array_values(array_unique(array_filter($ids_pecah)));
-				if (!empty($ids_pecah)) {
-					$sql_jual_p = "
-						SELECT id_persediaan_barang, COALESCE(SUM(jumlah), 0) AS total_terjual
-						FROM tbl_penjualan
-						WHERE id_persediaan_barang IN (" . implode(',', $ids_pecah) . ")
-						AND (barang_jasa != 'jasa' OR barang_jasa IS NULL)
-						GROUP BY id_persediaan_barang
-					";
-					foreach ($CI->db->query($sql_jual_p)->result() as $j) {
-						$map_terjual_pecah[(int) $j->id_persediaan_barang] = (float) $j->total_terjual;
-					}
-				}
+
+				$row->stok_tersedia = $stock;
+				$rows[] = $row;
 			}
 
-			foreach ($list_pecah as $pecah) {
-				$nama = trim((string) (isset($pecah->nama_barang_baru) ? $pecah->nama_barang_baru : ''));
-				if ($nama === '') {
-					$nama = isset($pecah->uraian) ? $pecah->uraian : '';
-				}
-				$satuan = trim((string) (isset($pecah->satuan_barang_baru) ? $pecah->satuan_barang_baru : ''));
-				if ($satuan === '') {
-					$satuan = isset($pecah->satuan) ? $pecah->satuan : '';
-				}
-				$harga = isset($pecah->harga_satuan_barang_baru) ? $pecah->harga_satuan_barang_baru : (isset($pecah->harga_satuan) ? $pecah->harga_satuan : 0);
-				$jumlah_asal = (float) (isset($pecah->jumlah_barang_baru) ? $pecah->jumlah_barang_baru : (isset($pecah->jumlah) ? $pecah->jumlah : 0));
-
-				$id_ref = (int) $pecah->id;
-				$total_terjual = isset($map_terjual_pecah[$id_ref]) ? $map_terjual_pecah[$id_ref] : 0;
-				if (!empty($pecah->id_persediaan_baru) && isset($map_terjual_pecah[(int) $pecah->id_persediaan_baru])) {
-					$total_terjual += $map_terjual_pecah[(int) $pecah->id_persediaan_baru];
-				}
-				$sisa_stok = $jumlah_asal - $total_terjual;
-				if ($sisa_stok <= 0) {
-					continue;
-				}
-
-				$spop_val = trim((string) (isset($pecah->spop) ? $pecah->spop : ''));
-				$kode_brg = trim((string) (isset($pecah->kode_barang_baru) ? $pecah->kode_barang_baru : (isset($pecah->kode_barang) ? $pecah->kode_barang : '')));
-
-				$obj = new stdClass();
-				$obj->id_persediaan_barang = $id_ref;
-				$obj->uuid_persediaan = !empty($pecah->uuid_persediaan_baru) ? $pecah->uuid_persediaan_baru : (isset($pecah->uuid_persediaan) ? $pecah->uuid_persediaan : (isset($pecah->uuid_pecah_satuan) ? $pecah->uuid_pecah_satuan : ''));
-				$obj->uuid_barang = !empty($pecah->uuid_barang_baru) ? $pecah->uuid_barang_baru : (isset($pecah->uuid_barang) ? $pecah->uuid_barang : '');
-				$obj->kode_barang = $kode_brg;
-				$obj->tgl_po = isset($pecah->tgl_po) ? $pecah->tgl_po : null;
-				$obj->spop = $spop_val;
-				$obj->spop_label = 'pecah satuan';
-				$obj->sumber_tabel = 'tbl_pembelian_pecah_satuan';
-				$obj->kategori = '';
-				$obj->namabarang = $nama;
-				$obj->satuan = $satuan;
-				$obj->hpp = $harga;
-				$obj->sisa_stok = $sisa_stok;
-				$obj->total_10 = $sisa_stok;
-				$obj->tabel_source_referensi = 'tbl_pembelian_pecah_satuan';
-				$Data_stock[] = $obj;
-			}
-		}
-
-		return $Data_stock;
-	}
-}
-
-if (!function_exists('penjualan_modal_render_tbody')) {
-	/**
-	 * Bentuk HTML tbody + (opsional) modals untuk DataTable modal Pilih Barang.
-	 *
-	 * Kolom: No | Pilih | Tgl PO | SPOP | Kategori | Nama Barang | Harga Satuan | Satuan | Sisa Stok | Pilih
-	 *
-	 * @param array $Data_stock hasil penjualan_modal_load_stock_rows()
-	 * @param array $extra opsional (belum dipakai untuk form tersembunyi)
-	 * @return array [tbody => string, modals => string, jumlah => int]
-	 */
-	function penjualan_modal_render_tbody($Data_stock, $extra = array())
-	{
-		$tbody = '';
-		$modals = '';
-		$no = 0;
-
-		if (!is_array($Data_stock) || empty($Data_stock)) {
-			$tbody = '<tr><td colspan="10" class="text-center text-muted">Tidak ada barang persediaan untuk bulan ini.</td></tr>';
 			return array(
-				'tbody' => $tbody,
-				'modals' => $modals,
-				'jumlah' => 0,
+				'recordsTotal' => count($rows),
+				'recordsFiltered' => count($rows),
+				'start' => 0,
+				'tanggalAkhir' => $tgl_akhir_filter,
+				'rows' => $rows,
 			);
 		}
 
-		foreach ($Data_stock as $row) {
-			$no++;
-			$id_ref = (int) (isset($row->id_persediaan_barang) ? $row->id_persediaan_barang : 0);
-			$uuid_pers = htmlspecialchars((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''), ENT_QUOTES, 'UTF-8');
-			$nama = htmlspecialchars((string) (isset($row->namabarang) ? $row->namabarang : ''), ENT_QUOTES, 'UTF-8');
-			$satuan = htmlspecialchars((string) (isset($row->satuan) ? $row->satuan : ''), ENT_QUOTES, 'UTF-8');
-			$kategori = htmlspecialchars((string) (isset($row->kategori) ? $row->kategori : ''), ENT_QUOTES, 'UTF-8');
-			$spop = htmlspecialchars((string) (isset($row->spop) ? $row->spop : ''), ENT_QUOTES, 'UTF-8');
-			$spop_label = trim((string) (isset($row->spop_label) ? $row->spop_label : ''));
-			$sumber = htmlspecialchars((string) (isset($row->sumber_tabel) ? $row->sumber_tabel : ''), ENT_QUOTES, 'UTF-8');
-			$hpp = (float) (isset($row->hpp) ? $row->hpp : 0);
-			$sisa = (float) (isset($row->sisa_stok) ? $row->sisa_stok : 0);
-			$tgl_po_raw = isset($row->tgl_po) ? $row->tgl_po : null;
+		$tanggal_group_expr = penjualan_sql_tanggal_persediaan_expr('kelompok');
+		$tanggal_oldest_expr = penjualan_sql_tanggal_persediaan_expr('terpilih');
+		$stok_expr = penjualan_modal_sql_sisa_stock_expr($CI, 'p');
+		$stok_group_expr = penjualan_modal_sql_sisa_stock_expr($CI, 'kelompok');
+		$stok_oldest_expr = penjualan_modal_sql_sisa_stock_expr($CI, 'terpilih');
+		$oldest_ids_sql = "
+			SELECT MIN(terpilih.id)
+			FROM persediaan terpilih
+			INNER JOIN (
+				SELECT
+					TRIM(COALESCE(kelompok.uuid_persediaan, '')) AS uuid_key,
+					LOWER(TRIM(COALESCE(kelompok.namabarang, ''))) AS nama_key,
+					MIN({$tanggal_group_expr}) AS tanggal_terlama
+				FROM persediaan kelompok
+				WHERE COALESCE({$stok_group_expr}, 0) > 0
+				AND {$tanggal_group_expr} >= '2026-01-01'
+				AND {$tanggal_group_expr} <= '{$tgl_akhir_filter}'
+				AND TRIM(COALESCE(kelompok.uuid_persediaan, '')) <> ''
+				GROUP BY TRIM(COALESCE(kelompok.uuid_persediaan, '')), LOWER(TRIM(COALESCE(kelompok.namabarang, '')))
+			) tanggal_minimum
+				ON TRIM(COALESCE(terpilih.uuid_persediaan, '')) = tanggal_minimum.uuid_key
+				AND LOWER(TRIM(COALESCE(terpilih.namabarang, ''))) = tanggal_minimum.nama_key
+				AND {$tanggal_oldest_expr} = tanggal_minimum.tanggal_terlama
+			WHERE COALESCE({$stok_oldest_expr}, 0) > 0
+			AND {$tanggal_oldest_expr} >= '2026-01-01'
+			AND {$tanggal_oldest_expr} <= '{$tgl_akhir_filter}'
+			GROUP BY TRIM(COALESCE(terpilih.uuid_persediaan, '')), LOWER(TRIM(COALESCE(terpilih.namabarang, '')))
+		";
+		$where = "WHERE COALESCE({$stok_expr}, 0) > 0
+			AND {$tanggal_expr} >= '2026-01-01'
+			AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
+			AND (
+				TRIM(COALESCE(p.uuid_persediaan, '')) = ''
+				OR p.id IN ({$oldest_ids_sql})
+			)";
+		$base_where = $where;
+		$search_value = isset($request['search']['value']) ? $request['search']['value'] : '';
+		$search = $all_records || !is_scalar($search_value) ? '' : trim((string) $search_value);
+		if ($search !== '') {
+			$like = $CI->db->escape('%' . $CI->db->escape_like_str($search) . '%');
+			$where .= " AND (
+				CAST(p.id AS CHAR) LIKE {$like} ESCAPE '!'
+				OR CAST({$tanggal_expr} AS CHAR) LIKE {$like} ESCAPE '!'
+				OR DATE_FORMAT({$tanggal_expr}, '%d/%m/%Y') LIKE {$like} ESCAPE '!'
+				OR COALESCE(p.spop, '') LIKE {$like} ESCAPE '!'
+				OR COALESCE({$kategori_sql}, '') LIKE {$like} ESCAPE '!'
+				OR COALESCE(p.namabarang, '') LIKE {$like} ESCAPE '!'
+				OR COALESCE(p.hpp, '') LIKE {$like} ESCAPE '!'
+				OR REPLACE(FORMAT(CAST(NULLIF(REPLACE(TRIM(COALESCE(p.hpp, '')), ',', '.'), '') AS DECIMAL(20,4)), 0), ',', '.') LIKE {$like} ESCAPE '!'
+				OR COALESCE(p.satuan, '') LIKE {$like} ESCAPE '!'
+				OR CAST({$stok_expr} AS CHAR) LIKE {$like} ESCAPE '!'
+			)";
+		}
 
-			$tgl_po_disp = '';
-			if (!empty($tgl_po_raw) && strpos((string) $tgl_po_raw, '0000-00-00') === false) {
-				$ts = strtotime($tgl_po_raw);
-				$tgl_po_disp = $ts ? date('d/m/Y', $ts) : htmlspecialchars((string) $tgl_po_raw, ENT_QUOTES, 'UTF-8');
+		$records_total = 0;
+		$records_filtered = 0;
+		if (!$all_records) {
+			$total_query = $CI->db->query("SELECT COUNT(*) AS jumlah FROM persediaan p {$base_where}");
+			if ($total_query === false) {
+				$error = $CI->db->error();
+				throw new Exception(isset($error['message']) ? $error['message'] : 'Gagal menghitung data persediaan.');
 			}
-
-			// SPOP + label sumber di bawahnya (persediaan / sys_unit_produk / pecah_satuan)
-			$spop_html = $spop;
-			if ($spop_label !== '') {
-				$spop_html .= '<br><small class="text-muted">' . htmlspecialchars($spop_label, ENT_QUOTES, 'UTF-8') . '</small>';
+			$records_total = (int) $total_query->row()->jumlah;
+			$records_filtered = $records_total;
+			if ($search !== '') {
+				$filtered_query = $CI->db->query("SELECT COUNT(*) AS jumlah FROM persediaan p {$where}");
+				if ($filtered_query === false) {
+					$error = $CI->db->error();
+					throw new Exception(isset($error['message']) ? $error['message'] : 'Gagal memfilter data persediaan.');
+				}
+				$records_filtered = (int) $filtered_query->row()->jumlah;
 			}
+		}
 
-			$harga_disp = number_format($hpp, 0, ',', '.');
-			$sisa_disp = rtrim(rtrim(number_format($sisa, 2, ',', '.'), '0'), ',');
+		$order_columns = array(
+			2 => $tanggal_expr,
+			3 => 'p.spop',
+			4 => $kategori_sql,
+			5 => 'p.namabarang',
+			6 => "CAST(NULLIF(REPLACE(TRIM(COALESCE(p.hpp, '')), ',', '.'), '') AS DECIMAL(20,4))",
+			7 => 'p.satuan',
+			8 => $stok_expr,
+		);
+		$order_parts = array();
+		if (isset($request['order']) && is_array($request['order'])) {
+			foreach ($request['order'] as $order) {
+				if (!isset($order['column']) || !is_scalar($order['column'])) {
+					continue;
+				}
+				$order_index = (int) $order['column'];
+				if (isset($order_columns[$order_index])) {
+					$direction = isset($order['dir']) && strtolower($order['dir']) === 'desc' ? 'DESC' : 'ASC';
+					$order_parts[] = $order_columns[$order_index] . ' ' . $direction;
+				}
+			}
+		}
+		if (empty($order_parts)) {
+			$order_parts[] = 'p.namabarang ASC';
+			$order_parts[] = $tanggal_expr . ' ASC';
+		}
+		$order_parts[] = 'p.id ASC';
+		$order_sql = ' ORDER BY ' . implode(', ', $order_parts);
 
-			$btn_pilih = '<button type="button" class="btn btn-xs btn-primary btn-pilih-barang-penjualan"'
-				. ' data-id="' . $id_ref . '"'
-				. ' data-uuid_persediaan="' . $uuid_pers . '"'
-				. ' data-nama="' . $nama . '"'
-				. ' data-satuan="' . $satuan . '"'
-				. ' data-hpp="' . htmlspecialchars((string) $hpp, ENT_QUOTES, 'UTF-8') . '"'
-				. ' data-sisa="' . htmlspecialchars((string) $sisa, ENT_QUOTES, 'UTF-8') . '"'
-				. ' data-sumber="' . $sumber . '"'
-				. ' data-spop="' . $spop . '"'
-				. ' data-tgl_po="' . htmlspecialchars((string) $tgl_po_raw, ENT_QUOTES, 'UTF-8') . '"'
-				. '>Pilih</button>';
+		$start_value = isset($request['start']) ? $request['start'] : 0;
+		$length_value = isset($request['length']) ? $request['length'] : 10;
+		$start = is_scalar($start_value) ? max(0, (int) $start_value) : 0;
+		$length = is_scalar($length_value) ? (int) $length_value : 10;
+		if ($length < 1) {
+			$length = 10;
+		}
 
-			$tbody .= '<tr>'
-				. '<td class="text-center">' . $no . '</td>'
-				. '<td class="text-center">' . $btn_pilih . '</td>'
-				. '<td>' . $tgl_po_disp . '</td>'
-				. '<td>' . $spop_html . '</td>'
-				. '<td>' . $kategori . '</td>'
-				. '<td>' . $nama . '</td>'
-				. '<td class="text-right">' . $harga_disp . '</td>'
-				. '<td>' . $satuan . '</td>'
-				. '<td class="text-right">' . $sisa_disp . '</td>'
-				. '<td class="text-center">' . $btn_pilih . '</td>'
-				. '</tr>';
+		$sql = "SELECT p.id, p.uuid_persediaan, p.uuid_barang,
+				p.kode_barang, p.spop, {$tanggal_expr} AS tanggal_urut,
+				{$tanggal_expr} AS tanggal_beli,
+				{$kategori_sql} AS kategori, p.namabarang, p.satuan,
+				p.hpp, p.total_10, {$stok_expr} AS stok_tersedia
+			FROM persediaan p {$where}{$order_sql}";
+		if (!$all_records) {
+			$length = min($length, 100);
+			$sql .= " LIMIT {$start}, {$length}";
+		}
+		$query = $CI->db->query($sql);
+		if ($query === false) {
+			$error = $CI->db->error();
+			throw new Exception(isset($error['message']) ? $error['message'] : 'Gagal mengambil data persediaan.');
+		}
+		if ($all_records) {
+			$records_total = $query->num_rows();
+			$records_filtered = $records_total;
 		}
 
 		return array(
-			'tbody' => $tbody,
-			'modals' => $modals,
-			'jumlah' => $no,
+			'recordsTotal' => $records_total,
+			'recordsFiltered' => $records_filtered,
+			'start' => $all_records ? 0 : $start,
+			'tanggalAkhir' => $tgl_akhir_filter,
+			'rows' => $query->result(),
+		);
+	}
+}
+
+if (!function_exists('penjualan_modal_sql_sisa_stock_expr')) {
+	function penjualan_modal_sql_sisa_stock_expr($CI, $alias)
+	{
+		$total = "CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.total_10, '')), ',', '.'), '') AS DECIMAL(20,4))";
+		$penjualan = $CI->db->field_exists('penjualan', 'persediaan')
+			? "COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.penjualan, '')), ',', '.'), '') AS DECIMAL(20,4)), 0)"
+			: '0';
+		$pecah_satuan = $CI->db->field_exists('pecah_satuan', 'persediaan')
+			? "COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.pecah_satuan, '')), ',', '.'), '') AS DECIMAL(20,4)), 0)"
+			: '0';
+		$bahan_produksi = $CI->db->field_exists('bahan_produksi', 'persediaan')
+			? "COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.bahan_produksi, '')), ',', '.'), '') AS DECIMAL(20,4)), 0)"
+			: '0';
+		$sa = $CI->db->field_exists('sa', 'persediaan')
+			? "COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.sa, '')), ',', '.'), '') AS DECIMAL(20,4)), 0)"
+			: '0';
+		$beli = $CI->db->field_exists('beli', 'persediaan')
+			? "COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE({$alias}.beli, '')), ',', '.'), '') AS DECIMAL(20,4)), 0)"
+			: '0';
+		$deductions = "({$penjualan} + {$pecah_satuan} + {$bahan_produksi})";
+		$gross = "({$sa} + {$beli})";
+		$total_value = "COALESCE({$total}, 0)";
+
+		return "(CASE
+			WHEN {$deductions} <= 0 THEN GREATEST(0, FLOOR({$total_value}))
+			WHEN {$gross} > 0 AND ABS({$total_value} - {$gross}) < 0.01
+				THEN GREATEST(0, FLOOR({$total_value} - {$deductions}))
+			WHEN ABS({$total_value} - GREATEST(0, FLOOR({$gross} - {$deductions}))) < 0.01
+				THEN GREATEST(0, FLOOR({$total_value}))
+			ELSE GREATEST(0, FLOOR({$total_value} - {$deductions}))
+		END)";
+	}
+}
+
+if (!function_exists('penjualan_modal_format_datatable_row')) {
+	function penjualan_modal_format_datatable_row($row, $nomor, $selectable, $client_side = false)
+	{
+		$id = (int) $row->id;
+		$spop = htmlspecialchars((string) (isset($row->spop) ? $row->spop : ''), ENT_QUOTES, 'UTF-8');
+		$kategori = htmlspecialchars((string) (isset($row->kategori) ? $row->kategori : ''), ENT_QUOTES, 'UTF-8');
+		$nama = htmlspecialchars((string) (isset($row->namabarang) ? $row->namabarang : ''), ENT_QUOTES, 'UTF-8');
+		$satuan = htmlspecialchars((string) (isset($row->satuan) ? $row->satuan : ''), ENT_QUOTES, 'UTF-8');
+		$harga = (float) (isset($row->hpp) ? $row->hpp : 0);
+		$stok = isset($row->stok_tersedia) ? (float) $row->stok_tersedia : (float) (isset($row->total_10) ? $row->total_10 : 0);
+		$tanggal = isset($row->tanggal_urut) ? $row->tanggal_urut : null;
+		$tanggal_tampil = '';
+		if (!empty($tanggal) && strpos((string) $tanggal, '0000-00-00') === false) {
+			$timestamp = strtotime($tanggal);
+			$tanggal_tampil = $timestamp ? date('d/m/Y', $timestamp) : htmlspecialchars((string) $tanggal, ENT_QUOTES, 'UTF-8');
+		}
+		$tanggal_cell = '<span data-order="' . htmlspecialchars((string) $tanggal, ENT_QUOTES, 'UTF-8') . '">' . $tanggal_tampil . '</span>';
+		$button_class = $selectable ? 'btn-success' : 'btn-secondary';
+		$disabled = $selectable ? '' : ' disabled';
+		$button_attributes = $client_side
+			? ' class="btn ' . $button_class . ' btn-xs btn-pilih-barang-penjualan" data-id="' . $id . '"'
+			: ' class="btn ' . $button_class . ' btn-xs" data-toggle="modal" data-target="#modal-xl_1_' . $id . '"';
+		$button = '<button type="button"' . $button_attributes . $disabled . '>PILIH BARANG</button>';
+
+		return array(
+			$nomor,
+			$button,
+			$tanggal_cell,
+			$spop . '<br><small class="text-muted">persediaan</small>',
+			$kategori,
+			$nama,
+			number_format($harga, 0, ',', '.'),
+			$satuan,
+			rtrim(rtrim(number_format($stok, 2, ',', '.'), '0'), ','),
+			$button,
 		);
 	}
 }

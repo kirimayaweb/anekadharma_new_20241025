@@ -1376,8 +1376,20 @@ function penjualan_update_persediaan_saat_jual($CI, $id_persediaan, $uuid_unit, 
 	if ($id_persediaan <= 0 || $jumlah <= 0) {
 		return array('ok' => false, 'message' => 'Data persediaan atau jumlah tidak valid.');
 	}
+	if (!$CI->db->field_exists('penjualan', 'persediaan')) {
+		return array('ok' => false, 'message' => 'Kolom persediaan.penjualan tidak ditemukan.');
+	}
 
-	$row = $CI->Persediaan_model->get_by_id($id_persediaan);
+	$row_query = $CI->db->query(
+		'SELECT * FROM ' . $CI->db->escape_identifiers('persediaan')
+			. ' WHERE ' . $CI->db->escape_identifiers('id') . ' = ? FOR UPDATE',
+		array($id_persediaan)
+	);
+	if ($row_query === false) {
+		$error = $CI->db->error();
+		return array('ok' => false, 'message' => !empty($error['message']) ? $error['message'] : 'Gagal membaca stok persediaan.');
+	}
+	$row = $row_query->row();
 	if (empty($row)) {
 		return array('ok' => false, 'message' => 'Barang persediaan tidak ditemukan.');
 	}
@@ -1385,14 +1397,14 @@ function penjualan_update_persediaan_saat_jual($CI, $id_persediaan, $uuid_unit, 
 	$row = penjualan_normalize_row_untuk_hitung_sisa($row);
 	$kolom_unit = penjualan_resolve_kolom_persediaan_unit($CI, $uuid_unit);
 	$penjualan_lama = (int) floor(persediaan_parse_angka($row->penjualan));
+	$sisa_sebelum = penjualan_get_sisa_stock_penjualan($row, $kolom_unit);
 
 	if ($mode === 'tambah') {
-		$sisa = penjualan_get_sisa_stock_penjualan($row, $kolom_unit);
-		if ($jumlah > $sisa) {
+		if ($jumlah > $sisa_sebelum) {
 			$label = $kolom_unit ? penjualan_get_label_kolom_unit($kolom_unit) : 'stok';
 			return array(
 				'ok' => false,
-				'message' => 'Jumlah melebihi stok tersedia (' . $label . ': ' . $sisa . ').',
+				'message' => 'Jumlah melebihi stok tersedia (' . $label . ': ' . $sisa_sebelum . ').',
 			);
 		}
 		$update = array('penjualan' => $penjualan_lama + $jumlah);
@@ -1411,7 +1423,24 @@ function penjualan_update_persediaan_saat_jual($CI, $id_persediaan, $uuid_unit, 
 		}
 	}
 
-	$CI->Persediaan_model->update($id_persediaan, $update);
+	$stock_gross = persediaan_parse_angka(isset($row->sa) ? $row->sa : 0)
+		+ persediaan_parse_angka(isset($row->beli) ? $row->beli : 0);
+	if ($stock_gross > 0 && $CI->db->field_exists('total_10', 'persediaan')) {
+		$row_setelah = clone $row;
+		$row_setelah->penjualan = $update['penjualan'];
+		$update['total_10'] = persediaan_hitung_total_10_kalkulasi($row_setelah);
+		if ($CI->db->field_exists('nilai_persediaan', 'persediaan')) {
+			$update['nilai_persediaan'] = (int) floor(
+				$update['total_10'] * persediaan_parse_angka(isset($row->hpp) ? $row->hpp : 0)
+			);
+		}
+	}
+
+	$updated = $CI->db->where('id', $id_persediaan)->update('persediaan', $update);
+	if (!$updated) {
+		$error = $CI->db->error();
+		return array('ok' => false, 'message' => !empty($error['message']) ? $error['message'] : 'Gagal memperbarui stok persediaan.');
+	}
 	return array('ok' => true, 'kolom_unit' => $kolom_unit);
 }
 
