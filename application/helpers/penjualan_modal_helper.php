@@ -47,7 +47,8 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 		$tanggal_expr = penjualan_sql_tanggal_persediaan_expr('p');
 		$kategori_sql = $CI->db->field_exists('kategori', 'persediaan') ? 'p.kategori' : "''";
 		$filter_non_jasa = "LOWER(TRIM(COALESCE({$kategori_sql}, ''))) <> 'jasa'";
-		if ($all_records) {
+		$sales_picker = isset($request['sales_picker']) && (string) $request['sales_picker'] === '1';
+		if ($all_records && !$sales_picker) {
 			$CI->load->helper('persediaan_display');
 			$stok_mentah_expr = "CAST(NULLIF(REPLACE(TRIM(COALESCE(p.total_10, '')), ',', '.'), '') AS DECIMAL(20,4))";
 			$sql = "SELECT p.*, {$tanggal_expr} AS tanggal_urut,
@@ -91,6 +92,83 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 				'start' => 0,
 				'tanggalAkhir' => $tgl_akhir_filter,
 				'rows' => $rows,
+			);
+		}
+
+		if ($all_records) {
+			$CI->load->helper('persediaan_display');
+			$sql = "SELECT p.*, {$tanggal_expr} AS tanggal_urut,
+					{$tanggal_expr} AS tanggal_beli
+				FROM persediaan p
+				WHERE {$filter_non_jasa}
+				AND {$tanggal_expr} >= '2026-01-01'
+				AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
+				ORDER BY tanggal_urut DESC, p.id DESC";
+			$query = $CI->db->query($sql);
+			if ($query === false) {
+				$error = $CI->db->error();
+				throw new Exception(isset($error['message']) ? $error['message'] : 'Gagal mengambil data persediaan.');
+			}
+
+			$rows = array();
+			$seen = array();
+			foreach ($query->result() as $row) {
+				$uuid = trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
+				if ($uuid !== '') {
+					$key = strtolower($uuid);
+					if (isset($seen[$key])) {
+						continue;
+					}
+					$seen[$key] = true;
+				}
+				$rows[] = $row;
+			}
+			usort($rows, function ($left, $right) {
+				$name_order = strcasecmp(
+					trim((string) (isset($left->namabarang) ? $left->namabarang : '')),
+					trim((string) (isset($right->namabarang) ? $right->namabarang : ''))
+				);
+				if ($name_order !== 0) {
+					return $name_order;
+				}
+				$date_order = strcmp(
+					(string) (isset($left->tanggal_urut) ? $left->tanggal_urut : ''),
+					(string) (isset($right->tanggal_urut) ? $right->tanggal_urut : '')
+				);
+				return $date_order !== 0 ? $date_order : ((int) $left->id <=> (int) $right->id);
+			});
+
+			$future_sales_map = penjualan_modal_future_sales_map($CI, $rows, $bulan_persediaan);
+			$rows_tersedia = array();
+			foreach ($rows as $row) {
+				$stock = max(0, (int) floor(persediaan_hitung_total_10_kalkulasi($row)));
+				$uuid_key = strtolower(trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : '')));
+				$stock_lanjutan = 0;
+				$bulan_row = penjualan_modal_bulan_persediaan_row($row, $bulan_persediaan);
+				$tanggal_akhir_bulan_row = $bulan_row !== ''
+					? date('Y-m-t', strtotime($bulan_row . '-01'))
+					: $tgl_akhir_bulan_pilihan;
+				if ($uuid_key !== '' && isset($future_sales_map[$uuid_key])) {
+					foreach ($future_sales_map[$uuid_key] as $sale) {
+						if ((int) $sale['id_persediaan_barang'] !== (int) $row->id
+							&& $sale['tanggal_jual'] > $tanggal_akhir_bulan_row) {
+							$stock_lanjutan += $sale['jumlah'];
+						}
+					}
+				}
+				$row->stok_tersedia = max(0, $stock - $stock_lanjutan);
+				if ($row->stok_tersedia <= 0) {
+					continue;
+				}
+				$rows_tersedia[] = $row;
+			}
+
+			return array(
+				'recordsTotal' => count($rows_tersedia),
+				'recordsFiltered' => count($rows_tersedia),
+				'start' => 0,
+				'tanggalAkhir' => $tgl_akhir_filter,
+				'rows' => $rows_tersedia,
 			);
 		}
 
@@ -233,6 +311,149 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 			'tanggalAkhir' => $tgl_akhir_filter,
 			'rows' => $query->result(),
 		);
+	}
+}
+
+if (!function_exists('penjualan_modal_future_sales_map')) {
+	function penjualan_modal_future_sales_map($CI, $rows, $bulan_fallback = '')
+	{
+		$uuids = array();
+		$tanggal_akhir_min = '';
+		foreach ((array) $rows as $row) {
+			$uuid = trim((string) (is_object($row) && isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
+			if ($uuid !== '') {
+				$uuids[strtolower($uuid)] = $uuid;
+				$bulan_row = penjualan_modal_bulan_persediaan_row($row, $bulan_fallback);
+				if ($bulan_row !== '') {
+					$tanggal_akhir_row = date('Y-m-t', strtotime($bulan_row . '-01'));
+					if ($tanggal_akhir_min === '' || $tanggal_akhir_row < $tanggal_akhir_min) {
+						$tanggal_akhir_min = $tanggal_akhir_row;
+					}
+				}
+			}
+		}
+		if (empty($uuids)) {
+			return array();
+		}
+		if ($tanggal_akhir_min === '') {
+			return array();
+		}
+
+		if (!$CI->db->table_exists('tbl_penjualan')
+			|| !$CI->db->field_exists('tgl_jual', 'tbl_penjualan')
+			|| !$CI->db->field_exists('jumlah', 'tbl_penjualan')
+			|| !$CI->db->field_exists('id_persediaan_barang', 'tbl_penjualan')
+			|| !$CI->db->field_exists('uuid_persediaan', 'persediaan')
+			|| (!$CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')
+				&& !$CI->db->field_exists('uuid_persediaan', 'persediaan'))) {
+			throw new Exception('Data penjualan atau relasi UUID persediaan tidak tersedia untuk menghitung stok bulan lanjutan.');
+		}
+
+		$tanggal_jual_expr = "COALESCE(
+			NULLIF(DATE(tp.tgl_jual), '0000-00-00'),
+			STR_TO_DATE(tp.tgl_jual, '%d/%m/%Y'),
+			STR_TO_DATE(tp.tgl_jual, '%e/%c/%Y'),
+			STR_TO_DATE(tp.tgl_jual, '%Y-%m-%d'),
+			STR_TO_DATE(tp.tgl_jual, '%d-%m-%Y'),
+			STR_TO_DATE(tp.tgl_jual, '%e-%c-%Y')
+		)";
+		$uuid_transaksi_expr = $CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')
+			? "LOWER(TRIM(COALESCE(NULLIF(TRIM(tp.uuid_persediaan), ''), NULLIF(TRIM(sumber.uuid_persediaan), ''), '')))"
+			: "LOWER(TRIM(COALESCE(NULLIF(TRIM(sumber.uuid_persediaan), ''), '')))";
+		$jumlah_expr = "GREATEST(0, COALESCE(CAST(NULLIF(REPLACE(TRIM(COALESCE(tp.jumlah, '')), ',', '.'), '') AS DECIMAL(20,4)), 0))";
+		$escaped_uuids = array();
+		foreach ($uuids as $uuid) {
+			$escaped_uuids[] = $CI->db->escape($uuid);
+		}
+		$uuid_list = implode(',', $escaped_uuids);
+		if ($CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')) {
+			$uuid_match = "(tp.uuid_persediaan IN ({$uuid_list})
+				OR (COALESCE(TRIM(tp.uuid_persediaan), '') = ''
+					AND sumber.uuid_persediaan IN ({$uuid_list})))";
+		} else {
+			$uuid_match = "sumber.uuid_persediaan IN ({$uuid_list})";
+		}
+
+		$sql = "SELECT {$uuid_transaksi_expr} AS uuid_key,
+				COALESCE(tp.id_persediaan_barang, 0) AS id_persediaan_barang,
+				{$tanggal_jual_expr} AS tanggal_jual,
+				SUM({$jumlah_expr}) AS jumlah
+			FROM tbl_penjualan tp
+			LEFT JOIN persediaan sumber ON sumber.id = tp.id_persediaan_barang
+			WHERE {$uuid_match}
+			AND {$tanggal_jual_expr} > '{$tanggal_akhir_min}'
+			AND {$tanggal_jual_expr} <= CURDATE()
+			GROUP BY uuid_key, id_persediaan_barang, tanggal_jual";
+		$query = $CI->db->query($sql);
+		if ($query === false) {
+			$error = $CI->db->error();
+			throw new Exception(!empty($error['message']) ? $error['message'] : 'Gagal menghitung penjualan pada bulan lanjutan.');
+		}
+
+		$map = array();
+		foreach ($query->result() as $sale) {
+			$uuid_key = strtolower(trim((string) $sale->uuid_key));
+			if ($uuid_key === '') {
+				continue;
+			}
+			if (!isset($map[$uuid_key])) {
+				$map[$uuid_key] = array();
+			}
+			$map[$uuid_key][] = array(
+				'id_persediaan_barang' => (int) $sale->id_persediaan_barang,
+				'tanggal_jual' => (string) $sale->tanggal_jual,
+				'jumlah' => max(0, (int) floor(persediaan_parse_angka($sale->jumlah))),
+			);
+		}
+		return $map;
+	}
+}
+
+if (!function_exists('penjualan_modal_bulan_persediaan_row')) {
+	function penjualan_modal_bulan_persediaan_row($row, $bulan_fallback = '')
+	{
+		$tanggal = is_object($row) && !empty($row->tanggal_beli)
+			? trim((string) $row->tanggal_beli)
+			: (is_object($row) && isset($row->tanggal) ? trim((string) $row->tanggal) : '');
+		$bulan = $tanggal !== '' ? penjualan_get_bulan_key_from_tgl($tanggal) : '';
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+			$bulan = trim((string) $bulan_fallback);
+		}
+		return preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan) ? $bulan : '';
+	}
+}
+
+if (!function_exists('penjualan_modal_sisa_stok_setelah_penjualan_lanjutan')) {
+	function penjualan_modal_sisa_stok_setelah_penjualan_lanjutan($CI, $row, $bulan_persediaan = '')
+	{
+		if (!is_object($row)) {
+			return 0;
+		}
+		$uuid = trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
+		$CI->load->helper('persediaan_display');
+		$stock = max(0, (int) floor(persediaan_hitung_total_10_kalkulasi($row)));
+		if ($uuid === '') {
+			return $stock;
+		}
+
+		$bulan_persediaan = penjualan_modal_bulan_persediaan_row($row, $bulan_persediaan);
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan_persediaan)) {
+			return $stock;
+		}
+
+		$future_sales_map = penjualan_modal_future_sales_map($CI, array($row), $bulan_persediaan);
+		$uuid_key = strtolower($uuid);
+		$jumlah_lanjutan = 0;
+		if (isset($future_sales_map[$uuid_key])) {
+			foreach ($future_sales_map[$uuid_key] as $sale) {
+				$tanggal_akhir_bulan_row = date('Y-m-t', strtotime($bulan_persediaan . '-01'));
+				if ((int) $sale['id_persediaan_barang'] !== (int) $row->id
+					&& $sale['tanggal_jual'] > $tanggal_akhir_bulan_row) {
+					$jumlah_lanjutan += $sale['jumlah'];
+				}
+			}
+		}
+		return max(0, $stock - $jumlah_lanjutan);
 	}
 }
 

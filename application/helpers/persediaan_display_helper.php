@@ -3278,7 +3278,7 @@ function persediaan_gen_proses_penjualan_build_rekap($CI, $bulan_target, $counts
 		'tanggal_beli_target' => $tgl_awal,
 	);
 	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
-	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI, $tgl_awal, $tgl_akhir);
 	$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 
 	$count_masuk = 0;
@@ -3329,7 +3329,7 @@ function persediaan_generate_proses_penjualan_package($CI, $bulan_target)
 		'tanggal_beli_target' => $tgl_awal,
 	);
 	$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
-	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+	$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI, $tgl_awal_d, $tgl_akhir_d);
 	$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 
 	$rows_masuk = array();
@@ -3709,7 +3709,7 @@ function persediaan_gen_proses_excel_load_rows($CI, $bulan_target, $jenis, $def)
 			'tanggal_beli_target' => $tgl_awal,
 		);
 		$map = persediaan_gen_v2_build_map_persediaan_bulan_range($CI, $tgl_awal, $tgl_akhir);
-		$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI);
+		$cache_pembelian = persediaan_gen_v2_build_verifikasi_cache($CI, $tgl_awal, $tgl_akhir);
 		$rows_all = persediaan_gen_v2_load_penjualan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 		$kat_want = isset($def['penjualan_kategori']) ? $def['penjualan_kategori'] : 'masuk';
 		$out = array();

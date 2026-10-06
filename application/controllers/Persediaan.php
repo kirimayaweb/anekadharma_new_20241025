@@ -620,6 +620,7 @@ class Persediaan extends CI_Controller
 			'url_hapus_persediaan_jasa' => site_url('Persediaan/ajax_hapus_persediaan_jasa'),
 			'url_hapus_persediaan_verifikasi' => site_url('Persediaan/ajax_hapus_persediaan_verifikasi'),
 			'url_cek_generate_persediaan' => site_url('Persediaan/ajax_cek_generate_persediaan_bulan'),
+			'url_generate_stock_bulanan' => site_url('Persediaan/ajax_generate_stock_bulanan'),
 			'url_analisa_generate_persediaan' => site_url('Persediaan/ajax_analisa_generate_persediaan_bulan'),
 			'url_generate_persediaan_base' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN'),
 			'url_recalculate_persediaan' => site_url('Persediaan/recalculate_data_persediaan'),
@@ -791,22 +792,17 @@ class Persediaan extends CI_Controller
 		$tanggal_beli_sumber = date('Y-m-01', strtotime('-1 month', $ts_target));
 		$bulan_sumber = date('Y-m', strtotime('-1 month', $ts_target));
 
-		$count_target = $this->persediaan_count_by_tanggal_beli($tanggal_beli_target);
-		$count_sumber_all = $this->persediaan_count_by_tanggal_beli($tanggal_beli_sumber);
-		$count_sumber = $this->persediaan_count_sumber_layak_generate($tanggal_beli_sumber);
+		$this->load->helper('persediaan_stock_bulanan');
+		$stock_meta = persediaan_stock_bulanan_month_meta($this, $bulan_target);
+		$count_target = $stock_meta['count_target'];
+		$count_sumber_all = $stock_meta['count_sumber_all'];
+		$count_sumber = $stock_meta['count_sumber_layak'];
 		$sudah_ada = ($count_target > 0);
 		$tgl_awal = $tanggal_beli_target;
 		$tgl_akhir = date('Y-m-t', $ts_target);
-		$can_recalc_only = $this->persediaan_target_can_proceed_without_source(
-			$bulan_target,
-			$tanggal_beli_target,
-			$tgl_awal,
-			$tgl_akhir
-		);
-		$can_generate = ($count_sumber_all > 0) || $can_recalc_only;
-
 		$this->load->helper('pembelian_persediaan');
 		$count_pembelian_barang = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian', $tgl_awal, $tgl_akhir);
+		$can_generate = ($count_sumber_all > 0 || $count_pembelian_barang > 0);
 		$count_pembelian_jasa = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir);
 		$show_pembelian_proses_view = ($count_target > 0 || $count_pembelian_barang > 0 || $count_pembelian_jasa > 0);
 		$count_unit_produk = persediaan_gen_v2_count_unit_produk_bulan($this, $tgl_awal, $tgl_akhir);
@@ -815,23 +811,22 @@ class Persediaan extends CI_Controller
 		$show_penjualan_proses_view = ($count_target > 0 || $count_penjualan > 0);
 
 		$message = '';
-		if ($count_sumber_all === 0 && !$can_recalc_only) {
-			$message = 'Tidak ada data sumber bulan ' . date('m/Y', strtotime($bulan_sumber . '-01'))
-				. ' (tanggal_beli = ' . $tanggal_beli_sumber . ') dan belum ada data/transaksi di bulan target. '
-				. 'Isi dulu persediaan bulan sebelumnya atau pastikan ada pembelian/penjualan/produksi di bulan target.';
-		} elseif ($count_sumber_all === 0 && $can_recalc_only) {
-			$message = 'Bulan sumber kosong — siap <strong>Recalculate</strong> bulan target '
-				. date('m/Y', $ts_target) . ' dari data persediaan/transaksi yang ada '
-				. '(pembelian, penjualan, produksi, pecah satuan).';
+		if ($count_sumber_all === 0 && $count_pembelian_barang === 0) {
+			$message = 'Tidak ada record persediaan sumber bulan '
+				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' maupun pembelian bulan target.';
+		} elseif ($count_sumber_all === 0) {
+			$message = 'Tidak ada record stock bulan sebelumnya; seluruh <strong>' . $count_pembelian_barang
+				. '</strong> pembelian bulan target akan dibuat sebagai record baru. Proses lanjutan tidak dijalankan.';
 		} elseif ($sudah_ada) {
-			$message = 'Bulan target sudah ada <strong>' . $count_target . ' record</strong>. Generate & Recalculate akan: '
-				. '(1) hapus baris target sa=0 &amp; total_10=0, '
-				. '(2) salin/update <strong>' . $count_sumber . '</strong> record sumber (total_10 &gt;= 1), '
-				. '(3) proses pembelian bulan ini → insert baru / update <strong>beli</strong>.';
+			$message = 'Proses hanya menghapus data target dari <code>persediaan_stock_bulanan</code>, '
+				. 'menyalin <strong>' . $count_sumber . '</strong> record sumber dengan <code>total_10 &gt; 0</code>, '
+				. 'lalu memproses <strong>' . $count_pembelian_barang . '</strong> pembelian <code>tbl_pembelian</code>. '
+				. 'Data target yang ada (' . $count_target . ' record) akan diganti. '
+				. 'Produksi, penjualan, dan pecah satuan tidak diproses.';
 		} else {
-			$message = 'Siap Generate & Recalculate: salin/update <strong>' . $count_sumber . '</strong> record dari bulan '
-				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' (hanya total_10 &gt;= 1, dari ' . $count_sumber_all . ' record sumber) ke bulan '
-				. date('m/Y', $ts_target) . ', lalu proses pembelian (record baru → insert persediaan).';
+			$message = 'Siap Generate: salin <strong>' . $count_sumber . '</strong> record dengan <code>total_10 &gt; 0</code> '
+				. 'dari bulan sebelumnya, lalu proses <strong>' . $count_pembelian_barang
+				. '</strong> pembelian <code>tbl_pembelian</code>. Proses berhenti setelah pembelian.';
 		}
 
 		echo json_encode(array(
@@ -854,11 +849,93 @@ class Persediaan extends CI_Controller
 			'show_penjualan_proses_view' => $show_penjualan_proses_view,
 			'count_penjualan' => $count_penjualan,
 			'can_generate' => $can_generate,
-			'can_recalc_only' => ($count_sumber_all === 0 && $can_recalc_only),
+			'can_recalc_only' => false,
 			'user_can_generate' => true,
-			'url_generate' => site_url('Persediaan/GENERATE_PERSEDIAN_BULAN/' . $bulan_target),
+			'url_generate' => site_url('Persediaan/ajax_generate_stock_bulanan'),
 			'message' => $message,
 		));
+	}
+
+	/**
+	 * Generate snapshot stok bulanan: copy stock bulan sebelumnya, lalu sinkronkan tbl_pembelian.
+	 */
+	public function ajax_generate_stock_bulanan()
+	{
+		$this->output->set_header('Content-Type: application/x-ndjson; charset=utf-8');
+		$this->output->set_header('Cache-Control: no-cache, no-store, must-revalidate');
+		$this->output->set_header('X-Accel-Buffering: no');
+		@ini_set('zlib.output_compression', '0');
+		@ini_set('output_buffering', 'off');
+		$emit = function ($event) {
+			echo json_encode($event) . "\n";
+			while (ob_get_level() > 0) {
+				if (!@ob_end_flush()) {
+					break;
+				}
+			}
+			flush();
+		};
+
+		if (!$this->persediaan_user_can_generate()) {
+			$emit(array(
+				'type' => 'result',
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Generate Persediaan')),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+			$emit(array('type' => 'result', 'ok' => false, 'message' => 'Format bulan tidak valid. Gunakan YYYY-MM.'));
+			return;
+		}
+
+		$this->load->helper(array('persediaan_display', 'persediaan_stock_bulanan'));
+		$db_debug = $this->db->db_debug;
+		$this->db->db_debug = false;
+		try {
+			$emit(array(
+				'type' => 'progress',
+				'phase' => 'copy',
+				'phase_label' => 'Tahap 1 dari 2 — Salin persediaan_stock_bulanan',
+				'message' => 'Menyiapkan data bulan ' . $bulan . '...',
+				'processed' => 0,
+				'total' => 0,
+				'percent' => 0,
+				'record' => '',
+			));
+			$result = persediaan_stock_bulanan_generate($this, $bulan, function ($progress) use ($emit) {
+				$progress['type'] = 'progress';
+				$emit($progress);
+			});
+			$result['bulan_target_label'] = date('m/Y', strtotime($bulan . '-01'));
+			$result['bulan_sumber_label'] = date('m/Y', strtotime($result['bulan_sumber'] . '-01'));
+			$result['html'] = $this->load->view(
+				'anekadharma/persediaan/_generate_stock_bulanan_result',
+				$result,
+				true
+			);
+			$this->db->db_debug = $db_debug;
+			$emit(array(
+				'type' => 'result',
+				'ok' => true,
+				'html' => $result['html'],
+				'bulan_target' => $bulan,
+				'count_copied' => $result['count_copied'],
+				'count_deleted' => $result['count_deleted'],
+				'count_purchases' => $result['count_purchases'],
+				'count_purchase_updated' => $result['count_purchase_updated'],
+				'count_purchase_inserted' => $result['count_purchase_inserted'],
+			));
+		} catch (Throwable $e) {
+			$this->db->db_debug = $db_debug;
+			$emit(array(
+				'type' => 'result',
+				'ok' => false,
+				'message' => 'Generate stok bulanan gagal: ' . $e->getMessage(),
+			));
+		}
 	}
 
 	/**
@@ -3632,6 +3709,73 @@ class Persediaan extends CI_Controller
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
 		} catch (Throwable $e) {
 			persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Error: ' . $e->getMessage()));
+		}
+	}
+
+	/**
+	 * Read-only preview jumlah persediaan sebelum mode Copy Saja.
+	 */
+	public function ajax_generate_copy_only_januari_2026_preview()
+	{
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Preview Copy Persediaan Januari 2026'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		persediaan_ajax_json_output($this, persediaan_generate_copy_only_januari_2026_preview($this, $bulan));
+	}
+
+	/**
+	 * Salin saldo Desember 2025 ke Januari 2026 saja; hentikan sebelum transaksi lain.
+	 */
+	public function ajax_generate_copy_only_januari_2026()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '1024M');
+
+		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_generate()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Copy persediaan Januari 2026'),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
+		if ($bulan !== '2026-01') {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Mode copy saja ini hanya berlaku untuk Januari 2026.',
+			));
+			return;
+		}
+
+		$db_debug = $this->db->db_debug;
+		$this->db->db_debug = false;
+		try {
+			$result = persediaan_generate_copy_only_januari_2026($this, $bulan);
+			$this->db->db_debug = $db_debug;
+			persediaan_ajax_json_output($this, $result);
+		} catch (Exception $e) {
+			$this->db->db_debug = $db_debug;
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Gagal menyalin persediaan Januari 2026: ' . $e->getMessage(),
+			));
+		} catch (Throwable $e) {
+			$this->db->db_debug = $db_debug;
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Gagal menyalin persediaan Januari 2026: ' . $e->getMessage(),
+			));
 		}
 	}
 

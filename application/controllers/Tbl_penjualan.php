@@ -1132,8 +1132,9 @@ class Tbl_penjualan extends CI_Controller
 		$draw_value = isset($request['draw']) ? $request['draw'] : 0;
 		$draw = is_scalar($draw_value) ? (int) $draw_value : 0;
 		try {
-			$this->load->helper('penjualan_modal');
+			$this->load->helper(array('pembelian_persediaan', 'penjualan_modal'));
 			$request['all_records'] = '1';
+			$request['sales_picker'] = '1';
 			$result = penjualan_modal_datatable_persediaan($this, $request);
 			$data_rows = array();
 			$stock_data = array();
@@ -1165,6 +1166,7 @@ class Tbl_penjualan extends CI_Controller
 				'recordsFiltered' => $result['recordsTotal'],
 				'tanggalAwal' => '2026-01-01',
 				'tanggalAkhir' => $result['tanggalAkhir'],
+				'bulanPersediaan' => isset($request['bulan_persediaan']) ? $request['bulan_persediaan'] : '',
 				'data' => $data_rows,
 				'stockData' => $stock_data,
 			));
@@ -1281,7 +1283,7 @@ class Tbl_penjualan extends CI_Controller
 
 	public function create_action_simpan_barang($uuid_penjualan = null, $id_persediaan_barang = null)
 	{
-		$this->load->helper('pembelian_persediaan');
+		$this->load->helper(array('pembelian_persediaan', 'penjualan_modal'));
 
 		$uuid_penjualan = trim((string) $uuid_penjualan);
 		if ($uuid_penjualan === '') {
@@ -1440,12 +1442,17 @@ class Tbl_penjualan extends CI_Controller
 			return;
 		}
 
-		$kolom_unit_simpan = penjualan_resolve_kolom_persediaan_unit($this, $Get_uuid_unit);
-		$sisa_stock_simpan = penjualan_get_sisa_stock_penjualan($data_barang, $kolom_unit_simpan);
+		$bulan_stock_simpan = trim((string) $this->input->post('bulan_persediaan', TRUE));
+		$sisa_stock_simpan = penjualan_modal_sisa_stok_setelah_penjualan_lanjutan(
+			$this,
+			$data_barang,
+			$bulan_stock_simpan
+		);
 		if ((int) $jumlah_simpan > $sisa_stock_simpan) {
 			$this->_respon_simpan_barang(
 				false,
-				'Jumlah melebihi stok tersedia (' . (int) $sisa_stock_simpan . ').',
+				'Jumlah melebihi stok yang masih tersedia setelah memperhitungkan penjualan bulan berikutnya ('
+					. (int) $sisa_stock_simpan . ').',
 				$uuid_penjualan
 			);
 			return;
@@ -1542,7 +1549,8 @@ class Tbl_penjualan extends CI_Controller
 			$id_persediaan_barang,
 			$Get_uuid_unit,
 			$jumlah_simpan,
-			'tambah'
+			'tambah',
+			$bulan_stock_simpan
 		);
 
 		if (empty($hasil_persediaan['ok'])) {

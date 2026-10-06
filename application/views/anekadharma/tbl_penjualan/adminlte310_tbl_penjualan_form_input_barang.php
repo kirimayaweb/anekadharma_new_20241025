@@ -240,7 +240,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1" id="info-bulan-persediaan-penjualan">
-                                    Persediaan <strong>total_10 &gt; 0</strong> sejak 01/01/2026; duplikat UUID dan nama memakai record terlama, urutan nama lalu Tgl PO.
+                                    Stok mengikuti bulan persediaan yang dipilih, dikurangi penjualan pada bulan-bulan sesudahnya sampai hari ini; jasa tidak ditampilkan.
                                 </small>
                                 <?php if ((int) $jumlah_barang_penjualan > 0) { ?>
                                 <small class="text-danger d-block mt-1" id="info-tgl-jual-terkunci">
@@ -559,7 +559,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
     <div class="modal-dialog modal-pilih-barang-wide">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">Pilih Barang <small class="text-muted" id="modal-pilih-barang-bulan-label">(Persediaan: total_10 &gt; 0, sejak 01/01/2026)</small></h4>
+                <h4 class="modal-title">Pilih Barang <small class="text-muted" id="modal-pilih-barang-bulan-label">(Saldo bulan terpilih setelah dikurangi penjualan bulan berikutnya)</small></h4>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -574,7 +574,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                         <div class="d-flex align-items-center flex-wrap">
                             <label for="filter-bulan-persediaan-penjualan" class="mb-0 mr-2">Bulan persediaan:</label>
                             <input type="month" id="filter-bulan-persediaan-penjualan" class="form-control form-control-sm mr-3" style="width:180px">
-                            <small class="text-muted" id="modal-pilih-barang-cache-status">Data diambil langsung dari tabel persediaan.</small>
+                            <small class="text-muted" id="modal-pilih-barang-cache-status">Pilih bulan untuk melihat saldo stok yang masih tersedia.</small>
                         </div>
                         <button type="button" class="btn btn-outline-primary btn-sm" id="btn-refresh-pilih-barang">
                             <i class="fas fa-sync-alt"></i> Refresh data terbaru
@@ -828,10 +828,15 @@ window.clearPenjualanPilihBarangCache = function() {
 };
 
 window.updatePenjualanPilihBarangRangeLabel = function(payload) {
-    var endDate = payload && payload.tanggalAkhir ? payload.tanggalAkhir : '';
+    var month = payload && payload.bulanPersediaan ? payload.bulanPersediaan : '';
     var count = payload && payload.recordsTotal ? payload.recordsTotal : 0;
+    var monthLabel = month;
+    var monthMatch = String(month).match(/^(\d{4})-(\d{2})$/);
+    if (monthMatch) {
+        monthLabel = monthMatch[2] + '/' + monthMatch[1];
+    }
     $('#modal-pilih-barang-bulan-label').text(
-        '(Persediaan: 01/01/2026–' + endDate + ', ' + count + ' data)'
+        '(Stok ' + monthLabel + ' setelah penjualan bulan berikutnya, ' + count + ' barang)'
     );
 };
 
@@ -919,6 +924,7 @@ window.openPenjualanPilihBarangModal = function(id) {
         '</div></div></div></div><div class="modal-footer justify-content-between">' +
         '<input type="hidden" name="ajax" value="1">' +
         '<input type="hidden" name="tgl_jual" value="' + window.penjualanEscapeHtml($('#input_tgl_jual_penjualan').val()) + '">' +
+        '<input type="hidden" name="bulan_persediaan" value="' + window.penjualanEscapeHtml($('#filter-bulan-persediaan-penjualan').val()) + '">' +
         '<input type="hidden" name="uuid_unit" value="' + window.penjualanEscapeHtml($('#uuid_unit').val()) + '">' +
         '<input type="hidden" name="uuid_konsumen" value="' + window.penjualanEscapeHtml($('#uuid_konsumen').val()) + '">' +
         '<input type="hidden" name="uuid_persediaan" value="' + window.penjualanEscapeHtml(item.uuid_persediaan) + '">' +
@@ -1079,7 +1085,7 @@ window.initDataTablePilihBarang = function(onReady, onFinish) {
                     window.penjualanStockCacheById = json.stockData || {};
                     $('#container-modal-pilih-barang-nested').empty();
                     $('#modal-pilih-barang-cache-status').text(
-                        'Data terbaru dimuat langsung dari persediaan 01/01/2026–' + json.tanggalAkhir + '.'
+                        'Menampilkan saldo bulan terpilih setelah dikurangi penjualan pada bulan-bulan sesudahnya sampai hari ini.'
                     );
                     window.updatePenjualanPilihBarangRangeLabel(json);
                     json.draw = data.draw;
@@ -1160,10 +1166,7 @@ window.initDataTablePilihBarang = function(onReady, onFinish) {
                 if (json && json.error) {
                     penjualanAlertPesan('Gagal memuat data', json.error, 'error');
                 } else {
-                    var count = json ? json.recordsTotal : 0;
-                    $('#modal-pilih-barang-bulan-label').text(
-                        '(Persediaan: 01/01/2026–' + (json && json.tanggalAkhir ? json.tanggalAkhir : '') + ', ' + count + ' data)'
-                    );
+                    window.updatePenjualanPilihBarangRangeLabel(json);
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
                             icon: 'success',
