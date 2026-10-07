@@ -2700,9 +2700,13 @@ function persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target)
 
 	$rows_bahan = persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akhir);
 	$count_bahan = count($rows_bahan);
+	$count_bahan_persediaan_match = 0;
+	$count_bahan_stock_match = 0;
 	foreach ($rows_bahan as $rb) {
 		$sum_jumlah_bahan += (float) (isset($rb->jumlah_bahan_num) ? $rb->jumlah_bahan_num : 0);
 		$sum_nominal_bahan += (float) (isset($rb->total_nominal_bahan) ? $rb->total_nominal_bahan : 0);
+		$count_bahan_persediaan_match += !empty($rb->id_persediaan_bahan) ? 1 : 0;
+		$count_bahan_stock_match += !empty($rb->id_stock_bulanan) ? 1 : 0;
 	}
 
 	$rows_real = persediaan_gen_proses_produksi_build_bahan_real_rows($CI, $tgl_awal, $tgl_akhir);
@@ -2736,6 +2740,9 @@ function persediaan_gen_proses_produksi_build_rekap($CI, $bulan_target)
 		'sum_jumlah_produksi_fmt' => persediaan_format_angka_tampil($sum_jumlah),
 		'sum_beli_persediaan_fmt' => persediaan_format_angka_tampil($sum_beli),
 		'count_bahan' => $count_bahan,
+		'count_bahan_persediaan_match' => $count_bahan_persediaan_match,
+		'count_bahan_stock_match' => $count_bahan_stock_match,
+		'count_bahan_stock_unmatched' => max(0, $count_bahan - $count_bahan_stock_match),
 		'sum_jumlah_bahan' => $sum_jumlah_bahan,
 		'sum_nominal_bahan' => $sum_nominal_bahan,
 		'sum_jumlah_bahan_fmt' => persediaan_format_angka_tampil($sum_jumlah_bahan),
@@ -2810,7 +2817,36 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 	$CI->load->helper('pembelian_persediaan');
 	$raw = persediaan_gen_v2_load_unit_produk_bahan_bulan_rows($CI, $tgl_awal, $tgl_akhir);
 	$out = array();
-	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tgl_awal);
+	$persediaan_map = persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tgl_awal);
+	$stock_map = array('by_uuid_pers' => array(), 'by_id' => array(), 'by_nama_satuan' => array());
+	if ($CI->db->table_exists('persediaan_stock_bulanan')) {
+		$stock_rows = $CI->db->query(
+			"SELECT * FROM `persediaan_stock_bulanan`
+			WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+			ORDER BY `id` ASC",
+			array($tgl_awal, $tgl_awal)
+		)->result();
+		foreach ($stock_rows as $stock_row) {
+			$stock_map['by_id'][(int) $stock_row->id] = $stock_row;
+			$uuid = isset($stock_row->uuid_persediaan) ? trim((string) $stock_row->uuid_persediaan) : '';
+			if ($uuid !== '') {
+				if (!isset($stock_map['by_uuid_pers'][$uuid])) {
+					$stock_map['by_uuid_pers'][$uuid] = array();
+				}
+				$stock_map['by_uuid_pers'][$uuid][] = $stock_row;
+			}
+			$ns_key = persediaan_recalculate_nama_satuan_key(
+				isset($stock_row->namabarang) ? $stock_row->namabarang : '',
+				isset($stock_row->satuan) ? $stock_row->satuan : ''
+			);
+			if ($ns_key !== '') {
+				if (!isset($stock_map['by_nama_satuan'][$ns_key])) {
+					$stock_map['by_nama_satuan'][$ns_key] = array();
+				}
+				$stock_map['by_nama_satuan'][$ns_key][] = $stock_row;
+			}
+		}
+	}
 
 	// Map produk untuk nama produk (via uuid_persediaan bahan = uuid_persediaan produk)
 	$produk_by_uuid = array();
@@ -2823,15 +2859,15 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 	}
 
 	foreach ($raw as $row) {
-		$uuid_bahan = isset($row->uuid_persediaan_bahan) ? trim((string) $row->uuid_persediaan_bahan) : '';
-		if ($uuid_bahan === '' && isset($row->uuid_persediaan)) {
-			$uuid_bahan = trim((string) $row->uuid_persediaan);
-		}
+		$uuid_bahan_field = $CI->db->field_exists('uuid_persediaan_bahan', 'sys_unit_produk_bahan')
+			? 'uuid_persediaan_bahan'
+			: 'uuid_persediaan';
+		$uuid_bahan = isset($row->{$uuid_bahan_field}) ? trim((string) $row->{$uuid_bahan_field}) : '';
 		$jumlah = (float) persediaan_parse_angka(isset($row->jumlah_bahan) ? $row->jumlah_bahan : 0);
-		$pers = persediaan_generate_recalculate_find_persediaan_for_produksi_bahan($CI, $row, $map);
-		if (!$pers && $uuid_bahan !== '') {
-			$pers = persediaan_gen_proses_produksi_lookup_persediaan_bahan($CI, $uuid_bahan, $tgl_awal, $tgl_akhir);
-		}
+		$pers_match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row, $persediaan_map);
+		$stock_match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row, $stock_map);
+		$pers = isset($pers_match['row']) ? $pers_match['row'] : null;
+		$stock = isset($stock_match['row']) ? $stock_match['row'] : null;
 
 		$harga_pers = $pers && isset($pers->hpp) ? (float) persediaan_parse_angka($pers->hpp) : 0.0;
 		$harga_bahan_tbl = (float) persediaan_parse_angka(isset($row->harga_satuan_bahan) ? $row->harga_satuan_bahan : 0);
@@ -2852,7 +2888,37 @@ function persediaan_gen_proses_produksi_load_bahan_rows($CI, $tgl_awal, $tgl_akh
 		$item->total_nominal_bahan = $jumlah * $harga_pakai;
 		$item->nama_produk = $produk && isset($produk->nama_barang) ? (string) $produk->nama_barang : '';
 		$item->id_persediaan_bahan = $pers && isset($pers->id) ? (int) $pers->id : 0;
+		$item->namabarang_persediaan = $pers && isset($pers->namabarang) ? (string) $pers->namabarang : '';
 		$item->match_persediaan = $pers ? 1 : 0;
+		$item->uuid_persediaan_bahan_tampil = $uuid_bahan;
+		$item->status_persediaan = $pers
+			? (isset($pers_match['metode']) && $pers_match['metode'] === 'PEMBELIAN_NAMA_TANGGAL' ? 'TERPROSES VIA PEMBELIAN' : 'TERPROSES UUID')
+			: ($uuid_bahan === '' ? 'UUID KOSONG' : 'UUID TIDAK DITEMUKAN');
+		$item->metode_pencocokan_persediaan = isset($pers_match['metode']) ? $pers_match['metode'] : '';
+		$item->alasan_persediaan = isset($pers_match['alasan']) ? $pers_match['alasan'] : '';
+		$item->persediaan_bahan_produksi = $pers && isset($pers->bahan_produksi)
+			? (float) persediaan_parse_angka($pers->bahan_produksi)
+			: 0.0;
+		$item->persediaan_total_10 = $pers && isset($pers->total_10)
+			? (float) persediaan_parse_angka($pers->total_10)
+			: 0.0;
+		$item->id_stock_bulanan = $stock && isset($stock->id) ? (int) $stock->id : 0;
+		$item->namabarang_stock_bulanan = $stock && isset($stock->namabarang) ? (string) $stock->namabarang : '';
+		$item->status_stock_bulanan = $stock
+			? (isset($stock_match['metode']) && $stock_match['metode'] === 'PEMBELIAN_NAMA_TANGGAL' ? 'TERPROSES VIA PEMBELIAN' : 'TERPROSES UUID')
+			: ($uuid_bahan === '' ? 'UUID KOSONG' : 'UUID TIDAK DITEMUKAN');
+		$item->metode_pencocokan_stock_bulanan = isset($stock_match['metode']) ? $stock_match['metode'] : '';
+		$item->alasan_stock_bulanan = isset($stock_match['alasan']) ? $stock_match['alasan'] : '';
+		$purchase_match = !empty($pers_match['pembelian']) ? $pers_match['pembelian'] : (isset($stock_match['pembelian']) ? $stock_match['pembelian'] : null);
+		$item->id_pembelian_referensi = $purchase_match && isset($purchase_match->id) ? (int) $purchase_match->id : 0;
+		$item->tgl_pembelian_referensi = $purchase_match && isset($purchase_match->tgl_po) ? (string) $purchase_match->tgl_po : '';
+		$item->uuid_pembelian_referensi = $purchase_match && isset($purchase_match->uuid_persediaan) ? (string) $purchase_match->uuid_persediaan : '';
+		$item->stock_bulanan_bahan_produksi = $stock && isset($stock->bahan_produksi)
+			? (float) persediaan_parse_angka($stock->bahan_produksi)
+			: 0.0;
+		$item->stock_bulanan_total_10 = $stock && isset($stock->total_10)
+			? (float) persediaan_parse_angka($stock->total_10)
+			: 0.0;
 		$item->bahan_produksi_persediaan = $pers && isset($pers->bahan_produksi)
 			? (float) persediaan_parse_angka($pers->bahan_produksi)
 			: 0.0;
@@ -2879,10 +2945,6 @@ function persediaan_gen_proses_produksi_build_bahan_tidak_ada_rows($CI, $tgl_awa
 		$CI->load->helper('pembelian_persediaan');
 		if (function_exists('sys_unit_produk_bahan_is_manual_verified_persediaan')
 			&& sys_unit_produk_bahan_is_manual_verified_persediaan($row)) {
-			continue;
-		}
-		$jumlah = isset($row->jumlah_bahan_num) ? (float) $row->jumlah_bahan_num : 0;
-		if ($jumlah <= 0) {
 			continue;
 		}
 		$out[] = $row;

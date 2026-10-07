@@ -798,10 +798,19 @@ class Persediaan extends CI_Controller
 		$count_sumber_all = $stock_meta['count_sumber_all'];
 		$count_sumber = $stock_meta['count_sumber_layak'];
 		$sudah_ada = ($count_target > 0);
+		$is_live_january = ($bulan_target === '2026-01');
 		$tgl_awal = $tanggal_beli_target;
-		$tgl_akhir = date('Y-m-t', $ts_target);
+		$tgl_akhir = $is_live_january ? date('Y-m-d') : date('Y-m-t', $ts_target);
 		$this->load->helper('pembelian_persediaan');
 		$count_pembelian_barang = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian', $tgl_awal, $tgl_akhir);
+		if ($is_live_january) {
+			$row_live_target = $this->db->query(
+				"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli` >= ? AND `tanggal_beli` < ?",
+				array('2026-01-01', '2027-01-01')
+			)->row();
+			$count_target = $row_live_target ? (int) $row_live_target->jml : 0;
+			$sudah_ada = ($count_target > 0);
+		}
 		$can_generate = ($count_sumber_all > 0 || $count_pembelian_barang > 0);
 		$count_pembelian_jasa = persediaan_gen_v2_count_pembelian_bulan($this, 'tbl_pembelian_jasa', $tgl_awal, $tgl_akhir);
 		$show_pembelian_proses_view = ($count_target > 0 || $count_pembelian_barang > 0 || $count_pembelian_jasa > 0);
@@ -811,7 +820,13 @@ class Persediaan extends CI_Controller
 		$show_penjualan_proses_view = ($count_target > 0 || $count_penjualan > 0);
 
 		$message = '';
-		if ($count_sumber_all === 0 && $count_pembelian_barang === 0) {
+		if ($is_live_january) {
+			$message = 'Mode stock live Januari: saldo pembuka Desember 2025 dicopy satu kali, lalu pembelian '
+				. '<strong>' . $count_pembelian_barang . '</strong>, produksi bahan, produk jadi, dan penjualan '
+				. '<strong>' . $count_penjualan . '</strong> diproses dari 2026-01-01 sampai '
+				. htmlspecialchars($tgl_akhir, ENT_QUOTES, 'UTF-8')
+				. '. Stock UUID hanya disimpan pada satu record live; snapshot Februari dan bulan berikutnya tidak dibuat.';
+		} elseif ($count_sumber_all === 0 && $count_pembelian_barang === 0) {
 			$message = 'Tidak ada record persediaan sumber bulan '
 				. date('m/Y', strtotime($bulan_sumber . '-01')) . ' maupun pembelian bulan target.';
 		} elseif ($count_sumber_all === 0) {
@@ -861,6 +876,8 @@ class Persediaan extends CI_Controller
 	 */
 	public function ajax_generate_stock_bulanan()
 	{
+		@set_time_limit(0);
+		@ini_set('max_execution_time', '0');
 		$this->output->set_header('Content-Type: application/x-ndjson; charset=utf-8');
 		$this->output->set_header('Cache-Control: no-cache, no-store, must-revalidate');
 		$this->output->set_header('X-Accel-Buffering: no');
@@ -895,6 +912,108 @@ class Persediaan extends CI_Controller
 		$db_debug = $this->db->db_debug;
 		$this->db->db_debug = false;
 		try {
+			if ($bulan === '2026-01') {
+				$this->load->helper('persediaan_live_stock');
+				$live_result = persediaan_live_stock_rebuild_2026($this, function ($progress) use ($emit) {
+					$progress['type'] = 'progress';
+					$emit($progress);
+				});
+				if (empty($live_result['ok'])) {
+					$this->db->db_debug = $db_debug;
+					$emit(array(
+						'type' => 'result',
+						'ok' => false,
+						'message' => isset($live_result['message']) ? $live_result['message'] : 'Rebuild stock live Januari 2026 gagal.',
+					));
+					return;
+				}
+
+				$stats = isset($live_result['stats']) && is_array($live_result['stats']) ? $live_result['stats'] : array();
+				$stock_count_row = $this->db->query(
+					"SELECT COUNT(*) AS jml FROM `persediaan` WHERE `tanggal_beli` >= ? AND `tanggal_beli` < ?",
+					array('2026-01-01', '2027-01-01')
+				)->row();
+				$duplicate_uuid_row = $this->db->query(
+					"SELECT COUNT(*) AS jml FROM (
+						SELECT LOWER(TRIM(`uuid_persediaan`)) AS uuid_key
+						FROM `persediaan`
+						WHERE `tanggal_beli` >= ? AND `tanggal_beli` < ?
+						AND TRIM(COALESCE(`uuid_persediaan`, '')) <> ''
+						GROUP BY LOWER(TRIM(`uuid_persediaan`)) HAVING COUNT(*) > 1
+					) AS duplicate_rows",
+					array('2026-01-01', '2027-01-01')
+				)->row();
+				$unmatched_count = (int) (isset($stats['purchase_unmatched']) ? $stats['purchase_unmatched'] : 0)
+					+ (int) (isset($stats['material_unverified']) ? $stats['material_unverified'] : 0)
+					+ (int) (isset($stats['product_unmatched']) ? $stats['product_unmatched'] : 0)
+					+ (int) (isset($stats['sale_unverified']) ? $stats['sale_unverified'] : 0);
+				$end_date = isset($live_result['tanggal_akhir']) ? $live_result['tanggal_akhir'] : date('Y-m-d');
+				$render_issues = function ($title, $rows, $columns) {
+					if (empty($rows)) {
+						return '';
+					}
+					$html = '<details class="mb-2"><summary><strong>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8')
+						. ' (' . count($rows) . ')</strong></summary><div class="table-responsive mt-2"><table class="table table-sm table-bordered"><thead><tr>';
+					foreach ($columns as $column => $label) {
+						$html .= '<th>' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</th>';
+					}
+					$html .= '</tr></thead><tbody>';
+					foreach (array_slice($rows, 0, 100) as $row) {
+						$html .= '<tr>';
+						foreach ($columns as $column => $label) {
+							$value = isset($row[$column]) ? (string) $row[$column] : '';
+							$html .= '<td>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</td>';
+						}
+						$html .= '</tr>';
+					}
+					$html .= '</tbody></table></div>';
+					if (count($rows) > 100) {
+						$html .= '<small>Menampilkan 100 dari ' . count($rows) . ' transaksi.</small>';
+					}
+					return $html . '</details>';
+				};
+				$html = '<div class="alert ' . ($unmatched_count > 0 ? 'alert-warning' : 'alert-success') . '">'
+					. '<strong>Rebuild stock live Januari 2026 selesai.</strong><br>'
+					. 'Saldo awal Desember disalin: <strong>' . (int) (isset($stats['opening_copied']) ? $stats['opening_copied'] : 0) . '</strong>; '
+					. 'pembelian diproses: <strong>' . (int) (isset($stats['purchase_processed']) ? $stats['purchase_processed'] : 0) . '</strong>; '
+					. 'bahan produksi: <strong>' . (int) (isset($stats['material_processed']) ? $stats['material_processed'] : 0) . '</strong>; '
+					. 'produk jadi: <strong>' . (int) (isset($stats['product_processed']) ? $stats['product_processed'] : 0) . '</strong>; '
+					. 'penjualan diproses: <strong>' . (int) (isset($stats['sale_processed']) ? $stats['sale_processed'] : 0) . '</strong>; '
+					. 'stock records: <strong>' . (int) ($stock_count_row ? $stock_count_row->jml : 0) . '</strong>; '
+					. 'UUID ganda: <strong>' . (int) ($duplicate_uuid_row ? $duplicate_uuid_row->jml : 0) . '</strong>.'
+					. '<br>Rentang transaksi: 2026-01-01 sampai ' . htmlspecialchars($end_date, ENT_QUOTES, 'UTF-8') . '. '
+					. 'Snapshot Februari dan bulan berikutnya tidak dibuat.'
+					. ($unmatched_count > 0 ? '<br><strong>Perlu pemeriksaan: ' . $unmatched_count . ' transaksi tidak terpetakan atau stock tidak cukup.</strong>' : '')
+					. '</div>'
+					. $render_issues('Pembelian belum terpetakan', isset($live_result['purchase_unmatched']) ? $live_result['purchase_unmatched'] : array(), array('id' => 'ID', 'nama' => 'Uraian', 'jumlah' => 'Jumlah', 'keterangan' => 'Alasan'))
+					. $render_issues('Bahan produksi belum terverifikasi', isset($live_result['material_unverified']) ? $live_result['material_unverified'] : array(), array('id' => 'ID', 'tanggal' => 'Tanggal', 'nama' => 'Bahan', 'jumlah' => 'Jumlah', 'uuid' => 'UUID', 'keterangan' => 'Alasan'))
+					. $render_issues('Produk jadi belum terpetakan', isset($live_result['product_unmatched']) ? $live_result['product_unmatched'] : array(), array('id' => 'ID', 'tanggal' => 'Tanggal', 'nama' => 'Produk', 'jumlah' => 'Jumlah', 'uuid' => 'UUID', 'keterangan' => 'Alasan'))
+					. $render_issues('Penjualan belum terverifikasi', isset($live_result['sale_unverified']) ? $live_result['sale_unverified'] : array(), array('id' => 'ID', 'tanggal' => 'Tanggal', 'nama' => 'Barang', 'jumlah' => 'Jumlah', 'uuid' => 'UUID', 'keterangan' => 'Alasan'));
+
+				$this->db->db_debug = $db_debug;
+				$emit(array(
+					'type' => 'result',
+					'ok' => true,
+					'live_stock' => true,
+					'html' => $html,
+					'bulan_target' => $bulan,
+					'tanggal_akhir' => $end_date,
+					'count_copied' => (int) (isset($stats['opening_copied']) ? $stats['opening_copied'] : 0),
+					'count_purchases' => (int) (isset($stats['purchase_processed']) ? $stats['purchase_processed'] : 0),
+					'count_purchase_updated' => (int) (isset($stats['purchase_updated']) ? $stats['purchase_updated'] : 0),
+					'count_purchase_inserted' => (int) (isset($stats['purchase_inserted']) ? $stats['purchase_inserted'] : 0),
+					'count_bahan_proses' => (int) (isset($stats['material_processed']) ? $stats['material_processed'] : 0),
+					'count_bahan_tidak_terproses' => (int) (isset($stats['material_unverified']) ? $stats['material_unverified'] : 0),
+					'count_sales_processed' => (int) (isset($stats['sale_processed']) ? $stats['sale_processed'] : 0),
+					'count_sales_unverified' => (int) (isset($stats['sale_unverified']) ? $stats['sale_unverified'] : 0),
+					'count_purchase_unmatched' => (int) (isset($stats['purchase_unmatched']) ? $stats['purchase_unmatched'] : 0),
+					'count_product_unmatched' => (int) (isset($stats['product_unmatched']) ? $stats['product_unmatched'] : 0),
+					'persediaan_sync_ok' => ($unmatched_count === 0),
+					'persediaan_sync_message' => 'Stock 2026 dibangun ulang pada satu saldo live Januari; snapshot bulanan berikutnya tidak disalin.',
+				));
+				return;
+			}
+
 			$emit(array(
 				'type' => 'progress',
 				'phase' => 'copy',
@@ -909,8 +1028,156 @@ class Persediaan extends CI_Controller
 				$progress['type'] = 'progress';
 				$emit($progress);
 			});
+
+			$persediaan_sync = array(
+				'ok' => true,
+				'message' => 'Sinkronisasi tabel persediaan utama tidak dijalankan.',
+			);
+			try {
+				$sync_offset = 0;
+				$sync_start = true;
+				$sync_iteration = 0;
+				do {
+					$persediaan_sync = persediaan_generate_v2_batch($this, $bulan, $sync_offset, 200, $sync_start);
+					$sync_start = false;
+					if (empty($persediaan_sync['ok']) || !empty($persediaan_sync['done'])) {
+						break;
+					}
+					$sync_offset = !empty($persediaan_sync['phase_changed'])
+						? 0
+						: max(0, (int) (isset($persediaan_sync['offset_selesai']) ? $persediaan_sync['offset_selesai'] : 0));
+					$sync_iteration++;
+					$emit(array(
+						'type' => 'progress',
+						'phase' => isset($persediaan_sync['phase']) ? $persediaan_sync['phase'] : 'recalculate',
+						'phase_label' => isset($persediaan_sync['progress_label']) ? $persediaan_sync['progress_label'] : 'Sinkronisasi persediaan utama',
+						'message' => isset($persediaan_sync['pesan']) ? $persediaan_sync['pesan'] : 'Melanjutkan recalculate persediaan utama.',
+						'processed' => (int) $sync_offset,
+						'total' => (int) (isset($persediaan_sync['total_phase']) ? $persediaan_sync['total_phase'] : 0),
+						'percent' => 0,
+						'record' => '',
+					));
+					if ($sync_iteration >= 10000) {
+						$persediaan_sync = array(
+							'ok' => false,
+						'done' => false,
+						'message' => 'Recalculate persediaan belum selesai setelah 10.000 batch; proses dihentikan agar tidak berulang tanpa akhir.',
+						'phase' => isset($persediaan_sync['phase']) ? $persediaan_sync['phase'] : '',
+					);
+						break;
+					}
+				} while (true);
+				if (!empty($persediaan_sync['ok']) && !empty($persediaan_sync['done'])) {
+					$persediaan_sync['message'] = 'Sinkronisasi tabel persediaan utama selesai.';
+				} elseif (!empty($persediaan_sync['message'])) {
+					$persediaan_sync['message'] = $persediaan_sync['message'];
+				}
+			} catch (Throwable $e) {
+				$persediaan_sync = array(
+					'ok' => false,
+					'message' => 'Sinkronisasi tabel persediaan utama gagal: ' . $e->getMessage(),
+				);
+			}
+
+			$produksi_bahan = isset($result['produksi_bahan']) && is_array($result['produksi_bahan'])
+				? $result['produksi_bahan']
+				: array();
+			$is_live_recalculate_done = !empty($persediaan_sync['ok']) && !empty($persediaan_sync['done']);
+			$snapshot_processed_ids = array();
+		foreach (isset($produksi_bahan['rows']) && is_array($produksi_bahan['rows']) ? $produksi_bahan['rows'] : array() as $row_processed) {
+				$id_bahan = isset($row_processed['id_bahan']) ? (int) $row_processed['id_bahan'] : 0;
+				if ($id_bahan > 0) {
+					$snapshot_processed_ids[$id_bahan] = $row_processed;
+				}
+			}
+
+			$rows_bahan_proses = array();
+			$rows_bahan_tidak_terproses = array();
+			if (function_exists('persediaan_gen_proses_produksi_load_bahan_rows')) {
+				$tgl_awal_bahan = date('Y-m-01', strtotime($bulan . '-01'));
+				$tgl_akhir_bahan = date('Y-m-t', strtotime($bulan . '-01'));
+				$rows_bahan = persediaan_gen_proses_produksi_load_bahan_rows($this, $tgl_awal_bahan, $tgl_akhir_bahan);
+				foreach ($rows_bahan as $row_bahan) {
+					$id_bahan = isset($row_bahan->id) ? (int) $row_bahan->id : 0;
+					$stock_row = isset($snapshot_processed_ids[$id_bahan]) ? $snapshot_processed_ids[$id_bahan] : null;
+					$row_data = array(
+						'id_bahan' => $id_bahan,
+						'tgl_transaksi' => isset($row_bahan->tgl_transaksi) ? (string) $row_bahan->tgl_transaksi : '',
+						'nama_barang_bahan' => isset($row_bahan->nama_barang_bahan) ? (string) $row_bahan->nama_barang_bahan : '',
+						'satuan_bahan' => isset($row_bahan->satuan_bahan) ? (string) $row_bahan->satuan_bahan : '',
+						'jumlah_bahan' => isset($row_bahan->jumlah_bahan) ? (string) $row_bahan->jumlah_bahan : '0',
+						'uuid_persediaan' => isset($row_bahan->uuid_persediaan_bahan_tampil) ? (string) $row_bahan->uuid_persediaan_bahan_tampil : '',
+						'id_persediaan' => isset($row_bahan->id_persediaan_bahan) ? (int) $row_bahan->id_persediaan_bahan : 0,
+						'namabarang_persediaan' => isset($row_bahan->namabarang_persediaan) ? (string) $row_bahan->namabarang_persediaan : '',
+						'metode_pencocokan_persediaan' => isset($row_bahan->metode_pencocokan_persediaan) ? (string) $row_bahan->metode_pencocokan_persediaan : '',
+						'alasan_persediaan' => isset($row_bahan->alasan_persediaan) ? (string) $row_bahan->alasan_persediaan : '',
+						'status_persediaan' => $is_live_recalculate_done
+							? (isset($row_bahan->status_persediaan) ? (string) $row_bahan->status_persediaan : 'UUID TIDAK DITEMUKAN')
+							: 'BATCH RECALCULATE BELUM SELESAI',
+						'bahan_produksi_persediaan' => isset($row_bahan->persediaan_bahan_produksi) ? $row_bahan->persediaan_bahan_produksi : 0,
+						'total_10_persediaan' => isset($row_bahan->persediaan_total_10) ? $row_bahan->persediaan_total_10 : 0,
+						'id_stock_bulanan' => isset($row_bahan->id_stock_bulanan) ? (int) $row_bahan->id_stock_bulanan : 0,
+						'namabarang_stock_bulanan' => isset($row_bahan->namabarang_stock_bulanan) ? (string) $row_bahan->namabarang_stock_bulanan : '',
+						'metode_pencocokan_stock_bulanan' => isset($row_bahan->metode_pencocokan_stock_bulanan) ? (string) $row_bahan->metode_pencocokan_stock_bulanan : '',
+						'alasan_stock_bulanan' => isset($row_bahan->alasan_stock_bulanan) ? (string) $row_bahan->alasan_stock_bulanan : '',
+						'status_stock_bulanan' => isset($row_bahan->status_stock_bulanan) ? (string) $row_bahan->status_stock_bulanan : 'UUID TIDAK DITEMUKAN',
+						'bahan_produksi_stock_bulanan' => isset($row_bahan->stock_bulanan_bahan_produksi) ? $row_bahan->stock_bulanan_bahan_produksi : 0,
+						'total_10_stock_bulanan' => isset($row_bahan->stock_bulanan_total_10) ? $row_bahan->stock_bulanan_total_10 : 0,
+						'status_snapshot_proses' => $stock_row ? 'TERPROSES' : 'BELUM TERPROSES',
+						'keterangan' => '',
+					);
+					$purchase_match = !empty($row_bahan->id_pembelian_referensi) ? array(
+						'id' => (int) $row_bahan->id_pembelian_referensi,
+						'tgl_po' => isset($row_bahan->tgl_pembelian_referensi) ? (string) $row_bahan->tgl_pembelian_referensi : '',
+						'uuid_persediaan' => isset($row_bahan->uuid_pembelian_referensi) ? (string) $row_bahan->uuid_pembelian_referensi : '',
+					) : null;
+					$row_data['id_pembelian_referensi'] = $purchase_match ? $purchase_match['id'] : 0;
+					$row_data['tgl_pembelian_referensi'] = $purchase_match ? $purchase_match['tgl_po'] : '';
+					$row_data['uuid_pembelian_referensi'] = $purchase_match ? $purchase_match['uuid_persediaan'] : '';
+					$row_data['metode_pencocokan'] = !empty($row_bahan->metode_pencocokan_persediaan)
+						? (string) $row_bahan->metode_pencocokan_persediaan
+						: (isset($row_bahan->metode_pencocokan_stock_bulanan) ? (string) $row_bahan->metode_pencocokan_stock_bulanan : '');
+					$live_done = $is_live_recalculate_done && !empty($row_bahan->id_persediaan_bahan);
+					$snapshot_done = !empty($stock_row);
+					if ($live_done && $snapshot_done) {
+						$row_data['keterangan'] = $row_data['metode_pencocokan'] === 'PEMBELIAN_NAMA_TANGGAL'
+							? 'Dipetakan melalui pembelian sebelumnya id=' . $row_data['id_pembelian_referensi']
+								. ' tanggal ' . substr($row_data['tgl_pembelian_referensi'], 0, 10)
+							: 'UUID bahan cocok; hasil produksi tersedia pada kedua tabel stock.';
+						$rows_bahan_proses[] = $row_data;
+					} else {
+						$reasons = array();
+						if (empty($row_data['uuid_persediaan'])) {
+							$reasons[] = 'UUID persediaan bahan kosong';
+						}
+						if (!$live_done) {
+							$reasons[] = $is_live_recalculate_done
+								? (isset($row_bahan->alasan_persediaan) && trim((string) $row_bahan->alasan_persediaan) !== ''
+									? (string) $row_bahan->alasan_persediaan
+									: 'UUID/pembelian sebelumnya tidak dapat dipetakan ke persediaan')
+								: 'batch recalculate persediaan belum selesai';
+						}
+						if (!$snapshot_done) {
+							$reasons[] = isset($row_bahan->alasan_stock_bulanan) && trim((string) $row_bahan->alasan_stock_bulanan) !== ''
+								? (string) $row_bahan->alasan_stock_bulanan
+								: (isset($row_bahan->jumlah_bahan_num) && (float) $row_bahan->jumlah_bahan_num <= 0
+									? 'jumlah_bahan <= 0, tidak ada pengurangan stock snapshot'
+									: 'UUID/pembelian sebelumnya tidak dapat dipetakan ke persediaan_stock_bulanan');
+						}
+						$row_data['keterangan'] = implode('; ', $reasons);
+						$rows_bahan_tidak_terproses[] = $row_data;
+					}
+				}
+			}
+			$result['rows_bahan_proses'] = $rows_bahan_proses;
+			$result['rows_bahan_tidak_terproses'] = $rows_bahan_tidak_terproses;
+
+
 			$result['bulan_target_label'] = date('m/Y', strtotime($bulan . '-01'));
 			$result['bulan_sumber_label'] = date('m/Y', strtotime($result['bulan_sumber'] . '-01'));
+			$result['persediaan_sync'] = $persediaan_sync;
+			$result['persediaan_sync_ok'] = !empty($persediaan_sync['ok']) && !empty($persediaan_sync['done']);
+			$result['persediaan_sync_message'] = isset($persediaan_sync['message']) ? $persediaan_sync['message'] : '';
 			$result['html'] = $this->load->view(
 				'anekadharma/persediaan/_generate_stock_bulanan_result',
 				$result,
@@ -927,6 +1194,10 @@ class Persediaan extends CI_Controller
 				'count_purchases' => $result['count_purchases'],
 				'count_purchase_updated' => $result['count_purchase_updated'],
 				'count_purchase_inserted' => $result['count_purchase_inserted'],
+				'persediaan_sync_ok' => $result['persediaan_sync_ok'],
+				'persediaan_sync_message' => $result['persediaan_sync_message'],
+				'count_bahan_proses' => count($rows_bahan_proses),
+				'count_bahan_tidak_terproses' => count($rows_bahan_tidak_terproses),
 			));
 		} catch (Throwable $e) {
 			$this->db->db_debug = $db_debug;

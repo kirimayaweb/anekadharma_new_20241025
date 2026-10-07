@@ -117,6 +117,203 @@ function persediaan_stock_bulanan_ensure_table($CI)
 	}
 }
 
+function persediaan_stock_bulanan_sync_produksi_bahan($CI, $bulan_target, $progress_callback = null)
+{
+	if (!function_exists('persediaan_parse_angka')) {
+		$CI->load->helper('persediaan_display');
+	}
+	$CI->load->helper('pembelian_persediaan');
+
+	if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', trim((string) $bulan_target))) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid. Gunakan YYYY-MM.');
+	}
+	if (!$CI->db->table_exists('persediaan_stock_bulanan')) {
+		return array('ok' => false, 'message' => 'Tabel persediaan_stock_bulanan tidak tersedia.');
+	}
+	foreach (array('uuid_persediaan', 'bahan_produksi', 'total_10') as $required_field) {
+		if (!$CI->db->field_exists($required_field, 'persediaan_stock_bulanan')) {
+			return array('ok' => false, 'message' => 'Kolom ' . $required_field . ' tidak tersedia di persediaan_stock_bulanan.');
+		}
+	}
+	if (!$CI->db->table_exists('sys_unit_produk_bahan')) {
+		return array('ok' => true, 'updated' => 0, 'matched' => 0, 'unmatched_count' => 0, 'skipped_count' => 0, 'total_sumber' => 0, 'rows' => array(), 'unmatched' => array(), 'skipped' => array());
+	}
+
+	$ts = strtotime($bulan_target . '-01');
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+
+	$sumber_rows = $CI->db->query(
+		"SELECT * FROM `sys_unit_produk_bahan`
+		WHERE `tgl_transaksi` IS NOT NULL AND `tgl_transaksi` <> '0000-00-00'
+		AND DATE(`tgl_transaksi`) >= ? AND DATE(`tgl_transaksi`) <= ?
+		ORDER BY `tgl_transaksi` ASC, `id` ASC",
+		array($tgl_awal, $tgl_akhir)
+	)->result();
+
+	$stock_rows = $CI->db->query(
+		"SELECT * FROM `persediaan_stock_bulanan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `id` ASC",
+		array($tgl_awal, $tgl_awal)
+	)->result();
+
+	$by_uuid = array();
+	$stock_map = array('by_uuid_pers' => array(), 'by_id' => array(), 'by_nama_satuan' => array());
+	foreach ($stock_rows as $row_stock) {
+		$stock_id = (int) $row_stock->id;
+		$stock_map['by_id'][$stock_id] = $row_stock;
+		$uuid = trim((string) (isset($row_stock->uuid_persediaan) ? $row_stock->uuid_persediaan : ''));
+		if ($uuid === '') {
+			continue;
+		}
+		if (!isset($by_uuid[$uuid])) {
+			$by_uuid[$uuid] = array();
+			$stock_map['by_uuid_pers'][$uuid] = array();
+		}
+		$by_uuid[$uuid][] = $row_stock;
+		$stock_map['by_uuid_pers'][$uuid][] = $row_stock;
+		$ns_key = persediaan_recalculate_nama_satuan_key(
+			isset($row_stock->namabarang) ? $row_stock->namabarang : '',
+			isset($row_stock->satuan) ? $row_stock->satuan : ''
+		);
+		if ($ns_key !== '') {
+			if (!isset($stock_map['by_nama_satuan'][$ns_key])) {
+				$stock_map['by_nama_satuan'][$ns_key] = array();
+			}
+			$stock_map['by_nama_satuan'][$ns_key][] = $row_stock;
+		}
+	}
+
+	$agg = array();
+	$unmatched = array();
+	$skipped = array();
+	$uuid_bahan_field = $CI->db->field_exists('uuid_persediaan_bahan', 'sys_unit_produk_bahan')
+		? 'uuid_persediaan_bahan'
+		: 'uuid_persediaan';
+	foreach ($sumber_rows as $row) {
+		$uuid = trim((string) (isset($row->{$uuid_bahan_field}) ? $row->{$uuid_bahan_field} : ''));
+		$jumlah = persediaan_parse_angka(isset($row->jumlah_bahan) ? $row->jumlah_bahan : 0);
+		if ($jumlah <= 0) {
+			$skipped[] = array(
+				'id_bahan' => isset($row->id) ? (int) $row->id : 0,
+				'tgl_transaksi' => isset($row->tgl_transaksi) ? (string) $row->tgl_transaksi : '',
+				'nama_barang_bahan' => isset($row->nama_barang_bahan) ? (string) $row->nama_barang_bahan : '',
+				'satuan_bahan' => isset($row->satuan_bahan) ? (string) $row->satuan_bahan : '',
+				'jumlah_bahan' => persediaan_format_angka_tampil($jumlah),
+				'uuid_persediaan' => $uuid,
+				'id_persediaan' => '',
+				'status' => 'SKIP',
+				'keterangan' => 'jumlah_bahan harus lebih dari 0 untuk mengurangi stock',
+			);
+			continue;
+		}
+		$match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row, $stock_map);
+		$stock = isset($match['row']) ? $match['row'] : null;
+		if (!$stock) {
+			$purchase = isset($match['pembelian']) ? $match['pembelian'] : null;
+			$unmatched[] = array(
+				'id_bahan' => isset($row->id) ? (int) $row->id : 0,
+				'tgl_transaksi' => isset($row->tgl_transaksi) ? (string) $row->tgl_transaksi : '',
+				'nama_barang_bahan' => isset($row->nama_barang_bahan) ? (string) $row->nama_barang_bahan : '',
+				'satuan_bahan' => isset($row->satuan_bahan) ? (string) $row->satuan_bahan : '',
+				'jumlah_bahan' => persediaan_format_angka_tampil($jumlah),
+				'uuid_persediaan' => $uuid,
+				'uuid_persediaan_target' => '',
+				'id_persediaan' => '',
+				'id_pembelian_referensi' => $purchase && isset($purchase->id) ? (int) $purchase->id : 0,
+				'tgl_pembelian_referensi' => $purchase && isset($purchase->tgl_po) ? (string) $purchase->tgl_po : '',
+				'uuid_pembelian_referensi' => $purchase && isset($purchase->uuid_persediaan) ? (string) $purchase->uuid_persediaan : '',
+				'metode_pencocokan' => isset($match['metode']) ? $match['metode'] : '',
+				'status' => 'UNMATCHED',
+				'keterangan' => isset($match['alasan']) ? $match['alasan'] : 'UUID dan pembelian sebelumnya tidak dapat dipetakan ke stock bulanan target',
+			);
+			continue;
+		}
+
+		$stock_id = (int) $stock->id;
+		if (!isset($agg[$stock_id])) {
+			$agg[$stock_id] = array('jumlah' => 0.0, 'details' => array());
+		}
+		$agg[$stock_id]['jumlah'] += $jumlah;
+		$agg[$stock_id]['details'][] = array('row' => $row, 'match' => $match);
+	}
+
+	$rows_out = array();
+	$matched = 0;
+	$updated = 0;
+	$no = 0;
+
+	foreach ($agg as $stock_id => $group) {
+		$stock = isset($stock_map['by_id'][$stock_id]) ? $stock_map['by_id'][$stock_id] : null;
+		if (!$stock) {
+			continue;
+		}
+		$sum_jumlah = (float) $group['jumlah'];
+
+		$total_lama = persediaan_parse_angka(isset($stock->total_10) ? $stock->total_10 : 0);
+		$bahan_lama = persediaan_parse_angka(isset($stock->bahan_produksi) ? $stock->bahan_produksi : 0);
+		$bahan_baru = $bahan_lama + $sum_jumlah;
+		$total_baru = max(0, $total_lama - $sum_jumlah);
+		$hpp = persediaan_parse_angka(isset($stock->hpp) ? $stock->hpp : 0);
+		$update = array(
+			'bahan_produksi' => persediaan_format_angka_tampil($bahan_baru),
+			'total_10' => persediaan_format_angka_tampil($total_baru),
+		);
+		if ($CI->db->field_exists('nilai_persediaan', 'persediaan_stock_bulanan')) {
+			$update['nilai_persediaan'] = (string) (int) floor($total_baru * $hpp);
+		}
+		if ($CI->db->field_exists('tuj', 'persediaan_stock_bulanan')) {
+			$update['tuj'] = persediaan_format_angka_tampil($total_baru);
+		}
+		$CI->db->where('id', (int) $stock->id)->update('persediaan_stock_bulanan', $update);
+
+		$updated++;
+		$matched++;
+		foreach ($group['details'] as $detail) {
+			$row = $detail['row'];
+			$match = $detail['match'];
+			$no++;
+			$jumlah_row = persediaan_parse_angka(isset($row->jumlah_bahan) ? $row->jumlah_bahan : 0);
+			$rows_out[] = array(
+				'no' => $no,
+				'id_bahan' => isset($row->id) ? (int) $row->id : 0,
+				'tgl_transaksi' => isset($row->tgl_transaksi) ? (string) $row->tgl_transaksi : '',
+				'nama_barang_bahan' => isset($row->nama_barang_bahan) ? (string) $row->nama_barang_bahan : '',
+				'satuan_bahan' => isset($row->satuan_bahan) ? (string) $row->satuan_bahan : '',
+				'jumlah_bahan' => persediaan_format_angka_tampil($jumlah_row),
+				'uuid_persediaan' => $uuid_bahan_field && isset($row->{$uuid_bahan_field}) ? trim((string) $row->{$uuid_bahan_field}) : '',
+				'uuid_persediaan_target' => isset($stock->uuid_persediaan) ? (string) $stock->uuid_persediaan : '',
+				'id_persediaan' => (int) $stock->id,
+				'id_pembelian_referensi' => !empty($match['pembelian']->id) ? (int) $match['pembelian']->id : 0,
+				'tgl_pembelian_referensi' => !empty($match['pembelian']->tgl_po) ? (string) $match['pembelian']->tgl_po : '',
+				'uuid_pembelian_referensi' => !empty($match['pembelian']->uuid_persediaan) ? (string) $match['pembelian']->uuid_persediaan : '',
+				'metode_pencocokan' => isset($match['metode']) ? $match['metode'] : '',
+				'namabarang' => isset($stock->namabarang) ? (string) $stock->namabarang : '',
+				'bahan_produksi' => persediaan_format_angka_tampil($bahan_baru),
+				'total_10_lama' => persediaan_format_angka_tampil($total_lama),
+				'total_10' => persediaan_format_angka_tampil($total_baru),
+				'status' => 'UPDATED',
+				'keterangan' => 'bahan_produksi += jumlah_bahan; total_10 = total_10 - jumlah_bahan (snapshot)',
+			);
+		}
+	}
+
+	return array(
+		'ok' => true,
+		'updated' => $updated,
+		'matched' => $matched,
+		'unmatched_count' => count($unmatched),
+		'skipped_count' => count($skipped),
+		'total_sumber' => count($sumber_rows),
+		'rows' => $rows_out,
+		'unmatched' => $unmatched,
+		'skipped' => $skipped,
+		'tgl_awal' => $tgl_awal,
+		'tgl_akhir' => $tgl_akhir,
+	);
+}
+
 function persediaan_stock_bulanan_generate($CI, $bulan_target, $progress_callback = null)
 {
 	if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan_target)) {
@@ -555,10 +752,24 @@ function persediaan_stock_bulanan_generate($CI, $bulan_target, $progress_callbac
 			100
 		);
 
+		$production_result = persediaan_stock_bulanan_sync_produksi_bahan($CI, $bulan_target, $progress_callback);
+		if (is_callable($progress_callback)) {
+			$progress_callback(array(
+				'phase' => 'produksi_bahan',
+				'phase_label' => 'Tahap 3 dari 3 — Proses sys_unit_produk_bahan',
+				'message' => 'Memproses bahan produksi ke persediaan_stock_bulanan.',
+				'processed' => (int) (isset($production_result['updated']) ? $production_result['updated'] : 0),
+				'total' => (int) (isset($production_result['total_sumber']) ? $production_result['total_sumber'] : 0),
+				'percent' => 100,
+				'record' => '',
+			));
+		}
+
 		$meta['source_rows'] = array_slice($target_stock_rows, 0, count($copy_data_rows));
 		$meta['purchase_rows'] = $purchase_rows;
 		$meta['purchase_matched'] = $purchase_matched;
 		$meta['purchase_new'] = $purchase_new;
+		$meta['produksi_bahan'] = $production_result;
 		$meta['count_deleted'] = $count_deleted;
 		$meta['count_copied'] = count($copied_rows);
 		$meta['count_purchases'] = count($purchase_rows);

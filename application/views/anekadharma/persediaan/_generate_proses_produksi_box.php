@@ -101,7 +101,8 @@ $sum_margin_fmt = isset($rekap['sum_margin_riil_fmt'])
 						<li>Σ margin: <strong><?php echo htmlspecialchars($sum_margin_fmt, ENT_QUOTES, 'UTF-8'); ?></strong></li>
 						<li>Record bahan: <strong><?php echo $count_bahan; ?></strong></li>
 						<li>Σ bahan_produksi persediaan: <strong><?php echo htmlspecialchars($sum_bahan_produksi_pers_fmt, ENT_QUOTES, 'UTF-8'); ?></strong></li>
-						<li>Cocok / tidak cocok: <strong><?php echo $count_bahan_update; ?></strong> / <strong class="<?php echo $count_bahan_tidak_ada > 0 ? 'text-danger' : ''; ?>"><?php echo $count_bahan_tidak_ada; ?></strong></li>
+						<li>Stok terpetakan persediaan / stock bulanan: <strong><?php echo (int) (isset($rekap['count_bahan_persediaan_match']) ? $rekap['count_bahan_persediaan_match'] : $count_bahan_update); ?></strong> / <strong><?php echo (int) (isset($rekap['count_bahan_stock_match']) ? $rekap['count_bahan_stock_match'] : 0); ?></strong></li>
+						<li>Stok tidak terpetakan persediaan / stock bulanan: <strong class="<?php echo $count_bahan_tidak_ada > 0 ? 'text-danger' : ''; ?>"><?php echo $count_bahan_tidak_ada; ?></strong> / <strong class="<?php echo !empty($rekap['count_bahan_stock_unmatched']) ? 'text-danger' : ''; ?>"><?php echo (int) (isset($rekap['count_bahan_stock_unmatched']) ? $rekap['count_bahan_stock_unmatched'] : 0); ?></strong></li>
 					</ul>
 					<p class="gen-proses-hero-note mb-0 small">
 						<strong>Margin = Harga jual − Harga bahan</strong> (bukan harga satuan × jumlah bahan).

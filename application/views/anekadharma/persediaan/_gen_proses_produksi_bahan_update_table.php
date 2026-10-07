@@ -25,8 +25,7 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 	));
 } ?>
 <div class="alert alert-success small py-2 mb-2">
-	Record bahan produksi yang <strong>cocok</strong> dengan persediaan bulan target.
-	Kolom <strong>Bahan Produksi (Persediaan)</strong> menampilkan nilai field <code>bahan_produksi</code> setelah proses Generate &amp; Recalculate.
+	Record bahan produksi terpetakan melalui UUID bahan atau pembelian nama+satuan yang tanggalnya lebih awal dari input bahan. Nilai dan status ditampilkan terpisah untuk <strong>persediaan</strong> dan <strong>persediaan_stock_bulanan</strong>.
 </div>
 <div class="gen-proses-produksi-dt-wrap persediaan-tab-dt-wrap">
 	<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped table-sm gen-proses-produksi-dt display nowrap" style="width:100%"
@@ -34,6 +33,8 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 		<thead>
 			<tr>
 				<th>No</th>
+				<th>ID sys_unit_produk_bahan</th>
+				<th>UUID Persediaan Bahan</th>
 				<th>ID Persediaan</th>
 				<th>Nama Bahan</th>
 				<th>Satuan</th>
@@ -41,7 +42,11 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 				<th>Jumlah Bahan (Produksi)</th>
 				<th>Bahan Produksi (Persediaan)</th>
 				<th>Total_10 (Persediaan)</th>
-				<th>Match</th>
+				<th>Status Persediaan</th>
+				<th>ID Stock Bulanan</th>
+				<th>Bahan Produksi (Stock Bulanan)</th>
+				<th>Total_10 (Stock Bulanan)</th>
+				<th>Status Stock Bulanan</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -55,6 +60,8 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 			?>
 			<tr>
 				<td><?php echo (int) $no; ?></td>
+				<td><?php echo (int) (isset($row->id) ? $row->id : 0); ?></td>
+				<td><small><?php echo htmlspecialchars(isset($row->uuid_persediaan_bahan_tampil) ? (string) $row->uuid_persediaan_bahan_tampil : '', ENT_QUOTES, 'UTF-8'); ?></small></td>
 				<td><?php echo (int) (isset($row->id_persediaan_bahan) ? $row->id_persediaan_bahan : 0); ?></td>
 				<td><?php echo htmlspecialchars(isset($row->nama_bahan_tampil) ? (string) $row->nama_bahan_tampil : (isset($row->nama_barang_bahan) ? (string) $row->nama_barang_bahan : ''), ENT_QUOTES, 'UTF-8'); ?></td>
 				<td><?php echo htmlspecialchars(isset($row->satuan_tampil) ? (string) $row->satuan_tampil : (isset($row->satuan_bahan) ? (string) $row->satuan_bahan : ''), ENT_QUOTES, 'UTF-8'); ?></td>
@@ -62,17 +69,21 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_jumlah($jumlah); ?></td>
 				<td class="text-right font-weight-bold text-primary"><?php echo persediaan_gen_proses_pembelian_format_jumlah($bahan_prod); ?></td>
 				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_jumlah($total10); ?></td>
-				<td class="text-center"><span class="badge badge-success">Cocok</span></td>
+				<td class="text-center"><span class="badge badge-success"><?php echo htmlspecialchars(isset($row->status_persediaan) ? $row->status_persediaan : 'TERPROSES', ENT_QUOTES, 'UTF-8'); ?></span></td>
+				<td><?php echo (int) (isset($row->id_stock_bulanan) ? $row->id_stock_bulanan : 0); ?></td>
+				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_jumlah(isset($row->stock_bulanan_bahan_produksi) ? $row->stock_bulanan_bahan_produksi : 0); ?></td>
+				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_jumlah(isset($row->stock_bulanan_total_10) ? $row->stock_bulanan_total_10 : 0); ?></td>
+				<td class="text-center"><span class="badge <?php echo !empty($row->id_stock_bulanan) ? 'badge-success' : 'badge-danger'; ?>"><?php echo htmlspecialchars(isset($row->status_stock_bulanan) ? $row->status_stock_bulanan : 'UUID TIDAK COCOK', ENT_QUOTES, 'UTF-8'); ?></span></td>
 			</tr>
 			<?php } ?>
 		</tbody>
 		<tfoot class="gen-proses-dt-tfoot">
 			<tr>
 				<th class="font-weight-bold">TOTAL</th>
-				<th colspan="4"></th>
+				<th colspan="6"></th>
 				<th class="text-right font-weight-bold"><?php echo persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah); ?></th>
 				<th class="text-right font-weight-bold"><?php echo persediaan_gen_proses_pembelian_format_jumlah($sum_bahan_produksi); ?></th>
-				<th colspan="2"></th>
+				<th colspan="6"></th>
 			</tr>
 		</tfoot>
 	</table>

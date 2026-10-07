@@ -24,8 +24,7 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 	));
 } ?>
 <div class="alert alert-warning small py-2 mb-2">
-	Record di bawah ada di <strong>sys_unit_produk_bahan</strong> bulan target, tetapi tidak ditemukan di tabel <strong>persediaan</strong>
-	(cocokkan: <code>uuid_persediaan_bahan</code> atau <code>nama_barang_bahan + satuan_bahan + harga_satuan_bahan</code> = <code>namabarang + satuan + hpp</code>).
+	Record di bawah tidak dapat dipetakan ke stock: UUID bahan tidak cocok dan tidak ada pembelian nama+satuan bertanggal lebih awal dari input bahan, atau record stock pembelian belum tersedia.
 </div>
 <div class="gen-proses-produksi-dt-wrap persediaan-tab-dt-wrap">
 	<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped table-sm gen-proses-produksi-dt display nowrap" style="width:100%"
@@ -41,6 +40,9 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 				<th>HPP Bahan</th>
 				<th>Jumlah Bahan</th>
 				<th>UUID Persediaan Bahan</th>
+				<th>Status Persediaan</th>
+				<th>ID Stock Bulanan</th>
+				<th>Status Stock Bulanan</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -58,7 +60,10 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 				<td><?php echo htmlspecialchars(isset($row->satuan_bahan) ? (string) $row->satuan_bahan : '', ENT_QUOTES, 'UTF-8'); ?></td>
 				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_nominal(isset($row->harga_satuan_bahan) ? $row->harga_satuan_bahan : 0); ?></td>
 				<td class="text-right"><?php echo persediaan_gen_proses_pembelian_format_jumlah($jumlah); ?></td>
-				<td><small><?php echo htmlspecialchars(isset($row->uuid_persediaan_bahan) ? (string) $row->uuid_persediaan_bahan : (isset($row->uuid_persediaan) ? (string) $row->uuid_persediaan : ''), ENT_QUOTES, 'UTF-8'); ?></small></td>
+				<td><small><?php echo htmlspecialchars(isset($row->uuid_persediaan_bahan_tampil) ? (string) $row->uuid_persediaan_bahan_tampil : '', ENT_QUOTES, 'UTF-8'); ?></small></td>
+				<td><?php echo htmlspecialchars(isset($row->status_persediaan) ? (string) $row->status_persediaan : 'UUID KOSONG/TIDAK COCOK', ENT_QUOTES, 'UTF-8'); ?></td>
+				<td><?php echo (int) (isset($row->id_stock_bulanan) ? $row->id_stock_bulanan : 0); ?></td>
+				<td><?php echo htmlspecialchars(isset($row->status_stock_bulanan) ? (string) $row->status_stock_bulanan : 'UUID KOSONG/TIDAK COCOK', ENT_QUOTES, 'UTF-8'); ?></td>
 			</tr>
 			<?php } ?>
 		</tbody>
@@ -67,7 +72,7 @@ if (!function_exists('persediaan_gen_proses_pembelian_format_tgl')) {
 				<th class="font-weight-bold">TOTAL</th>
 				<th colspan="6"></th>
 				<th class="text-right font-weight-bold"><?php echo persediaan_gen_proses_pembelian_format_jumlah($sum_jumlah); ?></th>
-				<th></th>
+				<th colspan="4"></th>
 			</tr>
 		</tfoot>
 	</table>

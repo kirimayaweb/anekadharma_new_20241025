@@ -104,7 +104,7 @@ function pembelian_get_barang_list_rows($CI)
 
 	$has_spop = $CI->db->field_exists('spop', 'persediaan');
 	$spop_sql = $has_spop
-		? "TRIM(COALESCE(`spop`, '')) AS `spop`"
+			? "TRIM(COALESCE(`spop`, '')) AS `spop`"
 		: "'' AS `spop`";
 	$group_spop = $has_spop ? ', `spop`' : '';
 
@@ -182,7 +182,7 @@ function pembelian_get_barang_by_uuid($CI, $uuid_barang)
 			`satuan`,
 			`hpp` AS harga_satuan
 		FROM `persediaan`
-		WHERE (`uuid_barang` = ? OR `uuid_persediaan` = ?)
+		FROM `persediaan` p
 		AND DATE(`tanggal_beli`) >= ?
 		AND DATE(`tanggal_beli`) <= ?
 		ORDER BY `id` DESC
@@ -6427,6 +6427,44 @@ function persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli)
 	return $map;
 }
 
+function persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tanggal_beli)
+{
+	$ts = strtotime(trim((string) $tanggal_beli));
+	if ($ts === false) {
+		return persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	}
+	$tgl_awal = date('Y-m-01', $ts);
+
+	$rows = $CI->db->query(
+		"SELECT * FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `tanggal_beli` ASC, `id` ASC",
+		array($tgl_awal, $tgl_awal)
+	)->result();
+	$map = array(
+		'by_id' => array(),
+		'by_uuid_pers' => array(),
+		'by_uuid_barang' => array(),
+		'by_master_uuid' => array(),
+		'by_nama_key' => array(),
+		'by_sync_key' => array(),
+		'by_pembelian_sync_key' => array(),
+		'by_generate_key' => array(),
+		'by_nama_satuan' => array(),
+		'by_nama' => array(),
+		'by_kode' => array(),
+		'by_spop_valid' => array(),
+		'total' => count($rows),
+	);
+	foreach ($rows as $row) {
+		persediaan_recalculate_map_add_row($map, $row);
+	}
+	$master_index = persediaan_recalculate_build_master_uuid_index($CI, $rows);
+	$map['by_master_uuid'] = $master_index['by_master_uuid'];
+	$map['master_by_uuid'] = $master_index['master_by_uuid'];
+	return $map;
+}
+
 function persediaan_recalculate_filter_kandidat_penjualan($kandidat, $row_penjualan)
 {
 	if (!is_array($kandidat) || count($kandidat) === 0) {
@@ -6683,6 +6721,7 @@ function persediaan_recalculate_parse_jumlah_penjualan($jumlah)
 function persediaan_recalculate_reset_penjualan_persediaan_bulan($CI, $tanggal_beli)
 {
 	$CI->load->helper('persediaan_display');
+	$tgl_awal = date('Y-m-01', strtotime((string) $tanggal_beli));
 	$unit_cols = penjualan_persediaan_kolom_unit_existing($CI);
 	$update = array('penjualan' => '0');
 	foreach ($unit_cols as $kolom) {
@@ -6692,7 +6731,8 @@ function persediaan_recalculate_reset_penjualan_persediaan_bulan($CI, $tanggal_b
 		}
 	}
 
-	$CI->db->where('tanggal_beli', $tanggal_beli);
+	$CI->db->where('tanggal_beli >=', $tgl_awal);
+	$CI->db->where('tanggal_beli <', date('Y-m-01', strtotime($tgl_awal . ' +1 month')));
 	$CI->db->update('persediaan', $update);
 
 	return array(
@@ -6707,10 +6747,13 @@ function persediaan_recalculate_reset_penjualan_persediaan_bulan($CI, $tanggal_b
 function persediaan_recalculate_restore_gross_total_10_bulan($CI, $tanggal_beli)
 {
 	$CI->load->helper('persediaan_display');
+	$tgl_awal = date('Y-m-01', strtotime((string) $tanggal_beli));
 
 	$rows = $CI->db->query(
-		"SELECT `id`, `sa`, `beli`, `hpp` FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
-		array($tanggal_beli)
+		"SELECT `id`, `sa`, `beli`, `hpp` FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `id` ASC",
+		array($tgl_awal, $tgl_awal)
 	)->result();
 
 	$updated = 0;
@@ -12039,6 +12082,7 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 	if (persediaan_row_tanpa_sumber_stok_masuk($row)) {
 		return array(
 			'skipped' => true,
+			'update_ok' => true,
 			'penjualan_lama' => (string) (int) floor($penjualan_lama),
 			'penjualan_baru' => (string) (int) floor($penjualan_lama),
 			'total_10_lama' => (string) (int) floor($total_10_lama),
@@ -12050,6 +12094,18 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 			'unit_lama' => '0',
 			'unit_baru' => '0',
 			'tambah' => '0',
+		);
+	}
+	if ($tambah > 0 && $total_10_lama < $tambah) {
+		return array(
+			'insufficient_stock' => true,
+			'update_ok' => false,
+			'penjualan_lama' => (string) $penjualan_lama,
+			'penjualan_baru' => (string) $penjualan_lama,
+			'total_10_lama' => (string) $total_10_lama,
+			'total_10' => (string) $total_10_lama,
+			'tambah' => (string) $tambah,
+			'message' => 'Stok tersedia (' . $total_10_lama . ') kurang dari jumlah penjualan (' . $tambah . ').',
 		);
 	}
 
@@ -12083,9 +12139,16 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
 	if ($uuid_pers_upd !== '' && $CI->db->field_exists('uuid_persediaan', 'persediaan')) {
 		$CI->db->where('uuid_persediaan', $uuid_pers_upd);
 	}
-	$CI->db->update('persediaan', $update);
+	$update_ok = $CI->db->update('persediaan', $update);
+	$update_error = '';
+	if (!$update_ok) {
+		$db_error = $CI->db->error();
+		$update_error = !empty($db_error['message']) ? trim((string) $db_error['message']) : 'Query update persediaan gagal.';
+	}
 
 	return array(
+		'update_ok' => (bool) $update_ok,
+		'update_error' => $update_error,
 		'penjualan_lama' => (string) (int) floor($penjualan_lama),
 		'penjualan_baru' => (string) (int) floor($penjualan_baru),
 		'total_10_lama' => (string) (int) floor($total_10_lama),
@@ -12104,16 +12167,65 @@ function persediaan_generate_recalculate_tambah_penjualan_row($CI, $row, $tambah
  * Cari record persediaan bulan target untuk fase penjualan:
  * 1) uuid_persediaan, 2) nama_barang + satuan + hpp/harga_satuan, 3) fallback nama_barang + satuan.
  */
-function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref = null)
+function persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($candidates, $ref, $min_stock)
 {
+	$available = array();
+	foreach ((array) $candidates as $candidate) {
+		if (persediaan_row_tanpa_sumber_stok_masuk($candidate)) {
+			continue;
+		}
+		$qty = max(0, (int) floor(persediaan_parse_angka(isset($candidate->total_10) ? $candidate->total_10 : 0)));
+		if ($qty >= (int) $min_stock) {
+			$available[] = $candidate;
+		}
+	}
+	if (empty($available)) {
+		return null;
+	}
+	return count($available) === 1
+		? $available[0]
+		: persediaan_recalculate_pick_best_persediaan_row($available, $ref);
+}
+
+function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref = null, $min_stock = 0, $preferred_id = 0)
+{
+	$min_stock = max(0, (int) $min_stock);
+	$preferred_id = (int) $preferred_id;
+	$preferred_insufficient = null;
+	if ($preferred_id > 0 && !empty($map['by_id'][$preferred_id])) {
+		$preferred = $map['by_id'][$preferred_id];
+		if (persediaan_gen_v2_persediaan_row_matches_penjualan($preferred, $nama, $satuan)) {
+			$pick = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock(array($preferred), $ref, $min_stock);
+			if ($pick) {
+				return array('row' => $pick, 'match_via' => 'id_persediaan_barang');
+			}
+			$preferred_insufficient = $preferred;
+		}
+	}
+
 	$uuid_p = trim((string) $uuid_p);
 	if ($uuid_p !== '') {
-		$by_uuid = persediaan_generate_recalculate_find_by_uuid_persediaan($map, $uuid_p, $ref);
+		$uuid_candidates = array();
+		foreach (isset($map['by_id']) && is_array($map['by_id']) ? $map['by_id'] : array() as $candidate) {
+			if (trim((string) (isset($candidate->uuid_persediaan) ? $candidate->uuid_persediaan : '')) === $uuid_p) {
+				$uuid_candidates[] = $candidate;
+			}
+		}
+		if (empty($uuid_candidates) && isset($map['by_uuid_pers'][$uuid_p])) {
+			$uuid_candidates = $map['by_uuid_pers'][$uuid_p];
+		}
+		$by_uuid = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($uuid_candidates, $ref, $min_stock);
 		if ($by_uuid) {
 			return array(
 				'row' => $by_uuid,
 				'match_via' => 'uuid_persediaan',
 			);
+		}
+		if (!empty($uuid_candidates)) {
+			$insufficient = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($uuid_candidates, $ref, 0);
+			if ($insufficient) {
+				$preferred_insufficient = $preferred_insufficient ? $preferred_insufficient : $insufficient;
+			}
 		}
 	}
 
@@ -12129,12 +12241,24 @@ function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, 
 	}
 
 	if ($nama !== '' && $satuan !== '' && trim((string) $harga) !== '') {
-		$by_nsh = persediaan_generate_recalculate_find_by_nama_hpp($map, $nama, $satuan, $harga);
+		$nsh_candidates = array();
+		foreach (isset($map['by_id']) && is_array($map['by_id']) ? $map['by_id'] : array() as $candidate) {
+			if (persediaan_generate_recalculate_row_cocok_nama_hpp($candidate, $nama, $satuan, $harga)) {
+				$nsh_candidates[] = $candidate;
+			}
+		}
+		$by_nsh = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($nsh_candidates, $ref, $min_stock);
 		if ($by_nsh) {
 			return array(
 				'row' => $by_nsh,
 				'match_via' => 'nama_barang+satuan+hpp',
 			);
+		}
+		if (!empty($nsh_candidates)) {
+			$insufficient = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($nsh_candidates, $ref, 0);
+			if ($insufficient) {
+				return array('row' => null, 'match_via' => 'nama_barang+satuan+hpp', 'stok_row' => $insufficient);
+			}
 		}
 	}
 
@@ -12146,24 +12270,33 @@ function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, 
 	}
 
 	$ns_key = persediaan_recalculate_nama_satuan_key($nama, $satuan);
-	if ($ns_key !== '' && !empty($map['by_nama_satuan'][$ns_key])) {
-		$candidates = $map['by_nama_satuan'][$ns_key];
-		$pick = null;
-		if ($ref !== null && function_exists('persediaan_recalculate_pick_best_persediaan_row')) {
-			$pick = persediaan_recalculate_pick_best_persediaan_row($candidates, $ref);
+	if ($ns_key !== '') {
+		$candidates = array();
+		foreach (isset($map['by_id']) && is_array($map['by_id']) ? $map['by_id'] : array() as $candidate) {
+			if (persediaan_gen_v2_persediaan_row_matches_penjualan($candidate, $nama, $satuan)) {
+				$candidates[] = $candidate;
+			}
 		}
-		if (!$pick && !empty($candidates)) {
-			$pick = $candidates[0];
+		if (empty($candidates) && !empty($map['by_nama_satuan'][$ns_key])) {
+			$candidates = $map['by_nama_satuan'][$ns_key];
 		}
-		if ($pick) {
-			return array(
-				'row' => $pick,
-				'match_via' => 'nama_barang+satuan',
-			);
+		if (empty($candidates)) {
+			$candidates = array();
+		}
+		if (!empty($candidates)) {
+			$pick = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($candidates, $ref, $min_stock);
+			if ($pick) {
+				return array('row' => $pick, 'match_via' => 'nama_barang+satuan');
+			}
+			$insufficient = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($candidates, $ref, 0);
+			if ($insufficient) {
+				return array('row' => null, 'match_via' => 'nama_barang+satuan', 'stok_row' => $insufficient);
+			}
 		}
 	}
 
 	if (!empty($map['by_id']) && is_array($map['by_id'])) {
+		$unit_candidates = array();
 		foreach ($map['by_id'] as $row) {
 			$nama_row = persediaan_recalculate_normalize_nama(
 				persediaan_recalculate_sanitize_nama_persediaan(isset($row->namabarang) ? $row->namabarang : '')
@@ -12177,16 +12310,22 @@ function persediaan_generate_recalculate_find_penjualan_target_persediaan($map, 
 			if (!persediaan_recalculate_satuan_cocok_pembelian(isset($row->satuan) ? $row->satuan : '', $satuan)) {
 				continue;
 			}
-			return array(
-				'row' => $row,
-				'match_via' => 'nama_barang+satuan',
-			);
+			$unit_candidates[] = $row;
+		}
+		$pick = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($unit_candidates, $ref, $min_stock);
+		if ($pick) {
+			return array('row' => $pick, 'match_via' => 'nama_barang+satuan');
+		}
+		$insufficient = persediaan_generate_recalculate_pick_penjualan_candidate_with_stock($unit_candidates, $ref, 0);
+		if ($insufficient) {
+			return array('row' => null, 'match_via' => 'nama_barang+satuan', 'stok_row' => $insufficient);
 		}
 	}
 
 	return array(
 		'row' => null,
-		'match_via' => '',
+		'match_via' => $preferred_insufficient ? 'stok_tidak_cukup' : '',
+		'stok_row' => $preferred_insufficient,
 	);
 }
 
@@ -12255,9 +12394,26 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 		'satuan' => $satuan,
 		'harga_satuan' => $harga,
 	);
-	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref_match);
+	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan(
+		$map,
+		$nama,
+		$satuan,
+		$uuid_p,
+		$ref_match,
+		$jumlah,
+		isset($row->id_persediaan_barang) ? (int) $row->id_persediaan_barang : 0
+	);
 	$existing = isset($lookup['row']) ? $lookup['row'] : null;
 	$match_via = isset($lookup['match_via']) ? $lookup['match_via'] : '';
+	if (!$existing && !empty($lookup['stok_row'])) {
+		$stock_row = $lookup['stok_row'];
+		$row->status_kategori = 'tidak_masuk';
+		$row->status_label = 'Stok Kurang';
+		$row->status_keterangan = 'Stok total_10=' . (int) floor(persediaan_parse_angka($stock_row->total_10))
+			. ' kurang dari jumlah penjualan=' . $jumlah . '; tidak diproses.';
+		$row->id_persediaan_match = (int) $stock_row->id;
+		return $row;
+	}
 
 	if (!$existing) {
 		$keterangan_gagal = '';
@@ -12319,8 +12475,38 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 		);
 	}
 
+	if (max(0, (int) floor(persediaan_parse_angka($existing->total_10))) < $jumlah) {
+		return array(
+			'fase' => 'penjualan',
+			'aksi' => 'STOK_KURANG',
+			'id_penjualan' => $id,
+			'id_persediaan' => (int) $existing->id,
+			'jumlah_penjualan' => (string) $jumlah,
+			'keterangan' => 'Stok total_10 kurang dari jumlah penjualan; tidak diproses.',
+		);
+	}
 	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $existing, $jumlah, $row);
+	if (empty($upd['update_ok'])) {
+		return array(
+			'fase' => 'penjualan',
+			'aksi' => 'GAGAL_UPDATE',
+			'id_penjualan' => $id,
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => isset($upd['update_error']) ? $upd['update_error'] : 'Update penjualan ke persediaan gagal.',
+		);
+	}
 	$row_baru = $CI->db->where('id', (int) $existing->id)->limit(1)->get('persediaan')->row();
+	if (!$row_baru
+		|| (int) floor(persediaan_parse_angka($row_baru->penjualan)) !== (int) $upd['penjualan_baru']
+		|| (int) floor(persediaan_parse_angka($row_baru->total_10)) !== (int) $upd['total_10']) {
+		return array(
+			'fase' => 'penjualan',
+			'aksi' => 'GAGAL_VERIFIKASI_UPDATE',
+			'id_penjualan' => $id,
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => 'Nilai penjualan/total_10 setelah UPDATE tidak sesuai.',
+		);
+	}
 	if ($row_baru) {
 		persediaan_recalculate_map_add_row($map, $row_baru);
 	}
@@ -12373,14 +12559,17 @@ function persediaan_generate_recalculate_proses_penjualan_row($CI, $ctx, $queue_
 function persediaan_recalculate_reset_bahan_produksi_persediaan_bulan($CI, $tanggal_beli)
 {
 	$CI->load->helper('persediaan_display');
+	$tgl_awal = date('Y-m-01', strtotime((string) $tanggal_beli));
 
 	if (!$CI->db->field_exists('bahan_produksi', 'persediaan')) {
 		return array('record_direset' => 0, 'total_rows' => 0);
 	}
 
 	$rows = $CI->db->query(
-		"SELECT `id`, `bahan_produksi` FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
-		array($tanggal_beli)
+		"SELECT `id`, `bahan_produksi` FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `id` ASC",
+		array($tgl_awal, $tgl_awal)
 	)->result();
 
 	$updated = 0;
@@ -12425,12 +12614,12 @@ function persediaan_generate_recalculate_bahan_row_uuid_persediaan($row)
 		return '';
 	}
 
-	if (isset($row->uuid_persediaan) && trim((string) $row->uuid_persediaan) !== '') {
-		return trim((string) $row->uuid_persediaan);
+	if (property_exists($row, 'uuid_persediaan_bahan')) {
+		return trim((string) $row->uuid_persediaan_bahan);
 	}
 
-	if (isset($row->uuid_persediaan_bahan) && trim((string) $row->uuid_persediaan_bahan) !== '') {
-		return trim((string) $row->uuid_persediaan_bahan);
+	if (isset($row->uuid_persediaan) && trim((string) $row->uuid_persediaan) !== '') {
+		return trim((string) $row->uuid_persediaan);
 	}
 
 	return '';
@@ -12924,88 +13113,164 @@ function persediaan_recalculate_prepare_produksi_bulan($CI, $ctx)
  */
 function persediaan_generate_recalculate_kumpulkan_kandidat_produksi_bahan($CI, $row_bahan, $map)
 {
-	if (empty($map) || empty($row_bahan)) {
-		return array();
-	}
-
-	$raw = array();
-
-	$uuid_p = persediaan_generate_recalculate_bahan_row_uuid_persediaan($row_bahan);
-	if ($uuid_p !== '' && !empty($map['by_uuid_pers'][$uuid_p])) {
-		foreach ($map['by_uuid_pers'][$uuid_p] as $row) {
-			$raw[(int) $row->id] = $row;
-		}
-	}
-
-	$nama = isset($row_bahan->nama_barang_bahan) ? $row_bahan->nama_barang_bahan : '';
-	$satuan = isset($row_bahan->satuan_bahan) ? $row_bahan->satuan_bahan : '';
-	$harga = isset($row_bahan->harga_satuan_bahan) ? $row_bahan->harga_satuan_bahan : '';
-	$spop = persediaan_generate_recalculate_resolve_spop_produksi_bahan($CI, $row_bahan);
-
-	$exact = persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama, $satuan, $harga, $spop);
-	if ($exact) {
-		$raw[(int) $exact->id] = $exact;
-	}
-
-	$by_nama_hpp = persediaan_generate_recalculate_find_by_nama_hpp($map, $nama, $satuan, $harga);
-	if ($by_nama_hpp) {
-		$raw[(int) $by_nama_hpp->id] = $by_nama_hpp;
-	}
-
-	foreach (persediaan_generate_recalculate_kandidat_penjualan_persediaan($map, $nama, $satuan, $harga) as $row) {
-		if ($spop === '' || persediaan_recalculate_spop_cocok(isset($row->spop) ? $row->spop : '', $spop)) {
-			$raw[(int) $row->id] = $row;
-		}
-	}
-
-	return array_values($raw);
+	$match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row_bahan, $map);
+	return !empty($match['row']) ? array($match['row']) : array();
 }
 
-/**
- * Resolve baris persediaan bulan target untuk satu baris sys_unit_produk_bahan.
- */
 function persediaan_generate_recalculate_find_persediaan_for_produksi_bahan($CI, $row_bahan, $map)
 {
-	if (empty($map) || empty($row_bahan)) {
-		return null;
+	$match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row_bahan, $map);
+	return !empty($match['row']) ? $match['row'] : null;
+}
+
+function persediaan_generate_recalculate_load_prior_pembelian_produksi_bahan($CI, $nama)
+{
+	static $cache = array();
+	$key = strtolower(preg_replace('/\s+/', ' ', trim((string) $nama)));
+	if ($key === '') {
+		return array();
+	}
+	if (isset($cache[$key])) {
+		return $cache[$key];
 	}
 
-	$nama = isset($row_bahan->nama_barang_bahan) ? $row_bahan->nama_barang_bahan : '';
-	$satuan = isset($row_bahan->satuan_bahan) ? $row_bahan->satuan_bahan : '';
-	$harga = isset($row_bahan->harga_satuan_bahan) ? $row_bahan->harga_satuan_bahan : '';
-	$ref = (object) array(
-		'nama_barang' => $nama,
-		'satuan' => $satuan,
-		'harga_satuan' => $harga,
+	$cache[$key] = array();
+	foreach (array('tbl_pembelian', 'tbl_pembelian_jasa') as $table) {
+		if (!$CI->db->table_exists($table)
+			|| !$CI->db->field_exists('tgl_po', $table)
+			|| !$CI->db->field_exists('uraian', $table)
+			|| !$CI->db->field_exists('satuan', $table)) {
+			continue;
+		}
+		$uuid_sql = $CI->db->field_exists('uuid_persediaan', $table)
+			? "TRIM(COALESCE(`uuid_persediaan`, ''))"
+			: "''";
+		$hpp_sql = $CI->db->field_exists('harga_satuan', $table)
+			? '`harga_satuan`'
+			: '0';
+		$rows = $CI->db->query(
+			"SELECT `id`, `tgl_po`, `uraian`, `satuan`, {$hpp_sql} AS `harga_satuan`, {$uuid_sql} AS `uuid_persediaan`, '{$table}' AS `sumber_tabel`
+			FROM `{$table}`
+			WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
+			AND LOWER(TRIM(`uraian`)) = ?
+			ORDER BY `tgl_po` DESC, `id` DESC",
+			array($key)
+		)->result();
+		foreach ($rows as $row) {
+			$cache[$key][] = $row;
+		}
+	}
+
+	return $cache[$key];
+}
+
+function persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row_bahan, $map)
+{
+	$out = array(
+		'row' => null,
+		'metode' => '',
+		'pembelian' => null,
+		'alasan' => '',
 	);
-
-	$uuid_p = persediaan_generate_recalculate_bahan_row_uuid_persediaan($row_bahan);
-	if ($uuid_p !== '' && !empty($map['by_uuid_pers'][$uuid_p])) {
-		$pick_uuid = persediaan_recalculate_pick_best_persediaan_row($map['by_uuid_pers'][$uuid_p], $ref);
-		if ($pick_uuid) {
-			return $pick_uuid;
-		}
+	if (empty($map) || empty($row_bahan)) {
+		$out['alasan'] = 'Map persediaan bulan target tidak tersedia.';
+		return $out;
 	}
 
-	$by_nama_hpp = persediaan_generate_recalculate_find_by_nama_hpp($map, $nama, $satuan, $harga);
-	if ($by_nama_hpp) {
-		return $by_nama_hpp;
-	}
+	$nama = isset($row_bahan->nama_barang_bahan) ? trim((string) $row_bahan->nama_barang_bahan) : '';
+	$satuan = isset($row_bahan->satuan_bahan) ? trim((string) $row_bahan->satuan_bahan) : '';
+	$harga = isset($row_bahan->harga_satuan_bahan) ? $row_bahan->harga_satuan_bahan : '';
+	$uuid_bahan = persediaan_generate_recalculate_bahan_row_uuid_persediaan($row_bahan);
+	$ref = (object) array('nama_barang' => $nama, 'satuan' => $satuan, 'harga_satuan' => $harga);
 
-	$candidates = persediaan_generate_recalculate_kumpulkan_kandidat_produksi_bahan($CI, $row_bahan, $map);
-	if (empty($candidates)) {
-		return null;
-	}
-
-	$spop = persediaan_generate_recalculate_resolve_spop_produksi_bahan($CI, $row_bahan);
-	if ($spop !== '') {
-		$exact = persediaan_generate_recalculate_find_by_nama_hpp_spop($map, $nama, $satuan, $harga, $spop);
+	if ($uuid_bahan !== '' && !empty($map['by_uuid_pers'][$uuid_bahan])) {
+		$exact = persediaan_recalculate_pick_best_persediaan_row($map['by_uuid_pers'][$uuid_bahan], $ref);
 		if ($exact) {
-			return $exact;
+			$out['row'] = $exact;
+			$out['metode'] = 'UUID_BAHAN';
+			return $out;
 		}
 	}
 
-	return persediaan_recalculate_pick_best_persediaan_row($candidates, $ref);
+	$tgl_bahan = isset($row_bahan->tgl_transaksi) ? substr(trim((string) $row_bahan->tgl_transaksi), 0, 10) : '';
+	if ($tgl_bahan === '' || $tgl_bahan === '0000-00-00') {
+		$out['alasan'] = 'Tanggal transaksi bahan tidak valid; pembelian sebelumnya tidak dapat diverifikasi.';
+		return $out;
+	}
+
+	$eligible = array();
+	foreach (persediaan_generate_recalculate_load_prior_pembelian_produksi_bahan($CI, $nama) as $purchase) {
+		$tgl_po = isset($purchase->tgl_po) ? substr(trim((string) $purchase->tgl_po), 0, 10) : '';
+		if ($tgl_po === '' || $tgl_po === '0000-00-00' || $tgl_po >= $tgl_bahan) {
+			continue;
+		}
+		if (function_exists('persediaan_satuan_cocok_referensi')
+			? !persediaan_satuan_cocok_referensi($satuan, isset($purchase->satuan) ? $purchase->satuan : '')
+			: strcasecmp(trim($satuan), trim((string) (isset($purchase->satuan) ? $purchase->satuan : '')))) {
+			continue;
+		}
+		$eligible[] = $purchase;
+	}
+
+	if (empty($eligible)) {
+		$out['alasan'] = 'Tidak ditemukan pembelian dengan nama dan satuan yang cocok sebelum tanggal input bahan (' . $tgl_bahan . ').';
+		return $out;
+	}
+
+	foreach ($eligible as $purchase) {
+		$purchase_name = isset($purchase->uraian) ? trim((string) $purchase->uraian) : '';
+		$purchase_unit = isset($purchase->satuan) ? trim((string) $purchase->satuan) : '';
+		$purchase_hpp = isset($purchase->harga_satuan) ? $purchase->harga_satuan : 0;
+		$purchase_uuid = isset($purchase->uuid_persediaan) ? trim((string) $purchase->uuid_persediaan) : '';
+		$candidate = null;
+
+		if ($purchase_uuid !== '' && !empty($map['by_uuid_pers'][$purchase_uuid])) {
+			$candidates = array();
+			foreach ($map['by_uuid_pers'][$purchase_uuid] as $stock_row) {
+				if (persediaan_generate_recalculate_row_cocok_nama_hpp($stock_row, $purchase_name, $purchase_unit, $purchase_hpp)) {
+					$candidates[] = $stock_row;
+				}
+			}
+			$candidate = !empty($candidates)
+				? persediaan_recalculate_pick_best_persediaan_row($candidates, (object) array(
+					'nama_barang' => $purchase_name,
+					'satuan' => $purchase_unit,
+					'harga_satuan' => $purchase_hpp,
+				))
+				: null;
+		}
+
+		if (!$candidate && $purchase_hpp > 0) {
+			$candidate = persediaan_generate_recalculate_find_by_nama_hpp($map, $purchase_name, $purchase_unit, $purchase_hpp);
+		}
+
+		if (!$candidate && $purchase_hpp <= 0) {
+			$ns_key = persediaan_recalculate_nama_satuan_key($purchase_name, $purchase_unit);
+			$by_name_unit = isset($map['by_nama_satuan'][$ns_key]) ? $map['by_nama_satuan'][$ns_key] : array();
+			if (count($by_name_unit) === 1) {
+				$candidate = reset($by_name_unit);
+			}
+		}
+
+		if ($candidate) {
+			$out['row'] = $candidate;
+			$out['metode'] = 'PEMBELIAN_NAMA_TANGGAL';
+			$out['pembelian'] = $purchase;
+			return $out;
+		}
+	}
+
+	$out['pembelian'] = $eligible[0];
+	$out['alasan'] = 'Pembelian sebelumnya ditemukan ('
+		. (isset($eligible[0]->tgl_po) ? substr((string) $eligible[0]->tgl_po, 0, 10) : '')
+		. '), tetapi record persediaan bulan target yang cocok belum tersedia.';
+	return $out;
+}
+
+function persediaan_generate_recalculate_find_persediaan_for_produksi_bahan_uuid($CI, $row_bahan, $map)
+{
+	$match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row_bahan, $map);
+	return !empty($match['row']) ? $match['row'] : null;
 }
 
 function persediaan_generate_recalculate_build_produksi_queue($CI, $ctx)
@@ -13015,7 +13280,7 @@ function persediaan_generate_recalculate_build_produksi_queue($CI, $ctx)
 	}
 
 	$list = $CI->db->query(
-		"SELECT `id`, `uuid_persediaan`, `uuid_persediaan_bahan`, `nama_barang_bahan`, `satuan_bahan`, `harga_satuan_bahan`, `jumlah_bahan`, `nama_unit`, `kode_barang_bahan`
+		"SELECT `id`, `tgl_transaksi`, `uuid_persediaan`, `uuid_persediaan_bahan`, `nama_barang_bahan`, `satuan_bahan`, `harga_satuan_bahan`, `jumlah_bahan`, `nama_unit`, `kode_barang_bahan`
 		FROM `sys_unit_produk_bahan`
 		WHERE `tgl_transaksi` IS NOT NULL AND `tgl_transaksi` <> '0000-00-00'
 		AND DATE(`tgl_transaksi`) >= ? AND DATE(`tgl_transaksi`) <= ?
@@ -13033,7 +13298,7 @@ function persediaan_generate_recalculate_build_produksi_queue($CI, $ctx)
 		}
 
 		$spop = persediaan_generate_recalculate_resolve_spop_produksi_bahan($CI, $row);
-		$key = persediaan_generate_recalculate_group_key_nama_satuan_hpp_spop(
+		$key = persediaan_generate_recalculate_bahan_row_uuid_persediaan($row) . '|' . substr((string) $row->tgl_transaksi, 0, 10) . '|' . persediaan_generate_recalculate_group_key_nama_satuan_hpp_spop(
 			isset($row->nama_barang_bahan) ? $row->nama_barang_bahan : '',
 			isset($row->satuan_bahan) ? $row->satuan_bahan : '',
 			isset($row->harga_satuan_bahan) ? $row->harga_satuan_bahan : '',
@@ -13045,6 +13310,7 @@ function persediaan_generate_recalculate_build_produksi_queue($CI, $ctx)
 				'aggregated' => 1,
 				'group_key' => $key,
 				'id' => (int) $row->id,
+				'tgl_transaksi' => isset($row->tgl_transaksi) ? $row->tgl_transaksi : '',
 				'uuid_persediaan' => persediaan_generate_recalculate_bahan_row_uuid_persediaan($row),
 				'nama_barang_bahan' => isset($row->nama_barang_bahan) ? $row->nama_barang_bahan : '',
 				'satuan_bahan' => isset($row->satuan_bahan) ? $row->satuan_bahan : '',
@@ -13109,6 +13375,59 @@ function persediaan_recalculate_flush_produksi_accum_to_db($CI, $accum)
 	}
 
 	return $updated;
+}
+
+function persediaan_generate_recalculate_sync_produksi_to_stock_bulanan($CI, $tanggal_beli)
+{
+	$result = array('updated' => 0, 'unmatched' => 0);
+	if (!$CI->db->table_exists('persediaan_stock_bulanan')) {
+		return $result;
+	}
+
+	$rows = $CI->db->query(
+		"SELECT * FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `id` ASC",
+		array($tanggal_beli, $tanggal_beli)
+	)->result();
+	$fields_stock = $CI->db->list_fields('persediaan_stock_bulanan');
+	$copy_fields = array_intersect(
+		array('bahan_produksi', 'total_10', 'nilai_persediaan', 'tuj'),
+		$fields_stock
+	);
+
+	foreach ($rows as $row) {
+		$uuid = trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
+		if ($uuid === '') {
+			$result['unmatched']++;
+			continue;
+		}
+		$stock_rows = $CI->db->query(
+			"SELECT `id` FROM `persediaan_stock_bulanan`
+			WHERE `uuid_persediaan` = ? AND `tanggal_beli` >= ?
+			AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)",
+			array($uuid, $tanggal_beli, $tanggal_beli)
+		)->result();
+		if (empty($stock_rows)) {
+			$result['unmatched']++;
+			continue;
+		}
+
+		$payload = array();
+		foreach ($copy_fields as $field) {
+			if (isset($row->$field)) {
+				$payload[$field] = $row->$field;
+			}
+		}
+		foreach ($stock_rows as $stock_row) {
+			$CI->db->where('id', (int) $stock_row->id)->update('persediaan_stock_bulanan', $payload);
+			if ($CI->db->affected_rows() >= 0) {
+				$result['updated']++;
+			}
+		}
+	}
+
+	return $result;
 }
 
 /**
@@ -13216,6 +13535,7 @@ function persediaan_generate_recalculate_proses_produksi_row($CI, $ctx, $queue_i
 	if (!empty($queue_item['aggregated'])) {
 		$row = (object) array(
 			'id' => $id,
+			'tgl_transaksi' => isset($queue_item['tgl_transaksi']) ? $queue_item['tgl_transaksi'] : '',
 			'uuid_persediaan' => isset($queue_item['uuid_persediaan']) ? $queue_item['uuid_persediaan'] : '',
 			'nama_barang_bahan' => isset($queue_item['nama_barang_bahan']) ? $queue_item['nama_barang_bahan'] : '',
 			'satuan_bahan' => isset($queue_item['satuan_bahan']) ? $queue_item['satuan_bahan'] : '',
@@ -13259,8 +13579,10 @@ function persediaan_generate_recalculate_proses_produksi_row($CI, $ctx, $queue_i
 		);
 	}
 
-	$pick = persediaan_generate_recalculate_find_persediaan_for_produksi_bahan($CI, $row, $map);
+	$match = persediaan_generate_recalculate_resolve_produksi_bahan_match($CI, $row, $map);
+	$pick = isset($match['row']) ? $match['row'] : null;
 	if (!$pick) {
+		$purchase = isset($match['pembelian']) ? $match['pembelian'] : null;
 		return array(
 			'fase' => 'produksi',
 			'aksi' => 'TIDAK_COCOK',
@@ -13271,7 +13593,11 @@ function persediaan_generate_recalculate_proses_produksi_row($CI, $ctx, $queue_i
 			'spop' => $spop,
 			'jumlah_bahan' => (string) $jumlah,
 			'nama_unit' => $nama_unit,
-			'keterangan' => 'Tidak cocok di persediaan bulan target (uuid_persediaan atau nama_barang_bahan+satuan_bahan+harga_satuan_bahan = namabarang+satuan+hpp)'
+			'metode_pencocokan' => isset($match['metode']) ? $match['metode'] : '',
+			'id_pembelian_referensi' => $purchase && isset($purchase->id) ? (int) $purchase->id : 0,
+			'tgl_pembelian_referensi' => $purchase && isset($purchase->tgl_po) ? (string) $purchase->tgl_po : '',
+			'uuid_pembelian_referensi' => $purchase && isset($purchase->uuid_persediaan) ? (string) $purchase->uuid_persediaan : '',
+			'keterangan' => !empty($match['alasan']) ? $match['alasan'] : 'UUID bahan dan pembelian sebelumnya tidak dapat dipetakan ke persediaan bulan target'
 				. (count($source_ids) > 1 ? ' | agregasi ' . count($source_ids) . ' baris sys_unit_produk_bahan' : ''),
 		);
 	}
@@ -13330,6 +13656,10 @@ function persediaan_generate_recalculate_proses_produksi_row($CI, $ctx, $queue_i
 		'spop' => $spop,
 		'nama_unit' => $nama_unit,
 		'jumlah_bahan' => (string) $jumlah,
+		'metode_pencocokan' => isset($match['metode']) ? $match['metode'] : '',
+		'id_pembelian_referensi' => !empty($match['pembelian']->id) ? (int) $match['pembelian']->id : 0,
+		'tgl_pembelian_referensi' => !empty($match['pembelian']->tgl_po) ? (string) $match['pembelian']->tgl_po : '',
+		'uuid_pembelian_referensi' => !empty($match['pembelian']->uuid_persediaan) ? (string) $match['pembelian']->uuid_persediaan : '',
 		'bahan_produksi_lama' => (string) $bahan_lama,
 		'bahan_produksi_baru' => (string) $bahan_baru,
 		'total_10' => (string) $total_10_baru,
@@ -13355,7 +13685,7 @@ function persediaan_recalculate_undo_pecah_satuan_target_bulan($CI, $ctx)
 	}
 
 	$tanggal_beli = isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $ctx['tanggal_beli'];
-	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$map = persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tanggal_beli);
 
 	$list = $CI->db->query(
 		"SELECT * FROM `tbl_pembelian_pecah_satuan`
@@ -13413,14 +13743,17 @@ function persediaan_recalculate_undo_pecah_satuan_target_bulan($CI, $ctx)
 function persediaan_recalculate_reset_pecah_satuan_persediaan_bulan($CI, $tanggal_beli)
 {
 	$CI->load->helper('persediaan_display');
+	$tgl_awal = date('Y-m-01', strtotime((string) $tanggal_beli));
 
 	if (!$CI->db->field_exists('pecah_satuan', 'persediaan')) {
 		return array('record_direset' => 0, 'total_rows' => 0);
 	}
 
 	$rows = $CI->db->query(
-		"SELECT `id`, `pecah_satuan`, `total_10`, `hpp` FROM `persediaan` WHERE `tanggal_beli` = ? ORDER BY `id` ASC",
-		array($tanggal_beli)
+		"SELECT `id`, `pecah_satuan`, `total_10`, `hpp` FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `id` ASC",
+		array($tgl_awal, $tgl_awal)
 	)->result();
 
 	$updated = 0;
@@ -14399,7 +14732,7 @@ function persediaan_generate_recalculate_reapply_pecah_satuan_bulan($CI, $ctx)
 	persediaan_recalculate_prepare_pecah_satuan_bulan($CI, $ctx);
 
 	$tanggal_beli = isset($ctx['tanggal_beli_target']) ? $ctx['tanggal_beli_target'] : $ctx['tanggal_beli'];
-	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$map = persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tanggal_beli);
 
 	$list = $CI->db->query(
 		"SELECT * FROM `tbl_pembelian_pecah_satuan`
@@ -15761,11 +16094,70 @@ function persediaan_generate_recalculate_get_map_cached(&$state, $CI, $tanggal_b
 		return $state['persediaan_map_cache'];
 	}
 
-	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$map = persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tanggal_beli);
 	$state['persediaan_map_cache'] = $map;
 	$state['persediaan_map_cache_tgl'] = $tanggal_beli;
 
 	return $map;
+}
+
+function persediaan_gen_v2_reset_penjualan_target_month($CI, $tgl_awal, $tgl_akhir)
+{
+	$CI->load->helper('persediaan_display');
+	if (!$CI->db->table_exists('persediaan') || !$CI->db->field_exists('penjualan', 'persediaan')) {
+		return array('ok' => false, 'updated' => 0, 'message' => 'Kolom penjualan di persediaan tidak tersedia.');
+	}
+
+	$pecah_sql = $CI->db->field_exists('pecah_satuan', 'persediaan') ? '`pecah_satuan`' : '0 AS `pecah_satuan`';
+	$produksi_sql = $CI->db->field_exists('bahan_produksi', 'persediaan') ? '`bahan_produksi`' : '0 AS `bahan_produksi`';
+	$rows = $CI->db->query(
+		"SELECT `id`, `sa`, `beli`, {$pecah_sql}, {$produksi_sql}, `hpp`
+		FROM `persediaan`
+		WHERE `tanggal_beli` >= ? AND `tanggal_beli` < DATE_ADD(?, INTERVAL 1 MONTH)
+		ORDER BY `tanggal_beli` ASC, `id` ASC",
+		array($tgl_awal, $tgl_awal)
+	)->result();
+	$unit_columns = function_exists('persediaan_list_unit_columns')
+		? persediaan_list_unit_columns($CI)
+		: array();
+	$fields = $CI->db->list_fields('persediaan');
+	$unit_columns = array_values(array_intersect($unit_columns, $fields));
+	$updates = array();
+	foreach ($rows as $row) {
+		$gross = max(0, (int) floor(persediaan_parse_angka($row->sa) + persediaan_parse_angka($row->beli)));
+		$pecah = min($gross, max(0, (int) floor(persediaan_parse_angka($row->pecah_satuan))));
+		$produksi = min($gross - $pecah, max(0, (int) floor(persediaan_parse_angka($row->bahan_produksi))));
+		$total_10 = max(0, $gross - $pecah - $produksi);
+		$update = array(
+			'id' => (int) $row->id,
+			'penjualan' => '0',
+			'total_10' => (string) $total_10,
+		);
+		if ($CI->db->field_exists('nilai_persediaan', 'persediaan')) {
+			$update['nilai_persediaan'] = (string) (int) floor($total_10 * persediaan_parse_angka($row->hpp));
+		}
+		if ($CI->db->field_exists('tuj', 'persediaan')) {
+			$update['tuj'] = (string) $total_10;
+		}
+		foreach ($unit_columns as $column) {
+			$update[$column] = '0';
+		}
+		$updates[] = $update;
+	}
+
+	for ($offset = 0; $offset < count($updates); $offset += 200) {
+		$batch = array_slice($updates, $offset, 200);
+		if ($CI->db->update_batch('persediaan', $batch, 'id', 200) === false) {
+			$error = $CI->db->error();
+			return array(
+				'ok' => false,
+				'updated' => 0,
+				'message' => !empty($error['message']) ? $error['message'] : 'Gagal mereset penjualan persediaan bulan target.',
+			);
+		}
+	}
+
+	return array('ok' => true, 'updated' => count($updates), 'message' => 'Penjualan target direset sebelum dihitung ulang dari tbl_penjualan.');
 }
 
 function persediaan_generate_recalculate_prefetch_table_rows($CI, $table, $ids)
@@ -23915,7 +24307,7 @@ function persediaan_export_rekonsiliasi_transaksi_excel_output($CI, $bulan)
 	$bulan_label = date('m/Y', $ts);
 
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
-	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$map = persediaan_generate_recalculate_build_map_persediaan_target_month($CI, $tanggal_beli);
 	$pers_rows = $CI->db->query(
 		"SELECT `id`, `uuid_barang`, `namabarang`, `satuan`, `hpp`, `spop`, `sa`, `beli`, `total_10`
 		FROM `persediaan`
@@ -28725,16 +29117,17 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 	$match_via = '';
 	$uuid_updated = false;
 
-	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref_match);
+	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan(
+		$map,
+		$nama,
+		$satuan,
+		$uuid_p,
+		$ref_match,
+		$jumlah,
+		isset($row_penjualan->id_persediaan_barang) ? (int) $row_penjualan->id_persediaan_barang : 0
+	);
 	$existing = isset($lookup['row']) ? $lookup['row'] : null;
 	$match_via = isset($lookup['match_via']) ? $lookup['match_via'] : '';
-
-	if (!$existing && $uuid_p !== '' && !empty($map['by_uuid_pers'][$uuid_p])) {
-		$existing = persediaan_recalculate_pick_best_persediaan_row($map['by_uuid_pers'][$uuid_p], $ref_match);
-		if ($existing) {
-			$match_via = 'uuid_persediaan';
-		}
-	}
 
 	if (
 		!$existing
@@ -28773,6 +29166,22 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 				}
 			}
 		}
+	}
+
+	if (!$existing && !empty($lookup['stok_row'])) {
+		$stock_candidate = $lookup['stok_row'];
+		$qty_available = max(0, (int) floor(persediaan_parse_angka(isset($stock_candidate->total_10) ? $stock_candidate->total_10 : 0)));
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'STOK_KURANG',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $stock_candidate->id,
+			'penjualan_lama' => isset($stock_candidate->penjualan) ? (string) $stock_candidate->penjualan : '0',
+			'total_10' => (string) $qty_available,
+			'keterangan' => 'Stok total_10=' . $qty_available . ' kurang dari jumlah penjualan=' . $jumlah . '; tidak di-update dan tidak ditandai refered.',
+		));
 	}
 
 	if (!$existing && persediaan_gen_v2_uuid_in_pembelian_cache($uuid_p, $cache_pembelian)) {
@@ -28853,7 +29262,59 @@ function persediaan_gen_v2_proses_penjualan_row($CI, $ctx, $row_penjualan, &$map
 		));
 	}
 
+	$total_10_sebelum = max(0, (int) floor(persediaan_parse_angka(isset($existing->total_10) ? $existing->total_10 : 0)));
+	if ($total_10_sebelum < $jumlah) {
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'STOK_KURANG',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $existing->id,
+			'penjualan_lama' => isset($existing->penjualan) ? (string) $existing->penjualan : '0',
+			'total_10' => (string) $total_10_sebelum,
+			'keterangan' => 'Stok total_10=' . $total_10_sebelum . ' kurang dari jumlah penjualan=' . $jumlah . '; tidak di-update dan tidak ditandai refered.',
+		));
+	}
 	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $existing, $jumlah, $row_penjualan);
+	if (!empty($upd['insufficient_stock'])) {
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'STOK_KURANG',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => isset($upd['message']) ? $upd['message'] : 'Stok tidak mencukupi.',
+		));
+	}
+	if (empty($upd['update_ok'])) {
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'GAGAL_UPDATE',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => !empty($upd['update_error']) ? $upd['update_error'] : 'Update persediaan gagal.',
+		));
+	}
+	$row_after_update = $CI->db->where('id', (int) $existing->id)->limit(1)->get('persediaan')->row();
+	$penjualan_terverifikasi = $row_after_update ? (int) floor(persediaan_parse_angka($row_after_update->penjualan)) : -1;
+	$total_10_terverifikasi = $row_after_update ? (int) floor(persediaan_parse_angka($row_after_update->total_10)) : -1;
+	if (!$row_after_update
+		|| $penjualan_terverifikasi !== (int) $upd['penjualan_baru']
+		|| $total_10_terverifikasi !== (int) $upd['total_10']) {
+		if ($id > 0) {
+			tbl_penjualan_set_verified_persediaan($CI, $id, null);
+		}
+		return array_merge($base, array(
+			'aksi' => 'GAGAL_VERIFIKASI_UPDATE',
+			'kategori' => 'tidak_masuk',
+			'id_persediaan' => (int) $existing->id,
+			'keterangan' => 'Nilai persediaan setelah UPDATE tidak sesuai; verified_persediaan tidak ditandai refered.',
+		));
+	}
 	$row_baru = clone $existing;
 	$row_baru->penjualan = $upd['penjualan_baru'];
 	$row_baru->total_10 = $upd['total_10'];
@@ -28938,15 +29399,25 @@ function persediaan_gen_v2_classify_penjualan_row_display($CI, $ctx, $row_pen, $
 	$harga_eff = $eff['hpp'] !== '' ? $eff['hpp'] : (isset($row_pen->harga_satuan) ? $row_pen->harga_satuan : '');
 	$ref = (object) array('nama_barang' => $nama, 'satuan' => $satuan, 'harga_satuan' => $harga_eff);
 
-	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan($map, $nama, $satuan, $uuid_p, $ref);
+	$lookup = persediaan_generate_recalculate_find_penjualan_target_persediaan(
+		$map,
+		$nama,
+		$satuan,
+		$uuid_p,
+		$ref,
+		$jumlah,
+		isset($row_pen->id_persediaan_barang) ? (int) $row_pen->id_persediaan_barang : 0
+	);
 	$existing = isset($lookup['row']) ? $lookup['row'] : null;
 	$row->match_via = isset($lookup['match_via']) ? $lookup['match_via'] : '';
-
-	if (!$existing && $uuid_p !== '' && !empty($map['by_uuid_pers'][$uuid_p])) {
-		$existing = persediaan_recalculate_pick_best_persediaan_row($map['by_uuid_pers'][$uuid_p], $ref);
-		if ($existing) {
-			$row->match_via = 'uuid_persediaan';
-		}
+	if (!$existing && !empty($lookup['stok_row'])) {
+		$stock_row = $lookup['stok_row'];
+		$row->status_kategori = 'tidak_masuk';
+		$row->status_label = 'Stok Kurang';
+		$row->status_keterangan = 'Stok total_10=' . (int) floor(persediaan_parse_angka($stock_row->total_10))
+			. ' kurang dari jumlah penjualan=' . $jumlah . '; tidak diproses.';
+		$row->id_persediaan_match = (int) $stock_row->id;
+		return $row;
 	}
 
 	if ($existing) {
@@ -29330,6 +29801,8 @@ function persediaan_gen_v2_finish($CI, $bulan, $ctx, &$state, $state_key, $batch
 		'produksi_skip' => (int) (isset($stats['produksi_skip']) ? $stats['produksi_skip'] : 0),
 		'produksi_bahan_update' => (int) (isset($stats['produksi_bahan_update']) ? $stats['produksi_bahan_update'] : 0),
 		'produksi_bahan_tidak_cocok' => (int) (isset($stats['produksi_bahan_tidak_cocok']) ? $stats['produksi_bahan_tidak_cocok'] : 0),
+			'produksi_bahan_stock_bulanan_update' => (int) (isset($stats['produksi_bahan_stock_bulanan_update']) ? $stats['produksi_bahan_stock_bulanan_update'] : 0),
+			'produksi_bahan_stock_bulanan_tidak_cocok' => (int) (isset($stats['produksi_bahan_stock_bulanan_tidak_cocok']) ? $stats['produksi_bahan_stock_bulanan_tidak_cocok'] : 0),
 		'produksi_bahan_skip' => (int) (isset($stats['produksi_bahan_skip']) ? $stats['produksi_bahan_skip'] : 0),
 		'count_unit_produk' => (int) (isset($stats['count_unit_produk']) ? $stats['count_unit_produk'] : 0),
 		'penjualan_masuk' => (int) (isset($stats['penjualan_masuk']) ? $stats['penjualan_masuk'] : 0),
@@ -29557,6 +30030,8 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 				'produksi_skip' => 0,
 				'produksi_bahan_update' => 0,
 				'produksi_bahan_tidak_cocok' => 0,
+				'produksi_bahan_stock_bulanan_update' => 0,
+				'produksi_bahan_stock_bulanan_tidak_cocok' => 0,
 				'produksi_bahan_skip' => 0,
 				'count_unit_produk' => (int) $count_unit_produk,
 				'penjualan_masuk' => 0,
@@ -29817,6 +30292,16 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 	// --- Fase 3: Kosongkan bulan target (lewati jika preserve — data & uuid dipertahankan) ---
 	if ($state['phase'] === 'reset_target') {
 		if (!empty($state['preserve_target_persediaan']) || !empty($ctx['preserve_target_persediaan'])) {
+			if (empty($state['preserve_penjualan_reset_done'])) {
+				$reset_sales = persediaan_gen_v2_reset_penjualan_target_month($CI, $tgl_awal, $tgl_akhir);
+				if (empty($reset_sales['ok'])) {
+					return array('ok' => false, 'message' => 'Gagal menyiapkan ulang penjualan sebelum recalculate: ' . $reset_sales['message']);
+				}
+				$state['preserve_penjualan_reset_done'] = 1;
+				$state['stats']['penjualan_reset_rows'] = (int) $reset_sales['updated'];
+				unset($state['persediaan_map_cache'], $state['persediaan_map_cache_tgl']);
+				persediaan_gen_v2_save_batch_state($CI, $state_key, $state);
+			}
 			return persediaan_gen_v2_transition_preserve_skip_reset_copy(
 				$CI,
 				$state,
@@ -30349,6 +30834,16 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 			$state['stats']['count_penjualan'] = (int) $total_penjualan;
 		}
 
+		if ((int) $offset === 0 && empty($state['penjualan_phase_reset_done'])) {
+			$reset_penjualan = persediaan_gen_v2_reset_penjualan_target_month($CI, $tgl_awal, $tgl_akhir);
+			if (empty($reset_penjualan['ok'])) {
+				return array('ok' => false, 'message' => 'Gagal menyiapkan ulang penjualan bulan target: ' . $reset_penjualan['message']);
+			}
+			$state['penjualan_phase_reset_done'] = 1;
+			$state['stats']['penjualan_reset_rows'] = (int) $reset_penjualan['updated'];
+			unset($state['persediaan_map_cache'], $state['persediaan_map_cache_tgl']);
+		}
+
 		// Awal fase: reset flag verified agar yang gagal tetap kosong (belum terproses)
 		if ((int) $offset === 0 && $total_penjualan > 0) {
 			tbl_penjualan_reset_verified_persediaan_bulan($CI, $tgl_awal, $tgl_akhir);
@@ -30541,6 +31036,9 @@ function persediaan_generate_v2_batch($CI, $bulan, $offset, $limit, $start = fal
 				persediaan_recalculate_flush_produksi_accum_to_db($CI, $state['produksi_accum']);
 			}
 			persediaan_generate_recalculate_refresh_nilai_persediaan_bulan($CI, $ctx['tanggal_beli_target']);
+			$stock_bulanan_sync = persediaan_generate_recalculate_sync_produksi_to_stock_bulanan($CI, $ctx['tanggal_beli_target']);
+			$state['stats']['produksi_bahan_stock_bulanan_update'] = (int) $stock_bulanan_sync['updated'];
+			$state['stats']['produksi_bahan_stock_bulanan_tidak_cocok'] = (int) $stock_bulanan_sync['unmatched'];
 			persediaan_gen_recalc_refresh_items_total_10_check($CI, $items_produksi_bahan);
 			persediaan_gen_recalc_refresh_items_total_10_check($CI, $items_produksi_bahan_update);
 
@@ -30868,16 +31366,29 @@ function persediaan_gen_v2_apply_penjualan_ke_persediaan($CI, $bulan, $id_penjua
 		return array('ok' => false, 'message' => 'Jumlah penjualan 0 — tidak diproses.');
 	}
 
+	$total_10_before = max(0, (int) floor(persediaan_parse_angka(isset($row_pers->total_10) ? $row_pers->total_10 : 0)));
+	if ($total_10_before < $jumlah) {
+		return array('ok' => false, 'message' => 'Stok total_10=' . $total_10_before . ' kurang dari jumlah penjualan=' . $jumlah . '.');
+	}
+
+	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $row_pers, $jumlah, $row_pen);
+	if (!empty($upd['skipped']) || empty($upd['update_ok'])) {
+		return array('ok' => false, 'message' => isset($upd['update_error']) ? $upd['update_error'] : 'Update persediaan gagal.');
+	}
+	persediaan_gen_recalc_ensure_total_10_persediaan($CI, $id_persediaan);
+
+	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
+	if (!$row_baru
+		|| (int) floor(persediaan_parse_angka($row_baru->penjualan)) !== (int) $upd['penjualan_baru']
+		|| (int) floor(persediaan_parse_angka($row_baru->total_10)) !== (int) $upd['total_10']) {
+		return array('ok' => false, 'message' => 'Verifikasi setelah UPDATE gagal; verified_persediaan tidak diubah.');
+	}
+
 	$uuid_pers = trim((string) $row_pers->uuid_persediaan);
 	if ($uuid_pers !== '' && $CI->db->field_exists('uuid_persediaan', 'tbl_penjualan')) {
 		$CI->db->where('id', $id_penjualan)->update('tbl_penjualan', array('uuid_persediaan' => $uuid_pers));
 		$row_pen->uuid_persediaan = $uuid_pers;
 	}
-
-	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $row_pers, $jumlah, $row_pen);
-	persediaan_gen_recalc_ensure_total_10_persediaan($CI, $id_persediaan);
-
-	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
 
 	// Flag agar tab Belum ke Persediaan / Belum terproses ikut ter-update
 	if (function_exists('tbl_penjualan_set_verified_persediaan')) {
@@ -31038,8 +31549,23 @@ function persediaan_gen_v2_referensi_penjualan_update_persediaan_only($CI, $bula
 	}
 
 	$upd = persediaan_generate_recalculate_tambah_penjualan_row($CI, $row_pers, $jumlah, $row_pen);
+	if (!empty($upd['skipped']) || !empty($upd['insufficient_stock']) || empty($upd['update_ok'])) {
+		return array(
+			'ok' => false,
+			'message' => !empty($upd['skipped'])
+				? 'Tidak diproses: persediaan tidak memiliki sumber stok masuk.'
+				: (!empty($upd['insufficient_stock'])
+				? (isset($upd['message']) ? $upd['message'] : 'Stok persediaan tidak cukup.')
+				: (isset($upd['update_error']) ? $upd['update_error'] : 'Update penjualan ke persediaan gagal.')),
+		);
+	}
 	persediaan_gen_recalc_ensure_total_10_persediaan($CI, $id_persediaan);
 	$row_baru = $CI->db->where('id', $id_persediaan)->limit(1)->get('persediaan')->row();
+	if (!$row_baru
+		|| (int) floor(persediaan_parse_angka($row_baru->penjualan)) !== (int) $upd['penjualan_baru']
+		|| (int) floor(persediaan_parse_angka($row_baru->total_10)) !== (int) $upd['total_10']) {
+		return array('ok' => false, 'message' => 'Verifikasi nilai persediaan setelah UPDATE gagal.');
+	}
 
 	$ket_unit = '';
 	if (!empty($upd['kolom_unit'])) {

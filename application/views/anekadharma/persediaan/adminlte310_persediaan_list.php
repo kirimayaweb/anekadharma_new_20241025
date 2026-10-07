@@ -9655,7 +9655,9 @@ window.addEventListener('load', function() {
         '#table-stock-bulanan-sumber',
         '#table-stock-bulanan-pembelian',
         '#table-stock-bulanan-pembelian-update',
-        '#table-stock-bulanan-pembelian-baru'
+        '#table-stock-bulanan-pembelian-baru',
+        '#table-stock-bulanan-bahan-proses',
+        '#table-stock-bulanan-bahan-tidak-terproses'
     ];
 
     function destroyGenerateProsesPersediaanTables() {
@@ -11708,6 +11710,8 @@ window.addEventListener('load', function() {
                     + ((s.pembelian_skip || 0) > 0 ? ' (lewati: <strong>' + s.pembelian_skip + '</strong>)' : '')
                     + '<br/>Produksi (sys_unit_produk) → persediaan: <strong>' + (s.produksi_insert || 0) + '</strong> insert'
                     + ((s.produksi_skip || 0) > 0 ? ' (lewati: <strong>' + s.produksi_skip + '</strong>)' : '')
+                    + '<br/>Bahan produksi → persediaan: <strong>' + (s.produksi_bahan_update || 0) + '</strong> cocok, <strong class="text-danger">' + (s.produksi_bahan_tidak_cocok || 0) + '</strong> UUID tidak cocok'
+                    + ' | persediaan_stock_bulanan: <strong>' + (s.produksi_bahan_stock_bulanan_update || 0) + '</strong> sinkron, <strong class="text-danger">' + (s.produksi_bahan_stock_bulanan_tidak_cocok || 0) + '</strong> tidak ditemukan'
                     + (skipPenjualan
                         ? '<br/><span class="text-warning">Fase penjualan di-<strong>skip sementara</strong>.</span>'
                         : '<br/>Penjualan → persediaan — masuk: <strong>' + (s.penjualan_masuk || 0) + '</strong>'
@@ -12016,15 +12020,19 @@ window.addEventListener('load', function() {
         }
 
         var runGenerateStockBulanan = function() {
+            var isLiveJanuary = bulanKey === '2026-01';
             genRecalcBatchRunning = true;
             setGenRecalcButtonBusy(true);
-            setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> Memproses stock dan pembelian bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong>...');
+            setStatusGeneratePersediaan('info', '<i class="fas fa-spinner fa-spin"></i> '
+                + (isLiveJanuary
+                    ? 'Membangun ulang stock live dari 2026-01-01 sampai tanggal server...'
+                    : 'Memproses stock dan pembelian bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong>...'));
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
-                    title: 'Generate Persediaan',
+                    title: isLiveJanuary ? 'Rebuild Stock Live 2026' : 'Generate Persediaan',
                     html: '<div class="text-left">'
                         + '<div class="d-flex justify-content-between align-items-center mb-2">'
-                        + '<strong id="gen-stock-progress-phase">Tahap 1 dari 2 — Salin persediaan_stock_bulanan</strong>'
+                        + '<strong id="gen-stock-progress-phase">' + (isLiveJanuary ? 'Tahap 1 dari 5 — Saldo awal' : 'Tahap 1 dari 2 — Salin persediaan_stock_bulanan') + '</strong>'
                         + '<strong id="gen-stock-progress-percent">0%</strong></div>'
                         + '<div class="progress mb-2" style="height:18px;">'
                         + '<div id="gen-stock-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width:0%;" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>'
@@ -12032,7 +12040,9 @@ window.addEventListener('load', function() {
                         + '<div id="gen-stock-progress-stage" class="small mb-1">Menyiapkan data...</div>'
                         + '<div id="gen-stock-progress-count" class="small text-muted">Menunggu jumlah record dari server...</div>'
                         + '<div id="gen-stock-progress-record" class="small text-primary text-truncate"></div>'
-                        + '<div class="small text-muted mt-2">Tahap ini menyalin stock bulan sebelumnya lalu memproses seluruh pembelian bulan target.</div>'
+                        + '<div class="small text-muted mt-2">' + (isLiveJanuary
+                            ? 'Saldo Desember 2025 disalin satu kali, lalu transaksi 2026 diproses tanpa membuat snapshot Februari dan seterusnya.'
+                            : 'Tahap ini menyalin stock bulan sebelumnya lalu memproses seluruh pembelian bulan target.') + '</div>'
                         + '</div>',
                     allowOutsideClick: false,
                     allowEscapeKey: false,
@@ -12097,14 +12107,33 @@ window.addEventListener('load', function() {
                 destroyGenerateProsesPersediaanTables();
                 $('#gen-proses-persediaan-mount').html(res.html || '');
                 $('#gen-proses-pembelian-wrap, #gen-proses-pembelian-jasa-wrap, #gen-proses-produksi-wrap, #gen-proses-pecah-satuan-wrap, #gen-proses-penjualan-wrap, #gen-proses-persediaan-full-wrap, #gen-recalc-summary-wrap').addClass('d-none');
-                $('#gen-recalc-summary').html(
-                    'Generate <strong>' + escapeHtmlGen(bulanKey) + '</strong> selesai. '
-                    + 'Copy: <strong>' + (parseInt(res.count_copied, 10) || 0) + '</strong>, '
+                var resultSummary = 'Generate <strong>' + escapeHtmlGen(bulanKey) + '</strong> selesai. '
+                    + 'Saldo awal/copy: <strong>' + (parseInt(res.count_copied, 10) || 0) + '</strong>, '
                     + 'pembelian: <strong>' + (parseInt(res.count_purchases, 10) || 0) + '</strong>, '
                     + 'update: <strong>' + (parseInt(res.count_purchase_updated, 10) || 0) + '</strong>, '
-                    + 'record baru: <strong>' + (parseInt(res.count_purchase_inserted, 10) || 0) + '</strong>.'
+                    + 'record baru: <strong>' + (parseInt(res.count_purchase_inserted, 10) || 0) + '</strong>. '
+                    + 'Bahan produksi: <strong>' + (parseInt(res.count_bahan_proses, 10) || 0) + '</strong>, '
+                    + 'belum terproses: <strong class="text-danger">' + (parseInt(res.count_bahan_tidak_terproses, 10) || 0) + '</strong>. ';
+                if (res.live_stock) {
+                    resultSummary += 'Penjualan diproses: <strong>' + (parseInt(res.count_sales_processed, 10) || 0) + '</strong>, '
+                        + 'belum terverifikasi: <strong class="text-danger">' + (parseInt(res.count_sales_unverified, 10) || 0) + '</strong>. '
+                        + 'Pembelian tidak terpetakan: <strong class="text-danger">' + (parseInt(res.count_purchase_unmatched, 10) || 0) + '</strong>; '
+                        + 'produk tidak terpetakan: <strong class="text-danger">' + (parseInt(res.count_product_unmatched, 10) || 0) + '</strong>. ';
+                }
+                resultSummary += escapeHtmlGen(res.persediaan_sync_message || '');
+                $('#gen-recalc-summary').html(resultSummary);
+                var bahanBelumTerproses = parseInt(res.count_bahan_tidak_terproses, 10) || 0;
+                var generateHasWarning = !res.persediaan_sync_ok || bahanBelumTerproses > 0
+                    || (parseInt(res.count_sales_unverified, 10) || 0) > 0
+                    || (parseInt(res.count_purchase_unmatched, 10) || 0) > 0
+                    || (parseInt(res.count_product_unmatched, 10) || 0) > 0;
+                setStatusGeneratePersediaan(
+                    generateHasWarning ? 'warning' : 'success',
+                    'Generate Persediaan bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong>. '
+                    + (res.live_stock ? 'Saldo stock live dihitung sampai ' + escapeHtmlGen(res.tanggal_akhir || '') + '. '
+                        + (generateHasWarning ? 'Periksa transaksi yang belum terpetakan atau stock tidak cukup.' : 'Semua transaksi terpetakan.')
+                        : (generateHasWarning ? 'Periksa tabel bahan produksi nomor 6 dan status recalculate.' : 'Semua bahan terkonfirmasi pada kedua tabel stock.'))
                 );
-                setStatusGeneratePersediaan('success', 'Generate Persediaan selesai untuk bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong>. Stock dan pembelian sudah diproses.');
                 stopGenRecalcBatchRunning();
                 var showGenerateResults = function() {
                     var $generateTab = $('#tab-generate-persediaan');
@@ -12122,9 +12151,11 @@ window.addEventListener('load', function() {
                 };
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Generate selesai',
-                        text: 'Stock bulan sebelumnya dan pembelian tbl_pembelian bulan target berhasil diproses. Hasil ditampilkan di tab Generate Persediaan.',
+                        icon: generateHasWarning ? 'warning' : 'success',
+                        title: generateHasWarning ? 'Generate selesai dengan pemeriksaan' : 'Generate selesai',
+                        text: res.live_stock
+                            ? 'Saldo Januari dan seluruh transaksi 2026 sampai ' + (res.tanggal_akhir || '') + ' ditampilkan di tab Generate Persediaan.'
+                            : 'Hasil copy, pembelian, dan bahan produksi ditampilkan di tab Generate Persediaan.',
                         confirmButtonText: 'OK',
                         timer: 2000,
                         timerProgressBar: true,
@@ -12197,7 +12228,10 @@ window.addEventListener('load', function() {
             progressXhr.send('bulan=' + encodeURIComponent(bulanKey));
         };
 
-        var confirmMessage = 'Data bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong> pada <code>persediaan_stock_bulanan</code> akan dihapus dan dibuat ulang dari stock bulan sebelumnya (<code>total_10 &gt; 0</code>), lalu seluruh pembelian <code>tbl_pembelian</code> bulan tersebut akan diproses.';
+        var isLiveJanuary = bulanKey === '2026-01';
+        var confirmMessage = isLiveJanuary
+            ? 'Data persediaan bertanggal tahun 2026 akan dibangun ulang dari saldo <strong>Desember 2025</strong>. Seluruh pembelian, bahan produksi, hasil produksi, dan penjualan sejak <strong>1 Januari 2026 sampai tanggal server</strong> akan dihitung pada stock live Januari. Snapshot Februari dan bulan berikutnya tidak dibuat.'
+            : 'Data bulan <strong>' + escapeHtmlGen(bulanKey) + '</strong> pada <code>persediaan_stock_bulanan</code> akan dihapus dan dibuat ulang dari stock bulan sebelumnya (<code>total_10 &gt; 0</code>), lalu seluruh pembelian <code>tbl_pembelian</code> bulan tersebut akan diproses.';
         if (typeof Swal === 'undefined') {
             if (confirm('Lanjutkan? Data persediaan_stock_bulanan bulan ' + bulanKey + ' akan diganti; hanya stock copy dan tbl_pembelian diproses.')) {
                 runGenerateStockBulanan();
