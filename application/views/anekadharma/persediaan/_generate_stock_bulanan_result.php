@@ -10,6 +10,9 @@ $source_rows = isset($source_rows) && is_array($source_rows) ? $source_rows : ar
 $purchase_rows = isset($purchase_rows) && is_array($purchase_rows) ? $purchase_rows : array();
 $purchase_matched = isset($purchase_matched) && is_array($purchase_matched) ? $purchase_matched : array();
 $purchase_new = isset($purchase_new) && is_array($purchase_new) ? $purchase_new : array();
+$rows_bahan_proses = isset($rows_bahan_proses) && is_array($rows_bahan_proses) ? $rows_bahan_proses : array();
+$rows_bahan_tidak_terproses = isset($rows_bahan_tidak_terproses) && is_array($rows_bahan_tidak_terproses) ? $rows_bahan_tidak_terproses : array();
+$bahan_has_issues = !empty($rows_bahan_tidak_terproses) || empty($persediaan_sync_ok);
 $unit_fields = persediaan_list_unit_columns($this);
 $totals = array(
 	'sa' => 0,
@@ -68,9 +71,56 @@ $purchase_table = function ($rows, $table_id, $empty_text) {
 	</div>
 	<?php
 };
+$bahan_table = function ($rows, $table_id, $empty_text) {
+	?>
+	<div class="table-responsive">
+		<table id="<?php echo htmlspecialchars($table_id, ENT_QUOTES, 'UTF-8'); ?>" class="table table-bordered table-striped table-sm gen-stock-bulanan-dt" style="width:100%;">
+			<thead><tr>
+				<th>No</th><th>ID Bahan</th><th>Tgl Transaksi</th><th>Nama Bahan</th><th>Satuan</th><th>Jumlah</th><th>UUID Bahan</th><th>Metode Match</th><th>Pembelian Referensi</th>
+				<th>ID Persediaan</th><th>Nama di Persediaan</th><th>Status Persediaan</th><th>Bahan Produksi</th><th>Total_10</th>
+				<th>ID Stock Bulanan</th><th>Nama di Snapshot</th><th>Status Snapshot</th><th>Bahan Produksi Snapshot</th><th>Total_10 Snapshot</th><th>Keterangan</th>
+			</tr></thead>
+			<tbody>
+				<?php foreach ($rows as $index => $row) {
+					$status_persediaan = isset($row['status_persediaan']) ? (string) $row['status_persediaan'] : '';
+					$status_snapshot = isset($row['status_snapshot_proses']) ? (string) $row['status_snapshot_proses'] : '';
+					$purchase_ref = !empty($row['id_pembelian_referensi'])
+						? '#' . (int) $row['id_pembelian_referensi'] . ' / ' . substr((string) $row['tgl_pembelian_referensi'], 0, 10)
+							. (!empty($row['uuid_pembelian_referensi']) ? ' / UUID ' . $row['uuid_pembelian_referensi'] : '')
+						: '-';
+				?>
+					<tr>
+						<td><?php echo (int) ($index + 1); ?></td>
+						<td><?php echo (int) (isset($row['id_bahan']) ? $row['id_bahan'] : 0); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['tgl_transaksi']) ? $row['tgl_transaksi'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['nama_barang_bahan']) ? $row['nama_barang_bahan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['satuan_bahan']) ? $row['satuan_bahan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td class="text-right"><?php echo htmlspecialchars(isset($row['jumlah_bahan']) ? persediaan_format_angka_tampil($row['jumlah_bahan']) : '0', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><small><?php echo htmlspecialchars(isset($row['uuid_persediaan']) ? $row['uuid_persediaan'] : '', ENT_QUOTES, 'UTF-8'); ?></small></td>
+						<td><?php echo htmlspecialchars(isset($row['metode_pencocokan']) ? $row['metode_pencocokan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><small><?php echo htmlspecialchars($purchase_ref, ENT_QUOTES, 'UTF-8'); ?></small></td>
+						<td><?php echo (int) (isset($row['id_persediaan']) ? $row['id_persediaan'] : 0); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['namabarang_persediaan']) ? $row['namabarang_persediaan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><span class="badge <?php echo strpos($status_persediaan, 'TERPROSES') === 0 ? 'badge-success' : 'badge-danger'; ?>"><?php echo htmlspecialchars($status_persediaan, ENT_QUOTES, 'UTF-8'); ?></span></td>
+						<td class="text-right"><?php echo htmlspecialchars(isset($row['bahan_produksi_persediaan']) ? persediaan_format_angka_tampil($row['bahan_produksi_persediaan']) : '0', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td class="text-right"><?php echo htmlspecialchars(isset($row['total_10_persediaan']) ? persediaan_format_angka_tampil($row['total_10_persediaan']) : '0', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><?php echo (int) (isset($row['id_stock_bulanan']) ? $row['id_stock_bulanan'] : 0); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['namabarang_stock_bulanan']) ? $row['namabarang_stock_bulanan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><span class="badge <?php echo strpos($status_snapshot, 'TERPROSES') === 0 ? 'badge-success' : 'badge-danger'; ?>"><?php echo htmlspecialchars($status_snapshot, ENT_QUOTES, 'UTF-8'); ?></span></td>
+						<td class="text-right"><?php echo htmlspecialchars(isset($row['bahan_produksi_stock_bulanan']) ? persediaan_format_angka_tampil($row['bahan_produksi_stock_bulanan']) : '0', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td class="text-right"><?php echo htmlspecialchars(isset($row['total_10_stock_bulanan']) ? persediaan_format_angka_tampil($row['total_10_stock_bulanan']) : '0', ENT_QUOTES, 'UTF-8'); ?></td>
+						<td><?php echo htmlspecialchars(isset($row['keterangan']) ? $row['keterangan'] : '', ENT_QUOTES, 'UTF-8'); ?></td>
+					</tr>
+				<?php } ?>
+				<?php if (empty($rows)) { ?><tr><td colspan="20" class="text-center text-muted"><?php echo htmlspecialchars($empty_text, ENT_QUOTES, 'UTF-8'); ?></td></tr><?php } ?>
+			</tbody>
+		</table>
+	</div>
+	<?php
+};
 ?>
 <div class="gen-stock-bulanan-result">
-	<div class="alert alert-success">
+	<div class="alert <?php echo $bahan_has_issues ? 'alert-warning' : 'alert-success'; ?>">
 		<strong>Generate stok bulanan selesai — <?php echo htmlspecialchars($bulan_target_label, ENT_QUOTES, 'UTF-8'); ?>.</strong>
 		<br/>Dihapus: <?php echo (int) $count_deleted; ?> record target;
 		disalin dari <?php echo htmlspecialchars($tabel_sumber, ENT_QUOTES, 'UTF-8'); ?>
@@ -79,7 +129,8 @@ $purchase_table = function ($rows, $table_id, $empty_text) {
 		pembelian diproses: <?php echo (int) $count_purchases; ?> record
 		(<?php echo (int) $count_purchase_updated; ?> cocok/update,
 		<?php echo (int) $count_purchase_inserted; ?> record baru).
-		<br/><strong>Proses Generate saat ini mencakup penyalinan stock dan pembelian bulan target.</strong>
+		<br/>Bahan produksi bulan target: <?php echo count($rows_bahan_proses); ?> berhasil pada kedua tabel, <?php echo count($rows_bahan_tidak_terproses); ?> belum lengkap / tidak terproses.
+		<?php if (!empty($persediaan_sync_message)) { ?><br/>Recalculate persediaan: <?php echo htmlspecialchars((string) $persediaan_sync_message, ENT_QUOTES, 'UTF-8'); ?><?php } ?>
 	</div>
 
 	<section class="mb-4">
@@ -143,5 +194,15 @@ $purchase_table = function ($rows, $table_id, $empty_text) {
 		<h5>4. Pembelian tanpa UUID cocok — dibuat sebagai record stock baru</h5>
 		<p class="small text-muted">Jika UUID pembelian kosong, sistem membuat UUID baru untuk record stock. Jika UUID berisi tetapi tidak ditemukan pada stock awal, record baru menggunakan UUID pembelian.</p>
 		<?php $purchase_table($purchase_new, 'table-stock-bulanan-pembelian-baru', 'Tidak ada pembelian yang perlu dibuat sebagai record baru.'); ?>
+	</section>
+	<section class="mb-4">
+		<h5>5. sys_unit_produk_bahan_proses — terproses pada persediaan dan snapshot</h5>
+		<p class="small text-muted">Pencocokan utama memakai UUID bahan. Jika UUID berbeda, sistem memakai nama+satuan hanya bila pembelian terkait bertanggal sebelum tanggal input bahan, lalu mencatat pembelian referensinya.</p>
+		<?php $bahan_table($rows_bahan_proses, 'table-stock-bulanan-bahan-proses', 'Belum ada record bahan produksi yang terkonfirmasi terproses pada kedua tabel.'); ?>
+	</section>
+	<section>
+		<h5>6. sys_unit_produk_bahan_TIDAK_terproses — perlu pemeriksaan</h5>
+		<p class="small text-muted">Record sumber ditampilkan di sini bila UUID kosong/tidak ditemukan, recalculate live belum selesai, atau jumlah bahan tidak menghasilkan pengurangan stock.</p>
+		<?php $bahan_table($rows_bahan_tidak_terproses, 'table-stock-bulanan-bahan-tidak-terproses', 'Semua record bahan produksi terkonfirmasi terproses pada kedua tabel.'); ?>
 	</section>
 </div>
