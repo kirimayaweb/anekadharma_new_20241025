@@ -487,7 +487,6 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
 
-                                                <th style="text-align:center"></th>
                                                 <th style="text-align:right"><?php echo nominal($get_jumlah_barang);  ?></th>
                                                 <th style="text-align:right"></th>
                                                 <th style="text-align:right">

@@ -1479,6 +1479,7 @@ class Tbl_penjualan extends CI_Controller
 			'tgl_jual' => $tgl_jual_X,
 			'nmrpesan' => $nmrpesan,
 			'nmrkirim' => $nmrkirim,
+			'spop' => trim((string) (isset($data_barang->spop) ? $data_barang->spop : '')),
 			'uuid_unit' => $Get_uuid_unit,
 			'unit' => $Get_nama_unit,
 			'uuid_konsumen' => $uuid_konsumen,
