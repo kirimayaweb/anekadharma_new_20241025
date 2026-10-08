@@ -361,6 +361,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                                 <th style="text-align:left">Tgl Persediaan</th>
                                                 <th style="text-align:left">Tgl Jual</th>
                                                 <th style="text-align:center">Nama Barang</th>
+                                                <th style="text-align:left">SPOP</th>
                                                 <!-- <th style="text-align:center">Unit</th> -->
 
                                                 <th style="text-align:center">Satuan</th>
@@ -430,6 +431,7 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
 
 
                                                     <td><?php echo $list_data->nama_barang; ?></td>
+                                                    <td style="text-align:left"><?php echo htmlspecialchars(isset($list_data->spop) ? trim((string) $list_data->spop) : '', ENT_QUOTES, 'UTF-8') ?: '-'; ?></td>
                                                     <!-- <td><?php //echo $list_data->unit; 
                                                                 ?></td> -->
 
@@ -479,6 +481,8 @@ $render_modal_pilih_barang = penjualan_render_modal_pilih_barang($this, array(
                                             <tr>
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:left"></th>
+                                                <th style="text-align:center"></th>
+                                                <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
                                                 <th style="text-align:center"></th>
