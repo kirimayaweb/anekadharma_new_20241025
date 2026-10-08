@@ -37,6 +37,12 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
 		}
 		echo ' <span class="badge badge-warning" title="verified_persediaan kosong — belum terproses ke tabel persediaan">belum persediaan</span>';
 	}
+
+	function tbl_penjualan_render_spop($row)
+	{
+		$spop = isset($row->spop) ? trim((string) $row->spop) : '';
+		echo $spop === '' ? '-' : htmlspecialchars($spop, ENT_QUOTES, 'UTF-8');
+	}
 }
 ?>
                         <table id="<?php echo htmlspecialchars($penjualan_table_id, ENT_QUOTES, 'UTF-8'); ?>" class="display nowrap penjualan-list-table" style="width:100%">
@@ -47,6 +53,7 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                     <th rowspan="2">Tgl Jual</th>
                                     <th rowspan="2">nmrkirim</th>
                                     <th rowspan="2">nmrpesan</th>
+                                    <th rowspan="2">SPOP</th>
 
                                     <th rowspan="2">Konsumen</th>
                                     <th rowspan="2">Kode</th>
@@ -117,6 +124,7 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                             <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  
                                                                                                 ?></td>
 
+                                            <td style="background-color:yellow;" align="left">-</td>
                                             <td></td>
                                             <td></td>
                                             <td>
@@ -219,6 +227,7 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                                 ?>
                                             </td>
 
+                                            <td align="left"><?php tbl_penjualan_render_spop($list_data); ?></td>
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -355,6 +364,7 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                                 ?>
                                             </td>
 
+                                            <td align="left"><?php tbl_penjualan_render_spop($list_data); ?></td>
                                             <td align="left"> <?php echo $list_data->konsumen_nama; ?> </td>
 
 
@@ -525,6 +535,8 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
 
                                 <tr>
                                     <th>No</th>
+                                    <th></th>
+                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
