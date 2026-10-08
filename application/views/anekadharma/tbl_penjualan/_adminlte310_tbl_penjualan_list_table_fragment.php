@@ -127,6 +127,7 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                             <td style="background-color:yellow;" align="left">-</td>
                                             <td></td>
                                             <td></td>
+                                            <td></td>
                                             <td>
                                                 <?php //echo $list_data->nama_barang; 
                                                 ?>
@@ -535,7 +536,6 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
 
                                 <tr>
                                     <th>No</th>
-                                    <th></th>
                                     <th></th>
                                     <th></th>
                                     <th></th>
