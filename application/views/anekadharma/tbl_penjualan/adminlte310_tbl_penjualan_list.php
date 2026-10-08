@@ -191,8 +191,9 @@
 
                             <form id="form-cari-penjualan" class="penjualan-header-filter" action="<?php echo $action_cari_between_date; ?>" method="post">
                                 <input type="hidden" name="penjualan_active_tab" id="penjualan_active_tab_input" value="<?php echo htmlspecialchars($penjualan_active_tab, ENT_QUOTES, 'UTF-8'); ?>" />
-                                <input type="hidden" name="tgl_awal" id="bulan_awal_hidden" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" />
-                                <input type="month" class="form-control" id="bulan_akhir" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" />
+                                <input type="hidden" name="tgl_awal" id="bulan_awal_hidden" value="<?php echo htmlspecialchars($Get_date_awal, ENT_QUOTES, 'UTF-8'); ?>" />
+                                <label class="sr-only" for="bulan_selected">Bulan penjualan</label>
+                                <input type="month" class="form-control" id="bulan_selected" name="tgl_akhir" value="<?php echo htmlspecialchars($Get_date_akhir, ENT_QUOTES, 'UTF-8'); ?>" required autocomplete="off" aria-label="Pilih bulan penjualan" />
                                 <strong>
                                     <button type="submit" class="btn btn-danger btn-flat"><i class="fa fa-sign-in" aria-hidden="true"></i> Cari</button>
                                 </strong>
@@ -777,8 +778,8 @@
         }
 
         function syncBulanFilterDariAkhir() {
-            var inpAkhir = document.querySelector('#form-cari-penjualan input[name="tgl_akhir"]');
-            var inpAwal = document.querySelector('#form-cari-penjualan input[name="tgl_awal"]');
+            var inpAkhir = document.querySelector('#bulan_selected');
+            var inpAwal = document.querySelector('#bulan_awal_hidden');
             if (!inpAkhir || !inpAwal || !inpAkhir.value) {
                 return inpAkhir ? inpAkhir.value : '';
             }
@@ -947,19 +948,21 @@
 
         function initAutoCariPenjualan() {
             var form = document.getElementById('form-cari-penjualan');
-            if (!form) {
+            var bulanSelected = document.getElementById('bulan_selected');
+            if (!form || !bulanSelected) {
                 return;
             }
-            form.querySelectorAll('input[name="tgl_akhir"]').forEach(function(el) {
-                el.addEventListener('change', function() {
-                    syncBulanFilterDariAkhir();
-                    updateRekapModalLinks();
-                    var tgl = getTanggalFilterPenjualan();
-                    if (tgl.akhir) {
-                        savePenjualanListState(tgl.akhir, tgl.akhir, getActiveTabIdFromDom());
-                    }
-                    submitCariPenjualanOtomatis();
-                });
+            bulanSelected.addEventListener('change', function() {
+                syncBulanFilterDariAkhir();
+                updateRekapModalLinks();
+                var tgl = getTanggalFilterPenjualan();
+                if (tgl.akhir) {
+                    savePenjualanListState(tgl.akhir, tgl.akhir, getActiveTabIdFromDom());
+                }
+                submitCariPenjualanOtomatis();
+            });
+            form.addEventListener('submit', function() {
+                syncBulanFilterDariAkhir();
             });
             var tglInit = getTanggalFilterPenjualan();
             if (tglInit.awal && tglInit.akhir) {
