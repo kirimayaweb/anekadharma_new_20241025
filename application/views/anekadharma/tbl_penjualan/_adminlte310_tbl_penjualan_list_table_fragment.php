@@ -106,80 +106,30 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
 
                                         <!-- // Buat 1 baris untuk total dan background = KUNING -->
                                         <tr class="row-penjualan-subtotal">
-                                            <!-- BARIS TOTAL -->
                                             <td><?php echo ++$start; ?></td>
-                                            <td style="background-color:yellow;" align="right"><?php
-                                                                                                // echo date("d M Y", strtotime($list_data->tgl_jual));
-                                                                                                // echo $GET_tgl_jual;
-
-                                                                                                echo "<font color='red'><strong>TOTAL</strong></font>"
-
-                                                                                                ?>
-                                            </td>
-
-                                            <!-- Kolom Nomor Kirim -->
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>TOTAL</strong></font>"; ?></td>
                                             <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_kirim . "</strong></font>"; ?></td>
-
-                                            <!-- kolom Nomor pesan -->
-                                            <td style="background-color:yellow;" align="left"><?php //echo  "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>";  
-                                                                                                ?></td>
-
+                                            <td style="background-color:yellow;" align="left"><?php echo "<font color='red'><strong>" . $compare_nmr_pesan . "</strong></font>"; ?></td>
                                             <td style="background-color:yellow;" align="left">-</td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-                                            <td>
-                                                <?php //echo $list_data->nama_barang; 
-                                                ?>
-                                            </td>
-                                            <td>
-                                                <?php //echo $list_data->unit; 
-                                                ?>
-                                            </td>
-                                            <td></td>
-                                            <td></td>
-                                            <td></td>
-
-
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                //echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                                echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>";
-                                                echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                                ?>
-                                            </td>
-                                            <td style="background-color:yellow;" align="right">
-                                                <?php
-                                                // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>" 
-                                                echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"
-                                                ?>
-                                            </td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;"></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?></td>
+                                            <td style="background-color:yellow;" align="right"><?php echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?></td>
                                             <?php
-                                            // nmrkirim baru , me NOL kan total nmrkirim
                                             $Total_Jumlah_per_nmrkirim = 0;
                                             $Total_UMPPHPSL22_per_nmrkirim = 0;
                                             $Total_piutang_per_nmrkirim = 0;
                                             $Total_penjualandpp_per_nmrkirim = 0;
                                             $Total_utangppn_per_nmrkirim = 0;
                                             ?>
-                                            <!-- END OF BARIS TOTAL -->
                                         </tr>
 
                                         <!-- Tgl Jual & nmrpesan baru -->
@@ -495,40 +445,22 @@ if (!function_exists('tbl_penjualan_render_tgl_dan_badge_bayar')) {
                                     <td></td>
                                     <td></td>
                                     <td></td>
-
+                                    <td></td>
                                     <td style="background-color:yellow; text-align: right" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_Jumlah_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
+                                        <?php echo "<font color='red'><strong>" . number_format($Total_Jumlah_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?>
                                     </td>
                                     <td style="background-color:yellow; text-align: right" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_UMPPHPSL22_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
+                                        <?php echo "<font color='red'><strong>" . number_format($Total_UMPPHPSL22_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?>
                                     </td>
                                     <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        //  echo "<font color='red'><strong>" . nominal($Total_piutang_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
+                                        <?php echo "<font color='red'><strong>" . number_format($Total_piutang_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?>
                                     </td>
                                     <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_penjualandpp_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
+                                        <?php echo "<font color='red'><strong>" . number_format($Total_penjualandpp_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?>
                                     </td>
                                     <td style="background-color:yellow;" align="right">
-                                        <?php
-                                        // echo "<font color='red'><strong>" . nominal($Total_utangppn_per_nmrkirim) . "</strong></font>"; 
-                                        echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>";
-                                        ?>
+                                        <?php echo "<font color='red'><strong>" . number_format($Total_utangppn_per_nmrkirim, 2, ',', '.') . "</strong></font>"; ?>
                                     </td>
-
-
-
                                 </tr>
                             </tbody>
 
