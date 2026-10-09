@@ -174,18 +174,18 @@ function pembelian_get_barang_by_uuid($CI, $uuid_barang)
 	$tgl = pembelian_get_filter_tanggal($CI);
 
 	$sql = "SELECT
-			`id`,
-			`uuid_persediaan`,
-			COALESCE(NULLIF(`uuid_barang`, ''), `uuid_persediaan`) AS uuid_barang,
-			`kode` AS kode_barang,
-			`namabarang` AS nama_barang,
-			`satuan`,
-			`hpp` AS harga_satuan
-		FROM `persediaan`
+			p.`id`,
+			p.`uuid_persediaan`,
+			COALESCE(NULLIF(p.`uuid_barang`, ''), p.`uuid_persediaan`) AS uuid_barang,
+			p.`kode` AS kode_barang,
+			p.`namabarang` AS nama_barang,
+			p.`satuan`,
+			p.`hpp` AS harga_satuan
 		FROM `persediaan` p
-		AND DATE(`tanggal_beli`) >= ?
-		AND DATE(`tanggal_beli`) <= ?
-		ORDER BY `id` DESC
+		WHERE (p.`uuid_barang` = ? OR p.`uuid_persediaan` = ?)
+		AND DATE(p.`tanggal_beli`) >= ?
+		AND DATE(p.`tanggal_beli`) <= ?
+		ORDER BY p.`id` DESC
 		LIMIT 1";
 
 	$row = $CI->db->query($sql, array($uuid_barang, $uuid_barang, $tgl['awal'], $tgl['akhir']))->row();
