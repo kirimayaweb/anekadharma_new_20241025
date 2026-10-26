@@ -20635,22 +20635,31 @@ function persediaan_compare_build_column_map_from_fields($fields)
 
 	$normalized = array();
 	foreach ($fields as $field) {
-		$normalized[] = trim((string) $field);
+		$key = strtolower(trim((string) $field));
+		$key = preg_replace('/[^a-z0-9]+/', '_', $key);
+		$key = trim($key, '_');
+		if ($key !== '') {
+			$normalized[$key] = trim((string) $field);
+		}
 	}
 
-	$map = array(
-		'nama' => persediaan_compare_pick_column($normalized, array(
-			'namabarang', 'nama_barang', 'nama_barang_persediaan', 'nama barang', 'uraian', 'nama', 'barang',
-		)),
-		'satuan' => persediaan_compare_pick_column($normalized, array('satuan', 'sat')),
-		'hpp' => persediaan_compare_pick_column($normalized, array(
-			'hpp', 'harga_satuan', 'harga_satuan_persediaan', 'harga',
-		)),
-		'spop' => persediaan_compare_pick_column($normalized, array('spop')),
+	$candidates = array(
+		'nama' => array('namabarang', 'nama_barang', 'nama_barang_persediaan', 'uraian', 'nama', 'barang'),
+		'satuan' => array('satuan', 'sat'),
+		'hpp' => array('hpp', 'harga_satuan', 'harga_satuan_persediaan', 'harga'),
+		'spop' => array('spop'),
 	);
 
-	foreach (array('nama', 'satuan', 'hpp', 'spop') as $req) {
-		if (empty($map[$req])) {
+	$map = array();
+	foreach ($candidates as $key => $aliases) {
+		$map[$key] = null;
+		foreach ($aliases as $alias) {
+			if (isset($normalized[$alias])) {
+				$map[$key] = $normalized[$alias];
+				break;
+			}
+		}
+		if ($map[$key] === null) {
 			return null;
 		}
 	}
@@ -20852,9 +20861,36 @@ function persediaan_compare_csv_open_handle($filepath)
 	return $handle;
 }
 
-function persediaan_compare_csv_read_header($handle)
+function persediaan_compare_csv_detect_delimiter($handle)
 {
-	$row = fgetcsv($handle, 0, ',', '"');
+	$position = ftell($handle);
+	if ($position === false) {
+		return ',';
+	}
+
+	$line = fgets($handle);
+	if ($line === false) {
+		fseek($handle, $position);
+		return ',';
+	}
+	fseek($handle, $position);
+
+	$delimiter = ',';
+	$max_columns = 1;
+	foreach (array(';', ',', "\t") as $candidate) {
+		$columns = str_getcsv(rtrim($line, "\r\n"), $candidate, '"');
+		if (count($columns) > $max_columns) {
+			$max_columns = count($columns);
+			$delimiter = $candidate;
+		}
+	}
+
+	return $delimiter;
+}
+
+function persediaan_compare_csv_read_header($handle, $delimiter = ',')
+{
+	$row = fgetcsv($handle, 0, $delimiter, '"');
 	if (!is_array($row) || count($row) === 0) {
 		return null;
 	}
@@ -20891,7 +20927,8 @@ function persediaan_compare_import_csv_to_db($CI, $filepath, $original_filename,
 		);
 	}
 
-	$raw_headers = persediaan_compare_csv_read_header($handle);
+	$delimiter = persediaan_compare_csv_detect_delimiter($handle);
+	$raw_headers = persediaan_compare_csv_read_header($handle, $delimiter);
 	if ($raw_headers === null) {
 		fclose($handle);
 		return array(
@@ -20958,7 +20995,7 @@ function persediaan_compare_import_csv_to_db($CI, $filepath, $original_filename,
 	$batch_size = 100;
 	$line_no = 1;
 
-	while (($row = fgetcsv($handle, 0, ',', '"')) !== false) {
+	while (($row = fgetcsv($handle, 0, $delimiter, '"')) !== false) {
 		$line_no++;
 		if (!is_array($row)) {
 			continue;
@@ -21154,7 +21191,18 @@ function persediaan_compare_table_eligible_insert_persediaan_fields($CI, $table)
  * - Jika tidak cocok: generate uuid_persediaan baru.
  * - Saat copy dari tbl_penjualan, isi uuid_persediaan_lama = "copy uuid_persediaan dari tbl_penjualan".
  */
-function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '')
+function persediaan_compare_source_row_token($row)
+{
+	$values = (array) $row;
+	ksort($values, SORT_STRING);
+	foreach ($values as $key => $value) {
+		$values[$key] = ($value === null) ? '' : (string) $value;
+	}
+
+	return hash('sha256', serialize($values));
+}
+
+function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '', $row_token = '')
 {
 	$CI->load->helper('persediaan_display');
 
@@ -21196,6 +21244,69 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '')
 	$rows = $CI->db->query("SELECT * FROM `{$table}` ORDER BY 1 ASC")->result_array();
 	if (empty($rows)) {
 		return array('ok' => false, 'message' => 'Tabel manual kosong. Tidak ada data untuk diinsert ke persediaan.');
+	}
+
+	$row_token = trim((string) $row_token);
+	if ($row_token !== '') {
+		if (!preg_match('/^[a-f0-9]{64}$/', $row_token)) {
+			return array('ok' => false, 'message' => 'Identitas baris manual tidak valid.');
+		}
+
+		$manual = persediaan_compare_load_manual_rows_for_bulan($CI, $table, $bulan);
+		if (empty($manual['ok'])) {
+			return array('ok' => false, 'message' => $manual['message']);
+		}
+
+		$selected = null;
+		$manual_key_counts = array();
+		foreach ($manual['rows'] as $manual_row) {
+			$key = persediaan_compare_build_key(
+				persediaan_compare_row_get($manual_row, $map['nama']),
+				persediaan_compare_row_get($manual_row, $map['satuan']),
+				persediaan_compare_row_get($manual_row, $map['hpp']),
+				persediaan_compare_row_get($manual_row, $map['spop'])
+			);
+			if ($key !== '') {
+				$manual_key_counts[$key] = isset($manual_key_counts[$key])
+					? $manual_key_counts[$key] + 1
+					: 1;
+			}
+			if ($selected === null && persediaan_compare_source_row_token($manual_row) === $row_token) {
+				$selected = (array) $manual_row;
+			}
+		}
+		if ($selected === null) {
+			return array('ok' => false, 'message' => 'Baris manual tidak ditemukan pada periode yang dipilih. Silakan jalankan Compare kembali.');
+		}
+
+		$selected_key = persediaan_compare_build_key(
+			persediaan_compare_row_get((object) $selected, $map['nama']),
+			persediaan_compare_row_get((object) $selected, $map['satuan']),
+			persediaan_compare_row_get((object) $selected, $map['hpp']),
+			persediaan_compare_row_get((object) $selected, $map['spop'])
+		);
+		$existing_key_count = 0;
+		foreach (persediaan_compare_get_persediaan_bulan_rows($CI, $bulan) as $existing_row) {
+			$existing_key = persediaan_compare_build_key(
+				isset($existing_row->namabarang) ? $existing_row->namabarang : '',
+				isset($existing_row->satuan) ? $existing_row->satuan : '',
+				isset($existing_row->hpp) ? $existing_row->hpp : '',
+				isset($existing_row->spop) ? $existing_row->spop : ''
+			);
+			if ($existing_key !== '' && $existing_key === $selected_key) {
+				$existing_key_count++;
+			}
+		}
+		if ($selected_key === '' || $existing_key_count >= (isset($manual_key_counts[$selected_key]) ? $manual_key_counts[$selected_key] : 0)) {
+			return array(
+				'ok' => true,
+				'already_exists' => true,
+				'inserted' => 0,
+				'message' => 'Record dengan data yang sama sudah ada di persediaan untuk periode terpilih.',
+			);
+		}
+
+		$rows = array($selected);
 	}
 
 	$uuid_by_key = array();
@@ -21247,6 +21358,12 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '')
 				$src_col = $fields_src_lookup[$key];
 				$data[$fp] = isset($src[$src_col]) ? (string) $src[$src_col] : '';
 			}
+		}
+
+		if (isset($fields_pers_lookup['total_10']) && isset($fields_src_lookup['col_10'])) {
+			$data[$fields_pers_lookup['total_10']] = isset($src[$fields_src_lookup['col_10']])
+				? (string) $src[$fields_src_lookup['col_10']]
+				: '';
 		}
 
 		$nama = trim((string) persediaan_compare_row_get($src_obj, isset($map['nama']) ? $map['nama'] : null));
@@ -21399,7 +21516,7 @@ function persediaan_compare_bulan_to_date_range($bulan)
  */
 function persediaan_compare_table_name_matches_bulan($table, $bulan)
 {
-	if (!preg_match('/^\d{4}-\d{2}$/', trim((string) $bulan), $m)) {
+	if (!preg_match('/^(\d{4})-(\d{2})$/', trim((string) $bulan), $m)) {
 		return false;
 	}
 
@@ -21419,7 +21536,7 @@ function persediaan_compare_table_name_matches_bulan($table, $bulan)
 
 function persediaan_compare_detect_manual_date_column($fields)
 {
-	return persediaan_compare_pick_column($fields, array(
+	$allowed = array(
 		'tanggal_beli',
 		'tanggal',
 		'tgl',
@@ -21428,7 +21545,19 @@ function persediaan_compare_detect_manual_date_column($fields)
 		'proses_input',
 		'bulan',
 		'tahun',
-	));
+	);
+	$by_lower = array();
+	foreach ((array) $fields as $field) {
+		$by_lower[strtolower(trim((string) $field))] = $field;
+	}
+
+	foreach ($allowed as $candidate) {
+		if (isset($by_lower[$candidate])) {
+			return $by_lower[$candidate];
+		}
+	}
+
+	return null;
 }
 
 /**
@@ -22052,6 +22181,7 @@ function persediaan_compare_run($CI, $bulan, $table)
 	$persediaan_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
 
 	$compare_by_key = array();
+	$total_manual_rows = 0;
 	foreach ($compare_rows as $row) {
 		$key = persediaan_compare_build_key(
 			persediaan_compare_row_get($row, $map['nama']),
@@ -22062,6 +22192,7 @@ function persediaan_compare_run($CI, $bulan, $table)
 		if ($key === '') {
 			continue;
 		}
+		$total_manual_rows++;
 		if (!isset($compare_by_key[$key])) {
 			$compare_by_key[$key] = array();
 		}
@@ -22074,7 +22205,7 @@ function persediaan_compare_run($CI, $bulan, $table)
 	$items_cocok = array();
 	$stats = array(
 		'total_persediaan' => count($persediaan_rows),
-		'total_tabel' => count($compare_rows),
+		'total_tabel' => $total_manual_rows,
 		'total10_kosong' => 0,
 		'tidak_di_tabel' => 0,
 		'cocok' => 0,
@@ -22119,10 +22250,12 @@ function persediaan_compare_run($CI, $bulan, $table)
 	foreach ($compare_by_key as $key => $list) {
 		foreach ($list as $crow) {
 			$stats['hanya_tabel']++;
-			$items_hanya_tabel[] = array_merge(
+			$item = array_merge(
 				persediaan_compare_format_side(null, 'p'),
 				persediaan_compare_format_side($crow, 'c', $map)
 			);
+			$item['manual_row_token'] = persediaan_compare_source_row_token($crow);
+			$items_hanya_tabel[] = $item;
 		}
 	}
 

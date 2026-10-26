@@ -2226,11 +2226,11 @@
                             <div class="compare-dt-wrap mb-4">
                                 <table id="table-compare-hanya" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
-                                        <th>No</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_SA</th><th>P_Beli</th><th>P_Total_10</th>
+                                        <th>No</th><th>Insert ke Persediaan</th><th>P_Namabarang</th><th>P_Satuan</th><th>P_HPP</th><th>P_SPOP</th><th>P_SA</th><th>P_Beli</th><th>P_Total_10</th>
                                         <th>C_Nama</th><th>C_Satuan</th><th>C_HPP</th><th>C_SPOP</th><th>C_SA</th><th>C_Beli</th><th>C_Total_10</th>
                                     </tr></thead>
                                     <tbody></tbody>
-                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
                                 </table>
                             </div>
 
@@ -3575,6 +3575,7 @@ window.addEventListener('load', function() {
     var urlCompareImportCsv = <?php echo json_encode(isset($url_compare_import_csv) ? $url_compare_import_csv : site_url('Persediaan/ajax_compare_import_csv')); ?>;
     var urlCompareTabelPreview = <?php echo json_encode(isset($url_compare_tabel_preview) ? $url_compare_tabel_preview : site_url('Persediaan/ajax_compare_tabel_preview')); ?>;
     var urlCompareInsertToPersediaan = <?php echo json_encode(isset($url_compare_insert_to_persediaan) ? $url_compare_insert_to_persediaan : site_url('Persediaan/ajax_compare_insert_to_persediaan')); ?>;
+    var urlCompareInsertRowToPersediaan = <?php echo json_encode(isset($url_compare_insert_row_to_persediaan) ? $url_compare_insert_row_to_persediaan : site_url('Persediaan/ajax_compare_insert_row_to_persediaan')); ?>;
     var urlCompareCheckInsertEligible = <?php echo json_encode(isset($url_compare_check_insert_eligible) ? $url_compare_check_insert_eligible : site_url('Persediaan/ajax_compare_check_insert_persediaan_eligible')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
@@ -12290,7 +12291,7 @@ window.addEventListener('load', function() {
     var compareDtFooterSumCols = {
         '#table-compare-total10': [5, 6, 7],
         '#table-compare-tidak': [5, 6, 7, 12, 13, 14],
-        '#table-compare-hanya': [5, 6, 7, 12, 13, 14],
+        '#table-compare-hanya': [6, 7, 8, 13, 14, 15],
         '#table-compare-cocok': [5, 6, 7, 12, 13, 14],
         '#table-compare-pembelian-tidak': [6],
         '#table-compare-penjualan-tidak': [6],
@@ -13038,6 +13039,69 @@ window.addEventListener('load', function() {
         });
     }
 
+    function insertCompareManualRowToPersediaan($button) {
+        if (!userCanComparePersediaan || !$button || $button.prop('disabled')) {
+            return;
+        }
+
+        var rowToken = String($button.attr('data-row-token') || '');
+        var table = String($('#compare_tabel_pilihan').val() || '').trim();
+        var bulan = getBulanKeyCompare();
+        if (!rowToken || !table || !bulan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data compare tidak lengkap',
+                text: 'Pilih bulan, tahun, dan tabel, lalu jalankan Compare kembali.'
+            });
+            return;
+        }
+
+        var originalHtml = $button.html();
+        $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses');
+        $.ajax({
+            url: urlCompareInsertRowToPersediaan,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                tabel: table,
+                bulan: bulan,
+                row_token: rowToken
+            }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                $button.prop('disabled', false).html(originalHtml);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Insert gagal',
+                    text: (res && res.message) ? res.message : 'Record gagal dimasukkan ke persediaan.'
+                });
+                return;
+            }
+
+            $button
+                .removeClass('btn-outline-success')
+                .addClass('btn-secondary')
+                .attr('title', 'Record sudah ada di persediaan')
+                .html('<i class="fas fa-check"></i> Sudah di Persediaan')
+                .prop('disabled', true);
+
+            var message = res.message || 'Record berhasil dimasukkan ke persediaan.';
+            Swal.fire({
+                icon: 'success',
+                title: res.already_exists ? 'Record sudah ada' : 'Insert berhasil',
+                text: message
+            });
+            setCompareStatus('success', escapeHtmlCompare(message)
+                + ' Jalankan Compare kembali untuk memperbarui hasil dan memastikan record masuk ke kategori Data Cocok.');
+        }).fail(function(xhr) {
+            $button.prop('disabled', false).html(originalHtml);
+            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                ? xhr.responseJSON.message
+                : 'Insert gagal. Periksa koneksi, lalu coba kembali.';
+            Swal.fire({ icon: 'error', title: 'Insert gagal', text: message });
+        });
+    }
+
     function buildCompareRows(jenis, items) {
         items = items || [];
         if (jenis === 'total10_kosong') {
@@ -13107,6 +13171,32 @@ window.addEventListener('load', function() {
                 ];
             });
         }
+        if (jenis === 'hanya_tabel') {
+            return items.map(function(it, i) {
+                var token = escapeHtmlCompare(it.manual_row_token || '');
+                var action = token
+                    ? '<button type="button" class="btn btn-outline-success btn-sm btn-compare-insert-row" data-row-token="' + token + '"><i class="fas fa-database"></i> Insert ke Persediaan</button>'
+                    : '<button type="button" class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i> Tidak tersedia</button>';
+                return [
+                    i + 1,
+                    action,
+                    it.p_namabarang || '',
+                    it.p_satuan || '',
+                    it.p_hpp || '',
+                    it.p_spop || '',
+                    it.p_sa || '',
+                    it.p_beli || '',
+                    it.p_total_10 || '',
+                    it.c_namabarang || '',
+                    it.c_satuan || '',
+                    it.c_hpp || '',
+                    it.c_spop || '',
+                    it.c_sa || '',
+                    it.c_beli || '',
+                    it.c_total_10 || ''
+                ];
+            });
+        }
         return items.map(function(it, i) {
             return [
                 i + 1,
@@ -13165,7 +13255,7 @@ window.addEventListener('load', function() {
         res = res || {};
         upsertCompareDataTable('#table-compare-total10', buildCompareRows('total10_kosong', res.items_total10_kosong || []), 1);
         upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
-        upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 6);
+        upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 7);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
         upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
         upsertCompareDataTable('#table-compare-penjualan-tidak', buildCompareRows('penjualan_tidak_manual', res.items_penjualan_tidak_manual || []), 2);
@@ -13389,6 +13479,10 @@ window.addEventListener('load', function() {
             return false;
         }
         runCompareTabel();
+    });
+
+    $(document).on('click', '.btn-compare-insert-row', function() {
+        insertCompareManualRowToPersediaan($(this));
     });
 
     $(document).on('click', '.btn-compare-excel', function() {
@@ -13679,6 +13773,36 @@ window.addEventListener('load', function() {
                 zeroRecords: 'Tidak ada data persediaan untuk bulan ini'
             }
         };
+        if ($sel.attr('data-stock-table') === '1') {
+            dtOpts.footerCallback = function() {
+                var api = this.api();
+                var totals = [];
+                api.rows({ search: 'applied' }).every(function() {
+                    var node = this.node();
+                    if (!node) {
+                        return;
+                    }
+                    $(node).find('td.stock-total-value').each(function(index) {
+                        var value = parseFloat($(this).attr('data-total') || 0);
+                        if (!isFinite(value)) {
+                            value = 0;
+                        }
+                        totals[index] = (totals[index] || 0) + value;
+                    });
+                });
+
+                var footer = api.table().footer();
+                if (!footer) {
+                    return;
+                }
+                $(footer).find('th.stock-total-footer').each(function(index) {
+                    var total = totals[index] || 0;
+                    $(this).text(Number(total).toLocaleString('id-ID', {
+                        maximumFractionDigits: 2
+                    }));
+                });
+            };
+        }
         if (selector === '#table-persediaan-verifikasi') {
             dtOpts.footerCallback = function() {
                 var api = this.api();

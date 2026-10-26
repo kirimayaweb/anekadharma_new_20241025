@@ -183,12 +183,12 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 					<td><?php echo htmlspecialchars(isset($persediaan->namabarang) ? (string) $persediaan->namabarang : '', ENT_QUOTES, 'UTF-8'); ?></td>
 					<td class="text-right persediaan-col-money"><?php echo number_format((float) $persediaan->hpp, 0, ',', '.'); ?></td>
 					<td><?php echo htmlspecialchars(isset($persediaan->satuan) ? (string) $persediaan->satuan : '', ENT_QUOTES, 'UTF-8'); ?></td>
-					<td class="text-right"><?php echo persediaan_format_angka_tampil(isset($persediaan->stok_tersedia) ? $persediaan->stok_tersedia : 0); ?></td>
-					<td><?php echo persediaan_row_get($persediaan, 'sa'); ?></td>
-					<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_sa_nominal_row($persediaan); ?></td>
-					<td><?php echo persediaan_row_get($persediaan, 'beli'); ?></td>
-					<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_beli_nominal_row($persediaan); ?></td>
-					<td><?php echo persediaan_row_get($persediaan, 'tuj'); ?></td>
+					<td class="text-right stock-total-value" data-total="<?php echo persediaan_parse_angka(isset($persediaan->stok_tersedia) ? $persediaan->stok_tersedia : 0); ?>"><?php echo persediaan_format_angka_tampil(isset($persediaan->stok_tersedia) ? $persediaan->stok_tersedia : 0); ?></td>
+					<td class="stock-total-value" data-total="<?php echo persediaan_parse_angka(persediaan_row_get($persediaan, 'sa')); ?>"><?php echo persediaan_row_get($persediaan, 'sa'); ?></td>
+					<td class="text-right persediaan-col-money stock-total-value" data-total="<?php echo persediaan_hitung_sa_nominal_row($persediaan); ?>"><?php echo persediaan_tampil_sa_nominal_row($persediaan); ?></td>
+					<td class="stock-total-value" data-total="<?php echo persediaan_parse_angka(persediaan_row_get($persediaan, 'beli')); ?>"><?php echo persediaan_row_get($persediaan, 'beli'); ?></td>
+					<td class="text-right persediaan-col-money stock-total-value" data-total="<?php echo persediaan_hitung_beli_nominal_row($persediaan); ?>"><?php echo persediaan_tampil_beli_nominal_row($persediaan); ?></td>
+					<td class="stock-total-value" data-total="<?php echo persediaan_parse_angka(persediaan_row_get($persediaan, 'tuj')); ?>"><?php echo persediaan_row_get($persediaan, 'tuj'); ?></td>
 				<?php } else { ?>
 				<td><?php echo $persediaan->namabarang ?></td>
 				<td><?php echo $persediaan->satuan ?></td>
@@ -201,7 +201,13 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 				<td><?php echo $persediaan->tuj ?></td>
 				<?php } ?>
 				<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
-					<td><?php
+					<td<?php if ($is_stock_tab && $field_tgl_total !== 'tgl_keluar') {
+						$stock_total_value = ($field_tgl_total === 'total_10')
+							? persediaan_parse_angka(persediaan_row_get($persediaan, 'total_10'))
+							: persediaan_parse_angka(persediaan_row_get($persediaan, $field_tgl_total));
+						echo ' class="stock-total-value" data-total="' . htmlspecialchars((string) $stock_total_value, ENT_QUOTES, 'UTF-8') . '"';
+					} ?>>
+					<?php
 						if ($field_tgl_total === 'total_10') {
 							if ($is_stock_tab) {
 								echo persediaan_row_get($persediaan, 'total_10');
@@ -215,10 +221,10 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 						}
 					?></td>
 					<?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
-						<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
+						<td class="text-right persediaan-col-money<?php echo $is_stock_tab ? ' stock-total-value' : ''; ?>"<?php echo $is_stock_tab ? ' data-total="' . htmlspecialchars((string) persediaan_hitung_kolom_nominal_row($persediaan, $field_tgl_total), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo persediaan_tampil_kolom_nominal_row($persediaan, $field_tgl_total); ?></td>
 					<?php } ?>
 				<?php } ?>
-				<td class="text-right persediaan-col-money"><?php
+				<td class="text-right persediaan-col-money<?php echo $is_stock_tab ? ' stock-total-value' : ''; ?>"<?php echo $is_stock_tab ? ' data-total="' . htmlspecialchars((string) $nilai_persediaan_row, ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php
 					if ($is_draft_referensi_tab) {
 						echo persediaan_format_rupiah_tampil($nilai_persediaan_row, true);
 					} else {
@@ -226,23 +232,63 @@ $excel_jenis = isset($excel_jenis) ? trim((string) $excel_jenis) : '';
 					}
 				?></td>
 				<?php if ($show_keluar_columns) { ?>
-				<td><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
+				<td<?php echo $is_stock_tab ? ' class="stock-total-value" data-total="' . htmlspecialchars((string) persediaan_parse_angka(isset($persediaan->penjualan) ? $persediaan->penjualan : 0), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo isset($persediaan->penjualan) ? $persediaan->penjualan : 0 ?></td>
 				<?php if ($show_keluar_nominal_columns) { ?>
-				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'penjualan'); ?></td>
+				<td class="text-right persediaan-col-money<?php echo $is_stock_tab ? ' stock-total-value' : ''; ?>"<?php echo $is_stock_tab ? ' data-total="' . htmlspecialchars((string) persediaan_hitung_kolom_nominal_row($persediaan, 'penjualan'), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'penjualan'); ?></td>
 				<?php } ?>
-				<td><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
+				<td<?php echo $is_stock_tab ? ' class="stock-total-value" data-total="' . htmlspecialchars((string) persediaan_parse_angka(isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo isset($persediaan->pecah_satuan) ? $persediaan->pecah_satuan : 0 ?></td>
 				<?php if ($show_keluar_nominal_columns) { ?>
-				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'pecah_satuan'); ?></td>
+				<td class="text-right persediaan-col-money<?php echo $is_stock_tab ? ' stock-total-value' : ''; ?>"<?php echo $is_stock_tab ? ' data-total="' . htmlspecialchars((string) persediaan_hitung_kolom_nominal_row($persediaan, 'pecah_satuan'), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'pecah_satuan'); ?></td>
 				<?php } ?>
-				<td><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
+				<td<?php echo $is_stock_tab ? ' class="stock-total-value" data-total="' . htmlspecialchars((string) persediaan_parse_angka(isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo isset($persediaan->bahan_produksi) ? $persediaan->bahan_produksi : 0 ?></td>
 				<?php if ($show_keluar_nominal_columns) { ?>
-				<td class="text-right persediaan-col-money"><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'bahan_produksi'); ?></td>
+				<td class="text-right persediaan-col-money<?php echo $is_stock_tab ? ' stock-total-value' : ''; ?>"<?php echo $is_stock_tab ? ' data-total="' . htmlspecialchars((string) persediaan_hitung_kolom_nominal_row($persediaan, 'bahan_produksi'), ENT_QUOTES, 'UTF-8') . '"' : ''; ?>><?php echo persediaan_tampil_kolom_nominal_row($persediaan, 'bahan_produksi'); ?></td>
 				<?php } ?>
 				<?php } ?>
 			</tr>
 		<?php } ?>
 	</tbody>
-	<?php if (!$is_stock_tab) { ?>
+	<?php if ($is_stock_tab) { ?>
+	<tfoot>
+		<tr>
+			<?php for ($stock_footer_blank = 0; $stock_footer_blank < 7; $stock_footer_blank++) { ?>
+				<th></th>
+			<?php } ?>
+			<th class="persediaan-foot-total-label">Total</th>
+			<th class="text-right stock-total-footer"></th>
+			<th class="text-right stock-total-footer"></th>
+			<th class="text-right stock-total-footer"></th>
+			<th class="text-right stock-total-footer"></th>
+			<th class="text-right stock-total-footer"></th>
+			<th class="text-right stock-total-footer"></th>
+			<?php foreach ($persediaan_fields_tgl_total as $field_tgl_total) { ?>
+				<?php if ($field_tgl_total === 'tgl_keluar') { ?>
+					<th></th>
+				<?php } else { ?>
+					<th class="text-right stock-total-footer"></th>
+				<?php } ?>
+				<?php if (persediaan_field_has_nominal_column($field_tgl_total)) { ?>
+					<th class="text-right stock-total-footer persediaan-col-money"></th>
+				<?php } ?>
+			<?php } ?>
+			<th class="text-right stock-total-footer persediaan-col-money"></th>
+			<?php if ($show_keluar_columns) { ?>
+				<th class="text-right stock-total-footer"></th>
+				<?php if ($show_keluar_nominal_columns) { ?>
+					<th class="text-right stock-total-footer persediaan-col-money"></th>
+				<?php } ?>
+				<th class="text-right stock-total-footer"></th>
+				<?php if ($show_keluar_nominal_columns) { ?>
+					<th class="text-right stock-total-footer persediaan-col-money"></th>
+				<?php } ?>
+				<th class="text-right stock-total-footer"></th>
+				<?php if ($show_keluar_nominal_columns) { ?>
+					<th class="text-right stock-total-footer persediaan-col-money"></th>
+				<?php } ?>
+			<?php } ?>
+		</tr>
+	</tfoot>
+	<?php } else { ?>
 	<tfoot>
 		<tr>
 			<?php
