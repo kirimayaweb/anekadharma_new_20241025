@@ -3285,16 +3285,18 @@ function persediaan_recalculate_resolve_uuid_barang_pembelian($CI, $uuid_pembeli
 	);
 }
 
-function persediaan_recalculate_insert_persediaan_from_pembelian($CI, $ctx, $row_pembelian, $tabel, &$map)
+function persediaan_recalculate_insert_persediaan_from_pembelian($CI, $ctx, $row_pembelian, $tabel, &$map, $strict_compare = false)
 {
-	$existing = persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $map);
-	if (!$existing) {
+	$existing = $strict_compare
+		? null
+		: persediaan_recalculate_find_persediaan_for_pembelian($row_pembelian, $map);
+	if (!$existing && !$strict_compare) {
 		$spop_cek = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
 		if (persediaan_recalculate_spop_valid($spop_cek) && is_array($map)) {
 			$existing = persediaan_generate_recalculate_find_target_by_spop_row($row_pembelian, $map);
 		}
 	}
-	if (!$existing) {
+	if (!$existing && !$strict_compare) {
 		$nama_cek = isset($row_pembelian->uraian) ? $row_pembelian->uraian : '';
 		$harga_cek = isset($row_pembelian->harga_satuan) ? $row_pembelian->harga_satuan : '';
 		$spop_cek = isset($row_pembelian->spop) ? $row_pembelian->spop : '';
@@ -6382,8 +6384,16 @@ function persediaan_recalculate_load_pembelian_bulan_rows($CI, $tabel, $tgl_awal
 	$spop_sql = $CI->db->field_exists('spop', $tabel)
 		? 'TRIM(COALESCE(`spop`, \'\')) AS `spop`'
 		: "'' AS `spop`";
+	$id_sql = $CI->db->field_exists('id', $tabel) ? '`id`' : '0 AS `id`';
+	$uuid_barang_sql = $CI->db->field_exists('uuid_barang', $tabel)
+		? '`uuid_barang`'
+		: "'' AS `uuid_barang`";
+	$uuid_spop_sql = $CI->db->field_exists('uuid_spop', $tabel)
+		? '`uuid_spop`'
+		: "'' AS `uuid_spop`";
 	$cache[$key] = $CI->db->query(
-		"SELECT `uraian`, `satuan`, `harga_satuan`, `jumlah`, `tgl_po`, {$spop_sql}
+		"SELECT {$id_sql}, {$uuid_barang_sql}, {$uuid_spop_sql},
+			`uraian`, `satuan`, `harga_satuan`, `jumlah`, `tgl_po`, {$spop_sql}
 		FROM `{$tabel}`
 		WHERE `tgl_po` IS NOT NULL AND `tgl_po` <> '0000-00-00'
 		AND DATE(`tgl_po`) >= ? AND DATE(`tgl_po`) <= ?",
@@ -19483,6 +19493,17 @@ function persediaan_gen_recalc_item_to_display_row($jenis, $item, $nomor)
 				isset($item['total_10']) ? $item['total_10'] : '',
 				isset($item['keterangan']) ? $item['keterangan'] : '',
 			);
+		case 'pembelian_manual_tidak_persediaan':
+			return array(
+				$nomor,
+				isset($item['tgl_po']) ? $item['tgl_po'] : '',
+				isset($item['uraian']) ? $item['uraian'] : '',
+				isset($item['spop']) ? $item['spop'] : '',
+				isset($item['satuan']) ? $item['satuan'] : '',
+				isset($item['harga_satuan']) ? $item['harga_satuan'] : '',
+				isset($item['jumlah']) ? $item['jumlah'] : '',
+				isset($item['keterangan']) ? $item['keterangan'] : '',
+			);
 		case 'generate_update':
 			return array(
 				$nomor,
@@ -21286,6 +21307,7 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 			persediaan_compare_row_get((object) $selected, $map['spop'])
 		);
 		$existing_key_count = 0;
+		$existing_match = null;
 		foreach (persediaan_compare_get_persediaan_bulan_rows($CI, $bulan) as $existing_row) {
 			$existing_key = persediaan_compare_build_key(
 				isset($existing_row->namabarang) ? $existing_row->namabarang : '',
@@ -21295,9 +21317,52 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 			);
 			if ($existing_key !== '' && $existing_key === $selected_key) {
 				$existing_key_count++;
+				if ($existing_match === null) {
+					$existing_match = $existing_row;
+				}
 			}
 		}
 		if ($selected_key === '' || $existing_key_count >= (isset($manual_key_counts[$selected_key]) ? $manual_key_counts[$selected_key] : 0)) {
+			$marker_field = isset($fields_pers_lookup['uuid_persediaan_lama'])
+				? $fields_pers_lookup['uuid_persediaan_lama']
+				: null;
+			if ($existing_match !== null && $marker_field !== null) {
+				$old_marker = trim((string) (isset($existing_match->{$marker_field}) ? $existing_match->{$marker_field} : ''));
+				if (strpos($old_marker, 'compare_manual_insert') !== 0) {
+					$new_marker = 'compare_manual_insert' . ($old_marker !== '' ? ' | ' . $old_marker : '');
+					$CI->db->where('id', (int) $existing_match->id);
+					if (!$CI->db->update('persediaan', array($marker_field => $new_marker))) {
+						$db_err = $CI->db->error();
+						return array(
+							'ok' => false,
+							'message' => 'Record sudah ada, tetapi gagal menandai sumber compare agar tampil di Stok Siap Jual. Detail: '
+								. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+						);
+					}
+					$marker_query = $CI->db
+						->select($marker_field)
+						->where('id', (int) $existing_match->id)
+						->get('persediaan');
+					if ($marker_query === false) {
+						$db_err = $CI->db->error();
+						return array(
+							'ok' => false,
+							'message' => 'Record sudah ada, tetapi gagal membaca ulang penanda compare. Detail: '
+								. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+						);
+					}
+					$verified_marker = $marker_query->row();
+					if (!$verified_marker
+						|| strpos((string) $verified_marker->{$marker_field}, 'compare_manual_insert') !== 0
+					) {
+						return array(
+							'ok' => false,
+							'message' => 'Record sudah ada, tetapi penanda compare gagal diverifikasi pada tabel persediaan.',
+						);
+					}
+				}
+			}
+
 			return array(
 				'ok' => true,
 				'already_exists' => true,
@@ -21340,6 +21405,7 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 	$next_id = $row_max && $row_max->max_id ? ((int) $row_max->max_id + 1) : 1;
 
 	$inserted = 0;
+	$inserted_ids = array();
 	$copied_uuid = 0;
 	$generated_uuid = 0;
 	$skip_empty_name = 0;
@@ -21428,6 +21494,11 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 				$generated_uuid++;
 			}
 		}
+		if ($row_token !== '' && isset($fields_pers_lookup['uuid_persediaan_lama'])) {
+			$existing_marker = trim((string) $data[$fields_pers_lookup['uuid_persediaan_lama']]);
+			$data[$fields_pers_lookup['uuid_persediaan_lama']] = 'compare_manual_insert'
+				. ($existing_marker !== '' ? ' | ' . $existing_marker : '');
+		}
 
 		if (!$CI->db->insert('persediaan', $data)) {
 			$db_err = $CI->db->error();
@@ -21439,6 +21510,15 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 			);
 		}
 		$inserted++;
+		$inserted_ids[] = $id_val;
+	}
+
+	if ($inserted === 0) {
+		$CI->db->trans_rollback();
+		return array(
+			'ok' => false,
+			'message' => 'Tidak ada baris yang berhasil dimasukkan ke persediaan.',
+		);
 	}
 
 	if ($CI->db->trans_status() === false) {
@@ -21446,6 +21526,31 @@ function persediaan_compare_insert_table_to_persediaan($CI, $table, $bulan = '',
 		return array('ok' => false, 'message' => 'Transaksi insert ke persediaan gagal.');
 	}
 	$CI->db->trans_commit();
+
+	$persisted_query = $CI->db
+		->select('id')
+		->where_in('id', $inserted_ids)
+		->get('persediaan');
+	if ($persisted_query === false) {
+		$db_err = $CI->db->error();
+		return array(
+			'ok' => false,
+			'message' => 'Insert diproses, tetapi verifikasi record di persediaan gagal. Detail: '
+				. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+		);
+	}
+	$persisted_ids = array();
+	foreach ($persisted_query->result() as $persisted_row) {
+		$persisted_ids[] = (int) $persisted_row->id;
+	}
+	$missing_ids = array_diff($inserted_ids, $persisted_ids);
+	if (!empty($missing_ids)) {
+		return array(
+			'ok' => false,
+			'message' => 'Verifikasi gagal: ' . count($missing_ids)
+				. ' record tidak ditemukan di tabel persediaan setelah proses insert.',
+		);
+	}
 
 	return array(
 		'ok' => true,
@@ -21487,6 +21592,200 @@ function persediaan_compare_get_persediaan_bulan_rows($CI, $bulan)
 	)->result();
 
 	return persediaan_export_sort_rows_by_namabarang($rows, 'namabarang');
+}
+
+function persediaan_compare_mark_pembelian_insert($CI, $persediaan_id, $purchase_table, $purchase_id)
+{
+	if (!$CI->db->field_exists('uuid_persediaan_lama', 'persediaan')) {
+		return array('ok' => false, 'message' => 'Kolom penanda sumber tidak tersedia pada tabel persediaan.');
+	}
+
+	$existing_query = $CI->db->select('uuid_persediaan_lama')
+		->where('id', (int) $persediaan_id)
+		->get('persediaan');
+	if ($existing_query === false) {
+		$db_err = $CI->db->error();
+		return array(
+			'ok' => false,
+			'message' => 'Gagal membaca record persediaan. Detail: '
+				. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+		);
+	}
+	$existing = $existing_query->row();
+	if (!$existing) {
+		return array('ok' => false, 'message' => 'Record persediaan tidak ditemukan untuk diberi penanda compare.');
+	}
+
+	$old_marker = trim((string) $existing->uuid_persediaan_lama);
+	if (strpos($old_marker, 'compare_manual_insert') !== 0) {
+		$new_marker = 'compare_manual_insert | pembelian:' . $purchase_table . ':' . (int) $purchase_id
+			. ($old_marker !== '' ? ' | ' . $old_marker : '');
+		$new_marker = substr($new_marker, 0, 255);
+		$updated = $CI->db->where('id', (int) $persediaan_id)
+			->update('persediaan', array('uuid_persediaan_lama' => $new_marker));
+		if (!$updated) {
+			$db_err = $CI->db->error();
+			return array(
+				'ok' => false,
+				'message' => 'Record tersimpan, tetapi gagal memberi penanda compare. Detail: '
+					. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+			);
+		}
+	}
+
+	$verified_query = $CI->db->select('uuid_persediaan_lama')
+		->where('id', (int) $persediaan_id)
+		->get('persediaan');
+	if ($verified_query === false) {
+		$db_err = $CI->db->error();
+		return array(
+			'ok' => false,
+			'message' => 'Gagal membaca ulang penanda compare. Detail: '
+				. (isset($db_err['message']) ? $db_err['message'] : 'error database'),
+		);
+	}
+	$verified = $verified_query->row();
+	if (!$verified || strpos((string) $verified->uuid_persediaan_lama, 'compare_manual_insert') !== 0) {
+		return array('ok' => false, 'message' => 'Penanda compare tidak berhasil diverifikasi pada tabel persediaan.');
+	}
+
+	return array('ok' => true);
+}
+
+function persediaan_compare_insert_pembelian_to_persediaan($CI, $bulan, $row_token)
+{
+	$bulan = trim((string) $bulan);
+	$row_token = trim((string) $row_token);
+	if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+		return array('ok' => false, 'message' => 'Pilih bulan dan tahun yang valid.');
+	}
+	if (!preg_match('/^[a-f0-9]{64}$/', $row_token)) {
+		return array('ok' => false, 'message' => 'Identitas baris pembelian tidak valid.');
+	}
+
+	$ts = strtotime($bulan . '-01');
+	if ($ts === false) {
+		return array('ok' => false, 'message' => 'Bulan pembelian tidak valid.');
+	}
+	$tgl_awal = date('Y-m-01', $ts);
+	$tgl_akhir = date('Y-m-t', $ts);
+	$purchase_lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
+	$selected = null;
+	foreach ($purchase_lists['pembelian'] as $purchase_row) {
+		if (persediaan_compare_pembelian_source_token($purchase_row) === $row_token) {
+			$selected = $purchase_row;
+			break;
+		}
+	}
+	if (!$selected) {
+		return array(
+			'ok' => false,
+			'message' => 'Baris pembelian tidak ditemukan pada bulan terpilih. Jalankan Compare kembali.',
+		);
+	}
+
+	$purchase_table = isset($selected->_compare_table) ? (string) $selected->_compare_table : '';
+	$purchase_id = isset($selected->id) ? (int) $selected->id : 0;
+	if (!in_array($purchase_table, array('tbl_pembelian', 'tbl_pembelian_jasa'), true) || $purchase_id <= 0) {
+		return array('ok' => false, 'message' => 'Sumber baris pembelian tidak valid.');
+	}
+	if (trim((string) (isset($selected->uraian) ? $selected->uraian : '')) === ''
+		|| trim((string) (isset($selected->satuan) ? $selected->satuan : '')) === ''
+	) {
+		return array('ok' => false, 'message' => 'Nama barang dan satuan wajib tersedia untuk insert ke persediaan.');
+	}
+
+	$CI->load->helper('persediaan_display');
+	$tanggal_beli = date('Y-m-01', $ts);
+	$map = persediaan_recalculate_build_map_persediaan_bulan($CI, $tanggal_beli);
+	$purchase_key = persediaan_compare_excel_all_pembelian_full_key($selected);
+	if ($purchase_key === '') {
+		return array(
+			'ok' => false,
+			'message' => 'Data pembelian belum memiliki nama, satuan, atau harga yang cukup untuk dicocokkan.',
+		);
+	}
+	$existing = null;
+	foreach (persediaan_compare_get_persediaan_bulan_rows($CI, $bulan) as $persediaan_row) {
+		if (persediaan_compare_excel_all_pers_full_key($persediaan_row) === $purchase_key) {
+			$existing = $persediaan_row;
+			break;
+		}
+	}
+	if ($existing) {
+		$marked = persediaan_compare_mark_pembelian_insert(
+			$CI,
+			(int) $existing->id,
+			$purchase_table,
+			$purchase_id
+		);
+		if (empty($marked['ok'])) {
+			return $marked;
+		}
+
+		return array(
+			'ok' => true,
+			'already_exists' => true,
+			'id_persediaan' => (int) $existing->id,
+			'message' => 'Data pembelian sudah ada di persediaan; keberadaannya telah diverifikasi.',
+		);
+	}
+
+	$created = persediaan_recalculate_insert_persediaan_from_pembelian(
+		$CI,
+		array('tanggal_beli' => $tanggal_beli),
+		$selected,
+		$purchase_table,
+		$map,
+		true
+	);
+	if (empty($created['ok'])) {
+		if (!empty($created['existing'])) {
+			return array(
+				'ok' => false,
+				'message' => 'Penyimpanan dibatalkan karena ada record persediaan yang dianggap serupa. Periksa nama, satuan, HPP, dan SPOP sebelum mencoba lagi.',
+			);
+		}
+		return array(
+			'ok' => false,
+			'message' => 'Gagal insert pembelian ke persediaan: '
+				. (isset($created['alasan']) ? $created['alasan'] : 'kesalahan tidak diketahui.'),
+		);
+	}
+
+	$persediaan_id = isset($created['id_persediaan']) ? (int) $created['id_persediaan'] : 0;
+	if ($persediaan_id <= 0) {
+		return array('ok' => false, 'message' => 'Insert diproses tetapi ID persediaan baru tidak tersedia untuk verifikasi.');
+	}
+	$marked = persediaan_compare_mark_pembelian_insert($CI, $persediaan_id, $purchase_table, $purchase_id);
+	if (empty($marked['ok'])) {
+		return $marked;
+	}
+
+	$verified = $CI->db->where('id', $persediaan_id)
+		->where('tanggal_beli', $tanggal_beli)
+		->get('persediaan')
+		->row();
+	if (!$verified
+		|| persediaan_compare_build_key(
+			isset($verified->namabarang) ? $verified->namabarang : '',
+			isset($verified->satuan) ? $verified->satuan : '',
+			isset($verified->hpp) ? $verified->hpp : '',
+			isset($verified->spop) ? $verified->spop : ''
+		) !== persediaan_compare_excel_all_pembelian_full_key($selected)
+	) {
+		return array(
+			'ok' => false,
+			'message' => 'Insert diproses tetapi data hasilnya tidak cocok saat dibaca ulang dari tabel persediaan.',
+		);
+	}
+
+	return array(
+		'ok' => true,
+		'inserted' => 1,
+		'id_persediaan' => $persediaan_id,
+		'message' => 'Data pembelian berhasil dimasukkan dan diverifikasi di tabel persediaan.',
+	);
 }
 
 /**
@@ -21809,6 +22108,26 @@ function persediaan_compare_jenis_definitions()
 			'headers' => array('No', 'Tgl PO', 'Nama Barang', 'SPOP', 'Satuan', 'Harga Satuan', 'Jumlah', 'Keterangan'),
 			'file_suffix' => 'Pembelian_Tidak_Manual',
 		),
+		'pembelian_manual_tidak_persediaan' => array(
+			'title' => 'Pembelian Manual Tidak Ada di Persediaan',
+			'headers' => array('No', 'Tgl PO', 'Nama Barang', 'SPOP', 'Satuan', 'Harga Satuan', 'Jumlah', 'Sumber'),
+			'file_suffix' => 'Pembelian_Manual_Tidak_Di_Persediaan',
+		),
+		'penjualan_manual_tidak_persediaan' => array(
+			'title' => 'Penjualan Manual Tidak Ada di Persediaan',
+			'headers' => array('No', 'Nama Barang CSV', 'Satuan CSV', 'HPP CSV', 'SPOP CSV', 'SA CSV', 'Beli CSV', 'Total_10 CSV', 'Sumber CSV'),
+			'file_suffix' => 'Penjualan_Manual_Tidak_Di_Persediaan',
+		),
+		'produksi_manual_tidak_persediaan' => array(
+			'title' => 'Produksi Manual Tidak Ada di Persediaan',
+			'headers' => array('No', 'Nama Barang CSV', 'Satuan CSV', 'HPP CSV', 'SPOP CSV', 'SA CSV', 'Beli CSV', 'Total_10 CSV', 'Sumber CSV'),
+			'file_suffix' => 'Produksi_Manual_Tidak_Di_Persediaan',
+		),
+		'pecah_satuan_manual_tidak_persediaan' => array(
+			'title' => 'Pecah Satuan Manual Tidak Ada di Persediaan',
+			'headers' => array('No', 'Nama Barang CSV', 'Satuan CSV', 'HPP CSV', 'SPOP CSV', 'SA CSV', 'Beli CSV', 'Total_10 CSV', 'Sumber CSV'),
+			'file_suffix' => 'Pecah_Satuan_Manual_Tidak_Di_Persediaan',
+		),
 		'penjualan_tidak_manual' => array(
 			'title' => 'Penjualan Tidak Ada di Tabel Manual',
 			'headers' => array('No', 'Tgl Jual', 'Nama Barang', 'SPOP', 'Satuan', 'Harga Satuan', 'Jumlah', 'Keterangan'),
@@ -21874,6 +22193,20 @@ function persediaan_compare_item_to_row_cells($jenis, $item, $nomor)
 				isset($item['jumlah']) ? $item['jumlah'] : '',
 				isset($item['keterangan']) ? $item['keterangan'] : '',
 			);
+		case 'penjualan_manual_tidak_persediaan':
+		case 'produksi_manual_tidak_persediaan':
+		case 'pecah_satuan_manual_tidak_persediaan':
+			return array(
+				$nomor,
+				isset($item['c_namabarang']) ? $item['c_namabarang'] : '',
+				isset($item['c_satuan']) ? $item['c_satuan'] : '',
+				isset($item['c_hpp']) ? $item['c_hpp'] : '',
+				isset($item['c_spop']) ? $item['c_spop'] : '',
+				isset($item['c_sa']) ? $item['c_sa'] : '',
+				isset($item['c_beli']) ? $item['c_beli'] : '',
+				isset($item['c_total_10']) ? $item['c_total_10'] : '',
+				isset($item['sumber']) ? $item['sumber'] : '',
+			);
 		case 'penjualan_tidak_manual':
 			return array(
 				$nomor,
@@ -21926,6 +22259,22 @@ function persediaan_compare_get_items_by_jenis($result, $jenis)
 			return isset($result['items_cocok']) ? $result['items_cocok'] : array();
 		case 'pembelian_tidak_manual':
 			return isset($result['items_pembelian_tidak_manual']) ? $result['items_pembelian_tidak_manual'] : array();
+		case 'pembelian_manual_tidak_persediaan':
+			return isset($result['items_pembelian_manual_tidak_persediaan'])
+				? $result['items_pembelian_manual_tidak_persediaan']
+				: array();
+		case 'penjualan_manual_tidak_persediaan':
+			return isset($result['items_penjualan_manual_tidak_persediaan'])
+				? $result['items_penjualan_manual_tidak_persediaan']
+				: array();
+		case 'produksi_manual_tidak_persediaan':
+			return isset($result['items_produksi_manual_tidak_persediaan'])
+				? $result['items_produksi_manual_tidak_persediaan']
+				: array();
+		case 'pecah_satuan_manual_tidak_persediaan':
+			return isset($result['items_pecah_satuan_manual_tidak_persediaan'])
+				? $result['items_pecah_satuan_manual_tidak_persediaan']
+				: array();
 		case 'penjualan_tidak_manual':
 			return isset($result['items_penjualan_tidak_manual']) ? $result['items_penjualan_tidak_manual'] : array();
 		case 'produksi_tidak_manual':
@@ -22031,13 +22380,57 @@ function persediaan_compare_tx_key_in_manual($manual_keys, $key)
 	return ($key !== '' && isset($manual_keys[$key]));
 }
 
+function persediaan_compare_persediaan_key_counts($persediaan_rows)
+{
+	$counts = array();
+	foreach ($persediaan_rows as $row) {
+		$key = persediaan_compare_excel_all_pers_full_key($row);
+		if ($key !== '') {
+			$counts[$key] = isset($counts[$key]) ? $counts[$key] + 1 : 1;
+		}
+	}
+
+	return $counts;
+}
+
+function persediaan_compare_consume_persediaan_key(&$counts, $key)
+{
+	if ($key === '' || empty($counts[$key])) {
+		return false;
+	}
+
+	$counts[$key]--;
+	return true;
+}
+
+function persediaan_compare_pembelian_source_token($row)
+{
+	$row = (array) $row;
+	$source = array(
+		'table' => isset($row['_compare_table']) ? (string) $row['_compare_table'] : '',
+		'id' => isset($row['id']) ? (string) $row['id'] : '',
+		'tgl_po' => isset($row['tgl_po']) ? (string) $row['tgl_po'] : '',
+		'uraian' => isset($row['uraian']) ? (string) $row['uraian'] : '',
+		'satuan' => isset($row['satuan']) ? (string) $row['satuan'] : '',
+		'harga_satuan' => isset($row['harga_satuan']) ? (string) $row['harga_satuan'] : '',
+		'spop' => isset($row['spop']) ? (string) $row['spop'] : '',
+		'jumlah' => isset($row['jumlah']) ? (string) $row['jumlah'] : '',
+	);
+
+	return hash('sha256', serialize($source));
+}
+
 function persediaan_compare_collect_tx_not_in_manual($CI, $bulan, $compare_rows, $map, $persediaan_rows)
 {
 	$empty = array(
 		'pembelian' => array(),
+		'pembelian_tidak_persediaan' => array(),
 		'penjualan' => array(),
+		'penjualan_tidak_persediaan' => array(),
 		'produksi' => array(),
+		'produksi_tidak_persediaan' => array(),
 		'pecah_satuan' => array(),
+		'pecah_satuan_tidak_persediaan' => array(),
 	);
 
 	$bulan = trim((string) $bulan);
@@ -22056,6 +22449,37 @@ function persediaan_compare_collect_tx_not_in_manual($CI, $bulan, $compare_rows,
 	$manual_by_nama = persediaan_compare_build_manual_by_nama($compare_rows, $map);
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
 	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $persediaan_rows);
+
+	$persediaan_purchase_key_counts = persediaan_compare_persediaan_key_counts($persediaan_rows);
+	$items_pembelian_tidak_persediaan = array();
+	foreach ($lists['pembelian'] as $purchase_row) {
+		$key = persediaan_compare_excel_all_pembelian_full_key($purchase_row);
+		if ($key === '') {
+			continue;
+		}
+		if ($key !== '' && !empty($persediaan_purchase_key_counts[$key])) {
+			$persediaan_purchase_key_counts[$key]--;
+			continue;
+		}
+		$items_pembelian_tidak_persediaan[] = array(
+			'tgl_po' => persediaan_compare_excel_all_format_tanggal_display(
+				isset($purchase_row->tgl_po) ? $purchase_row->tgl_po : ''
+			),
+			'uraian' => isset($purchase_row->uraian) ? $purchase_row->uraian : '',
+			'spop' => persediaan_compare_excel_all_normalize_spop_display(
+				isset($purchase_row->spop) ? $purchase_row->spop : ''
+			),
+			'satuan' => isset($purchase_row->satuan) ? $purchase_row->satuan : '',
+			'harga_satuan' => persediaan_compare_excel_all_normalize_numeric_display(
+				isset($purchase_row->harga_satuan) ? $purchase_row->harga_satuan : ''
+			),
+			'jumlah' => persediaan_compare_excel_all_normalize_numeric_display(
+				isset($purchase_row->jumlah) ? $purchase_row->jumlah : ''
+			),
+			'keterangan' => isset($purchase_row->_compare_table) ? $purchase_row->_compare_table : '',
+			'purchase_row_token' => persediaan_compare_pembelian_source_token($purchase_row),
+		);
+	}
 
 	$items_pembelian = array();
 	foreach ($lists['pembelian'] as $r) {
@@ -22157,6 +22581,7 @@ function persediaan_compare_collect_tx_not_in_manual($CI, $bulan, $compare_rows,
 
 	return array(
 		'pembelian' => $items_pembelian,
+		'pembelian_tidak_persediaan' => $items_pembelian_tidak_persediaan,
 		'penjualan' => $items_penjualan,
 		'produksi' => $items_produksi,
 		'pecah_satuan' => $items_pecah,
@@ -22255,16 +22680,25 @@ function persediaan_compare_run($CI, $bulan, $table)
 				persediaan_compare_format_side($crow, 'c', $map)
 			);
 			$item['manual_row_token'] = persediaan_compare_source_row_token($crow);
+			$item['sumber'] = $table;
 			$items_hanya_tabel[] = $item;
 		}
 	}
 
 	$tx_not_manual = persediaan_compare_collect_tx_not_in_manual($CI, $bulan, $compare_rows, $map, $persediaan_rows);
 	$items_pembelian_tidak_manual = $tx_not_manual['pembelian'];
+	$items_pembelian_manual_tidak_persediaan = $tx_not_manual['pembelian_tidak_persediaan'];
 	$items_penjualan_tidak_manual = $tx_not_manual['penjualan'];
 	$items_produksi_tidak_manual = $tx_not_manual['produksi'];
 	$items_pecah_tidak_manual = $tx_not_manual['pecah_satuan'];
+	$items_penjualan_manual_tidak_persediaan = $items_hanya_tabel;
+	$items_produksi_manual_tidak_persediaan = $items_hanya_tabel;
+	$items_pecah_satuan_manual_tidak_persediaan = $items_hanya_tabel;
 	$stats['pembelian_tidak_manual'] = count($items_pembelian_tidak_manual);
+	$stats['pembelian_manual_tidak_persediaan'] = count($items_pembelian_manual_tidak_persediaan);
+	$stats['penjualan_manual_tidak_persediaan'] = count($items_hanya_tabel);
+	$stats['produksi_manual_tidak_persediaan'] = count($items_hanya_tabel);
+	$stats['pecah_satuan_manual_tidak_persediaan'] = count($items_hanya_tabel);
 	$stats['penjualan_tidak_manual'] = count($items_penjualan_tidak_manual);
 	$stats['produksi_tidak_manual'] = count($items_produksi_tidak_manual);
 	$stats['pecah_tidak_manual'] = count($items_pecah_tidak_manual);
@@ -22281,9 +22715,13 @@ function persediaan_compare_run($CI, $bulan, $table)
 		'items_hanya_tabel' => $items_hanya_tabel,
 		'items_cocok' => $items_cocok,
 		'items_pembelian_tidak_manual' => $items_pembelian_tidak_manual,
+		'items_pembelian_manual_tidak_persediaan' => $items_pembelian_manual_tidak_persediaan,
 		'items_penjualan_tidak_manual' => $items_penjualan_tidak_manual,
+		'items_penjualan_manual_tidak_persediaan' => $items_penjualan_manual_tidak_persediaan,
 		'items_produksi_tidak_manual' => $items_produksi_tidak_manual,
+		'items_produksi_manual_tidak_persediaan' => $items_produksi_manual_tidak_persediaan,
 		'items_pecah_tidak_manual' => $items_pecah_tidak_manual,
+		'items_pecah_satuan_manual_tidak_persediaan' => $items_pecah_satuan_manual_tidak_persediaan,
 	);
 }
 
@@ -24055,6 +24493,7 @@ function persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_
 	$pembelian = array();
 	foreach (array('tbl_pembelian', 'tbl_pembelian_jasa') as $tbl) {
 		foreach (persediaan_recalculate_load_pembelian_bulan_rows($CI, $tbl, $tgl_awal, $tgl_akhir) as $r) {
+			$r->_compare_table = $tbl;
 			$pembelian[] = $r;
 		}
 	}

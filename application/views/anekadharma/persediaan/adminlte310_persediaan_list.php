@@ -2304,6 +2304,66 @@
                                     <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
                                 </table>
                             </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>9. Pembelian Manual Tidak Ada di Persediaan <span id="compare-badge-pembelian-manual-tidak-persediaan" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="pembelian_manual_tidak_persediaan"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-pembelian-manual-tidak-persediaan" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Aksi</th><th>Tgl PO</th><th>Nama Barang</th><th>SPOP</th><th>Satuan</th><th>Harga Satuan</th><th>Jumlah</th><th>Sumber</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                </table>
+                            </div>
+
+                            <div class="alert alert-info py-2">
+                                Tabel 10–12 menampilkan record dari file CSV yang tidak ditemukan di persediaan. Karena CSV tidak memiliki kolom jenis transaksi, record yang sama ditampilkan pada ketiga tabel; kolom sumber menunjukkan tabel CSV yang dipilih.
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>10. Penjualan Manual Tidak Ada di Persediaan <span id="compare-badge-penjualan-manual-tidak-persediaan" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="penjualan_manual_tidak_persediaan"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-penjualan-manual-tidak-persediaan" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Nama Barang CSV</th><th>Satuan CSV</th><th>HPP CSV</th><th>SPOP CSV</th><th>SA CSV</th><th>Beli CSV</th><th>Total_10 CSV</th><th>Sumber CSV</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>11. Produksi Manual Tidak Ada di Persediaan <span id="compare-badge-produksi-manual-tidak-persediaan" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="produksi_manual_tidak_persediaan"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-produksi-manual-tidak-persediaan" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Nama Barang CSV</th><th>Satuan CSV</th><th>HPP CSV</th><th>SPOP CSV</th><th>SA CSV</th><th>Beli CSV</th><th>Total_10 CSV</th><th>Sumber CSV</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap">
+                                <span>12. Pecah Satuan Manual Tidak Ada di Persediaan <span id="compare-badge-pecah-satuan-manual-tidak-persediaan" class="badge badge-danger">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="pecah_satuan_manual_tidak_persediaan"><i class="fas fa-file-excel"></i> Excel</button>
+                            </h6>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-pecah-satuan-manual-tidak-persediaan" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Nama Barang CSV</th><th>Satuan CSV</th><th>HPP CSV</th><th>SPOP CSV</th><th>SA CSV</th><th>Beli CSV</th><th>Total_10 CSV</th><th>Sumber CSV</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                </table>
+                            </div>
                         </div>
 
                         <div class="modal fade" id="modal-compare-csv-preview" tabindex="-1" role="dialog" aria-labelledby="modalCompareCsvPreviewLabel" aria-hidden="true">
@@ -3576,6 +3636,7 @@ window.addEventListener('load', function() {
     var urlCompareTabelPreview = <?php echo json_encode(isset($url_compare_tabel_preview) ? $url_compare_tabel_preview : site_url('Persediaan/ajax_compare_tabel_preview')); ?>;
     var urlCompareInsertToPersediaan = <?php echo json_encode(isset($url_compare_insert_to_persediaan) ? $url_compare_insert_to_persediaan : site_url('Persediaan/ajax_compare_insert_to_persediaan')); ?>;
     var urlCompareInsertRowToPersediaan = <?php echo json_encode(isset($url_compare_insert_row_to_persediaan) ? $url_compare_insert_row_to_persediaan : site_url('Persediaan/ajax_compare_insert_row_to_persediaan')); ?>;
+    var urlCompareInsertPembelianToPersediaan = <?php echo json_encode(isset($url_compare_insert_pembelian_to_persediaan) ? $url_compare_insert_pembelian_to_persediaan : site_url('Persediaan/ajax_compare_insert_pembelian_to_persediaan')); ?>;
     var urlCompareCheckInsertEligible = <?php echo json_encode(isset($url_compare_check_insert_eligible) ? $url_compare_check_insert_eligible : site_url('Persediaan/ajax_compare_check_insert_persediaan_eligible')); ?>;
     var userCanGeneratePersediaan = <?php echo !empty($can_generate_persediaan) ? 'true' : 'false'; ?>;
     var userCanComparePersediaan = <?php echo !empty($can_compare_persediaan) ? 'true' : 'false'; ?>;
@@ -12598,6 +12659,26 @@ window.addEventListener('load', function() {
         $('#compare-badge-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : 0);
         $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
         $('#compare-badge-pembelian-tidak').text(typeof stats.pembelian_tidak_manual !== 'undefined' ? stats.pembelian_tidak_manual : 0);
+        $('#compare-badge-pembelian-manual-tidak-persediaan').text(
+            typeof stats.pembelian_manual_tidak_persediaan !== 'undefined'
+                ? stats.pembelian_manual_tidak_persediaan
+                : 0
+        );
+        $('#compare-badge-penjualan-manual-tidak-persediaan').text(
+            typeof stats.penjualan_manual_tidak_persediaan !== 'undefined'
+                ? stats.penjualan_manual_tidak_persediaan
+                : 0
+        );
+        $('#compare-badge-produksi-manual-tidak-persediaan').text(
+            typeof stats.produksi_manual_tidak_persediaan !== 'undefined'
+                ? stats.produksi_manual_tidak_persediaan
+                : 0
+        );
+        $('#compare-badge-pecah-satuan-manual-tidak-persediaan').text(
+            typeof stats.pecah_satuan_manual_tidak_persediaan !== 'undefined'
+                ? stats.pecah_satuan_manual_tidak_persediaan
+                : 0
+        );
         $('#compare-badge-penjualan-tidak').text(typeof stats.penjualan_tidak_manual !== 'undefined' ? stats.penjualan_tidak_manual : 0);
         $('#compare-badge-produksi-tidak').text(typeof stats.produksi_tidak_manual !== 'undefined' ? stats.produksi_tidak_manual : 0);
         $('#compare-badge-pecah-tidak').text(typeof stats.pecah_tidak_manual !== 'undefined' ? stats.pecah_tidak_manual : 0);
@@ -12677,8 +12758,11 @@ window.addEventListener('load', function() {
         });
     }
 
-    function refreshPersediaanAfterCompareInsert() {
+    function refreshPersediaanAfterCompareInsert(bulan) {
         if ($('#form-persediaan-bulan').length) {
+            if (bulan && $('#bulan_persediaan').length) {
+                $('#bulan_persediaan').val(bulan);
+            }
             $('#form-persediaan-bulan').submit();
         }
     }
@@ -13089,7 +13173,10 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'success',
                 title: res.already_exists ? 'Record sudah ada' : 'Insert berhasil',
-                text: message
+                text: message,
+                confirmButtonText: 'Lihat di Stok Siap Jual'
+            }).then(function() {
+                refreshPersediaanAfterCompareInsert(bulan);
             });
             setCompareStatus('success', escapeHtmlCompare(message)
                 + ' Jalankan Compare kembali untuk memperbarui hasil dan memastikan record masuk ke kategori Data Cocok.');
@@ -13099,6 +13186,67 @@ window.addEventListener('load', function() {
                 ? xhr.responseJSON.message
                 : 'Insert gagal. Periksa koneksi, lalu coba kembali.';
             Swal.fire({ icon: 'error', title: 'Insert gagal', text: message });
+        });
+    }
+
+    function insertComparePembelianRowToPersediaan($button) {
+        if (!userCanComparePersediaan || !$button || $button.prop('disabled')) {
+            return;
+        }
+
+        var rowToken = String($button.attr('data-purchase-row-token') || '');
+        var bulan = getBulanKeyCompare();
+        if (!rowToken || !bulan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data compare tidak lengkap',
+                text: 'Pilih bulan dan tahun, lalu jalankan Compare kembali.'
+            });
+            return;
+        }
+
+        var originalHtml = $button.html();
+        $button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Memproses');
+        $.ajax({
+            url: urlCompareInsertPembelianToPersediaan,
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                bulan: bulan,
+                row_token: rowToken
+            }
+        }).done(function(res) {
+            if (!res || !res.ok) {
+                $button.prop('disabled', false).html(originalHtml);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Insert pembelian gagal',
+                    text: (res && res.message) ? res.message : 'Data pembelian gagal dimasukkan ke persediaan.'
+                });
+                return;
+            }
+
+            $button.removeClass('btn-outline-success')
+                .addClass('btn-secondary')
+                .attr('title', 'Record sudah ada di persediaan')
+                .html('<i class="fas fa-check"></i> Sudah di Persediaan')
+                .prop('disabled', true);
+
+            var message = res.message || 'Data pembelian berhasil diverifikasi di persediaan.';
+            Swal.fire({
+                icon: 'success',
+                title: res.already_exists ? 'Record sudah ada' : 'Insert berhasil',
+                text: message,
+                confirmButtonText: 'Lihat di Persediaan'
+            }).then(function() {
+                refreshPersediaanAfterCompareInsert(bulan);
+            });
+        }).fail(function(xhr) {
+            $button.prop('disabled', false).html(originalHtml);
+            var message = (xhr.responseJSON && xhr.responseJSON.message)
+                ? xhr.responseJSON.message
+                : 'Insert gagal. Periksa koneksi, lalu coba kembali.';
+            Swal.fire({ icon: 'error', title: 'Insert pembelian gagal', text: message });
         });
     }
 
@@ -13129,6 +13277,44 @@ window.addEventListener('load', function() {
                     it.harga_satuan || '',
                     it.jumlah || '',
                     it.keterangan || ''
+                ];
+            });
+        }
+        if (jenis === 'pembelian_manual_tidak_persediaan') {
+            return items.map(function(it, i) {
+                var token = escapeHtmlCompare(it.purchase_row_token || '');
+                var action = token
+                    ? '<button type="button" class="btn btn-outline-success btn-sm btn-compare-insert-pembelian-row" data-purchase-row-token="' + token + '"><i class="fas fa-database"></i> Insert ke Persediaan</button>'
+                    : '<button type="button" class="btn btn-secondary btn-sm" disabled><i class="fas fa-ban"></i> Tidak tersedia</button>';
+                return [
+                    i + 1,
+                    action,
+                    it.tgl_po || '',
+                    it.uraian || '',
+                    it.spop || '',
+                    it.satuan || '',
+                    it.harga_satuan || '',
+                    it.jumlah || '',
+                    it.keterangan || ''
+                ];
+            });
+        }
+        if (
+            jenis === 'penjualan_manual_tidak_persediaan' ||
+            jenis === 'produksi_manual_tidak_persediaan' ||
+            jenis === 'pecah_satuan_manual_tidak_persediaan'
+        ) {
+            return items.map(function(it, i) {
+                return [
+                    i + 1,
+                    it.c_namabarang || '',
+                    it.c_satuan || '',
+                    it.c_hpp || '',
+                    it.c_spop || '',
+                    it.c_sa || '',
+                    it.c_beli || '',
+                    it.c_total_10 || '',
+                    it.sumber || ''
                 ];
             });
         }
@@ -13258,6 +13444,26 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 7);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
         upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
+        upsertCompareDataTable(
+            '#table-compare-pembelian-manual-tidak-persediaan',
+            buildCompareRows('pembelian_manual_tidak_persediaan', res.items_pembelian_manual_tidak_persediaan || []),
+            3
+        );
+        upsertCompareDataTable(
+            '#table-compare-penjualan-manual-tidak-persediaan',
+            buildCompareRows('penjualan_manual_tidak_persediaan', res.items_penjualan_manual_tidak_persediaan || []),
+            2
+        );
+        upsertCompareDataTable(
+            '#table-compare-produksi-manual-tidak-persediaan',
+            buildCompareRows('produksi_manual_tidak_persediaan', res.items_produksi_manual_tidak_persediaan || []),
+            1
+        );
+        upsertCompareDataTable(
+            '#table-compare-pecah-satuan-manual-tidak-persediaan',
+            buildCompareRows('pecah_satuan_manual_tidak_persediaan', res.items_pecah_satuan_manual_tidak_persediaan || []),
+            2
+        );
         upsertCompareDataTable('#table-compare-penjualan-tidak', buildCompareRows('penjualan_tidak_manual', res.items_penjualan_tidak_manual || []), 2);
         upsertCompareDataTable('#table-compare-produksi-tidak', buildCompareRows('produksi_tidak_manual', res.items_produksi_tidak_manual || []), 1);
         upsertCompareDataTable('#table-compare-pecah-tidak', buildCompareRows('pecah_tidak_manual', res.items_pecah_tidak_manual || []), 1);
@@ -13321,6 +13527,10 @@ window.addEventListener('load', function() {
                 + 'Tidak di persediaan: <strong>' + (s.hanya_tabel || 0) + '</strong>, '
                 + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>, '
                 + 'Pembelian tidak di manual: <strong>' + (s.pembelian_tidak_manual || 0) + '</strong>, '
+                + 'Pembelian manual tidak di persediaan: <strong>' + (s.pembelian_manual_tidak_persediaan || 0) + '</strong>, '
+                + 'Penjualan manual tidak di persediaan: <strong>' + (s.penjualan_manual_tidak_persediaan || 0) + '</strong>, '
+                + 'Produksi manual tidak di persediaan: <strong>' + (s.produksi_manual_tidak_persediaan || 0) + '</strong>, '
+                + 'Pecah satuan manual tidak di persediaan: <strong>' + (s.pecah_satuan_manual_tidak_persediaan || 0) + '</strong>, '
                 + 'Penjualan tidak di manual: <strong>' + (s.penjualan_tidak_manual || 0) + '</strong>, '
                 + 'Produksi tidak di manual: <strong>' + (s.produksi_tidak_manual || 0) + '</strong>, '
                 + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.');
@@ -13483,6 +13693,10 @@ window.addEventListener('load', function() {
 
     $(document).on('click', '.btn-compare-insert-row', function() {
         insertCompareManualRowToPersediaan($(this));
+    });
+
+    $(document).on('click', '.btn-compare-insert-pembelian-row', function() {
+        insertComparePembelianRowToPersediaan($(this));
     });
 
     $(document).on('click', '.btn-compare-excel', function() {

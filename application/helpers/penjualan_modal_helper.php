@@ -51,10 +51,13 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 		if ($all_records && !$sales_picker) {
 			$CI->load->helper('persediaan_display');
 			$stok_mentah_expr = "CAST(NULLIF(REPLACE(TRIM(COALESCE(p.total_10, '')), ',', '.'), '') AS DECIMAL(20,4))";
+			$compare_manual_expr = $CI->db->field_exists('uuid_persediaan_lama', 'persediaan')
+				? "TRIM(COALESCE(p.uuid_persediaan_lama, '')) LIKE 'compare_manual_insert%'"
+				: '0 = 1';
 			$sql = "SELECT p.*, {$tanggal_expr} AS tanggal_urut,
 					{$tanggal_expr} AS tanggal_beli
 				FROM persediaan p
-				WHERE COALESCE({$stok_mentah_expr}, 0) > 0
+				WHERE (COALESCE({$stok_mentah_expr}, 0) > 0 OR {$compare_manual_expr})
 				AND {$filter_non_jasa}
 				AND {$tanggal_expr} >= '2026-01-01'
 				AND {$tanggal_expr} <= '{$tgl_akhir_filter}'
@@ -69,12 +72,14 @@ if (!function_exists('penjualan_modal_datatable_persediaan')) {
 			$seen = array();
 			foreach ($query->result() as $row) {
 				$stock = persediaan_hitung_sisa_stock($row);
-				if ($stock <= 0) {
+				$is_compare_manual = isset($row->uuid_persediaan_lama)
+					&& strpos((string) $row->uuid_persediaan_lama, 'compare_manual_insert') === 0;
+				if ($stock <= 0 && !$is_compare_manual) {
 					continue;
 				}
 
 				$uuid = trim((string) (isset($row->uuid_persediaan) ? $row->uuid_persediaan : ''));
-				if ($uuid !== '') {
+				if ($uuid !== '' && !$is_compare_manual) {
 					$key = strtolower($uuid) . "\x1f" . strtolower(trim((string) $row->namabarang));
 					if (isset($seen[$key])) {
 						continue;

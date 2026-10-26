@@ -665,6 +665,7 @@ class Persediaan extends CI_Controller
 			'url_compare_tabel_preview' => site_url('Persediaan/ajax_compare_tabel_preview'),
 			'url_compare_insert_to_persediaan' => site_url('Persediaan/ajax_compare_insert_to_persediaan'),
 			'url_compare_insert_row_to_persediaan' => site_url('Persediaan/ajax_compare_insert_row_to_persediaan'),
+			'url_compare_insert_pembelian_to_persediaan' => site_url('Persediaan/ajax_compare_insert_pembelian_to_persediaan'),
 			'url_compare_check_insert_eligible' => site_url('Persediaan/ajax_compare_check_insert_persediaan_eligible'),
 			'gen_bulan_default' => (int) date('n', $ts_gen_default),
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
@@ -7548,6 +7549,46 @@ class Persediaan extends CI_Controller
 		persediaan_ajax_json_output(
 			$this,
 			persediaan_compare_insert_table_to_persediaan($this, $table, $bulan, $row_token)
+		);
+	}
+
+	/**
+	 * AJAX: insert satu baris pembelian manual yang belum ada di persediaan.
+	 */
+	public function ajax_compare_insert_pembelian_to_persediaan()
+	{
+		@set_time_limit(0);
+		@ini_set('memory_limit', '512M');
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Insert pembelian compare ke persediaan')),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		$row_token = trim((string) $this->input->post('row_token', TRUE));
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih bulan dan tahun yang valid.',
+			));
+			return;
+		}
+		if (!preg_match('/^[a-f0-9]{64}$/', $row_token)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Identitas baris pembelian tidak valid.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output(
+			$this,
+			persediaan_compare_insert_pembelian_to_persediaan($this, $bulan, $row_token)
 		);
 	}
 
