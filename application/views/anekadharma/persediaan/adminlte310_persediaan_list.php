@@ -77,6 +77,11 @@
                                 </button>
                             </div>
                             <?php endif; ?>
+                            <?php if (!empty($Persediaan_data_barang_stock_error)) : ?>
+                            <div class="alert alert-warning" role="alert">
+                                <?php echo htmlspecialchars($Persediaan_data_barang_stock_error, ENT_QUOTES, 'UTF-8'); ?>
+                            </div>
+                            <?php endif; ?>
 
                             <form action="<?php echo $action_cari_form; ?>" method="post" id="form-persediaan-bulan">
                                 <div class="row mb-2 align-items-center">
