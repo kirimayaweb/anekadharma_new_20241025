@@ -67,6 +67,9 @@
         if (!isset($pembelian_count_persediaan_otomatis)) {
             $pembelian_count_persediaan_otomatis = count($Tbl_pembelian_data_persediaan_otomatis);
         }
+        if (!isset($pembelian_can_view_verifikasi)) {
+            $pembelian_can_view_verifikasi = false;
+        }
         if (!isset($pembelian_active_tab) || $pembelian_active_tab === '') {
             $pembelian_active_tab = 'tab-pembelian-jasa-data';
         }
@@ -79,14 +82,16 @@
                 'count' => (int) $row_count,
                 'badge_class' => 'badge-secondary',
             ),
-            array(
+        );
+        if ($pembelian_can_view_verifikasi) {
+            $pembelian_jasa_main_tabs[] = array(
                 'tab_id' => 'tab-pembelian-jasa-verifikasi',
                 'link_id' => 'tab-pembelian-jasa-verifikasi-link',
                 'label' => 'Data Verifikasi',
                 'count' => (int) $pembelian_count_belum_persediaan,
                 'badge_class' => 'badge-warning',
-            ),
-        );
+            );
+        }
 
         ?>
 
@@ -579,6 +584,7 @@
                         </table>
 
                             </div>
+                            <?php if ($pembelian_can_view_verifikasi) : ?>
                             <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-jasa-verifikasi') ? ' show active' : ''; ?>" id="tab-pembelian-jasa-verifikasi" role="tabpanel">
                                 <div class="alert alert-warning py-2 px-3 small mb-3">
                                     <strong>Verifikasi Persediaan Jasa</strong> — sub-tab Belum / Manual / Otomatis.
@@ -599,6 +605,7 @@
                                 include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_tbl_pembelian_verifikasi_persediaan_fragment.php';
                                 ?>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <!-- /.card-body -->
@@ -607,7 +614,9 @@
         </div>
     </section>
 
+<?php if ($pembelian_can_view_verifikasi) : ?>
 <?php include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_pembelian_verifikasi_referensi_modals.php'; ?>
+<?php endif; ?>
 
 </div>
 
@@ -764,6 +773,7 @@
     })();
 </script>
 
+<?php if ($pembelian_can_view_verifikasi) : ?>
 <?php
 $pem_ref_cfg = array(
     'table_sel' => '#tglSPOPFreezeJasaBelumPersediaan',
@@ -780,6 +790,7 @@ $pem_ref_cfg = array(
 );
 include dirname(__DIR__) . '/tbl_pembelian/_adminlte310_pembelian_verifikasi_referensi_init.php';
 ?>
+<?php endif; ?>
 <script>
 (function() {
     function parseBulanToRange(bulanStr) {

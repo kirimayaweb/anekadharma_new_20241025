@@ -24,12 +24,14 @@
                         <li class="nav-item">
                             <a class="nav-link" id="tab-rekap" data-toggle="pill" href="#panel-rekap" role="tab" aria-controls="panel-rekap" aria-selected="false">Rekap</a>
                         </li>
+                        <?php if (!empty($can_view_persediaan_restricted_tabs)) : ?>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-generate-persediaan" data-toggle="pill" href="#panel-generate-persediaan" role="tab" aria-controls="panel-generate-persediaan" aria-selected="false">Generate Persediaan</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-compare-manual" data-toggle="pill" href="#panel-compare-manual" role="tab" aria-controls="panel-compare-manual" aria-selected="false">Compare Data Manual - Online</a>
                         </li>
+                        <?php endif; ?>
                     </ul>
                 </div>
 
@@ -45,6 +47,7 @@
                             $Persediaan_data_barang = persediaan_filter_rows_by_kategori_tab($Persediaan_data, false);
                             $Persediaan_data_jasa = persediaan_filter_rows_by_kategori_tab($Persediaan_data, true);
                             $Persediaan_data_verifikasi = persediaan_filter_rows_verifikasi_tanpa_sumber($Persediaan_data);
+                            $can_view_persediaan_restricted_tabs = !empty($can_view_persediaan_restricted_tabs);
                             if (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) {
                                 $Persediaan_data_barang = $Persediaan_data_barang_stock;
                             }
@@ -93,8 +96,10 @@
                                             Bulan <?php echo $bulan_label_tampil; ?> —
                                             <?php echo (isset($Persediaan_data_barang_stock) && is_array($Persediaan_data_barang_stock)) ? 'Stok siap jual' : 'Barang'; ?>:
                                             <strong><?php echo count($Persediaan_data_barang); ?></strong> baris,
-                                            Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris,
-                                            Verifikasi: <strong class="text-danger"><?php echo count($Persediaan_data_verifikasi); ?></strong> anomali
+                                            Jasa: <strong><?php echo count($Persediaan_data_jasa); ?></strong> baris
+                                            <?php if ($can_view_persediaan_restricted_tabs) : ?>
+                                            , Verifikasi: <strong class="text-danger"><?php echo count($Persediaan_data_verifikasi); ?></strong> anomali
+                                            <?php endif; ?>
                                         </span>
                                     </div>
                                 </div>
@@ -112,6 +117,7 @@
                                         Jasa <span class="badge badge-info" id="badge-persediaan-jasa"><?php echo count($Persediaan_data_jasa); ?></span>
                                     </a>
                                 </li>
+                                <?php if ($can_view_persediaan_restricted_tabs) : ?>
                                 <li class="nav-item">
                                     <a class="nav-link" id="tab-persediaan-draft-referensi" data-toggle="pill" href="#panel-persediaan-draft-referensi" role="tab" aria-controls="panel-persediaan-draft-referensi" aria-selected="false">
                                         persediaan_draft_bulan_referensi (bulan sebelumnya)
@@ -124,6 +130,7 @@
                                         <span class="badge badge-danger" id="badge-persediaan-verifikasi"><?php echo count($Persediaan_data_verifikasi); ?></span>
                                     </a>
                                 </li>
+                                <?php endif; ?>
                             </ul>
 
                             <div class="tab-content" id="persediaan-data-subtabs-content">
@@ -161,6 +168,7 @@
                                         'tab_mode' => 'jasa',
                                     )); ?>
                                 </div>
+                                <?php if ($can_view_persediaan_restricted_tabs) : ?>
                                 <div class="tab-pane fade" id="panel-persediaan-draft-referensi" role="tabpanel" aria-labelledby="tab-persediaan-draft-referensi">
                                     <div class="d-flex align-items-center flex-wrap mb-2">
                                         <span class="text-muted small mr-auto">
@@ -212,6 +220,7 @@
                                         'bulan_tampil' => $bulan_tampil,
                                     )); ?>
                                 </div>
+                                <?php endif; ?>
                             </div>
                             <script>
                             (function() {
@@ -662,6 +671,7 @@
                             9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
                         );
                         ?>
+                        <?php if (!empty($can_view_persediaan_restricted_tabs)) : ?>
                         <div class="tab-pane fade" id="panel-generate-persediaan" role="tabpanel" aria-labelledby="tab-generate-persediaan">
                             <div class="row mb-3">
                                 <div class="col-md-12">
@@ -672,12 +682,12 @@
                                         <strong>2.</strong> Proses <code>tbl_pembelian</code> bulan target: UUID yang cocok menambah <code>beli</code> dan <code>total_10</code>;
                                         pembelian tanpa stock UUID yang cocok dibuat sebagai record baru.
                                         Generate saat ini mencakup penyalinan stock dan seluruh pembelian bulan target.
-                                        <em>Hanya user <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.</em>
+                                        <em>Hanya user <strong>iwanesia.id@gmail.com</strong>.</em>
                                     </p>
                                     <?php if (empty($can_generate_persediaan)) { ?>
                                     <div class="alert alert-warning py-2">
                                         Akun Anda tidak memiliki akses Generate Persediaan.
-                                        Hanya login <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.
+                                        Hanya login <strong>iwanesia.id@gmail.com</strong>.
                                     </div>
                                     <?php } ?>
                                 </div>
@@ -2059,8 +2069,10 @@
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <!-- TAB 4: COMPARE DATA MANUAL - ONLINE -->
+                        <?php if (!empty($can_view_persediaan_restricted_tabs)) : ?>
                         <?php
                         $compare_bulan_default = isset($bulan_tampil) && preg_match('/^\d{4}-\d{2}$/', $bulan_tampil)
                             ? $bulan_tampil
@@ -2081,7 +2093,7 @@
                                     <?php if (empty($can_compare_persediaan)) { ?>
                                     <div class="alert alert-warning py-2">
                                         Akun Anda tidak memiliki akses Compare.
-                                        Hanya login <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.
+                                        Hanya login <strong>iwanesia.id@gmail.com</strong>.
                                     </div>
                                     <?php } ?>
                                 </div>
@@ -2395,6 +2407,7 @@
                                 </div>
                             </div>
                         </div>
+                        <?php endif; ?>
 
                     </div>
                 </div>
@@ -6090,7 +6103,7 @@ window.addEventListener('load', function() {
             $('#gen-count-penjualan-bulan').text(typeof res.count_penjualan !== 'undefined' ? res.count_penjualan : '0');
 
             if (res.user_can_generate === false || !userCanGeneratePersediaan) {
-                setStatusGeneratePersediaan('warning', res.message || 'Hanya admin.id@gmail.com dan iwanesia.id@gmail.com yang dapat generate.');
+                setStatusGeneratePersediaan('warning', res.message || 'Hanya iwanesia.id@gmail.com yang dapat generate.');
                 updateTombolGeneratePersediaan('denied');
             } else if (!res.can_generate) {
                 setStatusGeneratePersediaan('warning', res.message || 'Belum dapat generate (bulan sumber kosong).');
@@ -11532,7 +11545,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Generate & Recalculate hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Generate & Recalculate hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -12068,7 +12081,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                html: 'Generate Persediaan hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.'
+                html: 'Generate Persediaan hanya untuk <strong>iwanesia.id@gmail.com</strong>.'
             });
             return false;
         }
@@ -12975,7 +12988,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Import CSV hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Import CSV hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -13040,7 +13053,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Insert ke persediaan hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Insert ke persediaan hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -13478,7 +13491,7 @@ window.addEventListener('load', function() {
         if (!userCanComparePersediaan) {
             $btn.prop('disabled', true).removeClass('btn-info').addClass('btn-secondary');
             $btnExcelAll.prop('disabled', true).removeClass('btn-success').addClass('btn-secondary');
-            setCompareStatus('warning', 'Compare hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.');
+            setCompareStatus('warning', 'Compare hanya untuk <strong>iwanesia.id@gmail.com</strong>.');
             return;
         }
         $btn.prop('disabled', false).removeClass('btn-secondary').addClass('btn-info');
@@ -13490,7 +13503,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                html: 'Compare hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.'
+                html: 'Compare hanya untuk <strong>iwanesia.id@gmail.com</strong>.'
             });
             return;
         }
@@ -13545,7 +13558,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Export Excel compare hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Export Excel compare hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -13708,7 +13721,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Export Excel ALL hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Export Excel ALL hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -15069,7 +15082,7 @@ window.addEventListener('load', function() {
             Swal.fire({
                 icon: 'warning',
                 title: 'Akses ditolak',
-                text: 'Export rekonsiliasi transaksi hanya untuk admin.id@gmail.com dan iwanesia.id@gmail.com.'
+                text: 'Export rekonsiliasi transaksi hanya untuk iwanesia.id@gmail.com.'
             });
             return;
         }
@@ -15577,7 +15590,7 @@ window.addEventListener('load', function() {
         }, 400);
     } else {
         updateTombolGeneratePersediaan('denied');
-        setStatusGeneratePersediaan('warning', 'Generate &amp; Recalculate hanya untuk <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.');
+        setStatusGeneratePersediaan('warning', 'Generate &amp; Recalculate hanya untuk <strong>iwanesia.id@gmail.com</strong>.');
     }
 
     updateTombolComparePersediaan();

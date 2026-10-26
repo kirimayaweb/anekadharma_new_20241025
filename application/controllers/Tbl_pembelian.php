@@ -120,9 +120,18 @@ class Tbl_pembelian extends CI_Controller
 		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/tbl_pembelian/adminlte310_tbl_pembelian_list', $data);
 	}
 
-	private function _get_pembelian_active_tab()
+	private function _pembelian_user_can_view_verifikasi()
+	{
+		$email = strtolower(trim((string) $this->session->userdata('sess_email_user')));
+		return $email === 'iwanesia.id@gmail.com';
+	}
+
+	private function _get_pembelian_active_tab($can_view_verifikasi)
 	{
 		$allowed = array('tab-pembelian-data', 'tab-pembelian-verifikasi');
+		if (!$can_view_verifikasi) {
+			$allowed = array('tab-pembelian-data');
+		}
 		$tab = trim((string) $this->input->get_post('pembelian_active_tab', TRUE));
 		if ($tab === '' || !in_array($tab, $allowed, true)) {
 			$tab = trim((string) $this->session->userdata('filter_tbl_pembelian_active_tab'));
@@ -136,19 +145,27 @@ class Tbl_pembelian extends CI_Controller
 
 	private function _pembelian_list_data_payload($Tbl_pembelian_data, $Get_date_awal, $Get_date_akhir)
 	{
-		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
-		tbl_pembelian_ensure_refered_manual_audit_columns($this, 'tbl_pembelian');
+		$can_view_verifikasi = $this->_pembelian_user_can_view_verifikasi();
+		$belum_display = array();
+		$manual_display = array();
+		$otomatis_display = array();
+		$sync_info = array();
 
-		$sync_info = tbl_pembelian_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
-		$Tbl_pembelian_data = $this->_get_pembelian_between($Get_date_awal, $Get_date_akhir);
+		if ($can_view_verifikasi) {
+			$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
+			tbl_pembelian_ensure_refered_manual_audit_columns($this, 'tbl_pembelian');
 
-		$belum = tbl_penjualan_filter_belum_verified_persediaan($Tbl_pembelian_data);
-		$manual = tbl_penjualan_filter_manual_verified_persediaan($Tbl_pembelian_data);
-		$otomatis = tbl_penjualan_filter_auto_verified_persediaan($Tbl_pembelian_data);
+			$sync_info = tbl_pembelian_sync_verified_persediaan_range($this, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
+			$Tbl_pembelian_data = $this->_get_pembelian_between($Get_date_awal, $Get_date_akhir);
 
-		$belum_display = tbl_pembelian_enrich_belum_persediaan_display_rows($this, $belum, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
-		$manual_display = tbl_pembelian_enrich_verified_persediaan_display_rows($manual, 'manual');
-		$otomatis_display = tbl_pembelian_enrich_verified_persediaan_display_rows($otomatis, 'auto');
+			$belum = tbl_penjualan_filter_belum_verified_persediaan($Tbl_pembelian_data);
+			$manual = tbl_penjualan_filter_manual_verified_persediaan($Tbl_pembelian_data);
+			$otomatis = tbl_penjualan_filter_auto_verified_persediaan($Tbl_pembelian_data);
+
+			$belum_display = tbl_pembelian_enrich_belum_persediaan_display_rows($this, $belum, $Get_date_awal, $Get_date_akhir, 'tbl_pembelian');
+			$manual_display = tbl_pembelian_enrich_verified_persediaan_display_rows($manual, 'manual');
+			$otomatis_display = tbl_pembelian_enrich_verified_persediaan_display_rows($otomatis, 'auto');
+		}
 
 		$bulan_referensi = '';
 		$ts_bulan = strtotime($Get_date_awal);
@@ -161,6 +178,7 @@ class Tbl_pembelian extends CI_Controller
 			'Tbl_pembelian_data_belum_persediaan' => $belum_display,
 			'Tbl_pembelian_data_persediaan_manual' => $manual_display,
 			'Tbl_pembelian_data_persediaan_otomatis' => $otomatis_display,
+			'pembelian_can_view_verifikasi' => $can_view_verifikasi,
 			'pembelian_count_belum_persediaan' => count($belum_display),
 			'pembelian_count_persediaan_manual' => count($manual_display),
 			'pembelian_count_persediaan_otomatis' => count($otomatis_display),
@@ -170,7 +188,7 @@ class Tbl_pembelian extends CI_Controller
 			'pembelian_want_jasa_referensi' => false,
 			'url_pembelian_referensi_list' => site_url('Tbl_pembelian/ajax_pembelian_referensi_persediaan_list'),
 			'url_pembelian_referensi_apply' => site_url('Tbl_pembelian/ajax_pembelian_referensi_persediaan_apply'),
-			'pembelian_active_tab' => $this->_get_pembelian_active_tab(),
+			'pembelian_active_tab' => $this->_get_pembelian_active_tab($can_view_verifikasi),
 			'date_awal' => $Get_date_awal,
 			'date_akhir' => $Get_date_akhir,
 			'start' => 0,
@@ -180,6 +198,11 @@ class Tbl_pembelian extends CI_Controller
 	public function ajax_pembelian_referensi_persediaan_list()
 	{
 		$this->output->set_content_type('application/json');
+		if (!$this->_pembelian_user_can_view_verifikasi()) {
+			$this->output->set_status_header(403);
+			echo json_encode(array('ok' => false, 'message' => 'Data Verifikasi hanya tersedia untuk iwanesia.id@gmail.com.'));
+			return;
+		}
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
 		$bulan = trim((string) $this->input->get_post('bulan', TRUE));
@@ -206,6 +229,11 @@ class Tbl_pembelian extends CI_Controller
 	public function ajax_pembelian_referensi_persediaan_apply()
 	{
 		$this->output->set_content_type('application/json');
+		if (!$this->_pembelian_user_can_view_verifikasi()) {
+			$this->output->set_status_header(403);
+			echo json_encode(array('ok' => false, 'message' => 'Data Verifikasi hanya tersedia untuk iwanesia.id@gmail.com.'));
+			return;
+		}
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
 		if (strtolower($this->input->method()) !== 'post') {

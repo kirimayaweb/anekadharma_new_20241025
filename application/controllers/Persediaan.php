@@ -673,9 +673,14 @@ class Persediaan extends CI_Controller
 			'gen_tahun_max' => (int) date('Y') + 2,
 			'can_generate_persediaan' => $this->persediaan_user_can_generate(),
 			'can_compare_persediaan' => $this->persediaan_user_can_compare(),
+			'can_view_persediaan_restricted_tabs' => $this->persediaan_user_can_generate(),
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
-			'Persediaan_data_draft_referensi' => $this->get_persediaan_draft_bulan_referensi_by_target($bulan),
-			'draft_referensi_bulan_sumber' => $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan),
+			'Persediaan_data_draft_referensi' => $this->persediaan_user_can_generate()
+				? $this->get_persediaan_draft_bulan_referensi_by_target($bulan)
+				: array(),
+			'draft_referensi_bulan_sumber' => $this->persediaan_user_can_generate()
+				? $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan)
+				: '',
 		);
 	}
 
@@ -685,8 +690,6 @@ class Persediaan extends CI_Controller
 	private function persediaan_allowed_restricted_emails()
 	{
 		return array(
-			'admin.id@gmail.com',
-			'admin.id@gmailc.om',
 			'iwanesia.id@gmail.com',
 		);
 	}
@@ -754,7 +757,7 @@ class Persediaan extends CI_Controller
 
 	private function persediaan_restricted_access_message($action_label = 'fitur ini')
 	{
-		return $action_label . ' hanya untuk user <strong>admin.id@gmail.com</strong> dan <strong>iwanesia.id@gmail.com</strong>.';
+		return $action_label . ' hanya untuk user <strong>iwanesia.id@gmail.com</strong>.';
 	}
 
 	/**
@@ -1657,6 +1660,14 @@ class Persediaan extends CI_Controller
 		}
 
 		header('Content-Type: application/json; charset=UTF-8');
+		if (!$this->persediaan_user_can_generate()) {
+			$this->output->set_status_header(403);
+			echo json_encode(array(
+				'ok' => false,
+				'message' => $this->persediaan_restricted_access_message('Verifikasi Data'),
+			));
+			return;
+		}
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
 		$id = (int) $this->input->post('id', TRUE);
@@ -3878,6 +3889,14 @@ class Persediaan extends CI_Controller
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
 		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Analisa Generate Persediaan'),
+				));
+				return;
+			}
+
 			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
 			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
 				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
@@ -3905,6 +3924,14 @@ class Persediaan extends CI_Controller
 		$this->load->helper(array('pembelian_persediaan', 'persediaan_display'));
 
 		try {
+			if (!$this->persediaan_user_can_generate()) {
+				persediaan_ajax_json_output($this, array(
+					'ok' => false,
+					'message' => $this->persediaan_restricted_access_message('Recalculate Persediaan'),
+				));
+				return;
+			}
+
 			$bulan = trim((string) $this->input->get_post('bulan', TRUE));
 			if (!preg_match('/^\d{4}-\d{2}$/', $bulan)) {
 				persediaan_ajax_json_output($this, array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).'));
@@ -9463,6 +9490,11 @@ class Persediaan extends CI_Controller
 	 */
 	public function excel_draft_bulan_referensi()
 	{
+		if (!$this->persediaan_user_can_generate()) {
+			show_error($this->persediaan_restricted_access_message('Export draft persediaan'), 403);
+			return;
+		}
+
 		$bulan_target = trim((string) $this->input->post('bulan_persediaan', TRUE));
 		if ($bulan_target === '' || !preg_match('/^\d{4}-\d{2}$/', $bulan_target)) {
 			$bulan_target = date('Y-m');

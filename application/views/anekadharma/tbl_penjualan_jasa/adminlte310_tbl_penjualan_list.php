@@ -59,6 +59,9 @@
         if (!isset($penjualan_count_belum_persediaan)) {
             $penjualan_count_belum_persediaan = count($Tbl_penjualan_data_belum_persediaan);
         }
+        if (!isset($penjualan_can_view_belum_persediaan)) {
+            $penjualan_can_view_belum_persediaan = false;
+        }
         if (!isset($penjualan_active_tab) || $penjualan_active_tab === '') {
             $penjualan_active_tab = 'tab-penjualan-jasa-semua';
         }
@@ -158,9 +161,11 @@
                             <li class="nav-item">
                                 <a class="nav-link<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-semua') ? ' active' : ''; ?>" data-toggle="tab" href="#tab-penjualan-jasa-semua" role="tab">Penjualan Jasa <span class="badge badge-secondary badge-count"><?php echo count($Tbl_penjualan_data); ?></span></a>
                             </li>
+                            <?php if ($penjualan_can_view_belum_persediaan) : ?>
                             <li class="nav-item">
                                 <a class="nav-link<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-belum-persediaan') ? ' active' : ''; ?>" id="tab-penjualan-jasa-belum-persediaan-link" data-toggle="tab" href="#tab-penjualan-jasa-belum-persediaan" role="tab">Belum ke Persediaan <span class="badge badge-warning badge-count"><?php echo (int) $penjualan_count_belum_persediaan; ?></span></a>
                             </li>
+                            <?php endif; ?>
                         </ul>
 
                         <div class="tab-content" id="penjualan-jasa-tabs-content">
@@ -701,6 +706,7 @@
                         </table>
 
                             </div>
+                            <?php if ($penjualan_can_view_belum_persediaan) : ?>
                             <div class="tab-pane fade<?php echo ($penjualan_active_tab === 'tab-penjualan-jasa-belum-persediaan') ? ' show active' : ''; ?>" id="tab-penjualan-jasa-belum-persediaan" role="tabpanel">
                                 <div class="alert alert-warning py-2 px-3 small mb-3">
                                     <strong>Verifikasi Persediaan Jasa</strong> — sub-tab:
@@ -715,6 +721,7 @@
                                 include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_tbl_penjualan_belum_persediaan_fragment.php';
                                 ?>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <!-- /.card-body -->
@@ -723,7 +730,9 @@
         </div>
     </section>
 
+<?php if ($penjualan_can_view_belum_persediaan) : ?>
 <?php include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_penjualan_belum_persediaan_referensi_modals.php'; ?>
+<?php endif; ?>
 
 </div>
 
@@ -1067,6 +1076,7 @@
 })();
 </script>
 
+<?php if ($penjualan_can_view_belum_persediaan) : ?>
 <?php
 $pj_ref_cfg = array(
     'table_sel' => '#tglSPOPFreezeJasaBelumPersediaan',
@@ -1080,6 +1090,7 @@ $pj_ref_cfg = array(
 );
 include dirname(__DIR__) . '/tbl_penjualan/_adminlte310_penjualan_belum_persediaan_referensi_init.php';
 ?>
+<?php endif; ?>
 
 
 

@@ -71,6 +71,9 @@
         if (!isset($penjualan_count_persediaan_otomatis)) {
             $penjualan_count_persediaan_otomatis = count($Tbl_penjualan_data_persediaan_otomatis);
         }
+        if (!isset($penjualan_can_view_belum_persediaan)) {
+            $penjualan_can_view_belum_persediaan = false;
+        }
         if (!isset($penjualan_active_tab) || $penjualan_active_tab === '') {
             $penjualan_active_tab = 'tab-penjualan-semua';
         }
@@ -103,7 +106,9 @@
                 'count' => (int) $penjualan_count_terbayar,
                 'badge_class' => 'badge-success',
             ),
-            array(
+        );
+        if ($penjualan_can_view_belum_persediaan) {
+            $penjualan_tabs_list[] = array(
                 'tab_id' => 'tab-penjualan-belum-persediaan',
                 'link_id' => 'tab-penjualan-belum-persediaan-link',
                 'label' => 'Belum ke Persediaan',
@@ -111,8 +116,8 @@
                 'data' => $Tbl_penjualan_data_belum_persediaan,
                 'count' => (int) $penjualan_count_belum_persediaan,
                 'badge_class' => 'badge-warning',
-            ),
-        );
+            );
+        }
 
         ?>
 
@@ -429,6 +434,7 @@
 </form>
 <!-- END OF MODAL EXTRA LARGE -->
 
+<?php if ($penjualan_can_view_belum_persediaan) : ?>
 <!-- Modal Referensi Persediaan (tab Belum ke Persediaan) -->
 <div class="modal fade" id="modal-pj-referensi-persediaan" tabindex="-1" role="dialog" aria-labelledby="modalPjReferensiPersediaanLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl" role="document" style="max-width:96%;">
@@ -523,6 +529,7 @@
         </div>
     </div>
 </div>
+<?php endif; ?>
 
 
 

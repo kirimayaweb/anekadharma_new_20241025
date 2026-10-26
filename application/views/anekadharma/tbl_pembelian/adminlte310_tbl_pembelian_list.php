@@ -75,6 +75,9 @@
     if (!isset($pembelian_count_persediaan_otomatis)) {
         $pembelian_count_persediaan_otomatis = count($Tbl_pembelian_data_persediaan_otomatis);
     }
+    if (!isset($pembelian_can_view_verifikasi)) {
+        $pembelian_can_view_verifikasi = false;
+    }
     if (!isset($pembelian_active_tab) || $pembelian_active_tab === '') {
         $pembelian_active_tab = 'tab-pembelian-data';
     }
@@ -87,14 +90,16 @@
             'count' => count($Tbl_pembelian_data),
             'badge_class' => 'badge-secondary',
         ),
-        array(
+    );
+    if ($pembelian_can_view_verifikasi) {
+        $pembelian_main_tabs[] = array(
             'tab_id' => 'tab-pembelian-verifikasi',
             'link_id' => 'tab-pembelian-verifikasi-link',
             'label' => 'Data Verifikasi',
             'count' => (int) $pembelian_count_belum_persediaan,
             'badge_class' => 'badge-warning',
-        ),
-    );
+        );
+    }
 
     ?>
 
@@ -632,6 +637,7 @@
                         </table>
 
                             </div>
+                            <?php if ($pembelian_can_view_verifikasi) : ?>
                             <div class="tab-pane fade<?php echo ($pembelian_active_tab === 'tab-pembelian-verifikasi') ? ' show active' : ''; ?>" id="tab-pembelian-verifikasi" role="tabpanel">
                                 <div class="alert alert-warning py-2 px-3 small mb-3">
                                     <strong>Verifikasi Persediaan Pembelian</strong> — sub-tab:
@@ -655,6 +661,7 @@
                                 include __DIR__ . '/_adminlte310_tbl_pembelian_verifikasi_persediaan_fragment.php';
                                 ?>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <!-- /.card-body -->
@@ -663,7 +670,9 @@
         </div>
     </section>
 
+<?php if ($pembelian_can_view_verifikasi) : ?>
 <?php include __DIR__ . '/_adminlte310_pembelian_verifikasi_referensi_modals.php'; ?>
+<?php endif; ?>
 
 </div>
 
@@ -867,4 +876,6 @@
     }
 })();
 </script>
+<?php if ($pembelian_can_view_verifikasi) : ?>
 <?php include __DIR__ . '/_adminlte310_pembelian_verifikasi_referensi_init.php'; ?>
+<?php endif; ?>
