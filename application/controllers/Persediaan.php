@@ -546,28 +546,119 @@ class Persediaan extends CI_Controller
 
 	public function index()
 	{
+
 		$bulan = trim((string) $this->input->get('bulan_persediaan', TRUE));
 		if ($bulan === '') {
 			$bulan = date('Y-m');
 		}
-		$Persediaan = $this->get_persediaan_by_bulan($bulan);
-		$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+
+		$this->render_persediaan_list_page($bulan);
 	}
 
 	public function search()
 	{
 		// Input <input type="month" name="bulan_persediaan"> mengirim YYYY-MM.
 		$bulan = trim((string) $this->input->post('bulan_persediaan', TRUE));
-		$Persediaan = $this->get_persediaan_by_bulan($bulan);
-		$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
-		$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+		$this->render_persediaan_list_page($bulan);
+	}
+
+	private function render_persediaan_list_page($bulan)
+	{
+		$db_debug = $this->db->db_debug;
+		$this->db->db_debug = false;
+		$page_error = '';
+		$Persediaan = array();
+		$debug = trim((string) $this->input->get('debug_persediaan', TRUE)) === '1';
+		$debug_steps = array();
+		$checkpoint = function ($label, $detail = '') use (&$debug_steps, $debug) {
+			if (!$debug) {
+				return;
+			}
+			$debug_steps[] = array($label, $detail);
+			log_message('debug', 'Persediaan debug ' . $label . ($detail !== '' ? ': ' . $detail : ''));
+		};
+		$buffer_level = ob_get_level();
+		ob_start();
+		$checkpoint('Proses A', 'Fungsi render dipanggil; bulan=' . trim((string) $bulan));
+
+		try {
+			if ($debug) {
+				try {
+					$table_exists = $this->db->table_exists('persediaan');
+					$fields = $table_exists ? array_map('strtolower', (array) $this->db->list_fields('persediaan')) : array();
+					$required_fields = array('id', 'tanggal_beli', 'namabarang', 'satuan', 'hpp', 'spop');
+					$missing_fields = array_values(array_diff($required_fields, $fields));
+					$schema_status = !$table_exists
+						? 'Tabel persediaan tidak ditemukan'
+						: (empty($missing_fields) ? 'Tabel ditemukan; kolom wajib tersedia' : 'Kolom wajib tidak ditemukan: ' . implode(', ', $missing_fields));
+					$checkpoint('Proses B', $schema_status);
+				} catch (Throwable $e) {
+					$checkpoint('Proses B - PERINGATAN', 'Pemeriksaan struktur tabel gagal di ' . basename($e->getFile()) . ':' . $e->getLine() . '; lanjutkan ke query');
+					log_message('error', 'Persediaan debug pemeriksaan struktur tabel gagal: ' . $e->getMessage());
+				}
+			}
+
+			try {
+				$Persediaan = $this->get_persediaan_by_bulan($bulan);
+				$checkpoint('Proses C', 'Query persediaan selesai; jumlah baris=' . count($Persediaan));
+			} catch (Throwable $e) {
+				$Persediaan = array();
+				$page_error = 'Data persediaan tidak dapat dimuat. Silakan periksa log aplikasi atau hubungi administrator.';
+				log_message('error', 'Persediaan page data query gagal untuk bulan ' . $bulan . ': ' . $e->getMessage());
+				$checkpoint('Proses C - GAGAL', 'Query gagal di ' . basename($e->getFile()) . ':' . $e->getLine() . '; detail ada di application/logs');
+			}
+
+			$data = $this->get_persediaan_list_view_data($bulan, $Persediaan);
+			$checkpoint('Proses D', 'Data untuk tampilan berhasil disiapkan');
+			$data['persediaan_page_error'] = $page_error;
+			$this->template->load('anekadharma/adminlte310_anekadharma_topnav_aside', 'anekadharma/persediaan/adminlte310_persediaan_list', $data);
+			$checkpoint('Proses E', 'Template berhasil dirender');
+			$page_output = ob_get_clean();
+			echo $page_output;
+		} catch (Throwable $e) {
+			while (ob_get_level() > $buffer_level) {
+				ob_end_clean();
+			}
+			log_message('error', 'Persediaan page render gagal untuk bulan ' . $bulan . ': ' . $e->getMessage());
+			$checkpoint('Proses D/E - GAGAL', 'Gagal di ' . basename($e->getFile()) . ':' . $e->getLine() . '; detail ada di application/logs');
+			$this->output->set_status_header(200);
+			echo '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
+			echo '<title>Persediaan</title><style>body{font:14px Arial,sans-serif;margin:24px;color:#222}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f3f3f3}.notice{padding:10px;background:#fff3cd;border:1px solid #ffeeba;margin-bottom:16px}</style></head><body>';
+			echo '<h1>Persediaan</h1><p>Bulan: ' . htmlspecialchars($bulan, ENT_QUOTES, 'UTF-8') . '</p>';
+			echo '<div class="notice">Halaman lengkap Persediaan mengalami kendala saat dimuat. Data yang berhasil dibaca tetap ditampilkan; silakan muat ulang atau hubungi administrator.</div>';
+			echo '<table><thead><tr><th>No</th><th>Nama Barang</th><th>Satuan</th><th>HPP</th><th>SPOP</th><th>Total Stok</th></tr></thead><tbody>';
+			foreach ($Persediaan as $index => $row) {
+				$row = is_object($row) ? get_object_vars($row) : (array) $row;
+				echo '<tr><td>' . (int) ($index + 1) . '</td>';
+				foreach (array('namabarang', 'satuan', 'hpp', 'spop', 'total_10') as $field) {
+					$value = isset($row[$field]) && is_scalar($row[$field]) ? (string) $row[$field] : '';
+					echo '<td>' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '</td>';
+				}
+				echo '</tr>';
+			}
+			echo '</tbody></table></body></html>';
+		} finally {
+			$this->db->db_debug = $db_debug;
+		}
+
+		$checkpoint('Proses F', 'Fungsi render selesai');
+		if ($debug) {
+			echo '<section style="margin:16px;padding:12px;border:2px solid #d39e00;background:#fffbe6;color:#222">';
+			echo '<strong>Diagnostik Persediaan</strong><ol>';
+			foreach ($debug_steps as $step) {
+				echo '<li><strong>' . htmlspecialchars($step[0], ENT_QUOTES, 'UTF-8') . '</strong>';
+				if ($step[1] !== '') {
+					echo ': ' . htmlspecialchars($step[1], ENT_QUOTES, 'UTF-8');
+				}
+				echo '</li>';
+			}
+			echo '</ol></section>';
+		}
 	}
 
 	private function get_persediaan_list_view_data($bulan, $Persediaan)
 	{
 		$this->load->helper(array('persediaan_display', 'pembelian_persediaan'));
-		persediaan_generate_schema_ensure_all($this);
 		$Persediaan_data_barang_stock = null;
 		$Persediaan_data_barang_stock_error = '';
 		$bulan = trim((string) $bulan);
@@ -598,6 +689,17 @@ class Persediaan extends CI_Controller
 		$ts_gen_default = strtotime('+1 month', strtotime(date('Y-m-01')));
 		if ($ts_gen_default === false) {
 			$ts_gen_default = time();
+		}
+		$can_generate = $this->persediaan_user_can_generate();
+		$draft_data = array();
+		$draft_bulan_sumber = '';
+		if ($can_generate) {
+			try {
+				$draft_data = $this->get_persediaan_draft_bulan_referensi_by_target($bulan);
+				$draft_bulan_sumber = $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan);
+			} catch (Throwable $e) {
+				log_message('error', 'Persediaan draft referensi gagal dimuat untuk bulan ' . $bulan . ': ' . $e->getMessage());
+			}
 		}
 
 		return array(
@@ -685,16 +787,12 @@ class Persediaan extends CI_Controller
 			'gen_tahun_default' => (int) date('Y', $ts_gen_default),
 			'gen_tahun_min' => 2020,
 			'gen_tahun_max' => (int) date('Y') + 2,
-			'can_generate_persediaan' => $this->persediaan_user_can_generate(),
+			'can_generate_persediaan' => $can_generate,
 			'can_compare_persediaan' => $this->persediaan_user_can_compare(),
-			'can_view_persediaan_restricted_tabs' => $this->persediaan_user_can_generate(),
+			'can_view_persediaan_restricted_tabs' => $can_generate,
 			'rekap_total_steps' => $this->get_rekap_total_steps(),
-			'Persediaan_data_draft_referensi' => $this->persediaan_user_can_generate()
-				? $this->get_persediaan_draft_bulan_referensi_by_target($bulan)
-				: array(),
-			'draft_referensi_bulan_sumber' => $this->persediaan_user_can_generate()
-				? $this->get_persediaan_draft_bulan_referensi_sumber_label($bulan)
-				: '',
+			'Persediaan_data_draft_referensi' => $draft_data,
+			'draft_referensi_bulan_sumber' => $draft_bulan_sumber,
 		);
 	}
 
@@ -9076,9 +9174,21 @@ class Persediaan extends CI_Controller
 	{
 		static $fields_cache = null;
 		if ($fields_cache === null) {
-			$fields_cache = $this->db->list_fields('persediaan');
+			$fields_cache = array_map('strtolower', (array) $this->db->list_fields('persediaan'));
 		}
-		return in_array($field_name, $fields_cache, true);
+		return in_array(strtolower((string) $field_name), $fields_cache, true);
+	}
+
+	private function persediaan_select_sql_column($field_name, $alias = null)
+	{
+		$alias = $alias === null ? $field_name : $alias;
+		$quoted_alias = '`' . str_replace('`', '``', $alias) . '`';
+		if (!$this->persediaan_field_exists($field_name)) {
+			return "'' AS " . $quoted_alias;
+		}
+
+		$quoted_column = '`' . str_replace('`', '``', $field_name) . '`';
+		return 'MAX(' . $quoted_column . ') AS ' . $quoted_alias;
 	}
 
 	private function persediaan_aggregate_sql_column($field_name, $alias = null)
@@ -9092,6 +9202,9 @@ class Persediaan extends CI_Controller
 			$column_name = 'CETAK';
 		} elseif ($field_name === 'grafikita' && !$this->persediaan_field_exists('grafikita') && $this->persediaan_field_exists('GRAFIKITA')) {
 			$column_name = 'GRAFIKITA';
+		}
+		if (!$this->persediaan_field_exists($column_name)) {
+			return '0 AS ' . $quoted_alias;
 		}
 		$quoted_column = '`' . str_replace('`', '``', $column_name) . '`';
 		return 'SUM(COALESCE(' . $quoted_column . ', 0)) AS ' . $quoted_alias;
@@ -9113,18 +9226,18 @@ class Persediaan extends CI_Controller
 				$bulan_key = date('Y-m', $ts);
 				$select_parts = array(
 					'MIN(`id`) AS `id`',
-					'MAX(`uuid_persediaan`) AS `uuid_persediaan`',
-					'MAX(`uuid_spop`) AS `uuid_spop`',
-					'MAX(`uuid_gudang`) AS `uuid_gudang`',
-					'MAX(`nama_gudang`) AS `nama_gudang`',
-					'MAX(`uuid_barang`) AS `uuid_barang`',
-					'MAX(`kode_barang`) AS `kode_barang`',
-					'MAX(`tanggal_beli`) AS `tanggal_beli`',
-					'MAX(`tanggal`) AS `tanggal`',
-					'MAX(`kode`) AS `kode`',
-					'MAX(`kategori`) AS `kategori`',
-					'MAX(`tuj`) AS `tuj`',
-					'MAX(`tgl_keluar`) AS `tgl_keluar`',
+					$this->persediaan_select_sql_column('uuid_persediaan'),
+					$this->persediaan_select_sql_column('uuid_spop'),
+					$this->persediaan_select_sql_column('uuid_gudang'),
+					$this->persediaan_select_sql_column('nama_gudang'),
+					$this->persediaan_select_sql_column('uuid_barang'),
+					$this->persediaan_select_sql_column('kode_barang'),
+					$this->persediaan_select_sql_column('tanggal_beli'),
+					$this->persediaan_select_sql_column('tanggal'),
+					$this->persediaan_select_sql_column('kode'),
+					$this->persediaan_select_sql_column('kategori'),
+					$this->persediaan_select_sql_column('tuj'),
+					$this->persediaan_select_sql_column('tgl_keluar'),
 					'`namabarang`',
 					'`satuan`',
 					'`hpp`',
