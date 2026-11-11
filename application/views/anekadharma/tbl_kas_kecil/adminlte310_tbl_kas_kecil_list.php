@@ -220,7 +220,7 @@
     </section>
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     /* Kas Kecil DataTable — border kuning tua hanya di luar wrapper */
     .kas-kecil-dt-wrap {
@@ -291,8 +291,8 @@
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/jquery/3.5.1/jquery.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
         $('#kas-kecil-table').DataTable({

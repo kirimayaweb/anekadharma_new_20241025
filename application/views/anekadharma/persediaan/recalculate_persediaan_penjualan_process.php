@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Recalculate Penjualan → Persediaan <?php echo htmlspecialchars($bulan_label); ?></title>
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="<?php echo base_url();?>assets/offline-vendor/sweetalert2/11.26.25/sweetalert2.all.min.js"></script>
 	<style>
 		body { font-family: Arial, sans-serif; margin: 20px; background: #f4f6f9; color: #333; }
 		.card { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.12); }

@@ -1590,7 +1590,7 @@
                     { targets: 5, className: 'text-wrap', width: '280px' }
                 ],
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json'
+                    url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json'
                 }
             });
             comparePembelianDtInstances[tableId] = dt;
@@ -1721,7 +1721,7 @@
                 autoWidth: false,
                 deferRender: true,
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json'
+                    url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json'
                 }
             });
 

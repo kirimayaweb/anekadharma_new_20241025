@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
@@ -807,7 +807,7 @@ window.addEventListener('load', function() {
                 pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                 drawCallback: function() {
                     var td = 0, tj = 0, tk = 0;
                     tabelDetailItems.forEach(function(it) {
@@ -940,7 +940,7 @@ window.addEventListener('load', function() {
             data: buildRows(items), paging: true, searching: true, ordering: true, info: true,
             scrollX: true, scrollY: '280px', scrollCollapse: true, pageLength: 10,
             order: [[1, 'asc']], autoWidth: false,
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
         });
         dtMap[sel] = dt;
     }

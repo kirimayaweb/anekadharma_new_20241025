@@ -1,6 +1,6 @@
 <!-- <script type="text/javascript" src="js/jquery-1.8.2.min.js"></script> -->
 <script src="<?php echo base_url() ?>js/jquery-1.8.2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/sweetalert2/11.26.25/sweetalert2.all.min.js"></script>
 
 <?php
 $this->load->helper('pembelian_persediaan');
@@ -513,7 +513,7 @@ $get_list_data = $x_list_data;
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
@@ -778,8 +778,8 @@ $get_list_data = $x_list_data;
 
 
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/jquery/3.5.1/jquery.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
     $(document).ready(function() {
         $('#example').DataTable({

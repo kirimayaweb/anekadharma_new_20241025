@@ -620,7 +620,7 @@
 
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     .pembelian-jasa-data-card {
         border: 2px solid #ffc107 !important;

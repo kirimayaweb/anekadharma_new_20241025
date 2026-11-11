@@ -2481,7 +2481,7 @@ window.addEventListener('load', function() {
                 pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
                     items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
@@ -2648,7 +2648,7 @@ window.addEventListener('load', function() {
             data: buildRows(items), paging: true, searching: true, ordering: true, info: true,
             scrollX: true, scrollY: '300px', scrollCollapse: true, pageLength: 10,
             order: [[1, 'asc']], autoWidth: false,
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' }
         };
         if (!opts.skipSimpleFooter) {
             dtOpts.drawCallback = function() {

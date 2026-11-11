@@ -1,6 +1,6 @@
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-theme@0.1.0-beta.10/dist/select2-bootstrap.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/select2/4.1.0-rc.0/css/select2.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/select2-bootstrap-theme/0.1.0-beta.10/select2-bootstrap.min.css">
 <style type="text/css">
     div.dataTables_wrapper {
         width: 100%;
@@ -878,9 +878,9 @@
 
 
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/jquery/3.5.1/jquery.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/select2/4.1.0-rc.0/js/select2.min.js"></script>
 <script>
     $(document).ready(function() {
         var urlUpdateKodeAkun = <?php echo json_encode(isset($url_jurnal_pembelian2_update_kode_akun) ? $url_jurnal_pembelian2_update_kode_akun : site_url('Tbl_pembelian/ajax_jurnal_pembelian2_update_kode_akun')); ?>;

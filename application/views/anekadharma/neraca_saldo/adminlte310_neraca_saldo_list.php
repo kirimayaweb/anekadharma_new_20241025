@@ -381,7 +381,7 @@
 
 
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     .ns-page-content > .box {
         width: 100%;
@@ -569,8 +569,8 @@
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/jquery/3.5.1/jquery.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
 <script>
 (function() {
     var LS_BULAN_NS = 'ns_bulan_ns';

@@ -10,7 +10,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <title>AdminLTE 3 | Top Navigation</title>
 
   <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/source-sans-pro/css/fonts.css">
   <!-- Font Awesome Icons -->
   <!-- <link rel="stylesheet" href="../../plugins/fontawesome-free/css/all.min.css"> -->
   <!-- Theme style -->
@@ -20,7 +20,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 
   <!-- Google Font: Source Sans Pro -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/source-sans-pro/css/fonts.css">
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/fontawesome-free/css/all.min.css">
   <!-- Theme style -->
@@ -37,12 +37,12 @@ scratch. This page gets rid of all links and provides the needed markup only.
 
 
   <!-- CHAIN COMBO -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <link href="<?php echo base_url();?>assets/offline-vendor/bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
   <!-- END OF CHAIN COMBO -->
 
 
   <!-- fixed column -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.2.1/css/fixedColumns.bootstrap5.min.css">
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables-fixedcolumns/4.2.1/css/fixedColumns.bootstrap5.min.css">
   <!-- end of fixed column -->
 
   <!-- SELECT2 && DATEPICKER -->

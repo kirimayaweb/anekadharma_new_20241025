@@ -1992,7 +1992,7 @@
                     { targets: 6, className: 'text-catatan', orderable: false }
                 ],
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                    url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                     emptyTable: 'Tidak ada data untuk ditampilkan',
                     zeroRecords: 'Tidak ada data yang cocok dengan pencarian'
                 },

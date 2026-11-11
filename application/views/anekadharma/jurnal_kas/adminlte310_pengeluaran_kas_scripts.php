@@ -172,7 +172,7 @@ window.PENGELUARAN_KAS_CFG = {
             info: true,
             autoWidth: false,
             columnDefs: [{ orderable: false, targets: '_all' }],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' },
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json' },
             drawCallback: function() {
                 if (pgkDt) pgkDt.columns.adjust();
             },

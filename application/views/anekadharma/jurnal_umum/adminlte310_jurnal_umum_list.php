@@ -478,7 +478,7 @@ $compare_sections = array(
             scrollX: true, scrollY: '450px', scrollCollapse: true,
             paging: true, searching: true, ordering: true, pageLength: 10,
             order: [[1, 'asc']],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json' }
         });
 
         jQuery('#btn-jurnal-umum-excel').on('click', function() {
@@ -617,7 +617,7 @@ $compare_sections = array(
             $t.DataTable({
                 data: buildRows(items), paging: true, searching: true, ordering: true, scrollX: true, scrollY: '280px', scrollCollapse: true,
                 pageLength: 10, order: [[1, 'asc']], autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
                     items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
@@ -721,7 +721,7 @@ $compare_sections = array(
                 $t.DataTable({
                     data: buildDetailRows(items), paging: true, searching: true, ordering: true, scrollX: true, pageLength: 10,
                     order: [[1, 'asc']], autoWidth: false,
-                    language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                     drawCallback: function() {
                         var td = 0, tk = 0;
                         items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });

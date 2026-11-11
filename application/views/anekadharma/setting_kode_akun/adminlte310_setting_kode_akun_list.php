@@ -357,8 +357,8 @@
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/jquery/3.5.1/jquery.min.js"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
 <script src="<?php echo base_url(); ?>assets/AdminLTE310/plugins/select2/js/select2.full.min.js"></script>
 <script>
 (function () {

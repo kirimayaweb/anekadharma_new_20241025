@@ -110,7 +110,7 @@ $url_json = isset($url_json) ? $url_json : site_url('Buku_besar_setting_kode_aku
         $t.DataTable({
             pageLength: 10,
             order: [[1, 'asc']],
-            language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.10.24/i18n/Indonesian.json' }
         });
     }
     jQuery('#btn-bb-ska-refresh-json').on('click', function() {

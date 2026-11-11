@@ -2426,7 +2426,7 @@
     </section>
 </div>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     div.dataTables_wrapper { width: 100%; margin: 0 auto; }
     .tab-pane { padding-top: 10px; }
@@ -14240,7 +14240,7 @@ window.addEventListener('load', function() {
             ],
             order: [[0, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data rekap pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14319,7 +14319,7 @@ window.addEventListener('load', function() {
             ],
             order: [[2, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data produksi pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14379,7 +14379,7 @@ window.addEventListener('load', function() {
             ],
             order: [[1, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data pecah satuan pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14438,7 +14438,7 @@ window.addEventListener('load', function() {
             ],
             order: [[1, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data pembelian barang pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14497,7 +14497,7 @@ window.addEventListener('load', function() {
             ],
             order: [[1, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data pembelian jasa pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14555,7 +14555,7 @@ window.addEventListener('load', function() {
             ],
             order: [[1, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data penjualan barang pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },
@@ -14613,7 +14613,7 @@ window.addEventListener('load', function() {
             ],
             order: [[1, 'asc']],
             language: {
-                url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json',
+                url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json',
                 emptyTable: 'Tidak ada data penjualan jasa pada bulan terpilih',
                 zeroRecords: 'Data tidak ditemukan'
             },

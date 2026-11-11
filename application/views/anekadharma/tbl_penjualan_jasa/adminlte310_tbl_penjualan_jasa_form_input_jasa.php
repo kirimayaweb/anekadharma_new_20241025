@@ -1,4 +1,4 @@
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?php echo base_url();?>assets/offline-vendor/sweetalert2/11.26.25/sweetalert2.all.min.js"></script>
 <script src="<?php echo base_url('assets/js/datatable-pilih-jasa-penjualan.js'); ?>"></script>
 <?php
 $this->load->helper('pembelian_persediaan');

@@ -460,7 +460,7 @@ $compare_sections = array(
                 orderCellsTop: true,
                 autoWidth: false,
                 columnDefs: [{ orderable: false, targets: [1] }],
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' }
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' }
             });
         } catch (eDt) {
             console.error('Buku Bank: gagal init DataTable tab 1', eDt);
@@ -878,7 +878,7 @@ $compare_sections = array(
                 pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
                     items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
@@ -1006,7 +1006,7 @@ $compare_sections = array(
                     pageLength: 10,
                     order: [[1, 'asc']],
                     autoWidth: false,
-                    language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                     drawCallback: function() {
                         var td = 0, tk = 0;
                         items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });

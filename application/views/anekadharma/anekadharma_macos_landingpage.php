@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <title>PD ANEKADHARMA</title>
-  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css'>
-  <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css'>
+  <link rel='stylesheet' href='<?php echo base_url();?>assets/offline-vendor/fontawesome/6.4.2/css/all.min.css'>
+  <link rel='stylesheet' href='<?php echo base_url();?>assets/offline-vendor/swiper/11.2.10/swiper-bundle.min.css'>
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/macos-fonts/fonts.css">
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/anekadharma_macosstyle/style.css">
 
 </head>
@@ -247,12 +248,14 @@
               </div>
               <ul class="control" id="custom-control">
                 <li class="prev">
-                  <ion-icon class="arrow" name="caret-back-outline"></ion-icon>
+                  <svg class="arrow" width="1em" height="1em" viewBox="0 0 512 512" aria-hidden="true">
+                    <path fill="currentColor" d="M321.94 98L158.82 237.78a24 24 0 000 36.44L321.94 414c15.57 13.34 39.62 2.28 39.62-18.22v-279.6c0-20.5-24.05-31.56-39.62-18.18z"></path>
+                  </svg>
                 </li>
                 <li class="next">
-                  <ion-icon
-                    class="arrow"
-                    name="caret-forward-outline"></ion-icon>
+                  <svg class="arrow" width="1em" height="1em" viewBox="0 0 512 512" aria-hidden="true">
+                    <path fill="currentColor" d="M190.06 414l163.12-139.78a24 24 0 000-36.44L190.06 98c-15.57-13.34-39.62-2.28-39.62 18.22v279.6c0 20.5 24.05 31.56 39.62 18.18z"></path>
+                  </svg>
                 </li>
               </ul>
             </div>
@@ -337,9 +340,7 @@
     </div>
   </body>
   <!-- partial -->
-  <script src='https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js'></script>
-  <script src='https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js'></script>
-  <script src='https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js'></script>
+  <script src='<?php echo base_url();?>assets/offline-vendor/swiper/11.2.10/swiper-bundle.min.js'></script>
   <script src="<?php echo base_url() ?>assets/anekadharma_macosstyle/script.js"></script>
 
 </body>

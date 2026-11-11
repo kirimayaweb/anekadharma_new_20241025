@@ -253,7 +253,7 @@ window.bbSkaBoot = window.bbSkaBoot || function() {
                     pageLength: 10,
                     order: [[0, 'asc']],
                     scrollX: true,
-                    language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.10.24/i18n/Indonesian.json' }
                 });
             }
 
@@ -408,7 +408,7 @@ window.bbSkaBoot = window.bbSkaBoot || function() {
                     pageLength: 10,
                     order: [[1, 'asc']],
                     columnDefs: [{ orderable: false, targets: 0 }],
-                    language: { url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json' }
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.10.24/i18n/Indonesian.json' }
                 });
             }
         });

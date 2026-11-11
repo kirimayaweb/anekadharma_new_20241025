@@ -405,7 +405,7 @@ $compare_sections = array(
     </div>
 </form>
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/jquery.dataTables.min.css">
 <style type="text/css">
     .nav-tabs.jurnal-penyesuaian-tabs { border-bottom: 2px solid #dc3545; margin-bottom: 0; }
     .nav-tabs.jurnal-penyesuaian-tabs .nav-link { border: 2px solid #dc3545; border-bottom: none; color: #666; margin-right: 4px; border-radius: 4px 4px 0 0; background: #fff; }
@@ -492,7 +492,7 @@ $compare_sections = array(
             scrollX: true, scrollY: '450px', scrollCollapse: true,
             paging: true, searching: true, ordering: true, pageLength: 10,
             order: [[1, 'asc']],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' }
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json' }
         });
 
         function refreshMainDatatable() {
@@ -778,7 +778,7 @@ $compare_sections = array(
             var dt = $t.DataTable({
                 data: buildRows(items), paging: true, searching: true, ordering: true, scrollX: true, scrollY: '280px', scrollCollapse: true,
                 pageLength: 10, order: [[1, 'asc']], autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
                     items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
@@ -889,7 +889,7 @@ $compare_sections = array(
                     data: buildTabelDetailRows(items, tabelDetailColumns),
                     paging: true, searching: true, ordering: true, scrollX: true, pageLength: 10,
                     order: [[1, 'asc']], autoWidth: false,
-                    language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                     drawCallback: function() {
                         var td = parseAmt(res.total_debet), tk = parseAmt(res.total_kredit);
                         if (!td && items.length) {

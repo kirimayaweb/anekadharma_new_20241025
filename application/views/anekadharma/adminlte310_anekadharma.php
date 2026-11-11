@@ -9,11 +9,11 @@
 
   <!-- DATATABLE -->
   <!-- Google Font: Source Sans Pro -->
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"> -->
+  <!-- <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/source-sans-pro/css/fonts.css"> -->
   <!-- Font Awesome -->
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/fontawesome-free/css/all.min.css">
   <!-- DataTables -->
-  <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
   <!-- <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-buttons/css/buttons.bootstrap4.min.css"> -->
   <!-- Theme style -->
@@ -24,17 +24,17 @@
   <link rel="stylesheet" href="<?php echo base_url(); ?>assets/animatebutton/style.css">
 
   <!-- CHAIN COMBO -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <link href="<?php echo base_url();?>assets/offline-vendor/bootstrap/5.2.3/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
   <!-- END OF CHAIN COMBO -->
 
 
   <!-- fixed column -->
-  <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.2.1/css/fixedColumns.bootstrap5.min.css">
+  <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/datatables-fixedcolumns/4.2.1/css/fixedColumns.bootstrap5.min.css">
   <!-- end of fixed column -->
 
   <!-- SELECT2 && DATEPICKER -->
   <!-- Google Font: Source Sans Pro -->
-  <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback"> -->
+  <!-- <link rel="stylesheet" href="<?php echo base_url();?>assets/offline-vendor/source-sans-pro/css/fonts.css"> -->
   <!-- Font Awesome -->
   <!-- <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/plugins/fontawesome-free/css/all.min.css"> -->
   <!-- daterange picker -->
@@ -58,11 +58,7 @@
   <link rel="stylesheet" href="<?php echo base_url() ?>assets/AdminLTE310/dist/css/adminlte.min.css">
   <!-- END OFF SELECT2 && DATEPICKER -->
 
-
-
-
-
-
+  <script type="text/javascript" src="<?php echo base_url();?>assets/offline-vendor/jquery/2.2.3/jquery.min.js"></script>
 </head>
 
 <body class="hold-transition sidebar-mini">
@@ -519,7 +515,6 @@
   <!-- <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/jquery/jquery.min.js"></script> -->
 
   <!-- JAQUERY CHAIN COMBOBOX -->
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
   <!-- END OF JAQUERY CHAIN COMBOBOX -->
 
 
@@ -528,8 +523,8 @@
   <!-- Bootstrap 4 -->
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
   <!-- DataTables  & Plugins -->
-  <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables/jquery.dataTables.min.js"></script>
-  <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
+  <script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/jquery.dataTables.min.js"></script>
+  <script src="<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/js/dataTables.bootstrap4.min.js"></script>
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-responsive/js/dataTables.responsive.min.js"></script>
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-responsive/js/responsive.bootstrap4.min.js"></script>
   <script src="<?php echo base_url() ?>assets/AdminLTE310/plugins/datatables-buttons/js/dataTables.buttons.min.js"></script>
@@ -557,7 +552,7 @@
 
 
   <!-- fixed column -->
-  <script src="https://cdn.datatables.net/fixedcolumns/4.2.1/js/dataTables.fixedColumns.min.js"></script>
+  <script src="<?php echo base_url();?>assets/offline-vendor/datatables-fixedcolumns/4.2.1/js/dataTables.fixedColumns.min.js"></script>
   <!-- end of fixed column -->
 
 

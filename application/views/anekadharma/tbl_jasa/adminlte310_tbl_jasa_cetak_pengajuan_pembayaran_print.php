@@ -262,8 +262,8 @@
 			<!-- <th style="font-size:0.550em; width: 100px;" colspan="100">x6</th> -->
 		</tr>
 
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+		<link rel="stylesheet" href="<?php echo base_url();?>assets/adminlte/bower_components/font-awesome/css/font-awesome.min.css">
+		<script src='<?php echo base_url();?>assets/offline-vendor/jquery/3.3.1/jquery.min.js'></script>
 		<script type="text/javascript">
 			// the selector will match all input controls of type :checkbox
 			// and attach a click event handler 

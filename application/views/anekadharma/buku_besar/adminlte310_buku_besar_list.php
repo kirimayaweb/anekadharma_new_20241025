@@ -986,7 +986,7 @@ $compare_sections = array(
                 { targets: 8, width: '160px' },
                 { targets: [9, 10, 11, 12, 13], width: '120px', className: 'text-right', type: 'num' }
             ],
-            language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json' },
+            language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json' },
             drawCallback: function() {
                 syncBbFooterTableWidth();
             }
@@ -1441,7 +1441,7 @@ $compare_sections = array(
                 pageLength: 10,
                 order: [[1, 'asc']],
                 autoWidth: false,
-                language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
+                language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data' },
                 drawCallback: function() {
                     var td = 0, tk = 0;
                     items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
@@ -1568,7 +1568,7 @@ $compare_sections = array(
                     pageLength: 10,
                     order: [[1, 'asc']],
                     autoWidth: false,
-                    language: { url: '//cdn.datatables.net/plug-ins/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
+                    language: { url: '<?php echo base_url();?>assets/offline-vendor/datatables/1.11.4/i18n/id.json', emptyTable: 'Tidak ada data pada bulan terpilih' },
                     drawCallback: function() {
                         var td = 0, tk = 0;
                         items.forEach(function(it) { td += parseAmt(it.debet); tk += parseAmt(it.kredit); });
