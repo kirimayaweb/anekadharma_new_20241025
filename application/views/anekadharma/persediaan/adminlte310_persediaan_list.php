@@ -2213,6 +2213,24 @@
                             </div>
 
                             <h6 class="d-flex align-items-center flex-wrap mt-3">
+                                <span>Hasil Compare Manual &amp; Persediaan <span id="compare-badge-detail" class="badge badge-primary">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="detail"><i class="fas fa-file-excel"></i> Excel Hasil Compare</button>
+                            </h6>
+                            <p class="text-muted small mb-2">
+                                Urutan mengikuti nama barang pada tabel manual. Setiap baris menampilkan status Cocok, Tidak cocok, atau Tidak ada pasangan dan rincian kedua record.
+                            </p>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-detail" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Status</th><th>ID Manual</th><th>Nama Manual</th><th>Satuan Manual</th><th>HPP Manual</th><th>SPOP Manual</th><th>SA Manual</th><th>Beli Manual</th><th>TUJ Manual</th><th>Total_10 Manual</th><th>Nilai Manual</th>
+                                        <th>ID Persediaan</th><th>Nama Persediaan</th><th>Satuan Persediaan</th><th>HPP Persediaan</th><th>SPOP Persediaan</th><th>SA Persediaan</th><th>Beli Persediaan</th><th>TUJ Persediaan</th><th>Total_10 Persediaan</th><th>Nilai Persediaan</th><th>Field Berbeda</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><?php for ($compare_detail_col = 0; $compare_detail_col < 23; $compare_detail_col++) { ?><th></th><?php } ?></tr></tfoot>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap mt-3">
                                 <span>1. Persediaan Total_10 Kosong / 0 <span id="compare-badge-total10" class="badge badge-secondary">0</span></span>
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="total10_kosong"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
@@ -12681,6 +12699,7 @@ window.addEventListener('load', function() {
         $('#compare-badge-tidak').text(typeof stats.tidak_di_tabel !== 'undefined' ? stats.tidak_di_tabel : 0);
         $('#compare-badge-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : 0);
         $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
+        $('#compare-badge-detail').text((res.items_detail || []).length);
         $('#compare-badge-pembelian-tidak').text(typeof stats.pembelian_tidak_manual !== 'undefined' ? stats.pembelian_tidak_manual : 0);
         $('#compare-badge-pembelian-manual-tidak-persediaan').text(
             typeof stats.pembelian_manual_tidak_persediaan !== 'undefined'
@@ -13289,6 +13308,37 @@ window.addEventListener('load', function() {
                 ];
             });
         }
+        if (jenis === 'detail') {
+            return items.map(function(it, i) {
+                var manual = it.manual || {};
+                var app = it.app || {};
+                return [
+                    i + 1,
+                    it.status || '',
+                    manual.id || '',
+                    manual.namabarang || app.namabarang || '',
+                    manual.satuan || '',
+                    manual.hpp || '',
+                    manual.spop || '',
+                    manual.sa || '',
+                    manual.beli || '',
+                    manual.tuj || '',
+                    manual.total_10 || '',
+                    manual.nilai_persediaan || '',
+                    app.id || '',
+                    app.namabarang || '',
+                    app.satuan || '',
+                    app.hpp || '',
+                    app.spop || '',
+                    app.sa || '',
+                    app.beli || '',
+                    app.tuj || '',
+                    app.total_10 || '',
+                    app.nilai_persediaan || '',
+                    (it.mismatch_fields || []).join(', ')
+                ];
+            });
+        }
         if (jenis === 'pembelian_tidak_manual') {
             return items.map(function(it, i) {
                 return [
@@ -13435,7 +13485,11 @@ window.addEventListener('load', function() {
             var dt = $sel.DataTable();
             dt.clear();
             if (rows.length) dt.rows.add(rows);
-            dt.draw(false);
+            if (orderCol !== undefined) {
+                dt.order([[orderCol, 'asc']]).draw(false);
+            } else {
+                dt.draw(false);
+            }
             compareDtStore[selector] = dt;
             layoutCompareDataTableBox($sel);
             applyScrollYToDataTable(dt, $sel, 130);
@@ -13464,8 +13518,9 @@ window.addEventListener('load', function() {
         res = res || {};
         upsertCompareDataTable('#table-compare-total10', buildCompareRows('total10_kosong', res.items_total10_kosong || []), 1);
         upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
-        upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 7);
+        upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 9);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
+        upsertCompareDataTable('#table-compare-detail', buildCompareRows('detail', res.items_detail || []), 3);
         upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
         upsertCompareDataTable(
             '#table-compare-pembelian-manual-tidak-persediaan',
@@ -13549,6 +13604,7 @@ window.addEventListener('load', function() {
                 + 'Tidak di tabel manual: <strong>' + (s.tidak_di_tabel || 0) + '</strong>, '
                 + 'Tidak di persediaan: <strong>' + (s.hanya_tabel || 0) + '</strong>, '
                 + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>, '
+                + 'Detail: cocok <strong>' + (s.detail_cocok || 0) + '</strong>, data berbeda <strong>' + (s.detail_berbeda || 0) + '</strong>, manual tanpa pasangan <strong>' + (s.detail_manual_tidak_ada_di_persediaan || 0) + '</strong>, persediaan tanpa pasangan <strong>' + (s.detail_persediaan_tidak_ada_di_manual || 0) + '</strong>. '
                 + 'Pembelian tidak di manual: <strong>' + (s.pembelian_tidak_manual || 0) + '</strong>, '
                 + 'Pembelian manual tidak di persediaan: <strong>' + (s.pembelian_manual_tidak_persediaan || 0) + '</strong>, '
                 + 'Penjualan manual tidak di persediaan: <strong>' + (s.penjualan_manual_tidak_persediaan || 0) + '</strong>, '
