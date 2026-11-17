@@ -2222,8 +2222,8 @@
                             <div class="compare-dt-wrap mb-4">
                                 <table id="table-compare-detail" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
-                                        <th>No</th><th>Status</th><th>ID Manual</th><th>Nama Manual</th><th>Satuan Manual</th><th>HPP Manual</th><th>SPOP Manual</th><th>SA Manual</th><th>Beli Manual</th><th>TUJ Manual</th><th>Total_10 Manual</th><th>Nilai Manual</th>
-                                        <th>ID Persediaan</th><th>Nama Persediaan</th><th>Satuan Persediaan</th><th>HPP Persediaan</th><th>SPOP Persediaan</th><th>SA Persediaan</th><th>Beli Persediaan</th><th>TUJ Persediaan</th><th>Total_10 Persediaan</th><th>Nilai Persediaan</th><th>Field Berbeda</th>
+                                        <th>No</th><th>Status</th><th>Field Berbeda</th><th>ID Manual</th><th>Nama Manual</th><th>Satuan Manual</th><th>HPP Manual</th><th>SPOP Manual</th><th>SA Manual</th><th>Beli Manual</th><th>TUJ Manual</th><th>Total_10 Manual</th><th>Nilai Manual</th>
+                                        <th>ID Persediaan</th><th>Nama Persediaan</th><th>Satuan Persediaan</th><th>HPP Persediaan</th><th>SPOP Persediaan</th><th>SA Persediaan</th><th>Beli Persediaan</th><th>TUJ Persediaan</th><th>Total_10 Persediaan</th><th>Nilai Persediaan</th>
                                     </tr></thead>
                                     <tbody></tbody>
                                     <tfoot><tr><?php for ($compare_detail_col = 0; $compare_detail_col < 23; $compare_detail_col++) { ?><th></th><?php } ?></tr></tfoot>
@@ -2812,6 +2812,11 @@
         overflow: hidden;
         margin: 0;
     }
+    #table-compare-detail tbody td.compare-cell-mismatch {
+        background-color: #c62828 !important;
+        color: #ffff00 !important;
+        font-weight: 700;
+    }
     #panel-compare-manual .compare-dt-wrap .dataTables_scroll,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scroll {
         width: 100% !important;
@@ -2821,20 +2826,10 @@
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollHead {
         overflow: hidden !important;
     }
-    #panel-compare-manual .compare-dt-wrap .dataTables_scrollHeadInner,
-    #panel-compare-manual .compare-dt-wrap .dataTables_scrollHeadInner table,
-    #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollHeadInner,
-    #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollHeadInner table {
-        width: 100% !important;
-    }
     #panel-compare-manual .compare-dt-wrap .dataTables_scrollBody,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollBody {
         overflow-x: auto !important;
         overflow-y: auto !important;
-        width: 100% !important;
-    }
-    #panel-compare-manual .compare-dt-wrap .dataTables_scrollBody table,
-    #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollBody table {
         width: 100% !important;
     }
     #panel-compare-manual .compare-dt-wrap tfoot th,
@@ -12395,6 +12390,7 @@ window.addEventListener('load', function() {
         '#table-compare-tidak': [5, 6, 7, 12, 13, 14],
         '#table-compare-hanya': [6, 7, 8, 13, 14, 15],
         '#table-compare-cocok': [5, 6, 7, 12, 13, 14],
+        '#table-compare-detail': [8, 9, 10, 11, 12, 18, 19, 20, 21, 22],
         '#table-compare-pembelian-tidak': [6],
         '#table-compare-penjualan-tidak': [6],
         '#table-compare-produksi-tidak': [5],
@@ -12415,6 +12411,8 @@ window.addEventListener('load', function() {
             s = s.replace(/\./g, '').replace(',', '.');
         } else if (s.indexOf(',') >= 0) {
             s = s.replace(',', '.');
+        } else if (/^-?\d{1,3}(?:\.\d{3})+$/.test(s)) {
+            s = s.replace(/\./g, '');
         }
         var n = parseFloat(s);
         return isNaN(n) ? 0 : n;
@@ -12873,7 +12871,7 @@ window.addEventListener('load', function() {
                     table: $('#compare_tabel_pilihan').val() || savedTabel || ''
                 });
                 if (savedTabel && getBulanKeyCompare()) {
-                    runCompareTabel();
+                    runCompareTabel(true);
                 }
             });
         }
@@ -13292,6 +13290,17 @@ window.addEventListener('load', function() {
         });
     }
 
+    function formatCompareDetailNumber(value) {
+        if (value == null || value === '') {
+            return '';
+        }
+        var number = typeof value === 'number' ? value : Number(String(value).trim());
+        if (!isFinite(number)) {
+            return value;
+        }
+        return number.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+    }
+
     function buildCompareRows(jenis, items) {
         items = items || [];
         if (jenis === 'total10_kosong') {
@@ -13312,31 +13321,54 @@ window.addEventListener('load', function() {
             return items.map(function(it, i) {
                 var manual = it.manual || {};
                 var app = it.app || {};
-                return [
+                var row = [
                     i + 1,
                     it.status || '',
+                    (it.mismatch_fields || []).join(', '),
                     manual.id || '',
-                    manual.namabarang || app.namabarang || '',
+                    manual.namabarang || '',
                     manual.satuan || '',
                     manual.hpp || '',
                     manual.spop || '',
-                    manual.sa || '',
-                    manual.beli || '',
-                    manual.tuj || '',
-                    manual.total_10 || '',
-                    manual.nilai_persediaan || '',
+                    formatCompareDetailNumber(manual.sa),
+                    formatCompareDetailNumber(manual.beli),
+                    formatCompareDetailNumber(manual.tuj),
+                    formatCompareDetailNumber(manual.total_10),
+                    formatCompareDetailNumber(manual.nilai_persediaan),
                     app.id || '',
                     app.namabarang || '',
                     app.satuan || '',
                     app.hpp || '',
                     app.spop || '',
-                    app.sa || '',
-                    app.beli || '',
-                    app.tuj || '',
-                    app.total_10 || '',
-                    app.nilai_persediaan || '',
-                    (it.mismatch_fields || []).join(', ')
+                    formatCompareDetailNumber(app.sa),
+                    formatCompareDetailNumber(app.beli),
+                    formatCompareDetailNumber(app.tuj),
+                    formatCompareDetailNumber(app.total_10),
+                    formatCompareDetailNumber(app.nilai_persediaan)
                 ];
+                var mismatchColumnsByField = {
+                    'Satuan': [5, 15],
+                    'HPP': [6, 16],
+                    'SPOP': [7, 17],
+                    'SA': [8, 18],
+                    'Beli': [9, 19],
+                    'TUJ': [10, 20],
+                    'Total_10': [11, 21],
+                    'Nilai Persediaan': [12, 22]
+                };
+                row._compareMismatchColumns = [];
+                if (it.status === 'Tidak ada pasangan') {
+                    for (var col = 3; col <= 22; col++) {
+                        row._compareMismatchColumns.push(col);
+                    }
+                } else {
+                    (it.mismatch_fields || []).forEach(function(field) {
+                        (mismatchColumnsByField[field] || []).forEach(function(col) {
+                            row._compareMismatchColumns.push(col);
+                        });
+                    });
+                }
+                return row;
             });
         }
         if (jenis === 'pembelian_tidak_manual') {
@@ -13504,8 +13536,14 @@ window.addEventListener('load', function() {
             pageLength: 10,
             order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
             columnDefs: [{ targets: 0, orderable: false }],
+            rowCallback: function(row, data) {
+                $(row).children('td').removeClass('compare-cell-mismatch');
+                (data._compareMismatchColumns || []).forEach(function(col) {
+                    $('td:eq(' + col + ')', row).addClass('compare-cell-mismatch');
+                });
+            },
             language: compareDtLang,
-            autoWidth: false,
+            autoWidth: true,
             deferRender: true,
             footerCallback: footerCb
         });
@@ -13563,7 +13601,54 @@ window.addEventListener('load', function() {
         $btnExcelAll.prop('disabled', false).removeClass('btn-secondary').addClass('btn-success');
     }
 
-    function runCompareTabel() {
+    var compareProgressTimer = null;
+
+    function showCompareProgress(table) {
+        Swal.fire({
+            title: 'Memproses perbandingan',
+            html: '<p style="margin:0 0 10px;font-size:14px;">Membandingkan persediaan dengan tabel <strong>'
+                + escapeHtmlCompare(table)
+                + '</strong>... mohon tunggu.</p>'
+                + '<div style="height:12px;background:#e9ecef;border-radius:6px;overflow:hidden;">'
+                + '<div id="swal-compare-progress" style="height:100%;width:8%;background:#17a2b8;transition:width .25s ease;"></div></div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: function() {
+                var bar = document.getElementById('swal-compare-progress');
+                var pct = 8;
+                if (compareProgressTimer) {
+                    clearInterval(compareProgressTimer);
+                }
+                compareProgressTimer = setInterval(function() {
+                    pct = Math.min(92, pct + 4);
+                    if (bar) {
+                        bar.style.width = pct + '%';
+                    }
+                }, 250);
+            },
+            willClose: function() {
+                if (compareProgressTimer) {
+                    clearInterval(compareProgressTimer);
+                    compareProgressTimer = null;
+                }
+            }
+        });
+    }
+
+    function finishCompareProgress() {
+        var bar = document.getElementById('swal-compare-progress');
+        if (bar) {
+            bar.style.width = '100%';
+        }
+        if (compareProgressTimer) {
+            clearInterval(compareProgressTimer);
+            compareProgressTimer = null;
+        }
+        Swal.close();
+    }
+
+    function runCompareTabel(silent) {
         if (!userCanComparePersediaan) {
             Swal.fire({
                 icon: 'warning',
@@ -13583,7 +13668,12 @@ window.addEventListener('load', function() {
             return;
         }
 
+        var $compareButton = $('#btn-compare-tabel');
+        $compareButton.prop('disabled', true);
         setCompareStatus('info', '<i class="fas fa-spinner fa-spin"></i> Membandingkan persediaan dengan tabel <strong>' + escapeHtmlCompare(tabel) + '</strong>...');
+        if (!silent) {
+            showCompareProgress(tabel);
+        }
 
         $.ajax({
             url: urlCompareTabelRun,
@@ -13592,6 +13682,9 @@ window.addEventListener('load', function() {
             data: { bulan: bulanKey, tabel: tabel }
         }).done(function(res) {
             if (!res || !res.ok) {
+                if (!silent) {
+                    finishCompareProgress();
+                }
                 setCompareStatus('danger', (res && res.message) ? res.message : 'Compare gagal.');
                 Swal.fire({ icon: 'error', title: 'Compare gagal', text: (res && res.message) ? res.message : 'Gagal compare.' });
                 return;
@@ -13613,9 +13706,24 @@ window.addEventListener('load', function() {
                 + 'Penjualan tidak di manual: <strong>' + (s.penjualan_tidak_manual || 0) + '</strong>, '
                 + 'Produksi tidak di manual: <strong>' + (s.produksi_tidak_manual || 0) + '</strong>, '
                 + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.');
+            if (!silent) {
+                finishCompareProgress();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Compare selesai',
+                    text: 'Hasil perbandingan berhasil ditampilkan.',
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            }
         }).fail(function() {
+            if (!silent) {
+                finishCompareProgress();
+            }
             setCompareStatus('danger', 'Tidak dapat menghubungi server.');
             Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
+        }).always(function() {
+            $compareButton.prop('disabled', false);
         });
     }
 

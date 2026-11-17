@@ -22107,7 +22107,7 @@ function persediaan_compare_jenis_definitions()
 		),
 		'detail' => array(
 			'title' => 'Detail Compare Manual vs Persediaan',
-			'headers' => array('No', 'Status Pasangan', 'Manual ID', 'Manual Nama', 'Manual Satuan', 'Manual HPP', 'Manual SPOP', 'Manual SA', 'Manual Beli', 'Manual TUJ', 'Manual Total_10', 'Manual Nilai', 'Persediaan ID', 'Persediaan Nama', 'Persediaan Satuan', 'Persediaan HPP', 'Persediaan SPOP', 'Persediaan SA', 'Persediaan Beli', 'Persediaan TUJ', 'Persediaan Total_10', 'Persediaan Nilai', 'Field Berbeda'),
+			'headers' => array('No', 'Status Pasangan', 'Field Berbeda', 'Manual ID', 'Manual Nama', 'Manual Satuan', 'Manual HPP', 'Manual SPOP', 'Manual SA', 'Manual Beli', 'Manual TUJ', 'Manual Total_10', 'Manual Nilai', 'Persediaan ID', 'Persediaan Nama', 'Persediaan Satuan', 'Persediaan HPP', 'Persediaan SPOP', 'Persediaan SA', 'Persediaan Beli', 'Persediaan TUJ', 'Persediaan Total_10', 'Persediaan Nilai'),
 			'file_suffix' => 'Detail_Compare',
 		),
 		'pembelian_tidak_manual' => array(
@@ -22193,27 +22193,27 @@ function persediaan_compare_item_to_row_cells($jenis, $item, $nomor)
 			return array(
 				$nomor,
 				isset($item['status']) ? $item['status'] : '',
+				isset($item['mismatch_fields']) ? implode('|', $item['mismatch_fields']) : '',
 				isset($item['manual']['id']) ? $item['manual']['id'] : '',
-				isset($item['manual']['namabarang']) ? $item['manual']['namabarang'] : (isset($item['app']['namabarang']) ? $item['app']['namabarang'] : ''),
+				isset($item['manual']['namabarang']) ? $item['manual']['namabarang'] : '',
 				isset($item['manual']['satuan']) ? $item['manual']['satuan'] : '',
 				isset($item['manual']['hpp']) ? $item['manual']['hpp'] : '',
 				isset($item['manual']['spop']) ? $item['manual']['spop'] : '',
-				isset($item['manual']['sa']) ? $item['manual']['sa'] : '',
-				isset($item['manual']['beli']) ? $item['manual']['beli'] : '',
-				isset($item['manual']['tuj']) ? $item['manual']['tuj'] : '',
-				isset($item['manual']['total_10']) ? $item['manual']['total_10'] : '',
-				isset($item['manual']['nilai_persediaan']) ? $item['manual']['nilai_persediaan'] : '',
+				isset($item['manual']['sa']) ? persediaan_format_angka_tampil($item['manual']['sa']) : '',
+				isset($item['manual']['beli']) ? persediaan_format_angka_tampil($item['manual']['beli']) : '',
+				isset($item['manual']['tuj']) ? persediaan_format_angka_tampil($item['manual']['tuj']) : '',
+				isset($item['manual']['total_10']) ? persediaan_format_angka_tampil($item['manual']['total_10']) : '',
+				isset($item['manual']['nilai_persediaan']) ? persediaan_format_angka_tampil($item['manual']['nilai_persediaan']) : '',
 				isset($item['app']['id']) ? $item['app']['id'] : '',
 				isset($item['app']['namabarang']) ? $item['app']['namabarang'] : '',
 				isset($item['app']['satuan']) ? $item['app']['satuan'] : '',
 				isset($item['app']['hpp']) ? $item['app']['hpp'] : '',
 				isset($item['app']['spop']) ? $item['app']['spop'] : '',
-				isset($item['app']['sa']) ? $item['app']['sa'] : '',
-				isset($item['app']['beli']) ? $item['app']['beli'] : '',
-				isset($item['app']['tuj']) ? $item['app']['tuj'] : '',
-				isset($item['app']['total_10']) ? $item['app']['total_10'] : '',
-				isset($item['app']['nilai_persediaan']) ? $item['app']['nilai_persediaan'] : '',
-				isset($item['mismatch_fields']) ? implode('|', $item['mismatch_fields']) : '',
+				isset($item['app']['sa']) ? persediaan_format_angka_tampil($item['app']['sa']) : '',
+				isset($item['app']['beli']) ? persediaan_format_angka_tampil($item['app']['beli']) : '',
+				isset($item['app']['tuj']) ? persediaan_format_angka_tampil($item['app']['tuj']) : '',
+				isset($item['app']['total_10']) ? persediaan_format_angka_tampil($item['app']['total_10']) : '',
+				isset($item['app']['nilai_persediaan']) ? persediaan_format_angka_tampil($item['app']['nilai_persediaan']) : '',
 			);
 		case 'pembelian_tidak_manual':
 			return array(
@@ -22483,6 +22483,7 @@ function persediaan_compare_collect_tx_not_in_manual($CI, $bulan, $compare_rows,
 	$manual_keys = persediaan_compare_build_manual_key_lookup($compare_rows, $map);
 	$manual_by_nama = persediaan_compare_build_manual_by_nama($compare_rows, $map);
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
+	$lists = persediaan_compare_filter_transaction_lists_without_jasa($lists);
 	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $persediaan_rows);
 
 	$persediaan_purchase_key_counts = persediaan_compare_persediaan_key_counts($persediaan_rows);
@@ -22717,6 +22718,8 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 	$used_persediaan = array();
 	$persediaan_by_name = array();
 	$persediaan_by_key = array();
+	$manual_by_name = array();
+	$manual_by_key = array();
 	$name_cursor = array();
 	$key_cursor = array();
 	$items = array();
@@ -22744,6 +22747,23 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 		}
 	}
 
+	foreach ($manual_rows as $index => $manual_row) {
+		$manual_name = persediaan_compare_row_get($manual_row, $map['nama']);
+		$manual_key = persediaan_compare_build_key(
+			$manual_name,
+			persediaan_compare_row_get($manual_row, $map['satuan']),
+			persediaan_compare_row_get($manual_row, $map['hpp']),
+			persediaan_compare_row_get($manual_row, $map['spop'])
+		);
+		$name_key = persediaan_recalculate_normalize_nama($manual_name);
+		if ($name_key !== '') {
+			$manual_by_name[$name_key][] = $index;
+		}
+		if ($manual_key !== '') {
+			$manual_by_key[$manual_key][] = $index;
+		}
+	}
+
 	foreach ($manual_rows as $manual_row) {
 		$manual_name = persediaan_compare_row_get($manual_row, $map['nama']);
 		$manual_key = persediaan_compare_build_key(
@@ -22755,6 +22775,7 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 		$name_key = persediaan_recalculate_normalize_nama($manual_name);
 		$exact_index = null;
 		$name_index = null;
+		$duplicate_pair = false;
 
 		if ($manual_key !== '' && isset($persediaan_by_key[$manual_key])) {
 			$cursor = isset($key_cursor[$manual_key]) ? $key_cursor[$manual_key] : 0;
@@ -22780,8 +22801,14 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 		}
 
 		$match_index = $exact_index !== null ? $exact_index : $name_index;
+		if ($match_index === null && $name_key !== '' && !empty($persediaan_by_name[$name_key])) {
+			$match_index = isset($persediaan_by_key[$manual_key][0])
+				? $persediaan_by_key[$manual_key][0]
+				: $persediaan_by_name[$name_key][0];
+			$duplicate_pair = true;
+		}
 		$app_row = $match_index !== null ? $persediaan_rows[$match_index] : null;
-		if ($match_index !== null) {
+		if ($match_index !== null && !$duplicate_pair) {
 			$used_persediaan[$match_index] = true;
 		}
 		$manual_side = persediaan_compare_detail_side($manual_row, $map);
@@ -22791,6 +22818,10 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 		if ($app_row === null) {
 			$status = 'Tidak ada pasangan';
 			$stats['manual_tidak_ada_di_persediaan']++;
+		} elseif ($duplicate_pair) {
+			$status = 'Tidak cocok';
+			$mismatch_fields[] = 'Jumlah record';
+			$stats['berbeda']++;
 		} elseif (empty($mismatch_fields)) {
 			$status = 'Cocok';
 			$stats['cocok']++;
@@ -22808,6 +22839,35 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 
 	foreach ($persediaan_rows as $index => $persediaan_row) {
 		if (isset($used_persediaan[$index])) {
+			continue;
+		}
+		$name_key = persediaan_recalculate_normalize_nama(
+			isset($persediaan_row->namabarang) ? $persediaan_row->namabarang : ''
+		);
+		if ($name_key !== '' && !empty($manual_by_name[$name_key])) {
+			$manual_index = null;
+			$pers_key = persediaan_compare_build_key(
+				isset($persediaan_row->namabarang) ? $persediaan_row->namabarang : '',
+				isset($persediaan_row->satuan) ? $persediaan_row->satuan : '',
+				isset($persediaan_row->hpp) ? $persediaan_row->hpp : '',
+				isset($persediaan_row->spop) ? $persediaan_row->spop : ''
+			);
+			if ($pers_key !== '' && isset($manual_by_key[$pers_key][0])) {
+				$manual_index = $manual_by_key[$pers_key][0];
+			} else {
+				$manual_index = $manual_by_name[$name_key][0];
+			}
+			$manual_side = persediaan_compare_detail_side($manual_rows[$manual_index], $map);
+			$app_side = persediaan_compare_detail_side($persediaan_row, null, true);
+			$mismatch_fields = persediaan_compare_detail_mismatch_fields($manual_side, $app_side);
+			$mismatch_fields[] = 'Jumlah record';
+			$items[] = array(
+				'status' => 'Tidak cocok',
+				'manual' => $manual_side,
+				'app' => $app_side,
+				'mismatch_fields' => $mismatch_fields,
+			);
+			$stats['berbeda']++;
 			continue;
 		}
 		$items[] = array(
@@ -22844,6 +22904,48 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 	return array('items' => $items, 'stats' => $stats);
 }
 
+function persediaan_compare_row_name_contains_jasa($row, $name_field)
+{
+	if (is_array($row)) {
+		$name = isset($row[$name_field]) ? $row[$name_field] : '';
+	} elseif (is_object($row)) {
+		$name = isset($row->{$name_field}) ? $row->{$name_field} : '';
+	} else {
+		$name = '';
+	}
+
+	return stripos((string) $name, 'jasa') !== false;
+}
+
+function persediaan_compare_filter_rows_without_jasa($rows, $name_field)
+{
+	if (!is_array($rows)) {
+		return array();
+	}
+
+	return array_values(array_filter($rows, function ($row) use ($name_field) {
+		return !persediaan_compare_row_name_contains_jasa($row, $name_field);
+	}));
+}
+
+function persediaan_compare_filter_transaction_lists_without_jasa($lists)
+{
+	$name_fields = array(
+		'pembelian' => 'uraian',
+		'penjualan' => 'nama_barang',
+		'produksi' => 'nama_barang_bahan',
+		'pecah_satuan' => 'uraian',
+	);
+
+	foreach ($name_fields as $list_key => $name_field) {
+		if (isset($lists[$list_key])) {
+			$lists[$list_key] = persediaan_compare_filter_rows_without_jasa($lists[$list_key], $name_field);
+		}
+	}
+
+	return $lists;
+}
+
 function persediaan_compare_run($CI, $bulan, $table)
 {
 	$CI->load->helper('persediaan_display');
@@ -22858,9 +22960,12 @@ function persediaan_compare_run($CI, $bulan, $table)
 	}
 
 	$map = $loaded['map'];
-	$compare_rows = $loaded['rows'];
+	$compare_rows = persediaan_compare_filter_rows_without_jasa($loaded['rows'], $map['nama']);
 	persediaan_compare_sort_manual_rows_by_name($compare_rows, $map);
-	$persediaan_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
+	$persediaan_rows = persediaan_compare_filter_rows_without_jasa(
+		persediaan_compare_get_persediaan_bulan_rows($CI, $bulan),
+		'namabarang'
+	);
 	$detail_result = persediaan_compare_build_detail_items($compare_rows, $persediaan_rows, $map);
 
 	$compare_by_key = array();
@@ -23025,9 +23130,36 @@ function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'c
 	foreach ($items as $item) {
 		$no++;
 		$cells = persediaan_compare_item_to_row_cells($jenis, $item, $no);
+		$mismatch_columns = array();
+		if ($jenis === 'detail') {
+			if (isset($item['status']) && $item['status'] === 'Tidak ada pasangan') {
+				$mismatch_columns = range(3, 22);
+			} else {
+				$mismatch_columns_by_field = array(
+					'Satuan' => array(5, 15),
+					'HPP' => array(6, 16),
+					'SPOP' => array(7, 17),
+					'SA' => array(8, 18),
+					'Beli' => array(9, 19),
+					'TUJ' => array(10, 20),
+					'Total_10' => array(11, 21),
+					'Nilai Persediaan' => array(12, 22),
+				);
+				foreach (isset($item['mismatch_fields']) && is_array($item['mismatch_fields']) ? $item['mismatch_fields'] : array() as $field) {
+					if (isset($mismatch_columns_by_field[$field])) {
+						$mismatch_columns = array_merge($mismatch_columns, $mismatch_columns_by_field[$field]);
+					}
+				}
+			}
+		}
 		$col = 0;
 		foreach ($cells as $cell) {
-			xlsWriteLabel($row, $col++, $cell);
+			if (in_array($col, $mismatch_columns, true)) {
+				xlsWriteCellStyle($row, $col, $cell, 27);
+			} else {
+				xlsWriteLabel($row, $col, $cell);
+			}
+			$col++;
 		}
 		$row++;
 	}
@@ -24462,15 +24594,19 @@ function persediaan_compare_excel_all_build_rows($CI, $bulan, $table)
 	$map = $loaded['map'];
 	$fields = $loaded['fields'];
 	$manual_extra_cols = persediaan_compare_excel_all_detect_manual_extra_cols($fields);
-	$manual_rows = $loaded['rows'];
+	$manual_rows = persediaan_compare_filter_rows_without_jasa($loaded['rows'], $map['nama']);
 
 	$range = $loaded['range'];
 	$tgl_awal = $range['tgl_awal'];
 	$tgl_akhir = $range['tgl_akhir'];
 	$bulan_label = $range['bulan_label'];
 
-	$pers_rows = persediaan_compare_get_persediaan_bulan_rows($CI, $bulan);
+	$pers_rows = persediaan_compare_filter_rows_without_jasa(
+		persediaan_compare_get_persediaan_bulan_rows($CI, $bulan),
+		'namabarang'
+	);
 	$lists = persediaan_rekonsiliasi_tx_load_transaction_lists($CI, $tgl_awal, $tgl_akhir);
+	$lists = persediaan_compare_filter_transaction_lists_without_jasa($lists);
 	$spop_maps = persediaan_compare_excel_all_build_spop_maps($CI, $pers_rows);
 	$tx_index = persediaan_compare_excel_all_build_tx_indexes($CI, $pers_rows, $lists, $spop_maps);
 	$nama_groups = persediaan_compare_excel_all_build_nama_groups($manual_rows, $map, $pers_rows, $tx_index);
