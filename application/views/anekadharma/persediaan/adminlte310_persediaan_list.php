@@ -2235,6 +2235,36 @@
                             </div>
 
                             <h6 class="d-flex align-items-center flex-wrap mt-3">
+                                <span>Perbandingan Penjualan Per Unit <span id="compare-badge-detail-unit-sales" class="badge badge-primary">0</span></span>
+                                <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="detail_per_unit"><i class="fas fa-file-excel"></i> Excel Penjualan Per Unit</button>
+                            </h6>
+                            <p class="text-muted small mb-2">
+                                Jumlah dan nominal per unit dibandingkan antara tabel manual dan persediaan. Nominal dihitung dari jumlah unit × HPP; nilai yang berbeda diberi warna.
+                            </p>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-compare-detail-unit-sales" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>Nama Barang</th>
+                                        <?php
+                                        $compare_unit_sales_view_columns = array(
+                                            'Sekret', 'Cetak', 'Grafikita', 'Dinas Umum', 'ATK RSUD', 'PPBMP KBS',
+                                            'KBS', 'PPBMP', 'Medis', 'Siiplah BOSDA', 'Sembako', 'FC Gose',
+                                            'FC Manding', 'FC Psamya', 'Kop MP', 'PU Outsor', 'PU Buku',
+                                        );
+                                        foreach ($compare_unit_sales_view_columns as $compare_unit_sales_label) {
+                                            echo '<th>' . $compare_unit_sales_label . ' Manual</th>';
+                                            echo '<th>' . $compare_unit_sales_label . ' Persediaan</th>';
+                                            echo '<th>' . $compare_unit_sales_label . ' Nominal Manual</th>';
+                                            echo '<th>' . $compare_unit_sales_label . ' Nominal Persediaan</th>';
+                                        }
+                                        ?>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><?php for ($compare_unit_col = 0; $compare_unit_col < 69; $compare_unit_col++) { ?><th></th><?php } ?></tr></tfoot>
+                                </table>
+                            </div>
+
+                            <h6 class="d-flex align-items-center flex-wrap mt-3">
                                 <span>1. Persediaan Total_10 Kosong / 0 <span id="compare-badge-total10" class="badge badge-secondary">0</span></span>
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="total10_kosong"><i class="fas fa-file-excel"></i> Excel</button>
                             </h6>
@@ -2872,8 +2902,8 @@
     }
     #table-compare-detail tbody td.compare-cell-mismatch,
     #table-cekdata-compare-detail tbody td.compare-cell-mismatch {
-        background-color: #c62828 !important;
-        color: #ffff00 !important;
+        background-color: #7FBFCF !important;
+        color: #7F0000 !important;
         font-weight: 700;
     }
     #panel-compare-manual .compare-dt-wrap .dataTables_scroll,
@@ -12468,6 +12498,29 @@ window.addEventListener('load', function() {
         '#table-compare-produksi-tidak': [5],
         '#table-compare-pecah-tidak': [5]
     };
+    var compareUnitSalesFields = [
+        { key: 'sekret', label: 'Sekret' },
+        { key: 'cetak', label: 'Cetak' },
+        { key: 'grafikita', label: 'Grafikita' },
+        { key: 'dinas_umum', label: 'Dinas Umum' },
+        { key: 'atk_rsud', label: 'ATK RSUD' },
+        { key: 'ppbmp_kbs', label: 'PPBMP KBS' },
+        { key: 'kbs', label: 'KBS' },
+        { key: 'ppbmp', label: 'PPBMP' },
+        { key: 'medis', label: 'Medis' },
+        { key: 'siiplah_bosda', label: 'Siiplah BOSDA' },
+        { key: 'sembako', label: 'Sembako' },
+        { key: 'fc_gose', label: 'FC Gose' },
+        { key: 'fc_manding', label: 'FC Manding' },
+        { key: 'fc_psamya', label: 'FC Psamya' },
+        { key: 'kop_mp', label: 'Kop MP' },
+        { key: 'pu_outsor', label: 'PU Outsor' },
+        { key: 'pu_buku', label: 'PU Buku' }
+    ];
+    compareDtFooterSumCols['#table-compare-detail-unit-sales'] = [];
+    for (var compareUnitSumCol = 1; compareUnitSumCol < 69; compareUnitSumCol++) {
+        compareDtFooterSumCols['#table-compare-detail-unit-sales'].push(compareUnitSumCol);
+    }
     var compareCsvPreviewFooterSumCols = [];
 
     function parseCompareFooterNum(value) {
@@ -12777,6 +12830,7 @@ window.addEventListener('load', function() {
         $('#compare-badge-hanya').text(typeof stats.hanya_tabel !== 'undefined' ? stats.hanya_tabel : 0);
         $('#compare-badge-cocok').text(typeof stats.cocok !== 'undefined' ? stats.cocok : 0);
         $('#compare-badge-detail').text((res.items_detail || []).length);
+        $('#compare-badge-detail-unit-sales').text((res.items_detail || []).length);
         $('#compare-badge-pembelian-tidak').text(typeof stats.pembelian_tidak_manual !== 'undefined' ? stats.pembelian_tidak_manual : 0);
         $('#compare-badge-pembelian-manual-tidak-persediaan').text(
             typeof stats.pembelian_manual_tidak_persediaan !== 'undefined'
@@ -13457,6 +13511,34 @@ window.addEventListener('load', function() {
                 return row;
             });
         }
+        if (jenis === 'detail_per_unit') {
+            return items.map(function(it) {
+                var manual = it.manual || {};
+                var app = it.app || {};
+                var manualUnits = manual.unit_sales || {};
+                var appUnits = app.unit_sales || {};
+                var name = manual.namabarang || app.namabarang || '';
+                var row = [name];
+                var mismatches = it.unit_sales_mismatch_fields || [];
+
+                compareUnitSalesFields.forEach(function(field, fieldIndex) {
+                    row.push(formatCompareDetailNumber(manualUnits[field.key]));
+                    row.push(formatCompareDetailNumber(appUnits[field.key]));
+                    row.push(formatCompareDetailNumber(manualUnits[field.key + '_nominal']));
+                    row.push(formatCompareDetailNumber(appUnits[field.key + '_nominal']));
+                    var baseCol = 1 + (fieldIndex * 4);
+                    if (mismatches.indexOf(field.key) >= 0) {
+                        row._compareMismatchColumns = row._compareMismatchColumns || [];
+                        row._compareMismatchColumns.push(baseCol, baseCol + 1);
+                    }
+                    if (mismatches.indexOf(field.key + '_nominal') >= 0) {
+                        row._compareMismatchColumns = row._compareMismatchColumns || [];
+                        row._compareMismatchColumns.push(baseCol + 2, baseCol + 3);
+                    }
+                });
+                return row;
+            });
+        }
         if (jenis === 'pembelian_tidak_manual') {
             return items.map(function(it, i) {
                 return [
@@ -13652,6 +13734,11 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 9);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
         upsertCompareDataTable('#table-compare-detail', buildCompareRows('detail', res.items_detail || []), 24);
+        upsertCompareDataTable(
+            '#table-compare-detail-unit-sales',
+            buildCompareRows('detail_per_unit', res.items_detail || []),
+            0
+        );
         upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
         upsertCompareDataTable(
             '#table-compare-pembelian-manual-tidak-persediaan',
@@ -13903,28 +13990,36 @@ window.addEventListener('load', function() {
                 + 'Produksi tidak di manual: <strong>' + (s.produksi_tidak_manual || 0) + '</strong>, '
                 + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.';
             var historySaveFailed = res.history_saved === false;
+            var salesSaveFailed = res.sales_saved === false;
+            var compareSaveFailed = historySaveFailed || salesSaveFailed;
             compareStatusHtml += historySaveFailed
                 ? '<br><strong>History tidak tersimpan:</strong> ' + escapeHtmlCompare(res.history_message || 'Gagal menyimpan snapshot.')
                 : '<br>Snapshot hasil compare berhasil disimpan.';
-            setCompareStatus(historySaveFailed ? 'warning' : 'success', compareStatusHtml);
+            compareStatusHtml += salesSaveFailed
+                ? '<br><strong>Data penjualan per unit tidak tersimpan:</strong> ' + escapeHtmlCompare(res.sales_message || 'Gagal menyimpan data penjualan.')
+                : '<br>Data penjualan per unit tersimpan: <strong>' + (res.sales_saved_rows || 0) + '</strong> baris.';
+            setCompareStatus(compareSaveFailed ? 'warning' : 'success', compareStatusHtml);
             if (!silent) {
                 finishCompareProgress();
                 Swal.fire({
-                    icon: historySaveFailed ? 'warning' : 'success',
-                    title: historySaveFailed ? 'Compare selesai, history gagal disimpan' : 'Compare selesai',
-                    text: historySaveFailed
-                        ? (res.history_message || 'Hasil tampil, tetapi snapshot history tidak tersimpan.')
-                        : 'Hasil perbandingan berhasil ditampilkan dan disimpan ke history.',
+                    icon: compareSaveFailed ? 'warning' : 'success',
+                    title: compareSaveFailed ? 'Compare selesai dengan peringatan' : 'Compare selesai',
+                    text: compareSaveFailed
+                        ? [res.history_message, res.sales_message].filter(Boolean).join(' ')
+                        : 'Hasil perbandingan berhasil ditampilkan dan tersimpan.',
                     timer: 1800,
                     showConfirmButton: false
                 });
             }
-        }).fail(function() {
+        }).fail(function(xhr) {
             if (!silent) {
                 finishCompareProgress();
             }
-            setCompareStatus('danger', 'Tidak dapat menghubungi server.');
-            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak dapat menghubungi server.' });
+            var errorMessage = xhr && xhr.responseJSON && xhr.responseJSON.message
+                ? xhr.responseJSON.message
+                : 'Server mengembalikan HTTP ' + (xhr && xhr.status ? xhr.status : 'error') + '. Periksa log aplikasi untuk detail.';
+            setCompareStatus('danger', errorMessage);
+            Swal.fire({ icon: 'error', title: 'Gagal', text: errorMessage });
         }).always(function() {
             $compareButton.prop('disabled', false);
         });

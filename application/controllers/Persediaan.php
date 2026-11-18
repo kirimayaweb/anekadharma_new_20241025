@@ -7828,22 +7828,33 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
-		if (!persediaan_compare_history_ensure_table($this)) {
-			persediaan_ajax_json_output($this, array(
-				'ok' => false,
-				'message' => 'Tabel history compare tidak dapat dibuat atau diakses. Compare dibatalkan agar hasil tidak hilang.',
-			));
-			return;
-		}
-
+		$history_table_ready = persediaan_compare_history_ensure_table($this);
+		$sales_table_ready = persediaan_compare_sales_ensure_table($this);
 		$result = persediaan_compare_run($this, $bulan, $table);
 		if (!empty($result['ok'])) {
-			$history = persediaan_compare_history_save($this, $result);
+			$history = $history_table_ready
+				? persediaan_compare_history_save($this, $result)
+				: array('ok' => false, 'message' => 'Tabel history compare tidak dapat dibuat atau diakses.');
 			$result['history_saved'] = !empty($history['ok']);
 			if (empty($history['ok'])) {
 				$result['history_message'] = isset($history['message'])
 					? $history['message']
 					: 'History compare gagal disimpan.';
+			}
+
+			$sales = $sales_table_ready
+				? persediaan_compare_sales_history_save(
+					$this,
+					$result,
+					!empty($history['id']) ? $history['id'] : null
+				)
+				: array('ok' => false, 'message' => 'Tabel persediaan_penjualan tidak dapat dibuat atau diakses.');
+			$result['sales_saved'] = !empty($sales['ok']);
+			$result['sales_saved_rows'] = isset($sales['saved_rows']) ? (int) $sales['saved_rows'] : 0;
+			if (empty($sales['ok'])) {
+				$result['sales_message'] = isset($sales['message'])
+					? $sales['message']
+					: 'Data penjualan per unit gagal disimpan.';
 			}
 		}
 

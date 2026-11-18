@@ -20571,6 +20571,58 @@ function persediaan_compare_pick_column($fields, $candidates)
 	return null;
 }
 
+function persediaan_compare_unit_sales_definitions()
+{
+	return array(
+		'sekret' => array('label' => 'Sekret', 'manual' => array('sekret', 'sekretariat'), 'app' => array('sekretariat', 'sekret')),
+		'cetak' => array('label' => 'Cetak', 'manual' => array('cetak'), 'app' => array('cetak')),
+		'grafikita' => array('label' => 'Grafikita', 'manual' => array('grafikita'), 'app' => array('grafikita')),
+		'dinas_umum' => array('label' => 'Dinas Umum', 'manual' => array('dinas_umum'), 'app' => array('dinas_umum')),
+		'atk_rsud' => array('label' => 'ATK RSUD', 'manual' => array('atk_rsud'), 'app' => array('atk_rsud')),
+		'ppbmp_kbs' => array('label' => 'PPBMP KBS', 'manual' => array('ppbmp_kbs'), 'app' => array('ppbmp_kbs')),
+		'kbs' => array('label' => 'KBS', 'manual' => array('kbs'), 'app' => array('kbs')),
+		'ppbmp' => array('label' => 'PPBMP', 'manual' => array('ppbmp'), 'app' => array('ppbmp')),
+		'medis' => array('label' => 'Medis', 'manual' => array('medis'), 'app' => array('medis')),
+		'siiplah_bosda' => array('label' => 'Siiplah BOSDA', 'manual' => array('siiplah_bosda'), 'app' => array('siiplah_bosda')),
+		'sembako' => array('label' => 'Sembako', 'manual' => array('sembako'), 'app' => array('sembako')),
+		'fc_gose' => array('label' => 'FC Gose', 'manual' => array('fc_gose'), 'app' => array('fc_gose')),
+		'fc_manding' => array('label' => 'FC Manding', 'manual' => array('fc_manding'), 'app' => array('fc_manding')),
+		'fc_psamya' => array('label' => 'FC Psamya', 'manual' => array('fc_psamya'), 'app' => array('fc_psamya')),
+		'kop_mp' => array('label' => 'Kop MP', 'manual' => array('kop_mp'), 'app' => array('kop_mp')),
+		'pu_outsor' => array('label' => 'PU Outsor', 'manual' => array('pu_outsor'), 'app' => array('pu_outsor')),
+		'pu_buku' => array('label' => 'PU Buku', 'manual' => array('pu_buku'), 'app' => array('pu_buku')),
+	);
+}
+
+function persediaan_compare_unit_sales_side($row, $map = null, $is_persediaan = false)
+{
+	$definitions = persediaan_compare_unit_sales_definitions();
+	$fields = $row === null ? array() : array_keys((array) $row);
+	$hpp = $is_persediaan
+		? persediaan_compare_row_get($row, persediaan_compare_pick_column($fields, array('hpp', 'harga_satuan')))
+		: persediaan_compare_row_get($row, isset($map['hpp']) ? $map['hpp'] : null);
+	$hpp_value = persediaan_parse_angka($hpp);
+	$out = array();
+
+	foreach ($definitions as $key => $definition) {
+		$column = null;
+		if ($is_persediaan) {
+			$column = persediaan_compare_pick_column($fields, $definition['app']);
+		} elseif (isset($map['unit_sales'][$key])) {
+			$column = $map['unit_sales'][$key];
+		}
+
+		$quantity = persediaan_compare_row_get($row, $column);
+		$quantity_text = trim((string) $quantity);
+		$out[$key] = $quantity_text;
+		$out[$key . '_nominal'] = $quantity_text === ''
+			? ''
+			: (string) (persediaan_parse_angka($quantity_text) * $hpp_value);
+	}
+
+	return $out;
+}
+
 function persediaan_compare_detect_column_map($CI, $table)
 {
 	if (!persediaan_compare_is_valid_table_name($table) || !$CI->db->table_exists($table)) {
@@ -20592,7 +20644,11 @@ function persediaan_compare_detect_column_map($CI, $table)
 		'tuj' => persediaan_compare_pick_column($fields, array('tuj')),
 		'total_10' => persediaan_compare_excel_all_pick_col_10($fields),
 		'nilai_persediaan' => persediaan_compare_pick_column($fields, array('nilai_persediaan', 'nilai persediaan')),
+		'unit_sales' => array(),
 	);
+	foreach (persediaan_compare_unit_sales_definitions() as $key => $definition) {
+		$map['unit_sales'][$key] = persediaan_compare_pick_column($fields, $definition['manual']);
+	}
 
 	foreach (array('nama', 'satuan', 'hpp', 'spop') as $req) {
 		if (empty($map[$req])) {
@@ -22084,6 +22140,14 @@ function persediaan_compare_item_persediaan_only($row)
 
 function persediaan_compare_jenis_definitions()
 {
+	$unit_sales_headers = array('Nama Barang');
+	foreach (persediaan_compare_unit_sales_definitions() as $definition) {
+		$unit_sales_headers[] = $definition['label'] . ' Manual';
+		$unit_sales_headers[] = $definition['label'] . ' Persediaan';
+		$unit_sales_headers[] = $definition['label'] . ' Nominal Manual';
+		$unit_sales_headers[] = $definition['label'] . ' Nominal Persediaan';
+	}
+
 	return array(
 		'total10_kosong' => array(
 			'title' => 'Persediaan Total_10 Kosong atau 0',
@@ -22109,6 +22173,11 @@ function persediaan_compare_jenis_definitions()
 			'title' => 'Detail Compare Manual vs Persediaan',
 			'headers' => array('No', 'Status Pasangan', 'Field Berbeda', 'Manual ID', 'Manual Nama', 'Manual Satuan', 'Manual HPP', 'Manual SPOP', 'Manual SA', 'Manual Beli', 'Manual TUJ', 'Manual Total_10', 'Manual Nilai', 'Persediaan ID', 'Persediaan Nama', 'Persediaan Satuan', 'Persediaan HPP', 'Persediaan SPOP', 'Persediaan SA', 'Persediaan Beli', 'Persediaan TUJ', 'Persediaan Total_10', 'Persediaan Nilai'),
 			'file_suffix' => 'Detail_Compare',
+		),
+		'detail_per_unit' => array(
+			'title' => 'Perbandingan Penjualan Per Unit Manual vs Persediaan',
+			'headers' => $unit_sales_headers,
+			'file_suffix' => 'Detail_Penjualan_Per_Unit',
 		),
 		'pembelian_tidak_manual' => array(
 			'title' => 'Pembelian Tidak Ada di Tabel Manual',
@@ -22215,6 +22284,23 @@ function persediaan_compare_item_to_row_cells($jenis, $item, $nomor)
 				isset($item['app']['total_10']) ? persediaan_format_angka_tampil($item['app']['total_10']) : '',
 				isset($item['app']['nilai_persediaan']) ? persediaan_format_angka_tampil($item['app']['nilai_persediaan']) : '',
 			);
+		case 'detail_per_unit':
+			$manual_units = isset($item['manual']['unit_sales']) ? $item['manual']['unit_sales'] : array();
+			$app_units = isset($item['app']['unit_sales']) ? $item['app']['unit_sales'] : array();
+			$cells = array(isset($item['manual']['namabarang']) && $item['manual']['namabarang'] !== ''
+				? $item['manual']['namabarang']
+				: (isset($item['app']['namabarang']) ? $item['app']['namabarang'] : ''));
+			foreach (persediaan_compare_unit_sales_definitions() as $key => $definition) {
+				foreach (array($manual_units, $app_units) as $side_units) {
+					$value = isset($side_units[$key]) ? $side_units[$key] : '';
+					$cells[] = $value === '' ? '' : persediaan_format_angka_tampil($value);
+				}
+				foreach (array($manual_units, $app_units) as $side_units) {
+					$value = isset($side_units[$key . '_nominal']) ? $side_units[$key . '_nominal'] : '';
+					$cells[] = $value === '' ? '' : persediaan_format_angka_tampil($value);
+				}
+			}
+			return $cells;
 		case 'pembelian_tidak_manual':
 			return array(
 				$nomor,
@@ -22291,6 +22377,8 @@ function persediaan_compare_get_items_by_jenis($result, $jenis)
 		case 'cocok':
 			return isset($result['items_cocok']) ? $result['items_cocok'] : array();
 		case 'detail':
+			return isset($result['items_detail']) ? $result['items_detail'] : array();
+		case 'detail_per_unit':
 			return isset($result['items_detail']) ? $result['items_detail'] : array();
 		case 'pembelian_tidak_manual':
 			return isset($result['items_pembelian_tidak_manual']) ? $result['items_pembelian_tidak_manual'] : array();
@@ -22652,6 +22740,7 @@ function persediaan_compare_detail_side($row, $map = null, $is_persediaan = fals
 		foreach ($fields as $field) {
 			$out[$field] = isset($row->{$field}) ? $row->{$field} : '';
 		}
+		$out['unit_sales'] = persediaan_compare_unit_sales_side($row, null, true);
 		return $out;
 	}
 
@@ -22671,6 +22760,7 @@ function persediaan_compare_detail_side($row, $map = null, $is_persediaan = fals
 	foreach ($fields as $target => $source) {
 		$out[$target] = persediaan_compare_row_get($row, $source);
 	}
+	$out['unit_sales'] = persediaan_compare_unit_sales_side($row, $map, false);
 	return $out;
 }
 
@@ -22709,6 +22799,28 @@ function persediaan_compare_detail_mismatch_fields($manual, $app)
 			$diff[] = $label;
 		}
 	}
+	return $diff;
+}
+
+function persediaan_compare_unit_sales_mismatch_fields($manual, $app)
+{
+	$manual_units = isset($manual['unit_sales']) && is_array($manual['unit_sales']) ? $manual['unit_sales'] : array();
+	$app_units = isset($app['unit_sales']) && is_array($app['unit_sales']) ? $app['unit_sales'] : array();
+	$diff = array();
+
+	foreach (persediaan_compare_unit_sales_definitions() as $key => $definition) {
+		foreach (array($key, $key . '_nominal') as $field) {
+			$manual_value = isset($manual_units[$field]) ? trim((string) $manual_units[$field]) : '';
+			$app_value = isset($app_units[$field]) ? trim((string) $app_units[$field]) : '';
+			if ($manual_value === '' && $app_value === '') {
+				continue;
+			}
+			if (persediaan_parse_angka($manual_value) !== persediaan_parse_angka($app_value)) {
+				$diff[] = $field;
+			}
+		}
+	}
+
 	return $diff;
 }
 
@@ -22879,6 +22991,14 @@ function persediaan_compare_build_detail_items($manual_rows, $persediaan_rows, $
 		$stats['persediaan_tidak_ada_di_manual']++;
 	}
 
+	foreach ($items as &$item) {
+		$item['unit_sales_mismatch_fields'] = persediaan_compare_unit_sales_mismatch_fields(
+			isset($item['manual']) ? $item['manual'] : array(),
+			isset($item['app']) ? $item['app'] : array()
+		);
+	}
+	unset($item);
+
 	usort($items, function ($a, $b) {
 		$name_a = isset($a['manual']['namabarang']) && trim((string) $a['manual']['namabarang']) !== ''
 			? $a['manual']['namabarang']
@@ -22946,19 +23066,32 @@ function persediaan_compare_filter_transaction_lists_without_jasa($lists)
 	return $lists;
 }
 
-function persediaan_compare_history_table_exists($CI)
+function persediaan_compare_db_without_debug($CI, $callback)
 {
-	$query = $CI->db->query(
-		"SELECT COUNT(*) AS table_count
-		FROM information_schema.TABLES
-		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND TABLE_TYPE = 'BASE TABLE'",
-		array($CI->db->database, 'persediaan_compare_history')
-	);
+	$debug = $CI->db->db_debug;
+	$CI->db->db_debug = FALSE;
+	try {
+		return call_user_func($callback);
+	} finally {
+		$CI->db->db_debug = $debug;
+	}
+}
+
+function persediaan_compare_table_exists_in_schema($CI, $table)
+{
+	$query = persediaan_compare_db_without_debug($CI, function () use ($CI, $table) {
+		return $CI->db->query(
+			"SELECT COUNT(*) AS table_count
+			FROM information_schema.TABLES
+			WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND TABLE_TYPE = 'BASE TABLE'",
+			array($CI->db->database, $table)
+		);
+	});
 	if ($query === false) {
 		$error = $CI->db->error();
 		log_message(
 			'error',
-			'persediaan_compare_history_table_exists gagal: '
+			'persediaan_compare_table_exists_in_schema gagal (' . $table . '): '
 				. (isset($error['message']) ? $error['message'] : 'query information_schema gagal')
 		);
 		return null;
@@ -22966,6 +23099,11 @@ function persediaan_compare_history_table_exists($CI)
 
 	$row = $query->row();
 	return $row && (int) $row->table_count > 0;
+}
+
+function persediaan_compare_history_table_exists($CI)
+{
+	return persediaan_compare_table_exists_in_schema($CI, 'persediaan_compare_history');
 }
 
 function persediaan_compare_history_ensure_table($CI)
@@ -22989,7 +23127,10 @@ function persediaan_compare_history_ensure_table($CI)
   KEY `idx_persediaan_compare_history_bulan_id` (`bulan`, `id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
-	if ($CI->db->query($sql) === false) {
+	$created = persediaan_compare_db_without_debug($CI, function () use ($CI, $sql) {
+		return $CI->db->query($sql);
+	});
+	if ($created === false) {
 		$error = $CI->db->error();
 		log_message(
 			'error',
@@ -23008,6 +23149,109 @@ function persediaan_compare_history_ensure_table($CI)
 	return true;
 }
 
+function persediaan_compare_sales_storage_columns()
+{
+	$columns = array(
+		'compare_history_id' => 'BIGINT(20) UNSIGNED NULL',
+		'bulan' => 'VARCHAR(7) NOT NULL',
+		'source_table' => 'VARCHAR(64) NOT NULL',
+		'compared_at' => 'DATETIME NOT NULL',
+		'manual_id' => 'VARCHAR(100) NULL',
+		'persediaan_id' => 'VARCHAR(100) NULL',
+		'namabarang' => 'VARCHAR(255) NOT NULL',
+		'status' => 'VARCHAR(32) NOT NULL',
+		'mismatch_fields' => 'TEXT NULL',
+		'manual_hpp' => 'VARCHAR(100) NULL',
+		'persediaan_hpp' => 'VARCHAR(100) NULL',
+	);
+	foreach (persediaan_compare_unit_sales_definitions() as $key => $definition) {
+		$columns[$key . '_manual'] = 'VARCHAR(100) NULL';
+		$columns[$key . '_persediaan'] = 'VARCHAR(100) NULL';
+		$columns[$key . '_nominal_manual'] = 'VARCHAR(100) NULL';
+		$columns[$key . '_nominal_persediaan'] = 'VARCHAR(100) NULL';
+	}
+	return $columns;
+}
+
+function persediaan_compare_sales_ensure_table($CI)
+{
+	$table = 'persediaan_penjualan';
+	$exists = persediaan_compare_table_exists_in_schema($CI, $table);
+	if ($exists === null) {
+		return false;
+	}
+
+	$columns = persediaan_compare_sales_storage_columns();
+	if ($exists === false) {
+		$definitions = array(
+			'`id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT',
+		);
+		foreach ($columns as $name => $type) {
+			$definitions[] = '`' . $name . '` ' . $type;
+		}
+		$definitions[] = 'PRIMARY KEY (`id`)';
+		$definitions[] = 'KEY `idx_persediaan_penjualan_compare` (`compare_history_id`)';
+		$definitions[] = 'KEY `idx_persediaan_penjualan_bulan` (`bulan`, `source_table`)';
+		$sql = 'CREATE TABLE IF NOT EXISTS `' . $table . '` ('
+			. implode(', ', $definitions)
+			. ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci';
+		$created = persediaan_compare_db_without_debug($CI, function () use ($CI, $sql) {
+			return $CI->db->query($sql);
+		});
+		if ($created === false) {
+			$error = $CI->db->error();
+			log_message(
+				'error',
+				'persediaan_compare_sales_ensure_table gagal membuat tabel: '
+					. (isset($error['message']) ? $error['message'] : 'query CREATE TABLE gagal')
+			);
+			return false;
+		}
+	}
+
+	$fields = persediaan_compare_db_without_debug($CI, function () use ($CI, $table) {
+		return $CI->db->query(
+			'SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?',
+			array($CI->db->database, $table)
+		);
+	});
+	if ($fields === false) {
+		$error = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_compare_sales_ensure_table gagal membaca kolom: '
+				. (isset($error['message']) ? $error['message'] : 'query information_schema gagal')
+		);
+		return false;
+	}
+	$existing = array();
+	foreach ($fields->result_array() as $field) {
+		$existing[$field['COLUMN_NAME']] = true;
+	}
+	$missing = array();
+	foreach ($columns as $name => $type) {
+		if (!isset($existing[$name])) {
+			$missing[] = 'ADD COLUMN `' . $name . '` ' . $type;
+		}
+	}
+	if (!empty($missing)) {
+		$sql = 'ALTER TABLE `' . $table . '` ' . implode(', ', $missing);
+		$altered = persediaan_compare_db_without_debug($CI, function () use ($CI, $sql) {
+			return $CI->db->query($sql);
+		});
+		if ($altered === false) {
+			$error = $CI->db->error();
+			log_message(
+				'error',
+				'persediaan_compare_sales_ensure_table gagal menambah kolom: '
+					. (isset($error['message']) ? $error['message'] : 'query ALTER TABLE gagal')
+			);
+			return false;
+		}
+	}
+	return true;
+}
+
 function persediaan_compare_history_json_encode($value)
 {
 	$flags = JSON_UNESCAPED_UNICODE;
@@ -23015,6 +23259,20 @@ function persediaan_compare_history_json_encode($value)
 		$flags |= JSON_INVALID_UTF8_SUBSTITUTE;
 	}
 	return json_encode($value, $flags);
+}
+
+function persediaan_compare_history_pack_items(array $items)
+{
+	$json = persediaan_compare_history_json_encode($items);
+	if ($json === false || !function_exists('gzencode') || !function_exists('gzdecode')) {
+		return $json;
+	}
+	$compressed = gzencode($json, 6);
+	if ($compressed === false) {
+		return $json;
+	}
+	$packed = 'gz64:' . base64_encode($compressed);
+	return strlen($packed) < strlen($json) ? $packed : $json;
 }
 
 function persediaan_compare_history_save($CI, array $result)
@@ -23026,20 +23284,22 @@ function persediaan_compare_history_save($CI, array $result)
 		return array('ok' => false, 'message' => 'Tabel history compare tidak tersedia.');
 	}
 
-	$items_json = persediaan_compare_history_json_encode($result['items_detail']);
+	$items_json = persediaan_compare_history_pack_items($result['items_detail']);
 	$stats_json = persediaan_compare_history_json_encode(isset($result['stats']) ? $result['stats'] : array());
 	if ($items_json === false || $stats_json === false) {
 		log_message('error', 'persediaan_compare_history_save gagal encode JSON: ' . json_last_error_msg());
 		return array('ok' => false, 'message' => 'Hasil compare gagal dikemas untuk penyimpanan history.');
 	}
 
-	$inserted = $CI->db->insert('persediaan_compare_history', array(
-		'bulan' => $result['bulan'],
-		'source_table' => $result['table'],
-		'compared_at' => date('Y-m-d H:i:s'),
-		'stats_json' => $stats_json,
-		'items_detail_json' => $items_json,
-	));
+	$inserted = persediaan_compare_db_without_debug($CI, function () use ($CI, $result, $stats_json, $items_json) {
+		return $CI->db->insert('persediaan_compare_history', array(
+			'bulan' => $result['bulan'],
+			'source_table' => $result['table'],
+			'compared_at' => date('Y-m-d H:i:s'),
+			'stats_json' => $stats_json,
+			'items_detail_json' => $items_json,
+		));
+	});
 	if (!$inserted) {
 		$error = $CI->db->error();
 		log_message(
@@ -23052,6 +23312,80 @@ function persediaan_compare_history_save($CI, array $result)
 	}
 
 	return array('ok' => true, 'id' => (int) $CI->db->insert_id());
+}
+
+function persediaan_compare_sales_history_save($CI, array $result, $history_id = null)
+{
+	if (empty($result['ok']) || empty($result['bulan']) || empty($result['table']) || !isset($result['items_detail']) || !is_array($result['items_detail'])) {
+		return array('ok' => false, 'message' => 'Format hasil compare penjualan tidak dapat disimpan.');
+	}
+	if (!persediaan_compare_sales_ensure_table($CI)) {
+		return array('ok' => false, 'message' => 'Tabel persediaan_penjualan tidak tersedia.');
+	}
+
+	$definitions = persediaan_compare_unit_sales_definitions();
+	$compared_at = date('Y-m-d H:i:s');
+	$rows = array();
+	foreach ($result['items_detail'] as $item) {
+		$manual = isset($item['manual']) && is_array($item['manual']) ? $item['manual'] : array();
+		$app = isset($item['app']) && is_array($item['app']) ? $item['app'] : array();
+		$manual_units = isset($manual['unit_sales']) && is_array($manual['unit_sales']) ? $manual['unit_sales'] : array();
+		$app_units = isset($app['unit_sales']) && is_array($app['unit_sales']) ? $app['unit_sales'] : array();
+		$name = !empty($manual['namabarang'])
+			? $manual['namabarang']
+			: (isset($app['namabarang']) ? $app['namabarang'] : '');
+		$row = array(
+			'compare_history_id' => $history_id ? (int) $history_id : null,
+			'bulan' => $result['bulan'],
+			'source_table' => $result['table'],
+			'compared_at' => $compared_at,
+			'manual_id' => isset($manual['id']) ? (string) $manual['id'] : null,
+			'persediaan_id' => isset($app['id']) ? (string) $app['id'] : null,
+			'namabarang' => (string) $name,
+			'status' => isset($item['status']) ? (string) $item['status'] : '',
+			'mismatch_fields' => implode(', ', isset($item['unit_sales_mismatch_fields']) ? $item['unit_sales_mismatch_fields'] : array()),
+			'manual_hpp' => isset($manual['hpp']) ? (string) $manual['hpp'] : null,
+			'persediaan_hpp' => isset($app['hpp']) ? (string) $app['hpp'] : null,
+		);
+		foreach ($definitions as $key => $definition) {
+			$row[$key . '_manual'] = isset($manual_units[$key]) ? (string) $manual_units[$key] : null;
+			$row[$key . '_persediaan'] = isset($app_units[$key]) ? (string) $app_units[$key] : null;
+			$row[$key . '_nominal_manual'] = isset($manual_units[$key . '_nominal']) ? (string) $manual_units[$key . '_nominal'] : null;
+			$row[$key . '_nominal_persediaan'] = isset($app_units[$key . '_nominal']) ? (string) $app_units[$key . '_nominal'] : null;
+		}
+		$rows[] = $row;
+	}
+
+	if (empty($rows)) {
+		return array('ok' => true, 'saved_rows' => 0);
+	}
+
+	$saved = persediaan_compare_db_without_debug($CI, function () use ($CI, $rows) {
+		$CI->db->trans_begin();
+		foreach (array_chunk($rows, 50) as $batch) {
+			if ($CI->db->insert_batch('persediaan_penjualan', $batch) === false) {
+				$CI->db->trans_rollback();
+				return false;
+			}
+		}
+		if ($CI->db->trans_status() === false) {
+			$CI->db->trans_rollback();
+			return false;
+		}
+		$CI->db->trans_commit();
+		return true;
+	});
+	if (!$saved) {
+		$error = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_compare_sales_history_save gagal bulan=' . $result['bulan']
+				. ' tabel=' . $result['table']
+				. ' err=' . (isset($error['message']) ? $error['message'] : 'unknown')
+		);
+		return array('ok' => false, 'message' => 'Hasil compare berhasil dihitung, tetapi data penjualan gagal disimpan.');
+	}
+	return array('ok' => true, 'saved_rows' => count($rows));
 }
 
 function persediaan_compare_history_load($CI, $bulan)
@@ -23073,7 +23407,14 @@ function persediaan_compare_history_load($CI, $bulan)
 		return array('ok' => true, 'found' => false, 'bulan' => $bulan);
 	}
 
-	$items = json_decode($row['items_detail_json'], true);
+	$items_json = $row['items_detail_json'];
+	if (strpos($items_json, 'gz64:') === 0) {
+		$compressed = base64_decode(substr($items_json, 5), true);
+		$items_json = $compressed === false || !function_exists('gzdecode')
+			? false
+			: gzdecode($compressed);
+	}
+	$items = $items_json === false ? null : json_decode($items_json, true);
 	$stats = !empty($row['stats_json']) ? json_decode($row['stats_json'], true) : array();
 	if (!is_array($items) || !is_array($stats)) {
 		log_message('error', 'persediaan_compare_history_load JSON tidak valid id=' . $row['id']);
@@ -23240,6 +23581,50 @@ function persediaan_compare_run($CI, $bulan, $table)
 	);
 }
 
+function persediaan_compare_export_total_columns($jenis, $column_count)
+{
+	$columns_by_type = array(
+		'total10_kosong' => array(5, 6, 7),
+		'tidak_di_tabel' => array(5, 6, 7, 12, 13, 14),
+		'hanya_tabel' => array(6, 7, 8, 13, 14, 15),
+		'cocok' => array(5, 6, 7, 12, 13, 14),
+		'detail' => array(8, 9, 10, 11, 12, 18, 19, 20, 21, 22),
+		'pembelian_tidak_manual' => array(6),
+		'penjualan_tidak_manual' => array(6),
+		'produksi_tidak_manual' => array(5),
+		'pecah_tidak_manual' => array(5),
+	);
+	if ($jenis === 'detail_per_unit') {
+		return $column_count > 1 ? range(1, $column_count - 1) : array();
+	}
+	return isset($columns_by_type[$jenis]) ? $columns_by_type[$jenis] : array();
+}
+
+function persediaan_compare_export_total_row($jenis, array $items, array $headers)
+{
+	$columns = persediaan_compare_export_total_columns($jenis, count($headers));
+	if (empty($columns)) {
+		return null;
+	}
+
+	$totals = array_fill(0, count($headers), 0);
+	foreach ($items as $item) {
+		$cells = persediaan_compare_item_to_row_cells($jenis, $item, 0);
+		foreach ($columns as $column) {
+			if (isset($cells[$column]) && $cells[$column] !== '') {
+				$totals[$column] += persediaan_parse_angka($cells[$column]);
+			}
+		}
+	}
+
+	$row = array_fill(0, count($headers), '');
+	$row[0] = 'Total';
+	foreach ($columns as $column) {
+		$row[$column] = persediaan_format_angka_tampil($totals[$column]);
+	}
+	return $row;
+}
+
 function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'cocok', $result_override = null)
 {
 	$CI->load->helper(array('exportexcel', 'persediaan_display'));
@@ -23300,6 +23685,21 @@ function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'c
 					}
 				}
 			}
+		} elseif ($jenis === 'detail_per_unit') {
+			$unit_index = 0;
+			$unit_fields = persediaan_compare_unit_sales_definitions();
+			foreach ($unit_fields as $key => $definition) {
+				$base_col = 1 + ($unit_index * 4);
+				if (in_array($key, isset($item['unit_sales_mismatch_fields']) ? $item['unit_sales_mismatch_fields'] : array(), true)) {
+					$mismatch_columns[] = $base_col;
+					$mismatch_columns[] = $base_col + 1;
+				}
+				if (in_array($key . '_nominal', isset($item['unit_sales_mismatch_fields']) ? $item['unit_sales_mismatch_fields'] : array(), true)) {
+					$mismatch_columns[] = $base_col + 2;
+					$mismatch_columns[] = $base_col + 3;
+				}
+				$unit_index++;
+			}
 		}
 		$col = 0;
 		foreach ($cells as $cell) {
@@ -23311,6 +23711,13 @@ function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'c
 			$col++;
 		}
 		$row++;
+	}
+
+	$total_cells = persediaan_compare_export_total_row($jenis, $items, $def['headers']);
+	if (is_array($total_cells)) {
+		foreach ($total_cells as $col => $cell) {
+			xlsWriteLabel($row, $col, $cell, $col > 0 ? 'right' : null);
+		}
 	}
 
 	xlsEOF();
