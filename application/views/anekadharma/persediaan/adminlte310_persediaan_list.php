@@ -31,6 +31,9 @@
                         <li class="nav-item">
                             <a class="nav-link" id="tab-compare-manual" data-toggle="pill" href="#panel-compare-manual" role="tab" aria-controls="panel-compare-manual" aria-selected="false">Compare Data Manual - Online</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-cek-data" data-toggle="pill" href="#panel-cek-data" role="tab" aria-controls="panel-cek-data" aria-selected="false">Cek Data</a>
+                        </li>
                         <?php endif; ?>
                     </ul>
                 </div>
@@ -2217,16 +2220,17 @@
                                 <button type="button" class="btn btn-xs btn-outline-primary btn-compare-excel ml-2 mb-1" data-jenis="detail"><i class="fas fa-file-excel"></i> Excel Hasil Compare</button>
                             </h6>
                             <p class="text-muted small mb-2">
-                                Urutan mengikuti nama barang pada tabel manual. Setiap baris menampilkan status Cocok, Tidak cocok, atau Tidak ada pasangan dan rincian kedua record.
+                                Urutan nama barang A-Z; baris tanpa pasangan diletakkan setelahnya dan nama kosong di urutan terakhir. Klik header kolom untuk mengurutkan berdasarkan kolom tersebut.
                             </p>
                             <div class="compare-dt-wrap mb-4">
                                 <table id="table-compare-detail" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
                                     <thead><tr>
                                         <th>No</th><th>Status</th><th>Field Berbeda</th><th>ID Manual</th><th>Nama Manual</th><th>Satuan Manual</th><th>HPP Manual</th><th>SPOP Manual</th><th>SA Manual</th><th>Beli Manual</th><th>TUJ Manual</th><th>Total_10 Manual</th><th>Nilai Manual</th>
                                         <th>ID Persediaan</th><th>Nama Persediaan</th><th>Satuan Persediaan</th><th>HPP Persediaan</th><th>SPOP Persediaan</th><th>SA Persediaan</th><th>Beli Persediaan</th><th>TUJ Persediaan</th><th>Total_10 Persediaan</th><th>Nilai Persediaan</th>
+                                        <th>Urutan Status</th><th>Urutan Nama</th>
                                     </tr></thead>
                                     <tbody></tbody>
-                                    <tfoot><tr><?php for ($compare_detail_col = 0; $compare_detail_col < 23; $compare_detail_col++) { ?><th></th><?php } ?></tr></tfoot>
+                                    <tfoot><tr><?php for ($compare_detail_col = 0; $compare_detail_col < 25; $compare_detail_col++) { ?><th></th><?php } ?></tr></tfoot>
                                 </table>
                             </div>
 
@@ -2402,6 +2406,58 @@
                                     </tr></thead>
                                     <tbody></tbody>
                                     <tfoot><tr><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th></tr></tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="panel-cek-data" role="tabpanel" aria-labelledby="tab-cek-data">
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <h5 class="mb-2">Cek Data Persediaan</h5>
+                                    <p class="text-muted small mb-0">
+                                        Menampilkan hasil compare terakhir yang tersimpan untuk bulan terpilih. Tab ini hanya membaca history dan tidak menjalankan compare.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row align-items-end mb-3">
+                                <div class="col-auto mb-2">
+                                    <label for="cekdata_bulan_persediaan" class="small mb-1">Bulan</label>
+                                    <select id="cekdata_bulan_persediaan" class="form-control form-control-sm compare-toolbar-control">
+                                        <?php foreach ($nama_bulan_id as $num => $label_bulan) { ?>
+                                            <option value="<?php echo (int) $num; ?>"<?php echo ((int) $num === $compare_bulan_num) ? ' selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($label_bulan, ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="col-auto mb-2">
+                                    <label for="cekdata_tahun_persediaan" class="small mb-1">Tahun</label>
+                                    <select id="cekdata_tahun_persediaan" class="form-control form-control-sm compare-toolbar-control">
+                                        <?php for ($th = $gen_tahun_max; $th >= $gen_tahun_min; $th--) { ?>
+                                            <option value="<?php echo (int) $th; ?>"<?php echo ((int) $th === $compare_tahun_num) ? ' selected' : ''; ?>>
+                                                <?php echo (int) $th; ?>
+                                            </option>
+                                        <?php } ?>
+                                    </select>
+                                </div>
+                                <div class="col-auto mb-2">
+                                    <button type="button" id="btn-cekdata-excel" class="btn btn-success btn-sm" disabled>
+                                        <i class="fas fa-file-excel"></i> Cetak Excel
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="cekdata-compare-status" class="alert alert-info py-2" role="status">
+                                Hasil compare terakhir akan dimuat berdasarkan bulan dan tahun yang dipilih.
+                            </div>
+                            <div class="compare-dt-wrap mb-4">
+                                <table id="table-cekdata-compare-detail" class="table table-bordered table-striped table-sm compare-dt" style="width:100%;font-size:13px;">
+                                    <thead><tr>
+                                        <th>No</th><th>Status</th><th>Field Berbeda</th><th>ID Manual</th><th>Nama Manual</th><th>Satuan Manual</th><th>HPP Manual</th><th>SPOP Manual</th><th>SA Manual</th><th>Beli Manual</th><th>TUJ Manual</th><th>Total_10 Manual</th><th>Nilai Manual</th>
+                                        <th>ID Persediaan</th><th>Nama Persediaan</th><th>Satuan Persediaan</th><th>HPP Persediaan</th><th>SPOP Persediaan</th><th>SA Persediaan</th><th>Beli Persediaan</th><th>TUJ Persediaan</th><th>Total_10 Persediaan</th><th>Nilai Persediaan</th>
+                                        <th>Urutan Status</th><th>Urutan Nama</th>
+                                    </tr></thead>
+                                    <tbody></tbody>
+                                    <tfoot><tr><?php for ($cekdata_detail_col = 0; $cekdata_detail_col < 25; $cekdata_detail_col++) { ?><th></th><?php } ?></tr></tfoot>
                                 </table>
                             </div>
                         </div>
@@ -2792,6 +2848,7 @@
     }
     /* Tab Compare — box tabel: border kuning, scroll vertikal di body DT, horizontal hanya di DT */
     #panel-compare-manual .compare-dt-wrap,
+    #panel-cek-data .compare-dt-wrap,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap {
         width: 100%;
         max-width: 100%;
@@ -2806,33 +2863,39 @@
         box-shadow: 0 0 0 1px rgba(255, 235, 59, 0.45), inset 0 0 12px rgba(255, 249, 196, 0.35);
     }
     #panel-compare-manual .compare-dt-wrap .dataTables_wrapper,
+    #panel-cek-data .compare-dt-wrap .dataTables_wrapper,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_wrapper {
         width: 100% !important;
         max-width: 100%;
         overflow: hidden;
         margin: 0;
     }
-    #table-compare-detail tbody td.compare-cell-mismatch {
+    #table-compare-detail tbody td.compare-cell-mismatch,
+    #table-cekdata-compare-detail tbody td.compare-cell-mismatch {
         background-color: #c62828 !important;
         color: #ffff00 !important;
         font-weight: 700;
     }
     #panel-compare-manual .compare-dt-wrap .dataTables_scroll,
+    #panel-cek-data .compare-dt-wrap .dataTables_scroll,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scroll {
         width: 100% !important;
         overflow: hidden;
     }
     #panel-compare-manual .compare-dt-wrap .dataTables_scrollHead,
+    #panel-cek-data .compare-dt-wrap .dataTables_scrollHead,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollHead {
         overflow: hidden !important;
     }
     #panel-compare-manual .compare-dt-wrap .dataTables_scrollBody,
+    #panel-cek-data .compare-dt-wrap .dataTables_scrollBody,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap .dataTables_scrollBody {
         overflow-x: auto !important;
         overflow-y: auto !important;
         width: 100% !important;
     }
     #panel-compare-manual .compare-dt-wrap tfoot th,
+    #panel-cek-data .compare-dt-wrap tfoot th,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap tfoot th {
         background: #fffde7;
         border-top: 2px solid #ffeb3b;
@@ -2840,10 +2903,12 @@
         white-space: nowrap;
     }
     #panel-compare-manual .compare-dt-wrap tfoot th.compare-foot-total-label,
+    #panel-cek-data .compare-dt-wrap tfoot th.compare-foot-total-label,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap tfoot th.compare-foot-total-label {
         text-align: right;
     }
     #panel-compare-manual .compare-dt-wrap tfoot th.compare-foot-num,
+    #panel-cek-data .compare-dt-wrap tfoot th.compare-foot-num,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap tfoot th.compare-foot-num {
         text-align: right;
         font-variant-numeric: tabular-nums;
@@ -2933,6 +2998,8 @@
     .persediaan-tab-dt-wrap table.dataTable tbody td,
     #panel-compare-manual .compare-dt-wrap table.dataTable thead th,
     #panel-compare-manual .compare-dt-wrap table.dataTable tbody td,
+    #panel-cek-data .compare-dt-wrap table.dataTable thead th,
+    #panel-cek-data .compare-dt-wrap table.dataTable tbody td,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap table.dataTable thead th,
     #modal-compare-csv-preview .compare-csv-preview-dt-wrap table.dataTable tbody td {
         white-space: nowrap;
@@ -3666,6 +3733,8 @@ window.addEventListener('load', function() {
     var urlExcelDraftBulanReferensi = <?php echo json_encode(isset($url_excel_draft_bulan_referensi) ? $url_excel_draft_bulan_referensi : site_url('Persediaan/excel_draft_bulan_referensi')); ?>;
     var urlCompareTabelList = <?php echo json_encode(isset($url_compare_tabel_list) ? $url_compare_tabel_list : site_url('Persediaan/ajax_compare_tabel_list')); ?>;
     var urlCompareTabelRun = <?php echo json_encode(isset($url_compare_tabel_run) ? $url_compare_tabel_run : site_url('Persediaan/ajax_compare_tabel_run')); ?>;
+    var urlCompareHistoryLoad = <?php echo json_encode(isset($url_compare_history_load) ? $url_compare_history_load : site_url('Persediaan/ajax_compare_history_load')); ?>;
+    var urlCompareHistoryExcel = <?php echo json_encode(isset($url_compare_history_excel) ? $url_compare_history_excel : site_url('Persediaan/excel_compare_history')); ?>;
     var urlCompareTabelExcel = <?php echo json_encode(isset($url_compare_tabel_excel) ? $url_compare_tabel_excel : site_url('Persediaan/excel_compare_tabel')); ?>;
     var urlCompareTabelExcelAll = <?php echo json_encode(isset($url_compare_tabel_excel_all) ? $url_compare_tabel_excel_all : site_url('Persediaan/excel_compare_tabel_all')); ?>;
     var urlCompareImportCsv = <?php echo json_encode(isset($url_compare_import_csv) ? $url_compare_import_csv : site_url('Persediaan/ajax_compare_import_csv')); ?>;
@@ -5743,7 +5812,8 @@ window.addEventListener('load', function() {
             '#panel-data-persediaan': 'data',
             '#panel-rekap': 'rekap',
             '#panel-generate-persediaan': 'generate',
-            '#panel-compare-manual': 'compare'
+            '#panel-compare-manual': 'compare',
+            '#panel-cek-data': 'cekdata'
         };
         return map[href] || 'data';
     }
@@ -5811,7 +5881,8 @@ window.addEventListener('load', function() {
             data: '#tab-data-persediaan',
             rekap: '#tab-rekap',
             generate: '#tab-generate-persediaan',
-            compare: '#tab-compare-manual'
+            compare: '#tab-compare-manual',
+            cekdata: '#tab-cek-data'
         };
         var sel = map[key] || map.data;
         if ($(sel).length) {
@@ -12391,6 +12462,7 @@ window.addEventListener('load', function() {
         '#table-compare-hanya': [6, 7, 8, 13, 14, 15],
         '#table-compare-cocok': [5, 6, 7, 12, 13, 14],
         '#table-compare-detail': [8, 9, 10, 11, 12, 18, 19, 20, 21, 22],
+        '#table-cekdata-compare-detail': [8, 9, 10, 11, 12, 18, 19, 20, 21, 22],
         '#table-compare-pembelian-tidak': [6],
         '#table-compare-penjualan-tidak': [6],
         '#table-compare-produksi-tidak': [5],
@@ -12672,6 +12744,13 @@ window.addEventListener('load', function() {
         return tahun + '-' + String(bulan).padStart(2, '0');
     }
 
+    function getBulanKeyCekData() {
+        var bulan = parseInt($('#cekdata_bulan_persediaan').val(), 10);
+        var tahun = parseInt($('#cekdata_tahun_persediaan').val(), 10);
+        if (!bulan || !tahun) return '';
+        return tahun + '-' + String(bulan).padStart(2, '0');
+    }
+
     function setCompareStatus(type, html) {
         var $el = $('#compare-status');
         $el.removeClass('alert-info alert-success alert-danger alert-warning');
@@ -12874,6 +12953,8 @@ window.addEventListener('load', function() {
                     runCompareTabel(true);
                 }
             });
+        } else if (mainKey === 'cekdata') {
+            loadCekDataCompareTab();
         }
 
         adjustAllPersediaanDataTableAreas();
@@ -13346,6 +13427,11 @@ window.addEventListener('load', function() {
                     formatCompareDetailNumber(app.total_10),
                     formatCompareDetailNumber(app.nilai_persediaan)
                 ];
+                var nameForSort = String(manual.namabarang || app.namabarang || '').trim();
+                var nameSortGroup = nameForSort === ''
+                    ? 2
+                    : (it.status === 'Tidak ada pasangan' ? 1 : 0);
+                row.push(nameSortGroup, nameForSort.toLowerCase());
                 var mismatchColumnsByField = {
                     'Satuan': [5, 15],
                     'HPP': [6, 16],
@@ -13511,8 +13597,14 @@ window.addEventListener('load', function() {
 
     function upsertCompareDataTable(selector, rows, orderCol) {
         var $sel = $(selector);
+        var isDetailCompareTable = selector === '#table-compare-detail'
+            || selector === '#table-cekdata-compare-detail';
         ensureCompareTableTfoot($sel);
         var footerCb = buildCompareFooterCallback(selector);
+        var columnDefs = [{ targets: 0, orderable: false }];
+        if (isDetailCompareTable) {
+            columnDefs.push({ targets: [23, 24], visible: false, searchable: false });
+        }
         if ($.fn.DataTable.isDataTable(selector)) {
             var dt = $sel.DataTable();
             dt.clear();
@@ -13535,7 +13627,8 @@ window.addEventListener('load', function() {
             paging: true,
             pageLength: 10,
             order: orderCol !== undefined ? [[orderCol, 'asc']] : [],
-            columnDefs: [{ targets: 0, orderable: false }],
+            orderFixed: isDetailCompareTable ? { pre: [[23, 'asc']] } : undefined,
+            columnDefs: columnDefs,
             rowCallback: function(row, data) {
                 $(row).children('td').removeClass('compare-cell-mismatch');
                 (data._compareMismatchColumns || []).forEach(function(col) {
@@ -13558,7 +13651,7 @@ window.addEventListener('load', function() {
         upsertCompareDataTable('#table-compare-tidak', buildCompareRows('tidak_di_tabel', res.items_tidak_di_tabel || []), 1);
         upsertCompareDataTable('#table-compare-hanya', buildCompareRows('hanya_tabel', res.items_hanya_tabel || []), 9);
         upsertCompareDataTable('#table-compare-cocok', buildCompareRows('cocok', res.items_cocok || []), 1);
-        upsertCompareDataTable('#table-compare-detail', buildCompareRows('detail', res.items_detail || []), 3);
+        upsertCompareDataTable('#table-compare-detail', buildCompareRows('detail', res.items_detail || []), 24);
         upsertCompareDataTable('#table-compare-pembelian-tidak', buildCompareRows('pembelian_tidak_manual', res.items_pembelian_tidak_manual || []), 2);
         upsertCompareDataTable(
             '#table-compare-pembelian-manual-tidak-persediaan',
@@ -13586,6 +13679,109 @@ window.addEventListener('load', function() {
         setTimeout(function() {
             adjustAllPersediaanDataTableAreas();
         }, 200);
+    }
+
+    var cekDataHistorySeq = 0;
+    var cekDataHistoryPendingKey = '';
+
+    function setCekDataCompareStatus(type, message) {
+        var $status = $('#cekdata-compare-status');
+        $status.removeClass('alert-info alert-success alert-danger alert-warning');
+        $status.addClass(
+            type === 'success' ? 'alert-success'
+                : (type === 'danger' ? 'alert-danger'
+                    : (type === 'warning' ? 'alert-warning' : 'alert-info'))
+        );
+        $status.text(message);
+    }
+
+    function loadCekDataCompareTab() {
+        loadCekDataHistory();
+    }
+
+    function loadCekDataHistory() {
+        var bulanKey = getBulanKeyCekData();
+        var existingDt = compareDtStore['#table-cekdata-compare-detail'];
+        $('#btn-cekdata-excel').prop('disabled', true);
+
+        if (!userCanComparePersediaan) {
+            cekDataHistorySeq++;
+            cekDataHistoryPendingKey = '';
+            if (existingDt) {
+                existingDt.clear().draw();
+            }
+            setCekDataCompareStatus('warning', 'Akun Anda tidak memiliki akses untuk melihat history compare.');
+            return;
+        }
+        if (!bulanKey) {
+            cekDataHistorySeq++;
+            cekDataHistoryPendingKey = '';
+            if (existingDt) {
+                existingDt.clear().draw();
+            }
+            setCekDataCompareStatus('warning', 'Pilih bulan dan tahun yang valid.');
+            return;
+        }
+        if (cekDataHistoryPendingKey === bulanKey) {
+            return;
+        }
+        if (existingDt) {
+            existingDt.clear().draw();
+        }
+
+        var requestSeq = ++cekDataHistorySeq;
+        cekDataHistoryPendingKey = bulanKey;
+        setCekDataCompareStatus('info', 'Memuat history compare bulan ' + bulanKey + '...');
+        $.ajax({
+            url: urlCompareHistoryLoad,
+            type: 'POST',
+            dataType: 'json',
+            data: { bulan: bulanKey }
+        }).done(function(res) {
+            if (requestSeq !== cekDataHistorySeq) {
+                return;
+            }
+            cekDataHistoryPendingKey = '';
+            if (!res || !res.ok) {
+                setCekDataCompareStatus(
+                    'danger',
+                    (res && res.message) ? res.message : 'Gagal memuat history compare.'
+                );
+                return;
+            }
+            if (!res.found) {
+                setCekDataCompareStatus(
+                    'warning',
+                    'Belum ada hasil compare tersimpan untuk bulan ' + bulanKey
+                        + '. Jalankan Compare di tab Compare Data Manual - Online terlebih dahulu.'
+                );
+                return;
+            }
+
+            var rows = buildCompareRows('detail', res.items_detail || []);
+            var dt = upsertCompareDataTable(
+                '#table-cekdata-compare-detail',
+                rows,
+                24
+            );
+            $('#btn-cekdata-excel').prop('disabled', false);
+            setCekDataCompareStatus(
+                'success',
+                'History compare terakhir: bulan ' + (res.bulan_label || bulanKey)
+                    + ', tabel ' + res.table + ', diproses ' + res.compared_at
+                    + '. Total ' + rows.length + ' record.'
+            );
+            setTimeout(function() {
+                layoutCompareDataTableBox($('#table-cekdata-compare-detail'));
+                applyScrollYToDataTable(dt, $('#table-cekdata-compare-detail'), 130);
+            }, 100);
+        }).fail(function() {
+            if (requestSeq !== cekDataHistorySeq) {
+                return;
+            }
+            cekDataHistoryPendingKey = '';
+            setCekDataCompareStatus('danger', 'Tidak dapat menghubungi server untuk memuat history compare.');
+        });
     }
 
     function updateTombolComparePersediaan() {
@@ -13693,7 +13889,7 @@ window.addEventListener('load', function() {
             renderCompareAllTables(res);
             updateCompareInfoRingkas(res);
             var s = res.stats || {};
-            setCompareStatus('success', 'Compare selesai — Total_10 kosong: <strong>' + (s.total10_kosong || 0) + '</strong>, '
+            var compareStatusHtml = 'Compare selesai — Total_10 kosong: <strong>' + (s.total10_kosong || 0) + '</strong>, '
                 + 'Tidak di tabel manual: <strong>' + (s.tidak_di_tabel || 0) + '</strong>, '
                 + 'Tidak di persediaan: <strong>' + (s.hanya_tabel || 0) + '</strong>, '
                 + 'Cocok: <strong>' + (s.cocok || 0) + '</strong>, '
@@ -13705,13 +13901,20 @@ window.addEventListener('load', function() {
                 + 'Pecah satuan manual tidak di persediaan: <strong>' + (s.pecah_satuan_manual_tidak_persediaan || 0) + '</strong>, '
                 + 'Penjualan tidak di manual: <strong>' + (s.penjualan_tidak_manual || 0) + '</strong>, '
                 + 'Produksi tidak di manual: <strong>' + (s.produksi_tidak_manual || 0) + '</strong>, '
-                + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.');
+                + 'Pecah satuan tidak di manual: <strong>' + (s.pecah_tidak_manual || 0) + '</strong>.';
+            var historySaveFailed = res.history_saved === false;
+            compareStatusHtml += historySaveFailed
+                ? '<br><strong>History tidak tersimpan:</strong> ' + escapeHtmlCompare(res.history_message || 'Gagal menyimpan snapshot.')
+                : '<br>Snapshot hasil compare berhasil disimpan.';
+            setCompareStatus(historySaveFailed ? 'warning' : 'success', compareStatusHtml);
             if (!silent) {
                 finishCompareProgress();
                 Swal.fire({
-                    icon: 'success',
-                    title: 'Compare selesai',
-                    text: 'Hasil perbandingan berhasil ditampilkan.',
+                    icon: historySaveFailed ? 'warning' : 'success',
+                    title: historySaveFailed ? 'Compare selesai, history gagal disimpan' : 'Compare selesai',
+                    text: historySaveFailed
+                        ? (res.history_message || 'Hasil tampil, tetapi snapshot history tidak tersimpan.')
+                        : 'Hasil perbandingan berhasil ditampilkan dan disimpan ke history.',
                     timer: 1800,
                     showConfirmButton: false
                 });
@@ -13727,7 +13930,58 @@ window.addEventListener('load', function() {
         });
     }
 
-    function exportCompareExcel(jenis) {
+    function exportCekDataHistoryExcel() {
+        if (!userCanComparePersediaan) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses ditolak',
+                text: 'Export history compare hanya untuk pengguna yang memiliki akses.'
+            });
+            return;
+        }
+
+        var bulanKey = getBulanKeyCekData();
+        if (!bulanKey) {
+            Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan dan tahun terlebih dahulu.' });
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('bulan', bulanKey);
+        tampilkanSwalExcelProgress();
+        fetch(urlCompareHistoryExcel, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(unduhExcelDariResponse)
+        .then(function(result) {
+            triggerDownloadBlob(result);
+            selesaiSwalExcelProgress();
+            Swal.fire({
+                icon: 'success',
+                title: 'Selesai',
+                text: 'File Excel history compare berhasil diunduh.',
+                timer: 1800,
+                showConfirmButton: false
+            });
+        })
+        .catch(function(err) {
+            if (excelProgressTimer) {
+                clearInterval(excelProgressTimer);
+                excelProgressTimer = null;
+            }
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: err && err.message ? err.message : 'Export Excel history compare gagal.'
+            });
+        });
+    }
+
+    function exportCompareExcel(jenis, bulanKeyOverride, tableOverride) {
         if (!userCanComparePersediaan) {
             Swal.fire({
                 icon: 'warning',
@@ -13736,8 +13990,12 @@ window.addEventListener('load', function() {
             });
             return;
         }
-        var bulanKey = getBulanKeyCompare();
-        var tabel = $('#compare_tabel_pilihan').val() || '';
+        var bulanKey = typeof bulanKeyOverride !== 'undefined'
+            ? bulanKeyOverride
+            : getBulanKeyCompare();
+        var tabel = typeof tableOverride !== 'undefined'
+            ? tableOverride
+            : ($('#compare_tabel_pilihan').val() || '');
         if (!bulanKey || !tabel) {
             Swal.fire({ icon: 'warning', title: 'Perhatian', text: 'Pilih bulan, tahun, dan tabel terlebih dahulu.' });
             return;
@@ -13789,6 +14047,11 @@ window.addEventListener('load', function() {
                 table: $('#compare_tabel_pilihan').val() || getSavedPersediaanCompareTabel() || ''
             });
         });
+        setTimeout(adjustAllPersediaanDataTableAreas, 150);
+    });
+
+    $('a[href="#panel-cek-data"]').on('shown.bs.tab', function() {
+        loadCekDataCompareTab();
         setTimeout(adjustAllPersediaanDataTableAreas, 150);
     });
 
@@ -13869,6 +14132,14 @@ window.addEventListener('load', function() {
             savePersediaanCompareBulanTahun();
         }
         updateCompareInfoRingkas({ bulan_label: getBulanKeyCompare(), table: $('#compare_tabel_pilihan').val() });
+    });
+
+    $('#cekdata_bulan_persediaan, #cekdata_tahun_persediaan').on('change', function() {
+        loadCekDataHistory();
+    });
+
+    $('#btn-cekdata-excel').on('click', function() {
+        exportCekDataHistoryExcel();
     });
 
     $('#btn-compare-tabel').on('click', function() {

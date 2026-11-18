@@ -775,6 +775,8 @@ class Persediaan extends CI_Controller
 			'url_excel_draft_bulan_referensi' => site_url('Persediaan/excel_draft_bulan_referensi'),
 			'url_compare_tabel_list' => site_url('Persediaan/ajax_compare_tabel_list'),
 			'url_compare_tabel_run' => site_url('Persediaan/ajax_compare_tabel_run'),
+			'url_compare_history_load' => site_url('Persediaan/ajax_compare_history_load'),
+			'url_compare_history_excel' => site_url('Persediaan/excel_compare_history'),
 			'url_compare_tabel_excel' => site_url('Persediaan/excel_compare_tabel'),
 			'url_compare_tabel_excel_all' => site_url('Persediaan/excel_compare_tabel_all'),
 			'url_compare_import_csv' => site_url('Persediaan/ajax_compare_import_csv'),
@@ -7826,7 +7828,89 @@ class Persediaan extends CI_Controller
 			return;
 		}
 
-		persediaan_ajax_json_output($this, persediaan_compare_run($this, $bulan, $table));
+		if (!persediaan_compare_history_ensure_table($this)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Tabel history compare tidak dapat dibuat atau diakses. Compare dibatalkan agar hasil tidak hilang.',
+			));
+			return;
+		}
+
+		$result = persediaan_compare_run($this, $bulan, $table);
+		if (!empty($result['ok'])) {
+			$history = persediaan_compare_history_save($this, $result);
+			$result['history_saved'] = !empty($history['ok']);
+			if (empty($history['ok'])) {
+				$result['history_message'] = isset($history['message'])
+					? $history['message']
+					: 'History compare gagal disimpan.';
+			}
+		}
+
+		persediaan_ajax_json_output($this, $result);
+	}
+
+	/**
+	 * AJAX: baca hasil compare terakhir yang sudah tersimpan untuk bulan terpilih.
+	 */
+	public function ajax_compare_history_load()
+	{
+		$this->load->helper('pembelian_persediaan');
+
+		if (!$this->persediaan_user_can_compare()) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => strip_tags($this->persediaan_restricted_access_message('Cek Data')),
+			));
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+			persediaan_ajax_json_output($this, array(
+				'ok' => false,
+				'message' => 'Pilih bulan dan tahun yang valid.',
+			));
+			return;
+		}
+
+		persediaan_ajax_json_output($this, persediaan_compare_history_load($this, $bulan));
+	}
+
+	/**
+	 * Export Excel dari snapshot compare terakhir yang tersimpan.
+	 */
+	public function excel_compare_history()
+	{
+		$this->load->helper(array('exportexcel', 'pembelian_persediaan', 'persediaan_display'));
+
+		if (!$this->persediaan_user_can_compare()) {
+			show_error(strip_tags($this->persediaan_restricted_access_message('Export Excel Cek Data')), 403);
+			return;
+		}
+
+		$bulan = trim((string) $this->input->post('bulan', TRUE));
+		if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $bulan)) {
+			show_error('Format bulan tidak valid (YYYY-MM).', 400);
+			return;
+		}
+
+		$history = persediaan_compare_history_load($this, $bulan);
+		if (empty($history['ok'])) {
+			show_error(isset($history['message']) ? $history['message'] : 'History compare tidak dapat dibaca.', 500);
+			return;
+		}
+		if (empty($history['found'])) {
+			show_error('Belum ada hasil compare tersimpan untuk bulan ' . $bulan . '.', 404);
+			return;
+		}
+
+		$table = $history['table'];
+		$safe_table = preg_replace('/[^A-Za-z0-9_-]/', '_', $table);
+		$namaFile = 'Cek_Data_Compare_' . $bulan . '_vs_' . $safe_table . '_' . date('Y-m-d_H-i-s') . '.xls';
+		excel_prepare_download($namaFile);
+		persediaan_compare_export_excel_output($this, $bulan, $table, 'detail', $history);
+		exit();
 	}
 
 	/**

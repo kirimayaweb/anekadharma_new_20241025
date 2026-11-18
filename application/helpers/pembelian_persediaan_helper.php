@@ -22946,6 +22946,153 @@ function persediaan_compare_filter_transaction_lists_without_jasa($lists)
 	return $lists;
 }
 
+function persediaan_compare_history_table_exists($CI)
+{
+	$query = $CI->db->query(
+		"SELECT COUNT(*) AS table_count
+		FROM information_schema.TABLES
+		WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND TABLE_TYPE = 'BASE TABLE'",
+		array($CI->db->database, 'persediaan_compare_history')
+	);
+	if ($query === false) {
+		$error = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_compare_history_table_exists gagal: '
+				. (isset($error['message']) ? $error['message'] : 'query information_schema gagal')
+		);
+		return null;
+	}
+
+	$row = $query->row();
+	return $row && (int) $row->table_count > 0;
+}
+
+function persediaan_compare_history_ensure_table($CI)
+{
+	$exists = persediaan_compare_history_table_exists($CI);
+	if ($exists === true) {
+		return true;
+	}
+	if ($exists === null) {
+		return false;
+	}
+
+	$sql = "CREATE TABLE IF NOT EXISTS `persediaan_compare_history` (
+  `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bulan` VARCHAR(7) NOT NULL,
+  `source_table` VARCHAR(64) NOT NULL,
+  `compared_at` DATETIME NOT NULL,
+  `stats_json` LONGTEXT NULL,
+  `items_detail_json` LONGTEXT NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_persediaan_compare_history_bulan_id` (`bulan`, `id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+
+	if ($CI->db->query($sql) === false) {
+		$error = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_compare_history_ensure_table gagal membuat tabel: '
+				. (isset($error['message']) ? $error['message'] : 'query CREATE TABLE gagal')
+		);
+		return false;
+	}
+
+	$exists = persediaan_compare_history_table_exists($CI);
+	if ($exists !== true) {
+		log_message('error', 'persediaan_compare_history_ensure_table: tabel tidak ditemukan setelah CREATE TABLE.');
+		return false;
+	}
+
+	return true;
+}
+
+function persediaan_compare_history_json_encode($value)
+{
+	$flags = JSON_UNESCAPED_UNICODE;
+	if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+		$flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+	}
+	return json_encode($value, $flags);
+}
+
+function persediaan_compare_history_save($CI, array $result)
+{
+	if (empty($result['ok']) || empty($result['bulan']) || empty($result['table']) || !isset($result['items_detail']) || !is_array($result['items_detail'])) {
+		return array('ok' => false, 'message' => 'Format hasil compare tidak dapat disimpan.');
+	}
+	if (!persediaan_compare_history_ensure_table($CI)) {
+		return array('ok' => false, 'message' => 'Tabel history compare tidak tersedia.');
+	}
+
+	$items_json = persediaan_compare_history_json_encode($result['items_detail']);
+	$stats_json = persediaan_compare_history_json_encode(isset($result['stats']) ? $result['stats'] : array());
+	if ($items_json === false || $stats_json === false) {
+		log_message('error', 'persediaan_compare_history_save gagal encode JSON: ' . json_last_error_msg());
+		return array('ok' => false, 'message' => 'Hasil compare gagal dikemas untuk penyimpanan history.');
+	}
+
+	$inserted = $CI->db->insert('persediaan_compare_history', array(
+		'bulan' => $result['bulan'],
+		'source_table' => $result['table'],
+		'compared_at' => date('Y-m-d H:i:s'),
+		'stats_json' => $stats_json,
+		'items_detail_json' => $items_json,
+	));
+	if (!$inserted) {
+		$error = $CI->db->error();
+		log_message(
+			'error',
+			'persediaan_compare_history_save gagal insert bulan=' . $result['bulan']
+				. ' tabel=' . $result['table']
+				. ' err=' . (isset($error['message']) ? $error['message'] : 'unknown')
+		);
+		return array('ok' => false, 'message' => 'Hasil compare berhasil dihitung, tetapi gagal menyimpan history.');
+	}
+
+	return array('ok' => true, 'id' => (int) $CI->db->insert_id());
+}
+
+function persediaan_compare_history_load($CI, $bulan)
+{
+	if (!preg_match('/^\d{4}-\d{2}$/', trim((string) $bulan))) {
+		return array('ok' => false, 'message' => 'Format bulan tidak valid (YYYY-MM).');
+	}
+	if (!persediaan_compare_history_ensure_table($CI)) {
+		return array('ok' => false, 'message' => 'Tabel history compare tidak tersedia.');
+	}
+
+	$row = $CI->db
+		->where('bulan', $bulan)
+		->order_by('id', 'DESC')
+		->limit(1)
+		->get('persediaan_compare_history')
+		->row_array();
+	if (!$row) {
+		return array('ok' => true, 'found' => false, 'bulan' => $bulan);
+	}
+
+	$items = json_decode($row['items_detail_json'], true);
+	$stats = !empty($row['stats_json']) ? json_decode($row['stats_json'], true) : array();
+	if (!is_array($items) || !is_array($stats)) {
+		log_message('error', 'persediaan_compare_history_load JSON tidak valid id=' . $row['id']);
+		return array('ok' => false, 'message' => 'Data history compare rusak dan tidak dapat ditampilkan.');
+	}
+
+	return array(
+		'ok' => true,
+		'found' => true,
+		'id' => (int) $row['id'],
+		'bulan' => $row['bulan'],
+		'bulan_label' => date('m/Y', strtotime($row['bulan'] . '-01')),
+		'table' => $row['source_table'],
+		'compared_at' => $row['compared_at'],
+		'stats' => $stats,
+		'items_detail' => $items,
+	);
+}
+
 function persediaan_compare_run($CI, $bulan, $table)
 {
 	$CI->load->helper('persediaan_display');
@@ -23093,7 +23240,7 @@ function persediaan_compare_run($CI, $bulan, $table)
 	);
 }
 
-function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'cocok')
+function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'cocok', $result_override = null)
 {
 	$CI->load->helper(array('exportexcel', 'persediaan_display'));
 
@@ -23105,7 +23252,9 @@ function persediaan_compare_export_excel_output($CI, $bulan, $table, $jenis = 'c
 		return;
 	}
 
-	$result = persediaan_compare_run($CI, $bulan, $table);
+	$result = is_array($result_override)
+		? $result_override
+		: persediaan_compare_run($CI, $bulan, $table);
 	if (empty($result['ok'])) {
 		xlsBOF();
 		xlsWriteLabel(0, 0, isset($result['message']) ? $result['message'] : 'Compare gagal.');
